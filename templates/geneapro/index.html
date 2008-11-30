@@ -1,0 +1,15 @@
+{% trans "This is from a template" %}
+
+{{ hello }}
+
+<p>
+We have defined {{placesCount}} places
+</p>
+<p>
+ <ul>
+ {% for place in places %}
+     <li>{{ place }}</li>
+ {% endfor %}
+ </ul>
+</p>
+

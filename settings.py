@@ -1,0 +1,85 @@
+# Django settings for mysites project.
+
+DEBUG = True
+TEMPLATE_DEBUG = DEBUG
+
+ADMINS = (
+	('Emmanuel Briot', 'briot@adacore.com'),
+)
+
+MANAGERS = ADMINS
+
+DATABASE_ENGINE='postgresql'
+DATABASE_NAME='geneapro'
+DATABASE_USER='briot'
+DATABASE_PASSWORD=''
+DATABASE_HOST=''
+DATABASE_PORT=''
+
+#DATABASE_ENGINE = 'sqlite3'    # or 'mysql'
+#DATABASE_NAME = 'database.db'  # Or path to database file if using sqlite3.
+
+# Local time zone for this installation. Choices can be found here:
+# http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
+# although not all choices may be available on all operating systems.
+# If running in a Windows environment this must be set to the same as your
+# system time zone.
+TIME_ZONE = 'America/Vancouver'
+
+# Language code for this installation. All choices can be found here:
+# http://www.i18nguy.com/unicode/language-identifiers.html
+LANGUAGE_CODE = 'en-us'
+
+SITE_ID = 1
+
+# If you set this to False, Django will make some optimizations so as not
+# to load the internationalization machinery.
+USE_I18N = True
+
+# Absolute path to the directory that holds media.
+# Example: "/home/media/media.lawrence.com/"
+MEDIA_ROOT = ''
+
+# URL that handles the media served from MEDIA_ROOT. Make sure to use a
+# trailing slash if there is a path component (optional in other cases).
+# Examples: "http://media.lawrence.com", "http://example.com/media/"
+MEDIA_URL = ''
+
+# URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
+# trailing slash.
+# Examples: "http://foo.com/media/", "/media/".
+ADMIN_MEDIA_PREFIX = '/media/'
+
+# Make this unique, and don't share it with anybody.
+SECRET_KEY = 'oow@*jaewp$qa0@wmy*(=c9sm0dlx^y!z%5=+ied!()1$+n-!4'
+
+# List of callables that know how to import templates from various sources.
+TEMPLATE_LOADERS = (
+    'django.template.loaders.filesystem.load_template_source',
+    'django.template.loaders.app_directories.load_template_source',
+#     'django.template.loaders.eggs.load_template_source',
+)
+
+MIDDLEWARE_CLASSES = (
+    'django.middleware.common.CommonMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+)
+
+ROOT_URLCONF = 'mysites.urls'
+
+TEMPLATE_DIRS = (
+    # Always use forward slashes, even on Windows.
+    # Don't forget to use absolute paths, not relative paths.
+	"/home/briot/genealogy/geneapro/mysites/templates",
+)
+
+INSTALLED_APPS = (
+    'django.contrib.auth',          # Authentication system
+    'django.contrib.contenttypes',  # Framework for content types
+    'django.contrib.sessions',      # Session framework
+	'django.contrib.admin',         # Admin page
+	#'django.contrib.admindocs',     # Admin documentation (/admin/doc/)
+    'django.contrib.sites',         # Managing multiple sites with one install
+	'mysites.geneapro',
+)
