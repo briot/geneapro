@@ -64,6 +64,12 @@ class _Lexical (object):
 		self.line = 0      # Current line
 		self.error = error # How to report errors
 		self.prefetch = self._parseNextLine () # Prefetched line, parsed
+		if self.prefetch:
+			if self.prefetch [_Lexical.LEVEL] != 0 \
+		  	  or self.prefetch [_Lexical.TAG] != "HEAD":
+				self.error.write (self.getLocation (1) + " " +
+					_("Invalid gedcom file, first line must be '0 HEAD'")+"\n")
+				self.prefetch = None
 
 	def _parseNextLine (self):
 		self.line = self.line + 1
@@ -72,15 +78,15 @@ class _Lexical (object):
 
 		g = LINE_RE.match (line)
 		if not g:
-			self.error.write (self.getLocation() + " " +
+			self.error.write (self.getLocation(1) + " " +
 							  _("Error, invalid line format") + "\n" + line)
 			return None
 
 		return (int (g.group ("level")), g.group ("tag"),
 			    g.group ("xref_id"), g.group ("value"))	
 
-	def getLocation (self):
-		return self.file.name + ":" + str (self.line - 1)
+	def getLocation (self, offset):
+		return self.file.name + ":" + str (self.line + offset - 1)
 
 	def readline (self, skip_to_level=-1):
 		"""
@@ -372,6 +378,7 @@ class Gedcom (object):
 		# Stack of handlers. Current one is at index 0
 		self.handlers = [[-1, 'root', _grammar["ROOT"], dict()]]
 		self.ids = dict () # Registered entities with xref_id
+		self.error = error
 		self.lexical = _Lexical (file=file, error=error)
 		self._parse ()
 
@@ -411,7 +418,7 @@ class Gedcom (object):
 
 		self.error.write (self.lexical.getLocation() + " " + 
 						  _("%(parent)s doesn't accept child tag %(child)s")
-				          % {'parent':parentTag, 'child':tag})
+				          % {'parent':parentTag, 'child':tag} + "\n")
 		return None
 
 	def _parse (self):
