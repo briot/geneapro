@@ -1,4 +1,5 @@
 # Django settings for mysites project.
+import os.path
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -38,17 +39,17 @@ USE_I18N = True
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = ''
+MEDIA_ROOT = os.path.join (os.path.dirname (__file__),	"resources/media/")
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = ''
+MEDIA_URL = '/media/'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = '/media/'
+ADMIN_MEDIA_PREFIX = '/media-admin/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'oow@*jaewp$qa0@wmy*(=c9sm0dlx^y!z%5=+ied!()1$+n-!4'
@@ -58,6 +59,13 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
 #     'django.template.loaders.eggs.load_template_source',
+)
+
+TEMPLATE_CONTEXT_PROCESSORS = (
+	"django.core.context_processors.auth",  # Adds "user", "messages", "perms"
+	"django.core.context_processors.debug", # Adds "debug", "sql_queries"
+	"django.core.context_processors.i18n",  # Adds "LANGUAGES", "LANGUAGE_CODE"
+	"django.core.context_processors.media", # Adds "MEDIA_URL"
 )
 
 MIDDLEWARE_CLASSES = (
@@ -71,7 +79,7 @@ ROOT_URLCONF = 'mysites.urls'
 TEMPLATE_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
-	"/home/briot/genealogy/geneapro/mysites/templates",
+    os.path.join (os.path.dirname (__file__),	"resources/"),
 )
 
 INSTALLED_APPS = (

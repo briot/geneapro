@@ -3,4 +3,6 @@ from mysites.geneapro import views
 
 urlpatterns = patterns('',
 	(r'^$', views.index),
+	(r'^sources$', views.sources),
+	(r'^pedigree$', views.pedigree),
 )

@@ -1,0 +1,330 @@
+{% extends "geneapro/base.html" %}
+{% block title %}GeneaPro: sources{% endblock %}
+{% block css %}
+.sourceGallery ul.carousel li {background:url({{MEDIA_URL}}entry.gif) 0 0 no-repeat}
+{% endblock css %}
+{% block contents %}
+  <h1>Source (Id: S0001)<span id="titleAbbrev">N, Missillac, 1809</span></h1>
+  <ul id="tabs">
+   <li><a href="#info"><span>Information</span></a></li>
+   <li><a href="#extracts"><span>Evidences</span></a></li>
+  </ul>
+
+  <div id="info">
+   <div class="sourceInfo">
+    <div class="repositoryInfo">
+     <h3>Where was this source found ?</h3>
+     <table>
+      <tr><th>Repository Name</td>
+          <td><input type="text" value="Conseil General de la Loire Atlantique" title="A repository is a physical (or Internet) location where the source was found. It will in general give access to several sources"></td></tr>
+      <tr><th>Repository Type</td>
+          <td><select name="repositoryType">
+               <option>Album</option>
+               <option>Archive</option>
+               <option>Bookstore</option>
+               <option>Cemetery</option>
+               <option>Church</option>
+               <option>Collection (Archive dept, communales,...)</option>
+               <option>Library</option>
+               <option selected>Web site</option>
+              </select></td></tr>
+       <tr><th>Address/URL</td>
+           <td><textarea lines="3">www.cg44.fr</textarea></td></tr>
+     </table>
+    </div> <!-- repositoryInfo -->
+
+    <div class="sourceDetails">
+     <table>
+      <tr><th>Part of</th>
+          <td><select name="parentSource"><option>Missillac N, 1809</option></select></td></tr>
+      <tr><th>Source type</th>
+          <!--  How to cite sources - http://www.genealogy.com/19_wylie.html-->
+          <td><select name="sourceMediaType">
+               <option>Article</option>
+               <option>Audio</option>
+               <option>Birth certificate</option>
+               <option>Book</option>
+               <option>Census record</option>
+               <option>Court record</option>
+               <option>Death certificate</option>
+               <option>Email message</option>
+               <option>Interview</option>
+               <option>Letter</option>
+               <option>Livret de famille</option>
+               <option>Magazine</option>
+               <option>Marriage certificate</option>
+               <option>Manuscript</option>
+               <option>Map</option>
+               <option>Newspaper</option>
+               <option selected>Registre paroissial des naissances</option>
+               <option>Registre paroissial des mariages</option>
+               <option>Registre paroissial des deces</option>
+               <option>Photograph</option>
+               <option>Table decenale</option>
+               <option>Tombstone</option>
+               <option>Video</option>
+               <option>Web site</option>
+             </select></td></tr>
+             <!--  See Source type (original,...) and subtype (duplicate original, image copy, record (clerk's) copy, transcript, extract, abstract) in "10 things genealogy software should do" -->
+      <tr><th>Date</td>
+          <td><input type="text" class="date" value="1809"/></td></tr>
+      <tr><th>Confidence</td>
+          <td><select title="This is the general level of confidence in this source. This will be the default confidence set for all source extracts" name="sourceConfidence">
+              <option selected>5 - Very High</option>
+              <option>4 - High</option>
+              <option>3 - Normal</option>
+              <option>2 - Low</option>
+              <option>1 - Very Low</option>
+             </select></td>
+      <tr><th>Title</th>
+          <td><input type="text" watermark="Show parent's name"></td></tr>
+      <tr><th>Volume/Page</th>
+          <td><input type="text" name="page" value="p7" watermark="Show parent's page"/></td></tr>
+      <tr><th>Author</th>
+          <td><input type="text" watermark="Show parent's author"></td></tr>
+      <tr><th>Publisher Name</th>
+          <td><input type="text" watermark="Show parent's publisher"></td></tr>
+      <tr><th>Publisher Addr.</th>
+          <td><textarea lines="3" watermark="Show parent's publisher add">Missillac, France</textarea></td></tr>
+     </table>
+    </div> <!-- sourceDetails -->
+   </div> <!-- sourceInfo -->
+
+   <div class="sourceNotes">
+    <div class="actions"><a href="#">add</a> | <a onclick='hideOrShow(this,".notesList")'>hide</a></div>
+    <h2>Notes</h2>
+    <div class="notesList">
+     <ul>
+      <li>This is the first note</li>
+      <li>This is the second note,<br>
+on multiple lines</li>
+     </ul>
+    </div> <!-- notesList -->
+   </div> <!-- sourceNotes -->
+
+   <div class="sourceActions">
+    <div class="actions"><a href="#">add</a> | <a onclick='hideOrShow(this,".actionsList")'>hide</a></div>
+    <h2>Research to be done</h2>
+    <div class="actionsList">
+     <ul>
+      <li>TODO: <input type="txt" value="Investigate her death certificate"/></li>
+     </ul>
+    </div> <!-- actionsList -->
+   </div> <!-- sourceActions -->
+  </div> <!-- #info -->
+
+  <div id="extracts">
+   <div class="sourceGallery">
+    <div id="sourceGalleryCarousel">
+     <div style="float:right">
+      <ul>
+       <li><a href="#">add</a></li>
+       <li style="margin-top:10px"><a href="#">remove</a></li>
+      </ul>
+     </div>
+     <ul class="jcarousel-skin-tango carousel">
+      <li title="missillac, 1809, p17"><img src="{{MEDIA_URL}}thumbs/missillac-1809-p17.png"></li>
+      <li title="p10"><span>p10</span></li>
+      <li title="missillac, 1808, p9"><img src="{{MEDIA_URL}}thumbs/missillac-1808-p9.png"></li>
+      <li title="missillac, 1851, p8"><img src="{{MEDIA_URL}}thumbs/missillac-census-1851-p8.png"></li>
+      <li title="missillac, 1886, p6"><img src="{{MEDIA_URL}}thumbs/missillac-census-1886-p6.png"></li>
+      <li><span title="Extract 101">Extract 101</span></li>
+      <li><span>p11</span></li>
+      <li><span>p12</span></li>
+      <li><span>p13</span></li>
+      <li><span>p14</span></li>
+     </ul>
+    </div> <!-- sourceGalleryCarousel -->
+   </div> <!-- sourceGallery -->
+
+   <div class="sourcepartInfo">
+    <img class="scrollable" src="{{MEDIA_URL}}missillac-1809-p17.png">
+
+     <h3>Transcripts</h3>
+     <!-- Add support for editing transcripts of the extract -->
+     Transcripts could be either a free-form text, or we specify some columns
+     that correspond to this typical source faster. Then we can register a
+     post-processor for that custom table to automatically enter data from
+     here. For instance, when importing an existing genealogy:<br>
+        Columns=["Number", "Name", "Birth Date", "Birth Place", "Mariage Date",
+                 "Mariage Place", "Death Date", "Death Place"]
+        Postprocessor: enter these using Sosa numerotation
+
+     <h3>Facts</h3>
+     <div class="onUse">The persons cited in this section are the ones referenced in the source document. They are not related to existing persons in the database. Such links are created in the Conclusions section below.</div>
+     <table class="sourcepartData">
+
+      <tr class="fact">
+          <td rowspan="4"><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
+          <td rowspan="4" class="factType">Birth</td>
+          <td rowspan="4"><input type="text" class="person" value="Julienne Thomas"></td>
+          <th>Date:</th>
+          <td><input type="text" class="date" value="1809-05-28"></td>
+      </tr>
+      <tr><th>Place:</th>
+          <td><input type="text" class="place" value="Missillac, France"></td>
+      </tr>
+      <tr><th>Gallery:</th>
+          <td><input type="text" value=""></td>
+      </tr>
+      <tr><th>Notes:</th>
+          <td><input type="text" value=""></td>
+      </tr>
+      <tr><td><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
+          <td colpan="1" class="factType">Witness</td>
+          <td><input type="text" class="person" value="Francois Thomas (2)"></td>
+          </tr>
+
+      <tr class="fact">
+          <td rowspan="4"><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
+          <td rowspan="4" class="factType">Marriage</td>
+          <td rowspan="2"><input type="text" class="person" value="Francois Thomas"></td>
+          <th>Date:</th>
+          <td><input type="text" class="date" value="1780-01-01"></td>
+      </tr>
+      <tr><th>Place:</th>
+          <td><input type="text" class="place" value="Missillac, France"></td>
+      </tr>
+      </tr><td rowspan="2"><input type="text" class="person" value="Estelle Noblet"></td>
+          <th>Gallery:</th>
+          <td><input type="text" value=""></td>
+      </tr>
+      <tr><th>Notes:</th>
+          <td><input type="text" value=""></td>
+      </tr>
+
+      <tr class="fact">
+          <td rowspan="1"><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
+          <td rowspan="1" class="factType">Father of</td>
+          <td><input type="text" class="person" value="Julienne Thomas"></td>
+          <th>is:</th>
+          <td><input type="text" class="person" value="Francois Thomas"></td>
+      </tr>
+
+      <tr class="fact">
+          <td rowspan="4"><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
+          <td rowspan="4" class="factType">Sosa</td>
+          <td rowspan="4"><input type="text" value="10001"></td>
+          <th>Name:</th>
+          <td><input type="text" class="person" value="Francois Thomas"></td>
+      </tr>
+      <tr><th>Birth:</th>
+          <td><input type="text" class="date" value="1922-02-12"></td></tr>
+      <tr><th>Mariage:</th>
+          <td><input type="text" class="date" value=""></td></tr>
+      <tr><th>Death:</th>
+          <td><input type="text" class="date" value=""></td></tr>
+
+     </table>
+
+     <img src="{{MEDIA_URL}}add.png" alt="add new event">
+     <select type="eventType1" style="font-style:italic">
+      <option selected>Event</option>
+      <option>Birth</option>
+      <option>Death</option>
+      <option>Marriage</option>
+     </select>
+
+     <select type="eventType1" style="font-style:italic">
+      <option selected>Characteristic</option>
+      <option>Occupation</option>
+      <option>Residence</option>
+      <option>Education</option>
+     </select>
+
+     <select type="eventType1" style="font-style:italic">
+      <option selected>Person-&gt;Person</option>
+      <option>Father of</option>
+      <option>Mother of</option>
+      <option>Son of</option>
+      <option>Daughter of</option>
+      <option>Brother of</option>
+      <option>Sister of</option>
+      <option>Godfather of</option>
+      <option>Godmother of</option>
+     </select>
+
+     <select type="eventType1" style="font-style:italic">
+      <option selected>Person-&gt;Event</option>
+      <option>Aide</option>
+      <option>Celebrant</option>
+      <option>Clergy</option>
+      <option>Familly</option>
+      <option>Signed by</option>
+      <option>Unknown</option>
+      <option selected>Witness</option>
+     </select>
+
+    <h3>Conclusions</h3>
+    <div class="onUse">This section is used to draw conclusions from the evidences laid above, and can be used to related the above persons to existing persons in the database.</div>
+    <table>
+     <tr><td><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
+         <td><a href="#" class="person">Julienne Thomas</a></td>
+         <td><select>
+               <option>is same as</option>
+               <option>is different from</option>
+             </select></td>
+         <td><input type="text" class="person" value="Julienne Thomas (I0002)">
+         </td></tr>
+     <tr><th colspan="3">Why:</th>
+         <td><textarea rows="3"></textarea></td></tr>
+
+     <tr><td><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
+         <td><a href="#" class="person">Francois Thomas</a></td>
+         <td><select>
+               <option>is same as</option>
+               <option selected>is different from</option>
+             </select></td>
+         <td><input type="text" class="person" value=""></td></tr>
+     <tr><th colspan="3">Why:</th>
+         <td><textarea rows="3"></textarea></td></tr>
+
+     <tr><td><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
+         <td><a href="#" class="person">Francois Thomas (2)</a></td>
+         <td><select>
+               <option selected>is same as</option>
+               <option>is different from</option>
+             </select></td>
+         <td><input type="text" class="person" value=""></td></tr>
+     <tr><th colspan="3">Why:</th>
+         <td><textarea rows="3"></textarea></td></tr>
+
+     <tr><td><img src="{{MEDIA_URL}}add.png" alt="add new todo"></td></tr>
+    </table>
+
+   </div> <!-- sourcepartDetails -->
+  </div> <!-- #evidences -->
+
+{% endblock contents %}
+{% block script %}
+function hideOrShow(button,selector) {
+  $(selector).toggle("fast");
+  var b = $(button);
+  if (b.text() == "show") b.text ("hide"); else b.text ("show");
+}
+
+function getSelectValue (select) {
+  return (select.selectedIndex >= 0)
+     ? select.options [select.selectedIndex].text
+     : select.value;
+}
+
+function onTitleChange() {
+  parentS = getSelectValue ($("select[name=parentSource]")[0]);
+  page    = $("input[name=page]").attr ("value");
+  txt = $.sprintf ("%(parent)s, %(page)s", {parent:parentS, page:page});
+  $("#titleAbbrev").text(txt);
+}
+
+$(document).ready(function(){
+  $("img.scrollable").DragPane({disable:false, zoomFactor:1});
+  $("[tooltip],[title]").tooltip ();
+  //  $(".mediaView img").imgAreaSelect({selectionColor:'blue'});
+  $(".sourceGallery ul.carousel").jcarousel();
+  $("#tabs").tabs ({selected:0});
+  $("form").watermark ();
+  $("input[name=page],select[name=parentSource]")
+     .keyup (onTitleChange).change (onTitleChange);
+  onTitleChange ();
+});
+{% endblock script %}

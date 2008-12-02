@@ -1,0 +1,59 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+ <title>{% block title %}GeneaPro{% endblock title %}</title>
+ <script type="text/javascript" src="{{MEDIA_URL}}jquery-1.2.6.min.js"></script>
+ <script type="text/javascript" src="{{MEDIA_URL}}jquery.dragpane.js"></script>
+ <script type="text/javascript" src="{{MEDIA_URL}}jquery.jcarousel.pack.js"></script>
+ <script type="text/javascript" src="{{MEDIA_URL}}adacore.tooltips.js"></script>
+ <script type="text/javascript" src="{{MEDIA_URL}}jquery.watermark.pack.js"></script>
+ <script type="text/javascript" src="{{MEDIA_URL}}jquery.sprintf.js"></script>
+ <script type="text/javascript" src="{{MEDIA_URL}}ui.tabs.min.js"></script>
+ <style>
+   {# Defined in line to get variable replacement #}
+   .person {background:url("{{MEDIA_URL}}user.png") no-repeat left center}
+   .date   {background:url("{{MEDIA_URL}}calendar.png") no-repeat left center}
+   .place  {background:url("{{MEDIA_URL}}place.png") no-repeat left center} 
+   .ui-tabs-nav a, .ui-tabs-nav a span {background: url({{MEDIA_URL}}tab.png) no-repeat}
+   .jcarousel-skin-tango .jcarousel-next-horizontal {background: transparent url({{MEDIA_URL}}next-horizontal.png) no-repeat 0 0}
+   .jcarousel-skin-tango .jcarousel-prev-horizontal {background: transparent url({{MEDIA_URL}}prev-horizontal.png) no-repeat 0 0}
+   {% block css %}
+   {% endblock css %}
+ </style>
+ <link rel="stylesheet" href="{{MEDIA_URL}}jcarousel.css"/>
+ <link rel="stylesheet" href="{{MEDIA_URL}}base.css"/>
+ <link rel="stylesheet" href="{{MEDIA_URL}}ui.tabs.css"/>
+</head>
+<body>
+ <ul class="iconBox">
+ {% block iconBox %}
+  <li>People</li>
+  <li>Places</li>
+  <li><a href="sources">Sources</a></li>
+  <li><a href="pedigree">Pedigree</a></li>
+  <li>Search</li>
+ {% endblock iconBox %}
+ </ul>
+
+ <div id="clipboard">
+  <h2><img src="{{MEDIA_URL}}trash.png" alt="">Clipboard</h2>
+  <ul>
+   <li><a class="person">Emmanuel Briot</a></li>
+   <li><a class="person">Erwann Briot</a></li>
+   <li><a class="date">1809-05-28 ?</a></li>
+   <li><a class="place">Missillac, France</a></li>
+  </ul>
+ </div>
+
+ <div class="contents">
+  {% block contents %}
+  {% endblock contents %}
+ </div>
+
+ <script type="text/javascript">
+  {% block script %}
+  {% endblock script %}
+ </script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+{% extends "geneapro/base.html" %}
+{% block title %}GeneaPro: pedigree{% endblock %}
+{% block css %}
+.pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
+{% endblock css %}
+{% block contents %}
+
+ <table class="pedigree">
+  <tr>
+   <td rowspan="15" class="indiv decujus"><div class="male"><span class="name">Emmanuel Briot</span></div></td>
+   <td rowspan="3" class="tofather"><img src="{{MEDIA_URL}}vert.png" height="72px"></td>
+   <td rowspan="3" class="indiv"><div class="male"><img src="../../media/roland.jpg">
+<span class="name">Roland Briot</span><br>
+<span class="label">Ne le</span>08-06-1950<br>
+<span class="label">Deces</span>14-03-2008</div></td>
+   <td rowspan="1" class="tofather"><img src="{{MEDIA_URL}}vert.png" height="31px"></td>
+   <td rowspan="1" class="indiv"><div class="male"><span class="name">Joseph Briot</span></div></td>
+  </tr>
+  <tr>
+   <td rowspan="1"><img src="{{MEDIA_URL}}vert.png" height="100%"></td>
+   <td rowspan="1" class="mariage"><span class="label">Mariage</span>?</td>
+  </tr>
+  <tr>
+   <td rowspan="1" class="tomother"><img src="{{MEDIA_URL}}vert.png" height="32px"></td>
+   <td rowspan="1" class="indiv"><div class="female"><span class="name">Maria Herpin</span></div></td>
+  </tr>
+  <tr>
+   <td rowspan="1"><img src="{{MEDIA_URL}}vert.png" height="100%"></td>
+   <td rowspan="1" class="mariage"><span class="label">Mariage</span>07-07-1973 (Lyon?)</td>
+  </tr>
+  <tr>
+   <td rowspan="8" class="tomother"><img src="{{MEDIA_URL}}vert.png" height="153px"></td>
+   <td rowspan="8" class="indiv"><div class="female"><span class="name">Anne Poidevin</span></div></td>
+   <td rowspan="3" class="tofather"><img src="{{MEDIA_URL}}vert.png" height="72px"></td>
+   <td rowspan="3" class="indiv"><div class="male"><span class="name">Rene Poidevin</span><br>
+<span class="label">Ne le</span>1924<br>
+<span class="label">Mariage</span><br></div></td>
+   <td rowspan="1" class="tofather"><img src="{{MEDIA_URL}}vert.png" height="31px"></td>
+   <td rowspan="1" class="indiv"><div class="unknown"/></td>
+  </tr>
+  <tr>
+   <td rowspan="1"><img src="{{MEDIA_URL}}vert.png" height="100%"></td>
+   <td rowspan="1" class="mariage"><span class="label">Mariage</span>?</td>
+  </tr>
+  <tr>
+   <td rowspan="1" class="tomother"><img src="{{MEDIA_URL}}vert.png" height="32px"/></td>
+   <td rowspan="1" class="indiv"><div class="unknown"/></td>
+  </tr>
+  <tr>
+   <td rowspan="1"><img src="{{MEDIA_URL}}vert.png" height="100%"></td>
+   <td rowspan="1" class="mariage"><span class="label">Mariage</span>(Paris?)</td>
+  </tr>
+  <tr>
+   <td rowspan="3" class="tomother"><img src="{{MEDIA_URL}}vert.png" height="72px"/></td>
+   <td rowspan="3" class="indiv"><div class="female"><span class="name">Jacqueline Ondarsuhu</span></div></td>
+   <td rowspan="1" class="tofather"><img src="{{MEDIA_URL}}vert.png" height="31px"></td>
+   <td rowspan="1" class="indiv"><div class="male"><span class="name">Noel Ondarsuhu</span><br>
+  </tr>
+  <tr>
+   <td rowspan="1"><img src="{{MEDIA_URL}}vert.png" height="100%"></td>
+   <td rowspan="1" class="mariage"><span class="label">Mariage</span>?</td>
+  </tr>
+  <tr>
+   <td rowspan="1" class="tomother"><img src="{{MEDIA_URL}}vert.png" height="32px"/></td>
+   <td rowspan="1" class="indiv"><div class="female"><span class="name">Suzanne Letexier</span></div></td>
+  </tr>
+ </table>
+{% endblock contents %}
+

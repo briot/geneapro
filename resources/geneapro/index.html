@@ -1,3 +1,7 @@
+{% extends "geneapro/base.html" %}
+{% block title %}GeneaPro: index{% endblock %}
+{% block contents %}
+{% load i18n %}
 {% trans "This is from a template" %}
 
 {{ hello }}
@@ -12,4 +16,6 @@ We have defined {{placesCount}} places
  {% endfor %}
  </ul>
 </p>
+
+{% endblock contents %}
 

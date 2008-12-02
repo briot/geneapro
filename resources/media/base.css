@@ -1,0 +1,157 @@
+* {margin:0; padding:0}
+select {min-width:1.5em}  /* http://leftjustified.net/journal/2004/10/19/global-ws-reset/*/
+
+/* Tips from http://www.smashingmagazine.com/2007/05/10/70-expert-ideas-for-better-css-coding */
+html {height:100.01%}  /* avoid various browser errors */
+body {font-size:62.5%;  /* so that 1em=10px, when default font-size is 16px */
+      }
+
+* {font-size:small}
+
+* { font-family:arial,helvetica,clean,sans-serif;}
+
+/* Debugging */
+/* * {border:1px solid #f00} */
+
+.indiv > div:hover {border-width:2px; border-color:#999; margin:1px}
+.indiv > div       {padding:0 4px 0 4px; margin:2px;
+                    min-width:60px; min-height:55px;
+                    position:relative;
+                    width:100%}  /* slightly larger boxes, so that links are somewhat nicer*/
+.unknown           {background:#eee;    border:1px dashed #9CA3D4}
+.male              {background:#D6E0EA; border:1px solid #9CA3D4}
+.female            {background:#E9DAF1; border:1px solid #FF2080}
+.label             {font-weight:bold;margin-right:2px}
+td.mariage .label  {font-weight:normal}
+.name              {font-weight:bold}
+.indiv img         {float:left; height:50px; border:1px solid black; margin:2px 2px 2px 0}
+
+.pedigree td.indiv {padding-left:20px}
+.pedigree td.decujus {background:transparent}
+
+.pedigree td.tofather {vertical-align:bottom; text-align:right}
+.pedigree td.tomother {vertical-align:top; text-align:right}
+.pedigree td.tofather img, .pedigree td.tomother img {width:2px}
+
+.pedigree {border-collapse:separate; border-spacing:0px}
+.pedigree td {vertical-align:middle}
+
+.pedigree td.mariage {text-indent:20px}
+.pedigree td.mariage:hover {border:2px solid #999; text-indent:18px}
+
+.dateselect {border:1px solid #999}
+.dateselect td.label {text-align:right; font-weight:bold}
+.dateselect td {text-align:left}
+.dateselect input,
+.dateselect select {border:1px solid #aaa}
+.dateselect input {width:100%}
+.dateselect input[name="date1"],
+.dateselect input[name="duration"],
+.dateselect input[name="date2"]  {width:7em}
+.dateselect .full td {border-bottom: 1px dashed #999; padding-bottom:15px}
+.dateselect td.left {text-align:left}
+
+.sourceView { margin:10px;
+         height:600px;
+             border:1px solid #999; position:relative; overflow:hidden}
+.mediaView  {min-width:800px; height:48%;overflow:auto}
+
+.handle {height:4px; width:100%;
+         background:#c3c5c4 url(handle_bg.png) no-repeat center center;
+         border-top:1px solid #999;
+         border-bottom:1px solid #999; margin-top:8px}
+
+.iconBox {width:140px; float:left; list-style-type:none;
+          padding:0 10px; position:absolute}
+.iconBox li {border:1px solid black; font-size:1.4em; line-height:2em; padding:2px 10px 2px 10px; margin:20px 0 20px 0}
+
+#clipboard {border:1px solid #ddd; overflow:auto;
+            position:fixed; right:10px; top:10px;
+            height:500px;
+            width:170px}  /* will not work with screens narrower than 1280*/
+#clipboard h2 img {width:16px; height:16px; float:left; margin:0 10px 0 0}
+#clipboard li {line-height:1.5em}
+
+.contents {margin-left:180px; /* same as .iconBox:width + iconBox:padding*/
+           margin-right:20px;
+           max-width:900px; /* screenWidth - #clipboard.width - .leftMenu.width*/
+          }
+h1 {margin:20px 0 20px 0; font-size:x-large}
+#titleAbbrev {font-size:x-large; margin-left: 20px; font-style:italic}
+h2 {background-color:#ECF2F9;
+    margin-bottom:15px;
+    border-top:1px solid #CAD4DE;
+    border-bottom:1px solid #CAD4DE;
+    padding: 2px 0 2px 15px;
+    font-weight:bold; font-size:13px}
+
+.buttons span {font-style:italic; margin-left:10px; color:#BBB}
+
+.contents h2 {margin-top:15px}
+.contents table th {font-weight:normal; padding-left:1px; text-align:right;
+                    width:100px; color:#777; padding-right:7px}
+.contents table input,
+.contents table textarea,
+.contents table select {width:20em; border:1px solid #999}
+
+.repositoryInfo {float:right; background-color:#F5F5F5; margin-right:10px;
+          padding:10px; border:1px solid #ddd}
+.repositoryInfo h3 {margin:0 0 10px 0}
+
+.sourceInfo {width:64em}
+.sourcepartDetails {margin-bottom:30px}
+
+.sourcepart h3 {margin:10px 0; padding-left:10px; }
+.sourcepartInfo {margin-top:30px}
+.sourcepartInfo td {white-space:nowrap}
+.sourcepartInfo table {border-collapse:collapse}
+.sourcepartInfo table th {text-align:right}
+.sourcepartInfo table select {width:10em}
+.sourcepartInfo tr.fact {border-top:1px dotted #999}
+.sourcepartData {border-bottom:1px dotted #999}
+.sourcepartInfo td {height:2.5em}
+.sourcepartInfo td.factType {text-align:left; color:#777; padding-right:7px}
+
+.sourceGallery ul {list-style-type:none}
+.sourceGallery ul.carousel li {	display:block;
+	float:left;
+	margin-right:8px;
+	width:88px;
+	height:66px;
+	color:#ccc;
+	line-height:66px;
+	text-decoration:none;
+	text-align:center;
+	cursor:pointer;
+ }
+.sourceGallery ul.carousel li span {font-size:20px}
+.sourceGallery ul.carousel li:hover {color:#999}
+.sourceGallery ul.carousel li:active {color:#555;
+    background-position:-174px 0;
+    cursor:default}
+
+.actions {color:#CAD4DE; float:right; padding:2px 10px 5px 10px;
+          line-height:1.22em}
+.actions a {font-weight:bold; font-size:10px}
+
+.onUse {font-size:10px; color: #999; font-style:italic}
+
+a {color:#16B; text-decoration:none; cursor:pointer}
+
+.date, .person, .place   {padding-left:2em; width:18em!important}
+
+.sourceNotes ul, .sourceActions ul {margin-left:30px}
+.sourceNotes li, .sourceActions li {margin-bottom:20px}
+
+.design {position:absolute;right:0; width:300px; background-color:#555; color:white}
+
+.tooltip {padding: 2px; font-size: small; z-index: 100000;
+          border-left: 1px solid black;
+          border-top: 1px solid black;
+          border-bottom: 2px solid black;
+          border-right: 2px solid black;
+          background:#ECF397}
+.tooltip ul {margin:0; padding-left:20px}
+
+div.scrollable {border:1px solid #ddd}
+img.scrollable {height:50%; width:100%; min-height:300px}
