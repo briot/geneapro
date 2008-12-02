@@ -234,7 +234,7 @@ _grammar = dict (
               ),
 
     INDI =  (("RESN", 0, 1),    # Restriction notice
-             ("NAME", 0, 1),
+             ("NAME", 0, 1000000),
              ("SEX",  0, 1),    # Sex value
              (("BIRT", "CHR"), 0, 1000000,
                 event_details
@@ -340,6 +340,7 @@ _grammar = dict (
              ("RIN", 0, 1),       # Automated record id
              ("CHAN", 0, 1)),    # Change date
 
+    SUBM_XREF = (),
     HEAD =  (("SOUR", 1, 1, # Approved system id
                 (("VERS", 0, 1), # Version number
                  ("NAME", 0, 1), # Name of product
@@ -352,8 +353,8 @@ _grammar = dict (
              ("DEST", 0, 1),       # Receiving system name
              ("DATE", 0, 1,        # Transmission date
                 (("TIME", 0, 1),)), # Time value
-             ("SUBM", 1, 1),       # Xref to SUBM
-             ("SUBN", 0, 1),       # Xref to SUBN
+             ("SUBM", 1, 1, "SUBM_XREF"), # Xref to SUBM
+             ("SUBN", 0, 1, "SUBN_XREF"), # Xref to SUBN
              ("FILE", 0, 1),       # File name
              ("COPR", 0, 1),       # Copyright Gedcom file
              ("GEDC", 1, 1,
@@ -384,7 +385,7 @@ class Gedcom (object):
         """
 
         # Stack of handlers. Current one is at index 0
-        self.handlers = [[-1, 'root', _grammar["ROOT"], dict()]]
+        self.handlers = [(-1, 'root', list (_grammar["ROOT"]), dict())]
         self.ids = dict () # Registered entities with xref_id
         self.error = error
         self.lexical = _Lexical (file=file, error=error)
@@ -404,7 +405,7 @@ class Gedcom (object):
 
         level, parentTag, subtags, record = self.handlers [0]
         if subtags != None:
-            for child in subtags:
+            for index, child in enumerate (subtags):
                 if type (child[0]) == str:
                     matches = tag == child[0]
                 elif type (child[0]) == tuple:
@@ -418,6 +419,7 @@ class Gedcom (object):
                         child = (child[0], child[1] - 1, child[2] - 1, child[3])
                     else:
                         child = (child[0], child[1] - 1, child[2] - 1)
+                    subtags [index] = child
 
                     if child [2] < 0:
                         self.error.write (self.lexical.getLocation() + " " +
@@ -460,7 +462,7 @@ class Gedcom (object):
             while self.handlers and l [_Lexical.LEVEL] <= self.handlers [0][0]:
                 if len (self.handlers) > 2:
                     parentInst = self.handlers[1][3]
-                    subtags    = self.handlers[1][2]
+                    subtags    = self.handlers[0][2]
                     childInst  = self.handlers[0][3]
                     childTag   = self.handlers[0][1]
 
@@ -470,8 +472,9 @@ class Gedcom (object):
                     for s in subtags:
                         if s[1] > 0:
                             self.error.write (self.lexical.getLocation()+" "+
-                                _("Missing %(count)d occurrences of %(tag)s")
-                                % {'count':s[1], 'tag':s[0]} + "\n")
+                                _("Missing %(count)d occurrences of %(tag)s in %(parent)s ")
+                                % {'count':s[1], 'tag':s[0], 'parent':childTag}
+                                + "\n")
                             has_error = True
 
                     if has_error:
@@ -501,10 +504,9 @@ class Gedcom (object):
             skip_to_level = -1
             subtags = self._findHandlerClass (l [_Lexical.TAG])
             if subtags != None:
+                inst = dict ()
                 if l[_Lexical.VALUE]:
-                    inst = dict (value = l[_Lexical.VALUE])
-                else:
-                    inst = dict ()
+                    inst ['value'] = l [_Lexical.VALUE]
 
                 # Register the entity if need be
                 if l [_Lexical.XREF_ID]:
@@ -512,10 +514,10 @@ class Gedcom (object):
                 elif l [_Lexical.TAG] == "HEAD":
                     self.ids ["HEAD"] = inst
 
-                # Push the new handler on the stack so that it gets lower
-                # level info
+                # Push the new handler on the stack to build the record
                 self.handlers.insert (
-                    0, (l [_Lexical.LEVEL], l [_Lexical.TAG], subtags, inst))
+                    0, (l [_Lexical.LEVEL], l [_Lexical.TAG], list (subtags),
+                        inst))
                 
             else:
                 skip_to_level = l [_Lexical.LEVEL]
