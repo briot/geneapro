@@ -24,11 +24,19 @@ value put on the first line that declared the record
 
 The HEAD part of the Gedcom file is accessible under the "HEAD" key.
 
+This package provides minimal error handling: it checks that tags occur as
+many times as needed in the standard, and not more. Otherwise an error is
+raised.
+
 This file has no external dependency, except for the _ function which is
 used for internationalization.
 
 ??? Missing: handling of charsets. We should always convert to utf8 in the
     resulting structure
+??? Currently, we reject custom tags (_NAME) for which no specific support
+    was added. This is intended: we could accept them in the parser, but then
+    the rest of the code would not handle it, and that data would not be
+    imported correctly. Better warn the user in such a case
 """
 
 from django.utils.translation import ugettext as _
@@ -85,7 +93,7 @@ class _Lexical (object):
         return (int (g.group ("level")), g.group ("tag"),
                 g.group ("xref_id"), g.group ("value")) 
 
-    def getLocation (self, offset):
+    def getLocation (self, offset=0):
         return self.file.name + ":" + str (self.line + offset - 1)
 
     def readline (self, skip_to_level=-1):
@@ -403,6 +411,21 @@ class Gedcom (object):
                     matches = tag in child[0]
 
                 if matches:
+
+                    # Verify minimum and maximum usage count
+
+                    if len (child) >= 4:
+                        child = (child[0], child[1] - 1, child[2] - 1, child[3])
+                    else:
+                        child = (child[0], child[1] - 1, child[2] - 1)
+
+                    if child [2] < 0:
+                        self.error.write (self.lexical.getLocation() + " " +
+                          _("Too many occurrences of %(tag)s") % {'tag':tag} +
+                          "\n")
+
+                    # Find handler
+
                     if len (child) >= 4:
                         if type (child[3]) == str:
                             return _grammar [child[3]]
@@ -437,8 +460,23 @@ class Gedcom (object):
             while self.handlers and l [_Lexical.LEVEL] <= self.handlers [0][0]:
                 if len (self.handlers) > 2:
                     parentInst = self.handlers[1][3]
+                    subtags    = self.handlers[1][2]
                     childInst  = self.handlers[0][3]
                     childTag   = self.handlers[0][1]
+
+                    # Check minimum number of nested node is satisfied
+
+                    has_error = False
+                    for s in subtags:
+                        if s[1] > 0:
+                            self.error.write (self.lexical.getLocation()+" "+
+                                _("Missing %(count)d occurrences of %(tag)s")
+                                % {'count':s[1], 'tag':s[0]} + "\n")
+                            has_error = True
+
+                    if has_error:
+                        self.ids = None
+                        return
 
                     # If the child has a single 'value' key, it means there
                     # was not subrecord, and we simplify it a bit then by
