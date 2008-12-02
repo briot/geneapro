@@ -49,85 +49,6 @@ OPTIONAL_XREF_ID = "(?:@(?P<xref_id>\w" + POINTER_STRING + ")@\s)?"
 LINE_RE = re.compile ('^(?P<level>\d+)\s' + OPTIONAL_XREF_ID
                       + '(?P<tag>\w+)' + '(?:\s(?P<value>.*))?')
 
-class _Lexical (object):
-    """
-    Return lines of the GEDCOM file, taking care of concatenation when
-    needed, and potentially skipping levels
-    """
-
-    # The components of the tuple returned by readline
-    LEVEL   = 0
-    TAG     = 1
-    XREF_ID = 2
-    VALUE   = 3
-
-    def __init__ (self, file, error):
-        """
-        Lexical parser for a GEDCOM file. This returns lines one by one,
-        after splitting them into components. This automatically groups
-        continuation lines as appropriate
-        """
-        self.file = file
-        self.level = 0     # Level of the current line
-        self.line = 0      # Current line
-        self.error = error # How to report errors
-        self.prefetch = self._parseNextLine () # Prefetched line, parsed
-        if self.prefetch:
-            if self.prefetch [_Lexical.LEVEL] != 0 \
-              or self.prefetch [_Lexical.TAG] != "HEAD":
-                self.error.write (self.getLocation (1) + " " +
-                    _("Invalid gedcom file, first line must be '0 HEAD'")+"\n")
-                self.prefetch = None
-
-    def _parseNextLine (self):
-        self.line = self.line + 1
-        line = self.file.readline ()
-        if not line: return None
-
-        g = LINE_RE.match (line)
-        if not g:
-            self.error.write (self.getLocation(1) + " " +
-                              _("Error, invalid line format") + "\n" + line)
-            return None
-
-        return (int (g.group ("level")), g.group ("tag"),
-                g.group ("xref_id"), g.group ("value")) 
-
-    def getLocation (self, offset=0):
-        return self.file.name + ":" + str (self.line + offset - 1)
-
-    def readline (self, skip_to_level=-1):
-        """
-        Return the next line (after doing proper concatenation).
-        If skip_to_level is specified, skip all lines until the next one at
-        the specified level (or higher), ie skip current block potentially
-        """
-        if not self.prefetch:
-            return None
-
-        result = self.prefetch
-        if skip_to_level != -1:
-            while result \
-              and result[_Lexical.LEVEL] > skip_to_level:
-                result = self._parseNextLine ()
-                self.prefetch = result
-
-        value = result [_Lexical.VALUE]
-        self.prefetch = self._parseNextLine ()
-        while self.prefetch:
-            if self.prefetch [_Lexical.TAG] == "CONT":
-                value = value + "\n" + self.prefetch [_Lexical.VALUE]
-            elif self.prefetch [_Lexical.TAG] == "CONC":
-                value = value + self.prefetch [_Lexical.VALUE]
-            else:
-                break
-            self.prefetch = self._parseNextLine ()
-
-        return (result [_Lexical.LEVEL],
-                result [_Lexical.TAG],
-                result [_Lexical.XREF_ID],
-                value)
-
 event_details = (("TYPE", 0, 1),
                  ("DATE", 0, 1),
                  ("PLAC", 0, 1),
@@ -377,6 +298,88 @@ _grammar = dict (
              ("NOTE", 0, 100000)), # Note
 )
 
+class _Lexical (object):
+    """
+    Return lines of the GEDCOM file, taking care of concatenation when
+    needed, and potentially skipping levels
+    """
+
+    # The components of the tuple returned by readline
+    LEVEL   = 0
+    TAG     = 1
+    XREF_ID = 2
+    VALUE   = 3
+
+    def __init__ (self, file, error):
+        """
+        Lexical parser for a GEDCOM file. This returns lines one by one,
+        after splitting them into components. This automatically groups
+        continuation lines as appropriate
+        """
+        self.file = file
+        self.level = 0     # Level of the current line
+        self.line = 0      # Current line
+        self.error = error # How to report errors
+        self.had_error = False
+        self.prefetch = self._parseNextLine () # Prefetched line, parsed
+        if self.prefetch:
+            if self.prefetch [_Lexical.LEVEL] != 0 \
+              or self.prefetch [_Lexical.TAG] != "HEAD":
+                self.error.write (self.getLocation (1) + " " +
+                    _("Invalid gedcom file, first line must be '0 HEAD'")+"\n")
+                self.had_error = True
+                self.prefetch = None
+
+    def _parseNextLine (self):
+        self.line = self.line + 1
+        line = self.file.readline ()
+        if not line: return None
+
+        g = LINE_RE.match (line)
+        if not g:
+            self.error.write (self.getLocation(1) + " " +
+                              _("Invalid line format: ") + line)
+            self.had_error = True
+            return None
+
+        return (int (g.group ("level")), g.group ("tag"),
+                g.group ("xref_id"), g.group ("value")) 
+
+    def getLocation (self, offset=0):
+        return self.file.name + ":" + str (self.line + offset - 1)
+
+    def readline (self, skip_to_level=-1):
+        """
+        Return the next line (after doing proper concatenation).
+        If skip_to_level is specified, skip all lines until the next one at
+        the specified level (or higher), ie skip current block potentially
+        """
+        if not self.prefetch:
+            return None
+
+        result = self.prefetch
+        if skip_to_level != -1:
+            while result \
+              and result[_Lexical.LEVEL] > skip_to_level:
+                result = self._parseNextLine ()
+                self.prefetch = result
+
+        value = result [_Lexical.VALUE]
+        self.prefetch = self._parseNextLine ()
+        while self.prefetch:
+            if self.prefetch [_Lexical.TAG] == "CONT":
+                value = value + "\n" + self.prefetch [_Lexical.VALUE]
+            elif self.prefetch [_Lexical.TAG] == "CONC":
+                value = value + self.prefetch [_Lexical.VALUE]
+            else:
+                break
+            self.prefetch = self._parseNextLine ()
+
+        return (result [_Lexical.LEVEL],
+                result [_Lexical.TAG],
+                result [_Lexical.XREF_ID],
+                value)
+
 class Gedcom (object):
     def __init__ (self, file, error=sys.stderr):
         """
@@ -385,7 +388,7 @@ class Gedcom (object):
         """
 
         # Stack of handlers. Current one is at index 0
-        self.handlers = [(-1, 'root', list (_grammar["ROOT"]), dict())]
+        self.handlers = [(-1, 'file', list (_grammar["ROOT"]), dict())]
         self.ids = dict () # Registered entities with xref_id
         self.error = error
         self.lexical = _Lexical (file=file, error=error)
@@ -446,6 +449,63 @@ class Gedcom (object):
                           % {'parent':parentTag, 'child':tag} + "\n")
         return None
 
+    def _closeNode (self):
+        """
+        Close the current node, and make various checks. return False in case
+        of error
+        """
+        subtags    = self.handlers[0][2]
+        childInst  = self.handlers[0][3]
+        childTag   = self.handlers[0][1]
+
+        # Check minimum number of nested node is satisfied
+
+        has_error = False
+        for s in subtags:
+            if s[1] > 0:
+                self.error.write (self.lexical.getLocation()+" "+
+                   _("Missing %(count)d occurrences of %(tag)s in %(parent)s")
+                   % {'count':s[1], 'tag':s[0], 'parent':childTag}
+                   + "\n")
+                has_error = True
+
+        if has_error:
+            return False
+
+        # If the child has a single 'value' key, it means there
+        # was not subrecord, and we simplify it a bit then by
+        # only storing the string
+
+        if len (childInst) == 1 and childInst.has_key ('value'):
+            childInst = childInst ['value']
+
+        # Now append the child to its parent
+
+        if len (self.handlers) > 1:
+            parentInst = self.handlers[1][3]
+
+            try:
+                existing = parentInst [childTag]
+                if type (existing) == list:
+                    existing.append (childInst)
+                else:
+                    parentInst [childTag] = [existing, childInst]
+            except KeyError:
+                parentInst [childTag] = childInst
+
+        self.handlers.pop (0)
+        return True
+
+    def _closeNodeUp (self, up_to_level):
+        """
+        Same as _closeNode, but close all nodes until we reach the appropriate
+        level. Returns False in case of error
+        """
+        while self.handlers and up_to_level <= self.handlers [0][0]:
+            if not self._closeNode ():
+                return False
+        return True
+
     def _parse (self):
         """
         Do the actual parsing
@@ -454,52 +514,14 @@ class Gedcom (object):
 
         while True:
             l = self.lexical.readline (skip_to_level=skip_to_level)
-            if not l: break
+            if not l:
+                if not self.lexical.had_error:
+                    self._closeNodeUp (up_to_level=-1)
+                return
 
-            # If we have moved one level up, pass the current handler to its
-            # parent
-
-            while self.handlers and l [_Lexical.LEVEL] <= self.handlers [0][0]:
-                if len (self.handlers) > 2:
-                    parentInst = self.handlers[1][3]
-                    subtags    = self.handlers[0][2]
-                    childInst  = self.handlers[0][3]
-                    childTag   = self.handlers[0][1]
-
-                    # Check minimum number of nested node is satisfied
-
-                    has_error = False
-                    for s in subtags:
-                        if s[1] > 0:
-                            self.error.write (self.lexical.getLocation()+" "+
-                                _("Missing %(count)d occurrences of %(tag)s in %(parent)s ")
-                                % {'count':s[1], 'tag':s[0], 'parent':childTag}
-                                + "\n")
-                            has_error = True
-
-                    if has_error:
-                        self.ids = None
-                        return
-
-                    # If the child has a single 'value' key, it means there
-                    # was not subrecord, and we simplify it a bit then by
-                    # only storing the string
-
-                    if len (childInst) == 1 and childInst.has_key ('value'):
-                        childInst = childInst ['value']
-
-                    # Now append the child to its parent
-
-                    try:
-                        existing = parentInst [childTag]
-                        if type (existing) == list:
-                            existing.append (childInst)
-                        else:
-                            parentInst [childTag] = [existing, childInst]
-                    except KeyError:
-                        parentInst [childTag] = childInst
-
-                self.handlers.pop (0)
+            if not self._closeNodeUp (up_to_level = l [_Lexical.LEVEL]):
+                self.ids = None
+                return
 
             skip_to_level = -1
             subtags = self._findHandlerClass (l [_Lexical.TAG])

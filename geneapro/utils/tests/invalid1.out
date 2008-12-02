@@ -1,2 +1,1 @@
-<dir>/invalid1.ged:1 Error, invalid line format
-FOO
+<dir>/invalid1.ged:1 Invalid line format: FOO

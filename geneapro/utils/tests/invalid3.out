@@ -1,4 +1,3 @@
-<dir>/invalid3.ged:3 Missing 1 occurrences of SOUR
-<dir>/invalid3.ged:3 Missing 1 occurrences of SUBM
-<dir>/invalid3.ged:3 Missing 1 occurrences of GEDC
-<dir>/invalid3.ged:3 Missing 1 occurrences of CHAR
+<dir>/invalid3.ged:4 Missing 1 occurrences of SUBM in HEAD
+<dir>/invalid3.ged:4 Missing 1 occurrences of GEDC in HEAD
+<dir>/invalid3.ged:4 Missing 1 occurrences of CHAR in HEAD
