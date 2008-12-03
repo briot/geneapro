@@ -1,0 +1,17 @@
+[
+  {
+     "model": "geneapro.place_part_type",
+     "pk":    1,
+     "fields": {"name": "country"}
+  },
+  {
+     "model": "geneapro.place_part_type",
+     "pk":    2,
+     "fields": {"name": "state"}
+  },
+  {
+     "model": "geneapro.place_part_type",
+     "pk":    3,
+     "fields": {"name": "city"}
+  }
+]
