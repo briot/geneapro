@@ -1,6 +1,34 @@
 # ??? Prevent edition of date_sort, and set it when date is modified
 
 from django.db import models
+from mysites.geneapro.utils import date
+
+class PartialDateField (models.CharField):
+    """
+    A new type of field: this stores a date/time or date range exactly
+    as was entered by the user (that is it fundamentally behaves as a
+    text field). However, whenever it is modified, it also modifies another
+    field in the model with a standard date/time which can be used for
+    sorting purposes
+    """
+    # ??? We should also override form_field, so that we can more easily
+    #     create html input fields to edit this field
+
+    __metaclass__ = models.SubfieldBase
+
+    def __init__ (self, sortfield, max_length=0, null=True, *args, **kwargs):
+        kwargs["null"]=null
+        super (PartialDateField, self).__init__ (
+           self, max_length=100, *args, **kwargs)
+        self.sortfield = sortfield
+
+    def pre_save(self, model_instance, add):
+        # ??? Should preserve sortfield if set manually by the user
+        val = super (PartialDateField, self).pre_save (model_instance, add)
+        if val:
+           sort = date.DateRange (val).sort_date ()
+           setattr (model_instance, self.sortfield, sort)
+        return val
 
 class Config (models.Model):
     """
@@ -21,6 +49,9 @@ class Researcher (models.Model):
         help_text="Contact information for this researcher, like email"
                 + " or postal addresses,...")
 
+    def __unicode__ (self):
+        return self.name
+
 class Surety_Scheme (models.Model):
     """
     A surety scheme describes how certain a researcher is of the data that
@@ -34,18 +65,24 @@ class Surety_Scheme (models.Model):
     name = models.CharField (max_length=100)
     description = models.TextField (null=True)
 
+    def __unicode__ (self):
+        return self.name
+
 class Surety_Scheme_Part (models.Model):
     """
     An element of a Surety_Scheme
     """
 
-    scheme = models.ForeignKey (Surety_Scheme, related_name="part")
+    scheme = models.ForeignKey (Surety_Scheme, related_name="parts")
     name   = models.CharField (max_length=100)
-    description = models.TextField (null=True)
+    description = models.TextField (null=True,blank=True)
     sequence_number = models.IntegerField (default=1)
 
+    def __unicode__ (self):
+        return self.name
+
     class Meta:
-        ordering = ('sequence_number', 'name')
+        ordering = ('-sequence_number', 'name')
 
 class Project (models.Model):
     """
@@ -58,10 +95,13 @@ class Project (models.Model):
         through="Researcher_Project")
     name        = models.CharField (max_length=100)
     description = models.TextField (null=True)
-    scheme      = models.ForeignKey (Surety_Scheme, default=0)
+    scheme      = models.ForeignKey (Surety_Scheme, default=1)
     client_data = models.TextField (null=True,
         help_text="The client for which the project is undertaken. In general"
                 + " this will be the researched himself")
+
+    def __unicode__ (self):
+        return "name=" + self.name
 
 class Researcher_Project (models.Model):
     """
@@ -123,7 +163,13 @@ class Source_Medium (models.Model):
     """
 
     name        = models.CharField (max_length=50)
-    description = models.TextField ()
+    description = models.TextField (blank=True)
+
+    def __unicode__ (self):
+        return self.name
+
+    class Meta:
+        ordering = ("name",)
 
 class Place (models.Model):
     """
@@ -135,8 +181,7 @@ class Place (models.Model):
     The actual info for a place is defined in terms of Place_Part
     """
 
-    date = models.CharField (
-        'date of existence', max_length=200, null=True)
+    date = PartialDateField (sortfield="date_sort")
     date_sort = models.DateTimeField ('date used when sorting', null=True)
     parent_place = models.ForeignKey ('self', null=True,
         help_text = "The parent place, that contains this one")
@@ -144,21 +189,41 @@ class Place (models.Model):
     def __unicode__ (self):
         parts = self.place_part_set.all ()
         name = ",".join ([p.name for p in parts]) + " " + str (self.date)
-        if self.parentPlace:
-            return str (self.parentPlace) + name
+        if self.parent_place:
+            return str (self.parent_place) + name
         else:
             return name
 
-class Place_Part_Type (models.Model):
+    class Meta:
+        ordering = ("date_sort",)
+
+class Part_Type (models.Model):
+    """
+    An abstract base class for the various tables that store components of
+    higher level entities. These are associated with a simple name in general,
+    but we also store the required information to import and export them to
+    the Gedcom format
+    """
+
+    name = models.CharField (max_length=100, blank=False, null=False)
+    gedcom = models.CharField (max_length=15, help_text="Name in Gedcom files",
+                               blank=True)
+
+    class Meta:
+        abstract = True
+        ordering = ("name",)
+
+    def __unicode__ (self):
+        if self.gedcom:
+           return self.name + " (gedcom: " + self.gedcom + ")"
+        else:
+           return self.name
+
+class Place_Part_Type (Part_Type):
     """
     Contains information about various schemes for organizing place data
     """
-
-    name        = models.CharField (
-        'type name', max_length=100, blank=False,null=False)
-
-    def __unicode__ (self):
-        return self.name
+    pass
 
 class Place_Part (models.Model):
     """
@@ -189,7 +254,13 @@ class Repository_Type (models.Model):
     """
 
     name        = models.CharField (max_length=100)
-    description = models.TextField (null=True)
+    description = models.TextField (null=True, blank=True)
+
+    def __unicode__ (self):
+        return self.name
+
+    class Meta:
+        ordering = ("name",)
     
 class Repository (models.Model):
     """
@@ -225,7 +296,7 @@ class Source (models.Model):
                 + " and their activities in Georgia. Georgia is the subject"
                 + " place, whereas NC is the jurisdiction place")
     researcher    = models.ForeignKey (Researcher)
-    subject_date  = models.CharField (max_length=200, null=True,
+    subject_date  = PartialDateField (sortfield="subject_date_sort",
         help_text="the date of the subject. Note that the dates might be"
                 + " different for the various levels of source (a range of"
                 + " dates for a book, and a specific date for an extract for"
@@ -283,12 +354,11 @@ class Representation (models.Model):
     file = models.TextField ()
     comments = models.TextField (null=True)
 
-class Citation_Part_Type (models.Model):
+class Citation_Part_Type (Part_Type):
     """
     The type of elements associated with a citation
     """
-
-    name = models.CharField (max_length=100)
+    pass
 
 class Citation_Part (models.Model):
     """
@@ -300,6 +370,17 @@ class Citation_Part (models.Model):
     value  = models.TextField ()
 
 class Entity (models.Model):
+    """
+    This data model includes several types of high-level entities: personas,
+    groups, events and characteristic. Each of these is deduced from data
+    available in the various sources, and therefore various assertions exist
+    to link them all (A Persona takes part in an Event, a Persona belongs to
+    a Group,...). These assertions are described in a separate table that
+    needs pointers to two entities.
+    We therefore created this Entity table to ensure unique ids everywhere,
+    since all these high-level entities take their id from this Entity table.
+    """
+
     pass
 
 class Persona (Entity):
@@ -313,14 +394,11 @@ class Persona (Entity):
     name = models.CharField (max_length=100)
     description = models.TextField (null=True)
 
-class Event_Type (models.Model):
+class Event_Type (Part_Type):
     """
     The type of events
     """
-
-    name = models.CharField (max_length=100)
-    gedcom = models.CharField (max_length=10,
-        help_text="Name in Gedcom fiels")
+    pass
 
 class Event_Type_Role (models.Model):
     """
@@ -328,7 +406,9 @@ class Event_Type_Role (models.Model):
     "chaplain"
     """
 
-    type = models.ForeignKey (Event_Type)
+    type = models.ForeignKey (Event_Type, null=True, blank=True,
+        help_text="The event type for which the role is defined. If unset,"
+                + " this applies to all events")
     name = models.CharField (max_length=50)
 
 class Event (Entity):
@@ -339,14 +419,14 @@ class Event (Entity):
     type = models.ForeignKey (Event_Type)
     place = models.ForeignKey (Place, null=True)
     name  = models.CharField (max_length=100)
-    date  = models.CharField (max_length=200,
+    date  = PartialDateField (sortfield="date_sort", null=True,
         help_text="The date of the event, as found in the original source."
                 + " This date is internally parsed into date_sort"
                 + " which is used for sorting purposes")
-    date_sort = models.DateTimeField ()
+    date_sort = models.DateTimeField (null=True)
 
-class Characteristic_Part_Type (models.Model):
-    name = models.CharField (max_length=100)
+class Characteristic_Part_Type (Part_Type):
+    pass
 
 class Characteristic (Entity):
     """
@@ -354,8 +434,8 @@ class Characteristic (Entity):
     """
 
     place = models.ForeignKey (Place, null=True)
-    date  = models.CharField (max_length=200)
-    date_sort = models.DateTimeField ()
+    date  = PartialDateField (sortfield="date_sort", null=True)
+    date_sort = models.DateTimeField (null=True)
 
 class Characteristic_Part (models.Model):
     """
@@ -372,7 +452,7 @@ class Characteristic_Part (models.Model):
     class Meta:
         ordering = ("sequence_number", "name")
 
-class Group_Type (models.Model):
+class Group_Type (Part_Type):
     """
     A group is any way in which persons might be grouped: students from
     the same class, members of the same church, an army regiment,...
@@ -380,7 +460,7 @@ class Group_Type (models.Model):
     described by a Group_Type_Role
     """
 
-    name = models.CharField (max_length=100)
+    pass
 
 class Group_Type_Role (models.Model):
     """
@@ -402,7 +482,7 @@ class Group (Entity):
     type = models.ForeignKey (Group_Type)
     place = models.ForeignKey (Place, null=True)
     name  = models.CharField (max_length=200)
-    date  = models.CharField (max_length=200)
+    date  = PartialDateField (sortfield="date_sort")
     date_sort = models.DateTimeField ()
     criteria  = models.TextField (null=True,
          help_text="The criteria for admission in a group. For instance, one"
@@ -430,7 +510,7 @@ class Assertion (models.Model):
         help_text="Describes the value for an assertion, which could either"
                 + " point into a table, or be described as text, depending"
                 + " on the type of assertion")
-    rationale  = models.TextField ()
+    rationale  = models.TextField (null=True)
     disproved  = models.BooleanField (default=False)
 
 class Assertion_Assertion (models.Model):
@@ -444,7 +524,7 @@ class Assertion_Assertion (models.Model):
  
 # from mysites.geneapro.models import *
 # p = Place ()
-# p.place_part_set.create (type="0", name="France")
+# p.save ()
 # p.place_part_set.create (type=Place_Part_Type.objects.get(pk=1), name="France")
 
 # from django.db import connection

@@ -74,6 +74,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 )
 
+INTERNAL_IPS = ('192.168.1.102','127.0.0.1',)
+
 ROOT_URLCONF = 'mysites.urls'
 
 TEMPLATE_DIRS = (

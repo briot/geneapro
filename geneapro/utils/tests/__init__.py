@@ -61,13 +61,13 @@ class DateTestCase (unittest.TestCase):
            if type (day) != tuple:
               error = "expected a simple date for result"
            elif d.date[0].date != day[0]:
-              error = `d.date[0].date` + " != " + `day[0]`
+              error = str (d.date[0].date) + " != " + str (day[0])
            elif d.date[1].date != day[1]:
-              error = `d.date[1].date` + " != " + `day[1]`
+              error = str (d.date[1].date) + " != " + str (day[1])
         elif type (day) == tuple:
            erro = "expected a range for result"
         elif d.date.date != day:
-           error = `d.date.date` + " != " + `day`
+           error = str (d.date.date) + " != " + str (day)
 
         if expected and str (d) != expected:
            error =  str (d) + "\n  != " + expected

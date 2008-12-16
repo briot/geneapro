@@ -59,17 +59,29 @@ month_names = {_("jan"):1,
 
 french_months = {
   "vendemiaire":1,
+  "vend":1,
   "brumaire":2,
+  "brum":2,
   "frimaire":3,
+  "frim":3,
   "nivose":4,
+  "niv":4,
   "pluviose":5,
+  "pluv":5,
   "ventose":6,
+  "vent":6,
   "germinal":7,
+  "germ":7,
   "floreal":8,
+  "flor":8,
   "prairial":9,
+  "prai":9,
   "messidor":10,
+  "mess":10,
   "thermidor":11,
+  "therm":11,
   "fructidor":12,
+  "fruct":12,
   "":13}
 
 ## No translation below
@@ -82,21 +94,28 @@ time_re = re.compile ("\s*(\d?\d):(\d?\d)(:(\d?\d))?(am|pm)?")
 add_re  = re.compile ("\s*([-+])\s*(\d+)\s*(days?|months?|years?|" +
                       re_days + "|" + re_months + "|" +
                       re_years + ")\s*$", re.IGNORECASE)
-year_re = "(\d{1,4}|[MDCXVI]+)"
-yyyymmdd_re = re.compile ("^\s*" + year_re + "[-/](\d?\d)[-/](\d?\d)$") 
-iso_re = re.compile ("^\s*" + year_re + "(\d{2})(\d{2})$")
-ddmmyyyy_re = re.compile ("^\s*(\d\d)[/-](\d\d)[/-]" + year_re + "$")
+year_re = "(\d{1,4}|(?:an\s+)?[MDCXVI]+)"
+yyyymmdd_re = re.compile ("^\s*" + year_re + "[-/](\d?\d)[-/](\d?\d)$",
+                          re.IGNORECASE) 
+iso_re = re.compile ("^\s*" + year_re + "(\d{2})(\d{2})$", re.IGNORECASE)
+ddmmyyyy_re = re.compile ("^\s*(\d\d)[/-](\d\d)[/-]" + year_re + "$",
+                          re.IGNORECASE)
 spelled_out_re = re.compile ("^\s*(\d\d?)\s+(\w+),?\s*" + year_re + "$",
                              re.IGNORECASE)
 spelled_out2_re = re.compile ("^\s*(\w+)\s+(\d\d?),?\s*" + year_re + "$",
                              re.IGNORECASE)
-yyyymm_re = re.compile ("^\s*" + year_re + "([-/](\d\d?))?$")
+yyyymm_re = re.compile ("^\s*" + year_re + "([-/](\d\d?))?$", re.IGNORECASE)
 ddmm_re   = re.compile ("^\s*(\d{2})[-/](\d{2})$")
 
-before_re = re.compile ("(<|before|bef|avant|[^\d]/(\\d))")
-after_re  = re.compile ("(>|after|aft|apres|(\\d)/[^\d])")
-about_re  = re.compile ("\s*(about|abt\\.?|circa|ca|environ|env|~)\s*")
-est_re    = re.compile ("\s*(estimated\s*|est\.?\s*|\?\s*$)")
+before_re = re.compile ("(<|before|bef|avant|[^\d]/(\\d))",
+                        re.IGNORECASE)
+after_re  = re.compile ("(>|after|aft|apres|(\\d)/[^\d])",
+                        re.IGNORECASE)
+about_re  = re.compile ("\s*\\b(about|abt\\.?|circa|ca|environ|env|~)\\b\s*",
+                        re.IGNORECASE)
+
+# "cal" is used for "calculated" in gramps
+est_re    = re.compile ("\s*(estimated\s*|est\.?\s*|cal|\?\s*$)", re.IGNORECASE)
  
 SPAN_FROM    = 1
 SPAN_BETWEEN = 2
@@ -149,6 +168,9 @@ def __get_year (str):
    if str.isdigit ():
       return int (str)
    else:
+      # In the french calendar, the date is often spelled with
+      #  "25 fructidor an X", where "an" means "year"
+      str = re.sub ("an\s*", "", str)
       return from_roman_literal (str)
 
 def get_ymd (txt, months):
@@ -196,9 +218,10 @@ def get_ymd (txt, months):
       try:
          month = months[m.group (1).lower()]
       except KeyError:
-         month = months[""]
-      return (__get_year (m.group (3)), month, int (m.group (2)),
-              True, True, True)
+         month = months.get ("")
+      if month:
+         return (__get_year (m.group (3)), month, int (m.group (2)),
+                 True, True, True)
 
    m = ddmm_re.search (txt)
    if m:
@@ -249,7 +272,7 @@ class Calendar (object):
 
    def __init__ (self, suffixes):
      self.__re = re.compile \
-       ('\\s*\\(?(' + suffixes + ')\\)?\\s*$', re.IGNORECASE)
+       ('\\s*\\(?(' + suffixes + ')\\)?\\s*', re.IGNORECASE)
 
    def is_a (self, str):
      """If str is expressed in the calendar, returns the string that remains
@@ -284,13 +307,14 @@ class Calendar (object):
      """
      return None
 
-   def date_str (self, julian_day, year_known, month_known, day_known):
+   def date_str (self, julian_day, year_known=True,
+                 month_known=True, day_known=True):
      """Return a string representing the julian day in the self calendar"""
      return "unkonwn"
 
 class Calendar_Gregorian (Calendar):
    def __init__ (self):
-     Calendar.__init__ (self, "GR|G|Gregorian")
+     Calendar.__init__ (self, "\\b(GR|G|Gregorian)\\b")
 
    def parse (self, txt, add_year=0, add_month=0, add_day=0):
      year, month, day, y_known, m_known, d_known = get_ymd (txt, month_names)
@@ -315,7 +339,8 @@ class Calendar_Gregorian (Calendar):
           - feb_29_4800
         return (d, y_known, m_known, d_known, self) 
 
-   def date_str (self, julian_day, year_known, month_known, day_known):
+   def date_str (self, julian_day, year_known=True, month_known=True,
+                 day_known=True):
       # Algorithm from wikipedia "julian day"
       days_per_four_years = 1461 # julian days per four year period
       j = julian_day + 32044
@@ -338,7 +363,8 @@ class Calendar_Gregorian (Calendar):
 
 class Calendar_French (Calendar):
    def __init__ (self):
-     Calendar.__init__ (self, "F|FR|French Republican")
+     # The @#DFRENCH R@ notation comes from gramps
+     Calendar.__init__ (self, "\\b(F|FR|French Republican)\\b|@#DFRENCH R@")
      self.__months_re = re.compile\
          ("|".join ([m for m in french_months.keys() if m != ""]),
           re.IGNORECASE)
@@ -370,7 +396,8 @@ class Calendar_French (Calendar):
      else:
         return (0, False, False, False, self)
 
-   def date_str (self, julian_day, year_known, month_known, day_known):
+   def date_str (self, julian_day, year_known=True, month_known=True,
+                 day_known=True):
      # From http://www.scottlee.net
      days_per_four_years = 1461 # julian days per four year period
      epoch = 2375474
@@ -402,7 +429,8 @@ class Calendar_French (Calendar):
 
 class Calendar_Julian (Calendar):
    def __init__ (self):
-     Calendar.__init__ (self, "JU|J|Julian|OS")  # OS stands for Old Style
+     # OS stands for "Old style"
+     Calendar.__init__ (self, "\\b(JU|J|Julian|OS)\\n")
 
    def __str__ (self):
      return "Julian"
@@ -422,7 +450,8 @@ class Calendar_Julian (Calendar):
      return ((day + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4) - feb_29_4800,
              y_known, m_known, d_known, self)
 
-   def date_str (self, julian_day, year_known, month_known, day_known):
+   def date_str (self, julian_day=True, year_known=True, month_known=True,
+                 day_known=True):
      days_per_four_years = 1461 # julian days per four year period
      j = julian_day + 32083
      b = j / days_per_four_years
@@ -538,6 +567,7 @@ class Date (object):
 
          txt = txt[:m.start (0)] + txt [m.end (0):]
 
+      txt = txt.strip ()
       d = self.calendar.parse (txt, add_years, add_months, add_days)
       if d:
          (self.date, self.year_known, self.month_known, self.day_known,
@@ -550,6 +580,13 @@ class Date (object):
         parsed the date as was entered by the user. The calendar used is the
         one parsed from the initial string"""
      return self.display (calendar=None)
+
+   def sort_date (self):
+      """Return a single date that can be used when sorting Dates"""
+      if self.year_known:
+         return Calendar_Gregorian().date_str (self.date)
+      else:
+         return None  # Can't do any sorting
 
    def display (self, calendar=None):
      """Return a string representing string. By default, this uses the
@@ -602,6 +639,13 @@ class DateRange (object):
 
       self.text = str
       self.__parse ()
+
+   def sort_date (self):
+      """Return a single date that can be used when sorting DateRanges"""
+      if isinstance (self.date, tuple):
+         return self.date[0].sort_date ()
+      else:
+         return self.date.sort_date ()
 
    def __str__ (self):
      """Convert to a string"""

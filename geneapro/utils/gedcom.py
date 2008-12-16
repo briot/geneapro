@@ -8,21 +8,8 @@ Example of use:
     ged.postprocess ()    # Optional
     recs = ged.getRecords ()
 
-The resulting data structure is a dictionary. The keys are the ids that were
-found in the GEDCOM file (typically "I0001", "S0001", ...). Each element is
-itself a dictionary, for which the keys are the values read in GEDCOM, with
-no interpretation. One special key is called 'value' and corresponds to the
-value put on the first line that declared the record
-
-    - If the value for this key is a simple string, it is put as it.
-        e.g. NAME: {'SURN': 'Smith'}
-    - If the value is itself a record, it is put as a dictionary.
-        e.g. ASSO: {'RELA': 'Godfather', 'value': '@I0022'}
-    - If the field could be repeated multiple times, it is an array of one
-        of the two types above:
-        e.g. NAME: [{'SURN': 'Smith'}, {'SURN': 'Smayth'}]     
-
-The HEAD part of the Gedcom file is accessible under the "HEAD" key.
+The resulting data structure is a GedcomData (see the documentation for
+the format)
 
 This package provides minimal error handling: it checks that tags occur as
 many times as needed in the standard, and not more. Otherwise an error is
@@ -43,6 +30,56 @@ from django.utils.translation import ugettext as _
 import re, sys
 
 __all__ = ["Gedcom"]
+
+##################################
+## GedcomData
+##################################
+
+class GedcomData (dict):
+   """
+   A Gedcom data structure.
+   The keys are the ids that were
+   found in the GEDCOM file (typically "I0001", "S0001", ...). Each element is
+   itself a dictionary, for which the keys are the values read in GEDCOM, with
+   no interpretation. One special key is called 'value' and corresponds to the
+   value put on the first line that declared the record
+      - If the value for this key is a simple string, it is put as it.
+          e.g. NAME: {'SURN': 'Smith'}
+      - If the value is itself a record, it is put as a dictionary.
+          e.g. ASSO: {'RELA': 'Godfather', 'value': '@I0022'}
+      - If the field could be repeated multiple times, it is an array of one
+          of the two types above:
+          e.g. NAME: [{'SURN': 'Smith'}, {'SURN': 'Smayth'}]
+   The HEAD part of the Gedcom file is accessible under the "HEAD" key.
+
+   All toplevel nodes (except HEAD), ie the ones that have an ID in the gedcom
+   file, have a special "type" element which indicates the type of record
+   associated with that element ("INDI", "SOUR",...)
+
+   This automatically dereferences pointers within the gedcom structure when
+   data is accessed.
+   """
+
+   def deref (self, object):
+       """
+       If object represents a reference to another object, returns the object
+       pointed to. Otherwise return object itself. This should be used in
+       cases where an element in the gedcom might or does contain a reference.
+       This also handles referenced found within a list.
+       This is not recursive
+       """
+
+       if object == None:
+          return object
+       elif type (object) == str \
+         and object and object[0] == '@' and object[-1] == '@':
+           return self [object[1:-1]]
+
+       elif type (object) == list:
+           for index, val in enumerate (object):
+               if type (val) == str \
+                 and val and val[0] == "@" and val[-1] == '@':
+                   object[index] = self [val[1:-1]]
 
 POINTER_STRING = "(?:[^@]*)"
 OPTIONAL_XREF_ID = "(?:@(?P<xref_id>\w" + POINTER_STRING + ")@\s)?"
@@ -125,7 +162,7 @@ _grammar = dict (
              ("ABBR", 0, 1), # Source filed by entry
              ("PUBL", 0, 1), # Source publication facts
              ("TEXT", 0, 1), # Text from source
-             ("REPO", 1, 1,  # Source repository citation
+             ("REPO", 0, 1,  # Source repository citation
                 (("NOTE", 0, 100000), # Note on repository
                  ("CALN", 0, 100000,  # Source call number
                     (("MEDI", 0, 1),  # Source media type
@@ -389,7 +426,7 @@ class Gedcom (object):
 
         # Stack of handlers. Current one is at index 0
         self.handlers = [(-1, 'file', list (_grammar["ROOT"]), dict())]
-        self.ids = dict () # Registered entities with xref_id
+        self.ids = GedcomData () # Registered entities with xref_id
         self.error = error
         self.lexical = _Lexical (file=file, error=error)
         self._parse ()
@@ -476,7 +513,7 @@ class Gedcom (object):
         # was not subrecord, and we simplify it a bit then by
         # only storing the string
 
-        if len (childInst) == 1 and childInst.has_key ('value'):
+        if len (childInst) == 1 and 'value' in childInst:
             childInst = childInst ['value']
 
         # Now append the child to its parent
@@ -533,6 +570,7 @@ class Gedcom (object):
                 # Register the entity if need be
                 if l [_Lexical.XREF_ID]:
                     self.ids [l [_Lexical.XREF_ID]] = inst
+                    inst ['type'] = l [_Lexical.TAG]
                 elif l [_Lexical.TAG] == "HEAD":
                     self.ids ["HEAD"] = inst
 
@@ -554,9 +592,9 @@ class Gedcom (object):
                     if type (val) == str \
                       and val and val[0] == "@" and val[-1] == '@':
                         value[index] = self.ids [val[1:-1]]
-                    elif type (val) == dict:
+                    elif isinstance (val, dict):
                         self._postprocessRecord (val)
-            elif type (value) == dict:
+            elif isinstance (value, dict):
                 self._postprocessRecord (value)
 
     def postprocess (self, record=None):

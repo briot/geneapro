@@ -34,9 +34,9 @@ class ImporterMetaClass (type):
 		new_class = super_new (cls, name, bases, attrs)
 		meta = attrs.pop ('Meta', None)
 
-		displayName = getattr (meta, 'displayName', None) or name
-		descr       = getattr (meta, 'description', None)
-		abstract    = getattr (meta, "abstract",    None)
+		displayName = getattr (meta, 'displayName', name)
+		descr       = getattr (meta, 'description', "")
+		abstract    = getattr (meta, "abstract",    False)
 		if not abstract:
 			register_importer (new_class, displayName, descr)
 
@@ -56,14 +56,10 @@ class Importer (object):
 	__metaclass__ = ImporterMetaClass
 
 	def parse (self, file):
-		"""
-		Import data from _file_ into our data model
-		"""
+		"""Import data from _file_ (an instance of file) into our data model"""
 		pass
 
 	def error (self, message):
-		"""
-		Report an error to the user
-		"""
+		"""Report an error to the user"""
 		print message
 

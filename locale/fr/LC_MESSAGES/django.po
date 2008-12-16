@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-02 10:31-0800\n"
+"POT-Creation-Date: 2008-12-14 20:04-0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,27 +24,155 @@ msgstr ""
 msgid "Imports a standard GEDCOM file, which most genealogy can export to"
 msgstr ""
 
-#: geneapro/utils/gedcom.py:79
+#: geneapro/utils/date.py:26
+msgid "de"
+msgstr ""
+
+#: geneapro/utils/date.py:27
+msgid "a"
+msgstr ""
+
+#: geneapro/utils/date.py:28
+msgid "entre"
+msgstr ""
+
+#: geneapro/utils/date.py:29
+msgid "et"
+msgstr ""
+
+#: geneapro/utils/date.py:30
+msgid "jours?"
+msgstr ""
+
+#: geneapro/utils/date.py:31
+msgid "mois?"
+msgstr ""
+
+#: geneapro/utils/date.py:32
+msgid "ans?"
+msgstr ""
+
+#: geneapro/utils/date.py:33
+msgid "mm/dd/yyyy"
+msgstr ""
+
+#: geneapro/utils/date.py:36
+msgid "jan"
+msgstr ""
+
+#: geneapro/utils/date.py:37
+msgid "january"
+msgstr ""
+
+#: geneapro/utils/date.py:38
+msgid "feb"
+msgstr ""
+
+#: geneapro/utils/date.py:39
+msgid "februrary"
+msgstr ""
+
+#: geneapro/utils/date.py:40
+msgid "mar"
+msgstr ""
+
+#: geneapro/utils/date.py:41
+msgid "march"
+msgstr ""
+
+#: geneapro/utils/date.py:42
+msgid "apr"
+msgstr ""
+
+#: geneapro/utils/date.py:43
+msgid "april"
+msgstr ""
+
+#: geneapro/utils/date.py:44
+msgid "may"
+msgstr ""
+
+#: geneapro/utils/date.py:45
+msgid "jun"
+msgstr ""
+
+#: geneapro/utils/date.py:46
+msgid "june"
+msgstr ""
+
+#: geneapro/utils/date.py:47
+msgid "jul"
+msgstr ""
+
+#: geneapro/utils/date.py:48
+msgid "july"
+msgstr ""
+
+#: geneapro/utils/date.py:49
+msgid "aug"
+msgstr ""
+
+#: geneapro/utils/date.py:50
+msgid "august"
+msgstr ""
+
+#: geneapro/utils/date.py:51
+msgid "sep"
+msgstr ""
+
+#: geneapro/utils/date.py:52
+msgid "september"
+msgstr ""
+
+#: geneapro/utils/date.py:53
+msgid "oct"
+msgstr ""
+
+#: geneapro/utils/date.py:54
+msgid "october"
+msgstr ""
+
+#: geneapro/utils/date.py:55
+msgid "nov"
+msgstr ""
+
+#: geneapro/utils/date.py:56
+msgid "november"
+msgstr ""
+
+#: geneapro/utils/date.py:57
+msgid "dec"
+msgstr ""
+
+#: geneapro/utils/date.py:58
+msgid "december"
+msgstr ""
+
+#: geneapro/utils/date.py:391
+msgid "jours feries "
+msgstr ""
+
+#: geneapro/utils/gedcom.py:329
 msgid "Invalid gedcom file, first line must be '0 HEAD'"
 msgstr ""
 
-#: geneapro/utils/gedcom.py:90
-msgid "Error, invalid line format"
+#: geneapro/utils/gedcom.py:341
+msgid "Invalid line format: "
 msgstr ""
 
-#: geneapro/utils/gedcom.py:424
+#: geneapro/utils/gedcom.py:429
 #, python-format
 msgid "Too many occurrences of %(tag)s"
 msgstr ""
 
-#: geneapro/utils/gedcom.py:443
+#: geneapro/utils/gedcom.py:448
 #, python-format
 msgid "%(parent)s doesn't accept child tag %(child)s"
 msgstr ""
 
-#: geneapro/utils/gedcom.py:473
+#: geneapro/utils/gedcom.py:467
 #, python-format
-msgid "Missing %(count)d occurrences of %(tag)s"
+msgid "Missing %(count)d occurrences of %(tag)s in %(parent)s"
 msgstr ""
 
 #: geneapro/views/__init__.py:14
