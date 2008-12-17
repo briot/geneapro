@@ -1,6 +1,4 @@
-# ??? Prevent edition of date_sort, and set it when date is modified
-
-from django.db import models
+from django.db import models, backend, connection
 from mysites.geneapro.utils import date
 
 class PartialDateField (models.CharField):
@@ -16,18 +14,25 @@ class PartialDateField (models.CharField):
 
     __metaclass__ = models.SubfieldBase
 
-    def __init__ (self, sortfield, max_length=0, null=True, *args, **kwargs):
+    def __init__ (self, max_length=0, null=True, *args, **kwargs):
         kwargs["null"]=null
         super (PartialDateField, self).__init__ (
            self, max_length=100, *args, **kwargs)
-        self.sortfield = sortfield
+
+    def contribute_to_class (self, cls, name):
+        """Add the partialDateField to a class, as well as a second field
+           used for sorting purposes"""
+        sortfield = models.DateTimeField ('used to sort', null=True)
+        self._sortfield = name + "_sort"
+        cls.add_to_class (self._sortfield, sortfield)
+        super (PartialDateField, self).contribute_to_class (cls, name)
 
     def pre_save(self, model_instance, add):
-        # ??? Should preserve sortfield if set manually by the user
+        """Update the value of the sort field based on the contents of self"""
         val = super (PartialDateField, self).pre_save (model_instance, add)
         if val:
            sort = date.DateRange (val).sort_date ()
-           setattr (model_instance, self.sortfield, sort)
+           setattr (model_instance, self._sortfield, sort)
         return val
 
 class Config (models.Model):
@@ -181,8 +186,7 @@ class Place (models.Model):
     The actual info for a place is defined in terms of Place_Part
     """
 
-    date = PartialDateField (sortfield="date_sort")
-    date_sort = models.DateTimeField ('date used when sorting', null=True)
+    date = PartialDateField ()
     parent_place = models.ForeignKey ('self', null=True,
         help_text = "The parent place, that contains this one")
 
@@ -296,14 +300,13 @@ class Source (models.Model):
                 + " and their activities in Georgia. Georgia is the subject"
                 + " place, whereas NC is the jurisdiction place")
     researcher    = models.ForeignKey (Researcher)
-    subject_date  = PartialDateField (sortfield="subject_date_sort",
+    subject_date  = PartialDateField (
         help_text="the date of the subject. Note that the dates might be"
                 + " different for the various levels of source (a range of"
                 + " dates for a book, and a specific date for an extract for"
                 + " instance). This field contains the date as found in the"
                 + " original document. subject_date_sort stores the actual"
                 + " computed from subject_date, for sorting purposes")
-    subject_date_sort = models.DateTimeField (null=True)
     medium        = models.ForeignKey (Source_Medium)
     comments      = models.TextField (null=True)
 
@@ -383,6 +386,42 @@ class Entity (models.Model):
 
     pass
 
+def sql_field_name (cls, field_name):
+    """Help write custom SQL queries"""
+    if field_name == "pk":
+       f = cls._meta.pk
+    else:
+       f = cls._meta.get_field (field_name)
+    return "%s.%s" % (
+       connection.ops.quote_name (cls._meta.db_table),
+       connection.ops.quote_name (f.column))
+
+class ParentsManager (models.Manager):
+    """
+    A manager that adds extra parent_id and mother_id fields to each persona
+    returned
+    """
+
+    # ??? Does not handle case where a persona has multiple parents (either
+    #     foster parents, or simply because we are not sure which ones are
+    #     the real parents)
+    # ??? Should also look for parents for persona aliased to the current one
+
+    def get_query_set(self):
+        if not hasattr (self, "_query"):
+           a = Assertion._meta
+           p = self.model._meta
+           self._query = \
+              "SELECT %s FROM %s WHERE %s=%s AND value='%%s' LIMIT 1" % \
+              (sql_field_name (Assertion, "subject1"),
+               connection.ops.quote_name (a.db_table),
+               sql_field_name (Assertion, "subject2"),
+               sql_field_name (Persona, "pk"))
+
+        return super (ParentsManager, self).get_query_set().extra (select={
+           'father_id': self._query % ("father of",),
+           'mother_id': self._query % ("mother of",)})
+
 class Persona (Entity):
     """
     Contains the core identification for individuals. Such individuals
@@ -393,6 +432,12 @@ class Persona (Entity):
 
     name = models.CharField (max_length=100)
     description = models.TextField (null=True)
+
+    def __unicode__ (self):
+        return self.name
+
+    objects = models.Manager ()
+    parents = ParentsManager ()
 
 class Event_Type (Part_Type):
     """
@@ -419,11 +464,10 @@ class Event (Entity):
     type = models.ForeignKey (Event_Type)
     place = models.ForeignKey (Place, null=True)
     name  = models.CharField (max_length=100)
-    date  = PartialDateField (sortfield="date_sort", null=True,
+    date  = PartialDateField (
         help_text="The date of the event, as found in the original source."
                 + " This date is internally parsed into date_sort"
                 + " which is used for sorting purposes")
-    date_sort = models.DateTimeField (null=True)
 
 class Characteristic_Part_Type (Part_Type):
     pass
@@ -434,8 +478,7 @@ class Characteristic (Entity):
     """
 
     place = models.ForeignKey (Place, null=True)
-    date  = PartialDateField (sortfield="date_sort", null=True)
-    date_sort = models.DateTimeField (null=True)
+    date  = PartialDateField (null=True)
 
 class Characteristic_Part (models.Model):
     """
@@ -482,8 +525,7 @@ class Group (Entity):
     type = models.ForeignKey (Group_Type)
     place = models.ForeignKey (Place, null=True)
     name  = models.CharField (max_length=200)
-    date  = PartialDateField (sortfield="date_sort")
-    date_sort = models.DateTimeField ()
+    date  = PartialDateField ()
     criteria  = models.TextField (null=True,
          help_text="The criteria for admission in a group. For instance, one"
                  + " group might be all neighbors listed in a particular"

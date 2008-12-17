@@ -15,12 +15,6 @@ def index (request):
 		},
 		context_instance=RequestContext(request))
 
-def pedigree (request):
-	return render_to_response (
-		'geneapro/pedigree.html',
-		{},
-		context_instance=RequestContext(request))
-
 def sources (request):
 	return render_to_response (
 		'geneapro/sources.html',
