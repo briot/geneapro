@@ -155,8 +155,8 @@ def get_parents (dic, person, max_level, sosa):
 def view (request):
     max_level = 4
 
-    #p = Persona.parents.filter (name="Emmanuel Christophe/Briot/")[0]
-    p = Persona.parents.filter (name="Joseph Marie Francois/Briot/")[0]
+    p = Persona.parents.filter (name="Emmanuel Christophe/Briot/")[0]
+    #p = Persona.parents.filter (name="Joseph Marie Francois/Briot/")[0]
     tree = dict ()
     get_parents (tree, p, max_level, sosa=1)
     return render_to_response (

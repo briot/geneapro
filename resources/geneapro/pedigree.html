@@ -2,27 +2,38 @@
 {% block title %}GeneaPro: pedigree{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
-#pedigreeSVG {width:100%;height:600px;border:0}
+#pedigreeSVG {width:100%;height:100%;margin:10px 0 10px 0;border:0}
 {% endblock css %}
 {% block contents %}
 <script type="text/javascript">
 var boxWidth = 200;
 var horizPadding = 20;
 var boxHeight = 50;
-var vertPadding = 10; {# vertical padding at last gen #}
+var vertPadding = 20; {# vertical padding at last gen #}
 sosa = {{ pedigree|safe }};
 generations = {{ generations }};
 
 function onMouseOver (evt) {
   var box = evt.target;
   box.setAttribute ('oldstroke', box.getAttribute ('stroke'));
-  box.setAttribute ('stroke', '#999');
-  box.setAttribute ('stroke-width', '2');
+  box.setAttribute ('stroke', '#555');
+  box.setAttribute ('filter','');
 }
 function onMouseOut (evt) {
   var box = evt.target;
   box.setAttribute ('stroke', box.getAttribute ('oldstroke'));
+  box.setAttribute ('filter','url(#shadow)');
+}
+function onTxtMouseOver (evt) {
+  var box = evt.target;
+  box.setAttribute ('oldstroke', box.getAttribute ('stroke'));
+  box.setAttribute ('stroke', '#555');
   box.setAttribute ('stroke-width', '1');
+}
+function onTxtMouseOut (evt) {
+  var box = evt.target;
+  box.setAttribute ('stroke', box.getAttribute ('oldstroke'));
+  box.setAttribute ('stroke-width', '0');
 }
 
 function drawPedigree(svg) {
@@ -33,9 +44,10 @@ function drawPedigree(svg) {
 
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
                   preserveAspectRatio:"xMinYMid"},true);
-   var filter = svg.filter (svg.defs(), 'shadow', 0, 0, "120%", "120%");
-   svg.filters.gaussianBlur (filter, '', '', 2, 2);
-   svg.filters.offset (filter, '', '', 2, 2);
+   var filter = svg.filter (svg.defs(), 'shadow', 0, 0);
+   svg.filters.gaussianBlur (filter, 'myBlur', {#'SourceAlpha'#}'', 2);
+   svg.filters.offset (filter, 'finalBlur', 'myBlur', 3, 3);
+   svg.filters.merge (filter, 'finalBlur', ['finalBlur', 'SourceGraphic']);
 
    var tops = new Array(totalBoxes);
 
@@ -60,10 +72,8 @@ function drawPedigree(svg) {
       if (person) {
          var bg = (index % 2 != 0) ? '#D6E0EA' : '#E9DAF1';
          var fg = (index % 2 != 0) ? '#9CA3D4' : '#FF2080';
-         //svg.rect (x + 2, tops[index] + 2, boxWidth, boxHeight,
-         //         {stroke:"none", fill:"grey", filter:"url(#shadow)"});
          svg.rect (x, tops[index], boxWidth, boxHeight,
-                  {stroke:fg, fill:bg,
+                  {stroke:fg, fill:bg, filter:"url(#shadow)",
                    onmouseover:'onMouseOver(evt)',
                    onmouseout:'onMouseOut(evt)'});
          var clip = svg.other ('clipPath', {id:'person'+index});
@@ -74,8 +84,8 @@ function drawPedigree(svg) {
                svg.createText().string(person.name)
                .span ("b:", {x:x+4, dy:16})
                .span ("d:", {x:x+4, dy:16}),
-               {"font-weight":"bold", 
-                "clip-path":"url(#person"+index+")"});
+               {"font-weight":"bold", "clip-path":"url(#person"+index+")",
+                "pointer-events":"none"});
         }
       } else {
          svg.rect (x, tops[index], boxWidth, boxHeight,
@@ -99,10 +109,12 @@ function drawPedigree(svg) {
                       .vertTo (y2)
                       .horizTo (x2),
                       {stroke:'black', fill:'none'});
-            if (gen < generations - 2) {
-              svg.text (x2, (y1 + y2) / 2,
+            if (gen < generations - 1) {
+              svg.text (x2, (y1 + y2) / 2 + 4,
                         svg.createText().string ("marriage ?"),
-                        {stroke:"black", "stroke-width":0});
+                        {stroke:"black", "stroke-width":0,
+                         onmouseover:'onTxtMouseOver(evt)',
+                         onmouseout:'onTxtMouseOut(evt)'});
             }
          }
          drawBox (x, index);
