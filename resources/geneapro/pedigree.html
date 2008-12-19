@@ -27,7 +27,7 @@ function onMouseOut (evt) {
 function onTxtMouseOver (evt) {
   var box = evt.target;
   box.setAttribute ('oldstroke', box.getAttribute ('stroke'));
-  box.setAttribute ('stroke', '#555');
+  box.setAttribute ('stroke', '#888');
   box.setAttribute ('stroke-width', '1');
 }
 function onTxtMouseOut (evt) {
@@ -82,8 +82,8 @@ function drawPedigree(svg) {
         if (person.name) {
           svg.text(x + 4, tops[index] + 16,
                svg.createText().string(person.name)
-               .span ("b:", {x:x+4, dy:16})
-               .span ("d:", {x:x+4, dy:16}),
+               .span ("b:", {x:x+4, dy:"1em"})
+               .span ("d:", {x:x+4, dy:"1em"}),
                {"font-weight":"bold", "clip-path":"url(#person"+index+")",
                 "pointer-events":"none"});
         }

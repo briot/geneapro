@@ -11,33 +11,8 @@ body {font-size:62.5%;  /* so that 1em=10px, when default font-size is 16px */
 * { font-family:arial,helvetica,clean,sans-serif;}
 
 /* Debugging */
-/* * {border:1px solid #f00} */
-
-.indiv > div:hover {border-width:2px; border-color:#999; margin:1px}
-.indiv > div       {padding:0 4px 0 4px; margin:2px;
-                    min-width:60px; min-height:55px;
-                    position:relative;
-                    width:100%}  /* slightly larger boxes, so that links are somewhat nicer*/
-.unknown           {background:#eee;    border:1px dashed #9CA3D4}
-.male              {background:#D6E0EA; border:1px solid #9CA3D4}
-.female            {background:#E9DAF1; border:1px solid #FF2080}
-.label             {font-weight:bold;margin-right:2px}
-td.mariage .label  {font-weight:normal}
-.name              {font-weight:bold}
-.indiv img         {float:left; height:50px; border:1px solid black; margin:2px 2px 2px 0}
-
-.pedigree td.indiv {padding-left:20px}
-.pedigree td.decujus {background:transparent}
-
-.pedigree td.tofather {vertical-align:bottom; text-align:right}
-.pedigree td.tomother {vertical-align:top; text-align:right}
-.pedigree td.tofather img, .pedigree td.tomother img {width:2px}
-
-.pedigree {border-collapse:separate; border-spacing:0px}
-.pedigree td {vertical-align:middle}
-
-.pedigree td.mariage {text-indent:20px}
-.pedigree td.mariage:hover {border:2px solid #999; text-indent:18px}
+/** {border:1px solid #f00} 
+*/
 
 .dateselect {border:1px solid #999}
 .dateselect td.label {text-align:right; font-weight:bold}
@@ -61,7 +36,7 @@ td.mariage .label  {font-weight:normal}
          border-top:1px solid #999;
          border-bottom:1px solid #999; margin-top:8px}
 
-.iconBox {width:140px; float:left; list-style-type:none;
+.iconBox {width:140px; float:left; list-style-type:none; position:absolute;
           padding:0 10px;}
 .iconBox li {border:1px solid black; font-size:1.4em; line-height:2em; padding:2px 10px 2px 10px; margin:20px 0 20px 0}
 
