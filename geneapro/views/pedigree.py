@@ -1,6 +1,7 @@
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.translation import ugettext as _
+from django.utils import simplejson
 from mysites.geneapro.models import *
 import sys
 
@@ -126,27 +127,41 @@ import sys
 # Person). We now do three queries (one to get persona and parents, and then
 # one to get a Person for the parents)
 
-def get_parents (person):
+class ModelEncoder (simplejson.JSONEncoder):
+   def default(self, obj):
+      if isinstance(obj, GeneaproModel):
+         return obj.to_json()
+      return super (ModelEncoder, self).default (ob)
+
+def to_json (obj):
+   return simplejson.dumps (obj, cls=ModelEncoder, separators=(',',':'))
+
+def get_parents (dic, person, max_level, sosa):
+    dic[sosa] = person
+
+    if max_level == 1:
+       return
+
     if person.father_id:
-       father = get_parents (Persona.parents.get (pk=person.father_id))
-    else:
-       father = None
+       get_parents (dic, \
+          Persona.parents.get (pk=person.father_id),
+          max_level - 1, sosa=sosa * 2)
 
     if person.mother_id:
-       mother = get_parents (Persona.parents.get (pk=person.mother_id))
-    else:
-       mother = None
-
-    if father or mother:
-       return [person, father, mother]
-    else:
-       return person
+       get_parents (dic, \
+          Persona.parents.get (pk=person.mother_id),
+          max_level - 1, sosa=sosa * 2 + 1)
 
 def view (request):
-    p = Persona.parents.filter (name="Emmanuel Christophe/Briot/")[0]
-    print get_parents (p)
+    max_level = 4
+
+    #p = Persona.parents.filter (name="Emmanuel Christophe/Briot/")[0]
+    p = Persona.parents.filter (name="Joseph Marie Francois/Briot/")[0]
+    tree = dict ()
+    get_parents (tree, p, max_level, sosa=1)
     return render_to_response (
         'geneapro/pedigree.html',
-        {},
+        {'pedigree': to_json (tree),
+         'generations': max_level},
         context_instance=RequestContext(request))
 

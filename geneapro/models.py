@@ -1,5 +1,30 @@
+"""
+The data model for our application.
+In addition to all the standard django properties, the classes here can
+define an addition to_json method that should return a version of the
+object appropriate for use by simplejson. For instance:
+   class Persona (models.Model):
+      name = models.CharField (max_length=10)
+      def to_json (self):
+         return {"name": self.name} 
+"""
+
 from django.db import models, backend, connection
 from mysites.geneapro.utils import date
+
+class GeneaproModel (models.Model):
+    def to_json (self):
+        """Returns a version of self suitable for use in json. By default,
+           this returns the dictionary of the class without the attributes
+           starting with _"""
+        result = {}
+        for key, value in self.__dict__.iteritems():
+            if key[0] != '_':
+               result[key] = value
+        return result
+
+    class Meta:
+        abstract = True
 
 class PartialDateField (models.CharField):
     """
@@ -35,7 +60,7 @@ class PartialDateField (models.CharField):
            setattr (model_instance, self._sortfield, sort)
         return val
 
-class Config (models.Model):
+class Config (GeneaproModel):
     """
     This table contains general information on the setup of the database
     """
@@ -44,7 +69,7 @@ class Config (models.Model):
        help_text="Version number of this database. Used to detect what"
               + " updates need to be performed")
 
-class Researcher (models.Model):
+class Researcher (GeneaproModel):
     """
     A researcher is a person who gathers data or made assertions
     """
@@ -57,7 +82,7 @@ class Researcher (models.Model):
     def __unicode__ (self):
         return self.name
 
-class Surety_Scheme (models.Model):
+class Surety_Scheme (GeneaproModel):
     """
     A surety scheme describes how certain a researcher is of the data that
     was gathered. Different projects and researchers might be using different
@@ -73,7 +98,7 @@ class Surety_Scheme (models.Model):
     def __unicode__ (self):
         return self.name
 
-class Surety_Scheme_Part (models.Model):
+class Surety_Scheme_Part (GeneaproModel):
     """
     An element of a Surety_Scheme
     """
@@ -89,7 +114,7 @@ class Surety_Scheme_Part (models.Model):
     class Meta:
         ordering = ('-sequence_number', 'name')
 
-class Project (models.Model):
+class Project (GeneaproModel):
     """
     This table describes one of the project that a researcher is working
     on. It could be something as simple as "my genealogy", or a more detailed
@@ -108,7 +133,7 @@ class Project (models.Model):
     def __unicode__ (self):
         return "name=" + self.name
 
-class Researcher_Project (models.Model):
+class Researcher_Project (GeneaproModel):
     """
     A project is conducted by one or more researchers, and a
     given researcher might be working simulatenously on several projects.
@@ -122,7 +147,7 @@ class Researcher_Project (models.Model):
     class Meta:
         unique_together = (("researcher", "project"))
     
-class Research_Objective (models.Model):
+class Research_Objective (GeneaproModel):
     """
     Contains comments about one objective that the researcher has
     determined is appropriate for a project. This could for instance be
@@ -140,7 +165,7 @@ class Research_Objective (models.Model):
     class Meta:
         ordering = ("sequence_number", "name")
     
-class Activity (models.Model):
+class Activity (GeneaproModel):
     """
     An activity allows a researcher to translate a Research_Objective
     into a specific action item
@@ -162,7 +187,7 @@ class Activity (models.Model):
     class Meta:
         ordering = ("scheduled_date", "completed_date")
 
-class Source_Medium (models.Model):
+class Source_Medium (GeneaproModel):
     """
     This table lists the different types of medium for sources
     """
@@ -176,7 +201,7 @@ class Source_Medium (models.Model):
     class Meta:
         ordering = ("name",)
 
-class Place (models.Model):
+class Place (GeneaproModel):
     """
     Information about a historical place. Places are organized hierarchically,
     to avoid duplicating information whenever possible (for instance, if a
@@ -201,7 +226,7 @@ class Place (models.Model):
     class Meta:
         ordering = ("date_sort",)
 
-class Part_Type (models.Model):
+class Part_Type (GeneaproModel):
     """
     An abstract base class for the various tables that store components of
     higher level entities. These are associated with a simple name in general,
@@ -229,7 +254,7 @@ class Place_Part_Type (Part_Type):
     """
     pass
 
-class Place_Part (models.Model):
+class Place_Part (GeneaproModel):
     """
     Specific information about a place
     """
@@ -252,7 +277,7 @@ class Place_Part (models.Model):
     def __unicode__ (self):
         return str (self.type) + "=" + self.name
 
-class Repository_Type (models.Model):
+class Repository_Type (GeneaproModel):
     """
     The various kinds of repositories
     """
@@ -266,7 +291,7 @@ class Repository_Type (models.Model):
     class Meta:
         ordering = ("name",)
     
-class Repository (models.Model):
+class Repository (GeneaproModel):
     """
     Contains information about the place where data was found. Most
     fields from the gentech model were grouped into the info field.
@@ -278,7 +303,7 @@ class Repository (models.Model):
     type  = models.ForeignKey (Repository_Type)
     info  = models.TextField (null=True)
 
-class Source (models.Model):
+class Source (GeneaproModel):
     """
     A collection of data useful for genealogical research, such as a book,
     a compiled genealogy, an electronic database,... Generally, a
@@ -310,7 +335,7 @@ class Source (models.Model):
     medium        = models.ForeignKey (Source_Medium)
     comments      = models.TextField (null=True)
 
-class Repository_Source (models.Model):
+class Repository_Source (GeneaproModel):
     """
     Links repositories to the sources they contains, and the sources to
     all the possible repositories where they are found
@@ -322,7 +347,7 @@ class Repository_Source (models.Model):
     call_number = models.CharField (max_length=200, null=True)
     description = models.TextField (null=True)
 
-class Search (models.Model):
+class Search (GeneaproModel):
     """
     A specific examination of a source to find information. This is
     usually linked to a research_objective, through an activity, but not
@@ -337,7 +362,7 @@ class Search (models.Model):
     repository   = models.ForeignKey (Repository)
     searched_for = models.TextField (null=True)
 
-class Source_Group (models.Model):
+class Source_Group (GeneaproModel):
     """
     This can be used to group sources into groups relevant to the user,
     such as "wills", "census",... or "new england sources" for instance
@@ -346,7 +371,7 @@ class Source_Group (models.Model):
     sources = models.ManyToManyField (Source, related_name="groups")
     name = models.CharField (max_length=100)
 
-class Representation (models.Model):
+class Representation (GeneaproModel):
     """
     Contains the representation of a source in a variete of formats.
     A given source can have multiple representations
@@ -363,7 +388,7 @@ class Citation_Part_Type (Part_Type):
     """
     pass
 
-class Citation_Part (models.Model):
+class Citation_Part (GeneaproModel):
     """
     Stores the citation for a source, such as author, title,...
     """
@@ -372,7 +397,7 @@ class Citation_Part (models.Model):
     type   = models.ForeignKey (Citation_Part_Type)
     value  = models.TextField ()
 
-class Entity (models.Model):
+class Entity (GeneaproModel):
     """
     This data model includes several types of high-level entities: personas,
     groups, events and characteristic. Each of these is deduced from data
@@ -436,6 +461,9 @@ class Persona (Entity):
     def __unicode__ (self):
         return self.name
 
+    def to_json (self):
+        return {"id":self.id, "name":self.name}
+
     objects = models.Manager ()
     parents = ParentsManager ()
 
@@ -445,7 +473,7 @@ class Event_Type (Part_Type):
     """
     pass
 
-class Event_Type_Role (models.Model):
+class Event_Type_Role (GeneaproModel):
     """
     The individual roles of a defined event type, such as "witness",
     "chaplain"
@@ -480,7 +508,7 @@ class Characteristic (Entity):
     place = models.ForeignKey (Place, null=True)
     date  = PartialDateField (null=True)
 
-class Characteristic_Part (models.Model):
+class Characteristic_Part (GeneaproModel):
     """
     Most characteristics have a single part (such as Occupation
     for instance). However, the full name is also stored as a
@@ -505,7 +533,7 @@ class Group_Type (Part_Type):
 
     pass
 
-class Group_Type_Role (models.Model):
+class Group_Type_Role (GeneaproModel):
     """
     The role a person can have in a group
     """
@@ -533,7 +561,7 @@ class Group (Entity):
                  + " listed in another document, or same document at a"
                  + " different time")
 
-class Assertion (models.Model):
+class Assertion (GeneaproModel):
     """
     """
 
@@ -555,7 +583,7 @@ class Assertion (models.Model):
     rationale  = models.TextField (null=True)
     disproved  = models.BooleanField (default=False)
 
-class Assertion_Assertion (models.Model):
+class Assertion_Assertion (GeneaproModel):
     original = models.ForeignKey (Assertion, related_name="leads_to")
     deduction = models.ForeignKey (Assertion, related_name="deducted_from")
     sequence_number = models.IntegerField (default=1)

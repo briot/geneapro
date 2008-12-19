@@ -2,68 +2,118 @@
 {% block title %}GeneaPro: pedigree{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
+#pedigreeSVG {width:100%;height:600px;border:0}
 {% endblock css %}
 {% block contents %}
+<script type="text/javascript">
+var boxWidth = 200;
+var horizPadding = 20;
+var boxHeight = 50;
+var vertPadding = 10; {# vertical padding at last gen #}
+sosa = {{ pedigree|safe }};
+generations = {{ generations }};
 
- <table class="pedigree">
-  <tr>
-   <td rowspan="15" class="indiv decujus"><div class="male"><span class="name">Emmanuel Briot</span></div></td>
-   <td rowspan="3" class="tofather"><img src="{{MEDIA_URL}}vert.png" height="72px"></td>
-   <td rowspan="3" class="indiv"><div class="male"><img src="../../media/roland.jpg">
-<span class="name">Roland Briot</span><br>
-<span class="label">Ne le</span>08-06-1950<br>
-<span class="label">Deces</span>14-03-2008</div></td>
-   <td rowspan="1" class="tofather"><img src="{{MEDIA_URL}}vert.png" height="31px"></td>
-   <td rowspan="1" class="indiv"><div class="male"><span class="name">Joseph Briot</span></div></td>
-  </tr>
-  <tr>
-   <td rowspan="1"><img src="{{MEDIA_URL}}vert.png" height="100%"></td>
-   <td rowspan="1" class="mariage"><span class="label">Mariage</span>?</td>
-  </tr>
-  <tr>
-   <td rowspan="1" class="tomother"><img src="{{MEDIA_URL}}vert.png" height="32px"></td>
-   <td rowspan="1" class="indiv"><div class="female"><span class="name">Maria Herpin</span></div></td>
-  </tr>
-  <tr>
-   <td rowspan="1"><img src="{{MEDIA_URL}}vert.png" height="100%"></td>
-   <td rowspan="1" class="mariage"><span class="label">Mariage</span>07-07-1973 (Lyon?)</td>
-  </tr>
-  <tr>
-   <td rowspan="8" class="tomother"><img src="{{MEDIA_URL}}vert.png" height="153px"></td>
-   <td rowspan="8" class="indiv"><div class="female"><span class="name">Anne Poidevin</span></div></td>
-   <td rowspan="3" class="tofather"><img src="{{MEDIA_URL}}vert.png" height="72px"></td>
-   <td rowspan="3" class="indiv"><div class="male"><span class="name">Rene Poidevin</span><br>
-<span class="label">Ne le</span>1924<br>
-<span class="label">Mariage</span><br></div></td>
-   <td rowspan="1" class="tofather"><img src="{{MEDIA_URL}}vert.png" height="31px"></td>
-   <td rowspan="1" class="indiv"><div class="unknown"/></td>
-  </tr>
-  <tr>
-   <td rowspan="1"><img src="{{MEDIA_URL}}vert.png" height="100%"></td>
-   <td rowspan="1" class="mariage"><span class="label">Mariage</span>?</td>
-  </tr>
-  <tr>
-   <td rowspan="1" class="tomother"><img src="{{MEDIA_URL}}vert.png" height="32px"/></td>
-   <td rowspan="1" class="indiv"><div class="unknown"/></td>
-  </tr>
-  <tr>
-   <td rowspan="1"><img src="{{MEDIA_URL}}vert.png" height="100%"></td>
-   <td rowspan="1" class="mariage"><span class="label">Mariage</span>(Paris?)</td>
-  </tr>
-  <tr>
-   <td rowspan="3" class="tomother"><img src="{{MEDIA_URL}}vert.png" height="72px"/></td>
-   <td rowspan="3" class="indiv"><div class="female"><span class="name">Jacqueline Ondarsuhu</span></div></td>
-   <td rowspan="1" class="tofather"><img src="{{MEDIA_URL}}vert.png" height="31px"></td>
-   <td rowspan="1" class="indiv"><div class="male"><span class="name">Noel Ondarsuhu</span><br>
-  </tr>
-  <tr>
-   <td rowspan="1"><img src="{{MEDIA_URL}}vert.png" height="100%"></td>
-   <td rowspan="1" class="mariage"><span class="label">Mariage</span>?</td>
-  </tr>
-  <tr>
-   <td rowspan="1" class="tomother"><img src="{{MEDIA_URL}}vert.png" height="32px"/></td>
-   <td rowspan="1" class="indiv"><div class="female"><span class="name">Suzanne Letexier</span></div></td>
-  </tr>
- </table>
+function onMouseOver (evt) {
+  var box = evt.target;
+  box.setAttribute ('oldstroke', box.getAttribute ('stroke'));
+  box.setAttribute ('stroke', '#999');
+  box.setAttribute ('stroke-width', '2');
+}
+function onMouseOut (evt) {
+  var box = evt.target;
+  box.setAttribute ('stroke', box.getAttribute ('oldstroke'));
+  box.setAttribute ('stroke-width', '1');
+}
+
+function drawPedigree(svg) {
+   var maxBoxes = Math.pow (2,generations-1);{# max boxes at last generation #}
+   var totalBoxes = Math.pow (2,generations) - 1; {# geometrical summation #}
+   var maxWidth = (boxWidth + horizPadding) * generations + 1;
+   var maxHeight = boxHeight * maxBoxes + vertPadding * (maxBoxes - 1);
+
+   svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
+                  preserveAspectRatio:"xMinYMid"},true);
+   var filter = svg.filter (svg.defs(), 'shadow', 0, 0, "120%", "120%");
+   svg.filters.gaussianBlur (filter, '', '', 2, 2);
+   svg.filters.offset (filter, '', '', 2, 2);
+
+   var tops = new Array(totalBoxes);
+
+   {#Compute the positions for the last generation, so that boxes occupy the#}
+   {# whole height of the window. We have 2^gen boxes and 2^gen-1 separators #}
+
+   var y = 0;
+   for (var index=totalBoxes - maxBoxes; index < totalBoxes; index++) {
+      tops[index] = y;
+      y += boxHeight + vertPadding;
+   }
+
+   {# For the other generations, the boxes are centered relatively to their #}
+   {# ancestors in the next gen #}
+
+   for (index = totalBoxes - maxBoxes - 1; index >= 0; index--) {
+      tops[index] = (tops [2 * index + 1] + tops [2 * index + 2]) / 2;
+   }
+
+   drawBox = function(x, index) {
+      person = sosa [index + 1];
+      if (person) {
+         var bg = (index % 2 != 0) ? '#D6E0EA' : '#E9DAF1';
+         var fg = (index % 2 != 0) ? '#9CA3D4' : '#FF2080';
+         //svg.rect (x + 2, tops[index] + 2, boxWidth, boxHeight,
+         //         {stroke:"none", fill:"grey", filter:"url(#shadow)"});
+         svg.rect (x, tops[index], boxWidth, boxHeight,
+                  {stroke:fg, fill:bg,
+                   onmouseover:'onMouseOver(evt)',
+                   onmouseout:'onMouseOut(evt)'});
+         var clip = svg.other ('clipPath', {id:'person'+index});
+         svg.rect (clip, x, tops[index], boxWidth, boxHeight);
+
+        if (person.name) {
+          svg.text(x + 4, tops[index] + 16,
+               svg.createText().string(person.name)
+               .span ("b:", {x:x+4, dy:16})
+               .span ("d:", {x:x+4, dy:16}),
+               {"font-weight":"bold", 
+                "clip-path":"url(#person"+index+")"});
+        }
+      } else {
+         svg.rect (x, tops[index], boxWidth, boxHeight,
+                  {stroke:'#9CA3D4', fill:'#EEE', "stroke-dasharray":"3",
+                   onmouseover:'onMouseOver(evt)',
+                   onmouseout:'onMouseOut(evt)'});
+      }
+   }
+
+   index = 0;
+   for (var gen = 0; gen < generations; gen++) {
+      var x = (boxWidth + horizPadding) * gen + 1;
+      for (var box = Math.pow (2, gen); box >= 1; box--) {
+         if (gen < generations - 1) {
+            var x2 = x + boxWidth + horizPadding;
+            var y1 = tops[2 * index + 1] + boxHeight / 2;
+            var y2 = tops[2 * index + 2] + boxHeight / 2;
+            svg.path (svg.createPath()
+                      .moveTo (x2, y1)
+                      .horizTo (x + boxWidth * 0.9)
+                      .vertTo (y2)
+                      .horizTo (x2),
+                      {stroke:'black', fill:'none'});
+            if (gen < generations - 2) {
+              svg.text (x2, (y1 + y2) / 2,
+                        svg.createText().string ("marriage ?"),
+                        {stroke:"black", "stroke-width":0});
+            }
+         }
+         drawBox (x, index);
+         index ++;
+      }
+   }
+}
+$(function(){
+  $('#pedigreeSVG').svg({onLoad:drawPedigree});
+});
+</script>
+<div id="pedigreeSVG"></div>
 {% endblock contents %}
 
