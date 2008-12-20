@@ -10,8 +10,8 @@ var boxWidth = 200;
 var horizPadding = 20;
 var boxHeight = 50;
 var vertPadding = 20; {# vertical padding at last gen #}
-sosa = {{ pedigree|safe }};
-generations = {{ generations }};
+var sosa=null;
+var generations=null;
 
 function onMouseOver (evt) {
   var box = evt.target;
@@ -23,6 +23,13 @@ function onMouseOut (evt) {
   var box = evt.target;
   box.setAttribute ('stroke', box.getAttribute ('oldstroke'));
   box.setAttribute ('filter','url(#shadow)');
+}
+function onClick (evt) {
+  var box = evt.target;
+  if (box.getAttribute ("sosa") != 1) {
+     var id = sosa[box.getAttribute ("sosa")].id;
+     $.getJSON ("pedigreeData", {id:id, generations:generations}, ongetJSON);
+  }
 }
 function onTxtMouseOver (evt) {
   var box = evt.target;
@@ -36,7 +43,9 @@ function onTxtMouseOut (evt) {
   box.setAttribute ('stroke-width', '0');
 }
 
-function drawPedigree(svg) {
+function drawSOSA() {
+   var svg = $('#pedigreeSVG').svg('get');
+   svg.clear ();
    var maxBoxes = Math.pow (2,generations-1);{# max boxes at last generation #}
    var totalBoxes = Math.pow (2,generations) - 1; {# geometrical summation #}
    var maxWidth = (boxWidth + horizPadding) * generations + 1;
@@ -47,7 +56,7 @@ function drawPedigree(svg) {
    var filter = svg.filter (svg.defs(), 'shadow', 0, 0);
    svg.filters.gaussianBlur (filter, 'myBlur', {#'SourceAlpha'#}'', 2);
    svg.filters.offset (filter, 'finalBlur', 'myBlur', 3, 3);
-   svg.filters.merge (filter, 'finalBlur', ['finalBlur', 'SourceGraphic']);
+   svg.filters.merge (filter, '', ['finalBlur', 'SourceGraphic']);
 
    var tops = new Array(totalBoxes);
 
@@ -74,6 +83,8 @@ function drawPedigree(svg) {
          var fg = (index % 2 != 0) ? '#9CA3D4' : '#FF2080';
          svg.rect (x, tops[index], boxWidth, boxHeight,
                   {stroke:fg, fill:bg, filter:"url(#shadow)",
+                   sosa:index + 1,
+                   onclick:'onClick(evt)',
                    onmouseover:'onMouseOver(evt)',
                    onmouseout:'onMouseOut(evt)'});
          var clip = svg.other ('clipPath', {id:'person'+index});
@@ -122,8 +133,14 @@ function drawPedigree(svg) {
       }
    }
 }
+function ongetJSON (data, status) {
+  sosa = data.sosa;
+  generations = data.generations;
+  drawSOSA ();
+}
 $(function(){
-  $('#pedigreeSVG').svg({onLoad:drawPedigree});
+  $('#pedigreeSVG').svg();
+  $.getJSON ("pedigreeData", {id:13023, generations:4}, ongetJSON);
 });
 </script>
 <div id="pedigreeSVG"></div>

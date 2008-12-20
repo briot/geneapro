@@ -1,0 +1,11 @@
+Create indexes in database:
+   Assertion.subject1
+   Assertion.subject2
+   (Assertion.subject1, Assertion.value)   ???
+   (Assertion.subject2, Assertion.value)   ???
+Assertion.Value should point into a table rather than be a text
+
+Display the children of a person in the pedigree view
+Background color should depend on person's sex, not mod2
+
+Busy cursor while downloading json data (and prevent further clicks)
