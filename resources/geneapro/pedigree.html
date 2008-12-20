@@ -88,9 +88,17 @@ function drawSOSA() {
 
    drawBox = function(x, index) {
       person = sosa [index + 1];
+      if (person && person.sex == "M") {
+         var bg = '#D6E0EA';
+         var fg = '#9CA3D4';
+      } else if (person && person.sex == "F") {
+         var bg = '#E9DAF1';
+         var fg = '#FF2080';
+      } else {
+         var bg = '#FFF';
+         var fg = '#9CA3D4';
+      }
       if (person) {
-         var bg = (index % 2 != 0) ? '#D6E0EA' : '#E9DAF1';
-         var fg = (index % 2 != 0) ? '#9CA3D4' : '#FF2080';
          svg.rect (x, tops[index], boxWidth, boxHeight,
                   {stroke:fg, fill:bg, filter:"url(#shadow)",
                    sosa:index + 1,
@@ -110,7 +118,7 @@ function drawSOSA() {
         }
       } else {
          svg.rect (x, tops[index], boxWidth, boxHeight,
-                  {stroke:'#9CA3D4', fill:'#EEE', "stroke-dasharray":"3",
+                  {stroke:fg, fill:bg, "stroke-dasharray":"3",
                    onmouseover:'onMouseOver(evt)',
                    onmouseout:'onMouseOut(evt)'});
       }
@@ -146,7 +154,7 @@ function drawSOSA() {
 $(function(){
   $('#pedigreeSVG').svg();
   generations = 4;
-  getPedigree (13023);
+  getPedigree (1);
 });
 </script>
 <div id="pedigreeSVG"></div>

@@ -124,6 +124,12 @@ class GedcomImporter (object):
                         characteristic=c,
                         type=t,
                         name=str_value)
+                 a = Assertion.objects.create (
+                        surety = self._default_surety,
+                        researcher = self._researcher,
+                        subject1 = indi,
+                        subject2 = c,
+                        value = "has")
 
            except KeyError:
               try:
@@ -137,6 +143,12 @@ class GedcomImporter (object):
                           place=None,
                           name="",
                           date=v.get ("DATE"))
+                       a = Assertion.objects.create (
+                          surety = self._default_surety,
+                          researcher = self._researcher,
+                          subject1 = indi,
+                          subject2 = evt,
+                          value = "has")
 
               except KeyError:
                  if key not in ("NAME", "type", "SOUR",

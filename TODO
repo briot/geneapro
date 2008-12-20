@@ -8,9 +8,8 @@ Assertion.Value should point into a table rather than be a text
 
 * Pedigree View
 ** Display the children of a person in the pedigree view
-** Background color should depend on person's sex, not mod2
 ** BACK button should go back to previous pedigree view
 ** Should cache pedigree data locally to avoid reloading when going back
    (perhaps only save a few generations, although this is not big)
-** Allow use to configure number of generations
+** Allow user to configure number of generations
 ** Use reverse url to get pedigreeData

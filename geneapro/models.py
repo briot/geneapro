@@ -421,6 +421,9 @@ def sql_field_name (cls, field_name):
        connection.ops.quote_name (cls._meta.db_table),
        connection.ops.quote_name (f.column))
 
+def sql_table_name (cls):
+    return connection.ops.quote_name (cls._meta.db_table)
+
 class ParentsManager (models.Manager):
     """
     A manager that adds extra parent_id and mother_id fields to each persona
@@ -434,18 +437,34 @@ class ParentsManager (models.Manager):
 
     def get_query_set(self):
         if not hasattr (self, "_query"):
-           a = Assertion._meta
-           p = self.model._meta
            self._query = \
               "SELECT %s FROM %s WHERE %s=%s AND value='%%s' LIMIT 1" % \
               (sql_field_name (Assertion, "subject1"),
-               connection.ops.quote_name (a.db_table),
+               sql_table_name (Assertion),
                sql_field_name (Assertion, "subject2"),
                sql_field_name (Persona, "pk"))
 
+           self._char_query = \
+              "SELECT %s FROM %s, %s WHERE %s=%s AND %s=%%d AND %s=%s AND %s='%%s' LIMIT 1" % \
+              (sql_field_name (Characteristic_Part, "name"),
+
+               sql_table_name (Characteristic_Part),
+               sql_table_name (Assertion),
+
+               sql_field_name (Characteristic_Part, "characteristic"),
+               sql_field_name (Assertion, "subject2"),
+
+               sql_field_name (Characteristic_Part, "type"),
+
+               sql_field_name (Assertion, "subject1"),
+               sql_field_name (Persona, "pk"),
+
+               sql_field_name (Assertion, "value"))
+
         return super (ParentsManager, self).get_query_set().extra (select={
            'father_id': self._query % ("father of",),
-           'mother_id': self._query % ("mother of",)})
+           'mother_id': self._query % ("mother of",),
+           'sex': self._char_query % (1, "has")})  # 1=char_type (SEX)
 
 class Persona (Entity):
     """
@@ -462,7 +481,10 @@ class Persona (Entity):
         return self.name
 
     def to_json (self):
-        return {"id":self.id, "name":self.name}
+        return {"id":self.id, "name":self.name, "sex":self.sex}
+
+    #def get_sex (self):
+    #    return self.characteristic_set.filter(parts__type__name='sex')[0].parts.get().name
 
     objects = models.Manager ()
     parents = ParentsManager ()
@@ -487,6 +509,8 @@ class Event_Type_Role (GeneaproModel):
 class Event (Entity):
     """
     An event is any type of happening
+    A Event is associated with a Persona or a Group through an
+    assertion.
     """
 
     type = models.ForeignKey (Event_Type)
@@ -502,7 +526,9 @@ class Characteristic_Part_Type (Part_Type):
 
 class Characteristic (Entity):
     """
-    A characteristic is any data that distinguishes one person from another
+    A characteristic is any data that distinguishes one person from another.
+    A Characteristic is associated with a Persona or a Group through an
+    assertion.
     """
 
     place = models.ForeignKey (Place, null=True)
@@ -512,16 +538,19 @@ class Characteristic_Part (GeneaproModel):
     """
     Most characteristics have a single part (such as Occupation
     for instance). However, the full name is also stored as a
-    characterstic, and therefore various parts might be needed
+    characterstic, and therefore various parts might be needed.
     """
 
-    characteristic  = models.ForeignKey (Characteristic)
+    characteristic  = models.ForeignKey (Characteristic, related_name="parts")
     type            = models.ForeignKey (Characteristic_Part_Type)
     name            = models.CharField (max_length=200)
     sequence_number = models.IntegerField (default=1)
 
     class Meta:
         ordering = ("sequence_number", "name")
+
+    def __unicode__ (self):
+        return self.type.name + "=" + self.name
 
 class Group_Type (Part_Type):
     """
