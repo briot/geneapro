@@ -49,7 +49,7 @@ body {font-size:62.5%;  /* so that 1em=10px, when default font-size is 16px */
 
 .contents {margin-left:180px; /* same as .iconBox:width + iconBox:padding*/
            margin-right:20px;
-           max-width:900px; /* screenWidth - #clipboard.width - .leftMenu.width*/
+           max-width:1200px; /* screenWidth - #clipboard.width - .leftMenu.width*/
           }
 h1 {margin:20px 0 20px 0; font-size:x-large}
 #titleAbbrev {font-size:x-large; margin-left: 20px; font-style:italic}

@@ -12,6 +12,7 @@ var boxHeight = 50;
 var vertPadding = 20; {# vertical padding at last gen #}
 var sosa=null;
 var generations=null;
+var children=null;
 
 function onMouseOver (evt) {
   var box = evt.target;
@@ -28,6 +29,7 @@ function ongetJSON (data, status) {
   unsetBusy ();
   sosa = data.sosa;
   generations = data.generations;
+  children = data.children;
   drawSOSA ();
 }
 function getPedigree (id) {
@@ -37,7 +39,11 @@ function getPedigree (id) {
 function onClick (evt) {
   var box = evt.target;
   if (box.getAttribute ("sosa") != 1) {
-     var id = sosa[box.getAttribute ("sosa")].id;
+     var num = box.getAttribute ("sosa");
+     if (num < 0)
+        var id = children[-1 - num].id;
+     else
+        var id = sosa[num].id;
      getPedigree (id);
   }
 }
@@ -58,7 +64,9 @@ function drawSOSA() {
    svg.clear ();
    var maxBoxes = Math.pow (2,generations-1);{# max boxes at last generation #}
    var totalBoxes = Math.pow (2,generations) - 1; {# geometrical summation #}
-   var maxWidth = (boxWidth + horizPadding) * generations + 1;
+
+   var startX = (children ? boxWidth + horizPadding : 0) + 1;
+   var maxWidth = (boxWidth + horizPadding) * generations + startX;
    var maxHeight = boxHeight * maxBoxes + vertPadding * (maxBoxes - 1);
 
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
@@ -70,8 +78,7 @@ function drawSOSA() {
 
    var tops = new Array(totalBoxes);
 
-   {#Compute the positions for the last generation, so that boxes occupy the#}
-   {# whole height of the window. We have 2^gen boxes and 2^gen-1 separators #}
+   {# Compute the positions for the last generation #}
 
    var y = 0;
    for (var index=totalBoxes - maxBoxes; index < totalBoxes; index++) {
@@ -86,8 +93,7 @@ function drawSOSA() {
       tops[index] = (tops [2 * index + 1] + tops [2 * index + 2]) / 2;
    }
 
-   drawBox = function(x, index) {
-      person = sosa [index + 1];
+   drawBox = function (person, x, y, sosa) {
       if (person && person.sex == "M") {
          var bg = '#D6E0EA';
          var fg = '#9CA3D4';
@@ -99,25 +105,25 @@ function drawSOSA() {
          var fg = '#9CA3D4';
       }
       if (person) {
-         svg.rect (x, tops[index], boxWidth, boxHeight,
+         svg.rect (x, y, boxWidth, boxHeight,
                   {stroke:fg, fill:bg, filter:"url(#shadow)",
-                   sosa:index + 1,
+                   sosa:sosa,
                    onclick:'onClick(evt)',
                    onmouseover:'onMouseOver(evt)',
                    onmouseout:'onMouseOut(evt)'});
-         var clip = svg.other ('clipPath', {id:'person'+index});
-         svg.rect (clip, x, tops[index], boxWidth, boxHeight);
+         var clip = svg.other ('clipPath', {id:'p'+person.id});
+         svg.rect (clip, x, y, boxWidth, boxHeight);
 
         if (person.name) {
-          svg.text(x + 4, tops[index] + 16,
+          svg.text(x + 4, y + 16,
                svg.createText().string(person.name)
                .span ("b:", {x:x+4, dy:"1em"})
                .span ("d:", {x:x+4, dy:"1em"}),
-               {"font-weight":"bold", "clip-path":"url(#person"+index+")",
+               {"font-weight":"bold", "clip-path":"url(#p"+person.id+")",
                 "pointer-events":"none"});
         }
       } else {
-         svg.rect (x, tops[index], boxWidth, boxHeight,
+         svg.rect (x, y, boxWidth, boxHeight,
                   {stroke:fg, fill:bg, "stroke-dasharray":"3",
                    onmouseover:'onMouseOver(evt)',
                    onmouseout:'onMouseOut(evt)'});
@@ -126,7 +132,7 @@ function drawSOSA() {
 
    index = 0;
    for (var gen = 0; gen < generations; gen++) {
-      var x = (boxWidth + horizPadding) * gen + 1;
+      var x = (boxWidth + horizPadding) * gen + startX;
       for (var box = Math.pow (2, gen); box >= 1; box--) {
          if (gen < generations - 1) {
             var x2 = x + boxWidth + horizPadding;
@@ -146,9 +152,30 @@ function drawSOSA() {
                          onmouseout:'onTxtMouseOut(evt)'});
             }
          }
-         drawBox (x, index);
+         drawBox (sosa [index + 1], x, tops[index], index + 1);
          index ++;
       }
+   }
+
+   {# draw children #}
+   if (children) {
+      var space = (maxHeight - children.length * boxHeight) 
+         / (children.length + 1);
+      var y = space;
+      for (var c=0; c < children.length; c++) {
+         drawBox (children [c], 1, y, -1 - c);
+         var x2 = x + boxWidth + horizPadding;
+         var y2 = tops[2 * index + 2] + boxHeight / 2;
+         svg.path (svg.createPath()
+                   .moveTo (startX, tops[0] + boxHeight / 2)
+                   .horizTo (startX - horizPadding / 2)
+                   .vertTo (y + boxHeight / 2)
+                   .horizTo (1 + boxWidth),
+                   {stroke:'black', fill:'none'});
+         y += boxHeight + space;
+      }
+   } else {
+      console.log ("no children");
    }
 }
 $(function(){

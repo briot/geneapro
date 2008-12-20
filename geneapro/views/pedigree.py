@@ -4,14 +4,15 @@ from django.utils.translation import ugettext as _
 from django.utils import simplejson
 from django.http import HttpResponse
 from django.db import connection
+from django.db.models import Q
 from mysites.geneapro.models import *
 import sys
 
 class ModelEncoder (simplejson.JSONEncoder):
    def default(self, obj):
-      if isinstance(obj, GeneaproModel):
+      if isinstance (obj, GeneaproModel):
          return obj.to_json()
-      return super (ModelEncoder, self).default (ob)
+      return super (ModelEncoder, self).default (obj)
 
 def to_json (obj):
    """Converts a type to json data, properly converting database instances"""
@@ -36,12 +37,25 @@ def get_parents (dic, person, max_level, sosa=1):
 def data (request):
     generations = int (request.GET.get ("generations", 4))
     id          = int (request.GET ["id"])
+
+    # Get ancestors
+
     tree = dict ()
     try:
-       get_parents (tree, Persona.parents.get (pk=id), generations)
+       p = Persona.parents.get (pk=id)
+       get_parents (tree, p, generations)
     except Persona.DoesNotExist:
        pass
-    data = to_json ({'generations':generations, 'sosa':tree})
+
+    # Get children (2 queries)
+
+    parent = p.subject1.filter (Q (value="father of")| Q (value="mother of"))
+    children = Persona.parents.filter (
+        id__in=parent.values_list ("subject2", flat=True)) 
+
+    data = to_json ({'generations':generations, 'sosa':tree,
+                     'children':list (children)})
+
     for q in connection.queries:
        print q["sql"]
     print "total=" + str (len (connection.queries))

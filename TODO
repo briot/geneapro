@@ -7,8 +7,10 @@ Assertion.Value should point into a table rather than be a text
 ** We no longer see javascript errors ???
 
 * Pedigree View
-** Display the children of a person in the pedigree view
 ** BACK button should go back to previous pedigree view
 ** Should cache pedigree data locally to avoid reloading when going back
    (perhaps only save a few generations, although this is not big)
 ** Allow user to configure number of generations
+** When showing children, show the name of the matching spouse
+** Display in bold only the De Cujus, others not in bold
+** Show animation when clicking on a box

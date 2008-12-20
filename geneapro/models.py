@@ -437,6 +437,8 @@ class ParentsManager (models.Manager):
 
     def get_query_set(self):
         if not hasattr (self, "_query"):
+           ## ??? We might be able to use QuerySet.values ("subject2") somehow
+           ## instead of writting our own query
            self._query = \
               "SELECT %s FROM %s WHERE %s=%s AND value='%%s' LIMIT 1" % \
               (sql_field_name (Assertion, "subject1"),
@@ -481,10 +483,10 @@ class Persona (Entity):
         return self.name
 
     def to_json (self):
+        # This only works if self was generated through the parents manager
+        # If not defined, we get an exception. The caller needs to be fixed,
+        # not here
         return {"id":self.id, "name":self.name, "sex":self.sex}
-
-    #def get_sex (self):
-    #    return self.characteristic_set.filter(parts__type__name='sex')[0].parts.get().name
 
     objects = models.Manager ()
     parents = ParentsManager ()
