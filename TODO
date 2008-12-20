@@ -12,5 +12,4 @@ Assertion.Value should point into a table rather than be a text
    (perhaps only save a few generations, although this is not big)
 ** Allow user to configure number of generations
 ** When showing children, show the name of the matching spouse
-** Display in bold only the De Cujus, others not in bold
 ** Show animation when clicking on a box

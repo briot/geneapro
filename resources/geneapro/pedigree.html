@@ -115,11 +115,12 @@ function drawSOSA() {
          svg.rect (clip, x, y, boxWidth, boxHeight);
 
         if (person.name) {
+          var fontweight = (sosa == 1) ? "bold" : "normal";
           svg.text(x + 4, y + 16,
                svg.createText().string(person.name)
                .span ("b:", {x:x+4, dy:"1em"})
                .span ("d:", {x:x+4, dy:"1em"}),
-               {"font-weight":"bold", "clip-path":"url(#p"+person.id+")",
+               {"font-weight":fontweight, "clip-path":"url(#p"+person.id+")",
                 "pointer-events":"none"});
         }
       } else {
@@ -163,7 +164,6 @@ function drawSOSA() {
          / (children.length + 1);
       var y = space;
       for (var c=0; c < children.length; c++) {
-         drawBox (children [c], 1, y, -1 - c);
          var x2 = x + boxWidth + horizPadding;
          var y2 = tops[2 * index + 2] + boxHeight / 2;
          svg.path (svg.createPath()
@@ -172,6 +172,7 @@ function drawSOSA() {
                    .vertTo (y + boxHeight / 2)
                    .horizTo (1 + boxWidth),
                    {stroke:'black', fill:'none'});
+         drawBox (children [c], 1, y, -1 - c);
          y += boxHeight + space;
       }
    } else {
