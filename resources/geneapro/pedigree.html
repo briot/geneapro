@@ -14,6 +14,8 @@ var sosa=null;
 var generations=null;
 var children=null;
 
+var tops=null;
+
 function onMouseOver (evt) {
   var box = evt.target;
   box.setAttribute ('oldstroke', box.getAttribute ('stroke'));
@@ -33,18 +35,20 @@ function ongetJSON (data, status) {
   drawSOSA ();
 }
 function getPedigree (id) {
-  setBusy ($("#pedigreeSVG"));
+  //setBusy ($("#pedigreeSVG"));
   $.getJSON ("{% url pedigree_data %}", {id:id, generations:generations}, ongetJSON);
 }
 function onClick (evt) {
   var box = evt.target;
   if (box.getAttribute ("sosa") != 1) {
      var num = box.getAttribute ("sosa");
-     if (num < 0)
-        var id = children[-1 - num].id;
-     else
-        var id = sosa[num].id;
-     getPedigree (id);
+     var id = (num < 0) ? children[-1 - num].id : sosa[num].id;
+     var startX = (children ? boxWidth + horizPadding : 0) + 1;
+     //var svg = $('#pedigreeSVG').svg('get');
+     //svg.root().setAttribute ("opacity",0.2);
+     var delay = 200;
+     $(box.parentNode).animate ({'svg-x':startX, 'svg-y':tops[0]}, delay);
+     setTimeout (function() {getPedigree (id);return false}, delay);
   }
 }
 function onTxtMouseOver (evt) {
@@ -76,7 +80,7 @@ function drawSOSA() {
    svg.filters.offset (filter, 'finalBlur', 'myBlur', 3, 3);
    svg.filters.merge (filter, '', ['finalBlur', 'SourceGraphic']);
 
-   var tops = new Array(totalBoxes);
+   tops = new Array(totalBoxes);
 
    {# Compute the positions for the last generation #}
 
@@ -105,22 +109,23 @@ function drawSOSA() {
          var fg = '#9CA3D4';
       }
       if (person) {
-         svg.rect (x, y, boxWidth, boxHeight,
+         var g = svg.svg (x, y);
+         svg.rect (g, 0, 0, boxWidth, boxHeight,
                   {stroke:fg, fill:bg, filter:"url(#shadow)",
                    sosa:sosa,
                    onclick:'onClick(evt)',
                    onmouseover:'onMouseOver(evt)',
                    onmouseout:'onMouseOut(evt)'});
-         var clip = svg.other ('clipPath', {id:'p'+person.id});
-         svg.rect (clip, x, y, boxWidth, boxHeight);
+         var clip = svg.other (g, 'clipPath', {id:'p'+sosa});
+         svg.rect (clip, 0, 0, boxWidth, boxHeight);
 
         if (person.name) {
           var fontweight = (sosa == 1) ? "bold" : "normal";
-          svg.text(x + 4, y + 16,
+          svg.text(g, 4, 16,
                svg.createText().string(person.name)
-               .span ("b:", {x:x+4, dy:"1em"})
-               .span ("d:", {x:x+4, dy:"1em"}),
-               {"font-weight":fontweight, "clip-path":"url(#p"+person.id+")",
+               .span ("b:", {x:4, dy:"1em"})
+               .span ("d:", {x:4, dy:"1em"}),
+               {"font-weight":fontweight, "clip-path":"url(#p"+sosa+")",
                 "pointer-events":"none"});
         }
       } else {
