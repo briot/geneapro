@@ -9,3 +9,5 @@ Display the children of a person in the pedigree view
 Background color should depend on person's sex, not mod2
 
 Busy cursor while downloading json data (and prevent further clicks)
+
+We no longer see javascript errors ???

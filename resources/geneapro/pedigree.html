@@ -2,7 +2,7 @@
 {% block title %}GeneaPro: pedigree{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
-#pedigreeSVG {width:100%;height:100%;margin:10px 0 10px 0;border:0}
+#pedigreeSVG {width:100%;height:600px;margin:10px 0 10px 0;border:0}
 {% endblock css %}
 {% block contents %}
 <script type="text/javascript">
@@ -44,7 +44,7 @@ function onTxtMouseOut (evt) {
 }
 
 function drawSOSA() {
-   var svg = $('#pedigreeSVG').svg('get');
+   var svg = $('#pedigreeSVG').height ("100%").svg('get');
    svg.clear ();
    var maxBoxes = Math.pow (2,generations-1);{# max boxes at last generation #}
    var totalBoxes = Math.pow (2,generations) - 1; {# geometrical summation #}
