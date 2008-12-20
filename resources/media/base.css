@@ -145,3 +145,8 @@ div.hr {clear:both}
    line-height:2em;
    font-size:1.1em;
 }
+
+.throbber {filter:alpha(opacity=30); opacity:0.3;
+           cursor:wait; display:inline; position:absolute;
+           background-color:#EEE; background-repeat:no-repeat;
+           background-position:center center}

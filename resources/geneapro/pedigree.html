@@ -24,11 +24,21 @@ function onMouseOut (evt) {
   box.setAttribute ('stroke', box.getAttribute ('oldstroke'));
   box.setAttribute ('filter','url(#shadow)');
 }
+function ongetJSON (data, status) {
+  unsetBusy ();
+  sosa = data.sosa;
+  generations = data.generations;
+  drawSOSA ();
+}
+function getPedigree (id) {
+  setBusy ($("#pedigreeSVG"));
+  $.getJSON ("pedigreeData", {id:id, generations:generations}, ongetJSON);
+}
 function onClick (evt) {
   var box = evt.target;
   if (box.getAttribute ("sosa") != 1) {
      var id = sosa[box.getAttribute ("sosa")].id;
-     $.getJSON ("pedigreeData", {id:id, generations:generations}, ongetJSON);
+     getPedigree (id);
   }
 }
 function onTxtMouseOver (evt) {
@@ -133,14 +143,10 @@ function drawSOSA() {
       }
    }
 }
-function ongetJSON (data, status) {
-  sosa = data.sosa;
-  generations = data.generations;
-  drawSOSA ();
-}
 $(function(){
   $('#pedigreeSVG').svg();
-  $.getJSON ("pedigreeData", {id:13023, generations:4}, ongetJSON);
+  generations = 4;
+  getPedigree (13023);
 });
 </script>
 <div id="pedigreeSVG"></div>

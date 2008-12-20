@@ -4,10 +4,13 @@ Create indexes in database:
    (Assertion.subject1, Assertion.value)   ???
    (Assertion.subject2, Assertion.value)   ???
 Assertion.Value should point into a table rather than be a text
+** We no longer see javascript errors ???
 
-Display the children of a person in the pedigree view
-Background color should depend on person's sex, not mod2
-
-Busy cursor while downloading json data (and prevent further clicks)
-
-We no longer see javascript errors ???
+* Pedigree View
+** Display the children of a person in the pedigree view
+** Background color should depend on person's sex, not mod2
+** BACK button should go back to previous pedigree view
+** Should cache pedigree data locally to avoid reloading when going back
+   (perhaps only save a few generations, although this is not big)
+** Allow use to configure number of generations
+** Use reverse url to get pedigreeData
