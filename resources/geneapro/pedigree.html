@@ -32,7 +32,7 @@ function ongetJSON (data, status) {
 }
 function getPedigree (id) {
   setBusy ($("#pedigreeSVG"));
-  $.getJSON ("pedigreeData", {id:id, generations:generations}, ongetJSON);
+  $.getJSON ("{% url pedigree_data %}", {id:id, generations:generations}, ongetJSON);
 }
 function onClick (evt) {
   var box = evt.target;

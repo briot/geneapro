@@ -12,4 +12,3 @@ Assertion.Value should point into a table rather than be a text
 ** Should cache pedigree data locally to avoid reloading when going back
    (perhaps only save a few generations, although this is not big)
 ** Allow user to configure number of generations
-** Use reverse url to get pedigreeData

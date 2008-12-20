@@ -5,6 +5,6 @@ import mysites.geneapro.views.pedigree
 urlpatterns = patterns('',
 	(r'^$', views.index),
 	(r'^sources$', views.sources),
-	(r'^pedigreeData$', views.pedigree.data),
+	url (r'^pedigreeData$', views.pedigree.data, name="pedigree_data"),
 	(r'^pedigree$',     views.pedigree.view),
 )
