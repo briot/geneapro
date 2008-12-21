@@ -57,7 +57,8 @@ class GedcomImporter (object):
           self._char_types [c.gedcom] = c
 
     def _create_all (self, tag, callback):
-       for key, value in self._data.iteritems ():
+       for key in sorted (self._data.keys()):
+           value = self._data[key]
            if value.get ("type") == tag:
               self._personas [key] = callback (value)
 
@@ -67,6 +68,25 @@ class GedcomImporter (object):
 
        wife = data.get ("WIFE")
        if wife: wife = self._personas [wife [1:-1]]
+
+       marriage = data.get ("MARR")
+       if marriage:
+          if not isinstance (marriage, list): marriage = [marriage]
+          for mar in marriage:
+             date = mar.get ("DATE")
+             if not isinstance (date, list): date = [date]
+             for d in date:
+                evt = Event.objects.create (
+                     type=self._event_types ["MARR"],
+                     place=None,
+                     name="Marriage",
+                     date=d)
+                a = Assertion.objects.create (
+                     surety = self._default_surety,
+                     researcher = self._researcher,
+                     subject1 = husb,
+                     subject2 = wife,
+                     value = "marriage")
 
        children = data.get ("CHIL")
        if children:
@@ -222,10 +242,3 @@ class GedcomFileImporter (mysites.geneapro.importers.Importer):
        if parser.getRecords ():
           GedcomImporter (parser.getRecords ())
        
-def test ():
-   GedcomFileImporter ().parse (file ("famille.ged"))
-
-if __name__ == "__main__":
-   test ()
-
-
