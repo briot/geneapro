@@ -53,6 +53,20 @@ def data (request):
     children = Persona.parents.filter (
         id__in=parent.values_list ("subject2", flat=True)) 
 
+    # Query to get the events
+#select geneapro_assertion.value, geneapro_assertion.subject1_id,
+#geneapro_assertion.subject2_id, geneapro_event.name, geneapro_event.type_id,
+#geneapro_event.date, geneapro_characteristic_part.type_id,
+#geneapro_characteristic_part.name, geneapro_persona.name from
+#((geneapro_assertion LEFT JOIN geneapro_event
+#  ON geneapro_assertion.subject2_id = geneapro_event.entity_ptr_id)
+#LEFT JOIN geneapro_characteristic_part
+#ON geneapro_assertion.subject2_id =
+#   geneapro_characteristic_part.characteristic_id)
+#LEFT JOIN geneapro_persona
+#ON geneapro_assertion.subject2_id = geneapro_persona.entity_ptr_id
+#where subject1_id=1 and not disproved;
+
     data = to_json ({'generations':generations, 'sosa':tree,
                      'children':list (children)})
 

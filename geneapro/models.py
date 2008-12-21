@@ -69,6 +69,9 @@ class Config (GeneaproModel):
        help_text="Version number of this database. Used to detect what"
               + " updates need to be performed")
 
+    class Meta:
+       db_table="config"
+
 class Researcher (GeneaproModel):
     """
     A researcher is a person who gathers data or made assertions
@@ -81,6 +84,9 @@ class Researcher (GeneaproModel):
 
     def __unicode__ (self):
         return self.name
+
+    class Meta:
+       db_table="researcher"
 
 class Surety_Scheme (GeneaproModel):
     """
@@ -98,6 +104,9 @@ class Surety_Scheme (GeneaproModel):
     def __unicode__ (self):
         return self.name
 
+    class Meta:
+       db_table="surety_scheme"
+
 class Surety_Scheme_Part (GeneaproModel):
     """
     An element of a Surety_Scheme
@@ -113,6 +122,9 @@ class Surety_Scheme_Part (GeneaproModel):
 
     class Meta:
         ordering = ('-sequence_number', 'name')
+
+    class Meta:
+       db_table="surety_scheme_part"
 
 class Project (GeneaproModel):
     """
@@ -133,6 +145,9 @@ class Project (GeneaproModel):
     def __unicode__ (self):
         return "name=" + self.name
 
+    class Meta:
+       db_table="project"
+
 class Researcher_Project (GeneaproModel):
     """
     A project is conducted by one or more researchers, and a
@@ -145,8 +160,9 @@ class Researcher_Project (GeneaproModel):
         help_text="Role that the researcher plays for that project")
 
     class Meta:
-        unique_together = (("researcher", "project"))
-    
+       unique_together = (("researcher", "project"))
+       db_table="researched_project"
+
 class Research_Objective (GeneaproModel):
     """
     Contains comments about one objective that the researcher has
@@ -164,7 +180,8 @@ class Research_Objective (GeneaproModel):
 
     class Meta:
         ordering = ("sequence_number", "name")
-    
+        db_table = "research_objective"
+ 
 class Activity (GeneaproModel):
     """
     An activity allows a researcher to translate a Research_Objective
@@ -186,6 +203,7 @@ class Activity (GeneaproModel):
 
     class Meta:
         ordering = ("scheduled_date", "completed_date")
+        db_table = "activity"
 
 class Source_Medium (GeneaproModel):
     """
@@ -200,6 +218,7 @@ class Source_Medium (GeneaproModel):
 
     class Meta:
         ordering = ("name",)
+        db_table = "source_medium"
 
 class Place (GeneaproModel):
     """
@@ -225,6 +244,7 @@ class Place (GeneaproModel):
 
     class Meta:
         ordering = ("date_sort",)
+        db_table = "place"
 
 class Part_Type (GeneaproModel):
     """
@@ -241,6 +261,7 @@ class Part_Type (GeneaproModel):
     class Meta:
         abstract = True
         ordering = ("name",)
+        db_table = "part_type"
 
     def __unicode__ (self):
         if self.gedcom:
@@ -252,7 +273,9 @@ class Place_Part_Type (Part_Type):
     """
     Contains information about various schemes for organizing place data
     """
-    pass
+
+    class Meta:
+       db_table = "place_part_type"
 
 class Place_Part (GeneaproModel):
     """
@@ -273,6 +296,7 @@ class Place_Part (GeneaproModel):
     class Meta:
         order_with_respect_to = 'place'
         ordering = ('sequence_number', 'name')
+        db_table = "place_part"
 
     def __unicode__ (self):
         return str (self.type) + "=" + self.name
@@ -290,6 +314,7 @@ class Repository_Type (GeneaproModel):
 
     class Meta:
         ordering = ("name",)
+        db_table = "repository_type"
     
 class Repository (GeneaproModel):
     """
@@ -302,6 +327,9 @@ class Repository (GeneaproModel):
     name  = models.CharField (max_length=200)
     type  = models.ForeignKey (Repository_Type)
     info  = models.TextField (null=True)
+
+    class Meta:
+       db_table = "repository"
 
 class Source (GeneaproModel):
     """
@@ -335,6 +363,9 @@ class Source (GeneaproModel):
     medium        = models.ForeignKey (Source_Medium)
     comments      = models.TextField (null=True)
 
+    class Meta:
+       db_table = "source"
+
 class Repository_Source (GeneaproModel):
     """
     Links repositories to the sources they contains, and the sources to
@@ -346,6 +377,9 @@ class Repository_Source (GeneaproModel):
     activity    = models.ForeignKey (Activity)
     call_number = models.CharField (max_length=200, null=True)
     description = models.TextField (null=True)
+
+    class Meta:
+       db_table = "repository_source"
 
 class Search (GeneaproModel):
     """
@@ -362,6 +396,9 @@ class Search (GeneaproModel):
     repository   = models.ForeignKey (Repository)
     searched_for = models.TextField (null=True)
 
+    class Meta:
+       db_table = "search"
+
 class Source_Group (GeneaproModel):
     """
     This can be used to group sources into groups relevant to the user,
@@ -370,6 +407,9 @@ class Source_Group (GeneaproModel):
 
     sources = models.ManyToManyField (Source, related_name="groups")
     name = models.CharField (max_length=100)
+
+    class Meta:
+       db_table = "source_group"
 
 class Representation (GeneaproModel):
     """
@@ -382,11 +422,16 @@ class Representation (GeneaproModel):
     file = models.TextField ()
     comments = models.TextField (null=True)
 
+    class Meta:
+       db_table = "representation"
+
 class Citation_Part_Type (Part_Type):
     """
     The type of elements associated with a citation
     """
-    pass
+
+    class Meta:
+       db_table = "citation_part_type"
 
 class Citation_Part (GeneaproModel):
     """
@@ -396,6 +441,9 @@ class Citation_Part (GeneaproModel):
     source = models.ForeignKey (Source)
     type   = models.ForeignKey (Citation_Part_Type)
     value  = models.TextField ()
+
+    class Meta:
+       db_table = "citation_part"
 
 class Entity (GeneaproModel):
     """
@@ -409,7 +457,8 @@ class Entity (GeneaproModel):
     since all these high-level entities take their id from this Entity table.
     """
 
-    pass
+    class Meta:
+       db_table = "entity"
 
 def sql_field_name (cls, field_name):
     """Help write custom SQL queries"""
@@ -466,7 +515,7 @@ class ParentsManager (models.Manager):
         return super (ParentsManager, self).get_query_set().extra (select={
            'father_id': self._query % ("father of",),
            'mother_id': self._query % ("mother of",),
-           'sex': self._char_query % (1, "has")})  # 1=char_type (SEX)
+           'sex': self._char_query % (1, "charac")})  # 1=char_type (SEX)
 
 class Persona (Entity):
     """
@@ -491,11 +540,16 @@ class Persona (Entity):
     objects = models.Manager ()
     parents = ParentsManager ()
 
+    class Meta:
+        db_table = "persona"
+
 class Event_Type (Part_Type):
     """
     The type of events
     """
-    pass
+
+    class Meta:
+       db_table = "event_type"
 
 class Event_Type_Role (GeneaproModel):
     """
@@ -507,6 +561,12 @@ class Event_Type_Role (GeneaproModel):
         help_text="The event type for which the role is defined. If unset,"
                 + " this applies to all events")
     name = models.CharField (max_length=50)
+
+    class Meta:
+       db_table = "event_type_role"
+
+    def __unicode__ (self):
+       return str (self.id) + ": " + self.type.name + " => " + self.name
 
 class Event (Entity):
     """
@@ -523,8 +583,12 @@ class Event (Entity):
                 + " This date is internally parsed into date_sort"
                 + " which is used for sorting purposes")
 
+    class Meta:
+       db_table = "event"
+
 class Characteristic_Part_Type (Part_Type):
-    pass
+    class Meta:
+       db_table = "characteristic_part_type"
 
 class Characteristic (Entity):
     """
@@ -535,6 +599,9 @@ class Characteristic (Entity):
 
     place = models.ForeignKey (Place, null=True)
     date  = PartialDateField (null=True)
+
+    class Meta:
+       db_table = "characteristic"
 
 class Characteristic_Part (GeneaproModel):
     """
@@ -550,6 +617,7 @@ class Characteristic_Part (GeneaproModel):
 
     class Meta:
         ordering = ("sequence_number", "name")
+        db_table = "characteristic_part"
 
     def __unicode__ (self):
         return self.type.name + "=" + self.name
@@ -562,7 +630,8 @@ class Group_Type (Part_Type):
     described by a Group_Type_Role
     """
 
-    pass
+    class Meta:
+       db_table = "group_type"
 
 class Group_Type_Role (GeneaproModel):
     """
@@ -575,6 +644,7 @@ class Group_Type_Role (GeneaproModel):
 
     class Meta:
         ordering = ("sequence_number", "name")
+        db_table = "group_type_role"
 
 class Group (Entity):
     """
@@ -591,6 +661,9 @@ class Group (Entity):
                  + " document, and another group might be a similar group"
                  + " listed in another document, or same document at a"
                  + " different time")
+
+    class Meta:
+       db_table = "group"
 
 class Assertion (GeneaproModel):
     """
@@ -614,19 +687,14 @@ class Assertion (GeneaproModel):
     rationale  = models.TextField (null=True)
     disproved  = models.BooleanField (default=False)
 
+    class Meta:
+       db_table = "assertion"
+
 class Assertion_Assertion (GeneaproModel):
     original = models.ForeignKey (Assertion, related_name="leads_to")
     deduction = models.ForeignKey (Assertion, related_name="deducted_from")
     sequence_number = models.IntegerField (default=1)
 
     class Meta:
-        ordering = ("sequence_number",)
-
- 
-# from mysites.geneapro.models import *
-# p = Place ()
-# p.save ()
-# p.place_part_set.create (type=Place_Part_Type.objects.get(pk=1), name="France")
-
-# from django.db import connection
-# connection.queries
+       ordering = ("sequence_number",)
+       db_table = "assertion_assertion"

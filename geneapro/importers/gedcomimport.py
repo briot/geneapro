@@ -32,6 +32,8 @@ class GedcomImporter (object):
           self._default_surety = prj.scheme.parts.all ()
           self._default_surety = \
              self._default_surety [len (self._default_surety) / 2]
+          self._event_role_marriage_husband = 1
+          self._event_role_marriage_wife = 2
 
           self._get_all_event_types () 
           self._personas = dict ()
@@ -85,8 +87,16 @@ class GedcomImporter (object):
                      surety = self._default_surety,
                      researcher = self._researcher,
                      subject1 = husb,
-                     subject2 = wife,
-                     value = "marriage")
+                     subject2 = evt,
+                     event_role_id= self._event_role_marriage_husband,
+                     value = "event")
+                a = Assertion.objects.create (
+                     surety = self._default_surety,
+                     researcher = self._researcher,
+                     subject1 = wife,
+                     subject2 = evt,
+                     event_role_id= self._event_role_marriage_wife,
+                     value = "event")
 
        children = data.get ("CHIL")
        if children:
@@ -149,7 +159,7 @@ class GedcomImporter (object):
                         researcher = self._researcher,
                         subject1 = indi,
                         subject2 = c,
-                        value = "has")
+                        value = "charac")
 
            except KeyError:
               try:
@@ -168,7 +178,7 @@ class GedcomImporter (object):
                           researcher = self._researcher,
                           subject1 = indi,
                           subject2 = evt,
-                          value = "has")
+                          value = "charac")
 
               except KeyError:
                  if key not in ("NAME", "type", "SOUR",
