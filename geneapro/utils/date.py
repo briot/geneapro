@@ -57,32 +57,20 @@ month_names = {_("jan"):1,
                _("dec"):12,
                _("december"):12}
 
-french_months = {
-  "vendemiaire":1,
-  "vend":1,
-  "brumaire":2,
-  "brum":2,
-  "frimaire":3,
-  "frim":3,
-  "nivose":4,
-  "niv":4,
-  "pluviose":5,
-  "pluv":5,
-  "ventose":6,
-  "vent":6,
-  "germinal":7,
-  "germ":7,
-  "floreal":8,
-  "flor":8,
-  "prairial":9,
-  "prai":9,
-  "messidor":10,
-  "mess":10,
-  "thermidor":11,
-  "therm":11,
-  "fructidor":12,
-  "fruct":12,
-  "":13}
+french_months = [
+  ("vendemiaire", "vend"),
+  ("brumaire", "brum"),
+  ("frimaire", "frim"),
+  ("nivose", "nivo"),
+  ("pluviose", "pluv"),
+  ("ventose",  "vent"),
+  ("germinal", "germ"),
+  ("floreal", "flor"),
+  ("prairial", "prai"),
+  ("messidor", "mess"),
+  ("thermidor", "ther"),
+  ("fructidor", "fruc"),
+  ("",)]
 
 ## No translation below
 
@@ -100,7 +88,7 @@ yyyymmdd_re = re.compile ("^\s*" + year_re + "[-/](\d?\d)[-/](\d?\d)$",
 iso_re = re.compile ("^\s*" + year_re + "(\d{2})(\d{2})$", re.IGNORECASE)
 ddmmyyyy_re = re.compile ("^\s*(\d\d)[/-](\d\d)[/-]" + year_re + "$",
                           re.IGNORECASE)
-spelled_out_re = re.compile ("^\s*(\d\d?)\s+(\w+),?\s*" + year_re + "$",
+spelled_out_re = re.compile ("^\s*(?:(\d\d?)\s+)?([a-z]+),?\s*" + year_re + "$",
                              re.IGNORECASE)
 spelled_out2_re = re.compile ("^\s*(\w+)\s+(\d\d?),?\s*" + year_re + "$",
                              re.IGNORECASE)
@@ -111,7 +99,7 @@ before_re = re.compile ("(<|before|bef|avant|[^\d]/(\\d))",
                         re.IGNORECASE)
 after_re  = re.compile ("(>|after|aft|apres|(\\d)/[^\d])",
                         re.IGNORECASE)
-about_re  = re.compile ("\s*\\b(about|abt\\.?|circa|ca|environ|env|~)\\b\s*",
+about_re  = re.compile ("\s*(\\babout\\b|\\babt\\.?|\\bcirca\\b|\\bca\\b|\\benviron\\b|\\benv\\b|~)\s*",
                         re.IGNORECASE)
 
 # "cal" is used for "calculated" in gramps
@@ -210,8 +198,11 @@ def get_ymd (txt, months):
          month = months[m.group (2).lower()]
       except KeyError:
          month = months[""]
-      return (__get_year (m.group (3)), month, int (m.group (1)),
-              True, True, True)
+      try:
+         day = int (m.group (1))
+      except:
+         day = 1
+      return (__get_year (m.group (3)), month, day, True, True, True)
 
    m = spelled_out2_re.search (txt)
    if m:
@@ -365,8 +356,13 @@ class Calendar_French (Calendar):
    def __init__ (self):
      # The @#DFRENCH R@ notation comes from gramps
      Calendar.__init__ (self, "\\b(F|FR|French Republican)\\b|@#DFRENCH R@")
+     self._french_months = dict ()
+     for index, f in enumerate (french_months):
+        for m in f:
+          self._french_months[m] = index + 1
+
      self.__months_re = re.compile\
-         ("|".join ([m for m in french_months.keys() if m != ""]),
+         ("|".join ([m for m in self._french_months.keys() if m != ""]),
           re.IGNORECASE)
 
    def __str__ (self):
@@ -385,7 +381,8 @@ class Calendar_French (Calendar):
      return None
 
    def parse (self, txt, add_year=0, add_month=0, add_day=0):
-     year, month, day, y_known, m_known, d_known = get_ymd (txt, french_months)
+     year, month, day, y_known, m_known, d_known = \
+        get_ymd (txt, self._french_months)
      if year >= 1:
         year  = year + add_year
         month = month + add_month - 1
@@ -417,10 +414,7 @@ class Calendar_French (Calendar):
         if m == 13:
            output = output + _("jours feries ")
         else:
-           for p in french_months:
-              if french_months[p] == m:
-                 output = output + p + " "
-                 break
+           output = output + french_months [m - 1][0] + " "
 
      if year_known:
         output = output + to_roman_literal (y)
@@ -430,7 +424,7 @@ class Calendar_French (Calendar):
 class Calendar_Julian (Calendar):
    def __init__ (self):
      # OS stands for "Old style"
-     Calendar.__init__ (self, "\\b(JU|J|Julian|OS)\\n")
+     Calendar.__init__ (self, "\\b(JU|J|Julian|OS)\\b")
 
    def __str__ (self):
      return "Julian"

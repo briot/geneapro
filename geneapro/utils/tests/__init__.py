@@ -108,6 +108,7 @@ class DateTestCase (unittest.TestCase):
         self._assertDate ("jan 1, 2008", Jan_1_2008, "2008-01-01")
         self._assertDate ("jan 1 2008", Jan_1_2008, "2008-01-01")
         self._assertDate ("1 january 2008", Jan_1_2008, "2008-01-01")
+        self._assertDate ("EST JAN 2008", Jan_1_2008, "2008-01-01 ?")
         self._assertDate ("2008-01-01 est", Jan_1_2008, "2008-01-01 ?")
         self._assertDate ("2008", Jan_1_2008, "2008")
         self._assertDate ("2008 ?  ", Jan_1_2008, "2008 ?")
