@@ -15,5 +15,5 @@ Assertion.Value should point into a table rather than be a text
 ** Allow user to configure number of generations
 ** When showing children, show the name of the matching spouse
 ** Support for multiple parents (foster parents, ambiguities,...)
-** Display Birth and Death dates
+** Search for parents in aliases personas
 ** Display marriage dates

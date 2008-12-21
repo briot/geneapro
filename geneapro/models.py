@@ -460,61 +460,43 @@ class Entity (GeneaproModel):
     class Meta:
        db_table = "entity"
 
-def sql_field_name (cls, field_name):
-    """Help write custom SQL queries"""
-    if field_name == "pk":
-       f = cls._meta.pk
-    else:
-       f = cls._meta.get_field (field_name)
-    return "%s.%s" % (
-       connection.ops.quote_name (cls._meta.db_table),
-       connection.ops.quote_name (f.column))
-
-def sql_table_name (cls):
-    return connection.ops.quote_name (cls._meta.db_table)
-
 class ParentsManager (models.Manager):
     """
     A manager that adds extra parent_id and mother_id fields to each persona
     returned
     """
 
-    # ??? Does not handle case where a persona has multiple parents (either
-    #     foster parents, or simply because we are not sure which ones are
-    #     the real parents)
-    # ??? Should also look for parents for persona aliased to the current one
-
     def get_query_set(self):
         if not hasattr (self, "_query"):
-           ## ??? We might be able to use QuerySet.values ("subject2") somehow
-           ## instead of writting our own query
-           self._query = \
-              "SELECT %s FROM %s WHERE %s=%s AND value='%%s' LIMIT 1" % \
-              (sql_field_name (Assertion, "subject1"),
-               sql_table_name (Assertion),
-               sql_field_name (Assertion, "subject2"),
-               sql_field_name (Persona, "pk"))
+           self._p2p_query = \
+              "SELECT %(assert.subj1)s FROM %(assert)s" + \
+              "WHERE %(assert.subj2)s=%(persona.id)s" + \
+              "AND %(assert.value)s='%%s' LIMIT 1"
+           self._p2p_query = self._p2p_query % all_fields 
 
            self._char_query = \
-              "SELECT %s FROM %s, %s WHERE %s=%s AND %s=%%d AND %s=%s AND %s='%%s' LIMIT 1" % \
-              (sql_field_name (Characteristic_Part, "name"),
+              "SELECT %(char_part.name)s" + \
+              " FROM %(char_part)s, %(assert)s" + \
+              " WHERE %(char_part.char)s=%(assert.subj2)s" + \
+              " AND %(char_part.type)s=%%d" + \
+              " AND %(assert.subj1)s=%(persona.id)s" + \
+              " AND %(assert.value)s='%%s' LIMIT 1"
+           self._char_query = self._char_query % all_fields
 
-               sql_table_name (Characteristic_Part),
-               sql_table_name (Assertion),
-
-               sql_field_name (Characteristic_Part, "characteristic"),
-               sql_field_name (Assertion, "subject2"),
-
-               sql_field_name (Characteristic_Part, "type"),
-
-               sql_field_name (Assertion, "subject1"),
-               sql_field_name (Persona, "pk"),
-
-               sql_field_name (Assertion, "value"))
+           self._event_query = \
+              "SELECT lower (%(event.date)s)" + \
+              "FROM %(assert)s, %(event)s" + \
+              "WHERE %(assert.subj2)s=%(event.id)s" + \
+              "AND %(assert.subj1)s=%(persona.id)s" + \
+              "AND %(assert.value)s='%%s'" + \
+              "AND %(event.type)s='%%d' LIMIT 1"
+           self._event_query = self._event_query % all_fields
 
         return super (ParentsManager, self).get_query_set().extra (select={
-           'father_id': self._query % ("father of",),
-           'mother_id': self._query % ("mother of",),
+           'father_id': self._p2p_query % ("father of",),
+           'mother_id': self._p2p_query % ("mother of",),
+           'birth': self._event_query % ('event', 1),
+           'death': self._event_query % ('event', 4),
            'sex': self._char_query % (1, "charac")})  # 1=char_type (SEX)
 
 class Persona (Entity):
@@ -535,7 +517,8 @@ class Persona (Entity):
         # This only works if self was generated through the parents manager
         # If not defined, we get an exception. The caller needs to be fixed,
         # not here
-        return {"id":self.id, "name":self.name, "sex":self.sex}
+        return {"id":self.id, "name":self.name, "sex":self.sex,
+                "birth":self.birth, "death":self.death}
 
     objects = models.Manager ()
     parents = ParentsManager ()
@@ -698,3 +681,35 @@ class Assertion_Assertion (GeneaproModel):
     class Meta:
        ordering = ("sequence_number",)
        db_table = "assertion_assertion"
+
+## This is used to help write custom SQL queries without hard-coding
+## table or field names
+
+def sql_table_name (cls):
+    return connection.ops.quote_name (cls._meta.db_table)
+
+def sql_field_name (cls, field_name):
+    """Help write custom SQL queries"""
+    if field_name == "pk":
+       f = cls._meta.pk
+    else:
+       f = cls._meta.get_field (field_name)
+    return "%s.%s" % (
+       sql_table_name (cls), connection.ops.quote_name (f.column))
+
+all_fields = {
+   'char_part.name': sql_field_name (Characteristic_Part, "name"),
+   'char_part':      sql_table_name (Characteristic_Part),
+   'assert':         sql_table_name (Assertion),
+   'char_part.char': sql_field_name (Characteristic_Part, "characteristic"),
+   'assert.subj2':   sql_field_name (Assertion, "subject2"),
+   'assert.subj1':   sql_field_name (Assertion, "subject1"),
+   'char_part.type': sql_field_name (Characteristic_Part, "type"),
+   'persona.id'    : sql_field_name (Persona, "pk"),
+   'assert.value'  : sql_field_name (Assertion, "value"),
+   'event.date'    : sql_field_name (Event, "date"),
+   'event':          sql_table_name (Event),
+   'event.id':       sql_field_name (Event, "pk"),
+   'event.type':     sql_field_name (Event, "type"),
+}
+

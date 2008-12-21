@@ -8,7 +8,7 @@
 <script type="text/javascript">
 var boxWidth = 200;
 var horizPadding = 20;
-var boxHeight = 50;
+var boxHeight = 60;
 var vertPadding = 20; {# vertical padding at last gen #}
 var sosa=null;
 var generations=null;
@@ -123,8 +123,12 @@ function drawSOSA() {
           var fontweight = (sosa == 1) ? "bold" : "normal";
           svg.text(g, 4, 16,
                svg.createText().string(person.name)
-               .span ("b:", {x:4, dy:"1em"})
-               .span ("d:", {x:4, dy:"1em"}),
+               .span ("b:", {x:4, dy:"1.4em"})
+               .span (person.birth, {"font-weight":"normal",
+                                     "font-style":"italic"})
+               .span ("d:", {x:4, dy:"1.2em"})
+               .span (person.death, {"font-weight":"normal",
+                                     "font-style":"italic"}),
                {"font-weight":fontweight, "clip-path":"url(#p"+sosa+")",
                 "pointer-events":"none"});
         }

@@ -178,7 +178,7 @@ class GedcomImporter (object):
                           researcher = self._researcher,
                           subject1 = indi,
                           subject2 = evt,
-                          value = "charac")
+                          value = "event")
 
               except KeyError:
                  if key not in ("NAME", "type", "SOUR",
