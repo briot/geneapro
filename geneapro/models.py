@@ -445,21 +445,6 @@ class Citation_Part (GeneaproModel):
     class Meta:
        db_table = "citation_part"
 
-class Entity (GeneaproModel):
-    """
-    This data model includes several types of high-level entities: personas,
-    groups, events and characteristic. Each of these is deduced from data
-    available in the various sources, and therefore various assertions exist
-    to link them all (A Persona takes part in an Event, a Persona belongs to
-    a Group,...). These assertions are described in a separate table that
-    needs pointers to two entities.
-    We therefore created this Entity table to ensure unique ids everywhere,
-    since all these high-level entities take their id from this Entity table.
-    """
-
-    class Meta:
-       db_table = "entity"
-
 class ParentsManager (models.Manager):
     """
     A manager that adds extra parent_id and mother_id fields to each persona
@@ -469,25 +454,28 @@ class ParentsManager (models.Manager):
     def get_query_set(self):
         if not hasattr (self, "_query"):
            self._p2p_query = \
-              "SELECT %(assert.subj1)s FROM %(assert)s" + \
-              "WHERE %(assert.subj2)s=%(persona.id)s" + \
-              "AND %(assert.value)s='%%s' LIMIT 1"
+              "SELECT %(p2p_assert.subj1)s FROM %(p2p_assert)s, %(assert)s" + \
+              " WHERE %(p2p_assert.subj2)s=%(persona.id)s" + \
+              " AND %(assert.pk)s=%(p2p_assert.pk)s" + \
+              " AND %(assert.value)s='%%s' LIMIT 1"
            self._p2p_query = self._p2p_query % all_fields 
 
            self._char_query = \
               "SELECT %(char_part.name)s" + \
-              " FROM %(char_part)s, %(assert)s" + \
-              " WHERE %(char_part.char)s=%(assert.subj2)s" + \
+              " FROM %(char_part)s, %(p2c_assert)s" + \
+              " WHERE %(char_part.char)s=%(p2c_assert.subj2)s" + \
               " AND %(char_part.type)s=%%d" + \
-              " AND %(assert.subj1)s=%(persona.id)s LIMIT 1"
+              " AND %(p2c_assert.subj1)s=%(persona.id)s LIMIT 1"
            self._char_query = self._char_query % all_fields
 
            self._event_query = \
               "SELECT lower (%(event.date)s)" + \
-              "FROM %(assert)s, %(event)s" + \
-              "WHERE %(assert.subj2)s=%(event.id)s" + \
-              "AND %(assert.subj1)s=%(persona.id)s" + \
-              "AND %(event.type)s='%%d' LIMIT 1"
+              " FROM %(p2e_assert)s, %(event)s" + \
+              " WHERE %(p2e_assert.subj2)s=%(event.id)s" + \
+              " AND %(p2e_assert.subj1)s=%(persona.id)s" + \
+              " AND %(event.type)s=%%d" + \
+              " AND %(p2e_assert.role)s=%%d" + \
+              " LIMIT 1"
            self._event_query = self._event_query % all_fields
 
         return super (ParentsManager, self).get_query_set().extra (select={
@@ -499,7 +487,7 @@ class ParentsManager (models.Manager):
            'death': self._event_query % (4), # 4=event_type (DEATH)
            'sex': self._char_query % (1)})  # 1=char_type (SEX)
 
-class Persona (Entity):
+class Persona (GeneaproModel):
     """
     Contains the core identification for individuals. Such individuals
     are grouped into group to represent a real individual. A persona
@@ -551,7 +539,7 @@ class Event_Type_Role (GeneaproModel):
     def __unicode__ (self):
        return str (self.id) + ": " + self.type.name + " => " + self.name
 
-class Event (Entity):
+class Event (models.Model):
     """
     An event is any type of happening
     A Event is associated with a Persona or a Group through an
@@ -573,7 +561,7 @@ class Characteristic_Part_Type (Part_Type):
     class Meta:
        db_table = "characteristic_part_type"
 
-class Characteristic (Entity):
+class Characteristic (models.Model):
     """
     A characteristic is any data that distinguishes one person from another.
     A Characteristic is associated with a Persona or a Group through an
@@ -629,7 +617,7 @@ class Group_Type_Role (GeneaproModel):
         ordering = ("sequence_number", "name")
         db_table = "group_type_role"
 
-class Group (Entity):
+class Group (models.Model):
     """
     The groups as found in our various sources
     """
@@ -678,10 +666,6 @@ class Assertion (GeneaproModel):
                 + " also come from one or more other assertions through the"
                 + " assertion_assertion table, in which case source_id is"
                 + " null")
-    subject1   = models.ForeignKey (Entity, related_name="subject1")
-    subject2   = models.ForeignKey (Entity, related_name="subject2")
-    group_role = models.ForeignKey (Group_Type_Role, null=True)
-    event_role = models.ForeignKey (Event_Type_Role, null=True)
     value      = models.TextField (
         help_text="Describes the value for an assertion, which could either"
                 + " point into a table, or be described as text, depending"
@@ -691,6 +675,34 @@ class Assertion (GeneaproModel):
 
     class Meta:
        db_table = "assertion"
+
+class P2C_Assertion (Assertion):
+    """Persona-to-Characteristic assertions"""
+    subject1 = models.ForeignKey (Persona, related_name="p2c_subject1")
+    subject2 = models.ForeignKey (Characteristic, related_name="p2c_subject2")
+
+    class Meta:
+       db_table = "p2c"
+
+class P2P_Assertion (Assertion):
+    """Persona-to-Persona assertions"""
+    subject1 = models.ForeignKey (Persona, related_name="p2p_subject1")
+    subject2 = models.ForeignKey (Persona, related_name="p2p_subject2")
+
+    class Meta:
+       db_table = "p2p"
+
+    def __unicode__ (self):
+       return unicode (self.subject1) + " " + self.value + " " + unicode (self.subject2)
+
+class P2E_Assertion (Assertion):
+    """Persona-to-Event assertions"""
+    subject1   = models.ForeignKey (Persona, related_name="p2e_subject1")
+    subject2   = models.ForeignKey (Event, related_name="p2e_subject2")
+    role       = models.ForeignKey (Event_Type_Role, null=True)
+
+    class Meta:
+       db_table = "p2e"
 
 class Assertion_Assertion (GeneaproModel):
     original = models.ForeignKey (Assertion, related_name="leads_to")
@@ -720,9 +732,21 @@ all_fields = {
    'char_part.name': sql_field_name (Characteristic_Part, "name"),
    'char_part':      sql_table_name (Characteristic_Part),
    'assert':         sql_table_name (Assertion),
+   'p2p_assert':     sql_table_name (P2P_Assertion),
+   'p2c_assert':     sql_table_name (P2C_Assertion),
+   'p2e_assert':     sql_table_name (P2E_Assertion),
    'char_part.char': sql_field_name (Characteristic_Part, "characteristic"),
-   'assert.subj2':   sql_field_name (Assertion, "subject2"),
-   'assert.subj1':   sql_field_name (Assertion, "subject1"),
+   'assert.pk':      sql_field_name (Assertion, "pk"),
+   'p2p_assert.pk':  sql_field_name (P2P_Assertion, "pk"),
+   'p2e_assert.pk':  sql_field_name (P2E_Assertion, "pk"),
+   'p2c_assert.pk':  sql_field_name (P2C_Assertion, "pk"),
+   'p2c_assert.subj2': sql_field_name (P2C_Assertion, "subject2"),
+   'p2c_assert.subj1': sql_field_name (P2C_Assertion, "subject1"),
+   'p2e_assert.subj2': sql_field_name (P2E_Assertion, "subject2"),
+   'p2e_assert.subj1': sql_field_name (P2E_Assertion, "subject1"),
+   'p2e_assert.role':  sql_field_name (P2E_Assertion, "role"),
+   'p2p_assert.subj2': sql_field_name (P2P_Assertion, "subject2"),
+   'p2p_assert.subj1': sql_field_name (P2P_Assertion, "subject1"),
    'char_part.type': sql_field_name (Characteristic_Part, "type"),
    'persona.id'    : sql_field_name (Persona, "pk"),
    'assert.value'  : sql_field_name (Assertion, "value"),

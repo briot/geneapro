@@ -83,19 +83,19 @@ class GedcomImporter (object):
                      place=None,
                      name="Marriage",
                      date=d)
-                a = Assertion.objects.create (
+                a = P2E_Assertion.objects.create (
                      surety = self._default_surety,
                      researcher = self._researcher,
                      subject1 = husb,
                      subject2 = evt,
-                     event_role_id= self._event_role_marriage_husband,
+                     role_id= self._event_role_marriage_husband,
                      value = "event")
-                a = Assertion.objects.create (
+                a = P2E_Assertion.objects.create (
                      surety = self._default_surety,
                      researcher = self._researcher,
                      subject1 = wife,
                      subject2 = evt,
-                     event_role_id= self._event_role_marriage_wife,
+                     role_id= self._event_role_marriage_wife,
                      value = "event")
 
        children = data.get ("CHIL")
@@ -107,14 +107,14 @@ class GedcomImporter (object):
           for c in children:
              c = self._personas [c[1:-1]]
              if husb:
-                a = Assertion.objects.create (
+                a = P2P_Assertion.objects.create (
                    surety = self._default_surety,
                    researcher = self._researcher,
                    subject1 = husb,
                    subject2 = c,
                    value = "father of")
              if wife:
-                a = Assertion.objects.create (
+                a = P2P_Assertion.objects.create (
                    surety = self._default_surety,
                    researcher = self._researcher,
                    subject1 = wife,
@@ -154,7 +154,7 @@ class GedcomImporter (object):
                         characteristic=c,
                         type=t,
                         name=str_value)
-                 a = Assertion.objects.create (
+                 a = P2C_Assertion.objects.create (
                         surety = self._default_surety,
                         researcher = self._researcher,
                         subject1 = indi,
@@ -173,7 +173,7 @@ class GedcomImporter (object):
                           place=None,
                           name="",
                           date=v.get ("DATE"))
-                       a = Assertion.objects.create (
+                       a = P2E_Assertion.objects.create (
                           surety = self._default_surety,
                           researcher = self._researcher,
                           subject1 = indi,

@@ -49,7 +49,8 @@ def data (request):
 
     # Get children (2 queries)
 
-    parent = p.subject1.filter (Q (value="father of")| Q (value="mother of"))
+    parent = p.p2p_subject1.filter (Q (value="father of") \
+                                    | Q (value="mother of"))
     children = Persona.parents.filter (
         id__in=parent.values_list ("subject2", flat=True)) 
 
