@@ -4,7 +4,6 @@ Create indexes in database:
    (Assertion.subject1, Assertion.value)   ???
    (Assertion.subject2, Assertion.value)   ???
 Assertion.Value should point into a table rather than be a text
-** We no longer see javascript errors ???
 
 * Pedigree View
 ** BACK button should go back to previous pedigree view
@@ -17,3 +16,20 @@ Assertion.Value should point into a table rather than be a text
 ** Support for multiple parents (foster parents, ambiguities,...)
 ** Search for parents in aliases personas
 ** Display marriage dates
+** "father of" and "mother of" are incorrect. They should be links to an
+   event with the appropriate roles
+** Make pedigree configurable:
+   Chose which events to show in each boxes ("birth" and "death" by default,
+   but should fallback on "baptism" and "burial" for instance, or the user
+   might want to see other info (if "residence", there can be multiple of
+   them)
+
+* GenTech model
+** Ambiguity to store children
+   Model seems to use a group "Children of x and y"
+   It is also possible to have an assertion between father and child and
+   another between mother and child
+   It is also possible to have a birth event, and each of father, mother
+   and child be associated with that event with different roles.
+   The last approach seems the best, since it at least groups them together
+   somehow.

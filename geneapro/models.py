@@ -479,8 +479,7 @@ class ParentsManager (models.Manager):
               " FROM %(char_part)s, %(assert)s" + \
               " WHERE %(char_part.char)s=%(assert.subj2)s" + \
               " AND %(char_part.type)s=%%d" + \
-              " AND %(assert.subj1)s=%(persona.id)s" + \
-              " AND %(assert.value)s='%%s' LIMIT 1"
+              " AND %(assert.subj1)s=%(persona.id)s LIMIT 1"
            self._char_query = self._char_query % all_fields
 
            self._event_query = \
@@ -488,16 +487,17 @@ class ParentsManager (models.Manager):
               "FROM %(assert)s, %(event)s" + \
               "WHERE %(assert.subj2)s=%(event.id)s" + \
               "AND %(assert.subj1)s=%(persona.id)s" + \
-              "AND %(assert.value)s='%%s'" + \
               "AND %(event.type)s='%%d' LIMIT 1"
            self._event_query = self._event_query % all_fields
 
         return super (ParentsManager, self).get_query_set().extra (select={
+           ## ??? "father of" should really be a link to a common event with
+           ## different roles
            'father_id': self._p2p_query % ("father of",),
            'mother_id': self._p2p_query % ("mother of",),
-           'birth': self._event_query % ('event', 1),
-           'death': self._event_query % ('event', 4),
-           'sex': self._char_query % (1, "charac")})  # 1=char_type (SEX)
+           'birth': self._event_query % (1), # 1=event_type (BIRTH)
+           'death': self._event_query % (4), # 4=event_type (DEATH)
+           'sex': self._char_query % (1)})  # 1=char_type (SEX)
 
 class Persona (Entity):
     """
@@ -650,6 +650,25 @@ class Group (Entity):
 
 class Assertion (GeneaproModel):
     """
+    Links two entities together, describing various facts we have learned
+    about in a source.
+    Not all combination of subject1 and subject2 make sense as per the
+    GenTech standard (although they are all allowed). The following
+    combination are described in the standard:
+      (Persona, Event)  # was part of an event (role is described separately)
+      (Persona, Group)  # is a member of a group (role is described)
+                        # Or "member of children of ..." (not used here)
+      (Persona, Characteristic) # has some attribute
+      (Event,   Event)  # One event occurred before another for instance
+      (Group,   Event)
+      (Group,   Persona)
+      (Group,   Group)  # Two groups might be the same for instance
+      (Group,   Characteristic) # e.g. prays on Sunday
+      (Characteristic, Group)   # occupation members of all jobs done by a
+                                # given person
+
+    It seems that the following are also expected
+      (Persona, Persona)  # When two persona represent the same person
     """
 
     surety     = models.ForeignKey (Surety_Scheme_Part)
