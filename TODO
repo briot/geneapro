@@ -23,13 +23,8 @@ Assertion.Value should point into a table rather than be a text
    but should fallback on "baptism" and "burial" for instance, or the user
    might want to see other info (if "residence", there can be multiple of
    them)
+** Children should be sorted by date of birth (the current implementation
+   is incorrect since the format of the date depends on how the date was
+   entered -- we should use event.date_sort rather than event.date, but use
+   the latter when displaying)
 
-* GenTech model
-** Ambiguity to store children
-   Model seems to use a group "Children of x and y"
-   It is also possible to have an assertion between father and child and
-   another between mother and child
-   It is also possible to have a birth event, and each of father, mother
-   and child be associated with that event with different roles.
-   The last approach seems the best, since it at least groups them together
-   somehow.

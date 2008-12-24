@@ -454,39 +454,49 @@ class ParentsManager (models.Manager):
     def get_query_set(self):
         if not hasattr (self, "_query"):
            self._p2p_query = \
-              "SELECT %(p2p_assert.subj1)s FROM %(p2p_assert)s, %(assert)s" + \
-              " WHERE %(p2p_assert.subj2)s=%(persona.id)s" + \
-              " AND %(assert.pk)s=%(p2p_assert.pk)s" + \
-              " AND %(assert.value)s='%%s' LIMIT 1"
+              "SELECT %(p2e.subj1)s" + \
+              " FROM %(p2e)s WHERE" + \
+              " %(p2e.role)s=%%d" + \
+              " AND %(p2e.subj2)s IN" + \
+              "   (SELECT %(p2e.subj2)s FROM %(p2e)s, %(event)s" + \
+              "    WHERE %(p2e.subj2)s=%(event.id)s" + \
+              "    AND %(p2e.subj1)s=%(persona.id)s" + \
+              "    AND %(event.type)s=1" + \
+              "    AND %(p2e.role)s=5)" + \
+              " AND %(persona.id)s!=%(p2e.subj1)s" + \
+              " LIMIT 1"
            self._p2p_query = self._p2p_query % all_fields 
 
            self._char_query = \
               "SELECT %(char_part.name)s" + \
-              " FROM %(char_part)s, %(p2c_assert)s" + \
-              " WHERE %(char_part.char)s=%(p2c_assert.subj2)s" + \
+              " FROM %(char_part)s, %(p2c)s" + \
+              " WHERE %(char_part.char)s=%(p2c.subj2)s" + \
               " AND %(char_part.type)s=%%d" + \
-              " AND %(p2c_assert.subj1)s=%(persona.id)s LIMIT 1"
+              " AND %(p2c.subj1)s=%(persona.id)s LIMIT 1"
            self._char_query = self._char_query % all_fields
 
-           self._event_query = \
+           self._event_date_query = \
               "SELECT lower (%(event.date)s)" + \
-              " FROM %(p2e_assert)s, %(event)s" + \
-              " WHERE %(p2e_assert.subj2)s=%(event.id)s" + \
-              " AND %(p2e_assert.subj1)s=%(persona.id)s" + \
+              " FROM %(p2e)s, %(event)s" + \
+              " WHERE %(p2e.subj2)s=%(event.id)s" + \
+              " AND %(p2e.subj1)s=%(persona.id)s" + \
               " AND %(event.type)s=%%d" + \
-              " AND %(p2e_assert.role)s=%%d" + \
+              " AND %(p2e.role)s=%%d" + \
               " LIMIT 1"
-           self._event_query = self._event_query % all_fields
+           self._event_date_query = self._event_date_query % all_fields
 
+        ## ??? The query is rather complex at this point, maybe we should
+        ## split it into several smaller pieces, that would be as efficient
+        ## and remove the need for custom queries
         return super (ParentsManager, self).get_query_set().extra (select={
-           ## ??? "father of" should really be a link to a common event with
-           ## different roles
-           'father_id': self._p2p_query % ("father of",),
-           'mother_id': self._p2p_query % ("mother of",),
-           'birth': self._event_query % (1, 5), # 1=event_type (BIRTH)
-                                                # 5=principal
-           'death': self._event_query % (4, 5), # 4=event_type (DEATH)
-           'sex': self._char_query % (1)})  # 1=char_type (SEX)
+           'father_id': self._p2p_query % (Event_Type_Role.birth__father),
+           'mother_id': self._p2p_query % (Event_Type_Role.birth__mother),
+           'birth': self._event_date_query % 
+               (Event_Type.birth, Event_Type_Role.principal),
+           'death': self._event_date_query %
+               (Event_Type.death, Event_Type_Role.principal),
+           'sex': self._char_query %
+               (Characteristic_Part_Type.sex)})
 
 class Persona (GeneaproModel):
     """
@@ -515,6 +525,18 @@ class Persona (GeneaproModel):
     class Meta:
         db_table = "persona"
 
+    def get_related_personas (self, event_type, role, related_role):
+        """Return all persons related to self through the given Event_Type,
+           where self played the role and the other persons played the
+           related_role"""
+        return Persona.objects.filter (
+           id__in = P2P_Assertion.objects.filter (
+              ole_in = related_role,
+              subject2__in = self.p2e_subject1.filter (
+                 subject2__type = event_type,
+                 role__in = role).values ('subject2').query)
+           .values ('subject1').query).exclude (id = self.id)
+
 class Event_Type (Part_Type):
     """
     The type of events
@@ -522,6 +544,11 @@ class Event_Type (Part_Type):
 
     class Meta:
        db_table = "event_type"
+
+    # Some hard-coded values for efficiency. Ideally, we should look these
+    # from the database. The problem is if the database gets translated
+    birth = 1
+    death = 4
 
 class Event_Type_Role (GeneaproModel):
     """
@@ -542,6 +569,14 @@ class Event_Type_Role (GeneaproModel):
           return str (self.id) + ": " + self.type.name + " => " + self.name
        else:
           return str (self.id) + ": * =>" + self.name
+
+    # Some hard-coded values for efficiency. Ideally, we should look these
+    # from the database. The problem is if the database gets translated
+    marriage__husband = 1
+    marriage__wife = 2
+    principal = 5
+    birth__father = 6
+    birth__mother = 7
 
 class Event (models.Model):
     """
@@ -572,6 +607,10 @@ class Event (models.Model):
 class Characteristic_Part_Type (Part_Type):
     class Meta:
        db_table = "characteristic_part_type"
+
+    # Some hard-coded values for efficiency. Ideally, we should look these
+    # from the database. The problem is if the database gets translated
+    sex = 1
 
 class Characteristic (models.Model):
     """
@@ -752,21 +791,21 @@ all_fields = {
    'char_part.name': sql_field_name (Characteristic_Part, "name"),
    'char_part':      sql_table_name (Characteristic_Part),
    'assert':         sql_table_name (Assertion),
-   'p2p_assert':     sql_table_name (P2P_Assertion),
-   'p2c_assert':     sql_table_name (P2C_Assertion),
-   'p2e_assert':     sql_table_name (P2E_Assertion),
+   'p2p':     sql_table_name (P2P_Assertion),
+   'p2c':     sql_table_name (P2C_Assertion),
+   'p2e':     sql_table_name (P2E_Assertion),
    'char_part.char': sql_field_name (Characteristic_Part, "characteristic"),
    'assert.pk':      sql_field_name (Assertion, "pk"),
-   'p2p_assert.pk':  sql_field_name (P2P_Assertion, "pk"),
-   'p2e_assert.pk':  sql_field_name (P2E_Assertion, "pk"),
-   'p2c_assert.pk':  sql_field_name (P2C_Assertion, "pk"),
-   'p2c_assert.subj2': sql_field_name (P2C_Assertion, "subject2"),
-   'p2c_assert.subj1': sql_field_name (P2C_Assertion, "subject1"),
-   'p2e_assert.subj2': sql_field_name (P2E_Assertion, "subject2"),
-   'p2e_assert.subj1': sql_field_name (P2E_Assertion, "subject1"),
-   'p2e_assert.role':  sql_field_name (P2E_Assertion, "role"),
-   'p2p_assert.subj2': sql_field_name (P2P_Assertion, "subject2"),
-   'p2p_assert.subj1': sql_field_name (P2P_Assertion, "subject1"),
+   'p2p.pk':  sql_field_name (P2P_Assertion, "pk"),
+   'p2e.pk':  sql_field_name (P2E_Assertion, "pk"),
+   'p2c.pk':  sql_field_name (P2C_Assertion, "pk"),
+   'p2c.subj2': sql_field_name (P2C_Assertion, "subject2"),
+   'p2c.subj1': sql_field_name (P2C_Assertion, "subject1"),
+   'p2e.subj2': sql_field_name (P2E_Assertion, "subject2"),
+   'p2e.subj1': sql_field_name (P2E_Assertion, "subject1"),
+   'p2e.role':  sql_field_name (P2E_Assertion, "role"),
+   'p2p.subj2': sql_field_name (P2P_Assertion, "subject2"),
+   'p2p.subj1': sql_field_name (P2P_Assertion, "subject1"),
    'char_part.type': sql_field_name (Characteristic_Part, "type"),
    'persona.id'    : sql_field_name (Persona, "pk"),
    'assert.value'  : sql_field_name (Assertion, "value"),

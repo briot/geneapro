@@ -48,83 +48,28 @@ def data (request):
     except Persona.DoesNotExist:
        pass
 
-    # Get id of children (2 queries)
-    #    6 => "father of" for a birth
-    #    7 => "mother of" for a birth
-    # explain analyze: 4.27 .. 11.99   (0.057ms)
-    # explain analyze: 8.55 .. 19.35   (0.069ms)
-    
-    #child_assert = p.p2e_subject1.filter (role__in=(6,7)) \
-    #    .values_list ("subject2", flat=True) 
-    #child_ids = P2E_Assertion.objects.filter (
-    #    # "5" = "principal"
-    #    subject2__in=child_assert, role=5) \
-    #    .exclude (subject1=p)
-
-    # This can be done in only 1 query with
-
-    # explain analyze => "12.00 .. 20.31"
-    # select e2.subject1_id
-    # from p2e e1, p2e e2
-    # where e1.subject2_id=e2.subject2_id
-    #     --  and e1.assertion_ptr_id != e2.assertion_ptr_id   # not needed?
-    # and e1.subject1_id=  <p.id>   # "p" is main subject   
-    # and e1.role_id in (6,7)       # Where "p" is father or mother
-    # and e2.role_id=5;             # Who was the principal of this birth ?
-
-    # which can be approximated with
-    # explain analyze => 4.27 .. 20.30" (0.110ms)
-    # select e2.subject1_id
-    # from p2e e2
-    # where e2.role_id=5
-    # and e2.subject2_id in
-    # (select e1.subject2_id from p2e e1 where e1.role_id in (6,7)
-    #    and e1.subject1_id=1);
-
-    # The latter is written in python as:
-
-    #child_ids = P2E_Assertion.objects.filter (
-    #    role=5,  # "principal" of the birth, ie who was born
-    #    subject2__in= \
-    #       p.p2e_subject1.filter (role__in=(6,7)).values('subject2').query)
-    #
-    #children = Persona.parents.filter (
-    #    id__in=child_ids.values_list ("subject1",flat=True))
-    
-    # Can the two above be reduced to a single query ?
+    # Get id of children
 
     children = Persona.parents.filter (
        id__in= P2E_Assertion.objects.filter (
-          role=5,  # "principal" of the birth, ie who was born
+          role=Event_Type_Role.principal,
           subject2__in= \
-            p.p2e_subject1.filter (role__in=(6,7)).values('subject2').query) \
+            p.p2e_subject1.filter (\
+               role__in=(Event_Type_Role.birth__father,
+                         Event_Type_Role.birth__mother))\
+            .values('subject2').query) \
         .values ('subject1').query)
 
-
-
-    # Query to get the events
-#select geneapro_assertion.value, geneapro_assertion.subject1_id,
-#geneapro_assertion.subject2_id, geneapro_event.name, geneapro_event.type_id,
-#geneapro_event.date, geneapro_characteristic_part.type_id,
-#geneapro_characteristic_part.name, geneapro_persona.name from
-#((geneapro_assertion LEFT JOIN geneapro_event
-#  ON geneapro_assertion.subject2_id = geneapro_event.entity_ptr_id)
-#LEFT JOIN geneapro_characteristic_part
-#ON geneapro_assertion.subject2_id =
-#   geneapro_characteristic_part.characteristic_id)
-#LEFT JOIN geneapro_persona
-#ON geneapro_assertion.subject2_id = geneapro_persona.entity_ptr_id
-#where subject1_id=1 and not disproved;
+    children = list (children)
+    children.sort (cmp=lambda x,y: cmp (x.birth,y.birth))
 
     data = to_json ({'generations':generations, 'sosa':tree,
-                     'children':list (children)})
+                     'children':children})
 
   except:
     traceback.print_exc()
     data = []
 
-  #print str (sys.exc_info ()[1])
-  #print dir (sys.exc_info()[2])
   for q in connection.queries:
      print q["sql"]
   print "total=" + str (len (connection.queries))
