@@ -34,6 +34,12 @@ class GedcomImporter (object):
              self._default_surety [len (self._default_surety) / 2]
           self._event_role_marriage_husband = 1
           self._event_role_marriage_wife = 2
+          self._role_principal = Event_Type_Role.objects.get (
+             name="principal")
+          self._role_birth_father = Event_Type_Role.objects.get (
+             name="father", type=Event_Type.objects.get (gedcom="BIRT"))
+          self._role_birth_mother = Event_Type_Role.objects.get (
+             name="mother", type=Event_Type.objects.get (gedcom="BIRT"))
 
           self._get_all_event_types () 
           self._personas = dict ()
@@ -106,21 +112,32 @@ class GedcomImporter (object):
           # Mark the parents of the child
           for c in children:
              c = self._personas [c[1:-1]]
+             evt = Event.objects.create (
+                 type=self._event_types ["BIRT"],
+                 place=None,
+                 name="Birth of " + c.name,
+                 date= None)   # ??? Should lookup event instead
+             a = P2E_Assertion.objects.create (
+                 surety = self._default_surety,
+                 researcher = self._researcher,
+                 subject1 = c,
+                 subject2 = evt,
+                 role = self._role_principal);
+
              if husb:
-                a = P2P_Assertion.objects.create (
+                a = P2E_Assertion.objects.create (
                    surety = self._default_surety,
                    researcher = self._researcher,
                    subject1 = husb,
-                   subject2 = c,
-                   value = "father of")
+                   subject2 = evt,
+                   role = self._role_birth_father);
              if wife:
-                a = P2P_Assertion.objects.create (
+                a = P2E_Assertion.objects.create (
                    surety = self._default_surety,
                    researcher = self._researcher,
                    subject1 = wife,
-                   subject2 = c,
-                   value = "mother of")
-          
+                   subject2 = evt,
+                   role = self._role_birth_mother);
 
     def _create_indi (self, data):
        # The name to use is the first one in the list of names

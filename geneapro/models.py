@@ -483,8 +483,9 @@ class ParentsManager (models.Manager):
            ## different roles
            'father_id': self._p2p_query % ("father of",),
            'mother_id': self._p2p_query % ("mother of",),
-           'birth': self._event_query % (1), # 1=event_type (BIRTH)
-           'death': self._event_query % (4), # 4=event_type (DEATH)
+           'birth': self._event_query % (1, 5), # 1=event_type (BIRTH)
+                                                # 5=principal
+           'death': self._event_query % (4, 5), # 4=event_type (DEATH)
            'sex': self._char_query % (1)})  # 1=char_type (SEX)
 
 class Persona (GeneaproModel):
@@ -537,7 +538,10 @@ class Event_Type_Role (GeneaproModel):
        db_table = "event_type_role"
 
     def __unicode__ (self):
-       return str (self.id) + ": " + self.type.name + " => " + self.name
+       if self.type:
+          return str (self.id) + ": " + self.type.name + " => " + self.name
+       else:
+          return str (self.id) + ": * =>" + self.name
 
 class Event (models.Model):
     """
@@ -556,6 +560,14 @@ class Event (models.Model):
 
     class Meta:
        db_table = "event"
+
+    def __unicode__ (self):
+       if self.date:
+          date = " (on " + self.date + ")"
+       else:
+          date = ""
+
+       return self.name + date
 
 class Characteristic_Part_Type (Part_Type):
     class Meta:
@@ -703,6 +715,14 @@ class P2E_Assertion (Assertion):
 
     class Meta:
        db_table = "p2e"
+
+    def __unicode__ (self):
+       if self.role:
+          role = " (as " + self.role.name + ")"
+       else:
+          role = ""
+     
+       return unicode (self.subject1) + " " + self.value + " " + unicode (self.subject2) + role
 
 class Assertion_Assertion (GeneaproModel):
     original = models.ForeignKey (Assertion, related_name="leads_to")
