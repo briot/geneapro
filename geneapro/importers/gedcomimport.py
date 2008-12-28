@@ -97,15 +97,15 @@ class GedcomImporter (object):
                 a = P2E_Assertion.objects.create (
                      surety = self._default_surety,
                      researcher = self._researcher,
-                     subject1 = husb,
-                     subject2 = evt,
+                     person = husb,
+                     event = evt,
                      role_id= Event_Type_Role.marriage__husband,
                      value = "event")
                 a = P2E_Assertion.objects.create (
                      surety = self._default_surety,
                      researcher = self._researcher,
-                     subject1 = wife,
-                     subject2 = evt,
+                     person = wife,
+                     event = evt,
                      role_id= Event_Type_Role.marriage__wife,
                      value = "event")
 
@@ -124,26 +124,26 @@ class GedcomImporter (object):
                    type=self._event_types ["BIRT"],
                    place=None,
                    name="Birth of " + c.name)
-             a = P2E_Assertion.objects.create (
-                 surety = self._default_surety,
-                 researcher = self._researcher,
-                 subject1 = c,
-                 subject2 = self._births [c.id],
-                 role = self._principal)
+                a = P2E_Assertion.objects.create (
+                   surety = self._default_surety,
+                   researcher = self._researcher,
+                   person = c,
+                   event = self._births [c.id],
+                   role = self._principal)
 
              if husb:
                 a = P2E_Assertion.objects.create (
                    surety = self._default_surety,
                    researcher = self._researcher,
-                   subject1 = husb,
-                   subject2 = self._births [c.id],
+                   person = husb,
+                   event = self._births [c.id],
                    role = self._birth__father)
              if wife:
                 a = P2E_Assertion.objects.create (
                    surety = self._default_surety,
                    researcher = self._researcher,
-                   subject1 = wife,
-                   subject2 = self._births [c.id],
+                   person = wife,
+                   event = self._births [c.id],
                    role = self._birth__mother)
 
     def _create_indi (self, data):
@@ -181,8 +181,8 @@ class GedcomImporter (object):
                  a = P2C_Assertion.objects.create (
                         surety = self._default_surety,
                         researcher = self._researcher,
-                        subject1 = indi,
-                        subject2 = c,
+                        person = indi,
+                        characteristic = c,
                         value = "charac")
 
            except KeyError:
@@ -192,16 +192,20 @@ class GedcomImporter (object):
                     value = [value]
                  for v in value:
                     if not isinstance (v, str):
+                       evt = None
+
                        if key == "BIRT":
                           name = "Birth of " + indi.name
+                          evt = self._births.get (indi.id, None)
                        else:
                           name = ""
 
-                       evt = Event.objects.create (
-                          type=t,
-                          place=None,
-                          name=name,
-                          date=v.get ("DATE"))
+                       if not evt:
+                          evt = Event.objects.create (
+                             type=t,
+                             place=None,
+                             name=name,
+                             date=v.get ("DATE"))
 
                        if key == "BIRT":
                           self._births [indi.id] = evt;
@@ -209,10 +213,10 @@ class GedcomImporter (object):
                        a = P2E_Assertion.objects.create (
                           surety = self._default_surety,
                           researcher = self._researcher,
-                          subject1 = indi,
-                          subject2 = evt,
+                          person = indi,
+                          event = evt,
                           role = self._principal,
-                          value = "event")
+                          value = "")
 
               except KeyError:
                  if key not in ("NAME", "type", "SOUR",
