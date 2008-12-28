@@ -1,5 +1,3 @@
-gedcom=famille.ged
-
 test:
 	./manage.py test --verbosity=1 --settings=testsettings
 test_verbose:
@@ -8,9 +6,6 @@ test_verbose:
 reset:
 	./manage.py reset --noinput geneapro
 	./manage.py loaddata geneapro/initial_data.json
-
-import:
-	./manage.py import "$(gedcom)"
 
 dump:
 	./manage.py dumpdata --format=xml geneapro > dump.xml
