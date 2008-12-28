@@ -1,9 +1,3 @@
-PYTHONPATH:=/home/briot/genealogy/geneapro/:$(PYTHONPATH)
-export PYTHONPATH
-
-DJANGO_SETTINGS_MODULE=mysites.settings
-export DJANGO_SETTINGS_MODULE
-
 gedcom=famille.ged
 
 test:
@@ -16,7 +10,7 @@ reset:
 	./manage.py loaddata geneapro/initial_data.json
 
 import:
-	python -c "from mysites.geneapro.importers.gedcomimport import GedcomFileImporter;GedcomFileImporter().parse (file('$(gedcom)'))"
+	./manage.py import "$(gedcom)"
 
 dump:
 	./manage.py dumpdata --format=xml geneapro > dump.xml
