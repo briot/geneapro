@@ -458,28 +458,28 @@ class ParentsManager (models.Manager):
               " FROM %(p2e)s WHERE" + \
               " %(p2e.role)s=%%d" + \
               " AND %(p2e.subj2)s IN" + \
-              "   (SELECT %(p2e.subj2)s FROM %(p2e)s, %(event)s" + \
-              "    WHERE %(p2e.subj2)s=%(event.id)s" + \
-              "    AND %(p2e.subj1)s=%(persona.id)s" + \
+              "   (SELECT %(p2e.event)s FROM %(p2e)s, %(event)s" + \
+              "    WHERE %(p2e.event)s=%(event.id)s" + \
+              "    AND %(p2e.person)s=%(persona.id)s" + \
               "    AND %(event.type)s=1" + \
               "    AND %(p2e.role)s=5)" + \
-              " AND %(persona.id)s!=%(p2e.subj1)s" + \
+              " AND %(persona.id)s!=%(p2e.person)s" + \
               " LIMIT 1"
            self._p2p_query = self._p2p_query % all_fields 
 
            self._char_query = \
               "SELECT %(char_part.name)s" + \
               " FROM %(char_part)s, %(p2c)s" + \
-              " WHERE %(char_part.char)s=%(p2c.subj2)s" + \
+              " WHERE %(char_part.char)s=%(p2c.char)s" + \
               " AND %(char_part.type)s=%%d" + \
-              " AND %(p2c.subj1)s=%(persona.id)s LIMIT 1"
+              " AND %(p2c.person)s=%(persona.id)s LIMIT 1"
            self._char_query = self._char_query % all_fields
 
            self._event_date_query = \
               "SELECT lower (%(event.date)s)" + \
               " FROM %(p2e)s, %(event)s" + \
-              " WHERE %(p2e.subj2)s=%(event.id)s" + \
-              " AND %(p2e.subj1)s=%(persona.id)s" + \
+              " WHERE %(p2e.event)s=%(event.id)s" + \
+              " AND %(p2e.person)s=%(persona.id)s" + \
               " AND %(event.type)s=%%d" + \
               " AND %(p2e.role)s=%%d" + \
               " LIMIT 1"
@@ -530,12 +530,12 @@ class Persona (GeneaproModel):
            where self played the role and the other persons played the
            related_role"""
         return Persona.objects.filter (
-           id__in = P2P_Assertion.objects.filter (
+           id__in = P2E_Assertion.objects.filter (
               ole_in = related_role,
-              subject2__in = self.p2e_subject1.filter (
+              event__in = self.events.filter (
                  subject2__type = event_type,
-                 role__in = role).values ('subject2').query)
-           .values ('subject1').query).exclude (id = self.id)
+                 role__in = role).values ('event').query)
+           .values ('person').query).exclude (id = self.id)
 
 class Event_Type (Part_Type):
     """
@@ -729,27 +729,16 @@ class Assertion (GeneaproModel):
 
 class P2C_Assertion (Assertion):
     """Persona-to-Characteristic assertions"""
-    subject1 = models.ForeignKey (Persona, related_name="p2c_subject1")
-    subject2 = models.ForeignKey (Characteristic, related_name="p2c_subject2")
+    person = models.ForeignKey (Persona, related_name="characteristics")
+    characteristic = models.ForeignKey (Characteristic, related_name="persons")
 
     class Meta:
        db_table = "p2c"
 
-class P2P_Assertion (Assertion):
-    """Persona-to-Persona assertions"""
-    subject1 = models.ForeignKey (Persona, related_name="p2p_subject1")
-    subject2 = models.ForeignKey (Persona, related_name="p2p_subject2")
-
-    class Meta:
-       db_table = "p2p"
-
-    def __unicode__ (self):
-       return unicode (self.subject1) + " " + self.value + " " + unicode (self.subject2)
-
 class P2E_Assertion (Assertion):
     """Persona-to-Event assertions"""
-    subject1   = models.ForeignKey (Persona, related_name="p2e_subject1")
-    subject2   = models.ForeignKey (Event, related_name="p2e_subject2")
+    person     = models.ForeignKey (Persona, related_name="events")
+    event      = models.ForeignKey (Event, related_name="actors")
     role       = models.ForeignKey (Event_Type_Role, null=True)
 
     class Meta:
@@ -761,7 +750,7 @@ class P2E_Assertion (Assertion):
        else:
           role = ""
      
-       return unicode (self.subject1) + " " + self.value + " " + unicode (self.subject2) + role
+       return unicode (self.person) + " " + self.value + " " + unicode (self.event) + role
 
 class Assertion_Assertion (GeneaproModel):
     original = models.ForeignKey (Assertion, related_name="leads_to")
@@ -791,21 +780,17 @@ all_fields = {
    'char_part.name': sql_field_name (Characteristic_Part, "name"),
    'char_part':      sql_table_name (Characteristic_Part),
    'assert':         sql_table_name (Assertion),
-   'p2p':     sql_table_name (P2P_Assertion),
    'p2c':     sql_table_name (P2C_Assertion),
    'p2e':     sql_table_name (P2E_Assertion),
    'char_part.char': sql_field_name (Characteristic_Part, "characteristic"),
    'assert.pk':      sql_field_name (Assertion, "pk"),
-   'p2p.pk':  sql_field_name (P2P_Assertion, "pk"),
    'p2e.pk':  sql_field_name (P2E_Assertion, "pk"),
    'p2c.pk':  sql_field_name (P2C_Assertion, "pk"),
-   'p2c.subj2': sql_field_name (P2C_Assertion, "subject2"),
-   'p2c.subj1': sql_field_name (P2C_Assertion, "subject1"),
-   'p2e.subj2': sql_field_name (P2E_Assertion, "subject2"),
-   'p2e.subj1': sql_field_name (P2E_Assertion, "subject1"),
+   'p2c.char': sql_field_name (P2C_Assertion, "characteristic"),
+   'p2c.person': sql_field_name (P2C_Assertion, "person"),
+   'p2e.person': sql_field_name (P2E_Assertion, "person"),
+   'p2e.event':  sql_field_name (P2E_Assertion, "event"),
    'p2e.role':  sql_field_name (P2E_Assertion, "role"),
-   'p2p.subj2': sql_field_name (P2P_Assertion, "subject2"),
-   'p2p.subj1': sql_field_name (P2P_Assertion, "subject1"),
    'char_part.type': sql_field_name (Characteristic_Part, "type"),
    'persona.id'    : sql_field_name (Persona, "pk"),
    'assert.value'  : sql_field_name (Assertion, "value"),
