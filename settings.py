@@ -92,4 +92,5 @@ INSTALLED_APPS = (
 	#'django.contrib.admindocs',     # Admin documentation (/admin/doc/)
     'django.contrib.sites',         # Managing multiple sites with one install
 	'mysites.geneapro',
+    'django_extensions',
 )

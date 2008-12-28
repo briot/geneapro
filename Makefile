@@ -10,3 +10,12 @@ reset:
 dump:
 	./manage.py dumpdata --format=xml geneapro > dump.xml
 	./manage.py dumpdata --format=json geneapro > dump.json
+
+## The following require the django extensions and graphviz
+
+graph:
+	./manage.py graph_models auth geneapro |dot -Tpng -o test.png
+shell:
+	./manage.py shell_plus
+run:
+	./manage.py runserver_plus
