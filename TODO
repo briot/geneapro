@@ -28,3 +28,5 @@ Assertion.Value should point into a table rather than be a text
    entered -- we should use event.date_sort rather than event.date, but use
    the latter when displaying)
 
+* Ideas for names
+** Geneatica, Forebears

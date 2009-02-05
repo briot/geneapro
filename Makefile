@@ -12,6 +12,7 @@ dump:
 	./manage.py dumpdata --format=json geneapro > dump.json
 
 ## The following require the django extensions and graphviz
+## See the list of installed apps in settings.py
 
 graph:
 	./manage.py graph_models auth geneapro |dot -Tpng -o test.png

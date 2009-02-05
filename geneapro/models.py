@@ -445,58 +445,82 @@ class Citation_Part (GeneaproModel):
     class Meta:
        db_table = "citation_part"
 
-class ParentsManager (models.Manager):
+def get_related_p (queryset):
+    """Return a Persona queryset, that returns all persons related to
+       each persona in queryset, through events:
+          related = get_related_p (Persona.objects.filter (pk=1))
+          related[0] is a Persona, with extra fields:
+             related[0].event => the shared event
+             related[0].event_date => the date of that event
+             related[0].role  => role played by related[0]
+             related[0].related => person from the original queryset
+             related[0].related_role => role played by that person
+       There could be several instances of the same person in the returned
+       array if she took part in multiple shared events.
     """
-    A manager that adds extra parent_id and mother_id fields to each persona
-    returned
+
+    # Problem: the persona in result is the same as in the where clause in
+    # the initial queryset, and we can't really change that. But we would
+    # like the persona in result to be the related persona instead
+    queryset.query.pre_sql_setup() 
+    queryset.query.join (('persona','p2e','id','person_id'))
+    queryset.query.join (('p2e','event','event_id','id'))
+    queryset.query.join (('p2e','p2e','event_id','event_id'))
+    return queryset.extra (
+        select={'event':        all_fields['event.id'],
+                'event_type':   all_fields['event.type'],
+                'event_date':   all_fields['event.date'],
+                'role':         all_fields['p2e.role'],
+                'related':      'T4.person_id',
+                'related_role': 'T4.role_id'},
+         where=(all_fields['persona.id'] + '!=T4.person_id',))
+    
+def get_related_persons (queryset, person_ids):
+    """For each event in queryset (Event.objects.....) to which the
+       specified person(s) took part, adds additional fields:
+         'role': the role played by this person in the event
+         'related': the name of one of the other persons taking part in
+                    the same event
+         'related_role': the role of that person
+       An event will therefore match multiple entries, one for each person
+       taking part in the event excep the one passed in parameter.
+
+       Example of use:
+          get_related_p (Event.objects.filter (type=1), person_ids=1)
+       reports all birth events in which person 1 took part, and the other
+       persons that also took part (either the parents, or the other parent
+       and the child, depending on the role played by person_id)
+
+       You can also specify multiple persons:
+          get_related_p (Event.objects.filter (type=1), [1,2])
+
+       You can also filter on these new fields:
+          get_related_p (Event.objects.filter(type=1), 1)
+             .extra(where=('p2e.role_id=5',))
+       if you only want the events where the person was playing the
+       principal role.
+
+       This queryset can be used for instance to find the parents, children
+       and spouse(s) of an individual in a single query
     """
+    queryset.query.pre_sql_setup()
+    alias1 = queryset.query.join (('event','p2e','id','event_id'))
+    queryset.query.join          ((alias1,'persona','person_id','id'))
+    alias = queryset.query.join  ((alias1,'p2e','event_id','event_id'),
+                                  promote=True)
+         # Need to add a test that alias.person_id!=persona.id inside the
+         # LEFT JOIN
+         # That would limit the size of the data returned
 
-    def get_query_set(self):
-        if not hasattr (self, "_query"):
-           self._p2p_query = \
-              "SELECT %(p2e.subj1)s" + \
-              " FROM %(p2e)s WHERE" + \
-              " %(p2e.role)s=%%d" + \
-              " AND %(p2e.subj2)s IN" + \
-              "   (SELECT %(p2e.event)s FROM %(p2e)s, %(event)s" + \
-              "    WHERE %(p2e.event)s=%(event.id)s" + \
-              "    AND %(p2e.person)s=%(persona.id)s" + \
-              "    AND %(event.type)s=1" + \
-              "    AND %(p2e.role)s=5)" + \
-              " AND %(persona.id)s!=%(p2e.person)s" + \
-              " LIMIT 1"
-           self._p2p_query = self._p2p_query % all_fields 
-
-           self._char_query = \
-              "SELECT %(char_part.name)s" + \
-              " FROM %(char_part)s, %(p2c)s" + \
-              " WHERE %(char_part.char)s=%(p2c.char)s" + \
-              " AND %(char_part.type)s=%%d" + \
-              " AND %(p2c.person)s=%(persona.id)s LIMIT 1"
-           self._char_query = self._char_query % all_fields
-
-           self._event_date_query = \
-              "SELECT lower (%(event.date)s)" + \
-              " FROM %(p2e)s, %(event)s" + \
-              " WHERE %(p2e.event)s=%(event.id)s" + \
-              " AND %(p2e.person)s=%(persona.id)s" + \
-              " AND %(event.type)s=%%d" + \
-              " AND %(p2e.role)s=%%d" + \
-              " LIMIT 1"
-           self._event_date_query = self._event_date_query % all_fields
-
-        ## ??? The query is rather complex at this point, maybe we should
-        ## split it into several smaller pieces, that would be as efficient
-        ## and remove the need for custom queries
-        return super (ParentsManager, self).get_query_set().extra (select={
-           'father_id': self._p2p_query % (Event_Type_Role.birth__father),
-           'mother_id': self._p2p_query % (Event_Type_Role.birth__mother),
-           'birth': self._event_date_query % 
-               (Event_Type.birth, Event_Type_Role.principal),
-           'death': self._event_date_query %
-               (Event_Type.death, Event_Type_Role.principal),
-           'sex': self._char_query %
-               (Characteristic_Part_Type.sex)})
+    if not isinstance (person_ids, list):
+       person_ids = [person_ids]
+    return queryset.extra (select={'person':       'persona.id',
+                                   'role':         alias1 + '.role_id',
+                                   'related':      alias  + '.person_id',
+                                   'related_role': alias  +'.role_id'},
+                           where=('persona.id IN (%s)'
+                                  % ",".join(["%d"%id for id in person_ids]),
+                          ))
 
 class Persona (GeneaproModel):
     """
@@ -516,26 +540,13 @@ class Persona (GeneaproModel):
         # This only works if self was generated through the parents manager
         # If not defined, we get an exception. The caller needs to be fixed,
         # not here
-        return {"id":self.id, "name":self.name, "sex":self.sex,
-                "birth":self.birth, "death":self.death}
+        return {"id":self.id, "name":self.name, 'birth':self.birth,
+                'sex':self.sex, 'death':self.death}
 
     objects = models.Manager ()
-    parents = ParentsManager ()
 
     class Meta:
         db_table = "persona"
-
-    def get_related_personas (self, event_type, role, related_role):
-        """Return all persons related to self through the given Event_Type,
-           where self played the role and the other persons played the
-           related_role"""
-        return Persona.objects.filter (
-           id__in = P2E_Assertion.objects.filter (
-              ole_in = related_role,
-              event__in = self.events.filter (
-                 subject2__type = event_type,
-                 role__in = role).values ('event').query)
-           .values ('person').query).exclude (id = self.id)
 
 class Event_Type (Part_Type):
     """
@@ -548,6 +559,7 @@ class Event_Type (Part_Type):
     # Some hard-coded values for efficiency. Ideally, we should look these
     # from the database. The problem is if the database gets translated
     birth = 1
+    marriage = 3
     death = 4
 
 class Event_Type_Role (GeneaproModel):
