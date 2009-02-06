@@ -85,11 +85,10 @@ def get_parents (dic, person_ids, max_level, sosa=1):
 
    persons = get_extended_personas (person_ids)
 
-   for rank,p in enumerate (persons):
-      dic [sosa + rank] = p
+   for p in persons:
+      dic [sosa] = p
 
-   if max_level > 1:
-      for p in persons:
+      if max_level > 1:
          if p.father_id and p.mother_id:
             get_parents (dic, [p.father_id, p.mother_id],
                          max_level - 1, sosa=sosa*2)
@@ -98,7 +97,7 @@ def get_parents (dic, person_ids, max_level, sosa=1):
          elif p.mother_id:
             get_parents (dic, p.mother_id, max_level-1, sosa=sosa*2+1)
 
-         sosa = sosa + 1
+      sosa = sosa + 1
 
    return persons
 
@@ -106,30 +105,19 @@ def data (request):
   # We currently use 35 queries to display a pedigree with 17 persons,
   # including the two children of the main person
 
+  generations = int (request.GET.get ("generations", 4))
+  id          = int (request.GET ["id"])
+  tree = dict ()
+
   try:
-    generations = int (request.GET.get ("generations", 4))
-    id          = int (request.GET ["id"])
-    tree = dict ()
+     p = get_parents (tree, id, generations)[0]
+     children = get_extended_personas (p.children)
+     children.sort (cmp=lambda x,y: cmp (x.birth,y.birth))
+  except Persona.DoesNotExist:
+     pass
 
-    try:
-       p = get_parents (tree, id, generations)[0]
-       children = get_extended_personas (p.children)
-    except Persona.DoesNotExist:
-       pass
-
-    children.sort (cmp=lambda x,y: cmp (x.birth,y.birth))
-
-    data = to_json ({'generations':generations, 'sosa':tree,
-                     'children':children})
-
-  except:
-    traceback.print_exc()
-    data = []
-
-  #for q in connection.queries:
-  #   print q["sql"]
-  print "total=" + str (len (connection.queries))
-
+  data = to_json ({'generations':generations, 'sosa':tree,
+                   'children':children})
   return HttpResponse (data, mimetype="application/javascript")
 
 def view (request):
