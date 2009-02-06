@@ -80,7 +80,7 @@ def get_extended_personas (ids):
                           Event_Type_Role.marriage__wife):
          # If this is the marriage with the other person in the list
          if e["related"] in ids:
-            result [id].marriage = str (Date (e["date"] or ""))
+            result [id].marriage = str (Date (e["date"]))
 
    return result.values()
 

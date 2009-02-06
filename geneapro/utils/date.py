@@ -482,7 +482,7 @@ class Date (object):
       """Represents a point in time (not a range of dates). The date might be
          imprecise ("about 1700") or incomplete ("1802-02", no day)
       """
-      self.text = str
+      self.text = str or ""
       self.calendar = None
       self.__parse ()
 
