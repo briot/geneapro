@@ -11,7 +11,28 @@ import sys, traceback
 
 class ModelEncoder (simplejson.JSONEncoder):
    def default(self, obj):
-      if isinstance (obj, GeneaproModel):
+      if isinstance (obj, Persona):
+         if obj.birth:
+            b = str (obj.birth)
+         else:
+            b = ""
+ 
+         if obj.death:
+            d = str (obj.death)
+            a = obj.death.years_since (obj.birth)
+            if a:
+               d += " (age " + str (a) + ")"
+         else:
+            a = date.Date.today().years_since (obj.birth)
+            if a:
+               d = "(age " + str (a) + ")"
+            else:
+               d = ""
+ 
+         return {"id":obj.id, "name":obj.name, 'birth':b,
+                 'sex':obj.sex, 'death':d}
+
+      elif isinstance (obj, GeneaproModel):
          return obj.to_json()
       return super (ModelEncoder, self).default (obj)
 

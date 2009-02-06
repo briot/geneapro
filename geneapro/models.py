@@ -536,31 +536,6 @@ class Persona (GeneaproModel):
     def __unicode__ (self):
         return self.name
 
-    def to_json (self):
-        # This only works if self was generated through the parents manager
-        # If not defined, we get an exception. The caller needs to be fixed,
-        # not here
-
-        if self.birth:
-           b = str (self.birth)
-        else:
-           b = ""
-
-        if self.death:
-           d = str (self.death)
-           a = self.death.years_since (self.birth)
-           if a:
-              d += " (age " + str (a) + ")"
-        else:
-           a = date.Date.today().years_since (self.birth)
-           if a:
-              d = "(age " + str (a) + ")"
-           else:
-              d = ""
-
-        return {"id":self.id, "name":self.name, 'birth':b,
-                'sex':self.sex, 'death':d}
-
     objects = models.Manager ()
 
     class Meta:
