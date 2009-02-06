@@ -76,26 +76,34 @@ def get_extended_personas (ids):
 
    return result.values()
 
-def get_parents (dic, person_id, max_level, sosa=1):
-   """Complete the ancestors data for person (who has SOSA number sosa).
+def get_parents (dic, person_ids, max_level, sosa=1):
+   """Complete the ancestors data for persons.
+      The first person in the list has SOSA number sosa, the others
+      are +1, +2,...
       The keys in dic are set to the sosa number for each ancestor.
       This searches up to max_level generations"""
 
-   if max_level == 0:
-      return
+   persons = get_extended_personas (person_ids)
 
-   person = get_extended_personas (person_id)[0]
-   dic[sosa] = person
+   for rank,p in enumerate (persons):
+      dic [sosa + rank] = p
 
-   if max_level > 1 and person.father_id:
-      get_parents (dic, person.father_id, max_level-1, sosa=sosa*2)
-   if max_level > 1 and person.mother_id:
-      get_parents (dic, person.mother_id, max_level-1, sosa=sosa*2+1)
+   if max_level > 1:
+      for p in persons:
+         if p.father_id and p.mother_id:
+            get_parents (dic, [p.father_id, p.mother_id],
+                         max_level - 1, sosa=sosa*2)
+         elif p.father_id:
+            get_parents (dic, p.father_id, max_level-1, sosa=sosa*2)
+         elif p.mother_id:
+            get_parents (dic, p.mother_id, max_level-1, sosa=sosa*2+1)
 
-   return person
+         sosa = sosa + 1
+
+   return persons
 
 def data (request):
-  # We currently use 49 queries to display a pedigree with 17 persons,
+  # We currently use 35 queries to display a pedigree with 17 persons,
   # including the two children of the main person
 
   try:
@@ -104,8 +112,8 @@ def data (request):
     tree = dict ()
 
     try:
-       person = get_parents (tree, id, generations)
-       children = get_extended_personas (person.children)
+       p = get_parents (tree, id, generations)[0]
+       children = get_extended_personas (p.children)
     except Persona.DoesNotExist:
        pass
 
