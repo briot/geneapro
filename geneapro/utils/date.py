@@ -247,6 +247,7 @@ class Calendar (object):
    def __init__ (self, suffixes):
      self.__re = re.compile \
        ('\\s*\\(?(' + suffixes + ')\\)?\\s*', re.IGNORECASE)
+     self._month_names = month_names
 
    def is_a (self, str):
      """If str is expressed in the calendar, returns the string that remains
@@ -279,10 +280,32 @@ class Calendar (object):
         In general, the calendar will be self, except if it could not parse
         the date and we defaulted to another calendar.
      """
+     year, month, day, y_known, m_known, d_known = \
+        get_ymd (txt, self._month_names)
+     if y_known:
+        year += add_year
+     else:
+        year = None
+
+     if m_known:
+        month += add_month
+     else:
+        month = None
+
+     if d_known:
+        day  += add_day
+     else:
+        day = None
+
+     return self.from_components (year, month, day)
+
+   def from_components (self, year=None, month=None, day=None):
+     """Given an expanded (possibly partial) date, return the same result
+        as parse."""
      return None
 
    def components (self, julian_day):
-     """Return a tuple (year, month, day)"""
+     """Return a tuple (year, month, day) for the given day"""
      return (0, 0, 0)
 
    def date_str (self, julian_day, year_known=True,
@@ -308,40 +331,31 @@ class Calendar_Gregorian (Calendar):
    def __init__ (self):
      Calendar.__init__ (self, "\\b(GR|G|Gregorian)\\b")
 
-   def parse (self, txt, add_year=0, add_month=0, add_day=0):
-     year, month, day, y_known, m_known, d_known = get_ymd (txt, month_names)
-     return self.__from_components (
-        year, month, day, y_known, m_known, d_known,
-        add_year, add_month, add_day)
+   def from_components (self, year=None, month=None, day=None):
+     y = year or -4000
+     m = month or 1
+     d = day or 1
 
-   def __from_components (self, year, month, day, year_known=True,
-                          month_known=True, day_known=True,
-                          add_year=0, add_month=0, add_day=0):
      # If date is before the invention of gregorian calendar, assume we have
      # a julian date
-     if year_known and \
-        (year < 1582 or \
-          (year == 1582 and month < 2) or \
-          (year == 1582 and month == 2 and day < 24)):
-        return Calendar_Julian ().parse (txt, add_year, add_month, add_day)
+
+     if year and (y,m,d) < (1582, 2, 24):
+        return Calendar_Julian ().from_components (year, month, day)
 
      else:
-        year  = year + add_year
-        month = month + add_month
-        day   = day + add_day
         feb_29_4800 = 32045 # Julian day for Feb 29th, -4800 in gregorian cal.
-        a = (14 - month) / 12
-        y2 = year + 4800 - a
-        m2 = month + 12 * a - 3
-        d = day + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400\
+        a = (14 - m) / 12
+        y2 = y + 4800 - a
+        m2 = m + 12 * a - 3
+        d = d + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400\
           - feb_29_4800
-        return (d, year_known, month_known, day_known, self) 
+        return (d, year != None, month != None, day != None, self) 
 
    @staticmethod
    def today ():
       """Return today's date"""
       t = time.localtime()
-      return Calendar_Gregorian ().__from_components (
+      return Calendar_Gregorian ().from_components (
           t.tm_year, t.tm_mon, t.tm_mday)
 
    def components (self, julian_day):
@@ -366,13 +380,13 @@ class Calendar_French (Calendar):
    def __init__ (self):
      # The @#DFRENCH R@ notation comes from gramps
      Calendar.__init__ (self, "\\b(F|FR|French Republican)\\b|@#DFRENCH R@")
-     self._french_months = dict ()
+     self._month_names = dict ()
      for index, f in enumerate (french_months):
         for m in f:
-          self._french_months[m] = index + 1
+          self._month_names[m] = index + 1
 
      self.__months_re = re.compile\
-         ("|".join ([m for m in self._french_months.keys() if m != ""]),
+         ("|".join ([m for m in self._month_names.keys() if m != ""]),
           re.IGNORECASE)
 
    def __str__ (self):
@@ -390,16 +404,14 @@ class Calendar_French (Calendar):
 
      return None
 
-   def parse (self, txt, add_year=0, add_month=0, add_day=0):
-     year, month, day, y_known, m_known, d_known = \
-        get_ymd (txt, self._french_months)
-     if year >= 1:
-        year  = year + add_year
-        month = month + add_month - 1
-        day   = day + add_day
+   def from_components (self, year=None, month=None, day=None):
+     if year and year >= 1:
+        y = year or -4000
+        m = month or 1
+        d = day or 1
         sep_21_1792 = 2375839
-        return (sep_21_1792 + (year  - 1) * 365 + year / 4 + month * 30 + day,
-                y_known, m_known, d_known, self)
+        return (sep_21_1792 + (y  - 1) * 365 + y / 4 + m * 30 - 30 + d,
+                year != None, month != None, day != None, self)
      else:
         return (0, False, False, False, self)
 
@@ -439,24 +451,23 @@ class Calendar_Julian (Calendar):
    def __init__ (self):
      # OS stands for "Old style"
      Calendar.__init__ (self, "\\b(JU|J|Julian|OS)\\b")
+     self._month_names = month_names
 
    def __str__ (self):
      return "Julian"
 
-   def parse (self, txt, add_year=0, add_month=0, add_day=0):
-     year, month, day, y_known, m_known, d_known = get_ymd (txt, month_names)
-     year  = year + add_year
-     month = month + add_month
-     day   = day + add_day
-
+   def from_components (self, year=None, month=None, day=None):
      # Conversion formulat from Wikipedia "Julian Day"
+     y = year or -4000
+     m = month or 1
+     d = day or 1
 
      feb_29_4800 = 32083 # Julian day number for Feb 29th, -4800
-     a = (14 - month) / 12
-     y2 = year + 4800 - a
-     m2 = month + 12 * a - 3
-     return ((day + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4) - feb_29_4800,
-             y_known, m_known, d_known, self)
+     a = (14 - m) / 12
+     y2 = y + 4800 - a
+     m2 = m + 12 * a - 3
+     return ((d + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4) - feb_29_4800,
+             year != None, month != None, day != None, self)
 
    def components (self, julian_day):
      days_per_four_years = 1461 # julian days per four year period

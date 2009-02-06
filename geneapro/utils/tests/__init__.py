@@ -40,6 +40,7 @@ Oct_11_2008       = 2454751
 Jan_1_1400        = 2232408
 Jan_1_1583        = 2299239
 Jan_1_1581        = 2298143
+Jan_1_1581_Ju     = 2298153
 Jan_1_1583_Ju     = 2299249
 Oct_2_1802        = 2379501
 Aug_28_1803       = 2379831
@@ -122,7 +123,6 @@ class DateTestCase (unittest.TestCase):
         self._assertDate ("01-15", Jan_15_Undefined, "????-01-15")
         self._assertDate ("1400-01-01", Jan_1_1400, "1400-01-01 (Julian)")
         self._assertDate ("1583-01-01", Jan_1_1583, "1583-01-01")
-        self._assertDate ("1583-01-01 - 3 years", Jan_1_1581, "1580-01-01")
         self._assertDate ("1583-01-01 JU   ", Jan_1_1583_Ju, "1583-01-01 (Julian)")
         self._assertDate ("1583-01-01 OS   ", Jan_1_1583_Ju, "1583-01-01 (Julian)")
         self._assertDate ("1583-01-01 (JU)   ", Jan_1_1583_Ju, "1583-01-01 (Julian)")
@@ -156,5 +156,7 @@ class DateTestCase (unittest.TestCase):
         self._assertDate ("between 1700 JU et 10 vendemiaire XI",
          (Jan_1_1700_Ju, Oct_2_1802),
          "between 1700 (Julian) and 10 vendemiaire XI")
+        self._assertDate ("1583-01-01 - 3 years", Jan_1_1581_Ju,
+                          "1580-01-01 (Julian)")
 
 
