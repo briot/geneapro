@@ -15,18 +15,11 @@ Assertion.Value should point into a table rather than be a text
 ** When showing children, show the name of the matching spouse
 ** Support for multiple parents (foster parents, ambiguities,...)
 ** Search for parents in aliases personas
-** Display marriage dates
-** "father of" and "mother of" are incorrect. They should be links to an
-   event with the appropriate roles
 ** Make pedigree configurable:
    Chose which events to show in each boxes ("birth" and "death" by default,
    but should fallback on "baptism" and "burial" for instance, or the user
    might want to see other info (if "residence", there can be multiple of
    them)
-** Children should be sorted by date of birth (the current implementation
-   is incorrect since the format of the date depends on how the date was
-   entered -- we should use event.date_sort rather than event.date, but use
-   the latter when displaying)
 
 * Ideas for names
 ** Geneatica, Forebears

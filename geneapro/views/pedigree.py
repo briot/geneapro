@@ -101,8 +101,11 @@ def get_parents (tree, marriage, person_ids, max_level, sosa=1):
 
       if max_level > 1:
          if p.father_id and p.mother_id:
-            get_parents (tree, marriage, [p.father_id, p.mother_id],
-                         max_level - 1, sosa=sosa*2)
+            (f,m) = get_parents (tree, marriage, [p.father_id, p.mother_id],
+                                 max_level - 1, sosa=sosa*2)
+            if f.id != p.father_id:
+               tree[sosa*2] = m
+               tree[sosa*2+1] = f
          elif p.father_id:
             get_parents (tree, marriage, p.father_id, max_level-1, sosa=sosa*2)
          elif p.mother_id:
