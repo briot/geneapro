@@ -237,23 +237,6 @@ def get_ymd (txt, months):
       
    return (-4000, 1, 1, False, False, False)
 
-def ymd_str (year, month, day, year_known, month_known, day_known):
-   """Converts year,month,day to a displayable string"""
-
-   if year_known:
-      if month_known and not day_known:
-         format = "%(year)d-%(month)02d"
-      elif month_known and day_known:
-         format = "%(year)d-%(month)02d-%(day)02d"
-      elif day_known:
-         format = "%(year)d-??-%(day)02d"
-      else:
-         format = "%(year)d"
-   else:
-      format = "????-%(month)02d-%(day)02d"
-
-   return format % {"year":year, "month":month, "day":day}
-
 ########################
 ## Calendar
 ########################
@@ -298,10 +281,28 @@ class Calendar (object):
      """
      return None
 
+   def components (self, julian_day):
+     """Return a tuple (year, month, day)"""
+     return (0, 0, 0)
+
    def date_str (self, julian_day, year_known=True,
                  month_known=True, day_known=True):
      """Return a string representing the julian day in the self calendar"""
-     return "unkonwn"
+     (year, month, day) = self.components (julian_day)
+
+     if year_known:
+        if month_known and not day_known:
+           format = "%(year)d-%(month)02d"
+        elif month_known and day_known:
+           format = "%(year)d-%(month)02d-%(day)02d"
+        elif day_known:
+           format = "%(year)d-??-%(day)02d"
+        else:
+           format = "%(year)d"
+     else:
+        format = "????-%(month)02d-%(day)02d"
+
+     return format % {"year":year, "month":month, "day":day}
 
 class Calendar_Gregorian (Calendar):
    def __init__ (self):
@@ -330,8 +331,7 @@ class Calendar_Gregorian (Calendar):
           - feb_29_4800
         return (d, y_known, m_known, d_known, self) 
 
-   def date_str (self, julian_day, year_known=True, month_known=True,
-                 day_known=True):
+   def components (self, julian_day):
       # Algorithm from wikipedia "julian day"
       days_per_four_years = 1461 # julian days per four year period
       j = julian_day + 32044
@@ -347,10 +347,7 @@ class Calendar_Gregorian (Calendar):
       m = (da * 5 + 308) / 153 - 2
       d = da - (m + 4) * 153 / 5 + 122
 
-      year  = y - 4800 + (m + 2) / 12
-      month = (m + 2) % 12 + 1
-      day   = d + 1
-      return ymd_str (year, month, day, year_known, month_known, day_known) 
+      return (y - 4800 + (m + 2) / 12, (m + 2) % 12 + 1, d + 1)
 
 class Calendar_French (Calendar):
    def __init__ (self):
@@ -393,8 +390,7 @@ class Calendar_French (Calendar):
      else:
         return (0, False, False, False, self)
 
-   def date_str (self, julian_day, year_known=True, month_known=True,
-                 day_known=True):
+   def components (self, julian_day):
      # From http://www.scottlee.net
      days_per_four_years = 1461 # julian days per four year period
      epoch = 2375474
@@ -405,6 +401,11 @@ class Calendar_French (Calendar):
      m = day_of_year / days_per_month + 1
      d = day_of_year % days_per_month + 1
 
+     return (y, m, d)
+
+   def date_str (self, julian_day, year_known=True, month_known=True,
+                 day_known=True):
+     (y, m, d) = self.components (julian_day)
      output = ""
 
      if day_known:
@@ -444,8 +445,7 @@ class Calendar_Julian (Calendar):
      return ((day + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4) - feb_29_4800,
              y_known, m_known, d_known, self)
 
-   def date_str (self, julian_day=True, year_known=True, month_known=True,
-                 day_known=True):
+   def components (self, julian_day):
      days_per_four_years = 1461 # julian days per four year period
      j = julian_day + 32083
      b = j / days_per_four_years
@@ -454,10 +454,8 @@ class Calendar_Julian (Calendar):
      da = db - a * 365
      y = b * 4 + a
      m = (da * 5 + 308) / 153 - 2
-     day = da - (m + 4) * 153 / 5 + 122
-     year = y - 4800 + (m + 2) / 12
-     month = (m + 2) % 12 + 1
-     return ymd_str (year, month, day, year_known, month_known, day_known)
+     return (y - 4800 + (m + 2) / 12, (m + 2) % 12 + 1,
+             da - (m + 4) * 153 / 5 + 122)
 
 # The list of predefined calendars
 calendars = [Calendar_Julian(), Calendar_French(), Calendar_Gregorian()]
@@ -581,6 +579,30 @@ class Date (object):
          return Calendar_Gregorian().date_str (self.date)
       else:
          return None  # Can't do any sorting
+
+   def year (self, calendar=None):
+     """Return the year component of self"""
+     cal = calendar or self.calendar
+     return cal.components (self.date)[0]
+
+   def month (self, calendar=None):
+     """Return the year component of self"""
+     cal = calendar or self.calendar
+     return cal.components (self.date)[0]
+
+   def day (self, calendar=None):
+     """Return the year component of self"""
+     cal = calendar or self.calendar
+     return cal.components (self.date)[0]
+
+   def __lt__ (self, d):
+     return self.date < d.date
+
+   def __gt__ (self, d):
+     return self.date < d.date
+
+   def __eq__ (self, d):
+     return self.date == d.date
 
    def display (self, calendar=None):
      """Return a string representing string. By default, this uses the

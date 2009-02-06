@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from django.db import connection
 from django.db.models import Q
 from mysites.geneapro.models import *
+from mysites.geneapro.utils.date import *
 import sys, traceback
 
 class ModelEncoder (simplejson.JSONEncoder):
@@ -56,7 +57,7 @@ def get_extended_personas (ids):
       if e["type_id"] == Event_Type.birth \
         and e["role"] == Event_Type_Role.principal:
 
-         result [id].birth = e["date"]
+         result [id].birth = Date (e["date"])
 
          if e["related_role"] == Event_Type_Role.birth__father:
             result [id].father_id = e["related"]
@@ -65,7 +66,7 @@ def get_extended_personas (ids):
 
       elif e["type_id"] == Event_Type.death \
         and e["role"] == Event_Type_Role.principal:
-         result [id].death = e["date"]
+         result [id].death = Date (e["date"])
 
       elif e["type_id"] == Event_Type.birth \
         and e["related_role"] == Event_Type_Role.principal \
@@ -108,7 +109,7 @@ def data (request):
     except Persona.DoesNotExist:
        pass
 
-    #children.sort (cmp=lambda x,y: cmp (x.birth,y.birth))
+    children.sort (cmp=lambda x,y: cmp (x.birth,y.birth))
 
     data = to_json ({'generations':generations, 'sosa':tree,
                      'children':children})
@@ -117,8 +118,8 @@ def data (request):
     traceback.print_exc()
     data = []
 
-  for q in connection.queries:
-     print q["sql"]
+  #for q in connection.queries:
+  #   print q["sql"]
   print "total=" + str (len (connection.queries))
 
   return HttpResponse (data, mimetype="application/javascript")
