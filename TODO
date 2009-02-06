@@ -11,7 +11,6 @@ Assertion.Value should point into a table rather than be a text
 ** Dnd on Pedigree icon should display the pedigree for that person
 ** Should cache pedigree data locally to avoid reloading when going back
    (perhaps only save a few generations, although this is not big)
-** Allow user to configure number of generations
 ** When showing children, show the name of the matching spouse
 ** Support for multiple parents (foster parents, ambiguities,...)
 ** Search for parents in aliases personas

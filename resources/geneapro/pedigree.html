@@ -2,7 +2,7 @@
 {% block title %}GeneaPro: pedigree{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
-#pedigreeSVG {width:100%;height:600px;margin:10px 0 10px 0;border:0}
+#pedigreeSVG {width:100%;height:600px;margin:10px 0 10px 0;border:0; min-height:600px}
 {% endblock css %}
 {% block header %}
 <script type="text/javascript" src="{{MEDIA_URL}}pedigree.js"></script>
@@ -10,12 +10,25 @@
 pedigree_data_url="{% url pedigree_data %}";
 $(function(){
   $('#pedigreeSVG').svg();
-  generations = 4;
-  getPedigree (1);
+  getPedigree ();
 });
+function changeGenerations () {
+  $('#pedigreeSVG').height ("auto").width ("auto");
+  getPedigree ();
+}
 </script>
 {% endblock header %}
 {% block contents %}
+Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
+  <option>2</option>
+  <option>3</option>
+  <option selected="1">4</option>
+  <option>5</option>
+  <option>6</option>
+  <option>7</option>
+  <option>8</option>
+  <option>9</option>
+</select>
 <div id="pedigreeSVG"></div>
 {% endblock contents %}
 

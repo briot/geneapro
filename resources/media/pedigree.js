@@ -6,7 +6,7 @@ var vertPadding = 20; //  vertical padding at last gen
 var sosa=null;
 var generations=null;
 var children=null;
-
+var decujus=1;
 var tops=null;
 
 function onMouseOver (evt) {
@@ -28,8 +28,18 @@ function onGetJSON (data, status) {
   marriage = data.marriage;
   drawSOSA ();
 }
+function getSelectedValue (select) {
+  return (select.selectedIndex >= 0)
+    ? (select.options[select.selectedIndex].value
+       ? select.options [select.selectedIndex].value
+       : select.options [select.selectedIndex].text)
+    : select.value;
+}
 function getPedigree (id) {
-  $.getJSON (pedigree_data_url, {id:id, generations:generations}, onGetJSON);
+  decujus=id || decujus;
+  generations = getSelectedValue ($("select[name=generations]")[0]);
+  $.getJSON (pedigree_data_url,
+             {id:decujus, generations:generations}, onGetJSON);
 }
 function onClick (evt) {
   var box = evt.target;

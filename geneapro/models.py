@@ -540,18 +540,25 @@ class Persona (GeneaproModel):
         # This only works if self was generated through the parents manager
         # If not defined, we get an exception. The caller needs to be fixed,
         # not here
-        if self.death and self.birth:
-           d = str (self.death) + " (age " + \
-               str (self.death.years_since (self.birth)) + ")"
-        elif self.death:
-           d = str (self.death)
-        elif self.birth:
-           d = "(age " + \
-               (str (date.Date.today().years_since (self.birth))) + ")"
-        else:
-           d = ""
 
-        return {"id":self.id, "name":self.name, 'birth':str (self.birth),
+        if self.birth:
+           b = str (self.birth)
+        else:
+           b = ""
+
+        if self.death:
+           d = str (self.death)
+           a = self.death.years_since (self.birth)
+           if a:
+              d += " (age " + str (a) + ")"
+        else:
+           a = date.Date.today().years_since (self.birth)
+           if a:
+              d = "(age " + str (a) + ")"
+           else:
+              d = ""
+
+        return {"id":self.id, "name":self.name, 'birth':b,
                 'sex':self.sex, 'death':d}
 
     objects = models.Manager ()

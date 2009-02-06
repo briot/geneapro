@@ -622,6 +622,9 @@ class Date (object):
         Only full years are counted
      """
 
+     if not d or not d.year_known or not self.year_known:
+        return None
+
      comps = self.calendar.components (self.date)
      dcomps = d.calendar.components (d.date)
      if comps[1] > dcomps [1]:
