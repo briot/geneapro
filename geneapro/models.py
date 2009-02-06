@@ -542,9 +542,12 @@ class Persona (GeneaproModel):
         # not here
         if self.death and self.birth:
            d = str (self.death) + " (age " + \
-               str (self.death.year() - self.birth.year()) + ")"
+               str (self.death.years_since (self.birth)) + ")"
         elif self.death:
            d = str (self.death)
+        elif self.birth:
+           d = "(age " + \
+               (str (date.Date.today().years_since (self.birth))) + ")"
         else:
            d = ""
 

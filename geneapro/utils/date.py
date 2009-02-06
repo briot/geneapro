@@ -16,7 +16,7 @@ display in diagrams.
 """
 
 from django.utils.translation import ugettext as _
-import datetime, re
+import datetime, re, time
 
 __all__ = ["from_roman_literal", "to_roman_literal", "DateRange", "Date"]
 
@@ -310,10 +310,16 @@ class Calendar_Gregorian (Calendar):
 
    def parse (self, txt, add_year=0, add_month=0, add_day=0):
      year, month, day, y_known, m_known, d_known = get_ymd (txt, month_names)
+     return self.__from_components (
+        year, month, day, y_known, m_known, d_known,
+        add_year, add_month, add_day)
 
+   def __from_components (self, year, month, day, year_known=True,
+                          month_known=True, day_known=True,
+                          add_year=0, add_month=0, add_day=0):
      # If date is before the invention of gregorian calendar, assume we have
      # a julian date
-     if y_known and \
+     if year_known and \
         (year < 1582 or \
           (year == 1582 and month < 2) or \
           (year == 1582 and month == 2 and day < 24)):
@@ -329,7 +335,14 @@ class Calendar_Gregorian (Calendar):
         m2 = month + 12 * a - 3
         d = day + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400\
           - feb_29_4800
-        return (d, y_known, m_known, d_known, self) 
+        return (d, year_known, month_known, day_known, self) 
+
+   @staticmethod
+   def today ():
+      """Return today's date"""
+      t = time.localtime()
+      return Calendar_Gregorian ().__from_components (
+          t.tm_year, t.tm_mon, t.tm_mday)
 
    def components (self, julian_day):
       # Algorithm from wikipedia "julian day"
@@ -603,6 +616,30 @@ class Date (object):
 
    def __eq__ (self, d):
      return self.date == d.date
+
+   def years_since (self, d):
+     """Return the number of years between self and d.
+        Only full years are counted
+     """
+
+     comps = self.calendar.components (self.date)
+     dcomps = d.calendar.components (d.date)
+     if comps[1] > dcomps [1]:
+        return comps[0] - dcomps [0]
+     elif comps[1] == dcomps [1] \
+        and comps [2] > dcomps [2]:
+        return comps [0] - dcomps [0]
+     else:
+        return comps [0] - dcomps [0] - 1
+
+   @staticmethod
+   def today ():
+     """Return today's date"""
+     d = Calendar_Gregorian().today ()
+     result = Date ("")
+     (result.date, result.year_known, result.month_known, result.day_known,
+      result.calendar) = d
+     return result
 
    def display (self, calendar=None):
      """Return a string representing string. By default, this uses the
