@@ -1,3 +1,4 @@
+// Needs the variable "pedigree_data_url" to be defined
 var boxWidth = 200;
 var horizPadding = 20;
 var boxHeight = 60;
@@ -19,16 +20,16 @@ function onMouseOut (evt) {
   box.setAttribute ('stroke', box.getAttribute ('oldstroke'));
   box.setAttribute ('filter','url(#shadow)');
 }
-function ongetJSON (data, status) {
+function onGetJSON (data, status) {
   unsetBusy ();
   sosa = data.sosa;
   generations = data.generations;
   children = data.children;
+  marriage = data.marriage;
   drawSOSA ();
 }
 function getPedigree (id) {
-  //setBusy ($("#pedigreeSVG"));
-  $.getJSON (pedigree_data_url, {id:id, generations:generations}, ongetJSON);
+  $.getJSON (pedigree_data_url, {id:id, generations:generations}, onGetJSON);
 }
 function onClick (evt) {
   var box = evt.target;
@@ -36,8 +37,6 @@ function onClick (evt) {
      var num = box.getAttribute ("sosa");
      var id = (num < 0) ? children[-1 - num].id : sosa[num].id;
      var startX = (children ? boxWidth + horizPadding : 0) + 1;
-     //var svg = $('#pedigreeSVG').svg('get');
-     //svg.root().setAttribute ("opacity",0.2);
      var delay = 200;
      $(box.parentNode).animate ({'svg-x':startX, 'svg-y':tops[0]}, delay);
      setTimeout (function() {getPedigree (id);return false}, delay);
@@ -145,9 +144,10 @@ function drawSOSA() {
                       .vertTo (y2)
                       .horizTo (x2),
                       {stroke:'black', fill:'none'});
-            if (gen < generations - 1) {
+            if (gen < generations - 1 
+                && marriage[2 * index + 2]) {
               svg.text (x2, (y1 + y2) / 2 + 4,
-                        svg.createText().string ("marriage ?"),
+                        svg.createText().string (marriage[2*index + 2]),
                         {stroke:"black", "stroke-width":0,
                          onmouseover:'onTxtMouseOver(evt)',
                          onmouseout:'onTxtMouseOut(evt)'});

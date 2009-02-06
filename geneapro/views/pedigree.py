@@ -32,6 +32,7 @@ def get_extended_personas (ids):
       p.mother_id = None
       p.birth = None
       p.death = None
+      p.marriage = None
 
       tmp = Characteristic_Part.objects.filter (
          type=Characteristic_Part_Type.sex,
@@ -74,9 +75,16 @@ def get_extended_personas (ids):
                           Event_Type_Role.birth__mother):
          result [id].children.append (e["related"])
 
+      elif e["type_id"] == Event_Type.marriage \
+        and e["role"] in (Event_Type_Role.marriage__husband,
+                          Event_Type_Role.marriage__wife):
+         # If this is the marriage with the other person in the list
+         if e["related"] in ids:
+            result [id].marriage = str (Date (e["date"]))
+
    return result.values()
 
-def get_parents (dic, person_ids, max_level, sosa=1):
+def get_parents (tree, marriage, person_ids, max_level, sosa=1):
    """Complete the ancestors data for persons.
       The first person in the list has SOSA number sosa, the others
       are +1, +2,...
@@ -86,16 +94,20 @@ def get_parents (dic, person_ids, max_level, sosa=1):
    persons = get_extended_personas (person_ids)
 
    for p in persons:
-      dic [sosa] = p
+      tree [sosa] = p
+
+      # Marriage data indexed on the husbands' sosa number
+      marriage [sosa - (sosa % 2)] = p.marriage
 
       if max_level > 1:
          if p.father_id and p.mother_id:
-            get_parents (dic, [p.father_id, p.mother_id],
+            get_parents (tree, marriage, [p.father_id, p.mother_id],
                          max_level - 1, sosa=sosa*2)
          elif p.father_id:
-            get_parents (dic, p.father_id, max_level-1, sosa=sosa*2)
+            get_parents (tree, marriage, p.father_id, max_level-1, sosa=sosa*2)
          elif p.mother_id:
-            get_parents (dic, p.mother_id, max_level-1, sosa=sosa*2+1)
+            get_parents (tree, marriage, p.mother_id, max_level-1,
+                         sosa=sosa*2+1)
 
       sosa = sosa + 1
 
@@ -109,15 +121,19 @@ def data (request):
   id          = int (request.GET ["id"])
   tree = dict ()
 
+  ## Marriage data is indexed on the husband's sosa number
+  marriage = dict()
+
   try:
-     p = get_parents (tree, id, generations)[0]
+     p = get_parents (tree, marriage, id, generations)[0]
      children = get_extended_personas (p.children)
      children.sort (cmp=lambda x,y: cmp (x.birth,y.birth))
   except Persona.DoesNotExist:
      pass
 
+
   data = to_json ({'generations':generations, 'sosa':tree,
-                   'children':children})
+                   'children':children, 'marriage':marriage})
   return HttpResponse (data, mimetype="application/javascript")
 
 def view (request):
