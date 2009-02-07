@@ -152,8 +152,11 @@ def data (request):
 
   try:
      p = get_parents (tree, marriage, id, generations)[0]
-     children = get_extended_personas (p.children)
-     children.sort (cmp=lambda x,y: cmp (x.birth,y.birth))
+     if p.children:
+        children = get_extended_personas (p.children)
+        children.sort (cmp=lambda x,y: cmp (x.birth,y.birth))
+     else:
+        children = None
   except Persona.DoesNotExist:
      pass
 

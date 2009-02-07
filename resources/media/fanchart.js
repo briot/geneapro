@@ -17,10 +17,12 @@ defaultConfig = {
    fontsizes: ["30px", "40px", "30px", "20px", "10px", "5px"],
 
    /* Width of boxes for children */
-   boxWidth: 100,
+   boxWidth: 200,
+   boxHeight: 60,
 
    /* Horizontal padding between the children and the decujus */
    horizPadding: 30,
+   vertPadding: 20,
 
    /* Animation delay (moving selected box to decujus' position */
    delay: 200
@@ -76,19 +78,22 @@ function drawSOSA (conf) {
    var svg = $('#pedigreeSVG').height ("100%").svg('get');
    svg.clear ();
 
-   var maxHeight = generations * config.rowHeight * 2;
-   var maxWidth  = Math.max
-      (1000, maxHeight + config.boxWidth + config.horizPadding + 300);
+   /* Margin, in radians, on each end of the text path for the names */
+   var margin = 2 * Math.PI / 180;
+
+   var childrenHeight = children
+       ? children.length * (config.boxHeight + config.vertPadding)
+       : 0;
+   var diameter = generations * config.rowHeight * 2;
+   var maxHeight = Math.max (childrenHeight, diameter);
+   var maxWidth = config.boxWidth + config.horizPadding + diameter;
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
                   preserveAspectRatio:"xMinYMid"},true);
 
-   var centerx = maxWidth - maxHeight / 2;
+   var centerx = maxWidth - diameter / 2;
    var centery = maxHeight / 2;
-
-   config.centerx = centerx;
-   config.centery = centery;
-   config.decujusx = centerx - 300;
-   config.decujusy = centery - 20;
+   config.decujusx = config.boxWidth + config.horizPadding;
+   config.decujusy = centery - 5;
 
    var person = sosa [1];
    svg.text(config.decujusx, config.decujusy,
@@ -163,10 +168,11 @@ function drawSOSA (conf) {
    
                if (minAngle < 0 || !config.readable_names) {
                   var textPath = createPath (medRadius, medRadius, 
-                       minAngle, minAngle + angleInc, false);
+                       minAngle + margin, minAngle + angleInc - margin, false);
                } else {
                   var textPath = createPath (medRadius, medRadius, 
-                       minAngle + angleInc, minAngle, false, false);
+                       minAngle + angleInc - margin, minAngle + margin,
+                       false, false);
                }
                svg.path (svg.defs(), textPath, {id:"Path"+(minIndex + id)})
 
@@ -190,5 +196,60 @@ function drawSOSA (conf) {
          }
       }
     }
+
+    /* Draw children */
+
+   if (children) {
+      var y = (maxHeight 
+         - children.length * (config.boxHeight + config.vertPadding)) / 2;
+      for (var c=0; c < children.length; c++) {
+         drawBox (svg, children [c], 1, y, -1 - c, config);
+         y += config.boxHeight + config.vertPadding;
+      }
+   }
 }
+
+   function drawBox (svg, person, x, y, sosa, config) {
+      if (person && person.sex == "M") {
+         var bg = '#D6E0EA';
+         var fg = '#9CA3D4';
+      } else if (person && person.sex == "F") {
+         var bg = '#E9DAF1';
+         var fg = '#FF2080';
+      } else {
+         var bg = '#FFF';
+         var fg = '#9CA3D4';
+      }
+      if (person) {
+         var g = svg.svg (x, y);
+         svg.rect (g, 0, 0, config.boxWidth, config.boxHeight,
+                  {stroke:fg, fill:bg,
+                   sosa:sosa,
+                   onclick:'onClick(evt)',
+                   onmouseover:'onMouseOver(evt)',
+                   onmouseout:'onMouseOut(evt)'});
+         var clip = svg.other (g, 'clipPath', {id:'p'+sosa});
+         svg.rect (clip, 0, 0, config.boxWidth, config.boxHeight);
+
+        if (person.name) {
+          var fontweight = (sosa == 1) ? "bold" : "normal";
+          svg.text(g, 4, 16,
+               svg.createText().string(person.name)
+               .span ("b:", {x:4, dy:"1.4em"})
+               .span (person.birth, {"font-weight":"normal",
+                                     "font-style":"italic"})
+               .span ("d:", {x:4, dy:"1.2em"})
+               .span (person.death, {"font-weight":"normal",
+                                     "font-style":"italic"}),
+               {"font-weight":fontweight, "clip-path":"url(#p"+sosa+")",
+                "pointer-events":"none"});
+        }
+      } else {
+         svg.rect (x, y, boxWidth, boxHeight,
+                  {stroke:fg, fill:bg, "stroke-dasharray":"3",
+                   onmouseover:'onMouseOver(evt)',
+                   onmouseout:'onMouseOut(evt)'});
+      }
+   }
+
 
