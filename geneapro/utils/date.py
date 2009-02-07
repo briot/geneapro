@@ -309,9 +309,13 @@ class Calendar (object):
      return (0, 0, 0)
 
    def date_str (self, julian_day, year_known=True,
-                 month_known=True, day_known=True):
-     """Return a string representing the julian day in the self calendar"""
+                 month_known=True, day_known=True, year_only=False):
+     """Return a string representing the julian day in the self calendar.
+        If year_only is true, only the year is returned"""
      (year, month, day) = self.components (julian_day)
+
+     if year_only:
+        return "%(year)d" % {"year":year}
 
      if year_known:
         if month_known and not day_known:
@@ -429,9 +433,12 @@ class Calendar_French (Calendar):
      return (y, m, d)
 
    def date_str (self, julian_day, year_known=True, month_known=True,
-                 day_known=True):
+                 day_known=True, year_only=False):
      (y, m, d) = self.components (julian_day)
      output = ""
+
+     if year_only:
+        return to_roman_literal (y)
 
      if day_known:
         output = str (d) + " "
@@ -655,7 +662,7 @@ class Date (object):
       result.calendar) = d
      return result
 
-   def display (self, calendar=None):
+   def display (self, calendar=None, year_only=False):
      """Return a string representing string. By default, this uses the
         calendar parsed when the date was created, but it is possible to
         force the display in other date formats.
@@ -674,9 +681,10 @@ class Date (object):
            result = result + "/"
 
         result = result + cal.date_str \
-          (self.date, self.year_known, self.month_known, self.day_known)
+          (self.date, self.year_known, self.month_known, self.day_known,
+           year_only=year_only)
 
-        if self.seconds != None:
+        if not year_only and self.seconds != None:
            result = result + " " + str (self.seconds)
 
         if self.type == DATE_AFTER:

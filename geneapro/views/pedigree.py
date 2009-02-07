@@ -9,35 +9,36 @@ from mysites.geneapro.models import *
 from mysites.geneapro.utils.date import *
 import sys, traceback
 
-class ModelEncoder (simplejson.JSONEncoder):
-   def default(self, obj):
-      if isinstance (obj, Persona):
-         if obj.birth:
-            b = str (obj.birth)
-         else:
-            b = ""
- 
-         if obj.death:
-            d = str (obj.death)
-            a = obj.death.years_since (obj.birth)
-            if a:
-               d += " (age " + str (a) + ")"
-         else:
-            a = date.Date.today().years_since (obj.birth)
-            if a:
-               d = "(age " + str (a) + ")"
+def to_json (obj, year_only):
+   class ModelEncoder (simplejson.JSONEncoder):
+      def default(self, obj):
+         if isinstance (obj, Persona):
+            if obj.birth:
+               b = obj.birth.display (year_only=year_only)
             else:
-               d = ""
+               b = ""
  
-         return {"id":obj.id, "name":obj.name, 'birth':b,
-                 'sex':obj.sex, 'death':d}
+            d = ""
+            if obj.death:
+               d = obj.death.display (year_only=year_only)
+               if not year_only:
+                  a = obj.death.years_since (obj.birth)
+                  if a:
+                     d += " (age " + str (a) + ")"
+            elif not year_only:
+               a = date.Date.today().years_since (obj.birth)
+               if a:
+                  d = "(age " + str (a) + ")"
+ 
+            return {"id":obj.id, "name":obj.name, 'birth':b,
+                    'sex':obj.sex, 'death':d}
 
-      elif isinstance (obj, GeneaproModel):
-         return obj.to_json()
-      return super (ModelEncoder, self).default (obj)
+         elif isinstance (obj, GeneaproModel):
+            return obj.to_json()
+         return super (ModelEncoder, self).default (obj)
 
-def to_json (obj):
-   """Converts a type to json data, properly converting database instances"""
+   """Converts a type to json data, properly converting database instances.
+      If year_only is true, then the dates will only include the year"""
    return simplejson.dumps (obj, cls=ModelEncoder, separators=(',',':'))
 
 def get_extended_personas (ids):
@@ -142,6 +143,7 @@ def data (request):
   # including the two children of the main person
 
   generations = int (request.GET.get ("generations", 4))
+  year_only   = request.GET.get ("yearonly", "false") == "true"
   id          = int (request.GET ["id"])
   tree = dict ()
 
@@ -157,7 +159,8 @@ def data (request):
 
 
   data = to_json ({'generations':generations, 'sosa':tree,
-                   'children':children, 'marriage':marriage})
+                   'children':children, 'marriage':marriage},
+                  year_only=year_only)
   return HttpResponse (data, mimetype="application/javascript")
 
 def pedigree_view (request):

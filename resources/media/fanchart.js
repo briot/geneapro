@@ -14,7 +14,7 @@ defaultConfig = {
 
    /* Size of fonts for each generation. Names will not be displayed if the
       generation has no entry in this table. Index 0 is for the decujus */
-   fontsizes: ["50", "40", "30", "20", "10", "5"],
+   fontsizes: ["30px", "40px", "30px", "20px", "10px", "5px"],
 
    /* Width of boxes for children */
    boxWidth: 100,
@@ -42,7 +42,7 @@ function getPedigree (id) {
   decujus=id || decujus;
   var gen = Number (getSelectedValue ($("select[name=generations]")[0]))+1;
   $.getJSON (pedigree_data_url,
-             {id:decujus, generations:gen}, onGetJSON);
+             {id:decujus, generations:gen, yearonly:true}, onGetJSON);
 }
 function onClick (evt) {
   var box = evt.target;
@@ -99,7 +99,7 @@ function drawSOSA (conf) {
                .span ("d:", {x:config.decujusx, dy:"1.2em"})
                .span (person.death, {"font-weight":"normal",
                                      "font-style":"italic"}),
-            {"font-weight":"bold",
+            {"font-weight":"bold", "text-anchor":"start",
              "font-size":config.fontsizes[0]});
 
    var minAngleRad = (-180 + config.halfAperture) * Math.PI / 180;
@@ -173,9 +173,14 @@ function drawSOSA (conf) {
                var text = svg.text ("",
                   {"stroke":"black", "font-size": config.fontsizes[gen],
                    "pointer-events":"none",
+                   "stroke-width":0,
                    "font-weight":"normal"});
                svg.textpath(text, "#Path"+(minIndex + id),
-                  svg.createText().string(person.name));
+                  svg.createText().string(person.name)
+                  .span ((person.birth || "?") + "-"
+                         + (person.death || "?"),
+                         {x:"10",dy:"1.1em"})
+                 );
             }
          } else {
             svg.path (p, {"stroke":"gray", "fill":bg,
