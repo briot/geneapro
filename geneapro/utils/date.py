@@ -633,7 +633,7 @@ class Date (object):
      return self.date < d.date
 
    def __gt__ (self, d):
-     return self.date < d.date
+     return self.date > d.date
 
    def __eq__ (self, d):
      return self.date == d.date

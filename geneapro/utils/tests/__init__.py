@@ -159,4 +159,11 @@ class DateTestCase (unittest.TestCase):
         self._assertDate ("1583-01-01 - 3 years", Jan_1_1581_Ju,
                           "1580-01-01 (Julian)")
 
+        self.assertFalse (date.Date ("1896-11-20") < date.Date ("1894-06-20"))
+        self.assertTrue (date.Date ("1896-11-20") > date.Date ("1894-06-20"))
+        self.assertEqual (cmp (date.Date ("1896-11-20"),
+                               date.Date ("1894-06-20")),
+                          1)
+
+
 

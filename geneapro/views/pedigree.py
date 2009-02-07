@@ -146,11 +146,14 @@ def data (request):
   ## Marriage data is indexed on the husband's sosa number
   marriage = dict()
 
+  def sort_by_birth (x, y):
+      return cmp (x.birth,y.birth)
+
   try:
      p = get_parents (tree, marriage, id, generations)[0]
      if p.children:
         children = get_extended_personas (p.children)
-        children.sort (cmp=lambda x,y: cmp (x.birth,y.birth))
+        children.sort (cmp=sort_by_birth)
      else:
         children = None
   except Persona.DoesNotExist:
