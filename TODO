@@ -20,5 +20,9 @@ Assertion.Value should point into a table rather than be a text
    might want to see other info (if "residence", there can be multiple of
    them)
 
+* FanChart
+** BUG: why isn't the font size taken into account in SVG ?
+   Later generations should be using a smaller font-size
+
 * Ideas for names
 ** Geneatica, Forebears

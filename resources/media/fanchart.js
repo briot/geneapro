@@ -2,19 +2,19 @@
 
 defaultConfig = {
    /* Height of a row in the circle, for one generation */
-   rowHeight: 60,
+   rowHeight: 80,
 
    /* Half the aperture on the left where the decujus is written,
       in degrees */
-   halfAperture: 17,
+   halfAperture: 10,
 
    /* If true, the names on the lower half of the circle are displayed
       so as to be readable. Otherwise they are up-side down */
-   readable_names: false,
+   readable_names: true,
 
    /* Size of fonts for each generation. Names will not be displayed if the
       generation has no entry in this table. Index 0 is for the decujus */
-   fontsizes: ["30px", "40px", "30px", "20px", "10px", "5px"],
+   fontsizes: ["30px", "40px", "30px", "20px", "10px", "5px", "5px", "5px"],
 
    /* Width of boxes for children */
    boxWidth: 200,
@@ -164,15 +164,38 @@ function drawSOSA (conf) {
                           onmouseout:'onMouseOut(evt)'});
 
             if (gen < config.fontsizes.length) {
-               /* Draw person name along the curve, and clipped */
-   
-               if (minAngle < 0 || !config.readable_names) {
-                  var textPath = createPath (medRadius, medRadius, 
-                       minAngle + margin, minAngle + angleInc - margin, false);
+               /* Draw person name along the curve, and clipped.
+                  For late generations, we rotate the text since there is not
+                  enough horizontal space anyway */
+
+               if (gen >= 5) {
+                 var c = Math.cos (minAngle + angleInc / 2);
+                 var s = Math.sin (minAngle + angleInc / 2);
+                 if (config.readable_names
+                     && Math.abs (minAngle) > Math.PI / 2)
+                 {
+                    var textPath = svg.createPath ()
+                    .moveTo (Math.round (centerx + maxRadius * c),
+                             Math.round (centery + maxRadius * s))
+                    .lineTo (Math.round (centerx + minRadius * c),
+                             Math.round (centery + minRadius * s));
+                 } else {
+                    var textPath = svg.createPath ()
+                    .moveTo (Math.round (centerx + minRadius * c),
+                             Math.round (centery + minRadius * s))
+                    .lineTo (Math.round (centerx + maxRadius * c),
+                             Math.round (centery + maxRadius * s));
+                 }
+
                } else {
-                  var textPath = createPath (medRadius, medRadius, 
+                 if (minAngle < 0 || !config.readable_names) {
+                    var textPath = createPath (medRadius, medRadius, 
+                       minAngle + margin, minAngle + angleInc - margin, false);
+                 } else {
+                    var textPath = createPath (medRadius, medRadius, 
                        minAngle + angleInc - margin, minAngle + margin,
                        false, false);
+                 }
                }
                svg.path (svg.defs(), textPath, {id:"Path"+(minIndex + id)})
 

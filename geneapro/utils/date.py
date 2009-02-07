@@ -315,7 +315,10 @@ class Calendar (object):
      (year, month, day) = self.components (julian_day)
 
      if year_only:
-        return "%(year)d" % {"year":year}
+        if year_known:
+           return "%(year)d" % {"year":year}
+        else:
+           return ""
 
      if year_known:
         if month_known and not day_known:
