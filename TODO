@@ -22,6 +22,7 @@ Assertion.Value should point into a table rather than be a text
    but should fallback on "baptism" and "burial" for instance, or the user
    might want to see other info (if "residence", there can be multiple of
    them)
+** BUG: children of Pierre Marie Joseph Poidevin are wrongly ordered
 
 * FanChart
 ** BUG: why isn't the font size taken into account in SVG ?

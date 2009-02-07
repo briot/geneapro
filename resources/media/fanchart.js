@@ -75,9 +75,6 @@ function onMouseOut (evt) {
 function drawSOSA (conf) {
    config = $.extend (true, {}, defaultConfig, conf);
 
-   var svg = $('#pedigreeSVG').height ("100%").svg('get');
-   svg.clear ();
-
    /* Margin, in radians, on each end of the text path for the names */
    var margin = 2 * Math.PI / 180;
 
@@ -87,6 +84,10 @@ function drawSOSA (conf) {
    var diameter = generations * config.rowHeight * 2;
    var maxHeight = Math.max (childrenHeight, diameter);
    var maxWidth = config.boxWidth + config.horizPadding + diameter;
+
+   $('#pedigreeSVG').height (maxHeight).width (maxWidth);
+   var svg = $('#pedigreeSVG').svg('get');
+   svg.clear ();
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
                   preserveAspectRatio:"xMinYMid"},true);
 
