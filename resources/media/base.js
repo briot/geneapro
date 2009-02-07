@@ -18,3 +18,15 @@ function unsetBusy (elemt) {
   $(".throbber", elemt).remove ();
 }
 
+/*************************************************
+ * Return the current value of a <select> element
+ *************************************************/
+
+function getSelectedValue (select) {
+  return (select.selectedIndex >= 0)
+    ? (select.options[select.selectedIndex].value
+       ? select.options [select.selectedIndex].value
+       : select.options [select.selectedIndex].text)
+    : select.value;
+}
+

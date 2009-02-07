@@ -5,7 +5,11 @@
 #pedigreeSVG {width:100%;height:600px;margin:10px 0 10px 0;border:0; min-height:600px}
 {% endblock css %}
 {% block header %}
+{% ifequal type "fanchart" %}
+<script type="text/javascript" src="{{MEDIA_URL}}fanchart.js"></script>
+{% else %}
 <script type="text/javascript" src="{{MEDIA_URL}}pedigree.js"></script>
+{% endifequal %}
 <script type="text/javascript">
 pedigree_data_url="{% url pedigree_data %}";
 $(function(){
@@ -28,6 +32,10 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
   <option>7</option>
   <option>8</option>
   <option>9</option>
+  <option>10</option>
+  <option>11</option>
+  <option>12</option>
+  <option>13</option>
 </select>
 <div id="pedigreeSVG"></div>
 {% endblock contents %}

@@ -28,13 +28,6 @@ function onGetJSON (data, status) {
   marriage = data.marriage;
   drawSOSA ();
 }
-function getSelectedValue (select) {
-  return (select.selectedIndex >= 0)
-    ? (select.options[select.selectedIndex].value
-       ? select.options [select.selectedIndex].value
-       : select.options [select.selectedIndex].text)
-    : select.value;
-}
 function getPedigree (id) {
   decujus=id || decujus;
   generations = getSelectedValue ($("select[name=generations]")[0]);

@@ -160,9 +160,14 @@ def data (request):
                    'children':children, 'marriage':marriage})
   return HttpResponse (data, mimetype="application/javascript")
 
-def view (request):
+def pedigree_view (request):
     return render_to_response (
         'geneapro/pedigree.html',
-        {},
+        {"type":"pedigree"},
         context_instance=RequestContext(request))
 
+def fanchart_view (request):
+    return render_to_response (
+        'geneapro/pedigree.html',
+        {"type":"fanchart"},
+        context_instance=RequestContext(request))
