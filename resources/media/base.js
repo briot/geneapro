@@ -30,3 +30,50 @@ function getSelectedValue (select) {
     : select.value;
 }
 
+/************************************************
+ * Support for pedigree and fanchart
+ ************************************************/
+
+function getColors (person) {
+  if (person && person.sex == "M") {
+     return {bg:'#D6E0EA', fg:'#9CA3D4'};
+  } else if (person && person.sex == "F") {
+     return {bg:'#E9DAF1', fg:'#FF2080'};
+  } else {
+     return {bg:'#FFF', fg:'#9CA3D4'};
+  }
+}
+
+function drawBox (svg, person, x, y, sosa, config, filter) {
+  var cols = getColors (person);
+  if (person) {
+     var g = svg.svg (x, y);
+     svg.rect (g, 0, 0, config.boxWidth, config.boxHeight,
+              {stroke:cols.fg, fill:cols.bg, filter:filter,
+               sosa:sosa,
+               onclick:'onClick(evt)',
+               onmouseover:'onMouseOver(evt)',
+               onmouseout:'onMouseOut(evt)'});
+     var clip = svg.other (g, 'clipPath', {id:'p'+sosa});
+     svg.rect (clip, 0, 0, config.boxWidth, config.boxHeight);
+
+    if (person.name) {
+      var fontweight = (sosa == 1) ? "bold" : "normal";
+      svg.text(g, 4, 16,
+          svg.createText().string(person.name)
+          .span ("b:", {x:4, dy:"1.4em"})
+          .span (person.birth, {"font-weight":"normal",
+                                "font-style":"italic"})
+          .span ("d:", {x:4, dy:"1.2em"})
+          .span (person.death, {"font-weight":"normal",
+                                "font-style":"italic"}),
+        {"font-weight":fontweight, "clip-path":"url(#p"+sosa+")",
+         "pointer-events":"none"});
+      }
+    } else {
+      svg.rect (x, y, boxWidth, boxHeight,
+               {stroke:cols.fg, fill:cols.bg, "stroke-dasharray":"3",
+                onmouseover:'onMouseOver(evt)',
+                onmouseout:'onMouseOut(evt)'});
+  }
+}

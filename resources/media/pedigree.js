@@ -90,48 +90,10 @@ function drawSOSA() {
       tops[index] = (tops [2 * index + 1] + tops [2 * index + 2]) / 2;
    }
 
-   drawBox = function (person, x, y, sosa) {
-      if (person && person.sex == "M") {
-         var bg = '#D6E0EA';
-         var fg = '#9CA3D4';
-      } else if (person && person.sex == "F") {
-         var bg = '#E9DAF1';
-         var fg = '#FF2080';
-      } else {
-         var bg = '#FFF';
-         var fg = '#9CA3D4';
-      }
-      if (person) {
-         var g = svg.svg (x, y);
-         svg.rect (g, 0, 0, boxWidth, boxHeight,
-                  {stroke:fg, fill:bg, filter:"url(#shadow)",
-                   sosa:sosa,
-                   onclick:'onClick(evt)',
-                   onmouseover:'onMouseOver(evt)',
-                   onmouseout:'onMouseOut(evt)'});
-         var clip = svg.other (g, 'clipPath', {id:'p'+sosa});
-         svg.rect (clip, 0, 0, boxWidth, boxHeight);
-
-        if (person.name) {
-          var fontweight = (sosa == 1) ? "bold" : "normal";
-          svg.text(g, 4, 16,
-               svg.createText().string(person.name)
-               .span ("b:", {x:4, dy:"1.4em"})
-               .span (person.birth, {"font-weight":"normal",
-                                     "font-style":"italic"})
-               .span ("d:", {x:4, dy:"1.2em"})
-               .span (person.death, {"font-weight":"normal",
-                                     "font-style":"italic"}),
-               {"font-weight":fontweight, "clip-path":"url(#p"+sosa+")",
-                "pointer-events":"none"});
-        }
-      } else {
-         svg.rect (x, y, boxWidth, boxHeight,
-                  {stroke:fg, fill:bg, "stroke-dasharray":"3",
-                   onmouseover:'onMouseOver(evt)',
-                   onmouseout:'onMouseOut(evt)'});
-      }
-   }
+   config = {
+     boxWidth: boxWidth,
+     boxHeight: boxHeight
+   };
 
    index = 0;
    for (var gen = 0; gen < generations; gen++) {
@@ -156,7 +118,8 @@ function drawSOSA() {
                          onmouseout:'onTxtMouseOut(evt)'});
             }
          }
-         drawBox (sosa [index + 1], x, tops[index], index + 1);
+         drawBox (svg, sosa [index + 1], x, tops[index], index + 1,
+                  config, "url(#shadow)");
          index ++;
       }
    }
@@ -175,7 +138,7 @@ function drawSOSA() {
                    .vertTo (y + boxHeight / 2)
                    .horizTo (1 + boxWidth),
                    {stroke:'black', fill:'none'});
-         drawBox (children [c], 1, y, -1 - c);
+         drawBox (svg, children [c], 1, y, -1 - c, config, "url(#shadow)");
          y += boxHeight + space;
       }
    }

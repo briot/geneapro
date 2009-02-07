@@ -27,6 +27,8 @@ Assertion.Value should point into a table rather than be a text
 * FanChart
 ** BUG: why isn't the font size taken into account in SVG ?
    Later generations should be using a smaller font-size
+** Display SOSA number related to a given person
+   Not necessarily related to the current root
 
 * Ideas for names
 ** Geneatica, Forebears

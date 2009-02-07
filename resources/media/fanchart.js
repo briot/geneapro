@@ -4,9 +4,9 @@ defaultConfig = {
    /* Height of a row in the circle, for one generation */
    rowHeight: 80,
 
-   /* Half the aperture on the left where the decujus is written,
-      in degrees */
-   halfAperture: 10,
+   /* Start and End angles, in degrees, for the pedigree view */
+   minAngle : -170,
+   maxAngle : 170,
 
    /* If true, the names on the lower half of the circle are displayed
       so as to be readable. Otherwise they are up-side down */
@@ -24,27 +24,32 @@ defaultConfig = {
    horizPadding: 30,
    vertPadding: 20,
 
+   /* Separator (in degree) between couples. Setting this to 0.5 or more will
+      visually separate the couples at each generation, possibly making the
+      fanchart more readable for some users */
+   separator: 0,
+
    /* Animation delay (moving selected box to decujus' position */
-   delay: 200
+   delay: 200,
 };
 
 /* Person for whom the fanchart is displayed */
 var decujus=1;
 var config=null;
 
-function onGetJSON (data, status) {
-  unsetBusy ();
-  sosa = data.sosa;
-  generations = data.generations;
-  children = data.children;
-  marriage = data.marriage;
-  drawSOSA ();
-}
 function getPedigree (id) {
   decujus=id || decujus;
   var gen = Number (getSelectedValue ($("select[name=generations]")[0]))+1;
   $.getJSON (pedigree_data_url,
-             {id:decujus, generations:gen, yearonly:true}, onGetJSON);
+             {id:decujus, generations:gen, yearonly:true},
+             function (data, status) {
+                unsetBusy ();
+                sosa = data.sosa;
+                generations = data.generations;
+                children = data.children;
+                marriage = data.marriage;
+                drawSOSA ();
+             });
 }
 function onClick (evt) {
   var box = evt.target;
@@ -72,11 +77,125 @@ function onMouseOut (evt) {
   box.setAttribute ('fill', box.getAttribute ('oldfill'));
 }
 
+/* Draw the fanchart for the global variables sosa, based on the configuration
+   This does not draw the decujus or its children */
+function drawFan (svg, config, centerx, centery) {
+
+   var minAngleRad = config.minAngle * Math.PI / 180;
+   var maxAngleRad = config.maxAngle * Math.PI / 180;
+   var margin = config.separator * Math.PI / 180;
+
+   function createPath (minRadius, maxRadius, minAngle, maxAngle,
+                        large, clockwise)
+   {
+      if (clockwise == null)  clockwise = false;
+      var p = svg.createPath()
+         .moveTo (Math.round (centerx + maxRadius * Math.cos (minAngle)),
+                  Math.round (centery - maxRadius * Math.sin (minAngle)))
+         .arcTo  (maxRadius, maxRadius, 0, large, clockwise,
+                  Math.round (centerx + maxRadius * Math.cos (maxAngle)),
+                  Math.round (centery - maxRadius * Math.sin (maxAngle)));
+
+      if (minRadius == maxRadius) return p;
+
+      return p
+         .lineTo (Math.round (centerx + minRadius * Math.cos (maxAngle)),
+                  Math.round (centery - minRadius * Math.sin (maxAngle)))
+         .arcTo  (minRadius, minRadius, 0, false, !clockwise,
+                  Math.round (centerx + minRadius * Math.cos (minAngle)),
+                  Math.round (centery - minRadius * Math.sin (minAngle)))
+         .close ();
+   }
+
+   for (var gen=generations - 1; gen >= 1; gen--) {
+      var minRadius = config.rowHeight * (gen - 1) || 10;
+      var maxRadius = config.rowHeight * gen;
+      var minIndex = Math.pow (2, gen); /* first SOSA in that gen, and number
+                                           of persons in that gen */
+      var angleInc = (maxAngleRad - minAngleRad) / minIndex;
+      var medRadius = (minRadius + maxRadius) / 2;
+
+      for (var id=0; id < minIndex; id++) {
+         var num = minIndex + id;
+         var person = sosa [num];
+         var bg = getColors (person).bg;
+         var maxAngle = maxAngleRad - id * angleInc;
+         var minAngle = maxAngle - angleInc;
+
+         if (id % 2 == 0)
+            maxAngle -= margin;
+         else
+            minAngle += margin;
+
+         var p = createPath (minRadius, maxRadius, minAngle, maxAngle, false);
+
+         if (person) {
+            svg.path (p, {"stroke":"gray", "fill":bg,
+                          sosa:num,
+                          onclick:"onClick(evt,config)",
+                          onmouseover:'onMouseOver(evt)',
+                          onmouseout:'onMouseOut(evt)'});
+
+            if (gen < config.fontsizes.length) {
+               /* Draw person name along the curve, and clipped.
+                  For late generations, we rotate the text since there is not
+                  enough horizontal space anyway */
+
+               if (gen >= 5) {
+                 var c = Math.cos (minAngle + (maxAngle - minAngle) / 2);
+                 var s = Math.sin (minAngle + (maxAngle - minAngle) / 2);
+                 if (config.readable_names
+                     && Math.abs (maxAngle) > Math.PI / 2)
+                 {
+                    var textPath = svg.createPath ()
+                    .moveTo (Math.round (centerx + maxRadius * c),
+                             Math.round (centery - maxRadius * s))
+                    .lineTo (Math.round (centerx + minRadius * c),
+                             Math.round (centery - minRadius * s));
+                 } else {
+                    var textPath = svg.createPath ()
+                    .moveTo (Math.round (centerx + minRadius * c),
+                             Math.round (centery - minRadius * s))
+                    .lineTo (Math.round (centerx + maxRadius * c),
+                             Math.round (centery - maxRadius * s));
+                 }
+
+               } else {
+                 if (minAngle < 0 || !config.readable_names) {
+                    var textPath = createPath (medRadius, medRadius, 
+                       minAngle, maxAngle, false);
+                 } else {
+                    var textPath = createPath (medRadius, medRadius, 
+                       maxAngle, minAngle, false, true);
+                 }
+               }
+               svg.path (svg.defs(), textPath, {id:"Path"+(minIndex + id)})
+
+               var text = svg.text ("",
+                  {"stroke":"black", "font-size": config.fontsizes[gen],
+                   "pointer-events":"none",
+                   "stroke-width":0, 
+                   "font-weight":"normal"});
+               svg.textpath(text, "#Path"+(minIndex + id),
+                  svg.createText().string(person.name)
+                  .span ((person.birth || "?") + "-"
+                         + (person.death || "?"),
+                         {x:"10",dy:"1.1em"}),
+                  {startOffset:5}
+                 );
+            }
+         } else {
+            svg.path (p, {"stroke":"gray", "fill":bg,
+                          "stroke-dasharray":3,
+                          onmouseover:'onMouseOver(evt)',
+                          onmouseout:'onMouseOut(evt)'});
+         }
+      }
+    }
+}
+
 function drawSOSA (conf) {
    config = $.extend (true, {}, defaultConfig, conf);
-
-   /* Margin, in radians, on each end of the text path for the names */
-   var margin = 2 * Math.PI / 180;
 
    var childrenHeight = children
        ? children.length * (config.boxHeight + config.vertPadding)
@@ -108,119 +227,7 @@ function drawSOSA (conf) {
             {"font-weight":"bold", "text-anchor":"start",
              "font-size":config.fontsizes[0]});
 
-   var minAngleRad = (-180 + config.halfAperture) * Math.PI / 180;
-   var maxAngleRad = (180 - config.halfAperture) * Math.PI / 180;
-
-   function createPath (minRadius, maxRadius, minAngle, maxAngle,
-                        large, clockwise)
-   {
-      if (clockwise == null)  clockwise = true;
-      var p = svg.createPath()
-         .moveTo (Math.round (centerx + maxRadius * Math.cos (minAngle)),
-                  Math.round (centery + maxRadius * Math.sin (minAngle)))
-         .arcTo  (maxRadius, maxRadius, 0, large, clockwise,
-                  Math.round (centerx + maxRadius * Math.cos (maxAngle)),
-                  Math.round (centery + maxRadius * Math.sin (maxAngle)));
-
-      if (minRadius == maxRadius)
-         return p;
-
-      return p
-         .lineTo (Math.round (centerx + minRadius * Math.cos (maxAngle)),
-                  Math.round (centery + minRadius * Math.sin (maxAngle)))
-         .arcTo  (minRadius, minRadius, 0, false, !clockwise,
-                  Math.round (centerx + minRadius * Math.cos (minAngle)),
-                  Math.round (centery + minRadius * Math.sin (minAngle)))
-         .close ();
-   }
-
-   for (var gen=generations - 1; gen >= 1; gen--) {
-      var minRadius = config.rowHeight * (gen - 1) || 10;
-      var maxRadius = config.rowHeight * gen;
-      var minIndex = Math.pow (2, gen); /* first SOSA in that gen, and number
-                                           of persons in that gen */
-      var angleInc = (maxAngleRad - minAngleRad) / minIndex;
-      var medRadius = (minRadius + maxRadius) / 2;
-
-      for (var id=0; id < minIndex; id++) {
-         var num = minIndex + id;
-         var person = sosa [num];
-         if (person && person.sex == "M") {
-            var bg = '#D6E0EA';
-         } else if (person && person.sex == "F") {
-            var bg = '#E9DAF1';
-         } else {
-           var bg = '#FFF';
-         }
-
-         /* Draw cell */
-         var minAngle = minAngleRad + id * angleInc;
-         var p = createPath
-            (minRadius, maxRadius, minAngle, minAngle + angleInc, false);
-
-         if (person) {
-            svg.path (p, {"stroke":"gray", "fill":bg,
-                          sosa:num,
-                          onclick:"onClick(evt,config)",
-                          onmouseover:'onMouseOver(evt)',
-                          onmouseout:'onMouseOut(evt)'});
-
-            if (gen < config.fontsizes.length) {
-               /* Draw person name along the curve, and clipped.
-                  For late generations, we rotate the text since there is not
-                  enough horizontal space anyway */
-
-               if (gen >= 5) {
-                 var c = Math.cos (minAngle + angleInc / 2);
-                 var s = Math.sin (minAngle + angleInc / 2);
-                 if (config.readable_names
-                     && Math.abs (minAngle) > Math.PI / 2)
-                 {
-                    var textPath = svg.createPath ()
-                    .moveTo (Math.round (centerx + maxRadius * c),
-                             Math.round (centery + maxRadius * s))
-                    .lineTo (Math.round (centerx + minRadius * c),
-                             Math.round (centery + minRadius * s));
-                 } else {
-                    var textPath = svg.createPath ()
-                    .moveTo (Math.round (centerx + minRadius * c),
-                             Math.round (centery + minRadius * s))
-                    .lineTo (Math.round (centerx + maxRadius * c),
-                             Math.round (centery + maxRadius * s));
-                 }
-
-               } else {
-                 if (minAngle < 0 || !config.readable_names) {
-                    var textPath = createPath (medRadius, medRadius, 
-                       minAngle + margin, minAngle + angleInc - margin, false);
-                 } else {
-                    var textPath = createPath (medRadius, medRadius, 
-                       minAngle + angleInc - margin, minAngle + margin,
-                       false, false);
-                 }
-               }
-               svg.path (svg.defs(), textPath, {id:"Path"+(minIndex + id)})
-
-               var text = svg.text ("",
-                  {"stroke":"black", "font-size": config.fontsizes[gen],
-                   "pointer-events":"none",
-                   "stroke-width":0,
-                   "font-weight":"normal"});
-               svg.textpath(text, "#Path"+(minIndex + id),
-                  svg.createText().string(num + " " + person.name)
-                  .span ((person.birth || "?") + "-"
-                         + (person.death || "?"),
-                         {x:"10",dy:"1.1em"})
-                 );
-            }
-         } else {
-            svg.path (p, {"stroke":"gray", "fill":bg,
-                          "stroke-dasharray":3,
-                          onmouseover:'onMouseOver(evt)',
-                          onmouseout:'onMouseOut(evt)'});
-         }
-      }
-    }
+   drawFan (svg, config, centerx, centery);
 
     /* Draw children */
 
@@ -233,48 +240,4 @@ function drawSOSA (conf) {
       }
    }
 }
-
-   function drawBox (svg, person, x, y, sosa, config) {
-      if (person && person.sex == "M") {
-         var bg = '#D6E0EA';
-         var fg = '#9CA3D4';
-      } else if (person && person.sex == "F") {
-         var bg = '#E9DAF1';
-         var fg = '#FF2080';
-      } else {
-         var bg = '#FFF';
-         var fg = '#9CA3D4';
-      }
-      if (person) {
-         var g = svg.svg (x, y);
-         svg.rect (g, 0, 0, config.boxWidth, config.boxHeight,
-                  {stroke:fg, fill:bg,
-                   sosa:sosa,
-                   onclick:'onClick(evt)',
-                   onmouseover:'onMouseOver(evt)',
-                   onmouseout:'onMouseOut(evt)'});
-         var clip = svg.other (g, 'clipPath', {id:'p'+sosa});
-         svg.rect (clip, 0, 0, config.boxWidth, config.boxHeight);
-
-        if (person.name) {
-          var fontweight = (sosa == 1) ? "bold" : "normal";
-          svg.text(g, 4, 16,
-               svg.createText().string(person.name)
-               .span ("b:", {x:4, dy:"1.4em"})
-               .span (person.birth, {"font-weight":"normal",
-                                     "font-style":"italic"})
-               .span ("d:", {x:4, dy:"1.2em"})
-               .span (person.death, {"font-weight":"normal",
-                                     "font-style":"italic"}),
-               {"font-weight":fontweight, "clip-path":"url(#p"+sosa+")",
-                "pointer-events":"none"});
-        }
-      } else {
-         svg.rect (x, y, boxWidth, boxHeight,
-                  {stroke:fg, fill:bg, "stroke-dasharray":"3",
-                   onmouseover:'onMouseOver(evt)',
-                   onmouseout:'onMouseOut(evt)'});
-      }
-   }
-
 
