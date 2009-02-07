@@ -45,8 +45,6 @@ def get_extended_personas (ids):
    """Return a list of personas with additional attributes"""
 
    result = dict ()
-   if not isinstance (ids, list):
-      ids=[ids]
    persons = Persona.objects.filter (pk__in=ids)
 
    for p in persons:
@@ -113,28 +111,26 @@ def get_parents (tree, marriage, person_ids, max_level, sosa=1):
       The keys in dic are set to the sosa number for each ancestor.
       This searches up to max_level generations"""
 
+   if not isinstance (person_ids, list):
+      person_ids = [person_ids]
+
    persons = get_extended_personas (person_ids)
 
    for p in persons:
-      tree [sosa] = p
+      s = sosa + person_ids.index (p.id)
+      tree [s] = p
 
       # Marriage data indexed on the husbands' sosa number
-      marriage [sosa - (sosa % 2)] = p.marriage
+      marriage [s - (s % 2)] = p.marriage
 
       if max_level > 1:
          if p.father_id and p.mother_id:
             (f,m) = get_parents (tree, marriage, [p.father_id, p.mother_id],
-                                 max_level - 1, sosa=sosa*2)
-            if f.id != p.father_id:
-               tree[sosa*2] = m
-               tree[sosa*2+1] = f
+                                 max_level - 1, sosa=s*2)
          elif p.father_id:
-            get_parents (tree, marriage, p.father_id, max_level-1, sosa=sosa*2)
+            get_parents (tree, marriage, p.father_id, max_level-1, sosa=s*2)
          elif p.mother_id:
-            get_parents (tree, marriage, p.mother_id, max_level-1,
-                         sosa=sosa*2+1)
-
-      sosa = sosa + 1
+            get_parents (tree, marriage, p.mother_id, max_level-1, sosa=s*2+1)
 
    return persons
 
@@ -159,7 +155,6 @@ def data (request):
         children = None
   except Persona.DoesNotExist:
      pass
-
 
   data = to_json ({'generations':generations, 'sosa':tree,
                    'children':children, 'marriage':marriage},

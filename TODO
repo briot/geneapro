@@ -8,6 +8,9 @@ Assertion.Value should point into a table rather than be a text
 * Pedigree View
 ** BACK button should go back to previous pedigree view
    Or perhaps use the area on the right to show the history
+   In fact, when changing the current de cujus, we should highlighting in
+   the next pedigree the child or parent on which we should click to get
+   back to the previous view (the previous de cujus might not be visible)
 ** Dnd on Pedigree icon should display the pedigree for that person
 ** Should cache pedigree data locally to avoid reloading when going back
    (perhaps only save a few generations, although this is not big)

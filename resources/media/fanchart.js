@@ -142,7 +142,8 @@ function drawSOSA (conf) {
       var medRadius = (minRadius + maxRadius) / 2;
 
       for (var id=0; id < minIndex; id++) {
-         var person = sosa [minIndex + id];
+         var num = minIndex + id;
+         var person = sosa [num];
          if (person && person.sex == "M") {
             var bg = '#D6E0EA';
          } else if (person && person.sex == "F") {
@@ -158,7 +159,7 @@ function drawSOSA (conf) {
 
          if (person) {
             svg.path (p, {"stroke":"gray", "fill":bg,
-                          sosa:minIndex + id,
+                          sosa:num,
                           onclick:"onClick(evt,config)",
                           onmouseover:'onMouseOver(evt)',
                           onmouseout:'onMouseOut(evt)'});
@@ -205,7 +206,7 @@ function drawSOSA (conf) {
                    "stroke-width":0,
                    "font-weight":"normal"});
                svg.textpath(text, "#Path"+(minIndex + id),
-                  svg.createText().string(person.name)
+                  svg.createText().string(num + " " + person.name)
                   .span ((person.birth || "?") + "-"
                          + (person.death || "?"),
                          {x:"10",dy:"1.1em"})
