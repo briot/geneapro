@@ -49,8 +49,14 @@ function onClick (evt) {
   if (box.getAttribute ("sosa") != 1) {
      var num = box.getAttribute ("sosa");
      var id = (num < 0) ? children[-1 - num].id : sosa[num].id;
-     $(box.parentNode).animate ({'svg-x':config.decujusx,
-                                 'svg-y':config.decujusy}, config.delay);
+     var targetX = config.decujusx + $('#pedigreeSVG').offset().left;
+     var targetY = config.decujusy + $('#pedigreeSVG').offset().top;
+
+     var transform = "translate(";
+     transform += (targetX - evt.pageX) + ",";
+     transform += (targetY - evt.pageY) + ")";
+     $(box).animate ({'svg-transform':transform}, config.delay);
+     $(box).animate({'svg-opacity':0}, config.delay);
      setTimeout (function() {getPedigree (id);return false}, config.delay);
   }
 }
