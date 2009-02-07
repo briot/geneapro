@@ -2,7 +2,14 @@
 
 defaultConfig = {
    /* Height of a row in the circle, for one generation */
-   rowHeight: 80,
+   rowHeight: 60,
+
+   /* Generation number after which the text is rotated 90 degrees to
+      make it more readable */
+   genThreshold: 4,
+
+   /* row height for generations >= genThreshold */
+   rowHeightAfterThreshold: 120, 
 
    /* Start and End angles, in degrees, for the pedigree view */
    minAngle : -170,
@@ -108,8 +115,16 @@ function drawFan (svg, config, centerx, centery) {
    }
 
    for (var gen=generations - 1; gen >= 1; gen--) {
-      var minRadius = config.rowHeight * (gen - 1) || 10;
-      var maxRadius = config.rowHeight * gen;
+      if (gen < config.genThreshold) {
+         var minRadius = config.rowHeight * (gen - 1) || 10;
+         var maxRadius = minRadius + config.rowHeight;
+         if (gen == 1) maxRadius -= 10;
+      } else {
+         var minRadius = config.rowHeight * (config.genThreshold - 1)
+            + (gen - config.genThreshold) * config.rowHeightAfterThreshold;;
+         var maxRadius = minRadius + config.rowHeightAfterThreshold;
+      }
+
       var minIndex = Math.pow (2, gen); /* first SOSA in that gen, and number
                                            of persons in that gen */
       var angleInc = (maxAngleRad - minAngleRad) / minIndex;
@@ -141,7 +156,7 @@ function drawFan (svg, config, centerx, centery) {
                   For late generations, we rotate the text since there is not
                   enough horizontal space anyway */
 
-               if (gen >= 5) {
+               if (gen >= config.genThreshold) {
                  var c = Math.cos (minAngle + (maxAngle - minAngle) / 2);
                  var s = Math.sin (minAngle + (maxAngle - minAngle) / 2);
                  if (config.readable_names
@@ -194,15 +209,32 @@ function drawFan (svg, config, centerx, centery) {
     }
 }
 
+/********************************************************
+ * Compute the dimensions of the chart (returns a record with
+ * width and height fields
+ ********************************************************/
+
+function chartDimensions (config) {
+   if (generations < config.genThreshold) {
+      var diameter = generations * config.rowHeight * 2;
+   } else {
+      var diameter = config.genThreshold * config.rowHeight * 2
+          + (generations - config.genThreshold)
+          * config.rowHeightAfterThreshold * 2;
+   }
+
+   return {width:diameter, height:diameter};
+}
+
 function drawSOSA (conf) {
    config = $.extend (true, {}, defaultConfig, conf);
 
    var childrenHeight = children
        ? children.length * (config.boxHeight + config.vertPadding)
        : 0;
-   var diameter = generations * config.rowHeight * 2;
-   var maxHeight = Math.max (childrenHeight, diameter);
-   var maxWidth = config.boxWidth + config.horizPadding + diameter;
+   var dimensions = chartDimensions (config);
+   var maxHeight = Math.max (childrenHeight, dimensions.height);
+   var maxWidth = config.boxWidth + config.horizPadding + dimensions.width;
 
    $('#pedigreeSVG').height (maxHeight).width (maxWidth);
    var svg = $('#pedigreeSVG').svg('get');
@@ -210,7 +242,7 @@ function drawSOSA (conf) {
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
                   preserveAspectRatio:"xMinYMid"},true);
 
-   var centerx = maxWidth - diameter / 2;
+   var centerx = maxWidth - dimensions.width / 2;
    var centery = maxHeight / 2;
    config.decujusx = config.boxWidth + config.horizPadding;
    config.decujusy = centery - 5;
