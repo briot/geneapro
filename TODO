@@ -26,8 +26,13 @@ Assertion.Value should point into a table rather than be a text
 * FanChart
 ** BUG: why isn't the font size taken into account in SVG ?
    Later generations should be using a smaller font-size
+** Possibility to fold part of the fanchart to concentrate on specific
+   families
+   See www.cs.utah.edu/~draperg/research/fanchart/demo/
 ** Display SOSA number related to a given person
    Not necessarily related to the current root
+** Editing fanchart's config graphically
+   As opposed to modifying defaultConfig in fanchart.js
 
 * Ideas for names
 ** Geneatica, Forebears

@@ -11,9 +11,15 @@ defaultConfig = {
    /* row height for generations >= genThreshold */
    rowHeightAfterThreshold: 120, 
 
+   /* Height of the inner (white) circle. This height is substracted from
+      rowHeight for the parent's row */
+   innerCircle: 10,
+
    /* Start and End angles, in degrees, for the pedigree view */
    minAngle : -170,
    maxAngle : 170,
+   //minAngle: 0,
+   //maxAngle: 180,
 
    /* If true, the names on the lower half of the circle are displayed
       so as to be readable. Otherwise they are up-side down */
@@ -116,9 +122,9 @@ function drawFan (svg, config, centerx, centery) {
 
    for (var gen=generations - 1; gen >= 1; gen--) {
       if (gen < config.genThreshold) {
-         var minRadius = config.rowHeight * (gen - 1) || 10;
+         var minRadius = config.rowHeight * (gen - 1) || config.innerCircle;
          var maxRadius = minRadius + config.rowHeight;
-         if (gen == 1) maxRadius -= 10;
+         if (gen == 1) maxRadius -= config.innerCircle;
       } else {
          var minRadius = config.rowHeight * (config.genThreshold - 1)
             + (gen - config.genThreshold) * config.rowHeightAfterThreshold;;
@@ -216,14 +222,57 @@ function drawFan (svg, config, centerx, centery) {
 
 function chartDimensions (config) {
    if (generations < config.genThreshold) {
-      var diameter = generations * config.rowHeight * 2;
+      var radius = generations * config.rowHeight;
    } else {
-      var diameter = config.genThreshold * config.rowHeight * 2
+      var radius = (config.genThreshold - 1) * config.rowHeight
           + (generations - config.genThreshold)
-          * config.rowHeightAfterThreshold * 2;
+          * config.rowHeightAfterThreshold;
    }
 
-   return {width:diameter, height:diameter};
+   if (config.maxAngle - config.minAngle >= 360)
+       // A full circle ?
+       return {width:diameter, height:diameter};
+   else {
+       var minA = (config.minAngle + 3600) % 360;  // 0 to 360
+       var maxA = minA + (config.maxAngle - config.minAngle); // 0 to 719
+       var min = -1;
+       var max = 1;
+
+       // If going from min to max includes 0, the max is 1, otherwise it is
+       // the max of the two cosine
+
+       if (maxA < 360)
+          max = Math.max (Math.cos (minA * Math.PI / 180),
+                          Math.cos (maxA * Math.PI / 180));
+
+       // If going from min to max includes 180 the min is -1, otherwise it is
+       // the min of the two cosine
+
+       if ((minA <= 180 && maxA >= 180)
+           || (minA >= 180 && maxA < 540))
+          min = Math.min (Math.cos (minA * Math.PI / 180),
+                          Math.cos (maxA * Math.PI / 180));
+
+       var width = radius * (max - min);
+       var centerX = -min * radius;
+
+       // same for height
+       max = 1;
+       min = -1;
+
+       if ((minA > 90 && maxA < 450)
+           || (minA < 90 && maxA < 90))
+          max = Math.max (Math.sin (minA * Math.PI / 180),
+                          Math.sin (maxA * Math.PI / 180));
+       if ((minA < 270 && maxA < 270)
+           || (minA > 270 && maxA < 270 + 360))
+          min = Math.min (Math.sin (minA * Math.PI / 180),
+                          Math.sin (maxA * Math.PI / 180));
+
+       var height = radius * (max - min);
+       return {width:width, height:height, centerX:centerX,
+               centerY:height+min*radius};
+   }
 }
 
 function drawSOSA (conf) {
@@ -242,9 +291,9 @@ function drawSOSA (conf) {
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
                   preserveAspectRatio:"xMinYMid"},true);
 
-   var centerx = maxWidth - dimensions.width / 2;
-   var centery = maxHeight / 2;
    config.decujusx = config.boxWidth + config.horizPadding;
+   var centerx = config.decujusx + dimensions.centerX;
+   var centery = dimensions.centerY;
    config.decujusy = centery - 5;
 
    var person = sosa [1];
@@ -264,8 +313,7 @@ function drawSOSA (conf) {
     /* Draw children */
 
    if (children) {
-      var y = (maxHeight 
-         - children.length * (config.boxHeight + config.vertPadding)) / 2;
+      var y = (maxHeight - childrenHeight) / 2;
       for (var c=0; c < children.length; c++) {
          drawBox (svg, children [c], 1, y, -1 - c, config);
          y += config.boxHeight + config.vertPadding;
