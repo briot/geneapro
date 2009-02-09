@@ -120,8 +120,6 @@ a {color:#16B; text-decoration:none; cursor:pointer}
 
 .design {position:absolute;right:0; width:300px; background-color:#555; color:white}
 
-.male {background-color:yellow}
-
 .tooltip {padding: 2px; font-size: small; z-index: 100000;
           border-left: 1px solid black;
           border-top: 1px solid black;
