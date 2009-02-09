@@ -1,56 +1,62 @@
-from mysites.geneapro.models import *
+"""
+Customizes the admin pages for geneapro
+"""
+
+from mysites.geneapro import models
 from django.contrib import admin
 
 class PlacePartInLine(admin.TabularInline):
-    model = Place_Part
-    extra = 3
-
+   """Customizes the edition of places"""
+   model = models.Place_Part
+   extra = 3
 class PlaceAdmin(admin.ModelAdmin):
-	# Choose an order for fields on the admin page
-	#fields = ['parent_place', 'date']
-	fieldsets = [
-		(None, {'fields': ['parent_place']}),
-		('Date information', {'fields': ['date'], 'classes':['collapse']})]
-	inlines = [PlacePartInLine]
+   """Customizes the edition of places"""
+   # Choose an order for fields on the admin page
+   #fields = ['parent_place', 'date']
+   fieldsets = [
+                (None, {'fields': ['parent_place']}),
+                ('Date information', {'fields': ['date'], 'classes':['collapse']})]
+   inlines = [PlacePartInLine]
 
-class Surety_Scheme_Part_Inline (admin.TabularInline):
-    model = Surety_Scheme_Part
-    extra = 5
-class Surety_Scheme_Admin (admin.ModelAdmin):
-    inlines = [Surety_Scheme_Part_Inline]
+class SuretySchemePartInline (admin.TabularInline):
+   """Customizes the editiong of surety schemes"""
+   model = models.Surety_Scheme_Part
+   extra = 5
+class SuretySchemeAdmin (admin.ModelAdmin):
+   """Customizes the editiong of surety schemes"""
+   inlines = [SuretySchemePartInline]
 
-admin.site.register (Config)
-admin.site.register (Researcher)
-admin.site.register (Surety_Scheme, Surety_Scheme_Admin)
-#admin.site.register (Surety_Scheme_Part)
-admin.site.register (Project)
-admin.site.register (Researcher_Project)
-admin.site.register (Research_Objective)
-admin.site.register (Activity)
-admin.site.register (Source_Medium)
-admin.site.register (Part_Type)
-admin.site.register (Place, PlaceAdmin)
-admin.site.register (Place_Part_Type)
-admin.site.register (Place_Part)
-admin.site.register (Repository_Type)
-admin.site.register (Repository)
-admin.site.register (Source)
-admin.site.register (Repository_Source)
-admin.site.register (Search)
-admin.site.register (Source_Group)
-admin.site.register (Representation)
-admin.site.register (Citation_Part_Type)
-admin.site.register (Citation_Part)
-admin.site.register (Persona)
-admin.site.register (Event_Type)
-admin.site.register (Event_Type_Role)
-admin.site.register (Event)
-admin.site.register (Characteristic_Part_Type)
-admin.site.register (Characteristic)
-admin.site.register (Characteristic_Part)
-admin.site.register (Group_Type)
-admin.site.register (Group_Type_Role)
-admin.site.register (Group)
-admin.site.register (P2E_Assertion)
-admin.site.register (P2C_Assertion)
-admin.site.register (Assertion_Assertion)
+admin.site.register (models.Config)
+admin.site.register (models.Researcher)
+admin.site.register (models.Surety_Scheme, SuretySchemeAdmin)
+admin.site.register (models.Project)
+admin.site.register (models.Researcher_Project)
+admin.site.register (models.Research_Objective)
+admin.site.register (models.Activity)
+admin.site.register (models.Source_Medium)
+admin.site.register (models.Part_Type)
+admin.site.register (models.Place, PlaceAdmin)
+admin.site.register (models.Place_Part_Type)
+admin.site.register (models.Place_Part)
+admin.site.register (models.Repository_Type)
+admin.site.register (models.Repository)
+admin.site.register (models.Source)
+admin.site.register (models.Repository_Source)
+admin.site.register (models.Search)
+admin.site.register (models.Source_Group)
+admin.site.register (models.Representation)
+admin.site.register (models.Citation_Part_Type)
+admin.site.register (models.Citation_Part)
+admin.site.register (models.Persona)
+admin.site.register (models.Event_Type)
+admin.site.register (models.Event_Type_Role)
+admin.site.register (models.Event)
+admin.site.register (models.Characteristic_Part_Type)
+admin.site.register (models.Characteristic)
+admin.site.register (models.Characteristic_Part)
+admin.site.register (models.Group_Type)
+admin.site.register (models.Group_Type_Role)
+admin.site.register (models.Group)
+admin.site.register (models.P2E_Assertion)
+admin.site.register (models.P2C_Assertion)
+admin.site.register (models.Assertion_Assertion)

@@ -60,33 +60,32 @@ class GedcomData (dict):
    data is accessed.
    """
 
-   def deref (self, object):
-       """
-       If object represents a reference to another object, returns the object
-       pointed to. Otherwise return object itself. This should be used in
-       cases where an element in the gedcom might or does contain a reference.
-       This also handles referenced found within a list.
-       This is not recursive
-       """
+   def deref (self, obj):
+      """
+      If object represents a reference to another object, returns the object
+      pointed to. Otherwise return object itself. This should be used in
+      cases where an element in the gedcom might or does contain a reference.
+      This also handles referenced found within a list.
+      This is not recursive
+      """
 
-       if object == None:
-          return object
-       elif type (object) == str \
-         and object and object[0] == '@' and object[-1] == '@':
-           return self [object[1:-1]]
-
-       elif type (object) == list:
-           for index, val in enumerate (object):
-               if type (val) == str \
-                 and val and val[0] == "@" and val[-1] == '@':
-                   object[index] = self [val[1:-1]]
+      if obj == None:
+         return obj
+      elif type (obj) == str \
+        and obj and obj[0] == '@' and obj[-1] == '@':
+         return self [obj[1:-1]]
+      elif type (obj) == list:
+         for index, val in enumerate (obj):
+            if type (val) == str \
+              and val and val[0] == "@" and val[-1] == '@':
+               obj[index] = self [val[1:-1]]
 
 POINTER_STRING = "(?:[^@]*)"
 OPTIONAL_XREF_ID = "(?:@(?P<xref_id>\w" + POINTER_STRING + ")@\s)?"
 LINE_RE = re.compile ('^(?P<level>\d+)\s' + OPTIONAL_XREF_ID
                       + '(?P<tag>\w+)' + '(?:\s(?P<value>.*))?')
 
-event_details = (("TYPE", 0, 1),
+EVENT_DETAILS = (("TYPE", 0, 1),
                  ("DATE", 0, 1),
                  ("PLAC", 0, 1),
                  ("ADDR", 0, 1),
@@ -111,7 +110,7 @@ event_details = (("TYPE", 0, 1),
 # match a single line in the GEDCOM file, not a record.
 #
 # The handler can also be specified itself as a tuple of tuples
-_grammar = dict (
+_GRAMMAR = dict (
     ROOT =  (("HEAD", 1, 1),
              ("FAM",  0, 100000),
              ("INDI", 0, 100000),
@@ -195,10 +194,10 @@ _grammar = dict (
              ("NAME", 0, 1000000),
              ("SEX",  0, 1),    # Sex value
              (("BIRT", "CHR"), 0, 1000000,
-                event_details
+                EVENT_DETAILS
                 + (("FAMC", 0, 1),)),  # Child to family link
              ("ADOP", 0, 100000,
-                event_details
+                EVENT_DETAILS
                 +   (("FAMC", 0, 1,
                         (("ADOP", 0, 1),) # Adopted by which parent
                         ),)
@@ -208,7 +207,7 @@ _grammar = dict (
                "CHRA", "CONF", "FCOM", "ORDN", "NATU",
                "EMIG", "IMMI", "CENS", "PROB", "WILL",
                "GRAD", "RETI", "EVEN"), 0, 1000000,
-                event_details),  # Events
+                EVENT_DETAILS),  # Events
 
              (("CAST",  # Cast name
                "DSCR",  # Physical description
@@ -224,7 +223,7 @@ _grammar = dict (
                "SSN",   # Social security number
                "TITL"), # Nobility type title
                  0, 100000,  # Individual attributes
-                 event_details),
+                 EVENT_DETAILS),
 
              # +1 <<LDS_INDIVIDUAL_ORDINANCE>>  {0:M}
              ("FAMC", 0, 100000), # Child to family link
@@ -271,7 +270,7 @@ _grammar = dict (
                "ENGA", "MARR", "MARB", "MARC",
                "MARL", "MARS",
                "EVEN"), 0, 100000,
-               event_details 
+               EVENT_DETAILS 
                +    (("HUSB", 0, 1,
                         (("AGE", 1, 1),)), # Age at event
                      ("WIFE", 0, 1,
@@ -336,277 +335,290 @@ _grammar = dict (
 )
 
 class _Lexical (object):
-    """
-    Return lines of the GEDCOM file, taking care of concatenation when
-    needed, and potentially skipping levels
-    """
+   """
+   Return lines of the GEDCOM file, taking care of concatenation when
+   needed, and potentially skipping levels
+   """
 
-    # The components of the tuple returned by readline
-    LEVEL   = 0
-    TAG     = 1
-    XREF_ID = 2
-    VALUE   = 3
+   # The components of the tuple returned by readline
+   LEVEL   = 0
+   TAG     = 1
+   XREF_ID = 2
+   VALUE   = 3
 
-    def __init__ (self, file, error):
-        """
-        Lexical parser for a GEDCOM file. This returns lines one by one,
-        after splitting them into components. This automatically groups
-        continuation lines as appropriate
-        """
-        self.file = file
-        self.level = 0     # Level of the current line
-        self.line = 0      # Current line
-        self.error = error # How to report errors
-        self.had_error = False
-        self.prefetch = self._parseNextLine () # Prefetched line, parsed
-        if self.prefetch:
-            if self.prefetch [_Lexical.LEVEL] != 0 \
-              or self.prefetch [_Lexical.TAG] != "HEAD":
-                self.error.write (self.getLocation (1) + " " +
-                    _("Invalid gedcom file, first line must be '0 HEAD'")+"\n")
-                self.had_error = True
-                self.prefetch = None
-
-    def _parseNextLine (self):
-        self.line = self.line + 1
-        line = self.file.readline ()
-        if not line: return None
-
-        g = LINE_RE.match (line)
-        if not g:
-            self.error.write (self.getLocation(1) + " " +
-                              _("Invalid line format: ") + line)
+   def __init__ (self, stream, error):
+      """
+      Lexical parser for a GEDCOM file. This returns lines one by one,
+      after splitting them into components. This automatically groups
+      continuation lines as appropriate
+      """
+      self.file = stream
+      self.level = 0     # Level of the current line
+      self.line = 0      # Current line
+      self.error = error # How to report errors
+      self.had_error = False
+      self.prefetch = self._parse_next_line () # Prefetched line, parsed
+      if self.prefetch:
+         if self.prefetch [_Lexical.LEVEL] != 0 \
+           or self.prefetch [_Lexical.TAG] != "HEAD":
+            self.error.write (self.get_location (1) + " " +
+                 _("Invalid gedcom file, first line must be '0 HEAD'")+"\n")
             self.had_error = True
-            return None
+            self.prefetch = None
 
-        return (int (g.group ("level")), g.group ("tag"),
-                g.group ("xref_id"), g.group ("value")) 
+   def _parse_next_line (self):
+      """Fetch the next relevant file of the GEDCOM stream,
+         and split it into its fields"""
 
-    def getLocation (self, offset=0):
-        return self.file.name + ":" + str (self.line + offset - 1)
+      self.line = self.line + 1
+      line = self.file.readline ()
+      if not line: 
+         return None
 
-    def readline (self, skip_to_level=-1):
-        """
-        Return the next line (after doing proper concatenation).
-        If skip_to_level is specified, skip all lines until the next one at
-        the specified level (or higher), ie skip current block potentially
-        """
-        if not self.prefetch:
-            return None
+      g = LINE_RE.match (line)
+      if not g:
+         self.error.write (self.get_location(1) + " " +
+                           _("Invalid line format: ") + line)
+         self.had_error = True
+         return None
 
-        result = self.prefetch
-        if skip_to_level != -1:
-            while result \
-              and result[_Lexical.LEVEL] > skip_to_level:
-                result = self._parseNextLine ()
-                self.prefetch = result
+      return (int (g.group ("level")), g.group ("tag"),
+              g.group ("xref_id"), g.group ("value")) 
 
-        value = result [_Lexical.VALUE]
-        self.prefetch = self._parseNextLine ()
-        while self.prefetch:
-            if self.prefetch [_Lexical.TAG] == "CONT":
-                value = value + "\n" + self.prefetch [_Lexical.VALUE]
-            elif self.prefetch [_Lexical.TAG] == "CONC":
-                value = value + self.prefetch [_Lexical.VALUE]
-            else:
-                break
-            self.prefetch = self._parseNextLine ()
+   def get_location (self, offset=0):
+      """Return the current parser location
+         This is intended for error messages
+      """
+      return self.file.name + ":" + str (self.line + offset - 1)
 
-        return (result [_Lexical.LEVEL],
-                result [_Lexical.TAG],
-                result [_Lexical.XREF_ID],
-                value)
+   def readline (self, skip_to_level=-1):
+      """
+      Return the next line (after doing proper concatenation).
+      If skip_to_level is specified, skip all lines until the next one at
+      the specified level (or higher), ie skip current block potentially
+      """
+      if not self.prefetch:
+         return None
+
+      result = self.prefetch
+      if skip_to_level != -1:
+         while result \
+           and result[_Lexical.LEVEL] > skip_to_level:
+            result = self._parse_next_line ()
+            self.prefetch = result
+
+      value = result [_Lexical.VALUE]
+      self.prefetch = self._parse_next_line ()
+      while self.prefetch:
+         if self.prefetch [_Lexical.TAG] == "CONT":
+            value = value + "\n" + self.prefetch [_Lexical.VALUE]
+         elif self.prefetch [_Lexical.TAG] == "CONC":
+            value = value + self.prefetch [_Lexical.VALUE]
+         else:
+            break
+         self.prefetch = self._parse_next_line ()
+
+      return (result [_Lexical.LEVEL],
+              result [_Lexical.TAG],
+              result [_Lexical.XREF_ID],
+              value)
 
 class Gedcom (object):
-    def __init__ (self, file, error=sys.stderr):
-        """
-        Creates a new Gedcom parser, that will parse file. Error messages
-        will be written to error. The file is parsed immediately.
-        """
+   """A class responsible for parsing a GEDCOM file and returning a data
+      structure to represent it. It checks that the file is syntactically
+      correct"""
 
-        # Stack of handlers. Current one is at index 0
-        self.handlers = [(-1, 'file', list (_grammar["ROOT"]), dict())]
-        self.ids = GedcomData () # Registered entities with xref_id
-        self.error = error
-        self.lexical = _Lexical (file=file, error=error)
-        self._parse ()
+   def __init__ (self, stream, error=sys.stderr):
+      """
+      Creates a new Gedcom parser, that will parse file. Error messages
+      will be written to error. The file is parsed immediately.
+      """
 
-    def getRecords (self):
-        """
-        Return the records read from the GEDCOM tree.
-        """
-        return self.ids
+      # Stack of handlers. Current one is at index 0
+      self.handlers = [(-1, 'file', list (_GRAMMAR["ROOT"]), dict())]
+      self.ids = GedcomData () # Registered entities with xref_id
+      self.error = error
+      self.lexical = _Lexical (stream=stream, error=error)
+      self._parse ()
 
-    def _findHandlerClass (self, tag):
-        """
-        Return the handler to use for the given tag. This handler is found
-        by looking at the subtags attribute of the current handler
-        """
+   def get_records (self):
+      """
+      Return the records read from the GEDCOM tree.
+      """
+      return self.ids
 
-        level, parentTag, subtags, record = self.handlers [0]
-        if subtags != None:
-            for index, child in enumerate (subtags):
-                if type (child[0]) == str:
-                    matches = tag == child[0]
-                elif type (child[0]) == tuple:
-                    matches = tag in child[0]
+   def _find_handler_class (self, tag):
+      """
+      Return the handler to use for the given tag. This handler is found
+      by looking at the subtags attribute of the current handler
+      """
 
-                if matches:
+      _dummy, parenttag, subtags, _dummy = self.handlers [0]
+      if subtags != None:
+         for index, child in enumerate (subtags):
+            if type (child[0]) == str:
+               matches = tag == child[0]
+            elif type (child[0]) == tuple:
+               matches = tag in child[0]
 
-                    # Verify minimum and maximum usage count
+            if matches:
 
-                    if len (child) >= 4:
-                        child = (child[0], child[1] - 1, child[2] - 1, child[3])
-                    else:
-                        child = (child[0], child[1] - 1, child[2] - 1)
-                    subtags [index] = child
+               # Verify minimum and maximum usage count
 
-                    if child [2] < 0:
-                        self.error.write (self.lexical.getLocation() + " " +
-                          _("Too many occurrences of %(tag)s") % {'tag':tag} +
-                          "\n")
+               if len (child) >= 4:
+                  child = (child[0], child[1] - 1, child[2] - 1, child[3])
+               else:
+                  child = (child[0], child[1] - 1, child[2] - 1)
+               subtags [index] = child
 
-                    # Find handler
+               if child [2] < 0:
+                  self.error.write (self.lexical.get_location() + " " +
+                     _("Too many occurrences of %(tag)s") % {'tag':tag} + "\n")
 
-                    if len (child) >= 4:
-                        if type (child[3]) == str:
-                            return _grammar [child[3]]
-                        elif type (child[3]) == tuple:
-                            return child[3]
+               # Find handler
 
-                    # Do we have a class specific for handling these Tags ?
-                    # If not, default to a simple string
-                    try:
-                        return _grammar [tag]
-                    except KeyError:
-                        return () # Doesn't accept subchildren
+               if len (child) >= 4:
+                  if type (child[3]) == str:
+                     return _GRAMMAR [child[3]]
+                  elif type (child[3]) == tuple:
+                     return child[3]
 
-        self.error.write (self.lexical.getLocation() + " " + 
-                          _("%(parent)s doesn't accept child tag %(child)s")
-                          % {'parent':parentTag, 'child':tag} + "\n")
-        return None
+               # Do we have a class specific for handling these Tags ?
+               # If not, default to a simple string
+               try:
+                  return _GRAMMAR [tag]
+               except KeyError:
+                  return () # Doesn't accept subchildren
 
-    def _closeNode (self):
-        """
-        Close the current node, and make various checks. return False in case
-        of error
-        """
-        subtags    = self.handlers[0][2]
-        childInst  = self.handlers[0][3]
-        childTag   = self.handlers[0][1]
+      self.error.write (self.lexical.get_location() + " " + 
+                        _("%(parent)s doesn't accept child tag %(child)s")
+                        % {'parent':parenttag, 'child':tag} + "\n")
+      return None
 
-        # Check minimum number of nested node is satisfied
+   def _close_node (self):
+      """
+      Close the current node, and make various checks. return False in case
+      of error
+      """
+      subtags    = self.handlers[0][2]
+      childinst  = self.handlers[0][3]
+      childtag   = self.handlers[0][1]
 
-        has_error = False
-        for s in subtags:
-            if s[1] > 0:
-                self.error.write (self.lexical.getLocation()+" "+
-                   _("Missing %(count)d occurrences of %(tag)s in %(parent)s")
-                   % {'count':s[1], 'tag':s[0], 'parent':childTag}
-                   + "\n")
-                has_error = True
+      # Check minimum number of nested node is satisfied
 
-        if has_error:
-            return False
+      has_error = False
+      for s in subtags:
+         if s[1] > 0:
+            self.error.write (self.lexical.get_location()+" "+
+               _("Missing %(count)d occurrences of %(tag)s in %(parent)s")
+               % {'count':s[1], 'tag':s[0], 'parent':childtag}
+               + "\n")
+            has_error = True
 
-        # If the child has a single 'value' key, it means there
-        # was not subrecord, and we simplify it a bit then by
-        # only storing the string
+      if has_error:
+         return False
 
-        if len (childInst) == 1 and 'value' in childInst:
-            childInst = childInst ['value']
+      # If the child has a single 'value' key, it means there
+      # was not subrecord, and we simplify it a bit then by
+      # only storing the string
 
-        # Now append the child to its parent
+      if len (childinst) == 1 and 'value' in childinst:
+         childinst = childinst ['value']
 
-        if len (self.handlers) > 1:
-            parentInst = self.handlers[1][3]
+      # Now append the child to its parent
 
-            try:
-                existing = parentInst [childTag]
-                if type (existing) == list:
-                    existing.append (childInst)
-                else:
-                    parentInst [childTag] = [existing, childInst]
-            except KeyError:
-                parentInst [childTag] = childInst
+      if len (self.handlers) > 1:
+         parentinst = self.handlers[1][3]
 
-        self.handlers.pop (0)
-        return True
-
-    def _closeNodeUp (self, up_to_level):
-        """
-        Same as _closeNode, but close all nodes until we reach the appropriate
-        level. Returns False in case of error
-        """
-        while self.handlers and up_to_level <= self.handlers [0][0]:
-            if not self._closeNode ():
-                return False
-        return True
-
-    def _parse (self):
-        """
-        Do the actual parsing
-        """
-        skip_to_level = -1
-
-        while True:
-            l = self.lexical.readline (skip_to_level=skip_to_level)
-            if not l:
-                if not self.lexical.had_error:
-                    self._closeNodeUp (up_to_level=-1)
-                return
-
-            if not self._closeNodeUp (up_to_level = l [_Lexical.LEVEL]):
-                self.ids = None
-                return
-
-            skip_to_level = -1
-            subtags = self._findHandlerClass (l [_Lexical.TAG])
-            if subtags != None:
-                inst = dict ()
-                if l[_Lexical.VALUE]:
-                    inst ['value'] = l [_Lexical.VALUE]
-
-                # Register the entity if need be
-                if l [_Lexical.XREF_ID]:
-                    self.ids [l [_Lexical.XREF_ID]] = inst
-                    inst ['type'] = l [_Lexical.TAG]
-                elif l [_Lexical.TAG] == "HEAD":
-                    self.ids ["HEAD"] = inst
-
-                # Push the new handler on the stack to build the record
-                self.handlers.insert (
-                    0, (l [_Lexical.LEVEL], l [_Lexical.TAG], list (subtags),
-                        inst))
-                
+         try:
+            existing = parentinst [childtag]
+            if type (existing) == list:
+               existing.append (childinst)
             else:
-                skip_to_level = l [_Lexical.LEVEL]
+               parentinst [childtag] = [existing, childinst]
+         except KeyError:
+            parentinst [childtag] = childinst
 
-    def _postprocessRecord (self, rec):
-        for key, value in rec.iteritems():
-            if type (value) == str \
-              and value and value[0] == '@' and value[-1] == '@':
-                rec[key] = self.ids [value[1:-1]]   
-            elif type (value) == list:
-                for index, val in enumerate (value):
-                    if type (val) == str \
-                      and val and val[0] == "@" and val[-1] == '@':
-                        value[index] = self.ids [val[1:-1]]
-                    elif isinstance (val, dict):
-                        self._postprocessRecord (val)
-            elif isinstance (value, dict):
-                self._postprocessRecord (value)
+      self.handlers.pop (0)
+      return True
 
-    def postprocess (self, record=None):
-        """
-        Postprocess a specific record (or the whole tree), replacing all
-        pointers by the actual data they point to. This makes it easier
-        to process the tree for other tools, but hides whether structures
-        were referenced inline or through a pointer
-        """
-        if record:
-            self._postprocessRecord (record)
-        else:
-            for rec in self.ids:
-                self._postprocessRecord (self.ids[rec])
+   def _close_node_up (self, up_to_level):
+      """
+      Same as _close_node, but close all nodes until we reach the appropriate
+      level. Returns False in case of error
+      """
+      while self.handlers and up_to_level <= self.handlers [0][0]:
+         if not self._close_node ():
+            return False
+      return True
+
+   def _parse (self):
+      """
+      Do the actual parsing
+      """
+      skip_to_level = -1
+
+      while True:
+         l = self.lexical.readline (skip_to_level=skip_to_level)
+         if not l:
+            if not self.lexical.had_error:
+               self._close_node_up (up_to_level=-1)
+            return
+
+         if not self._close_node_up (up_to_level = l [_Lexical.LEVEL]):
+            self.ids = None
+            return
+
+         skip_to_level = -1
+         subtags = self._find_handler_class (l [_Lexical.TAG])
+         if subtags != None:
+            inst = dict ()
+            if l[_Lexical.VALUE]:
+               inst ['value'] = l [_Lexical.VALUE]
+
+            # Register the entity if need be
+            if l [_Lexical.XREF_ID]:
+               self.ids [l [_Lexical.XREF_ID]] = inst
+               inst ['type'] = l [_Lexical.TAG]
+            elif l [_Lexical.TAG] == "HEAD":
+               self.ids ["HEAD"] = inst
+
+            # Push the new handler on the stack to build the record
+            self.handlers.insert (
+               0, (l [_Lexical.LEVEL], l [_Lexical.TAG], list (subtags),
+               inst))
+                
+         else:
+            skip_to_level = l [_Lexical.LEVEL]
+
+   def _postprocess_record (self, rec):
+      """
+      Same sas postprocess, for a specific record
+      """
+      for key, value in rec.iteritems():
+         if type (value) == str \
+           and value and value[0] == '@' and value[-1] == '@':
+            rec[key] = self.ids [value[1:-1]]   
+         elif type (value) == list:
+            for index, val in enumerate (value):
+               if type (val) == str \
+                 and val and val[0] == "@" and val[-1] == '@':
+                  value[index] = self.ids [val[1:-1]]
+               elif isinstance (val, dict):
+                  self._postprocess_record (val)
+         elif isinstance (value, dict):
+            self._postprocess_record (value)
+
+   def postprocess (self, record=None):
+      """
+      Postprocess a specific record (or the whole tree), replacing all
+      pointers by the actual data they point to. This makes it easier
+      to process the tree for other tools, but hides whether structures
+      were referenced inline or through a pointer
+      """
+      if record:
+         self._postprocess_record (record)
+      else:
+         for rec in self.ids:
+            self._postprocess_record (self.ids[rec])
 
