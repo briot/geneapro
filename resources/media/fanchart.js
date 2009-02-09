@@ -18,16 +18,13 @@ defaultConfig = {
    /* Start and End angles, in degrees, for the pedigree view */
    minAngle : -170,
    maxAngle : 170,
-   //minAngle: 0,
-   //maxAngle: 180,
 
    /* If true, the names on the lower half of the circle are displayed
       so as to be readable. Otherwise they are up-side down */
    readable_names: true,
 
-   /* Size of fonts for each generation. Names will not be displayed if the
-      generation has no entry in this table. Index 0 is for the decujus */
-   fontsizes: ["30px", "40px", "30px", "20px", "10px", "5px", "5px", "5px"],
+   /* Generation at which we stop displaying names */
+   textThreshold: 10,
 
    /* Width of boxes for children */
    boxWidth: 200,
@@ -45,6 +42,30 @@ defaultConfig = {
    /* Animation delay (moving selected box to decujus' position */
    delay: 200,
 };
+
+stylesheet =
+ "text.decujus {font-size:12px; font-weight:bold} "
+  +"text{stroke-width:0; font-weight:normal; fill:black; pointer-events:none}"
+  +" textpath.gen1, textpath.gen1 tspan {font-size:12px}"
+  +" textpath.gen2, textpath.gen2 tspan {font-size:12px}"
+  +" textpath.gen3, textpath.gen3 tspan {font-size:11px}"
+  +" textpath.gen4, textpath.gen4 tspan {font-size:10px}"
+  +" textpath.gen5, textpath.gen5 tspan {font-size:9px}"
+  +" textpath.gen6, textpath.gen6 tspan {font-size:9px}"
+  +" textpath.gen7, textpath.gen7 tspan {font-size:9px}"
+  +" textpath.gen8, textpath.gen8 tspan {font-size:9px}"
+  +" textpath.gen9, textpath.gen9 tspan {font-size:8px}"
+  +" textpath.gen10, textpath.gen10 tspan {font-size:8px}"
+  +" textpath.gen11, textpath.gen11 tspan {font-size:8px}"
+  +" textpath.gen12, textpath.gen12 tspan {font-size:8px}"
+  +" path   {stroke:gray; fill:white}"
+  +" path.selected {fill:gray}"
+  +" path.M {fill:#D6E0EA}"
+  +" path.F {fill:#E9DAF1}"
+  +" rect.M {fill:#D6E0EA; stroke:#9CA3D4}"
+  +" rect.F {fill:#E9DAF1; stroke:#fF2080}"
+  +" rect {fill:white; stroke:#9CA3DA}"
+  +" path.u {stroke-dasharray:3}"; // person unknown
 
 /* Person for whom the fanchart is displayed */
 var decujus=1;
@@ -139,7 +160,6 @@ function drawFan (svg, config, centerx, centery) {
       for (var id=0; id < minIndex; id++) {
          var num = minIndex + id;
          var person = sosa [num];
-         var bg = getColors (person).bg;
          var maxAngle = maxAngleRad - id * angleInc;
          var minAngle = maxAngle - angleInc;
 
@@ -151,13 +171,13 @@ function drawFan (svg, config, centerx, centery) {
          var p = createPath (minRadius, maxRadius, minAngle, maxAngle, false);
 
          if (person) {
-            svg.path (p, {"stroke":"gray", "fill":bg,
+            svg.path (p, {class:person.sex,
                           sosa:num,
                           onclick:"onClick(evt,config)",
                           onmouseover:'onMouseOver(evt)',
                           onmouseout:'onMouseOut(evt)'});
 
-            if (gen < config.fontsizes.length) {
+            if (gen < config.textThreshold) {
                /* Draw person name along the curve, and clipped.
                   For late generations, we rotate the text since there is not
                   enough horizontal space anyway */
@@ -192,22 +212,16 @@ function drawFan (svg, config, centerx, centery) {
                }
                svg.path (svg.defs(), textPath, {id:"Path"+(minIndex + id)})
 
-               var text = svg.text ("",
-                  {"stroke":"black", "font-size": config.fontsizes[gen],
-                   "pointer-events":"none",
-                   "stroke-width":0, 
-                   "font-weight":"normal"});
+               var text = svg.text ("");
                svg.textpath(text, "#Path"+(minIndex + id),
                   svg.createText().string(person.name)
                   .span ((person.birth || "?") + "-"
                          + (person.death || "?"),
                          {x:"10",dy:"1.1em"}),
-                  {startOffset:5}
-                 );
+                  {class:"gen" + gen, startOffset:5});
             }
          } else {
-            svg.path (p, {"stroke":"gray", "fill":bg,
-                          "stroke-dasharray":3,
+            svg.path (p, {class:"u",
                           onmouseover:'onMouseOver(evt)',
                           onmouseout:'onMouseOut(evt)'});
          }
@@ -291,6 +305,8 @@ function drawSOSA (conf) {
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
                   preserveAspectRatio:"xMinYMid"},true);
 
+   svg.style (stylesheet);
+
    config.decujusx = config.boxWidth + config.horizPadding;
    var centerx = config.decujusx + dimensions.centerX;
    var centery = dimensions.centerY;
@@ -305,8 +321,7 @@ function drawSOSA (conf) {
                .span ("d:", {x:config.decujusx, dy:"1.2em"})
                .span (person.death, {"font-weight":"normal",
                                      "font-style":"italic"}),
-            {"font-weight":"bold", "text-anchor":"start",
-             "font-size":config.fontsizes[0]});
+            {"class":"decujus"});
 
    drawFan (svg, config, centerx, centery);
 

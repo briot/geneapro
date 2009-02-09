@@ -34,22 +34,11 @@ function getSelectedValue (select) {
  * Support for pedigree and fanchart
  ************************************************/
 
-function getColors (person) {
-  if (person && person.sex == "M") {
-     return {bg:'#D6E0EA', fg:'#9CA3D4'};
-  } else if (person && person.sex == "F") {
-     return {bg:'#E9DAF1', fg:'#FF2080'};
-  } else {
-     return {bg:'#FFF', fg:'#9CA3D4'};
-  }
-}
-
-function drawBox (svg, person, x, y, sosa, config, filter) {
-  var cols = getColors (person);
+function drawBox (svg, person, x, y, sosa, config) {
   if (person) {
      var g = svg.svg (x, y);
      svg.rect (g, 0, 0, config.boxWidth, config.boxHeight,
-              {stroke:cols.fg, fill:cols.bg, filter:filter,
+              {class:person.sex,
                sosa:sosa,
                onclick:'onClick(evt)',
                onmouseover:'onMouseOver(evt)',
@@ -72,7 +61,7 @@ function drawBox (svg, person, x, y, sosa, config, filter) {
       }
     } else {
       svg.rect (x, y, boxWidth, boxHeight,
-               {stroke:cols.fg, fill:cols.bg, "stroke-dasharray":"3",
+               {"stroke-dasharray":"3",
                 onmouseover:'onMouseOver(evt)',
                 onmouseout:'onMouseOut(evt)'});
   }

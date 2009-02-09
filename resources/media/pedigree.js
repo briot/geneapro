@@ -9,6 +9,11 @@ var children=null;
 var decujus=1;
 var tops=null;
 
+stylesheet =
+ "rect.M {fill:#D6E0EA; stroke:#9CA3D4; filter:url(#shadow)}"
+ + "rect.F {fill:#E9DAF1; stroke:#fF2080; filter:url(#shadow)}"
+ + "rect {fill:white; stroke:#9CA3DA}";
+
 function onMouseOver (evt) {
   var box = evt.target;
   box.setAttribute ('oldstroke', box.getAttribute ('stroke'));
@@ -68,6 +73,8 @@ function drawSOSA() {
 
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
                   preserveAspectRatio:"xMinYMid"},true);
+   svg.style (stylesheet);
+
    var filter = svg.filter (svg.defs(), 'shadow', 0, 0);
    svg.filters.gaussianBlur (filter, 'myBlur', /*'SourceAlpha'*/'', 2);
    svg.filters.offset (filter, 'finalBlur', 'myBlur', 3, 3);
@@ -118,8 +125,7 @@ function drawSOSA() {
                          onmouseout:'onTxtMouseOut(evt)'});
             }
          }
-         drawBox (svg, sosa [index + 1], x, tops[index], index + 1,
-                  config, "url(#shadow)");
+         drawBox (svg, sosa [index + 1], x, tops[index], index + 1, config);
          index ++;
       }
    }
@@ -138,7 +144,7 @@ function drawSOSA() {
                    .vertTo (y + boxHeight / 2)
                    .horizTo (1 + boxWidth),
                    {stroke:'black', fill:'none'});
-         drawBox (svg, children [c], 1, y, -1 - c, config, "url(#shadow)");
+         drawBox (svg, children [c], 1, y, -1 - c, config);
          y += boxHeight + space;
       }
    }
