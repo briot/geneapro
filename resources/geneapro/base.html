@@ -45,26 +45,14 @@
  {% endblock iconBox %}
  </ul>
 
- <div id="clipboard">
-  <h2><img src="{{MEDIA_URL}}trash.png" alt="">Clipboard</h2>
-  <ul>
-   <li><a class="person">Emmanuel Briot</a></li>
-   <li><a class="person">Erwann Briot</a></li>
-   <li><a class="date">1809-05-28 ?</a></li>
-   <li><a class="place">Missillac, France</a></li>
-  </ul>
+ <div id="rightside">
+  {% block rightside %}
+  {% endblock rightside %}
  </div>
 
  <div class="contents">
   {% block contents %}
   {% endblock contents %}
- </div>
-
- <div class="hr"><hr/></div>
- <div id="footer_wrap">
-  <div id="footer">
-    Copyright &copy;Briot
-  </div>
  </div>
 
  <script type="text/javascript">

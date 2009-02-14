@@ -40,10 +40,9 @@ body {font-size:62.5%;  /* so that 1em=10px, when default font-size is 16px */
           padding:0 10px;}
 .iconBox li {border:1px solid black; font-size:1.4em; line-height:2em; padding:2px 10px 2px 10px; margin:20px 0 20px 0}
 
-#clipboard {border:1px solid #ddd; overflow:auto;
-            position:fixed; right:10px; top:10px;
-            height:500px;
-            width:170px}  /* will not work with screens narrower than 1280*/
+#rightside {position:fixed; right:10px; top:10px; height:auto;
+            background-color:white}
+#clipboard {border:1px solid #ddd; overflow:auto; height:500px; width:170px}
 #clipboard h2 img {width:16px; height:16px; float:left; margin:0 10px 0 0}
 #clipboard li {line-height:1.5em}
 

@@ -3,6 +3,17 @@
 {% block css %}
 .sourceGallery ul.carousel li {background:url({{MEDIA_URL}}entry.gif) 0 0 no-repeat}
 {% endblock css %}
+{% block rightside %}
+ <div id="clipboard">
+  <h2><img src="{{MEDIA_URL}}trash.png" alt="">Clipboard</h2>
+  <ul>
+   <li><a class="person">Emmanuel Briot</a></li>
+   <li><a class="person">Erwann Briot</a></li>
+   <li><a class="date">1809-05-28 ?</a></li>
+   <li><a class="place">Missillac, France</a></li>
+  </ul>
+ </div>
+{% endblock rightside %}
 {% block contents %}
   <h1>Source (Id: S0001)<span id="titleAbbrev">N, Missillac, 1809</span></h1>
   <ul id="tabs">

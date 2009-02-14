@@ -3,6 +3,8 @@
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
 #pedigreeSVG {width:100%;height:600px;margin:10px 0 10px 0;border:0}
+#stats {margin:0; padding:0}
+#stats li {margin-bottom:20px; list-style-type:none}
 {% endblock css %}
 {% block header %}
 {% ifequal type "fanchart" %}
@@ -38,4 +40,13 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
 </select>
 <div id="pedigreeSVG"></div>
 {% endblock contents %}
+{% block rightside %}
+<div>
+ <h2>Statistics</h2>
+ <ul id="stats">
+ </ul>
+</div>
+{% endblock rightside %}
+
+
 

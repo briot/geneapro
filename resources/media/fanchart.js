@@ -103,12 +103,12 @@ function onClick (evt) {
 }
 function onMouseOver (evt) {
   var box = evt.target;
-  box.setAttribute ('oldfill', box.getAttribute ('fill'));
-  box.setAttribute ('fill', '#BBB');
+  box.setAttribute ('oldclass', box.getAttribute ('class'));
+  box.setAttribute ("class", "selected");
 }
 function onMouseOut (evt) {
   var box = evt.target;
-  box.setAttribute ('fill', box.getAttribute ('oldfill'));
+  box.setAttribute ('class', box.getAttribute ('oldclass'));
 }
 
 /* Draw the fanchart for the global variables sosa, based on the configuration
@@ -325,7 +325,7 @@ function drawSOSA (conf) {
 
    drawFan (svg, config, centerx, centery);
 
-    /* Draw children */
+   /* Draw children */
 
    if (children) {
       var y = (maxHeight - childrenHeight) / 2;
@@ -333,6 +333,43 @@ function drawSOSA (conf) {
          drawBox (svg, children [c], 1, y, -1 - c, config);
          y += config.boxHeight + config.vertPadding;
       }
+   }
+
+   /* Generation information */
+
+   $("#stats").empty()
+
+   for (var gen=1; gen < generations; gen++) {
+      var minIndex = Math.pow (2, gen); /* first SOSA in that gen, and number
+                                           of persons in that gen */
+      var count = 0;
+      var earliest = "9999-99-99";
+      var latest = "0000-00-00";
+      for (var p=minIndex; p < 2 * minIndex; p++) {
+         var person = sosa [p];
+         if (person) {
+            count ++;
+            if (person.birth && person.birth < earliest)
+               earliest = person.birth;
+            if (person.death && person.death < earliest)
+               earliest = person.death;
+            if (person.birth && person.birth > latest)
+               latest = person.birth;
+            if (person.death && person.death > latest)
+               latest = person.death;
+         } 
+      }
+      if (earliest == "9999-99-99")
+         earliest = "";
+      if (latest == "0000-00-00")
+         latest = "";
+
+      $("#stats")
+         .append ("<li><b>Generation " + gen + "</b><br>"
+                  + count + "/" + minIndex + " individuals ("
+                  + (count / minIndex * 100) + "%)<br>"
+                  + " from " + earliest + " to " + latest
+                  + "</li>");
    }
 }
 
