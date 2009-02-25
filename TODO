@@ -7,7 +7,6 @@
    Assertion.Value should point into a table rather than be a text
 
 * GEDCOM import
-** Import first name and last name as separate fields
 
 * Pedigree View
 ** BACK button should go back to previous pedigree view
@@ -36,8 +35,9 @@
 ** Display last name on a separate line to make it more readable
 ** Editing fanchart's config graphically
    As opposed to modifying defaultConfig in fanchart.js
-** For each generation, display min and max known dates (earliest date of
-   birth, latest date of death
+
+* Model
+** Need to take into account persona and all its aliases in all queries
 
 * Ideas for names
 ** Geneatica, Forebears

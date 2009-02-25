@@ -38,8 +38,13 @@ def to_json (obj, year_only):
                a = Date.today().years_since (obj.birth)
                if a:
                   d = "(age " + str (a) + ")"
+
+            if obj.surname or obj.given_name:
+               name = str (obj.surname).upper() + " " + str (obj.given_name)
+            else:
+               name = obj.name
  
-            return {"id":obj.id, "name":obj.name, 'birth':b,
+            return {"id":obj.id, "name":name, 'birth':b,
                     'sex':obj.sex, 'death':d,
                     'birthp':obj.birth_place or "",
                     'deathp':obj.death_place or ""}
@@ -64,16 +69,24 @@ def get_extended_personas (ids):
       p.death_place = None
       p.death = None
       p.marriage = None
+      p.given_name = None
+      p.surname = None
+      p.sex = "?"
 
       tmp = models.Characteristic_Part.objects.filter (
-         type = models.Characteristic_Part_Type.sex,
+         type__in = (models.Characteristic_Part_Type.sex,
+                     models.Characteristic_Part_Type.given_name,
+                     models.Characteristic_Part_Type.surname),
          characteristic__in=
              models.P2C_Assertion.objects.filter (person=p)
-               .values_list('characteristic').query)
-      if tmp:
-         p.sex = tmp[0].name
-      else:
-         p.sex = "?"
+               .values_list('characteristic').query).values ('name','type_id')
+      for t in tmp:
+         if t["type_id"] == models.Characteristic_Part_Type.sex:
+            p.sex = t["name"]
+         elif t["type_id"] == models.Characteristic_Part_Type.given_name:
+            p.given_name = t["name"]
+         elif t["type_id"] == models.Characteristic_Part_Type.surname:
+            p.surname = t["name"]
 
       p.children = []
       result [p.id] = p

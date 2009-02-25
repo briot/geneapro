@@ -9,6 +9,11 @@ from django.db import transaction
 import mysites.geneapro.importers
 import re
 
+# If true, the given name read from gedcom is split (on spaces) into
+# a given name and one or more middle names. This might not be appropriate
+# for all languages
+GIVEN_NAME_TO_MIDDLE_NAME = True
+
 ##################################
 ## GedcomImporter
 ##################################
@@ -77,6 +82,9 @@ class GedcomImporter (object):
          (gedcom__isnull=True)
       for c in types:
          self._char_types [c.gedcom] = c
+
+      self._char_types ["MIDDLE_NAMES"] = models.Characteristic_Part_Type \
+         .objects.get (id=40)
 
       for p in models.Place_Part_Type.objects.exclude (gedcom__isnull=True):
          self._place_part_types [p.gedcom] = p
@@ -166,9 +174,15 @@ class GedcomImporter (object):
                   role = self._birth__mother)
 
    def _create_place (self, data):
-      """Create (or reuse) a place entry in the database"""
+      """If data contains a subnode PLAC, parse and returns it"""
 
-      if data == None:
+      if not isinstance (data, dict):
+         # Can't find a PLAC subnode if we only have a string
+         return None
+
+      data = data.get ("PLAC", None)
+
+      if data is None:
          return None
 
       if isinstance (data, str):
@@ -228,6 +242,96 @@ class GedcomImporter (object):
 
       return p
 
+   def _create_characteristic (self, key, value, indi):
+      """Create a Characteristic for the person indi.
+         Return True if a characteristic could be created, false otherwise.
+         (key,data) come from the GEDCOM structure, and could be:
+               {"SEX": "Male"}
+               {"NAME": {"value":"Smith", "GIVN":"Joe", "SURN":"Smith"}}
+         As defined in the GEDCOM standard, and except for the NAME which
+         is special, all other attributes follow the following grammar:
+             n TITL nobility_type_title
+             +1 <EVENT_DETAIL>
+         where EVENT_DETAIL can define any of the following: TYPE, DATE,
+         PLAC, ADDR, AGE, AGNC, CAUS, SOUR, NOTE, MULT
+      """
+
+      if key == "NAME":
+         # Special handling for name: its value was used to create the
+         # person itself, and now we are only looking into its subelements
+         # for the components of the name
+         t = None
+      else:
+         t = self._char_types.get (key, None)
+         if not t:
+            # This is not a GEDCOM attribute. We will test later on if this
+            # is an event, and report the error to the user when appropriate
+            return False
+
+      # Characteristic can be repeated several times (and thus value would
+      # be a list in such a case.
+
+      def create_simple_char (val, t):
+         if isinstance (val, str):
+            c = models.Characteristic.objects.create (place=None)
+            str_value = val
+         else:
+            place = self._create_place (val)
+            c = models.Characteristic.objects.create (
+               place=place, date=val.get ("DATE"))
+            str_value = val.get ("value")
+
+         # Associate the characteristic with the persona
+
+         models.P2C_Assertion.objects.create (
+                surety = self._default_surety,
+                researcher = self._researcher,
+                person = indi,
+                characteristic = c,
+                value = "charac")
+
+         # The main characteristic part is the value found on the same GEDCOM
+         # line as the characteristic itself.
+
+         if t:
+            models.Characteristic_Part.objects.create (
+               characteristic=c, type=t, name=str_value)
+
+         # We might have other characteristic part, most notably for names.
+
+         if isinstance (val, dict):
+            for k, v in val.iteritems ():
+               t = self._char_types.get (k, None)
+               if t:
+                  if k == "GIVN" and GIVEN_NAME_TO_MIDDLE_NAME:
+                     n = v.replace (',',' ').split(' ', 2)
+                     models.Characteristic_Part.objects.create (
+                        characteristic=c,
+                        type=t,
+                        name=n[0])
+                     if len (n) == 2:
+                        models.Characteristic_Part.objects.create (
+                           characteristic=c,
+                           type=self._char_types ["MIDDLE_NAMES"],
+                           name=n[1])
+
+                  else:
+                     models.Characteristic_Part.objects.create (
+                        characteristic=c,
+                        type=t,
+                        name=v)
+               elif k not in ("TYPE", "ADDR", "AGE", "AGNC", "CAUS", "SOUR",
+                                "NOTE", "MULT", "value"):
+                  print "Unknown characteristic: " + k
+   
+      if isinstance (value, list):
+         for val in value:
+            create_simple_char (val, t)
+      else:
+         create_simple_char (value, t)
+
+      return True
+
    def _create_indi (self, data):
       """Create the equivalent of an INDI in the database"""
 
@@ -240,40 +344,15 @@ class GedcomImporter (object):
 
       indi = models.Persona.objects.create (name=name, description="")
 
-      # Now create the events
+      # Now create the events and characteristics
       for key, value in data.iteritems ():
          if key in ("FAMC", "FAMS"):
             # Ignored, this will be set when parsing the families
             continue
 
-         try:
-            t = self._char_types [key]
-            if not isinstance (value, list):
-               value = [value]
-            for v in value:
-               if isinstance (v, str):
-                  c = models.Characteristic.objects.create (place=None)
-                  str_value = v
-
-               else:
-                  c = models.Characteristic.objects.create (
-                         place=None, date=v.get ("DATE"))
-                  str_value = v.get ("value")
-
-               models.Characteristic_Part.objects.create (
-                      characteristic=c,
-                      type=t,
-                      name=str_value)
-               models.P2C_Assertion.objects.create (
-                      surety = self._default_surety,
-                      researcher = self._researcher,
-                      person = indi,
-                      characteristic = c,
-                      value = "charac")
-
-         except KeyError:
-            try:
-               t = self._event_types [key]
+         if not self._create_characteristic (key, value, indi):
+            t = self._event_types.get (key)
+            if t:
                if not isinstance (value, list):
                   value = [value]
                for v in value:
@@ -287,7 +366,7 @@ class GedcomImporter (object):
                         name = ""
 
                      if not evt:
-                        place = self._create_place (v.get ("PLAC"))
+                        place = self._create_place (v)
                         evt = models.Event.objects.create (
                            type=t,
                            place=place,
@@ -305,11 +384,10 @@ class GedcomImporter (object):
                         role = self._principal,
                         value = "")
 
-            except KeyError:
-               if key not in ("NAME", "type", "SOUR",
-                              "CHAN", "ASSO", "OBJE", "FACT",
-                              "NOTE"):
-                  print "Unknown event type:" + key
+            elif key not in ("type", "SOUR",
+                             "CHAN", "ASSO", "OBJE", "FACT",
+                             "NOTE"):
+               print "Unknown event type:" + key
 
       return indi
 

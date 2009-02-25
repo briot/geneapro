@@ -614,9 +614,13 @@ class Characteristic_Part_Type (Part_Type):
       """Meta data for the model"""
       db_table = "characteristic_part_type"
 
+   is_name_part = models.BooleanField ()
+
    # Some hard-coded values for efficiency. Ideally, we should look these
    # from the database. The problem is if the database gets translated
    sex = 1
+   given_name = 6
+   surname = 7
 
 class Characteristic (models.Model):
    """
