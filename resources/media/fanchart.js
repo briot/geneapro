@@ -186,7 +186,7 @@ function drawFan (svg, config, centerx, centery) {
                  var c = Math.cos (minAngle + (maxAngle - minAngle) / 2);
                  var s = Math.sin (minAngle + (maxAngle - minAngle) / 2);
                  if (config.readable_names
-                     && Math.abs (maxAngle) > Math.PI / 2)
+                     && Math.abs (minAngle + (maxAngle - minAngle)/2) >= Math.PI / 2)
                  {
                     var textPath = svg.createPath ()
                     .moveTo (Math.round (centerx + maxRadius * c),
@@ -214,7 +214,9 @@ function drawFan (svg, config, centerx, centery) {
 
                var text = svg.text ("");
                svg.textpath(text, "#Path"+(minIndex + id),
-                  svg.createText().string(person.name)
+                  svg.createText().string("")
+                  .span (person.surn.toUpperCase(), {"font-weight":"normal"})
+                  .span (person.givn, {dx:5})
                   .span ((person.birth || "?") + "-"
                          + (person.death || "?"),
                          {x:"10",dy:"1.1em"}),
@@ -314,7 +316,7 @@ function drawSOSA (conf) {
 
    var person = sosa [1];
    svg.text(config.decujusx, config.decujusy,
-            svg.createText().string(person.name)
+            svg.createText().string(person.surn + " " + person.givn)
                .span ("b:", {x:config.decujusx, dy:"1.4em"})
                .span (person.birth, {"font-weight":"normal",
                                      "font-style":"italic"})

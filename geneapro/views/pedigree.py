@@ -39,14 +39,9 @@ def to_json (obj, year_only):
                if a:
                   d = "(age " + str (a) + ")"
 
-            if obj.surname or obj.given_name:
-               name = unicode (obj.surname).upper() \
-                  + " " + unicode (obj.given_name)
-            else:
-               name = obj.name
- 
-            return {"id":obj.id, "name":name, 'birth':b,
-                    'sex':obj.sex, 'death':d,
+            return {"id":obj.id, "givn":obj.given_name,
+                    'surn':obj.surname,
+                    'birth':b, 'sex':obj.sex, 'death':d,
                     'birthp':obj.birth_place or "",
                     'deathp':obj.death_place or ""}
 
@@ -70,8 +65,12 @@ def get_extended_personas (ids):
       p.death_place = None
       p.death = None
       p.marriage = None
-      p.given_name = None
-      p.surname = None
+      n = p.name.split ('/',3)
+      p.given_name = n[0]
+      if len (n) >= 2:
+         p.surname = n[1]
+      else:
+         p.surname = ""
       p.sex = "?"
 
       tmp = models.Characteristic_Part.objects.filter (

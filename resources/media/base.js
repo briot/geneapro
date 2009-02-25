@@ -46,10 +46,10 @@ function drawBox (svg, person, x, y, sosa, config) {
      var clip = svg.other (g, 'clipPath', {id:'p'+sosa});
      svg.rect (clip, 0, 0, config.boxWidth, config.boxHeight);
 
-    if (person.name) {
+    if (person) {
       var fontweight = (sosa == 1) ? "bold" : "normal";
       svg.text(g, 4, "1em",
-          svg.createText().string(person.name)
+          svg.createText().string(person.surn + " " + person.givn)
           .span ("b:", {x:4, dy:"1.2em"})
           .span (person.birth, {x:16,"font-weight":"normal","font-style":"italic"})
           .span (person.birthp, {x:16,dy:"1.1em","font-weight":"normal","font-style":"italic"})
