@@ -9,7 +9,7 @@ from mysites.geneapro import models
 
 def index (request):
    """The root page of GeneaPro"""
-   places = models.Place.objects.all ()
+   places = models.Place.objects.all()
    return render_to_response (
      'geneapro/index.html',
      {'placesCount': len (places),

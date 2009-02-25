@@ -52,7 +52,9 @@ class GedcomImporter (object):
 
          self._event_types = dict ()
          self._char_types = dict ()
+         self._place_part_types = dict ()
          self._get_all_event_types () 
+         self._places = dict ()
 
          self._personas = dict ()
          self._create_all ("INDI", self._create_indi)
@@ -75,6 +77,9 @@ class GedcomImporter (object):
          (gedcom__isnull=True)
       for c in types:
          self._char_types [c.gedcom] = c
+
+      for p in models.Place_Part_Type.objects.exclude (gedcom__isnull=True):
+         self._place_part_types [p.gedcom] = p
 
    def _create_all (self, tag, callback):
       """Process all records with a specific TAG and import them in the
@@ -160,6 +165,69 @@ class GedcomImporter (object):
                   event = self._births [c.id],
                   role = self._birth__mother)
 
+   def _create_place (self, data):
+      """Create (or reuse) a place entry in the database"""
+
+      if data == None:
+         return None
+
+      if isinstance (data, str):
+         name = data
+         long_name = name
+      else:
+         name = data.get ('value', "")
+
+         # Check if the place already exists, since GEDCOM will duplicate
+         # places unfortunately.
+         # We need to take into account all the place parts, which is done
+         # by simulating a long name including all the optional parts.
+
+         long_name = name
+         for info in sorted (data.keys ()):
+            if info != "value":
+               if info == "MAP":
+                  long_name = long_name + " " + info + "=" \
+                    + data[info].get ("LATI") + data[info].get("LONG")
+               else:
+                  long_name = long_name + " " + info + "=" + data[info]
+
+      p = self._places.get (long_name)
+
+      if not p:
+         p = models.Place.objects.create (
+             name = name,
+             date = None,
+             parent_place = None)
+         self._places [long_name] = p  # For reuse
+
+         # ??? Unhandled attributes of PLAC: FORM, SOURCE and NOTE
+         # FORM would in fact tell us how to split the name to get its various
+         # components, which we could use to initialize the place parts
+
+         # Take into account all parts (the GEDCOM standard only defines a
+         # few of these for a PLAC, but software such a gramps add quite a
+         # number of fields
+      
+         if isinstance (data, dict):
+            for info in data.keys ():
+               if info != "value":
+                  part = self._place_part_types.get (info, None)
+                  if not part:
+                     print "Unknown place part: " + info
+                  else:
+                     if info == "MAP":
+                        value = data[info].get ("LATI") + \
+                           " " + data[info].get ("LONG")
+                     else:
+                        value = data [info]
+               
+                     pp = models.Place_Part.objects.create (
+                        place = p,
+                        type = part,
+                        name = value)
+
+      return p
+
    def _create_indi (self, data):
       """Create the equivalent of an INDI in the database"""
 
@@ -219,9 +287,10 @@ class GedcomImporter (object):
                         name = ""
 
                      if not evt:
+                        place = self._create_place (v.get ("PLAC"))
                         evt = models.Event.objects.create (
                            type=t,
-                           place=None,
+                           place=place,
                            name=name,
                            date=v.get ("DATE"))
 

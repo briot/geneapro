@@ -241,14 +241,16 @@ class Place (GeneaproModel):
    date = PartialDateField ()
    parent_place = models.ForeignKey ('self', null=True,
        help_text = "The parent place, that contains this one")
+   name = models.CharField (max_length=100,
+       help_text = "Short description of the place")
 
    def __unicode__ (self):
       parts = self.place_part_set.all ()
       name = ",".join ([p.name for p in parts]) + " " + str (self.date)
       if self.parent_place:
-         return str (self.parent_place) + name
+         return str (self.name) + " " + str (self.parent_place) + name
       else:
-         return name
+         return str (self.name) + " " + name
 
    class Meta:
       """Meta data for the model"""
@@ -503,12 +505,15 @@ def get_related_persons (queryset, person_ids):
         # LEFT JOIN
         # That would limit the size of the data returned
 
+   alias2 = queryset.query.join (('event','place','place_id','id'))
+
    if not isinstance (person_ids, list):
       person_ids = [person_ids]
    return queryset.extra (select={'person':       'persona.id',
                                   'role':         alias1 + '.role_id',
                                   'related':      alias  + '.person_id',
-                                  'related_role': alias  +'.role_id'},
+                                  'related_role': alias  + '.role_id',
+                                  'place':        alias2 + '.name'},
                           where=('persona.id IN (%s)'
                                  % ",".join(["%d"%id for id in person_ids]),
                          ))

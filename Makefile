@@ -7,6 +7,11 @@ reset:
 	./manage.py reset --noinput geneapro
 	./manage.py loaddata geneapro/initial_data.json
 
+syncdb:
+	./manage.py syncdb
+
+full_reset: syncdb reset
+
 dump:
 	./manage.py dumpdata --format=xml geneapro > dump.xml
 	./manage.py dumpdata --format=json geneapro > dump.json

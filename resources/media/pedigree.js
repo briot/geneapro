@@ -1,7 +1,7 @@
 // Needs the variable "pedigree_data_url" to be defined
 var boxWidth = 200;
 var horizPadding = 20;
-var boxHeight = 60;
+var boxHeight = 75;
 var vertPadding = 20; //  vertical padding at last gen
 var sosa=null;
 var generations=null;
@@ -12,18 +12,17 @@ var tops=null;
 stylesheet =
  "rect.M {fill:#D6E0EA; stroke:#9CA3D4; filter:url(#shadow)}"
  + "rect.F {fill:#E9DAF1; stroke:#fF2080; filter:url(#shadow)}"
- + "rect {fill:white; stroke:#9CA3DA}";
+ + "rect {fill:white; stroke:#9CA3DA}"
+ + "rect.selected {fill:#CCC}";
 
 function onMouseOver (evt) {
   var box = evt.target;
-  box.setAttribute ('oldstroke', box.getAttribute ('stroke'));
-  box.setAttribute ('stroke', '#555');
-  box.setAttribute ('filter','');
+  box.setAttribute ('oldclass', box.getAttribute ('class'));
+  box.setAttribute ("class", "selected");
 }
 function onMouseOut (evt) {
   var box = evt.target;
-  box.setAttribute ('stroke', box.getAttribute ('oldstroke'));
-  box.setAttribute ('filter','url(#shadow)');
+  box.setAttribute ('class', box.getAttribute ('oldclass'));
 }
 function onGetJSON (data, status) {
   unsetBusy ();
@@ -69,7 +68,7 @@ function drawSOSA() {
 
    var startX = (children ? boxWidth + horizPadding : 0) + 1;
    var maxWidth = (boxWidth + horizPadding) * generations + startX;
-   var maxHeight = boxHeight * maxBoxes + vertPadding * (maxBoxes - 1);
+   var maxHeight = boxHeight * maxBoxes + vertPadding * (maxBoxes - 1) +1;
 
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
                   preserveAspectRatio:"xMinYMid"},true);

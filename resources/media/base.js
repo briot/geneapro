@@ -48,14 +48,14 @@ function drawBox (svg, person, x, y, sosa, config) {
 
     if (person.name) {
       var fontweight = (sosa == 1) ? "bold" : "normal";
-      svg.text(g, 4, 16,
+      svg.text(g, 4, "1em",
           svg.createText().string(person.name)
-          .span ("b:", {x:4, dy:"1.4em"})
-          .span (person.birth, {"font-weight":"normal",
-                                "font-style":"italic"})
+          .span ("b:", {x:4, dy:"1.2em"})
+          .span (person.birth, {x:16,"font-weight":"normal","font-style":"italic"})
+          .span (person.birthp, {x:16,dy:"1.1em","font-weight":"normal","font-style":"italic"})
           .span ("d:", {x:4, dy:"1.2em"})
-          .span (person.death, {"font-weight":"normal",
-                                "font-style":"italic"}),
+          .span (person.death, {x:16,"font-weight":"normal", "font-style":"italic"})
+          .span (person.deathp, {x:16,dy:"1.1em","font-weight":"normal","font-style":"italic"}),
         {"font-weight":fontweight, "clip-path":"url(#p"+sosa+")",
          "pointer-events":"none"});
       }

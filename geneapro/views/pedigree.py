@@ -40,7 +40,9 @@ def to_json (obj, year_only):
                   d = "(age " + str (a) + ")"
  
             return {"id":obj.id, "name":obj.name, 'birth':b,
-                    'sex':obj.sex, 'death':d}
+                    'sex':obj.sex, 'death':d,
+                    'birthp':obj.birth_place or "",
+                    'deathp':obj.death_place or ""}
 
          elif isinstance (obj, models.GeneaproModel):
             return obj.to_json()
@@ -57,7 +59,9 @@ def get_extended_personas (ids):
    for p in persons:
       p.father_id = None
       p.mother_id = None
+      p.birth_place = None
       p.birth = None
+      p.death_place = None
       p.death = None
       p.marriage = None
 
@@ -86,6 +90,7 @@ def get_extended_personas (ids):
         and e["role"] == models.Event_Type_Role.principal:
 
          result [who].birth = Date (e["date"])
+         result [who].birth_place = e["place"]
 
          if e["related_role"] == models.Event_Type_Role.birth__father:
             result [who].father_id = e["related"]
@@ -95,6 +100,7 @@ def get_extended_personas (ids):
       elif e["type_id"] == models.Event_Type.death \
         and e["role"] == models.Event_Type_Role.principal:
          result [who].death = Date (e["date"])
+         result [who].death_place = e["place"]
 
       elif e["type_id"] == models.Event_Type.birth \
         and e["related_role"] == models.Event_Type_Role.principal \
@@ -156,20 +162,18 @@ def data (request):
 
    ## Marriage data is indexed on the husband's sosa number
    marriage = dict()
+   children = None
 
    def sort_by_birth (pers1, pers2):
       """Compare two persons by birth date"""
       return cmp (pers1.birth, pers2.birth)
 
-   try:
-      p = get_parents (tree, marriage, who, generations)[0]
+   p = get_parents (tree, marriage, who, generations)
+   if p:
+      p = p[0]
       if p.children:
          children = get_extended_personas (p.children)
          children.sort (cmp=sort_by_birth)
-      else:
-         children = None
-   except models.Persona.DoesNotExist:
-      pass
 
    result = to_json ({'generations':generations, 'sosa':tree,
                    'children':children, 'marriage':marriage},

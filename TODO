@@ -1,9 +1,13 @@
-Create indexes in database:
+* Database
+** Create indexes in database:
    Assertion.subject1
    Assertion.subject2
    (Assertion.subject1, Assertion.value)   ???
    (Assertion.subject2, Assertion.value)   ???
-Assertion.Value should point into a table rather than be a text
+   Assertion.Value should point into a table rather than be a text
+
+* GEDCOM import
+** Import first name and last name as separate fields
 
 * Pedigree View
 ** BACK button should go back to previous pedigree view
@@ -29,6 +33,7 @@ Assertion.Value should point into a table rather than be a text
    See www.cs.utah.edu/~draperg/research/fanchart/demo/
 ** Display SOSA number related to a given person
    Not necessarily related to the current root
+** Display last name on a separate line to make it more readable
 ** Editing fanchart's config graphically
    As opposed to modifying defaultConfig in fanchart.js
 ** For each generation, display min and max known dates (earliest date of
