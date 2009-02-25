@@ -40,7 +40,8 @@ def to_json (obj, year_only):
                   d = "(age " + str (a) + ")"
 
             if obj.surname or obj.given_name:
-               name = str (obj.surname).upper() + " " + str (obj.given_name)
+               name = unicode (obj.surname).upper() \
+                  + " " + unicode (obj.given_name)
             else:
                name = obj.name
  
