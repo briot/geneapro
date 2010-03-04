@@ -492,12 +492,6 @@ class GedcomImporter (object):
                      evt = self._create_event (indi=indi, event_type=t, data=v)
                      sources = self._create_sources_ref (v)
 
-                     if t.gedcom == "BIRT" and id == "I0447":
-                        print "Found birth of Joseph Marie Briot"
-                        print evt
-                        print data
-                        print "sources=" + `sources`
-
                      for s in sources:
                         models.P2E_Assertion.objects.create (
                            surety = self._default_surety,

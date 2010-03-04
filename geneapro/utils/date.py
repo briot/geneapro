@@ -691,7 +691,8 @@ class Date (object):
          return None
 
       comps = self.calendar.components (self.date)
-      dcomps = date.calendar.components (date.date)
+      dcomps = self.calendar.components (date.date)
+
       if comps[1] > dcomps [1]:
          return comps[0] - dcomps [0]
       elif comps[1] == dcomps [1] \
