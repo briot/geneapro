@@ -506,7 +506,8 @@ def get_related_persons (queryset, person_ids):
         # LEFT JOIN
         # That would limit the size of the data returned
 
-   alias2 = queryset.query.join (('event','place','place_id','id'))
+   alias2 = queryset.query.join (('event','place','place_id','id'),
+                                 promote=True)
    alias3 = queryset.query.join (('p2e','assertion','assertion_ptr_id','id'))
 
    if not isinstance (person_ids, list):
