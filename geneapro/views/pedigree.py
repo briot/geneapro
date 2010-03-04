@@ -43,7 +43,9 @@ def to_json (obj, year_only):
                     'surn':obj.surname,
                     'birth':b, 'sex':obj.sex, 'death':d,
                     'birthp':obj.birth_place or "",
-                    'deathp':obj.death_place or ""}
+                    'deathp':obj.death_place or "",
+                    'births':obj.birth_sources or "",
+                    'deaths':obj.death_sources or ""}
 
          elif isinstance (obj, models.GeneaproModel):
             return obj.to_json()
@@ -62,8 +64,10 @@ def get_extended_personas (ids):
       p.mother_id = None
       p.birth_place = None
       p.birth = None
+      p.birth_sources = None
       p.death_place = None
       p.death = None
+      p.death_sources = None
       p.marriage = None
       n = p.name.split ('/',3)
       p.given_name = n[0]
@@ -104,6 +108,7 @@ def get_extended_personas (ids):
 
          result [who].birth = Date (e["date"])
          result [who].birth_place = e["place"]
+         result [who].birth_sources = e["sources"]
 
          if e["related_role"] == models.Event_Type_Role.birth__father:
             result [who].father_id = e["related"]
@@ -114,6 +119,7 @@ def get_extended_personas (ids):
         and e["role"] == models.Event_Type_Role.principal:
          result [who].death = Date (e["date"])
          result [who].death_place = e["place"]
+         result [who].death_sources = e["sources"]
 
       elif e["type_id"] == models.Event_Type.birth \
         and e["related_role"] == models.Event_Type_Role.principal \
@@ -127,6 +133,7 @@ def get_extended_personas (ids):
          # If this is the marriage with the other person in the list
          if e["related"] in ids:
             result [who].marriage = str (Date (e["date"]))
+            result [who].marriage_sources = e["sources"]
 
    return result.values()
 

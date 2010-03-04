@@ -60,8 +60,14 @@ class GedcomImporter (object):
          self._place_part_types = dict ()
          self._get_all_event_types () 
          self._places = dict ()
-
          self._personas = dict ()
+
+         self._source_medium = dict ()
+         self._read_source_medium ()
+
+         self._sources = dict ()
+         self._create_all ("SOUR", self._create_source)
+
          self._create_all ("INDI", self._create_indi)
          self._create_all ("FAM",  self._create_family)
 
@@ -95,9 +101,74 @@ class GedcomImporter (object):
       for key in sorted (self._data.keys()):
          value = self._data[key]
          if value.get ("type") == tag:
-            self._personas [key] = callback (value)
+            callback (value, id=key)
 
-   def _create_family (self, data):
+   def _read_source_medium (self):
+      for m in models.Source_Medium.objects.all ():
+         self._source_medium [m.name] = m.id
+
+   def _create_source (self, data, id=""):
+      #print "SOURCE " + `data`
+      # example: {'TITL': 'La Chapelle Chaussee, Mariages, 1876', 'OBJE': [{'TITL': 'Briot, Francois Marie, mariage, La Baussaine, p6', 'FILE': '/home/briot/genealogy/scans/briot_francois_marie/1876_p6_briot_becot.jpg', 'FORM': 'jpeg'}, {'TITL': 'Briot, Francois Marie, mariage, La Baussaine, p6 (2)', 'FILE': '/home/briot/genealogy/scans/briot_francois_marie/1876_p6_briot_becot_2.jpg', 'FORM': 'jpeg'}], 'type': 'SOUR', 'CHAN': {'DATE': {'value': '1 MAR 2010', 'TIME': '18:45:09'}}}
+
+      repo = data.get ("REPO")
+      medium_id = 0
+
+      if repo and not isinstance (repo, str):
+         caln = repo.get ("CALN")  # call number
+         if caln and not isinstance (caln, str):
+            medium = caln.get ("MEDI", "").lower ()
+            medium_id = self._source_medium.get (medium_id)
+            if not medium_id:
+               print "Unknown medium type for source %s: %s" % (id, medium)
+               medium_id = 0
+
+      src = models.Source.objects.create (
+         higher_source_id=None,
+         subject_place_id=None,
+         jurisdiction_place_id=None,
+         researcher=self._researcher,
+         subject_date=None,
+         medium_id=medium_id,
+         comments=data.get ("TITL"))
+
+      obje = data.get ("OBJE")
+      if obje:
+         if not isinstance (obje, list):
+            obje = [obje]
+         for o in obje:
+            obj = self._create_obje (o, src)
+
+      # ??? Missing import of NOTE and CHAN
+
+      if id:
+         self._sources ['@%s@' % id] = src
+
+      return src
+
+   def _create_obje (self, data, source):
+      """Create an object (representation) in the database"""
+      if data is None:
+         return None
+
+      if isinstance (data, str):
+         print "Ignore OBJE reference: %s" % (data)
+         return
+
+      form_to_mime = {"jpeg":"image/jpeg",
+                      "image/png":"image/png"}
+      mime = form_to_mime.get (data.get ("FORM"))
+      if mime is None:
+         print "Unknown mime type for object: " + data.get ("FORM")
+         return
+
+      repr = models.Representation.objects.create (
+         source=source,
+         mime_type=mime,
+         file=data.get ("FILE"),
+         comments=data.get ("TITL"))
+
+   def _create_family (self, data, id):
       """Create the equivalent of a FAMILY in the database"""
       husb = data.get ("HUSB")
       if husb: 
@@ -121,20 +192,24 @@ class GedcomImporter (object):
                     place=None,
                     name="Marriage",
                     date=d)
-               models.P2E_Assertion.objects.create (
-                    surety = self._default_surety,
-                    researcher = self._researcher,
-                    person = husb,
-                    event = evt,
-                    role_id= models.Event_Type_Role.marriage__husband,
-                    value = "event")
-               models.P2E_Assertion.objects.create (
-                    surety = self._default_surety,
-                    researcher = self._researcher,
-                    person = wife,
-                    event = evt,
-                    role_id = models.Event_Type_Role.marriage__wife,
-                    value = "event")
+
+               for src in self._create_sources_ref (mar):
+                  models.P2E_Assertion.objects.create (
+                       surety = self._default_surety,
+                       researcher = self._researcher,
+                       person = husb,
+                       source = src,
+                       event = evt,
+                       role_id= models.Event_Type_Role.marriage__husband,
+                       value = "event")
+                  models.P2E_Assertion.objects.create (
+                       surety = self._default_surety,
+                       researcher = self._researcher,
+                       person = wife,
+                       source = src,
+                       event = evt,
+                       role_id = models.Event_Type_Role.marriage__wife,
+                       value = "event")
 
       children = data.get ("CHIL")
       if children:
@@ -143,6 +218,8 @@ class GedcomImporter (object):
 
          # Mark the parents of the child
          for c in children:
+            sources = self._create_sources_ref (c)  # ??? Is this useful
+
             c = self._personas [c[1:-1]]
             try:
                evt = self._births [c.id]
@@ -151,29 +228,35 @@ class GedcomImporter (object):
                   type=self._event_types ["BIRT"],
                   place=None,
                   name="Birth of " + c.name)
-               models.P2E_Assertion.objects.create (
-                  surety = self._default_surety,
-                  researcher = self._researcher,
-                  person = c,
-                  event = self._births [c.id],
-                  role = self._principal)
 
-            if husb:
-               models.P2E_Assertion.objects.create (
-                  surety = self._default_surety,
-                  researcher = self._researcher,
-                  person = husb,
-                  event = self._births [c.id],
-                  role = self._birth__father)
-            if wife:
-               models.P2E_Assertion.objects.create (
-                  surety = self._default_surety,
-                  researcher = self._researcher,
-                  person = wife,
-                  event = self._births [c.id],
-                  role = self._birth__mother)
+               for s in sources:
+                  models.P2E_Assertion.objects.create (
+                     surety = self._default_surety,
+                     researcher = self._researcher,
+                     source = s,
+                     person = c,
+                     event = self._births [c.id],
+                     role = self._principal)
 
-   def _create_place (self, data):
+            for s in sources:
+               if husb:
+                  models.P2E_Assertion.objects.create (
+                     surety = self._default_surety,
+                     researcher = self._researcher,
+                     person = husb,
+                     source = s,
+                     event = self._births [c.id],
+                     role = self._birth__father)
+               if wife:
+                  models.P2E_Assertion.objects.create (
+                     surety = self._default_surety,
+                     researcher = self._researcher,
+                     person = wife,
+                     source = s,
+                     event = self._births [c.id],
+                     role = self._birth__mother)
+
+   def _create_place (self, data, id=""):
       """If data contains a subnode PLAC, parse and returns it"""
 
       if not isinstance (data, dict):
@@ -267,11 +350,11 @@ class GedcomImporter (object):
             # This is not a GEDCOM attribute. We will test later on if this
             # is an event, and report the error to the user when appropriate
             return False
+  
+      if not isinstance (value, list):
+         value = [value]
 
-      # Characteristic can be repeated several times (and thus value would
-      # be a list in such a case.
-
-      def create_simple_char (val, t):
+      for val in value:
          if isinstance (val, str):
             c = models.Characteristic.objects.create (place=None)
             str_value = val
@@ -283,10 +366,12 @@ class GedcomImporter (object):
 
          # Associate the characteristic with the persona
 
-         models.P2C_Assertion.objects.create (
+         for s in self._create_sources_ref (val):
+            models.P2C_Assertion.objects.create (
                 surety = self._default_surety,
                 researcher = self._researcher,
                 person = indi,
+                source = s,
                 characteristic = c,
                 value = "charac")
 
@@ -320,19 +405,66 @@ class GedcomImporter (object):
                         characteristic=c,
                         type=t,
                         name=v)
-               elif k not in ("TYPE", "ADDR", "AGE", "AGNC", "CAUS", "SOUR",
-                                "NOTE", "MULT", "value"):
-                  print "Unknown characteristic: " + k
-   
-      if isinstance (value, list):
-         for val in value:
-            create_simple_char (val, t)
-      else:
-         create_simple_char (value, t)
 
+               elif k == "SOUR":
+                  pass  # handled in the _create_sources_ref loop above
+
+               elif k not in ("TYPE", "ADDR", "AGE", "AGNC", "CAUS",
+                              "NOTE", "MULT", "value"):
+                  print "Unknown characteristic: " + k
+ 
       return True
 
-   def _create_indi (self, data):
+   def _create_event (self, indi, event_type, data):
+      """Create a new event, and return it"""
+
+      if event_type.gedcom == "BIRT":
+         name = "Birth of " + indi.name
+         evt = self._births.get (indi.id, None)
+      else:
+         evt = None
+         name = ""
+
+      if not evt:
+         place = self._create_place (data)
+         evt = models.Event.objects.create (
+             type=event_type,
+             place=place,
+             name=name,
+             date=data.get ("DATE"))
+
+         if event_type.gedcom == "BIRT":
+            self._births [indi.id] = evt
+
+      return evt
+
+   def _create_sources_ref (self, data):
+      """Create a list of instances of Source for the record described by
+         DATA. For instance, if Data is an event, these are all the sources in
+         which the event was references.
+         If there are no reference, this returns a list with a single element,
+         None. As a result, you can always iterate over the result to insert
+         rows in the database."""
+
+      if isinstance (data, dict):
+         sources = data.get ("SOUR")
+         if sources:
+            if not isinstance (sources, list):
+               sources = [sources]
+
+            all_sources = []
+
+            for s in sources:
+               if isinstance (s, str):
+                  all_sources.append (self._sources [s])
+               else:
+                  src = self._create_source (s)
+                  all_sources.append (src)
+            return all_sources
+
+      return [None]
+
+   def _create_indi (self, data, id):
       """Create the equivalent of an INDI in the database"""
 
       # The name to use is the first one in the list of names
@@ -355,40 +487,36 @@ class GedcomImporter (object):
             if t:
                if not isinstance (value, list):
                   value = [value]
-               for v in value:
+               for v in value:   # For all events of the same type KEY
                   if not isinstance (v, str):
-                     evt = None
+                     evt = self._create_event (indi=indi, event_type=t, data=v)
+                     sources = self._create_sources_ref (v)
 
-                     if key == "BIRT":
-                        name = "Birth of " + indi.name
-                        evt = self._births.get (indi.id, None)
-                     else:
-                        name = ""
+                     if t.gedcom == "BIRT" and id == "I0447":
+                        print "Found birth of Joseph Marie Briot"
+                        print evt
+                        print data
+                        print "sources=" + `sources`
 
-                     if not evt:
-                        place = self._create_place (v)
-                        evt = models.Event.objects.create (
-                           type=t,
-                           place=place,
-                           name=name,
-                           date=v.get ("DATE"))
+                     for s in sources:
+                        models.P2E_Assertion.objects.create (
+                           surety = self._default_surety,
+                           researcher = self._researcher,
+                           person = indi,
+                           event = evt,
+                           source = s,
+                           role = self._principal,
+                           value = "")
 
-                     if key == "BIRT":
-                        self._births [indi.id] = evt
+            elif key == "SOUR":
+               pass # already handled (?) in the create_sources_ref above
 
-                     models.P2E_Assertion.objects.create (
-                        surety = self._default_surety,
-                        researcher = self._researcher,
-                        person = indi,
-                        event = evt,
-                        role = self._principal,
-                        value = "")
-
-            elif key not in ("type", "SOUR",
+            elif key not in ("type",
                              "CHAN", "ASSO", "OBJE", "FACT",
                              "NOTE"):
                print "Unknown event type:" + key
 
+      self._personas [id] = indi
       return indi
 
    def _create_project (self, researcher):
@@ -439,13 +567,13 @@ class GedcomImporter (object):
 ##################################
 
 class GedcomFileImporter (mysites.geneapro.importers.Importer):
-   """Register a new imported in geneapro: imports GEDCOM files"""
+   """Register a new importer in geneapro: imports GEDCOM files"""
 
    class Meta:
       """see inherited documentation"""
       displayName = _("GEDCOM")
       description = _("Imports a standard GEDCOM file, which most genealogy" \
-                      + " can export to")
+                      + " software can export to")
 
    class ErrorProxy:
       """Report an error that occurred during an import"""

@@ -475,6 +475,7 @@ def get_related_persons (queryset, person_ids):
         'related': the name of one of the other persons taking part in
                    the same event
         'related_role': the role of that person
+        'sources': ids of the sources that justify this event
       An event will therefore match multiple entries, one for each person
       taking part in the event excep the one passed in parameter.
 
@@ -506,6 +507,7 @@ def get_related_persons (queryset, person_ids):
         # That would limit the size of the data returned
 
    alias2 = queryset.query.join (('event','place','place_id','id'))
+   alias3 = queryset.query.join (('p2e','assertion','assertion_ptr_id','id'))
 
    if not isinstance (person_ids, list):
       person_ids = [person_ids]
@@ -513,7 +515,8 @@ def get_related_persons (queryset, person_ids):
                                   'role':         alias1 + '.role_id',
                                   'related':      alias  + '.person_id',
                                   'related_role': alias  + '.role_id',
-                                  'place':        alias2 + '.name'},
+                                  'place':        alias2 + '.name',
+                                  'sources':      alias3 + '.source_id'},
                           where=('persona.id IN (%s)'
                                  % ",".join(["%d"%id for id in person_ids]),
                          ))
