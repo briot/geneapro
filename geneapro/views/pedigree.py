@@ -10,6 +10,11 @@ from django.http import HttpResponse
 from mysites.geneapro import models
 from mysites.geneapro.utils.date import Date
 
+class Marriage_Data:
+   def __init__ (self, date, sources):
+      self.date = date
+      self.sources = sources
+
 def to_json (obj, year_only):
    """Converts a type to json data, properly converting database instances.
       If year_only is true, then the dates will only include the year"""
@@ -47,8 +52,12 @@ def to_json (obj, year_only):
                     'births':obj.birth_sources or "",
                     'deaths':obj.death_sources or ""}
 
+         elif isinstance (obj, Marriage_Data):
+            return {"date":obj.date, "sources":obj.sources}
+
          elif isinstance (obj, models.GeneaproModel):
             return obj.to_json()
+
          return super (ModelEncoder, self).default (obj)
 
    return simplejson.dumps (obj, cls=ModelEncoder, separators=(',',':'))
@@ -69,6 +78,7 @@ def get_extended_personas (ids):
       p.death = None
       p.death_sources = None
       p.marriage = None
+      p.marriage_sources = None
       n = p.name.split ('/',3)
       p.given_name = n[0]
       if len (n) >= 2:
@@ -154,7 +164,8 @@ def get_parents (tree, marriage, person_ids, max_level, sosa=1):
       tree [s] = p
 
       # Marriage data indexed on the husbands' sosa number
-      marriage [s - (s % 2)] = p.marriage
+      marriage [s - (s % 2)] = Marriage_Data (
+         date=p.marriage, sources=p.marriage_sources)
 
       if max_level > 1:
          if p.father_id and p.mother_id:

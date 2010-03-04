@@ -117,8 +117,13 @@ function drawSOSA() {
                       {stroke:'black', fill:'none'});
             if (gen < generations - 1 
                 && marriage[2 * index + 2]) {
+
+              var mar = marriage [2 * index + 2].date || "";
+              if (mar)
+                 mar += (marriage [2*index + 2].sources ? " \u2713" : " \u2717");
+
               svg.text (x2, (y1 + y2) / 2 + 4,
-                        svg.createText().string (marriage[2*index + 2]),
+                        svg.createText().string (mar),
                         {stroke:"black", "stroke-width":0,
                          onmouseover:'onTxtMouseOver(evt)',
                          onmouseout:'onTxtMouseOut(evt)'});
