@@ -371,7 +371,7 @@ class _Lexical (object):
          and split it into its fields"""
 
       self.line = self.line + 1
-      line = self.file.readline ()
+      line = self.file.readline ().rstrip ('\r\n')
       if not line: 
          return None
 

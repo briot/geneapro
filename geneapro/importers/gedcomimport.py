@@ -532,18 +532,20 @@ class GedcomImporter (object):
       Convert an ADDR field to a single string. Our model does use different
       fields for current addresses
       """
-      addr = data.get ("value") + "\n" + \
-         data.get ("ADR1","") + "\n" + data.get ("ADR2","") + "\n" + \
-         data.get ("POST","") + " " + data.get ("CITY","") + "\n" + \
-         data.get ("STAE","") + "\n" + data.get ("CTRY","")
+      if data:
+         addr = data.get ("value") + "\n" + \
+            data.get ("ADR1","") + "\n" + data.get ("ADR2","") + "\n" + \
+            data.get ("POST","") + " " + data.get ("CITY","") + "\n" + \
+            data.get ("STAE","") + "\n" + data.get ("CTRY","")
 
-      # Gramps sets this when the address is not provided
-      addr = addr.replace ("Not Provided", "")
+         # Gramps sets this when the address is not provided
+         addr = addr.replace ("Not Provided", "")
 
-      # Cleanup empty lines
-      addr = re.sub ("^\n+", "", re.sub ("\n+", "\n", addr))
+         # Cleanup empty lines
+         return re.sub ("^\n+", "", re.sub ("\n+", "\n", addr))
 
-      return addr
+      else:
+         return ""
 
    def _create_researcher (self):
       """
@@ -551,6 +553,10 @@ class GedcomImporter (object):
       file
       """
       subm = self._data.deref (self._data["HEAD"]["SUBM"])
+      if not subm:
+         subm = {"NAME": "unknown",
+                 "ADDR": None,
+                 "PHON": "unknown"}
       return models.Researcher.objects.create (
           name= subm["NAME"],
           comment= GedcomImporter._addr_to_string (subm.get ("ADDR")) + "\n"\

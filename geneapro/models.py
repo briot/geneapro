@@ -530,7 +530,7 @@ class Persona (GeneaproModel):
    (when we are sure all attributes apply to the same person)
    """
 
-   name = models.CharField (max_length=100)
+   name = models.TextField ()
    description = models.TextField (null=True)
 
    def __unicode__ (self):
@@ -649,7 +649,7 @@ class Characteristic_Part (GeneaproModel):
 
    characteristic  = models.ForeignKey (Characteristic, related_name="parts")
    type            = models.ForeignKey (Characteristic_Part_Type)
-   name            = models.CharField (max_length=200)
+   name            = models.TextField ()
    sequence_number = models.IntegerField (default=1)
 
    class Meta:
