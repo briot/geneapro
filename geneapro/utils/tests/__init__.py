@@ -6,44 +6,42 @@ import unittest
 import os, os.path
 from .. import gedcom, date
 
-class _MemoryFile (object):
-   """Simulate a file instance, but stores result in memory instead"""
-   def __init__ (self):
-      self.output = ""
-   def write (self, msg):
-      """Add msg to the output"""
-      self.output = self.output + msg
-
 class GedcomTestCase (unittest.TestCase):
    """Tests for gedcom.py"""
 
    def setUp (self):
       """see inherited documentation"""
       self.dir = os.path.normpath (os.path.dirname (__file__))
-
-   def _open_file (self, filename):
-      """open a file in the current directory"""
-      return file (os.path.join (self.dir, filename))
+      self.parsers = gedcom.Gedcom ()
 
    def _process_file (self, filename):
       """parse a file and test the expected output"""
-      error = _MemoryFile ()
-      gedcom.Gedcom (self._open_file (filename), error=error)
+
+      error = ""
+      try:
+         # Universal newline
+         self.parsers.parse (file (filename, "U"))
+         error = error + "OK\n"
+      except gedcom.Invalid_Gedcom, e:
+         error = error + e.msg + "\n"
+
       expected_name = os.path.splitext (filename)[0] + ".out"
       try:
-         expected = self._open_file (expected_name).read ()
+         expected = file (expected_name).read ()
       except IOError:
-         expected = ""
-      out = error.output.replace (self.dir, "<dir>")
+         expected = "OK\n"
+      out = error.replace (self.dir, "<dir>")
       self.assertEqual (expected, out)
+
+   def _process_dir (self, dir):
+      for f in sorted (os.listdir (dir)):
+         if os.path.splitext (f)[1] == ".ged":
+            self._process_file (os.path.join (dir, f))
 
    def test_gedcom_error (self):
       """Test gedcom validation errors"""
-      files = os.listdir (self.dir)
-      files.sort()
-      for f in files:
-         if os.path.splitext (f)[1] == ".ged":
-            self._process_file (f)
+      self._process_dir (self.dir)
+      self._process_dir (os.path.join (self.dir, "t"))
 
 JAN_1_2008        = 2454467
 JAN_1_2008_ELEVEN = 2454466

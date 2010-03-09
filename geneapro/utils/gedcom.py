@@ -4,19 +4,20 @@ It parses a GEDCOM file, and creates a set of trees in memory corresponding
 to the GEDCOM file, without doing any interpretation of this tree.
 
 Example of use:
-    ged = Gedcom (file ("myfile.ged"))
-    ged.postprocess ()    # Optional
-    recs = ged.getRecords ()
+    ged = Gedcom().parse (file ("myfile.ged"))
 
-The resulting data structure is a GedcomData (see the documentation for
-the format)
+The resulting data structure is a GedcomFile, which provides subprograms
+to access the various fields.
 
 This package provides minimal error handling: it checks that tags occur as
 many times as needed in the standard, and not more. Otherwise an error is
-raised.
+raised. This check is based on the Gedcom 5.5 grammar
 
 This file has no external dependency, except for the _ function which is
 used for internationalization.
+
+This parser is reasonably fast, and will parse the ITIS.ged file in 2:45 min
+(472_676 individuals)
 
 ??? Missing: handling of charsets. We should always convert to utf8 in the
     resulting structure
@@ -26,76 +27,36 @@ used for internationalization.
     imported correctly. Better warn the user in such a case
 """
 
-from django.utils.translation import ugettext as _
-import re, sys
+# Use django's translation if possible, else make this file standalone
+try:
+   from django.utils.translation import ugetNone as _
+   _("foo")
+except:
+   def _(txt): return txt
 
-__all__ = ["Gedcom"]
+import re, sys, copy
 
-##################################
-## GedcomData
-##################################
-
-class GedcomData (dict):
-   """
-   A Gedcom data structure.
-   The keys are the ids that were
-   found in the GEDCOM file (typically "I0001", "S0001", ...). Each element is
-   itself a dictionary, for which the keys are the values read in GEDCOM, with
-   no interpretation. One special key is called 'value' and corresponds to the
-   value put on the first line that declared the record
-      - If the value for this key is a simple string, it is put as it.
-          e.g. NAME: {'SURN': 'Smith'}
-      - If the value is itself a record, it is put as a dictionary.
-          e.g. ASSO: {'RELA': 'Godfather', 'value': '@I0022'}
-      - If the field could be repeated multiple times, it is an array of one
-          of the two types above:
-          e.g. NAME: [{'SURN': 'Smith'}, {'SURN': 'Smayth'}]
-   The HEAD part of the Gedcom file is accessible under the "HEAD" key.
-
-   All toplevel nodes (except HEAD), ie the ones that have an ID in the gedcom
-   file, have a special "type" element which indicates the type of record
-   associated with that element ("INDI", "SOUR",...)
-
-   This automatically dereferences pointers within the gedcom structure when
-   data is accessed.
-   """
-
-   def deref (self, obj):
-      """
-      If object represents a reference to another object, returns the object
-      pointed to. Otherwise return object itself. This should be used in
-      cases where an element in the gedcom might or does contain a reference.
-      This also handles referenced found within a list.
-      This is not recursive
-      """
-
-      if obj == None:
-         return obj
-      elif type (obj) == str \
-        and obj and obj[0] == '@' and obj[-1] == '@':
-         return self [obj[1:-1]]
-      elif type (obj) == list:
-         for index, val in enumerate (obj):
-            if type (val) == str \
-              and val and val[0] == "@" and val[-1] == '@':
-               obj[index] = self [val[1:-1]]
+__all__ = ["Gedcom", "GedcomFile", "GedcomIndi", "GedcomFam", "GedcomRecord",
+           "Invalid_Gedcom"]
 
 POINTER_STRING = "(?:[^@]*)"
 OPTIONAL_XREF_ID = "(?:@(?P<xref_id>\w" + POINTER_STRING + ")@\s)?"
 LINE_RE = re.compile ('^(?P<level>\d+)\s' + OPTIONAL_XREF_ID
                       + '(?P<tag>\w+)' + '(?:\s(?P<value>.*))?')
 
-EVENT_DETAILS = (("TYPE", 0, 1),
-                 ("DATE", 0, 1),
-                 ("PLAC", 0, 1),
-                 ("ADDR", 0, 1),
-                 ("PHON", 0, 3), # In gedcom: part of ADDR
-                 ("AGE", 0, 1),  # Age at event
-                 ("AGNC", 0, 1), # Responsible agency
-                 ("CAUS", 0, 1), # Cause of event
-                 ("SOUR", 0, 1000000, "SOURCE_CITATION"),
-                 ("OBJE", 0, 1000000), # Multimedia link
-                 ("NOTE", 0, 1000000)) # Note on event
+unlimited = 100000
+
+EVENT_DETAILS = (("TYPE", 0, 1, None),
+                 ("DATE", 0, 1, None),
+                 ("PLAC", 0, 1, "PLAC"),
+                 ("ADDR", 0, 1, "ADDR"),
+                 ("PHON", 0, 3, None), # In gedcom: part of ADDR
+                 ("AGE",  0, 1, None),  # Age at event
+                 ("AGNC", 0, 1, None), # Responsible agency
+                 ("CAUS", 0, 1, None), # Cause of event
+                 ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+                 ("OBJE", 0, unlimited, "OBJE"), # Multimedia link
+                 ("NOTE", 0, unlimited, None)) # Note on event
 # _grammar is a tuple of tuples, each of which describes one of the nodes
 # that the record accepts:
 #   (tag_name, min_occurrences, max_occurrences, [handler])
@@ -103,113 +64,111 @@ EVENT_DETAILS = (("TYPE", 0, 1),
 # The tag_name field can be either a string or a tuple of strings
 # indicating all the tags that are accepted and handled the same way.
 #
-# The optional handler field is a string that indicates the name of an entry
-# in grammar that contains the valid child nodes. If not defined, the parser
-# will use the name of the node directly.
-# If this name does not correspond to an entry in the table, it is assumed to
-# match a single line in the GEDCOM file, not a record.
-#
-# The handler can also be specified itself as a tuple of tuples
+# The handler field is a string that indicates the name of an entry
+# in grammar that contains the valid child nodes. It can be None to indicate
+# that the field only contains None data.
+# The handler can also be specified itself as a tuple of tuples to describe
+# all child nodes.
+
 _GRAMMAR = dict (
-    ROOT =  (("HEAD", 1, 1),
-             ("FAM",  0, 100000),
-             ("INDI", 0, 100000),
-             ("OBJE", 0, 100000),
-             ("NOTE", 0, 100000),
-             ("REPO", 0, 100000),
-             ("SOUR", 0, 100000),
-             ("SUBM", 0, 100000),
-             ("TRLR", 1, 1)),
+    file =  (("HEAD", 1, 1,         "HEAD"),
+             ("FAM",  0, unlimited, "FAM"),
+             ("INDI", 0, unlimited, "INDI"),
+             ("OBJE", 0, unlimited, "OBJE"),
+             ("NOTE", 0, unlimited, None),
+             ("REPO", 0, unlimited, "REPO"),
+             ("SOUR", 0, unlimited, "SOUR"),
+             ("SUBM", 0, unlimited, "SUBM"),
+             ("SUBN", 0, 1,         "SUBN"),
+             ("TRLR", 1, 1,         None)),
 
     CHAN =  (("DATE", 1, 1,         # Change date
-                (("TIME", 0, 1),)),
-             ("NOTE", 0, 1000000)), # note structure
+                (("TIME", 0, 1, None),)),
+             ("NOTE", 0, unlimited, None)), # note structure
 
-    OBJE =  (("FORM", 1, 1),      # Multimedia format
-             ("TITL", 0, 1),      # Descriptive title
-             ("FILE", 1, 1),      # Multimedia file reference
-             ("NOTE", 0, 100000)),# Note on multimedia object
+    OBJE =  (("FORM", 1, 1,         None), # Multimedia format
+             ("TITL", 0, 1,         None), # Descriptive title
+             ("FILE", 1, 1,         None), # Multimedia file reference
+             ("NOTE", 0, unlimited, None)),# Note on multimedia object
 
     SOURCE_CITATION =
-            (("TEXT", 0, 1000000),      # Text from source
-             ("NOTE", 0, 1000000),      # Note on source
-             ("PAGE", 0, 1),            # Where within source
-             ("EVENT", 0, 1,            # Event type cited from
-                (("ROLE", 0, 1),)),     # Role in event
+            (("TEXT", 0, unlimited, None),      # Text from source
+             ("NOTE", 0, unlimited, None),      # Note on source
+             ("PAGE", 0, 1,         None),      # Where within source
+             ("EVENT", 0, 1,                    # Event type cited from
+                (("ROLE", 0, 1,     None),)),   # Role in event
              ("DATA", 0, 1,
-                (("DATE", 0, 1),        # Entry recording date
-                 ("TEXT", 0, 100000))), # Text from source
-             ("QUAY", 0, 1),            # Certainty assessment
-             ("OBJE", 0, 1000000),
-             ("NOTE", 0, 1000000)),
+                (("DATE", 0, 1,     None),      # Entry recording date
+                 ("TEXT", 0, unlimited, None))),# Text from source
+             ("QUAY", 0, 1,         None),      # Certainty assessment
+             ("OBJE", 0, unlimited, "OBJE"),
+             ("NOTE", 0, unlimited, None)),
 
-    ADDR =  (("ADR1", 0, 1),  # Address line 1
-             ("ADR2", 0, 1),  # Address line 2
-             ("CITY", 0, 1),  # Address city
-             ("STAE", 0, 1),  # Address state
-             ("POST", 0, 1),  # Address postal code
-             ("CTRY", 0, 1)), # Address country
+    ADDR =  (("ADR1", 0, 1, None),  # Address line 1
+             ("ADR2", 0, 1, None),  # Address line 2
+             ("CITY", 0, 1, None),  # Address city
+             ("STAE", 0, 1, None),  # Address state
+             ("POST", 0, 1, None),  # Address postal code
+             ("CTRY", 0, 1, None)), # Address country
 
     SOUR =  (("DATA", 0, 1,
-                (("EVEN", 0, 100000, # Event recorded
-                    (("DATE", 0, 1),  # Date period
-                     ("PLAC", 0, 1))), # Source jurisdiction place
-                 ("AGNC", 0, 1),     # Responsible agency
-                 ("NOTE", 0, 100000))), # Note on data
-             ("AUTH", 0, 1), # Source originator
-             ("TITL", 0, 1), # Source descriptive title
-             ("ABBR", 0, 1), # Source filed by entry
-             ("PUBL", 0, 1), # Source publication facts
-             ("TEXT", 0, 1), # Text from source
+                (("EVEN", 0, unlimited, # Event recorded
+                    (("DATE", 0, 1, None),       # Date period
+                     ("PLAC", 0, 1, "PLAC"))),   # Source jurisdiction place
+                 ("AGNC", 0, 1,         None),   # Responsible agency
+                 ("NOTE", 0, unlimited, None))), # Note on data
+             ("AUTH", 0, 1, None), # Source originator
+             ("TITL", 0, 1, None), # Source descriptive title
+             ("ABBR", 0, 1, None), # Source filed by entry
+             ("PUBL", 0, 1, None), # Source publication facts
+             ("TEXT", 0, 1, None), # Text from source
              ("REPO", 0, 1,  # Source repository citation
-                (("NOTE", 0, 100000), # Note on repository
-                 ("CALN", 0, 100000,  # Source call number
-                    (("MEDI", 0, 1),  # Source media type
+                (("NOTE", 0, unlimited, None), # Note on repository
+                 ("CALN", 0, unlimited,  # Source call number
+                    (("MEDI", 0, 1, None),  # Source media type
                 )))),
-             ("OBJE", 0, 1000000), # Multimedia link
-             ("NOTE", 0, 1000000), # Note on source
-             ("REFN", 0, 1000000,  # User reference number
-                (("TYPE", 0, 1),)), # User reference type
-             ("RIN", 0, 1),        # Automated record id
+             ("OBJE", 0, unlimited, "OBJE"), # Multimedia link
+             ("NOTE", 0, unlimited, None), # Note on source
+             ("REFN", 0, unlimited,  # User reference number
+                (("TYPE", 0, 1, None),)), # User reference type
+             ("RIN", 0, 1, None),        # Automated record id
              ("CHAN", 0, 1,        # Change date
                 (("DATE", 1, 1, # Change date
-                    (("TIME", 0, 1), # Time value
+                    (("TIME", 0, 1, None), # Time value
                     )),
-                 ("NOTE", 0, 100000), # Note on change date
+                 ("NOTE", 0, unlimited, None), # Note on change date
             ))),
 
-    PLAC =  (("FORM", 0, 1),  # Place hierarchy
-             ("SOUR", 0, 100000, "SOURCE_CITATION"),
-             ("NOTE", 0, 100000),
-             ("CTRY", 0, 1),  # ??? Gramps addition
-             ("CITY", 0, 1),  # ??? Gramps addition
-             ("POST", 0, 1),  # ??? Gramps addition
-             ("STAE", 0, 1),  # ??? Gramps addition
-             ("MAP",  0, 1,  # ??? Gramps addition
-                (("LATI", 1, 1),
-                 ("LONG", 1, 1))),
+    PLAC =  (("FORM", 0, 1,         None),  # Place hierarchy
+             ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+             ("NOTE", 0, unlimited, None),
+             ("CTRY", 0, 1,         None),  # ??? Gramps addition
+             ("CITY", 0, 1,         None),  # ??? Gramps addition
+             ("POST", 0, 1,         None),  # ??? Gramps addition
+             ("STAE", 0, 1,         None),  # ??? Gramps addition
+             ("MAP",  0, 1,                 # ??? Gramps addition
+                (("LATI", 1, 1,     None),
+                 ("LONG", 1, 1,     None))),
               ),
 
-    INDI =  (("RESN", 0, 1),    # Restriction notice
-             ("NAME", 0, 1000000),
-             ("SEX",  0, 1),    # Sex value
-             (("BIRT", "CHR"), 0, 1000000,
+    INDI =  (("RESN", 0, 1,         None),    # Restriction notice
+             ("NAME", 0, unlimited, "NAME"),
+             ("SEX",  0, 1,         None),    # Sex value
+             (("BIRT", "CHR"), 0, unlimited,
                 EVENT_DETAILS
-                + (("FAMC", 0, 1),)),  # Child to family link
-             ("ADOP", 0, 100000,
+                + (("FAMC", 0, 1, None),)),  # Child to family link
+             ("ADOP", 0, unlimited,
                 EVENT_DETAILS
                 +   (("FAMC", 0, 1,
-                        (("ADOP", 0, 1),) # Adopted by which parent
+                        (("ADOP", 0, 1, None),) # Adopted by which parent
                         ),)
              ),
              (("DEAT", "BURI", "CREM",
                "BAPM", "BARM", "BASM", "BLES",
                "CHRA", "CONF", "FCOM", "ORDN", "NATU",
                "EMIG", "IMMI", "CENS", "PROB", "WILL",
-               "GRAD", "RETI", "EVEN"), 0, 1000000,
-                EVENT_DETAILS),  # Events
-
-             (("CAST",  # Cast name
+               "GRAD", "RETI", "EVEN",
+               "CAST",  # Cast name
                "DSCR",  # Physical description
                "EDUC",  # Scholastic achievement
                "IDNO",  # National Id number
@@ -222,117 +181,135 @@ _GRAMMAR = dict (
                "RESI",  # Residence
                "SSN",   # Social security number
                "TITL"), # Nobility type title
-                 0, 100000,  # Individual attributes
+                 0, unlimited,  # Individual attributes
                  EVENT_DETAILS),
 
              # +1 <<LDS_INDIVIDUAL_ORDINANCE>>  {0:M}
-             ("FAMC", 0, 100000), # Child to family link
-             ("FAMS", 0, 100000), # Spouse to family link
-             ("SUBM", 0, 1000000), # Submitter pointer
-             ("ASSO", 0, 1000000,
-                (("RELA", 1, 1), # Relation_is descriptor
-                 ("NOTE", 0, 1000000),
-                 ("SOUR", 0, 1000000, "SOURCE_CITATION"))),
-             ("ALIA", 0, 1000000), # Pointer to INDI
-             ("ANCI", 0, 1000000), # Pointer to SUBM
-             ("DESI", 0, 1000000), # Pointer to DESI
-             ("SOUR", 0, 1000000, "SOURCE_CITATION"),
-             ("OBJE", 0, 1000000), # Multimedia link
-             ("NOTE", 0, 1000000),
-             ("RFN", 0, 1),  # Permanent record file number
-             ("AFN", 0, 1),  # Ancestral file number
-             ("REFN", 0, 1000000, # User reference number
-                (("TYPE", 0, 1), # User reference type
+             ("FAMC", 0, unlimited, None), # Child to family link
+             ("FAMS", 0, unlimited, None), # Spouse to family link
+             ("SUBM", 0, unlimited, None), # Submitter pointer
+             ("ASSO", 0, unlimited,
+                (("RELA", 1, 1,         None), # Relation_is descriptor
+                 ("NOTE", 0, unlimited, None),
+                 ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
+             ("ALIA", 0, unlimited, None), # Pointer to INDI
+             ("ANCI", 0, unlimited, None), # Pointer to SUBM
+             ("DESI", 0, unlimited, None), # Pointer to DESI
+             ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+             ("OBJE", 0, unlimited, "OBJE"), # Inline object
+             # ("OBJE", 0, unlimited, None),   # Multimedia link
+             ("NOTE", 0, unlimited, None),
+             ("RFN",  0, 1,         None),  # Permanent record file number
+             ("AFN",  0, 1,         None),  # Ancestral file number
+             ("REFN", 0, unlimited, # User reference number
+                (("TYPE", 0, 1, None), # User reference type
                 )),
-             ("RIN", 0, 1),  # Automated record Id
-             ("CHAN", 0, 1),  # Change date
-             ("FACT", 0, 100000,  # ??? gramps extension
-                (("TYPE", 1, 1), # type of fact ??? gramps
-                 ("NOTE", 0, 1000000),
-                 ("SOUR", 0, 1000000, "SOURCE_CITATION"))),
-             ("_MILT", 0, 10000,  # ??? gramps extension for military
-                (("TYPE", 1, 1),
-                 ("DATE", 1, 1),
-                 ("NOTE", 0, 1000000),
-                 ("PLAC", 0, 1),
-                 ("SOUR", 0, 1000000, "SOURCE_CITATION"))),
+             ("RIN",  0, 1,         None),  # Automated record Id
+             ("CHAN", 0, 1,         "CHAN"),  # Change date
+             ("FACT", 0, unlimited,  # ??? gramps extension
+                (("TYPE", 1, 1,         None), # type of fact ??? gramps
+                 ("NOTE", 0, unlimited, None),
+                 ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
+             ("_MILT", 0, unlimited,  # ??? gramps extension for military
+                (("TYPE", 1, 1,         None),
+                 ("DATE", 1, 1,         None),
+                 ("NOTE", 0, unlimited, None),
+                 ("ADDR", 0, 1,         "ADDR"),
+                 ("PLAC", 0, 1,         "PLAC"),
+                 ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
           ),
 
-    REPO =  (("NAME", 0, 1),  # Name of repository
-             ("ADDR", 0, 1),  # Address of repository
-             ("NOTE", 0, 100000), # Repository notes
-             ("REFN", 0, 100000, # User reference number
-                (("TYPE", 0, 1),)), # User reference type
-             ("RIN", 0, 1),   # Automated record id
-             ("CHAN", 0, 1)),
+    REPO =  (("NAME", 0, 1,         None),   # Name of repository
+             ("ADDR", 0, 1,         "ADDR"), # Address of repository
+             ("NOTE", 0, unlimited, None),   # Repository notes
+             ("REFN", 0, unlimited,          # User reference number
+                (("TYPE", 0, 1, None),)),    # User reference type
+             ("RIN", 0, 1, None),            # Automated record id
+             ("CHAN", 0, 1, "CHAN")),
 
     FAM =   ((("ANUL", "CENS", "DIV", "DIVF",
                "ENGA", "MARR", "MARB", "MARC",
                "MARL", "MARS",
-               "EVEN"), 0, 100000,
+               "EVEN"), 0, unlimited,
                EVENT_DETAILS 
                +    (("HUSB", 0, 1,
-                        (("AGE", 1, 1),)), # Age at event
+                        (("AGE", 1, 1, None),)), # Age at event
                      ("WIFE", 0, 1,
-                        (("AGE", 1, 1),)))), # Age at event
-             ("HUSB", 0, 1),  # xref to INDI
-             ("WIFE", 0, 1),  # xref to INDI
-             ("CHIL", 0, 100000), # xref to children
-             ("NCHI", 0, 1),      # count of children
-             ("SUBM", 0, 100000), # xref to SUBM
+                        (("AGE", 1, 1, None),)))), # Age at event
+             ("HUSB", 0, 1,         None), # xref to INDI
+             ("WIFE", 0, 1,         None), # xref to INDI
+             ("CHIL", 0, unlimited, None), # xref to children
+             ("NCHI", 0, 1,         None), # count of children
+             ("SUBM", 0, unlimited, None), # xref to SUBM
              # +1 <<LDS_SPOUSE_SEALING>>  {0:M}
-             ("SOUR", 0, 100000, "SOURCE_CITATION"), # source
-             ("OBJE", 0, 100000),
-             ("NOTE", 0, 100000),
-             ("REFN", 0, 100000, # User reference number
-                (("TYPE", 0, 1),)), # User reference type
-             ("RIN", 0, 1),      # Automated record id
-             ("CHAN", 0, 1)),    # Change date
+             ("SOUR", 0, unlimited, "SOURCE_CITATION"), # source
+             ("OBJE", 0, unlimited, "OBJE"),
+             ("NOTE", 0, unlimited, None),
+             ("REFN", 0, unlimited, # User reference number
+                (("TYPE", 0, 1, None),)), # User reference type
+             ("RIN", 0, 1, None),      # Automated record id
+             ("CHAN", 0, 1,         "CHAN")),    # Change date
 
-    SUBM =  (("NAME", 1, 1), # Submitter name
-             ("ADDR", 0, 1), # Current address of submitter
-             ("OBJE", 0, 100000), # Multimedia link
-             ("LANG", 0, 3),      # Language preference
-             ("RFN", 0, 1),       # Submitter registered rfn
-             ("RIN", 0, 1),       # Automated record id
-             ("CHAN", 0, 1)),    # Change date
+    SUBM =  (("NAME", 1, 1,         "NAME"), # Submitter name
+             ("ADDR", 0, 1,         "ADDR"), # Current address of submitter
+             ("OBJE", 0, unlimited, "OBJE"), # Multimedia link
+             ("LANG", 0, 3,         None),   # Language preference
+             ("RFN",  0, 1,         None),   # Submitter registered rfn
+             ("RIN",  0, 1,         None),   # Automated record id
+             ("PHON", 0, 3,         None),
+             ("CHAN", 0, 1,         "CHAN")),# Change date
 
-    SUBM_XREF = (),
+    SUBN = (("SUBM",  0, 1,         None),
+            ("FAMF",  0, 1,         None),   # Name of family file
+            ("TEMP",  0, 1,         None),   # Temple code
+            ("ANCE",  0, 1,         None),   # Generations of ancestors
+            ("DESC",  0, 1,         None),   # Generations of descendants
+            ("ORDI",  0, 1,         None),   # Ordinance process flag
+            ("RIN",   0, 1,         None)),  # Automated record id
+
     HEAD =  (("SOUR", 1, 1, # Approved system id
-                (("VERS", 0, 1), # Version number
-                 ("NAME", 0, 1), # Name of product
+                (("VERS", 0, 1, None), # Version number
+                 ("NAME", 0, 1, None), # Name of product
                  ("CORP", 0, 1,  # Name of business
-                    (("ADDR", 0, 1),)),
+                    (("ADDR", 0, 1, "ADDR"),
+                     ("PHON", 0, 3, None))),
                  ("DATA", 0, 1,  # Name of source data
-                    (("DATE", 0, 1), # Publication date
-                     ("COPR", 0, 1))), # Copyright source data
+                    (("DATE", 0, 1, None), # Publication date
+                     ("COPR", 0, 1, None))), # Copyright source data
                 )),
-             ("DEST", 0, 1),       # Receiving system name
+             ("DEST", 0, 1, None),       # Receiving system name
              ("DATE", 0, 1,        # Transmission date
-                (("TIME", 0, 1),)), # Time value
-             ("SUBM", 1, 1, "SUBM_XREF"), # Xref to SUBM
-             ("SUBN", 0, 1, "SUBN_XREF"), # Xref to SUBN
-             ("FILE", 0, 1),       # File name
-             ("COPR", 0, 1),       # Copyright Gedcom file
+                (("TIME", 0, 1, None),)), # Time value
+             ("SUBM", 1, 1, None), # Xref to SUBM
+             ("SUBN", 0, 1, None), # Xref to SUBN
+             ("FILE", 0, 1, None),       # File name
+             ("COPR", 0, 1, None),       # Copyright Gedcom file
              ("GEDC", 1, 1,
-                (("VERS", 1, 1),   # Version number
-                 ("FORM", 1, 1))), # Gedcom form
+                (("VERS", 1, 1, None),   # Version number
+                 ("FORM", 1, 1, None))), # Gedcom form
              ("CHAR", 1, 1,       # Character set
-                (("VERS", 0, 1),)), # Version number
-             ("LANG", 0, 1),       # Language of text 
+                (("VERS", 0, 1, None),)), # Version number
+             ("LANG", 0, 1, None),       # Language of text 
              ("PLAC", 0, 1,
-                (("FORM", 1, 1),)), # Place hierarchy
-             ("NOTE", 0, 1)),       # Gedcom content description
+                (("FORM", 1, 1, None),)), # Place hierarchy
+             ("_HME", 0, 1, None),        # ??? Extension from gedcom torture
+             ("NOTE", 0, 1, None)),       # Gedcom content description
 
-    NAME =  (("NPFX", 0, 1),  # Name piece prefix
-             ("GIVN", 0, 1),  # Name piece given
-             ("NICK", 0, 1),  # Name piece nickname
-             ("SPFX", 0, 1),  # Name piece surname prefix
-             ("SURN", 0, 1),  # Name piece surname
-             ("NSFX", 0, 1),  # Name piece suffix
-             ("SOUR", 0, 100000, "SOURCE_CITATION"),
-             ("NOTE", 0, 100000)), # Note
+    NAME =  (("NPFX", 0, 1,         None),  # Name piece prefix
+             ("GIVN", 0, 1,         None),  # Name piece given
+             ("NICK", 0, 1,         None),  # Name piece nickname
+             ("SPFX", 0, 1,         None),  # Name piece surname prefix
+             ("SURN", 0, 1,         None),  # Name piece surname
+             ("NSFX", 0, 1,         None),  # Name piece suffix
+             ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+             ("NOTE", 0, unlimited, None)), # Note
 )
+
+class Invalid_Gedcom (Exception):
+   def __init__ (self, msg):
+      self.msg = msg
+   def __str__ (self):
+      return self.msg
 
 class _Lexical (object):
    """
@@ -346,7 +323,7 @@ class _Lexical (object):
    XREF_ID = 2
    VALUE   = 3
 
-   def __init__ (self, stream, error):
+   def __init__ (self, stream):
       """
       Lexical parser for a GEDCOM file. This returns lines one by one,
       after splitting them into components. This automatically groups
@@ -355,35 +332,32 @@ class _Lexical (object):
       self.file = stream
       self.level = 0     # Level of the current line
       self.line = 0      # Current line
-      self.error = error # How to report errors
-      self.had_error = False
+      self.current_line = None
       self.prefetch = self._parse_next_line () # Prefetched line, parsed
       if self.prefetch:
          if self.prefetch [_Lexical.LEVEL] != 0 \
            or self.prefetch [_Lexical.TAG] != "HEAD":
-            self.error.write (self.get_location (1) + " " +
-                 _("Invalid gedcom file, first line must be '0 HEAD'")+"\n")
-            self.had_error = True
-            self.prefetch = None
+            raise Invalid_Gedcom (
+               "%s Invalid gedcom file, first line must be '0 HEAD'" %
+               self.get_location (1))
 
    def _parse_next_line (self):
       """Fetch the next relevant file of the GEDCOM stream,
          and split it into its fields"""
 
       self.line = self.line + 1
-      line = self.file.readline ().rstrip ('\r\n')
+      # Leading whitespace must be ignored in gedcom files
+      line = self.file.readline ().strip ()
       if not line: 
          return None
 
       g = LINE_RE.match (line)
       if not g:
-         self.error.write (self.get_location(1) + " " +
-                           _("Invalid line format: ") + line)
-         self.had_error = True
-         return None
+         raise Invalid_Gedcom (
+           "%s Invalid line format: %s" % (self.get_location(1), line))
 
       return (int (g.group ("level")), g.group ("tag"),
-              g.group ("xref_id"), g.group ("value")) 
+              g.group ("xref_id"), g.group ("value") or "") 
 
    def get_location (self, offset=0):
       """Return the current parser location
@@ -398,6 +372,7 @@ class _Lexical (object):
       the specified level (or higher), ie skip current block potentially
       """
       if not self.prefetch:
+         self.current_line = None
          return None
 
       result = self.prefetch
@@ -418,207 +393,202 @@ class _Lexical (object):
             break
          self.prefetch = self._parse_next_line ()
 
-      return (result [_Lexical.LEVEL],
-              result [_Lexical.TAG],
-              result [_Lexical.XREF_ID],
-              value)
+      # It seems that tags are case insensitive
+      self.current_line = (result [_Lexical.LEVEL],
+                           result [_Lexical.TAG].upper (), 
+                           result [_Lexical.XREF_ID],
+                           value)
+      return self.current_line
+
+class GedcomRecord (object):
+   """A Gedcom record (either individual, source, family,...)
+      Each record contains one field per valid child node, even if the
+      corresponding node did not exist in the file:
+
+      - If the value for this node is always a simple string, it is put as is.
+        This does not apply when the Gedcom grammar indicates that a field can
+        sometimes be a record with subfields.
+          e.g. n   @I0001@ INDI
+               n+1 NAME foo /bar/
+               n+2 SURN bar
+        is accessible as indi.NAME.SURN (a string)
+        If in fact this specific field does not occur in the gedcom file, the
+        empty string is returned. If the node can be repeated multiple times,
+        a list of strings is returned (possibly empty if the node was not in
+        the file)
+
+      - If the value is itself a record, it is put in a GedcomRecord
+          e.g. n   @I0001@ INDI
+               n+1 ASSO @I00002@
+               n+2 RELA Godfather    (there is always one and only one)
+        is accessible as indi.ASSO
+        Often, the record itself has a value (like the id of the
+        individual I00002 above), which can be accessed via the "value" key,
+        for instance:
+           indi.ASSO.value
+
+      - If the field could be repeated multiple times, it is a list:
+          e.g. n @I00001 INDI
+               n+1 NAME foo /bar/
+               n+2 NOTE note1
+               n+2 NOTE note2
+        You can traverse all notes with
+            for s in indi.NAME.NOTE:
+               ...
+   """
+
+   def __init__ (self):
+      self.value = ""
+
+   def deref (self):
+      """Returns either self itself, or the record pointed to by self when
+         self is a reference to another record
+      """
+      if obj == None:
+         return obj
+      elif type (obj) == str \
+        and obj and obj[0] == '@' and obj[-1] == '@':
+         return self [obj[1:-1]]
+      elif type (obj) == list:
+         for index, val in enumerate (obj):
+            if type (val) == str \
+              and val and val[0] == "@" and val[-1] == '@':
+               obj[index] = self [val[1:-1]]
+
+class _GedcomParser (object):
+   def __init__ (self, name, grammar, all_parsers=dict(),
+                 resultType=GedcomRecord):
+      self.name = name
+      self.result = resultType () # General type of the result
+      self.parsers = dict ()      # Parser for children nodes
+
+      for c in grammar:
+         names = c[0]
+         if isinstance (names, str):
+            names = [c[0]]
+
+         for n in names:
+            if c[3] is None:  # text only
+               handler = None 
+            elif isinstance (c[3], str): # ref to one of the toplevel nodes
+               handler = all_parsers.get (c[3])
+               if handler is None:
+                  handler = _GedcomParser (n, _GRAMMAR[c[3]], all_parsers)
+                  all_parsers [c[3]] = handler
+            else:  # An inline list of nodes
+               handler = _GedcomParser (n, c[3])
+
+            self.parsers [n] = (c[1],  # min occurrences
+                                c[2],  # max occurrences
+                                handler)
+
+            if c[2] > 1:    # A list of record
+               self.result.__dict__ [n] = []
+            elif handler is None:  # text only
+               self.result.__dict__ [n] = None
+            else:             # A single record
+               self.result.__dict__ [n] = None
+
+   def parse (self, lexical, indent=""):
+      result = copy.copy (self.result)
+      line   = lexical.current_line
+
+      if line:  # When parsing ROOT, there is no prefetch
+         if line [_Lexical.VALUE]:
+            result.value = line [_Lexical.VALUE]
+         startlevel = line [_Lexical.LEVEL]
+
+         # Register the entity if need be
+         #if startlevel == 0 and line [_Lexical.XREF_ID]:
+         #   self.ids [line [_Lexical.XREF_ID]] = inst
+
+      else:
+         startlevel = -1
+
+      line = lexical.readline () # Children start at next line
+
+      try:
+         while line and line [_Lexical.LEVEL] > startlevel:
+            tag = line [_Lexical.TAG]
+            p = self.parsers [tag]
+            if p[2]:
+               res = p[2].parse (lexical, indent+" ")
+               line = lexical.current_line
+            else:
+               res = line [_Lexical.VALUE] or ""
+               line = lexical.readline ()
+
+            if p[1] == 1:
+               if result.__dict__ [tag]:  # None or empty string
+                  raise Invalid_Gedcom (
+                     "%s Too many occurrences of %s" % 
+                        (lexical.get_location(), tag))
+               result.__dict__ [tag] = res
+
+            elif p[1] == unlimited:
+               result.__dict__ [tag].append (res)
+
+            elif len (result.__dict__ [tag]) < p[1]:
+               result.__dict__ [tag].append (res)
+
+            else:
+               raise Invalid_Gedcom (
+                  "%s Too many occurrences of %s" %
+                  (lexical.get_location(), tag))
+
+      except KeyError:
+         raise Invalid_Gedcom (
+            "%s Invalid tag %s inside %s" %
+             (lexical.get_location(), tag, self.name))
+
+      # Check we have reach the minimal number of occurrences
+
+      for tag, p in self.parsers.iteritems ():
+         val = result.__dict__ [tag]
+         if p[0] != 0 and (val is None or val == ()):
+            raise Invalid_Gedcom (
+               "%s Missing 1 occurrence of %s in %s" %
+               (lexical.get_location(), tag, self.name))
+            
+         elif p[0] > 1 and len (val) < p[0]:
+            raise Invalid_Gedcom (
+               "%s Missing %d occurrences of %s in %s" %
+               (lexical.get_location(), p[0] - len(val), tag, self.name))
+
+      return result
+
+class GedcomFile (GedcomRecord):
+   """Represents a whole GEDCOM file"""
+   pass
+
+class GedcomIndi (GedcomRecord):
+   """Represents an INDIvidual from a GEDCOM file"""
+   pass
+
+class GedcomFam (GedcomRecord):
+   """Represents a family from a GEDCOM file"""
+   pass
 
 class Gedcom (object):
-   """A class responsible for parsing a GEDCOM file and returning a data
-      structure to represent it. It checks that the file is syntactically
-      correct"""
+   """This class provides parsers for GEDCOM files.
+      Only one instance of this class should be created even if you want to
+      parse multiple GEDCOM files, since the parsers can be reused multiple
+      times.
+   """
 
-   def __init__ (self, stream, error=sys.stderr):
-      """
-      Creates a new Gedcom parser, that will parse file. Error messages
-      will be written to error. The file is parsed immediately.
-      """
+   def __init__ (self):
+      # Some parsers will return special types, for clarity
+      parsers = dict ()
+      parsers ["INDI"] = _GedcomParser (
+         "INDI", _GRAMMAR["INDI"], parsers, GedcomIndi)
+      parsers ["FAM"] = _GedcomParser (
+         "FAM", _GRAMMAR["FAM"], parsers, GedcomFam)
 
-      # Stack of handlers. Current one is at index 0
-      self.handlers = [(-1, 'file', list (_GRAMMAR["ROOT"]), dict())]
-      self.ids = GedcomData () # Registered entities with xref_id
-      self.error = error
-      self.lexical = _Lexical (stream=stream, error=error)
-      self._parse ()
+      self.parser = _GedcomParser (
+         "file", _GRAMMAR["file"], parsers, GedcomFile) \
 
-   def get_records (self):
-      """
-      Return the records read from the GEDCOM tree.
-      """
-      return self.ids
-
-   def _find_handler_class (self, tag):
-      """
-      Return the handler to use for the given tag. This handler is found
-      by looking at the subtags attribute of the current handler
-      """
-
-      _dummy, parenttag, subtags, _dummy = self.handlers [0]
-      if subtags != None:
-         for index, child in enumerate (subtags):
-            if type (child[0]) == str:
-               matches = tag == child[0]
-            elif type (child[0]) == tuple:
-               matches = tag in child[0]
-
-            if matches:
-
-               # Verify minimum and maximum usage count
-
-               if len (child) >= 4:
-                  child = (child[0], child[1] - 1, child[2] - 1, child[3])
-               else:
-                  child = (child[0], child[1] - 1, child[2] - 1)
-               subtags [index] = child
-
-               if child [2] < 0:
-                  self.error.write (self.lexical.get_location() + " " +
-                     _("Too many occurrences of %(tag)s") % {'tag':tag} + "\n")
-
-               # Find handler
-
-               if len (child) >= 4:
-                  if type (child[3]) == str:
-                     return _GRAMMAR [child[3]]
-                  elif type (child[3]) == tuple:
-                     return child[3]
-
-               # Do we have a class specific for handling these Tags ?
-               # If not, default to a simple string
-               try:
-                  return _GRAMMAR [tag]
-               except KeyError:
-                  return () # Doesn't accept subchildren
-
-      self.error.write (self.lexical.get_location() + " " + 
-                        _("%(parent)s doesn't accept child tag %(child)s")
-                        % {'parent':parenttag, 'child':tag} + "\n")
-      return None
-
-   def _close_node (self):
-      """
-      Close the current node, and make various checks. return False in case
-      of error
-      """
-      subtags    = self.handlers[0][2]
-      childinst  = self.handlers[0][3]
-      childtag   = self.handlers[0][1]
-
-      # Check minimum number of nested node is satisfied
-
-      has_error = False
-      for s in subtags:
-         if s[1] > 0:
-            self.error.write (self.lexical.get_location()+" "+
-               _("Missing %(count)d occurrences of %(tag)s in %(parent)s")
-               % {'count':s[1], 'tag':s[0], 'parent':childtag}
-               + "\n")
-            has_error = True
-
-      if has_error:
-         return False
-
-      # If the child has a single 'value' key, it means there
-      # was not subrecord, and we simplify it a bit then by
-      # only storing the string
-
-      if len (childinst) == 1 and 'value' in childinst:
-         childinst = childinst ['value']
-
-      # Now append the child to its parent
-
-      if len (self.handlers) > 1:
-         parentinst = self.handlers[1][3]
-
-         try:
-            existing = parentinst [childtag]
-            if type (existing) == list:
-               existing.append (childinst)
-            else:
-               parentinst [childtag] = [existing, childinst]
-         except KeyError:
-            parentinst [childtag] = childinst
-
-      self.handlers.pop (0)
-      return True
-
-   def _close_node_up (self, up_to_level):
-      """
-      Same as _close_node, but close all nodes until we reach the appropriate
-      level. Returns False in case of error
-      """
-      while self.handlers and up_to_level <= self.handlers [0][0]:
-         if not self._close_node ():
-            return False
-      return True
-
-   def _parse (self):
-      """
-      Do the actual parsing
-      """
-      skip_to_level = -1
-
-      while True:
-         l = self.lexical.readline (skip_to_level=skip_to_level)
-         if not l:
-            if not self.lexical.had_error:
-               self._close_node_up (up_to_level=-1)
-            return
-
-         if not self._close_node_up (up_to_level = l [_Lexical.LEVEL]):
-            self.ids = None
-            return
-
-         skip_to_level = -1
-         subtags = self._find_handler_class (l [_Lexical.TAG])
-         if subtags != None:
-            inst = dict ()
-            if l[_Lexical.VALUE]:
-               inst ['value'] = l [_Lexical.VALUE]
-
-            # Register the entity if need be
-            if l [_Lexical.XREF_ID]:
-               self.ids [l [_Lexical.XREF_ID]] = inst
-               inst ['type'] = l [_Lexical.TAG]
-            elif l [_Lexical.TAG] == "HEAD":
-               self.ids ["HEAD"] = inst
-
-            # Push the new handler on the stack to build the record
-            self.handlers.insert (
-               0, (l [_Lexical.LEVEL], l [_Lexical.TAG], list (subtags),
-               inst))
-                
-         else:
-            skip_to_level = l [_Lexical.LEVEL]
-
-   def _postprocess_record (self, rec):
-      """
-      Same sas postprocess, for a specific record
-      """
-      for key, value in rec.iteritems():
-         if type (value) == str \
-           and value and value[0] == '@' and value[-1] == '@':
-            rec[key] = self.ids [value[1:-1]]   
-         elif type (value) == list:
-            for index, val in enumerate (value):
-               if type (val) == str \
-                 and val and val[0] == "@" and val[-1] == '@':
-                  value[index] = self.ids [val[1:-1]]
-               elif isinstance (val, dict):
-                  self._postprocess_record (val)
-         elif isinstance (value, dict):
-            self._postprocess_record (value)
-
-   def postprocess (self, record=None):
-      """
-      Postprocess a specific record (or the whole tree), replacing all
-      pointers by the actual data they point to. This makes it easier
-      to process the tree for other tools, but hides whether structures
-      were referenced inline or through a pointer
-      """
-      if record:
-         self._postprocess_record (record)
-      else:
-         for rec in self.ids:
-            self._postprocess_record (self.ids[rec])
-
+   def parse (self, stream):
+      """Parse the specified GEDCOM file, check its syntax, and return a
+         GedcomFile instance.
+         Raise Invalid_Gedcom in case of error."""
+      return self.parser.parse (_Lexical (stream))
