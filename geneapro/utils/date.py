@@ -15,10 +15,19 @@ display in diagrams.
 ??? Would be nice to have support for other calendars
 """
 
-from django.utils.translation import ugettext as _
+try:
+   # Check that we can correctly import and use the translation module.
+   # If not, we still want to use this module standalone
+   from django.utils.translation import ugettext as _
+   _("foo")
+except:
+   def _ (txt): return txt
+
 import datetime, re, time
 
-__all__ = ["from_roman_literal", "to_roman_literal", "DateRange", "Date"]
+__all__ = ["from_roman_literal", "to_roman_literal", "DateRange", "Date",
+           "Calendar", "CalendarGregorian", "CalendarFrench",
+           "CalendarJulian"]
 
 ## The following strings indicate how to specify date ranges in your language.
 ## These are regexp, and should not include parenthesis groups
@@ -645,6 +654,9 @@ class Date (object):
       else:
          self.date = None
 
+   def __repr__ (self):
+      return self.__str__ ()
+
    def __str__ (self):
       """Display the date, using either the parsed date, or if it could not be
          parsed the date as was entered by the user. The calendar used is the
@@ -700,6 +712,20 @@ class Date (object):
          return comps [0] - dcomps [0]
       else:
          return comps [0] - dcomps [0] - 1
+
+   def add_days (self, days):
+      """Return a new date, DAYS days later"""
+
+      result = Date ("")
+      result.date = self.date + days
+      result.year_known = self.year_known
+      result.month_known = self.month_known
+      result.day_known = self.day_known
+      result.type = self.type
+      result.text = ""
+      result.calendar = self.calendar
+      result.precision = self.precision
+      return result
 
    @staticmethod
    def today ():
