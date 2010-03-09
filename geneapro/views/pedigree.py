@@ -9,6 +9,7 @@ from django.utils import simplejson
 from django.http import HttpResponse
 from mysites.geneapro import models
 from mysites.geneapro.utils.date import Date
+from mysites.geneapro.views.queries import *
 
 class Marriage_Data:
    def __init__ (self, date, sources):
@@ -61,91 +62,6 @@ def to_json (obj, year_only):
          return super (ModelEncoder, self).default (obj)
 
    return simplejson.dumps (obj, cls=ModelEncoder, separators=(',',':'))
-
-def get_extended_personas (ids):
-   """Return a list of personas with additional attributes"""
-
-   result = dict ()
-   persons = models.Persona.objects.filter (pk__in=ids)
-
-   for p in persons:
-      p.father_id = None
-      p.mother_id = None
-      p.birth_place = None
-      p.birth = None
-      p.birth_sources = None
-      p.death_place = None
-      p.death = None
-      p.death_sources = None
-      p.marriage = None
-      p.marriage_sources = None
-      n = p.name.split ('/',3)
-      p.given_name = n[0]
-      if len (n) >= 2:
-         p.surname = n[1]
-      else:
-         p.surname = ""
-      p.sex = "?"
-
-      tmp = models.Characteristic_Part.objects.filter (
-         type__in = (models.Characteristic_Part_Type.sex,
-                     models.Characteristic_Part_Type.given_name,
-                     models.Characteristic_Part_Type.surname),
-         characteristic__in=
-             models.P2C_Assertion.objects.filter (person=p)
-               .values_list('characteristic').query).values ('name','type_id')
-      for t in tmp:
-         if t["type_id"] == models.Characteristic_Part_Type.sex:
-            p.sex = t["name"]
-         elif t["type_id"] == models.Characteristic_Part_Type.given_name:
-            p.given_name = t["name"]
-         elif t["type_id"] == models.Characteristic_Part_Type.surname:
-            p.surname = t["name"]
-
-      p.children = []
-      result [p.id] = p
-
-   events = models.get_related_persons (
-     models.Event.objects.filter (type__in=(models.Event_Type.birth,
-                                            models.Event_Type.death,
-                                            models.Event_Type.marriage)),
-     person_ids = ids).values ()
-
-   for e in events:
-      who = e ["person"]
-      if e["type_id"] == models.Event_Type.birth \
-        and e["role"] == models.Event_Type_Role.principal:
-
-         result [who].birth = Date (e["date"])
-         result [who].birth_place = e["place"]
-         result [who].birth_sources = e["sources"]
-
-         if e["related_role"] == models.Event_Type_Role.birth__father:
-            result [who].father_id = e["related"]
-         elif e["related_role"] == models.Event_Type_Role.birth__mother:
-            result [who].mother_id = e["related"]
-
-      elif e["type_id"] == models.Event_Type.death \
-        and e["role"] == models.Event_Type_Role.principal:
-         result [who].death = Date (e["date"])
-         result [who].death_place = e["place"]
-         result [who].death_sources = e["sources"]
-
-      elif e["type_id"] == models.Event_Type.birth \
-        and e["related_role"] == models.Event_Type_Role.principal \
-        and e["role"] in (models.Event_Type_Role.birth__father,
-                          models.Event_Type_Role.birth__mother):
-         result [who].children.append (e["related"])
-
-      elif e["type_id"] == models.Event_Type.marriage \
-        and e["role"] in (models.Event_Type_Role.marriage__husband,
-                          models.Event_Type_Role.marriage__wife):
-         # If this is the marriage with the other person in the list
-         if e["related"] in ids:
-            result [who].marriage = str (Date (e["date"]))
-            result [who].marriage_sources = e["sources"]
-
-   return result.values()
 
 def get_parents (tree, marriage, person_ids, max_level, sosa=1):
    """Complete the ancestors data for persons.

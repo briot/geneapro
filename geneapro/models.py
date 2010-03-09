@@ -497,6 +497,7 @@ def get_related_persons (queryset, person_ids):
       This queryset can be used for instance to find the parents, children
       and spouse(s) of an individual in a single query
    """
+   queryset = queryset or Event.objects.all ()
    queryset.query.pre_sql_setup()
    alias1 = queryset.query.join (('event', 'p2e', 'id', 'event_id'))
    queryset.query.join          ((alias1, 'persona', 'person_id', 'id'))

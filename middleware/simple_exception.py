@@ -25,11 +25,14 @@ class AJAXSimpleExceptionResponse:
            end = time.clock ()
            total = 0.0
 
-           if not self.has_exception:
-              for r, q in enumerate (connection.queries):
-                 total += float (q['time'])
-                 print style.SQL_COLTYPE ("%d %ss => " % (r, q['time'])) \
-                    + q["sql"]
+           for r, q in enumerate (connection.queries):
+              total += float (q['time'])
+              print style.SQL_COLTYPE ("%d %ss => " % (r, q['time'])) \
+                 + q["sql"]
+
+           if self.has_exception:
+              print "Exception raised"
+
            print style.SQL_COLTYPE (
               "Number of queries: %d" % len (connection.queries))
            print style.SQL_COLTYPE (
