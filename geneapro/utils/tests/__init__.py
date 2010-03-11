@@ -41,7 +41,7 @@ class GedcomTestCase (unittest.TestCase):
    def test_gedcom_error (self):
       """Test gedcom validation errors"""
       self._process_dir (self.dir)
-      self._process_dir (os.path.join (self.dir, "t"))
+      self._process_dir (os.path.join (self.dir, "stress_tests"))
 
 JAN_1_2008        = 2454467
 JAN_1_2008_ELEVEN = 2454466
