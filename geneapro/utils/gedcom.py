@@ -55,7 +55,7 @@ EVENT_DETAILS = (("TYPE", 0, 1, None),
                  ("AGNC", 0, 1, None), # Responsible agency
                  ("CAUS", 0, 1, None), # Cause of event
                  ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-                 ("OBJE", 0, unlimited, "OBJE"), # Multimedia link
+                 ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
                  ("NOTE", 0, unlimited, None)) # Note on event
 # _grammar is a tuple of tuples, each of which describes one of the nodes
 # that the record accepts:
@@ -76,6 +76,10 @@ EVENT_DETAILS = (("TYPE", 0, 1, None),
 #      ("CHILD:XREF(INDI)", 0, 1, "INDI") # Either an xref or an inline INDI
 #      ("FAMC:XREF(FAM)",  0, 1, (...))   # An xref to FAM, plus inline fields
 #
+# You cannot specify a list of names when one of them is an XREF.
+# In the case where the name in XREF is not the same as the handler, the former
+# is supposed to be a superset of the latter.
+#
 # The handler field is a string that indicates the name of an entry
 # in grammar that contains the valid child nodes. It can be None to indicate
 # that the field only contains None data.
@@ -87,7 +91,7 @@ _GRAMMAR = dict (
              ("FAM",  0, unlimited, "FAM"),
              ("INDI", 0, unlimited, "INDI"),
              ("OBJE", 0, unlimited, "OBJE"),
-             ("NOTE", 0, unlimited, None),
+             ("NOTE", 0, unlimited, "NOTE"),
              ("REPO", 0, unlimited, "REPO"),
              ("SOUR", 0, unlimited, "SOUR"),
              ("SUBM", 0, unlimited, "SUBM"),
@@ -100,20 +104,32 @@ _GRAMMAR = dict (
 
     OBJE =  (("FORM", 1, 1,         None), # Multimedia format
              ("TITL", 0, 1,         None), # Descriptive title
-             ("FILE", 1, 1,         None), # Multimedia file reference
-             ("NOTE", 0, unlimited, None)),# Note on multimedia object
+             ("FILE", 0, 1,         None), # Multimedia file reference
+             ("NOTE", 0, unlimited, None), # Note on multimedia object
+             ("BLOB", 1, 1,         None),
+             ("OBJE:XREF(OBJE)", 0, 1, None),
+             ("REFN", 0, unlimited,
+                (("TYPE", 0, 1, None),)),
+             ("RIN",  0, 1,         None),
+             ("CHAN", 0, 1,         "CHAN")),
+
+    MULTIMEDIA_LINK = 
+            (("FORM", 1, 1, None),
+             ("TITL", 0, 1, None),
+             ("FILE", 1, 1, None),
+             ("NOTE", 0, unlimited, None)),
 
     SOURCE_CITATION =
             (("TEXT", 0, unlimited, None),      # Text from source
              ("NOTE", 0, unlimited, None),      # Note on source
              ("PAGE", 0, 1,         None),      # Where within source
-             ("EVENT", 0, 1,                    # Event type cited from
+             ("EVEN", 0, 1,                    # Event type cited from
                 (("ROLE", 0, 1,     None),)),   # Role in event
              ("DATA", 0, 1,
                 (("DATE", 0, 1,     None),      # Entry recording date
                  ("TEXT", 0, unlimited, None))),# Text from source
              ("QUAY", 0, 1,         None),      # Certainty assessment
-             ("OBJE", 0, unlimited, "OBJE"),
+             ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
              ("NOTE", 0, unlimited, None)),
 
     ADDR =  (("ADR1", 0, 1, None),  # Address line 1
@@ -139,7 +155,7 @@ _GRAMMAR = dict (
                  ("CALN", 0, unlimited,  # Source call number
                     (("MEDI", 0, 1, None),  # Source media type
                 )))),
-             ("OBJE:XREF(OBJE)", 0, unlimited, "OBJE"), # Multimedia link
+             ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
              ("NOTE", 0, unlimited, None), # Note on source
              ("REFN", 0, unlimited,  # User reference number
                 (("TYPE", 0, 1, None),)), # User reference type
@@ -196,6 +212,17 @@ _GRAMMAR = dict (
                  0, unlimited,  # Individual attributes
                  EVENT_DETAILS),
 
+             (("BAPL", "CONL", "ENDL"), 0, unlimited,
+               ((("STAT", "DATE", "TEMP", "PLAC"), 0, 1, None),
+                ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+                ("NOTE", 0, unlimited, None))),
+
+             ("SLGC", 0, unlimited,
+               ((("STAT", "DATE", "TEMP", "PLAC"), 0, 1, None),
+                ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+                ("FAMC:XREF(FAM)", 1, 1, None),
+                ("NOTE", 0, unlimited, None))),
+
              # +1 <<LDS_INDIVIDUAL_ORDINANCE>>  {0:M}
              ("FAMC:XREF(FAM)", 0, unlimited,    # Child to family link
                  (("PEDI", 0, unlimited, None),  # pedigree linkage type
@@ -210,7 +237,7 @@ _GRAMMAR = dict (
              ("ANCI:XREF(SUBM)", 0, unlimited, None),
              ("DESI:XREF(SUBM)", 0, unlimited, None),
              ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-             ("OBJE:XREF(OBJE)", 0, unlimited, "OBJE"), # Inline object or xref
+             ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
              ("NOTE", 0, unlimited, None),
              ("RFN",  0, 1,         None),  # Permanent record file number
              ("AFN",  0, 1,         None),  # Ancestral file number
@@ -234,6 +261,7 @@ _GRAMMAR = dict (
 
     REPO =  (("NAME", 0, 1,         None),   # Name of repository
              ("ADDR", 0, 1,         "ADDR"), # Address of repository
+             ("PHON", 0, 3,         None),
              ("NOTE", 0, unlimited, None),   # Repository notes
              ("REFN", 0, unlimited,          # User reference number
                 (("TYPE", 0, 1, None),)),    # User reference type
@@ -242,7 +270,7 @@ _GRAMMAR = dict (
 
     EVENT_FOR_INDI =
             EVENT_DETAILS
-            + (("HUSB", 0, 1, (("AGE", 1, 1, None),)), # Age at event
+            + (("HUSB", 0, 1, (("AGE", 1, 1, None),)),  # Age at event
                ("WIFE", 0, 1, (("AGE", 1, 1, None),))), # Age at event
 
     FAM =   ((("ANUL", "CENS", "DIV", "DIVF",
@@ -254,9 +282,18 @@ _GRAMMAR = dict (
              ("CHIL:XREF(INDI)", 0, unlimited, None), # xref to children
              ("NCHI", 0, 1,         None), # count of children
              ("SUBM:XREF(SUBM)", 0, unlimited, None), # xref to SUBM
+
+             ("SLGS", 0, unlimited,  # LDS spouse sealing
+               (("STAT", 0, 1, None), # Spouse sealing Date status
+                ("DATE", 0, 1, None), # Date LDS ordinance
+                ("TEMP", 0, 1, None), # Templace code
+                ("PLAC", 0, 1, None), # Place living ordinance
+                ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+                ("NOTE", 0, unlimited, None))),
+
              # +1 <<LDS_SPOUSE_SEALING>>  {0:M}
              ("SOUR", 0, unlimited, "SOURCE_CITATION"), # source
-             ("OBJE:XREF(OBJE)", 0, unlimited, "OBJE"),  # inline or link
+             ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
              ("NOTE", 0, unlimited, None),
              ("REFN", 0, unlimited, # User reference number
                 (("TYPE", 0, 1, None),)), # User reference type
@@ -265,7 +302,7 @@ _GRAMMAR = dict (
 
     SUBM =  (("NAME", 1, 1,         "NAME"), # Submitter name
              ("ADDR", 0, 1,         "ADDR"), # Current address of submitter
-             ("OBJE", 0, unlimited, "OBJE"), # Multimedia link
+             ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
              ("LANG", 0, 3,         None),   # Language preference
              ("RFN",  0, 1,         None),   # Submitter registered rfn
              ("RIN",  0, 1,         None),   # Automated record id
@@ -279,6 +316,12 @@ _GRAMMAR = dict (
             ("DESC",  0, 1,         None),   # Generations of descendants
             ("ORDI",  0, 1,         None),   # Ordinance process flag
             ("RIN",   0, 1,         None)),  # Automated record id
+
+    NOTE = (("SOUR", 0, unlimited, "SOURCE_CITATION"),
+            ("REFN", 0, unlimited,
+              (("TYPE", 0, 1, None),)),
+            ("RIN",  0, 1, None),
+            ("CHAN", 0, 1, "CHAN")),
 
     HEAD =  (("SOUR", 1, 1, # Approved system id
                 (("VERS", 0, 1, None), # Version number
@@ -531,56 +574,61 @@ class _GedcomParser (object):
 
       for c in grammar:
          names = c[0]
+         type = c[3]
+
          if isinstance (names, str):
             names = [c[0]]
 
-         for n in names:
-            type = c[3]
+         n = names[0]
+         if n.find (":XREF(") != -1:
+            xref_to = n[n.find("(")+1:-1]
+            n = n[:n.find (":")]
+            names = [n]
 
-            if n.find (":XREF(") != -1:
-               xref_to = n[n.find("(")+1:-1]
-               n = n[:n.find (":")]
+            handler = all_parsers.get (xref_to)
+            if handler is None:
+               handler = _GedcomParser (xref_to, _GRAMMAR[xref_to],
+                                        all_parsers, register=xref_to)
+            result = handler.result  # The type we are pointing to
 
-               handler = all_parsers.get (xref_to)
+            if type is None:
+               is_xref = XREF_PURE
+               handler = None
+            elif isinstance (type, str):
+               is_xref = XREF_OR_INLINE
+
+               # xref_to must be a superset of type
+               handler = all_parsers.get (type)
                if handler is None:
-                  handler = _GedcomParser (xref_to, _GRAMMAR[xref_to],
-                                           all_parsers, register=xref_to)
-               result = handler.result  # The type we are pointing to
-
-               if type is None:
-                  is_xref = XREF_PURE
-                  handler = None
-               elif isinstance (type, str):
-                  is_xref = XREF_OR_INLINE
-                  if type != xref_to:
-                     raise Invalid_Gedcom (
-                        "Grammar error for %s: xref type != inline type" % n)
-               else:
-                  is_xref = XREF_AND_INLINE
-                  handler = _GedcomParser (n, type, all_parsers)
-
-                  # The type of the result should be that of xref_to, so that
-                  # the methods exist. However, the result has more fields,
-                  # which are those inherited from handler.result.
-                  # When parsing the file, we should merge the list of fields
+                  handler = _GedcomParser (type, _GRAMMAR[type], all_parsers,
+                                           register=type)
 
             else:
-               is_xref=XREF_NONE
+               is_xref = XREF_AND_INLINE
+               handler = _GedcomParser (n, type, all_parsers)
 
-               if type is None:  # text only
-                  handler = None 
-                  result  = None
+               # The type of the result should be that of xref_to, so that
+               # the methods exist. However, the result has more fields,
+               # which are those inherited from handler.result.
+               # When parsing the file, we should merge the list of fields
 
-               elif isinstance (type, str): # ref to one of the toplevel nodes
-                  handler = all_parsers.get (type)
-                  if handler is None:
-                     handler = _GedcomParser (n, _GRAMMAR[type], all_parsers,
-                                              register=type)
-                  result = handler.result
+         else:
+            is_xref=XREF_NONE
 
-               else:  # An inline list of nodes
-                  handler = _GedcomParser (n, c[3], all_parsers)
-                  result  = handler.result
+            if type is None:  # text only
+               handler = None 
+               result  = None
+
+            elif isinstance (type, str): # ref to one of the toplevel nodes
+               handler = all_parsers.get (type)
+               if handler is None:
+                  handler = _GedcomParser (type, _GRAMMAR[type], all_parsers,
+                                           register=type)
+               result = handler.result
+
+            else:  # An inline list of nodes
+               handler = _GedcomParser (self.name + ":" + n, type, all_parsers)
+               result  = handler.result
 
             # HANDLER points to the parser for the children, and is null for
             # pure text nodes or pure xref. It will be set if we are expecting
@@ -588,6 +636,7 @@ class _GedcomParser (object):
             # cases it has the ability to parse the inline record.
             # IS_XREF is null if the node can be a pointer to a record result.
 
+         for n in names:
             self.parsers [n] = (c[1],  # min occurrences
                                 c[2],  # max occurrences
                                 handler,
@@ -601,8 +650,9 @@ class _GedcomParser (object):
             else:             # A single record
                self.result.__dict__ [n] = None
 
+
    def parse (self, lexical, gedcomFile=None, indent="   "):
-      result = copy.copy (self.result)
+      result = copy.deepcopy (self.result)
       line   = lexical.current_line
 
       if line:  # When parsing ROOT, there is no prefetch
@@ -635,7 +685,7 @@ class _GedcomParser (object):
                   res = p[2].parse (lexical, gedcomFile, indent=indent+"   ")
                   line = lexical.current_line
                else:
-                  res = copy.copy (p[4])
+                  res = copy.deepcopy (p[4])
                   line = lexical.readline ()
 
                res._xref_to (value, gedcomFile)
@@ -652,23 +702,25 @@ class _GedcomParser (object):
                res  = value
                line = lexical.readline ()
 
+            val = result.__dict__ [tag]
+
             if p[1] == 1:
-               if result.__dict__ [tag]:  # None or empty string
+               if val:  # None or empty string
                   raise Invalid_Gedcom (
                      "%s Too many occurrences of %s" % 
                         (lexical.get_location(), tag))
                result.__dict__ [tag] = res
 
             elif p[1] == unlimited:
-               result.__dict__ [tag].append (res)
+               val.append (res)
 
-            elif len (result.__dict__ [tag]) < p[1]:
-               result.__dict__ [tag].append (res)
+            elif len (val) < p[1]:
+               val.append (res)
 
             else:
                raise Invalid_Gedcom (
-                  "%s Too many occurrences of %s" %
-                  (lexical.get_location(), tag))
+                  "%s Too many occurrences (%d) of %s (max %d)" %
+                  (lexical.get_location(), p[1]+1, tag, len (val)))
 
       except KeyError:
          raise Invalid_Gedcom (
