@@ -37,10 +37,10 @@ except:
 import re, sys, copy
 
 __all__ = ["Gedcom", "GedcomFile", "GedcomIndi", "GedcomFam", "GedcomRecord",
-           "Invalid_Gedcom"]
+           "Invalid_Gedcom", "GedcomString"]
 
 POINTER_STRING = "(?:[^@]*)"
-OPTIONAL_XREF_ID = "(?:@(?P<xref_id>\w" + POINTER_STRING + ")@\s)?"
+OPTIONAL_XREF_ID = "(?:(?P<xref_id>@\w" + POINTER_STRING + "@)\s)?"
 LINE_RE = re.compile ('^(?P<level>\d+)\s' + OPTIONAL_XREF_ID
                       + '(?P<tag>\w+)' + '(?:\s(?P<value>.*))?')
 
@@ -59,10 +59,22 @@ EVENT_DETAILS = (("TYPE", 0, 1, None),
                  ("NOTE", 0, unlimited, None)) # Note on event
 # _grammar is a tuple of tuples, each of which describes one of the nodes
 # that the record accepts:
-#   (tag_name, min_occurrences, max_occurrences, [handler])
+#   (tag_name, min_occurrences, max_occurrences, handler)
 #
 # The tag_name field can be either a string or a tuple of strings
 # indicating all the tags that are accepted and handled the same way.
+# If the tag_name starts with XREF:, then the GEDCOM file might either
+# contain a single xref line for this element ("@...@"), or a record whose
+# type is described by handler. If the line must be a xref (and thus cannot
+# contain a record), the handle should be "XREF:type", pointing to the pointed
+# type. The handle must never be None for a xref line.
+# For instance:
+#      ("NAME",  0, 1, None)     # pure text
+#      ("CHILD", 0, 1, "INDI")   # An inline INDI record
+#      ("DATE",  0, 1, (...))    # An inline anonymous record
+#      ("CHILD:XREF(INDI)", 0, 1, None) # An xref to an INDI
+#      ("CHILD:XREF(INDI)", 0, 1, "INDI") # Either an xref or an inline INDI
+#      ("FAMC:XREF(FAM)",  0, 1, (...))   # An xref to FAM, plus inline fields
 #
 # The handler field is a string that indicates the name of an entry
 # in grammar that contains the valid child nodes. It can be None to indicate
@@ -127,7 +139,7 @@ _GRAMMAR = dict (
                  ("CALN", 0, unlimited,  # Source call number
                     (("MEDI", 0, 1, None),  # Source media type
                 )))),
-             ("OBJE", 0, unlimited, "OBJE"), # Multimedia link
+             ("OBJE:XREF(OBJE)", 0, unlimited, "OBJE"), # Multimedia link
              ("NOTE", 0, unlimited, None), # Note on source
              ("REFN", 0, unlimited,  # User reference number
                 (("TYPE", 0, 1, None),)), # User reference type
@@ -156,11 +168,11 @@ _GRAMMAR = dict (
              ("SEX",  0, 1,         None),    # Sex value
              (("BIRT", "CHR"), 0, unlimited,
                 EVENT_DETAILS
-                + (("FAMC", 0, 1, None),)),  # Child to family link
+                + (("FAMC:XREF(FAM)", 0, 1, None),)),  # Child to family link
              ("ADOP", 0, unlimited,
                 EVENT_DETAILS
-                +   (("FAMC", 0, 1,
-                        (("ADOP", 0, 1, None),) # Adopted by which parent
+                + (("FAMC:XREF(FAM)", 0, 1,
+                    (("ADOP", 0, 1, None),) # Adopted by which parent
                         ),)
              ),
              (("DEAT", "BURI", "CREM",
@@ -185,19 +197,20 @@ _GRAMMAR = dict (
                  EVENT_DETAILS),
 
              # +1 <<LDS_INDIVIDUAL_ORDINANCE>>  {0:M}
-             ("FAMC", 0, unlimited, None), # Child to family link
+             ("FAMC:XREF(FAM)", 0, unlimited,    # Child to family link
+                 (("PEDI", 0, unlimited, None),  # pedigree linkage type
+                  ("NOTE", 0, unlimited, None))),
              ("FAMS", 0, unlimited, None), # Spouse to family link
-             ("SUBM", 0, unlimited, None), # Submitter pointer
+             ("SUBM:XREF(SUBM)", 0, unlimited, None), # Submitter pointer
              ("ASSO", 0, unlimited,
                 (("RELA", 1, 1,         None), # Relation_is descriptor
                  ("NOTE", 0, unlimited, None),
                  ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
-             ("ALIA", 0, unlimited, None), # Pointer to INDI
-             ("ANCI", 0, unlimited, None), # Pointer to SUBM
-             ("DESI", 0, unlimited, None), # Pointer to DESI
+             ("ALIA:XREF(INDI)", 0, unlimited, None),
+             ("ANCI:XREF(SUBM)", 0, unlimited, None),
+             ("DESI:XREF(SUBM)", 0, unlimited, None),
              ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-             ("OBJE", 0, unlimited, "OBJE"), # Inline object
-             # ("OBJE", 0, unlimited, None),   # Multimedia link
+             ("OBJE:XREF(OBJE)", 0, unlimited, "OBJE"), # Inline object or xref
              ("NOTE", 0, unlimited, None),
              ("RFN",  0, 1,         None),  # Permanent record file number
              ("AFN",  0, 1,         None),  # Ancestral file number
@@ -227,23 +240,23 @@ _GRAMMAR = dict (
              ("RIN", 0, 1, None),            # Automated record id
              ("CHAN", 0, 1, "CHAN")),
 
+    EVENT_FOR_INDI =
+            EVENT_DETAILS
+            + (("HUSB", 0, 1, (("AGE", 1, 1, None),)), # Age at event
+               ("WIFE", 0, 1, (("AGE", 1, 1, None),))), # Age at event
+
     FAM =   ((("ANUL", "CENS", "DIV", "DIVF",
                "ENGA", "MARR", "MARB", "MARC",
                "MARL", "MARS",
-               "EVEN"), 0, unlimited,
-               EVENT_DETAILS 
-               +    (("HUSB", 0, 1,
-                        (("AGE", 1, 1, None),)), # Age at event
-                     ("WIFE", 0, 1,
-                        (("AGE", 1, 1, None),)))), # Age at event
-             ("HUSB", 0, 1,         None), # xref to INDI
-             ("WIFE", 0, 1,         None), # xref to INDI
-             ("CHIL", 0, unlimited, None), # xref to children
+               "EVEN"), 0, unlimited, "EVENT_FOR_INDI"),
+             ("HUSB:XREF(INDI)", 0, 1,         None),
+             ("WIFE:XREF(INDI)", 0, 1,         None),
+             ("CHIL:XREF(INDI)", 0, unlimited, None), # xref to children
              ("NCHI", 0, 1,         None), # count of children
-             ("SUBM", 0, unlimited, None), # xref to SUBM
+             ("SUBM:XREF(SUBM)", 0, unlimited, None), # xref to SUBM
              # +1 <<LDS_SPOUSE_SEALING>>  {0:M}
              ("SOUR", 0, unlimited, "SOURCE_CITATION"), # source
-             ("OBJE", 0, unlimited, "OBJE"),
+             ("OBJE:XREF(OBJE)", 0, unlimited, "OBJE"),  # inline or link
              ("NOTE", 0, unlimited, None),
              ("REFN", 0, unlimited, # User reference number
                 (("TYPE", 0, 1, None),)), # User reference type
@@ -259,7 +272,7 @@ _GRAMMAR = dict (
              ("PHON", 0, 3,         None),
              ("CHAN", 0, 1,         "CHAN")),# Change date
 
-    SUBN = (("SUBM",  0, 1,         None),
+    SUBN = (("SUBM:XREF(SUBM)",  0, 1,    None),
             ("FAMF",  0, 1,         None),   # Name of family file
             ("TEMP",  0, 1,         None),   # Temple code
             ("ANCE",  0, 1,         None),   # Generations of ancestors
@@ -280,8 +293,8 @@ _GRAMMAR = dict (
              ("DEST", 0, 1, None),       # Receiving system name
              ("DATE", 0, 1,        # Transmission date
                 (("TIME", 0, 1, None),)), # Time value
-             ("SUBM", 1, 1, None), # Xref to SUBM
-             ("SUBN", 0, 1, None), # Xref to SUBN
+             ("SUBM:XREF(SUBM)", 1, 1, None), # Xref to SUBM
+             ("SUBN:XREF(SUBN)", 0, 1, None), # Xref to SUBN
              ("FILE", 0, 1, None),       # File name
              ("COPR", 0, 1, None),       # Copyright Gedcom file
              ("GEDC", 1, 1,
@@ -439,28 +452,82 @@ class GedcomRecord (object):
 
    def __init__ (self):
       self.value = ""
+      self.xref = None
 
-   def deref (self):
-      """Returns either self itself, or the record pointed to by self when
-         self is a reference to another record
+   def _xref_to (self, xref, gedcom):
+      """Indicates that the record contains no real data, but is an xref
+         to some other record. Accessing the attributes of the record
+         automatically dereference the xref, so this is mostly transparent
+         to users
       """
-      if obj == None:
-         return obj
-      elif type (obj) == str \
-        and obj and obj[0] == '@' and obj[-1] == '@':
-         return self [obj[1:-1]]
-      elif type (obj) == list:
-         for index, val in enumerate (obj):
-            if type (val) == str \
-              and val and val[0] == "@" and val[-1] == '@':
-               obj[index] = self [val[1:-1]]
+      self.xref = xref
+      self.gedcom = gedcom
+
+      # We'll need to lookup the attribute in the derefed object.
+      # Using __getattribute__ would be called for all attributes, including
+      # internal ones like __dict__, and is thus less efficient.
+      # However, __getattr__ will only be called if the attribute is not in
+      # the directionary, so we remove the keys that are delegated.
+      #
+      # Note: it is too early to lookup the object in the gedcom file, since
+      # it might not have been parsed already. So we'll have to do it in
+      # __getattr__
+
+      for key in [k for k in self.__dict__.keys() if k[0].isupper()]:
+         del self.__dict__[key]
+      del self.__dict__ ['value']
+
+   def __getattr__ (self, name):
+      """Automatic dereference (self must be an xref)
+         In the case of XREF_AND_INLINE, some attributes are defined both
+         in SELF and in the dereferenced record."""
+      xref = object.__getattribute__ (self, "xref")
+      if xref:
+         if name == "_all":
+            # Cache the derefenced object
+            obj = self.gedcom.ids [xref]
+            del self.__dict__ ["gedcom"]  # no longer needed
+            self.__dict__ ["_all"] = obj
+            return obj
+
+         try:
+            return self._all.__getattribute__ (name)
+         except AttributeError:
+            pass
+
+      return object.__getattribute__ (self, name)
+
+XREF_NONE=0       # No xref allowed
+XREF_PURE=1       # A pure xref (only textual value)
+XREF_OR_INLINE=2  # Either an xref or an inline record
+XREF_AND_INLINE=3 # An xref, with optional additional inline fields
 
 class _GedcomParser (object):
-   def __init__ (self, name, grammar, all_parsers=dict(),
-                 resultType=GedcomRecord):
+   def __init__ (self, name, grammar, all_parsers, register=None):
+      """Parse the grammar and initialize all parsers. This is only
+         called once per element in the grammar, and no longer called
+         when parsing a gedcom file
+      """
+
       self.name = name
-      self.result = resultType () # General type of the result
+
+      if register   == "INDI":
+         self.result = GedcomIndi ()
+      elif register == "FAM":
+         self.result = GedcomFam ()
+      elif register == "SUBM":
+         self.result = GedcomSubm ()
+      elif name == "file":
+         self.result = GedcomFile ()
+      else:
+         self.result = GedcomRecord () # General type of the result
+
       self.parsers = dict ()      # Parser for children nodes
+
+      if register:
+         # Register as soon as possible, in case the record contains XREF to
+         # itself
+         all_parsers [register] = self
 
       for c in grammar:
          names = c[0]
@@ -468,19 +535,64 @@ class _GedcomParser (object):
             names = [c[0]]
 
          for n in names:
-            if c[3] is None:  # text only
-               handler = None 
-            elif isinstance (c[3], str): # ref to one of the toplevel nodes
-               handler = all_parsers.get (c[3])
+            type = c[3]
+
+            if n.find (":XREF(") != -1:
+               xref_to = n[n.find("(")+1:-1]
+               n = n[:n.find (":")]
+
+               handler = all_parsers.get (xref_to)
                if handler is None:
-                  handler = _GedcomParser (n, _GRAMMAR[c[3]], all_parsers)
-                  all_parsers [c[3]] = handler
-            else:  # An inline list of nodes
-               handler = _GedcomParser (n, c[3])
+                  handler = _GedcomParser (xref_to, _GRAMMAR[xref_to],
+                                           all_parsers, register=xref_to)
+               result = handler.result  # The type we are pointing to
+
+               if type is None:
+                  is_xref = XREF_PURE
+                  handler = None
+               elif isinstance (type, str):
+                  is_xref = XREF_OR_INLINE
+                  if type != xref_to:
+                     raise Invalid_Gedcom (
+                        "Grammar error for %s: xref type != inline type" % n)
+               else:
+                  is_xref = XREF_AND_INLINE
+                  handler = _GedcomParser (n, type, all_parsers)
+
+                  # The type of the result should be that of xref_to, so that
+                  # the methods exist. However, the result has more fields,
+                  # which are those inherited from handler.result.
+                  # When parsing the file, we should merge the list of fields
+
+            else:
+               is_xref=XREF_NONE
+
+               if type is None:  # text only
+                  handler = None 
+                  result  = None
+
+               elif isinstance (type, str): # ref to one of the toplevel nodes
+                  handler = all_parsers.get (type)
+                  if handler is None:
+                     handler = _GedcomParser (n, _GRAMMAR[type], all_parsers,
+                                              register=type)
+                  result = handler.result
+
+               else:  # An inline list of nodes
+                  handler = _GedcomParser (n, c[3], all_parsers)
+                  result  = handler.result
+
+            # HANDLER points to the parser for the children, and is null for
+            # pure text nodes or pure xref. It will be set if we are expecting
+            # an inline record, or either an xref or an inline record. In both
+            # cases it has the ability to parse the inline record.
+            # IS_XREF is null if the node can be a pointer to a record result.
 
             self.parsers [n] = (c[1],  # min occurrences
                                 c[2],  # max occurrences
-                                handler)
+                                handler,
+                                is_xref, # type of xref
+                                result)
 
             if c[2] > 1:    # A list of record
                self.result.__dict__ [n] = []
@@ -489,7 +601,7 @@ class _GedcomParser (object):
             else:             # A single record
                self.result.__dict__ [n] = None
 
-   def parse (self, lexical, indent=""):
+   def parse (self, lexical, gedcomFile=None, indent="   "):
       result = copy.copy (self.result)
       line   = lexical.current_line
 
@@ -499,11 +611,12 @@ class _GedcomParser (object):
          startlevel = line [_Lexical.LEVEL]
 
          # Register the entity if need be
-         #if startlevel == 0 and line [_Lexical.XREF_ID]:
-         #   self.ids [line [_Lexical.XREF_ID]] = inst
+         if startlevel == 0 and line [_Lexical.XREF_ID]:
+            gedcomFile.ids [line [_Lexical.XREF_ID]] = result
 
       else:
          startlevel = -1
+         gedcomFile = result
 
       line = lexical.readline () # Children start at next line
 
@@ -511,11 +624,32 @@ class _GedcomParser (object):
          while line and line [_Lexical.LEVEL] > startlevel:
             tag = line [_Lexical.TAG]
             p = self.parsers [tag]
-            if p[2]:
-               res = p[2].parse (lexical, indent+" ")
+            value = line [_Lexical.VALUE]
+            xref = p[3]
+
+            if xref != XREF_NONE \
+               and value != "" \
+               and value[0] == '@' and value[-1] == '@':  # An xref
+
+               if xref == XREF_AND_INLINE:
+                  res = p[2].parse (lexical, gedcomFile, indent=indent+"   ")
+                  line = lexical.current_line
+               else:
+                  res = copy.copy (p[4])
+                  line = lexical.readline ()
+
+               res._xref_to (value, gedcomFile)
+
+            elif p[2] and xref in (XREF_NONE, XREF_OR_INLINE): # inline record
+               res = p[2].parse (lexical, gedcomFile, indent=indent+"   ")
                line = lexical.current_line
-            else:
-               res = line [_Lexical.VALUE] or ""
+
+            elif xref != XREF_NONE: # we should have had an xref
+               raise Invalid_Gedcom (
+                  "%s Expecting an xref for %s" % (lexical.get_location(), tag))
+
+            else: # A string, but not an xref (handled above)
+               res  = value
                line = lexical.readline ()
 
             if p[1] == 1:
@@ -559,7 +693,10 @@ class _GedcomParser (object):
 
 class GedcomFile (GedcomRecord):
    """Represents a whole GEDCOM file"""
-   pass
+
+   def __init__ (self):
+      super (GedcomRecord, self).__init__ ()
+      self.ids = dict ()
 
 class GedcomIndi (GedcomRecord):
    """Represents an INDIvidual from a GEDCOM file"""
@@ -567,6 +704,10 @@ class GedcomIndi (GedcomRecord):
 
 class GedcomFam (GedcomRecord):
    """Represents a family from a GEDCOM file"""
+   pass
+
+class GedcomSubm (GedcomRecord):
+   """Represents a SUBM in a GEDCOM file"""
    pass
 
 class Gedcom (object):
@@ -579,13 +720,7 @@ class Gedcom (object):
    def __init__ (self):
       # Some parsers will return special types, for clarity
       parsers = dict ()
-      parsers ["INDI"] = _GedcomParser (
-         "INDI", _GRAMMAR["INDI"], parsers, GedcomIndi)
-      parsers ["FAM"] = _GedcomParser (
-         "FAM", _GRAMMAR["FAM"], parsers, GedcomFam)
-
-      self.parser = _GedcomParser (
-         "file", _GRAMMAR["file"], parsers, GedcomFile) \
+      self.parser = _GedcomParser ("file", _GRAMMAR["file"], parsers)
 
    def parse (self, stream):
       """Parse the specified GEDCOM file, check its syntax, and return a
