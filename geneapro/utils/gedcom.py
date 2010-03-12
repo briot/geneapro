@@ -404,7 +404,7 @@ class _Lexical (object):
 
       self.line = self.line + 1
       # Leading whitespace must be ignored in gedcom files
-      line = self.file.readline ().strip ()
+      line = self.file.readline ().lstrip ()
       if not line: 
          return None
 
@@ -455,7 +455,7 @@ class _Lexical (object):
                            result [_Lexical.TAG].upper (), 
                            result [_Lexical.XREF_ID],
                            value)
-      if self.line == 100000:
+      if self.line == 1000000:
          self.current_line = None
       return self.current_line
 
@@ -497,8 +497,10 @@ class GedcomRecord (object):
    """
 
    def __init__ (self, fields):
+      """LIST_FIELDS is the list of fields from gedcom that are lists, and
+         therefore need special handling when copying a gedcomRecord"""
       self.value = ""
-      self.fields = fields   # shared among all instances of that type
+      self._fields = fields
 
    def _xref_to (self, xref, gedcom):
       """Indicates that the record contains no real data, but is an xref
@@ -519,23 +521,11 @@ class GedcomRecord (object):
       # it might not have been parsed already. So we'll have to do it in
       # __getattr__
 
-      for key in self.fields:
+      #fields = [k for k in self.__dict__.keys()
+      #          if k[0].isupper() or (k[0]=='_' and k[1].isupper())]
+      for key in self._fields:
          del self.__dict__[key]
       del self.__dict__ ['value']
-
-   def __deepcopy__ (self, memo):
-      """controls the behavior of copy.deepcopy()"""
-      # No need to deep copy self.xref or self.gedcom
-      # No need to copy "value" either, since this is a immutable string.
-
-      result = self.__class__ (self.fields)
-      for key in self.fields:
-         result.__dict__[key] = copy.copy (self.__dict__[key])
-      result.xref   = self.__dict__.get ("xref")
-      result.gedcom = self.__dict__.get ("gedcom")
-      result.fields = self.__dict__.get ("fields")
-      result.value  = self.__dict__.get ("value")
-      return result
 
    def __getattr__ (self, name):
       """Automatic dereference (self must be an xref)
@@ -556,6 +546,22 @@ class GedcomRecord (object):
          pass
 
       return object.__getattribute__ (self, name)
+
+def copy_record (rec):
+   """Return a copy of rec, where some of the fields have been copied to
+      avoid sharing. We do not use __deepcopy__ for efficiency reasons. This
+      implementation is very specialized for the need of an empty gedcomRecord,
+      and would not work at the user level if he uses copy.deepcopy().
+      We also know that rec is not an xref at this point"""
+
+   result = rec.__class__ (rec._fields)
+   for key in rec._fields:
+      val = rec.__dict__ [key]
+      if val==[]:
+         result.__dict__[key] = []  # A new, separate list
+      else:
+         result.__dict__[key] = val
+   return result
 
 XREF_NONE=0       # No xref allowed
 XREF_PURE=1       # A pure xref (only textual value)
@@ -674,12 +680,11 @@ class _GedcomParser (object):
                self.result.__dict__ [n] = []
             elif handler is None:  # text only
                self.result.__dict__ [n] = None
-            else:             # A single record
+            else:           # A single record
                self.result.__dict__ [n] = None
 
-
    def parse (self, lexical, gedcomFile=None, indent="   "):
-      result = copy.deepcopy (self.result)
+      result = copy_record (self.result)
       line   = lexical.current_line
 
       if line:  # When parsing ROOT, there is no prefetch
@@ -712,7 +717,7 @@ class _GedcomParser (object):
                   res = p[2].parse (lexical, gedcomFile, indent=indent+"   ")
                   line = lexical.current_line
                else:
-                  res = copy.deepcopy (p[4])
+                  res = copy_record (p[4])
                   line = lexical.readline ()
 
                res._xref_to (value, gedcomFile)
@@ -802,13 +807,12 @@ class Gedcom (object):
       parsers = dict ()
       self.parser = _GedcomParser ("file", _GRAMMAR["file"], parsers)
 
-   def parse (self, stream):
+   def parse (self, filename):
       """Parse the specified GEDCOM file, check its syntax, and return a
          GedcomFile instance.
          Raise Invalid_Gedcom in case of error."""
-      return self.parser.parse (_Lexical (stream))
+      return self.parser.parse (_Lexical (file (filename, "U")))
 
 def test():
-   Gedcom().parse (file ("ITIS.ged"))
-
+   Gedcom().parse ("ITIS.ged")
 cProfile.run ('test()', 'parsing_ITI')
