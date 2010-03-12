@@ -1,10 +1,10 @@
 """
 This file provides a GEDCOM syntactical parser.
-It parses a GEDCOM file, and creates a set of trees in memory corresponding
+It parses a GEDCOM file, and creates a tree in memory corresponding
 to the GEDCOM file, without doing any interpretation of this tree.
 
 Example of use:
-    ged = Gedcom().parse (file ("myfile.ged"))
+    ged = Gedcom().parse ("myfile.ged")
 
 The resulting data structure is a GedcomFile, which provides subprograms
 to access the various fields.
@@ -16,7 +16,7 @@ raised. This check is based on the Gedcom 5.5 grammar
 This file has no external dependency, except for the _ function which is
 used for internationalization.
 
-This parser is reasonably fast, and will parse the ITIS.ged file in 2:45 min
+This parser is reasonably fast, and will parse the ITIS.ged file in 3:40 min
 (472_676 individuals)
 
 ??? Missing: handling of charsets. We should always convert to utf8 in the
@@ -35,7 +35,6 @@ except:
    def _(txt): return txt
 
 import re, sys, copy
-import cProfile
 
 __all__ = ["Gedcom", "GedcomFile", "GedcomIndi", "GedcomFam", "GedcomRecord",
            "Invalid_Gedcom", "GedcomString"]
@@ -44,31 +43,14 @@ POINTER_STRING = "(?:[^@]*)"
 OPTIONAL_XREF_ID = "(?:(?P<xref_id>@\w" + POINTER_STRING + "@)\s)?"
 LINE_RE = re.compile ('^(?P<level>\d+)\s' + OPTIONAL_XREF_ID
                       + '(?P<tag>\w+)' + '(?:\s(?P<value>.*))?')
-
 unlimited = 100000
 
-EVENT_DETAILS = (("TYPE", 0, 1, None),
-                 ("DATE", 0, 1, None),
-                 ("PLAC", 0, 1, "PLAC"),
-                 ("ADDR", 0, 1, "ADDR"),
-                 ("PHON", 0, 3, None), # In gedcom: part of ADDR
-                 ("AGE",  0, 1, None),  # Age at event
-                 ("AGNC", 0, 1, None), # Responsible agency
-                 ("CAUS", 0, 1, None), # Cause of event
-                 ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-                 ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-                 ("NOTE", 0, unlimited, None)) # Note on event
-# _grammar is a tuple of tuples, each of which describes one of the nodes
+# _GRAMMAR is a tuple of tuples, each of which describes one of the nodes
 # that the record accepts:
 #   (tag_name, min_occurrences, max_occurrences, handler)
 #
 # The tag_name field can be either a string or a tuple of strings
 # indicating all the tags that are accepted and handled the same way.
-# If the tag_name starts with XREF:, then the GEDCOM file might either
-# contain a single xref line for this element ("@...@"), or a record whose
-# type is described by handler. If the line must be a xref (and thus cannot
-# contain a record), the handle should be "XREF:type", pointing to the pointed
-# type. The handle must never be None for a xref line.
 # For instance:
 #      ("NAME",  0, 1, None)     # pure text
 #      ("CHILD", 0, 1, "INDI")   # An inline INDI record
@@ -87,6 +69,17 @@ EVENT_DETAILS = (("TYPE", 0, 1, None),
 # The handler can also be specified itself as a tuple of tuples to describe
 # all child nodes.
 
+EVENT_DETAILS = (("TYPE", 0, 1, None),
+                 ("DATE", 0, 1, None),
+                 ("PLAC", 0, 1, "PLAC"),
+                 ("ADDR", 0, 1, "ADDR"),
+                 ("PHON", 0, 3, None), # In gedcom: part of ADDR
+                 ("AGE",  0, 1, None),  # Age at event
+                 ("AGNC", 0, 1, None), # Responsible agency
+                 ("CAUS", 0, 1, None), # Cause of event
+                 ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+                 ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
+                 ("NOTE", 0, unlimited, None)) # Note on event
 _GRAMMAR = dict (
     file =  (("HEAD", 1, 1,         "HEAD"),
              ("FAM",  0, unlimited, "FAM"),
@@ -224,7 +217,6 @@ _GRAMMAR = dict (
                 ("FAMC:XREF(FAM)", 1, 1, None),
                 ("NOTE", 0, unlimited, None))),
 
-             # +1 <<LDS_INDIVIDUAL_ORDINANCE>>  {0:M}
              ("FAMC:XREF(FAM)", 0, unlimited,    # Child to family link
                  (("PEDI", 0, unlimited, None),  # pedigree linkage type
                   ("NOTE", 0, unlimited, None))),
@@ -292,7 +284,6 @@ _GRAMMAR = dict (
                 ("SOUR", 0, unlimited, "SOURCE_CITATION"),
                 ("NOTE", 0, unlimited, None))),
 
-             # +1 <<LDS_SPOUSE_SEALING>>  {0:M}
              ("SOUR", 0, unlimited, "SOURCE_CITATION"), # source
              ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
              ("NOTE", 0, unlimited, None),
@@ -359,8 +350,7 @@ _GRAMMAR = dict (
              ("SURN", 0, 1,         None),  # Name piece surname
              ("NSFX", 0, 1,         None),  # Name piece suffix
              ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-             ("NOTE", 0, unlimited, None)), # Note
-)
+             ("NOTE", 0, unlimited, None)))
 
 class Invalid_Gedcom (Exception):
    def __init__ (self, msg):
@@ -369,9 +359,8 @@ class Invalid_Gedcom (Exception):
       return self.msg
 
 class _Lexical (object):
-   """
-   Return lines of the GEDCOM file, taking care of concatenation when
-   needed, and potentially skipping levels
+   """Return lines of the GEDCOM file, taking care of concatenation when
+      needed, and potentially skipping levels
    """
 
    # The components of the tuple returned by readline
@@ -381,10 +370,9 @@ class _Lexical (object):
    VALUE   = 3
 
    def __init__ (self, stream):
-      """
-      Lexical parser for a GEDCOM file. This returns lines one by one,
-      after splitting them into components. This automatically groups
-      continuation lines as appropriate
+      """Lexical parser for a GEDCOM file. This returns lines one by one,
+         after splitting them into components. This automatically groups
+         continuation lines as appropriate
       """
       self.file = stream
       self.level = 0     # Level of the current line
@@ -404,7 +392,7 @@ class _Lexical (object):
 
       self.line = self.line + 1
       # Leading whitespace must be ignored in gedcom files
-      line = self.file.readline ().lstrip ()
+      line = self.file.readline ().lstrip ().rstrip ('\n')
       if not line: 
          return None
 
@@ -455,8 +443,6 @@ class _Lexical (object):
                            result [_Lexical.TAG].upper (), 
                            result [_Lexical.XREF_ID],
                            value)
-      if self.line == 1000000:
-         self.current_line = None
       return self.current_line
 
 class GedcomRecord (object):
@@ -471,8 +457,8 @@ class GedcomRecord (object):
                n+1 NAME foo /bar/
                n+2 SURN bar
         is accessible as indi.NAME.SURN (a string)
-        If in fact this specific field does not occur in the gedcom file, the
-        empty string is returned. If the node can be repeated multiple times,
+        If in fact this specific field does not occur in the gedcom file, None
+        is returned. If the node can be repeated multiple times,
         a list of strings is returned (possibly empty if the node was not in
         the file)
 
@@ -496,11 +482,10 @@ class GedcomRecord (object):
                ...
    """
 
-   def __init__ (self, fields):
+   def __init__ (self):
       """LIST_FIELDS is the list of fields from gedcom that are lists, and
          therefore need special handling when copying a gedcomRecord"""
       self.value = ""
-      self._fields = fields
 
    def _xref_to (self, xref, gedcom):
       """Indicates that the record contains no real data, but is an xref
@@ -508,23 +493,27 @@ class GedcomRecord (object):
          automatically dereference the xref, so this is mostly transparent
          to users
       """
-      self.xref = xref
-      self.gedcom = gedcom
 
       # We'll need to lookup the attribute in the derefed object.
       # Using __getattribute__ would be called for all attributes, including
       # internal ones like __dict__, and is thus less efficient.
       # However, __getattr__ will only be called if the attribute is not in
-      # the directionary, so we remove the keys that are delegated.
+      # the dictionary, so we remove the keys that are delegated.
       #
-      # Note: it is too early to lookup the object in the gedcom file, since
+      # Note: it might too early to lookup the object in the gedcom file, since
       # it might not have been parsed already. So we'll have to do it in
-      # __getattr__
+      # __getattr__ if not available yet
 
-      #fields = [k for k in self.__dict__.keys()
-      #          if k[0].isupper() or (k[0]=='_' and k[1].isupper())]
-      for key in self._fields:
-         del self.__dict__[key]
+      if gedcom.ids.get (xref):
+         self._all = gedcom.ids [xref]
+      else:
+         self._gedcom = gedcom
+
+      self.xref = xref
+      fields = [k for k in self.__dict__.keys()
+                if k[0].isupper() or (k[0]=='_' and k[1].isupper())]
+      for key in fields:
+          del self.__dict__[key]
       del self.__dict__ ['value']
 
    def __getattr__ (self, name):
@@ -536,8 +525,8 @@ class GedcomRecord (object):
          if xref:
             if name == "_all":
                # Cache the derefenced object
-               obj = self.gedcom.ids [xref]
-               del self.__dict__ ["gedcom"]  # no longer needed
+               obj = self._gedcom.ids [xref]
+               del self.__dict__ ["_gedcom"]  # no longer needed
                self.__dict__ ["_all"] = obj
                return obj
 
@@ -546,22 +535,6 @@ class GedcomRecord (object):
          pass
 
       return object.__getattribute__ (self, name)
-
-def copy_record (rec):
-   """Return a copy of rec, where some of the fields have been copied to
-      avoid sharing. We do not use __deepcopy__ for efficiency reasons. This
-      implementation is very specialized for the need of an empty gedcomRecord,
-      and would not work at the user level if he uses copy.deepcopy().
-      We also know that rec is not an xref at this point"""
-
-   result = rec.__class__ (rec._fields)
-   for key in rec._fields:
-      val = rec.__dict__ [key]
-      if val==[]:
-         result.__dict__[key] = []  # A new, separate list
-      else:
-         result.__dict__[key] = val
-   return result
 
 XREF_NONE=0       # No xref allowed
 XREF_PURE=1       # A pure xref (only textual value)
@@ -577,26 +550,16 @@ class _GedcomParser (object):
 
       self.name = name
 
-      fields = []
-      for c in grammar:
-         if isinstance (c[0], str):
-            if c[0].find (":XREF(") != -1:
-               fields.append (c[0][:c[0].find (":")])
-            else: 
-               fields.append (c[0])
-         else:
-            fields.extend (c[0])
-
       if register   == "INDI":
-         self.result = GedcomIndi (fields)
+         self.result = GedcomIndi ()
       elif register == "FAM":
-         self.result = GedcomFam (fields)
+         self.result = GedcomFam ()
       elif register == "SUBM":
-         self.result = GedcomSubm (fields)
+         self.result = GedcomSubm ()
       elif name == "file":
-         self.result = GedcomFile (fields)
+         self.result = GedcomFile ()
       else:
-         self.result = GedcomRecord (fields) # General type of the result
+         self.result = GedcomRecord () # General type of the result
 
       self.parsers = dict ()      # Parser for children nodes
 
@@ -684,7 +647,9 @@ class _GedcomParser (object):
                self.result.__dict__ [n] = None
 
    def parse (self, lexical, gedcomFile=None, indent="   "):
-      result = copy_record (self.result)
+      # We don't do a deepcopy here, but instead we replace lists the first
+      # time they are referenced to make sure don't modify self.result
+      result = copy.copy (self.result)
       line   = lexical.current_line
 
       if line:  # When parsing ROOT, there is no prefetch
@@ -717,7 +682,7 @@ class _GedcomParser (object):
                   res = p[2].parse (lexical, gedcomFile, indent=indent+"   ")
                   line = lexical.current_line
                else:
-                  res = copy_record (p[4])
+                  res = copy.copy (p[4])
                   line = lexical.readline ()
 
                res._xref_to (value, gedcomFile)
@@ -744,9 +709,13 @@ class _GedcomParser (object):
                result.__dict__ [tag] = res
 
             elif p[1] == unlimited:
+               if val == []:  # Make sure we do not modify the original list
+                  val = []
                val.append (res)
 
             elif len (val) < p[1]:
+               if val == []:
+                  val = []
                val.append (res)
 
             else:
@@ -779,8 +748,8 @@ class _GedcomParser (object):
 class GedcomFile (GedcomRecord):
    """Represents a whole GEDCOM file"""
 
-   def __init__ (self, fields):
-      super (GedcomFile, self).__init__ (fields)
+   def __init__ (self ):
+      super (GedcomFile, self).__init__ ()
       self.ids = dict ()
 
 class GedcomIndi (GedcomRecord):
@@ -803,7 +772,6 @@ class Gedcom (object):
    """
 
    def __init__ (self):
-      # Some parsers will return special types, for clarity
       parsers = dict ()
       self.parser = _GedcomParser ("file", _GRAMMAR["file"], parsers)
 
@@ -812,7 +780,3 @@ class Gedcom (object):
          GedcomFile instance.
          Raise Invalid_Gedcom in case of error."""
       return self.parser.parse (_Lexical (file (filename, "U")))
-
-def test():
-   Gedcom().parse ("ITIS.ged")
-cProfile.run ('test()', 'parsing_ITI')

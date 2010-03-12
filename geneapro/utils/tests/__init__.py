@@ -20,7 +20,7 @@ class GedcomTestCase (unittest.TestCase):
       error = ""
       try:
          # Universal newline
-         self.parsers.parse (file (filename, "U"))
+         self.parsers.parse (filename)
          error = error + "OK\n"
       except gedcom.Invalid_Gedcom, e:
          error = error + e.msg + "\n"
