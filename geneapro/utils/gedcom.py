@@ -35,6 +35,7 @@ except:
    def _(txt): return txt
 
 import re, sys, copy
+import cProfile
 
 __all__ = ["Gedcom", "GedcomFile", "GedcomIndi", "GedcomFam", "GedcomRecord",
            "Invalid_Gedcom", "GedcomString"]
@@ -454,6 +455,8 @@ class _Lexical (object):
                            result [_Lexical.TAG].upper (), 
                            result [_Lexical.XREF_ID],
                            value)
+      if self.line == 100000:
+         self.current_line = None
       return self.current_line
 
 class GedcomRecord (object):
@@ -493,9 +496,9 @@ class GedcomRecord (object):
                ...
    """
 
-   def __init__ (self):
+   def __init__ (self, fields):
       self.value = ""
-      self.xref = None
+      self.fields = fields   # shared among all instances of that type
 
    def _xref_to (self, xref, gedcom):
       """Indicates that the record contains no real data, but is an xref
@@ -516,27 +519,41 @@ class GedcomRecord (object):
       # it might not have been parsed already. So we'll have to do it in
       # __getattr__
 
-      for key in [k for k in self.__dict__.keys() if k[0].isupper()]:
+      for key in self.fields:
          del self.__dict__[key]
       del self.__dict__ ['value']
+
+   def __deepcopy__ (self, memo):
+      """controls the behavior of copy.deepcopy()"""
+      # No need to deep copy self.xref or self.gedcom
+      # No need to copy "value" either, since this is a immutable string.
+
+      result = self.__class__ (self.fields)
+      for key in self.fields:
+         result.__dict__[key] = copy.copy (self.__dict__[key])
+      result.xref   = self.__dict__.get ("xref")
+      result.gedcom = self.__dict__.get ("gedcom")
+      result.fields = self.__dict__.get ("fields")
+      result.value  = self.__dict__.get ("value")
+      return result
 
    def __getattr__ (self, name):
       """Automatic dereference (self must be an xref)
          In the case of XREF_AND_INLINE, some attributes are defined both
          in SELF and in the dereferenced record."""
-      xref = object.__getattribute__ (self, "xref")
-      if xref:
-         if name == "_all":
-            # Cache the derefenced object
-            obj = self.gedcom.ids [xref]
-            del self.__dict__ ["gedcom"]  # no longer needed
-            self.__dict__ ["_all"] = obj
-            return obj
+      try:
+         xref = object.__getattribute__ (self, "xref")
+         if xref:
+            if name == "_all":
+               # Cache the derefenced object
+               obj = self.gedcom.ids [xref]
+               del self.__dict__ ["gedcom"]  # no longer needed
+               self.__dict__ ["_all"] = obj
+               return obj
 
-         try:
             return self._all.__getattribute__ (name)
-         except AttributeError:
-            pass
+      except AttributeError:
+         pass
 
       return object.__getattribute__ (self, name)
 
@@ -554,16 +571,26 @@ class _GedcomParser (object):
 
       self.name = name
 
+      fields = []
+      for c in grammar:
+         if isinstance (c[0], str):
+            if c[0].find (":XREF(") != -1:
+               fields.append (c[0][:c[0].find (":")])
+            else: 
+               fields.append (c[0])
+         else:
+            fields.extend (c[0])
+
       if register   == "INDI":
-         self.result = GedcomIndi ()
+         self.result = GedcomIndi (fields)
       elif register == "FAM":
-         self.result = GedcomFam ()
+         self.result = GedcomFam (fields)
       elif register == "SUBM":
-         self.result = GedcomSubm ()
+         self.result = GedcomSubm (fields)
       elif name == "file":
-         self.result = GedcomFile ()
+         self.result = GedcomFile (fields)
       else:
-         self.result = GedcomRecord () # General type of the result
+         self.result = GedcomRecord (fields) # General type of the result
 
       self.parsers = dict ()      # Parser for children nodes
 
@@ -722,7 +749,8 @@ class _GedcomParser (object):
                   "%s Too many occurrences (%d) of %s (max %d)" %
                   (lexical.get_location(), p[1]+1, tag, len (val)))
 
-      except KeyError:
+      except KeyError, e:
+         raise
          raise Invalid_Gedcom (
             "%s Invalid tag %s inside %s" %
              (lexical.get_location(), tag, self.name))
@@ -746,8 +774,8 @@ class _GedcomParser (object):
 class GedcomFile (GedcomRecord):
    """Represents a whole GEDCOM file"""
 
-   def __init__ (self):
-      super (GedcomRecord, self).__init__ ()
+   def __init__ (self, fields):
+      super (GedcomFile, self).__init__ (fields)
       self.ids = dict ()
 
 class GedcomIndi (GedcomRecord):
@@ -779,3 +807,8 @@ class Gedcom (object):
          GedcomFile instance.
          Raise Invalid_Gedcom in case of error."""
       return self.parser.parse (_Lexical (stream))
+
+def test():
+   Gedcom().parse (file ("ITIS.ged"))
+
+cProfile.run ('test()', 'parsing_ITI')
