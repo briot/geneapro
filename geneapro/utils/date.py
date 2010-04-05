@@ -744,7 +744,7 @@ class Date (object):
          by the user.
       """
 
-      if self.date:
+      if self.year_known and self.month_known and self.day_known:
          cal = calendar or self.calendar
          result = ""
 

@@ -20,5 +20,5 @@ class Command (LabelCommand):
    def handle_label (self, label, **options):
       """Process the import command"""
       sys.stdout.write (STYLE  ('Importing %s' % label) + '\n')
-      GedcomFileImporter ().parse (file (label))
+      GedcomFileImporter ().parse (label)
       sys.stdout.write (STYLE  ('Done importing\n'))

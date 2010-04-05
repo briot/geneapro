@@ -55,8 +55,8 @@ class Importer (object):
 
    __metaclass__ = ImporterMetaClass
 
-   def parse (self, file):
-      """Import data from _file_ (an instance of file) into our data model"""
+   def parse (self, filename):
+      """Import data from _filename_ into our data model"""
       pass
 
    def error (self, message):

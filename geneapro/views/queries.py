@@ -100,12 +100,14 @@ def get_extended_personas (ids):
 
    for e in persons.events:
       who = e ["person"]
+      print who, " e.type=", e["type_id"], " role=", e["role"]
       if e["type_id"] == models.Event_Type.birth \
         and e["role"] == models.Event_Type_Role.principal:
 
          result [who].birth = Date (e["date"])
          result [who].birth_place = e["place"]
          result [who].birth_sources = e["sources"]
+         print "set birth=", e["date"], "  ", Date (e["date"])
 
          if e["related_role"] == models.Event_Type_Role.birth__father:
             result [who].father_id = e["related"]

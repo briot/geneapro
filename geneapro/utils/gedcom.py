@@ -554,6 +554,8 @@ class _GedcomParser (object):
          self.result = GedcomIndi ()
       elif register == "FAM":
          self.result = GedcomFam ()
+      elif register == "SOUR":
+         self.result = GedcomSour ()
       elif register == "SUBM":
          self.result = GedcomSubm ()
       elif name == "file":
@@ -659,6 +661,7 @@ class _GedcomParser (object):
 
          # Register the entity if need be
          if startlevel == 0 and line [_Lexical.XREF_ID]:
+            result.id = line [_Lexical.XREF_ID]
             gedcomFile.ids [line [_Lexical.XREF_ID]] = result
 
       else:
@@ -711,11 +714,13 @@ class _GedcomParser (object):
             elif p[1] == unlimited:
                if val == []:  # Make sure we do not modify the original list
                   val = []
+                  result.__dict__ [tag] = val
                val.append (res)
 
             elif len (val) < p[1]:
                if val == []:
                   val = []
+                  result.__dict__ [tag] = val
                val.append (res)
 
             else:
@@ -724,7 +729,6 @@ class _GedcomParser (object):
                   (lexical.get_location(), p[1]+1, tag, len (val)))
 
       except KeyError, e:
-         raise
          raise Invalid_Gedcom (
             "%s Invalid tag %s inside %s" %
              (lexical.get_location(), tag, self.name))
@@ -762,6 +766,10 @@ class GedcomFam (GedcomRecord):
 
 class GedcomSubm (GedcomRecord):
    """Represents a SUBM in a GEDCOM file"""
+   pass
+
+class GedcomSour (GedcomRecord):
+   """Represents a SOUR in a GEDCOM file"""
    pass
 
 class Gedcom (object):
