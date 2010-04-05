@@ -46,28 +46,30 @@ function drawBox (svg, person, x, y, sosa, config) {
      var clip = svg.other (g, 'clipPath', {id:'p'+sosa});
      svg.rect (clip, 0, 0, config.boxWidth, config.boxHeight);
 
-    if (person) {
-      var fontweight = (sosa == 1) ? "bold" : "normal";
+     var fontweight = (sosa == 1) ? "bold" : "normal";
 
-      var birth = person.birth;
-      if (person.birth)
-         birth += (person.births ? " \u2713" : " \u2717");
+     var birth = person.birth;
+     if (person.birth)
+        birth += (person.births ? " \u2713" : " \u2717");
 
-      var death = person.death;
-      if (person.death)
-         death += (person.deaths ? " \u2713" : " \u2717");
+     var death = person.death;
+     if (person.death)
+        death += (person.deaths ? " \u2713" : " \u2717");
 
-      svg.text(g, 4, "1em",
+     var birthp = person.birthp || " ";
+     var deathp = person.deathp || " ";
+
+     svg.text(g, 4, "1em",
           svg.createText().string(person.surn + " " + person.givn)
           .span ("b:", {x:4, dy:"1.2em"})
           .span (birth, {x:16,"font-weight":"normal","font-style":"italic"})
-          .span (person.birthp, {x:16,dy:"1.1em","font-weight":"normal","font-style":"italic"})
+          .span (birthp, {x:16,dy:"1.1em","font-weight":"normal","font-style":"italic"})
           .span ("d:", {x:4, dy:"1.2em"})
           .span (death, {x:16,"font-weight":"normal", "font-style":"italic"})
-          .span (person.deathp, {x:16,dy:"1.1em","font-weight":"normal","font-style":"italic"}),
+          .span (deathp, {x:16,dy:"1.1em","font-weight":"normal","font-style":"italic"}),
         {"font-weight":fontweight, "clip-path":"url(#p"+sosa+")",
-         "pointer-events":"none"});
-      }
+         "pointer-events":"none"}
+         );
     } else {
       svg.rect (x, y, boxWidth, boxHeight,
                {"stroke-dasharray":"3",
