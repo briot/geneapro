@@ -1,0 +1,12 @@
+
+Q. How do I import my GEDCOM data ?
+
+   Currently, GeneaPro is a read-only view. You should therefore
+   have a GEDCOM file created by another genealogy software.
+   Once you have this file, you should type the following command:
+      make reset
+      ./manage.py import gedcom.ged
+   where the last argument is the path to your gedcom file.
+
+   The first command is optional, and will reset the database. The
+   second command will always add to the existing database
