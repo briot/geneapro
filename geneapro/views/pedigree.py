@@ -47,6 +47,7 @@ def to_json (obj, year_only):
 
             return {"id":obj.id, "givn":obj.given_name,
                     'surn':obj.surname,
+                    'styles':obj.styles,
                     'birth':b, 'sex':obj.sex, 'death':d,
                     'birthp':obj.birth_place or "",
                     'deathp':obj.death_place or "",
@@ -63,7 +64,7 @@ def to_json (obj, year_only):
 
    return simplejson.dumps (obj, cls=ModelEncoder, separators=(',',':'))
 
-def get_parents (tree, marriage, person_ids, max_level, sosa=1):
+def get_parents (tree, marriage, person_ids, max_level, styles, sosa=1):
    """Complete the ancestors data for persons.
       The first person in the list has SOSA number sosa, the others
       are +1, +2,...
@@ -73,7 +74,7 @@ def get_parents (tree, marriage, person_ids, max_level, sosa=1):
    if not isinstance (person_ids, list):
       person_ids = [person_ids]
 
-   persons = get_extended_personas (person_ids)
+   persons = get_extended_personas (person_ids, styles)
 
    for p in persons:
       s = sosa + person_ids.index (p.id)
@@ -86,13 +87,48 @@ def get_parents (tree, marriage, person_ids, max_level, sosa=1):
       if max_level > 1:
          if p.father_id and p.mother_id:
             get_parents (tree, marriage, [p.father_id, p.mother_id],
-                         max_level - 1, sosa=s*2)
+                         max_level - 1, sosa=s*2, styles=styles)
          elif p.father_id:
-            get_parents (tree, marriage, p.father_id, max_level-1, sosa=s*2)
+            get_parents (tree, marriage, p.father_id, max_level-1, sosa=s*2,
+                         styles=styles)
          elif p.mother_id:
-            get_parents (tree, marriage, p.mother_id, max_level-1, sosa=s*2+1)
+            get_parents (tree, marriage, p.mother_id, max_level-1, sosa=s*2+1,
+                         styles=styles)
 
    return persons
+
+style_rules = [
+ (RULE_FLAG,  "ALIVE", "Y", {"font-weight":"bold"}),
+ (RULE_FLAG,  "SEX",   "M", {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
+ (RULE_FLAG,  "SEX",   "F", {"fill":"#E9DAF1", "stroke":"#fF2080"}),
+
+ # Born or dead in La Baussaine before 1862
+ (RULE_EVENT,
+    [("type_id", RULE_IN,         (models.Event_Type.birth,
+                                   models.Event_Type.death)),
+     ("place",   RULE_CONTAINS_INSENSITIVE, "baussaine"),
+     ("role",    RULE_IS,         models.Event_Type_Role.principal),
+     ("date",    RULE_BEFORE,     "1862")], {"color":"red"}),
+
+ # "Age at death" <= 60 years
+ (RULE_EVENT,
+   [("type_id", RULE_IS, models.Event_Type.death),
+    ("role",    RULE_IS, models.Event_Type_Role.principal),
+    ("age",     RULE_SMALLER_EQUAL, 60)],
+   {"color":"blue"}),
+
+] 
+# ??? Other rules that would be nice to have:
+#   FLAGS: BIRTH_ORDER, MULTIPLE_BIRTH, DATASET_ID
+#   "# of ... events"
+#   "place.country" != FRANCE
+#   "Age today"
+#   "End of line ancestors", ie without a known parent
+#   "Is ancestor of ..."
+#   "Is descendant of ..."
+#   "Project Explorer contains (or not) the person"
+#   "Son's name is"
+#   "Has sources", "Has sources with reliability >= "
 
 def data (request):
    """Compute, and send back to the user, information about the pedigree of a
@@ -115,11 +151,13 @@ def data (request):
       """Compare two persons by birth date"""
       return cmp (pers1.birth, pers2.birth)
 
-   p = get_parents (tree, marriage, who, generations)
+   styles = Styles (style_rules)
+
+   p = get_parents (tree, marriage, who, generations, styles=styles)
    if p:
       p = p[0]
       if p.children:
-         children = get_extended_personas (p.children)
+         children = get_extended_personas (p.children, styles)
          children.sort (cmp=sort_by_birth)
 
    result = to_json ({'generations':generations, 'sosa':tree,

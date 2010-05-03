@@ -45,7 +45,7 @@ defaultConfig = {
 
 stylesheet =
  "text.decujus {font-size:12px; font-weight:bold} "
-  +"text{stroke-width:0; font-weight:normal; fill:black; pointer-events:none}"
+  +"text{stroke-width:0; pointer-events:none}"
   +" textpath.gen1, textpath.gen1 tspan {font-size:12px}"
   +" textpath.gen2, textpath.gen2 tspan {font-size:12px}"
   +" textpath.gen3, textpath.gen3 tspan {font-size:11px}"
@@ -58,14 +58,10 @@ stylesheet =
   +" textpath.gen10, textpath.gen10 tspan {font-size:8px}"
   +" textpath.gen11, textpath.gen11 tspan {font-size:8px}"
   +" textpath.gen12, textpath.gen12 tspan {font-size:8px}"
-  +" path   {stroke:gray; fill:white}"
+  +" path {stroke:gray}"
   +" path.selected {fill:gray}"
-  +" path.M {fill:#D6E0EA}"
-  +" path.F {fill:#E9DAF1}"
-  +" rect.M {fill:#D6E0EA; stroke:#9CA3D4}"
-  +" rect.F {fill:#E9DAF1; stroke:#fF2080}"
-  +" rect {fill:white; stroke:#9CA3DA}"
-  +" path.u {stroke-dasharray:3}"; // person unknown
+  +" rect {stroke:#9CA3DA}"
+  +" path.u {fill:white; stroke-dasharray:3}"; // person unknown
 
 /* Person for whom the fanchart is displayed */
 var decujus=1;
@@ -171,11 +167,11 @@ function drawFan (svg, config, centerx, centery) {
          var p = createPath (minRadius, maxRadius, minAngle, maxAngle, false);
 
          if (person) {
-            svg.path (p, {class:person.sex,
-                          sosa:num,
-                          onclick:"onClick(evt,config)",
-                          onmouseover:'onMouseOver(evt)',
-                          onmouseout:'onMouseOut(evt)'});
+            svg.path (p, getAttr ({sosa:num,
+                                    onclick:"onClick(evt,config)",
+                                    onmouseover:'onMouseOver(evt)',
+                                    onmouseout:'onMouseOut(evt)'},
+                                   person, false));
 
             if (gen < config.textThreshold) {
                /* Draw person name along the curve, and clipped.
@@ -215,14 +211,13 @@ function drawFan (svg, config, centerx, centery) {
                var text = svg.text ("");
                svg.textpath(text, "#Path"+(minIndex + id),
                   svg.createText().string("")
-                  //.span (person.surn.toUpperCase(), {dy:"-0.5em","font-weight":"bold"})
-                  //.span (person.givn, {x:0, dy:"1em", "font-weight":"bold"})
-                  .span (person.surn.toUpperCase(), {"font-weight":"normal"})
+                  .span (person.surn.toUpperCase())
                   .span (person.givn, {dx:5})
                   .span ((person.birth || "?") + "-"
                          + (person.death || "?"),
                          {x:"10",dy:"1.1em"}),
-                  {class:"gen" + gen, startOffset:5});
+                  getAttr ({class:"gen" + gen, startOffset:5},
+                           person, true));
             }
          } else {
             svg.path (p, {class:"u",
@@ -323,7 +318,7 @@ function drawSOSA (conf) {
                .span ("d:", {x:config.decujusx, dy:"1.2em"})
                .span (person.death, {"font-weight":"normal",
                                      "font-style":"italic"}),
-            {class:"decujus"});
+            getAttr ({"pointer-events":"none"}, person, true));
 
    /* Draw children */
 

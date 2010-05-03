@@ -9,11 +9,7 @@ var children=null;
 var decujus=1;
 var tops=null;
 
-stylesheet =
- "rect.M {fill:#D6E0EA; stroke:#9CA3D4; filter:url(#shadow)}"
- + "rect.F {fill:#E9DAF1; stroke:#fF2080; filter:url(#shadow)}"
- + "rect {fill:white; stroke:#9CA3DA}"
- + "rect.selected {fill:#CCC}";
+stylesheet = "rect {filter:url(#shadow)} rect.selected {fill:#CCC}";
 
 function onMouseOver (evt) {
   var box = evt.target;
@@ -120,7 +116,7 @@ function drawSOSA() {
 
               var mar = marriage [2 * index + 2].date || "";
               if (mar)
-                 mar += (marriage [2*index + 2].sources ? " \u2713" : " \u2717");
+                 mar += (marriage [2*index + 2].sources ? " \u2713":" \u2717");
 
               svg.text (x2, (y1 + y2) / 2 + 4,
                         svg.createText().string (mar),

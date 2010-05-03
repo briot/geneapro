@@ -9,6 +9,7 @@ from django.utils import simplejson
 from django.http import HttpResponse
 from mysites.geneapro import models
 from mysites.geneapro.utils.date import Date
+from mysites.geneapro.views.styles import *
 
 class PersonsData:
    def __init__ (self, ids, event_filter=None, char_filter=dict()):
@@ -50,10 +51,12 @@ class PersonsData:
             models.Characteristic_Part.objects.filter, (), char_filter) \
             .values ('name','type_id')
 
-def get_extended_personas (ids):
+def get_extended_personas (ids, styles):
    """Return a list of instances of Persona with additional attributes.
       These attributes are computed from the list of events and characteristics
-      known for the person"""
+      known for the person.
+      styles must be an instance of Styles.
+   """
 
    result = dict ()
 
@@ -100,6 +103,7 @@ def get_extended_personas (ids):
 
    for e in persons.events:
       who = e ["person"]
+      print "Event=", e, "  who=", who
       if e["type_id"] == models.Event_Type.birth \
         and e["role"] == models.Event_Type_Role.principal:
 
@@ -132,5 +136,13 @@ def get_extended_personas (ids):
             result [who].marriage = str (Date (e["date"]))
             result [who].marriage_sources = e["sources"]
 
-   return result.values()
+   if styles:
+      # Process the styles only after we have computed the birth and death
+      styles.start ()
+      for e in persons.events:
+         styles.process (result [e ["person"]], e)
 
+      for p in persons.persons:
+         p.styles = styles.compute (p)
+
+   return result.values()

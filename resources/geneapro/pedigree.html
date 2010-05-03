@@ -14,7 +14,7 @@
 {% endifequal %}
 <script type="text/javascript">
 pedigree_data_url="{% url pedigree_data %}";
-$(function(){
+$(function() {
   $('#pedigreeSVG').svg();
   getPedigree ();
 });
@@ -25,6 +25,7 @@ function changeGenerations () {
 {% endblock header %}
 {% block contents %}
 Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
+  <option>1</option>
   <option>2</option>
   <option>3</option>
   <option>4</option>
