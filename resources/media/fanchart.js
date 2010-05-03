@@ -215,6 +215,8 @@ function drawFan (svg, config, centerx, centery) {
                var text = svg.text ("");
                svg.textpath(text, "#Path"+(minIndex + id),
                   svg.createText().string("")
+                  //.span (person.surn.toUpperCase(), {dy:"-0.5em","font-weight":"bold"})
+                  //.span (person.givn, {x:0, dy:"1em", "font-weight":"bold"})
                   .span (person.surn.toUpperCase(), {"font-weight":"normal"})
                   .span (person.givn, {dx:5})
                   .span ((person.birth || "?") + "-"
@@ -301,12 +303,10 @@ function drawSOSA (conf) {
    var maxHeight = Math.max (childrenHeight, dimensions.height);
    var maxWidth = config.boxWidth + config.horizPadding + dimensions.width;
 
-   $('#pedigreeSVG').height (maxHeight).width (maxWidth);
-   var svg = $('#pedigreeSVG').svg('get');
+   var svg = $('#pedigreeSVG').height (maxHeight).width (maxWidth).svg('get');
    svg.clear ();
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
                   preserveAspectRatio:"xMinYMid"},true);
-
    svg.style (stylesheet);
 
    config.decujusx = config.boxWidth + config.horizPadding;
@@ -323,9 +323,7 @@ function drawSOSA (conf) {
                .span ("d:", {x:config.decujusx, dy:"1.2em"})
                .span (person.death, {"font-weight":"normal",
                                      "font-style":"italic"}),
-            {"class":"decujus"});
-
-   drawFan (svg, config, centerx, centery);
+            {class:"decujus"});
 
    /* Draw children */
 
@@ -336,6 +334,8 @@ function drawSOSA (conf) {
          y += config.boxHeight + config.vertPadding;
       }
    }
+
+   drawFan (svg, config, centerx, centery);
 
    /* Generation information */
 

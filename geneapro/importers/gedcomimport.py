@@ -117,9 +117,10 @@ class GedcomImporter (object):
                print "Unknown medium type for source %s: %s" % (id, medium)
                medium_id = 0
 
-      comment = ""
-      if sour.__dict__.has_key ("TITL"):
+      try:
          comment = sour.TITL
+      except:
+         comment = ""
 
       src = models.Source.objects.create (
          higher_source_id=None,
@@ -139,8 +140,10 @@ class GedcomImporter (object):
 
       # ??? Missing import of NOTE and CHAN
 
-      if sour.__dict__.has_key ("id") and sour.id:
+      try:
          self._sources [sour.id] = src
+      except:
+         pass
 
       return src
 
@@ -247,7 +250,8 @@ class GedcomImporter (object):
    def _create_place (self, data, id=""):
       """If data contains a subnode PLAC, parse and returns it"""
 
-      data = data.PLAC
+      if data is not None:
+         data = data.PLAC
 
       if data is None:
          return None
@@ -331,6 +335,9 @@ class GedcomImporter (object):
          value = [value]
 
       for val in value:
+         if val is None:
+            continue
+
          if isinstance (val, str):
             c = models.Characteristic.objects.create (place=None)
             str_value = val
@@ -427,11 +434,9 @@ class GedcomImporter (object):
          all_sources = []
 
          for s in data.SOUR:
-            if isinstance (s, str):
-               all_sources.append (self._sources [s])
-            else:
-               src = self._create_source (s)
-               all_sources.append (src)
+            all_sources.append (self._sources [s.value])
+            #src = self._create_source (s)
+            #all_sources.append (src)
          return all_sources
 
       return [None]

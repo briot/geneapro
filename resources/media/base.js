@@ -37,13 +37,14 @@ function getSelectedValue (select) {
 function drawBox (svg, person, x, y, sosa, config) {
   if (person) {
      var g = svg.svg (x, y);
+     var pId = (sosa < 0 ? "c" + (-sosa) : sosa);
      svg.rect (g, 0, 0, config.boxWidth, config.boxHeight,
               {class:person.sex,
                sosa:sosa,
                onclick:'onClick(evt)',
                onmouseover:'onMouseOver(evt)',
                onmouseout:'onMouseOut(evt)'});
-     var clip = svg.other (g, 'clipPath', {id:'p'+sosa});
+     var clip = svg.other (g, 'clipPath', {id:'p'+pId});
      svg.rect (clip, 0, 0, config.boxWidth, config.boxHeight);
 
      var fontweight = (sosa == 1) ? "bold" : "normal";
@@ -67,7 +68,7 @@ function drawBox (svg, person, x, y, sosa, config) {
           .span ("d:", {x:4, dy:"1.2em"})
           .span (death, {x:16,"font-weight":"normal", "font-style":"italic"})
           .span (deathp, {x:16,dy:"1.1em","font-weight":"normal","font-style":"italic"}),
-        {"font-weight":fontweight, "clip-path":"url(#p"+sosa+")",
+        {"font-weight":fontweight, "clip-path":"url(#p"+pId+")",
          "pointer-events":"none"}
          );
     } else {
