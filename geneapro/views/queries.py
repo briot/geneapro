@@ -101,9 +101,23 @@ def get_extended_personas (ids, styles):
       p.children = []
       result [p.id] = p
 
+   # Note: an event will occur several times (once per source), so we
+   # avoid duplicates here to save time
+   # ??? This could be done directly in the SQL query
+
+   last_id = None
+
    for e in persons.events:
       who = e ["person"]
-      print "Event=", e, "  who=", who
+
+      # ??? This relies on the order_by from get_extended_persona
+      new_id = (e["id"], e["related"], who, e["role"])
+      if new_id == last_id:
+         continue
+      last_id=new_id
+
+      if who == e["related"]:  # ??? Should be done directly in the SQL query
+         continue
       if e["type_id"] == models.Event_Type.birth \
         and e["role"] == models.Event_Type_Role.principal:
 
@@ -139,8 +153,16 @@ def get_extended_personas (ids, styles):
    if styles:
       # Process the styles only after we have computed the birth and death
       styles.start ()
+      last_id = None
       for e in persons.events:
-         styles.process (result [e ["person"]], e)
+         new_id = (e["id"], e["related"], who, e["role"])
+         if new_id == last_id:
+            continue
+         last_id=new_id
+
+         if e["person"] != e["related"] \
+            or e["role"] == models.Event_Type_Role.principal:
+            styles.process (result [e ["person"]], e)
 
       for p in persons.persons:
          p.styles = styles.compute (p)

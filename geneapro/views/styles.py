@@ -5,7 +5,9 @@ Style rules have the following format:
 this is a list of simple rules, each of which is one of:
   (RULE_EVENT, [event_test], css)
       and event_test is a list of tuples ("field", "test", "value")
-         where "field" is one of "place", "date", "type_id", "age"...
+         where "field" is one of "place", "date", "type_id",
+               "age"   => age of the person at that event
+               "count" => count of times where that test matched
            and "test"  is one of RULE_CONTAINS, RULE_IS,...
       These rules are tested once per event in which the person took part,
       whether as principal or as witness. As a result, they are more expensive
@@ -100,11 +102,17 @@ class Styles ():
       # Preprocess the rules for faster computation
 
       self.rules = []
+      self.counts = [None] * len (rules)  # the "count" rules: (test, value)
 
-      for r in rules:
+      for index, r in enumerate (rules):
          if r[0] in (RULE_EVENT, RULE_ATTR):
             tests = []
             for t in r[1]:
+               if t[0] == "count":
+                  # Handled separately at the end
+                  self.counts [index] = (rules_func [t[1]], t[2])
+                  continue
+
                if t[1] == RULE_CONTAINS_INSENSITIVE \
                   or t[1] == RULE_IS_INSENSITIVE:
                   tests.append ((t[0], rules_func [t[1]], t[2].lower ()))
@@ -117,7 +125,7 @@ class Styles ():
          else:
             print "Unknown rule tag in the style rules: %s" % r
 
-      self.no_match = [False] * len (self.rules)
+      self.no_match = [0] * len (self.rules)
 
    def _merge (self, style1, style2):
       """Merge the two styles.
@@ -149,16 +157,13 @@ class Styles ():
          pr1 = self.cache [person.id]
 
       for index,r in enumerate (self.rules):
-         # No need to recompute if we already know it is True
-         if not pr1[index] and r[0] == RULE_EVENT:
+         if r[0] == RULE_EVENT:
             match = True
             for t in r[1]:
                if t[0] == "age":
                   if person.birth:
                      value = Date (e["date"]).years_since (person.birth)
-                     print "Age for person ", person.id, " ", value
                   else:
-                     print "No age known for person ", person.id
                      value = None
                else:
                   value = e[t[0]]
@@ -167,7 +172,9 @@ class Styles ():
                  or not t[1] (exp=t[2], value=value):
                   match = False
                   break
-            pr1[index] = match
+
+            if match:
+               pr1[index] = pr1[index] + 1
 
    def compute (self, person):
       """Returns the styles to use for that person"""
@@ -203,8 +210,15 @@ class Styles ():
             if match:
                self._merge (styles, r[2])
 
-         elif cache [index]:
-            self._merge (styles, r[2])
+         else:  # RULE_EVENT
+            count = self.counts [index]
+            if count is None:
+               if cache [index] > 0:
+                  self._merge (styles, r[2])
+            else:
+               # Need to check the count of the events
+               if count[0] (exp=count[1], value=cache[index]):
+                  self._merge (styles, r[2])
 
       # Default background value
 

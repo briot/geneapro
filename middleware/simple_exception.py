@@ -15,6 +15,8 @@ import time
 
 style = color.color_style ()
 
+show_SQL = False
+
 class AJAXSimpleExceptionResponse:
     def process_request(self, request):
         self.start = time.clock ()
@@ -25,10 +27,11 @@ class AJAXSimpleExceptionResponse:
            end = time.clock ()
            total = 0.0
 
-           for r, q in enumerate (connection.queries):
-              total += float (q['time'])
-              print style.SQL_COLTYPE ("%d %ss => " % (r, q['time'])) \
-                 + q["sql"]
+           if show_SQL:
+              for r, q in enumerate (connection.queries):
+                 total += float (q['time'])
+                 print style.SQL_COLTYPE ("%d %ss => " % (r, q['time'])) \
+                    + q["sql"]
 
            if self.has_exception:
               print "Exception raised"

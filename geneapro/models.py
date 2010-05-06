@@ -521,7 +521,11 @@ def get_related_persons (queryset, person_ids):
                                   'sources':      alias3 + '.source_id'},
                           where=('persona.id IN (%s)'
                                  % ",".join(["%d"%id for id in person_ids]),
-                         ))
+                                ),
+                          # ??? This is strongly related to code in queries.py
+                          order_by=['event.id','persona.id',alias+".person_id",
+                                   alias+".role_id"],
+                         )
 
 class Persona (GeneaproModel):
    """

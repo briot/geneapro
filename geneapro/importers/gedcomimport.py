@@ -175,11 +175,11 @@ class GedcomImporter (object):
 
       husb = data.HUSB
       if husb: 
-         husb = self._personas [data.HUSB.id]
+         husb = self._personas [husb.id]
 
       wife = data.WIFE
       if wife: 
-         wife = self._personas [data.WIFE.id]
+         wife = self._personas [wife.id]
 
       for mar in data.MARR:
          evt = models.Event.objects.create (
@@ -405,6 +405,9 @@ class GedcomImporter (object):
       if event_type.gedcom == "BIRT":
          name = "Birth of " + indi.name
          evt = self._births.get (indi.id, None)
+      elif event_type.gedcom == "MARR":
+         name = "Marriage"
+         evt = None
       else:
          evt = None
          name = ""
@@ -461,20 +464,26 @@ class GedcomImporter (object):
       for event in self._event_types.keys ():
         try:
           for v in data.__dict__[event]:
-            if not isinstance (v, str):
-               evt = self._create_event (
-                  indi=indi, event_type=self._event_types[event], data=v)
-               sources = self._create_sources_ref (v)
+             # This is how Gramps represents marriage events entered as a
+             # person's event (ie partner is not known)
+             if event == "EVEN" and v.TYPE == "Marriage":
+                type = self._event_types["MARR"]
+             else:
+                type = self._event_types[event]
 
-               for s in sources:
-                  models.P2E_Assertion.objects.create (
-                     surety = self._default_surety,
-                     researcher = self._researcher,
-                     person = indi,
-                     event = evt,
-                     source = s,
-                     role = self._principal,
-                     value = "")
+             #if not isinstance (v, str):
+             evt = self._create_event (indi=indi, event_type=type, data=v)
+             sources = self._create_sources_ref (v)
+
+             for s in sources:
+                models.P2E_Assertion.objects.create (
+                   surety = self._default_surety,
+                   researcher = self._researcher,
+                   person = indi,
+                   event = evt,
+                   source = s,
+                   role = self._principal,
+                   value = "")
         except KeyError:
            pass
 

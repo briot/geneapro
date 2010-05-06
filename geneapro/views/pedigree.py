@@ -99,8 +99,6 @@ def get_parents (tree, marriage, person_ids, max_level, styles, sosa=1):
 
 style_rules = [
  (RULE_ATTR, [("ALIVE", RULE_IS, "Y")], {"font-weight":"bold"}),
- (RULE_ATTR, [("SEX", RULE_IS, "M")], {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
- (RULE_ATTR, [("SEX", RULE_IS, "F")], {"fill":"#E9DAF1", "stroke":"#fF2080"}),
 
  # Born or dead in La Baussaine before 1862
  (RULE_EVENT,
@@ -119,14 +117,24 @@ style_rules = [
 
  # Person's age today is more than 80, and is alive
  (RULE_ATTR,
-   [("age", RULE_GREATER, 80),
-    ("ALIVE", RULE_IS, "Y")], {"color":"orange"}),
+   [("age",   RULE_GREATER, 80),
+    ("ALIVE", RULE_IS,      "Y")], {"color":"orange"}),
+
+ # Person's with more than one marriage
+ (RULE_EVENT,
+   [("type_id", RULE_IS, models.Event_Type.marriage),
+    ("role",    RULE_IN, (models.Event_Type_Role.marriage__husband,
+                          models.Event_Type_Role.principal,
+                          models.Event_Type_Role.marriage__wife)),
+    ("count",   RULE_GREATER, 1)],  {"fill":"#AA0000"}),
 
  # "Person's name is DELAMOTTE"
  (RULE_ATTR,
-   [("surname", RULE_IS_INSENSITIVE, "delamotte")],
-   {"color":"green"}),
+   [("surname", RULE_IS_INSENSITIVE, "delamotte")], {"color":"green"}),
 
+ # Default rules, related to the sex of the person
+ (RULE_ATTR, [("SEX", RULE_IS, "M")], {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
+ (RULE_ATTR, [("SEX", RULE_IS, "F")], {"fill":"#E9DAF1", "stroke":"#fF2080"}),
 ] 
 # ??? Other rules that would be nice to have:
 #   FLAGS: BIRTH_ORDER, MULTIPLE_BIRTH, DATASET_ID
