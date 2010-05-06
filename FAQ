@@ -1,4 +1,9 @@
 
+Q. How do I setup the application ?
+
+   You need to edit the file settings.py to point to the database
+   you wish to use
+
 Q. How do I import my GEDCOM data ?
 
    Currently, GeneaPro is a read-only view. You should therefore
@@ -10,3 +15,9 @@ Q. How do I import my GEDCOM data ?
 
    The first command is optional, and will reset the database. The
    second command will always add to the existing database
+
+Q. How do I start the server ?
+
+   Use ./manage.py runserver
+   and then open a web browser and connect to
+      http://127.0.0.1:8000/geneapro
