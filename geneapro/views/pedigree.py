@@ -123,9 +123,7 @@ style_rules = [
  # Person's with more than one marriage
  (RULE_EVENT,
    [("type_id", RULE_IS, models.Event_Type.marriage),
-    ("role",    RULE_IN, (models.Event_Type_Role.marriage__husband,
-                          models.Event_Type_Role.principal,
-                          models.Event_Type_Role.marriage__wife)),
+    ("role",    RULE_IS, models.Event_Type_Role.principal),
     ("count",   RULE_GREATER, 1)],  {"fill":"#AA0000"}),
 
  # "Person's name is DELAMOTTE"

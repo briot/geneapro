@@ -50,10 +50,6 @@ class GedcomImporter (object):
             pk = models.Event_Type_Role.birth__father)
          self._birth__mother = models.Event_Type_Role.objects.get (
             pk = models.Event_Type_Role.birth__mother)
-         self._marriage__husband = models.Event_Type_Role.objects.get (
-            pk = models.Event_Type_Role.marriage__husband)
-         self._marriage__wife = models.Event_Type_Role.objects.get (
-            pk = models.Event_Type_Role.marriage__wife)
 
          self._event_types = dict ()
          self._char_types = dict ()
@@ -195,7 +191,7 @@ class GedcomImporter (object):
                  person = husb,
                  source = src,
                  event = evt,
-                 role_id= models.Event_Type_Role.marriage__husband,
+                 role_id= models.Event_Type_Role.principal,
                  value = "event")
             models.P2E_Assertion.objects.create (
                  surety = self._default_surety,
@@ -203,7 +199,7 @@ class GedcomImporter (object):
                  person = wife,
                  source = src,
                  event = evt,
-                 role_id = models.Event_Type_Role.marriage__wife,
+                 role_id = models.Event_Type_Role.principal,
                  value = "event")
 
       children = data.CHIL

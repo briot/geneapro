@@ -585,8 +585,6 @@ class Event_Type_Role (GeneaproModel):
 
    # Some hard-coded values for efficiency. Ideally, we should look these
    # from the database. The problem is if the database gets translated
-   marriage__husband = 1
-   marriage__wife = 2
    principal = 5
    birth__father = 6
    birth__mother = 7

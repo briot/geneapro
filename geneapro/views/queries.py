@@ -143,8 +143,7 @@ def get_extended_personas (ids, styles):
          result [who].children.append (e["related"])
 
       elif e["type_id"] == models.Event_Type.marriage \
-        and e["role"] in (models.Event_Type_Role.marriage__husband,
-                          models.Event_Type_Role.marriage__wife):
+          and e["role"] == models.Event_Type_Role.principal:
          # If this is the marriage with the other person in the list
          if e["related"] in ids:
             result [who].marriage = str (Date (e["date"]))
@@ -160,8 +159,7 @@ def get_extended_personas (ids, styles):
             continue
          last_id=new_id
 
-         if e["person"] != e["related"] \
-            or e["role"] == models.Event_Type_Role.principal:
+         if e["person"] != e["related"]:
             styles.process (result [e ["person"]], e)
 
       for p in persons.persons:
