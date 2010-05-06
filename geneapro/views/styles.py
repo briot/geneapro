@@ -3,14 +3,20 @@ Configuring styles to use when displaying people and events
 Style rules have the following format:
 
 this is a list of simple rules, each of which is one of:
-  (RULE_FLAG, flag_name, flag_value, css)
-      where flag_name is one of "ALIVE", "SEX"
-        and flag_value is the value the flag should have
-
   (RULE_EVENT, [event_test], css)
       and event_test is a list of tuples ("field", "test", "value")
          where "field" is one of "place", "date", "type_id", "age"...
            and "test"  is one of RULE_CONTAINS, RULE_IS,...
+      These rules are tested once per event in which the person took part,
+      whether as principal or as witness. As a result, they are more expensive
+      to check than the RULE_ATTR tests.
+
+  (RULE_ATTR, [tests], css)
+      format is similar to EVENT, but these are tested on the person,
+      not once per event. The "field" would be one of "surname", "given",
+      "age",...
+      The "age" is computed from the person's birth, not checking whether that
+      person is still alive.
 
 In all cases, css is similar to a W3C style description, ie a
 dictionary of key-value pairs that describe the list. The keys
@@ -18,8 +24,8 @@ can be any of "color" (text color), "fill" (background color),
 "font-weight",...
 """
 
-RULE_FLAG  = 0
-RULE_EVENT = 1
+RULE_EVENT = 0
+RULE_ATTR  = 1
 
 RULE_CONTAINS             = 0
 RULE_CONTAINS_INSENSITIVE = 1
@@ -39,7 +45,7 @@ RULE_ON                   = 11
 RULE_IN                   = 12   # for sets
 
 __all__ = ["alive", "Styles",
-           "RULE_FLAG", "RULE_EVENT",
+           "RULE_EVENT", "RULE_ATTR",
            "RULE_CONTAINS", "RULE_CONTAINS_INSENSITIVE", "RULE_IS",
            "RULE_IS_INSENSITIVE", "RULE_BEFORE", "RULE_IN",
            "RULE_IS_NOT", "RULE_GREATER", "RULE_GREATER_EQUAL",
@@ -96,9 +102,7 @@ class Styles ():
       self.rules = []
 
       for r in rules:
-         if r[0] == RULE_FLAG:
-            self.rules.append (r)
-         elif r[0] == RULE_EVENT:
+         if r[0] in (RULE_EVENT, RULE_ATTR):
             tests = []
             for t in r[1]:
                if t[1] == RULE_CONTAINS_INSENSITIVE \
@@ -109,7 +113,7 @@ class Styles ():
                else:
                   tests.append ((t[0], rules_func [t[1]], t[2]))
 
-            self.rules.append ((RULE_EVENT, tests, r[2]))
+            self.rules.append ((r[0], tests, r[2]))
          else:
             print "Unknown rule tag in the style rules: %s" % r
 
@@ -175,20 +179,32 @@ class Styles ():
       # since they override each other
 
       for index, r in enumerate (self.rules):
-         if r[0] == RULE_FLAG:
-            if r[1] == "ALIVE":
-               if (r[2] == "Y" and alive (person)) \
-                  or (r[2] == "N" and not alive (person)):
-                  self._merge (styles, r[3])
-            elif r[1] == "SEX":
-               if person.sex == r[2]:
-                  self._merge (styles, r[3])
-            else:
-               print "Unknown flag in the styles rules: %s" % r
+         if r[0] == RULE_ATTR:
+            match = True
+            for t in r[1]:
+               if t[0] == "surname":
+                  value = person.surname
+               elif t[0] == "ALIVE":
+                  if alive (person):
+                     value = "Y"
+                  else:
+                     value = "N"
+               elif t[0] == "SEX":
+                  value = person.sex
+               elif t[0] == "age":
+                  value = Date.today().years_since (person.birth)
+               else:
+                  value = None
 
-         elif r[0] == RULE_EVENT:
-            if cache [index]:
+               if value is None \
+                 or not t[1] (exp=t[2], value=value):
+                  match = False
+                  break
+            if match:
                self._merge (styles, r[2])
+
+         elif cache [index]:
+            self._merge (styles, r[2])
 
       # Default background value
 

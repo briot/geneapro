@@ -98,9 +98,9 @@ def get_parents (tree, marriage, person_ids, max_level, styles, sosa=1):
    return persons
 
 style_rules = [
- (RULE_FLAG,  "ALIVE", "Y", {"font-weight":"bold"}),
- (RULE_FLAG,  "SEX",   "M", {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
- (RULE_FLAG,  "SEX",   "F", {"fill":"#E9DAF1", "stroke":"#fF2080"}),
+ (RULE_ATTR, [("ALIVE", RULE_IS, "Y")], {"font-weight":"bold"}),
+ (RULE_ATTR, [("SEX", RULE_IS, "M")], {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
+ (RULE_ATTR, [("SEX", RULE_IS, "F")], {"fill":"#E9DAF1", "stroke":"#fF2080"}),
 
  # Born or dead in La Baussaine before 1862
  (RULE_EVENT,
@@ -117,18 +117,28 @@ style_rules = [
     ("age",     RULE_SMALLER_EQUAL, 60)],
    {"color":"blue"}),
 
+ # Person's age today is more than 80, and is alive
+ (RULE_ATTR,
+   [("age", RULE_GREATER, 80),
+    ("ALIVE", RULE_IS, "Y")], {"color":"orange"}),
+
+ # "Person's name is DELAMOTTE"
+ (RULE_ATTR,
+   [("surname", RULE_IS_INSENSITIVE, "delamotte")],
+   {"color":"green"}),
+
 ] 
 # ??? Other rules that would be nice to have:
 #   FLAGS: BIRTH_ORDER, MULTIPLE_BIRTH, DATASET_ID
 #   "# of ... events"
 #   "place.country" != FRANCE
-#   "Age today"
 #   "End of line ancestors", ie without a known parent
 #   "Is ancestor of ..."
 #   "Is descendant of ..."
 #   "Project Explorer contains (or not) the person"
 #   "Son's name is"
 #   "Has sources", "Has sources with reliability >= "
+#   "Person's name is"
 
 def data (request):
    """Compute, and send back to the user, information about the pedigree of a
