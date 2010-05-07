@@ -247,6 +247,7 @@ class GedcomImporter (object):
       """If data contains a subnode PLAC, parse and returns it"""
 
       if data is not None:
+         addr = data.ADDR
          data = data.PLAC
 
       if data is None:
@@ -262,9 +263,9 @@ class GedcomImporter (object):
       # number of fields
 
       long_name = data.value
-      for key in data.__dict__.keys ():
-         if key not in ("value", "FORM", "SOUR", "NOTE", "MAP"):
-            long_name = long_name + " %s=%s" % (key, data.__dict__[key])
+      if addr:
+         for key,val in addr.__dict__.iteritems ():
+             long_name = long_name + " %s=%s" % (key, val)
       if data.MAP:
          long_name = long_name + " MAP=%s,%s" % (
             data.MAP.LATI, data.MAP.LONG)
@@ -278,26 +279,25 @@ class GedcomImporter (object):
              parent_place = None)
          self._places [long_name] = p  # For reuse
 
+         if data.MAP:
+            pp = models.Place_Part.objects.create (
+               place = p, type = self._place_part_types ["MAP"],
+               name = data.MAP.LATI + " " + data.MAP.LONG)
+
          # ??? Unhandled attributes of PLAC: FORM, SOURCE and NOTE
          # FORM would in fact tell us how to split the name to get its various
          # components, which we could use to initialize the place parts
       
-         for key in data.__dict__.keys ():
-            if key not in ("value", "FORM", "SOUR", "NOTE"):
-               if data.__dict__ [key]:
-                  part = self._place_part_types.get (key, None)
-                  if not part:
-                     print "Unknown place part: " + key
-                  else:
-                     if key == "MAP":
-                        value = data.MAP.LATI + " " + data.MAP.LONG
-                     else:
-                        value = data.__dict__ [key]
-            
-                     pp = models.Place_Part.objects.create (
-                        place = p,
-                        type = part,
-                        name = value)
+         for key, val in addr.__dict__.iteritems ():
+            if key != "value" and val:
+               part = self._place_part_types.get (key, None)
+               if not part:
+                  print "Unknown place part: " + key
+               else:
+                  pp = models.Place_Part.objects.create (
+                     place = p,
+                     type = part,
+                     name = val)
 
       return p
 

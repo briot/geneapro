@@ -164,10 +164,6 @@ _GRAMMAR = dict (
     PLAC =  (("FORM", 0, 1,         None),  # Place hierarchy
              ("SOUR", 0, unlimited, "SOURCE_CITATION"),
              ("NOTE", 0, unlimited, None),
-             ("CTRY", 0, 1,         None),  # ??? Gramps addition
-             ("CITY", 0, 1,         None),  # ??? Gramps addition
-             ("POST", 0, 1,         None),  # ??? Gramps addition
-             ("STAE", 0, 1,         None),  # ??? Gramps addition
              ("MAP",  0, 1,                 # ??? Gramps addition
                 (("LATI", 1, 1,     None),
                  ("LONG", 1, 1,     None))),

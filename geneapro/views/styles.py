@@ -5,7 +5,7 @@ Style rules have the following format:
 this is a list of simple rules, each of which is one of:
   (RULE_EVENT, [event_test], css)
       and event_test is a list of tuples ("field", "test", "value")
-         where "field" is one of "place", "date", "type_id",
+         where "field" is one of "place.name", "date", "type_id",
                "age"   => age of the person at that event
                "count" => count of times where that test matched
            and "test"  is one of RULE_CONTAINS, RULE_IS,...
@@ -36,17 +36,18 @@ RULE_CONTAINS_INSENSITIVE = 1
 RULE_IS                   = 2
 RULE_IS_INSENSITIVE       = 3
 RULE_IS_NOT               = 4
+RULE_CONTAINS_NOT_INSENSITIVE = 5
 
-RULE_SMALLER              = 5   # for integers (use RULE_IS for comparison)
-RULE_SMALLER_EQUAL        = 6
-RULE_GREATER_EQUAL        = 7
-RULE_GREATER              = 8
+RULE_SMALLER              = 6   # for integers (use RULE_IS for comparison)
+RULE_SMALLER_EQUAL        = 7
+RULE_GREATER_EQUAL        = 8
+RULE_GREATER              = 9
 
-RULE_BEFORE               = 9   # for dates
-RULE_AFTER                = 10 
-RULE_ON                   = 11
+RULE_BEFORE               = 10   # for dates
+RULE_AFTER                = 11 
+RULE_ON                   = 12
 
-RULE_IN                   = 12   # for sets
+RULE_IN                   = 13   # for sets
 
 __all__ = ["alive", "get_place",
            "Styles",
@@ -55,7 +56,7 @@ __all__ = ["alive", "get_place",
            "RULE_IS_INSENSITIVE", "RULE_BEFORE", "RULE_IN",
            "RULE_IS_NOT", "RULE_GREATER", "RULE_GREATER_EQUAL",
            "RULE_SMALLER", "RULE_SMALLER_EQUAL", "RULE_AFTER",
-           "RULE_ON"]
+           "RULE_ON", "RULE_CONTAINS_NOT_INSENSITIVE"]
 
 from mysites.geneapro.utils.date import Date
 
@@ -73,12 +74,22 @@ def alive (person):
          and (not person.birth 
               or Date.today().years_since (person.birth) <= max_age)
 
-def get_place (event):
+def get_place (event, part):
    """From an instance of Event, return the name of the place where the
-      event occurred
+      event occurred.
+      PART is one of "name", "country",...
    """
    if event.place:
-      return event.place.name
+      if part == "name":
+         return event.place.name
+      elif part == "country":
+         # ??? This is expensive, and might require extra SQL queries.
+         # ??? Also, this info is not currently imported from gedcom
+         data = event.place.place_part_set.filter (type__gedcom='CTRY').all()
+         if data:
+            return data[0].name
+         else:
+            return None
    else:
       return None
 
@@ -88,6 +99,7 @@ rules_func = (
    lambda exp,value: value == exp,         # IS
    lambda exp,value: value.lower() == exp, # IS_INSENSITIVE
    lambda exp,value: value != exp,         # IS_NOT
+   lambda exp,value: exp not in value.lower(), # CONTAINS_NOT_INSENSITIVE
 
    lambda exp,value: value < exp,          # SMALLER
    lambda exp,value: value <= exp,         # SMALLER_EQUAL
@@ -130,6 +142,7 @@ class Styles ():
                   continue
 
                if t[1] == RULE_CONTAINS_INSENSITIVE \
+                  or t[1] == RULE_CONTAINS_NOT_INSENSITIVE \
                   or t[1] == RULE_IS_INSENSITIVE:
                   tests.append ((t[0], rules_func [t[1]], t[2].lower ()))
                elif t[1] == RULE_BEFORE:
@@ -183,8 +196,8 @@ class Styles ():
                      value = Date (e.date).years_since (person.birth)
                   else:
                      value = None
-               elif t[0] == "place":
-                  value = get_place (e)
+               elif t[0].startswith("place."):
+                  value = get_place (e, t[0][6:])
                elif t[0] == "role":
                   value = role
                elif t[0] == "type":

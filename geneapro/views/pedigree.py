@@ -21,7 +21,7 @@ style_rules = [
  (RULE_EVENT,
     [("type",  RULE_IN,         (models.Event_Type.birth,
                                  models.Event_Type.death)),
-     ("place", RULE_CONTAINS_INSENSITIVE, "baussaine"),
+     ("place.name", RULE_CONTAINS_INSENSITIVE, "baussaine"),
      ("role",  RULE_IS,         models.Event_Type_Role.principal),
      ("date",  RULE_BEFORE,     "1862")], {"color":"red"}),
 
@@ -36,6 +36,14 @@ style_rules = [
  (RULE_ATTR,
    [("age",   RULE_GREATER, 80),
     ("ALIVE", RULE_IS,      "Y")], {"color":"orange"}),
+
+ # Foreign people in different color
+ (RULE_EVENT,
+  [("type", RULE_IS, models.Event_Type.birth),
+   ("role", RULE_IS, models.Event_Type_Role.principal),
+   ("place.country", RULE_IS_NOT, ""),
+   ("place.country", RULE_CONTAINS_NOT_INSENSITIVE, "france")],
+  {"fill":"#AAAAAA"}),
 
  # Person's with more than one marriage
  (RULE_EVENT,

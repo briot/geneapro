@@ -95,13 +95,13 @@ def __get_events (persons, ids, styles):
          if e.type_id == models.Event_Type.birth \
                and role == models.Event_Type_Role.principal:
             p.birth = Date (e.date)
-            p.birth_place = get_place (e)
+            p.birth_place = get_place (e, "name")
             p.birth_sources = e.sources
 
          elif e.type_id == models.Event_Type.death \
                and role == models.Event_Type_Role.principal:
             p.death = Date (e.date)
-            p.death_place = get_place (e)
+            p.death_place = get_place (e, "name")
             p.death_sources = e.sources
 
          elif e.type_id == models.Event_Type.marriage \
