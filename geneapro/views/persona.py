@@ -58,6 +58,8 @@ def __get_characteristics (persons, ids):
 def __get_events (persons, ids, styles):
    """Compute the events for the various persons in IDS"""
 
+   compute_parts = styles.need_place_parts()
+
    p2e = dict () # event_id -> person
    events = set ()
    sources = dict ()
@@ -83,7 +85,15 @@ def __get_events (persons, ids, styles):
                   models.Event_Type.death,
                   models.Event_Type.marriage)).select_related ('place')
 
+   places = dict ()
+
    for e in events:
+      if compute_parts and e.place:
+         if e.place_id not in places:
+            places [e.place_id] = e.place
+         else:
+            e.place = places [e.place_id]
+
       e.sources = sources [e.id]
       if e.date:
          e.Date = Date (e.date)
@@ -101,6 +111,12 @@ def __get_events (persons, ids, styles):
          elif e.type_id == models.Event_Type.marriage \
                and role == models.Event_Type_Role.principal:
             p.marriage = e
+
+   if compute_parts:
+      parts = models.Place_Part.objects.filter (
+         place__in = places.keys ()).select_related ('type')
+      for p in parts:
+         setattr (places [p.place_id], p.type.gedcom, p.name)
 
    # Process styles after we have computed birth (since we need age)
    for e in events:

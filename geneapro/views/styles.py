@@ -79,18 +79,15 @@ def get_place (event, part):
       event occurred.
       PART is one of "name", "country",...
    """
-   if event.place:
-      if part == "name":
-         return event.place.name
-      elif part == "country":
-         # ??? This is expensive, and might require extra SQL queries.
-         # ??? Also, this info is not currently imported from gedcom
-         data = event.place.place_part_set.filter (type__gedcom='CTRY').all()
-         if data:
-            return data[0].name
-         else:
-            return None
-   else:
+   try:
+      if event.place:
+         if part == "name":
+            return event.place.name
+         elif part == "country":
+            return event.place.CTRY
+      else:
+         return None
+   except:
       return None
 
 rules_func = (
@@ -129,6 +126,7 @@ class Styles ():
       self.rules = []
       self.today = Date.today ()
       self.counts = [None] * len (rules)  # the "count" rules: (test, value)
+      self._need_place_parts = False
 
       for index, r in enumerate (rules):
          if r[0] in (RULE_EVENT, RULE_ATTR):
@@ -141,6 +139,8 @@ class Styles ():
                elif t[0] == "ancestor" and r[0] == RULE_ATTR:
                   tests.append ((t[0], tree.ancestors (t[2])))
                   continue
+               elif t[0].startswith ("place.") and t[0] != "place.name":
+                  self._need_place_parts = True
 
                if t[1] == RULE_CONTAINS_INSENSITIVE \
                   or t[1] == RULE_CONTAINS_NOT_INSENSITIVE \
@@ -156,6 +156,10 @@ class Styles ():
             print "Unknown rule tag in the style rules: %s" % r
 
       self.no_match = [0] * len (self.rules)
+
+   def need_place_parts (self):
+      """Whether we need extra SQL queries for the place parts"""
+      return self._need_place_parts
 
    def _merge (self, style1, style2):
       """Merge the two styles.

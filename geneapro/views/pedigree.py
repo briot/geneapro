@@ -51,6 +51,17 @@ style_rules = [
     ("role",  RULE_IS, models.Event_Type_Role.principal),
     ("count", RULE_GREATER, 1)],  {"fill":"#AA0000"}),
 
+ # Persons too young at birth of child, or too old at death
+ (RULE_EVENT,
+  [("type", RULE_IS, models.Event_Type.birth),
+   ("role", RULE_IN, (models.Event_Type_Role.birth__father,
+                      models.Event_Type_Role.birth__mother)),
+   ("age",  RULE_SMALLER, 17)], {"fill":"red"}),
+ (RULE_EVENT,
+  [("type", RULE_IS, models.Event_Type.death),
+   ("role", RULE_IS, models.Event_Type_Role.principal),
+   ("age",  RULE_GREATER, 110)], {"fill":"red"}),
+
  # All ancestors of person id=14. Use different colors depending on the
  # sex. These two rules do not cost any additional query if "14" is in the
  # ancestor tree of the decujus
@@ -72,7 +83,6 @@ style_rules = [
  (RULE_ATTR, [("SEX", RULE_IS, "F")], {"fill":"#E9DAF1", "stroke":"#fF2080"}),
 ] 
 # ??? Other rules that would be nice to have:
-#   "place.country" != FRANCE
 #   "Is descendant of ..."
 #   "Project Explorer contains (or not) the person"
 #   "Son's name is"
