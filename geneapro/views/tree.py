@@ -174,8 +174,8 @@ class Tree (object):
             internal (sosa * 2 + 1, mother, gens - 1)
 
             if father is not None and mother is not None:
-               if father.marriage_event:
-                  marriage [sosa * 2] = father.marriage_event
+               if father.marriage:
+                  marriage [sosa * 2] = father.marriage
 
       result = dict ()
       marriage = dict ()

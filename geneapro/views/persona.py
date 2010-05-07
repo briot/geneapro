@@ -16,15 +16,9 @@ def __add_default_person_attributes (person):
       PERSON is an instance of Persona"""
 
    person.sex = "?"
-   person.birth_place = None
    person.birth = None
-   person.birth_sources = None
-   person.death_place = None
    person.death = None
-   person.death_sources = None
    person.marriage = None
-   person.marriage_sources = None
-   person.marriage_event = None
 
    n = person.name.split ('/',3)
    person.given_name = n[0]
@@ -91,24 +85,22 @@ def __get_events (persons, ids, styles):
 
    for e in events:
       e.sources = sources [e.id]
+      if e.date:
+         e.Date = Date (e.date)
+      else:
+         e.Date = None
       for p, role in p2e [e.id]:
          if e.type_id == models.Event_Type.birth \
                and role == models.Event_Type_Role.principal:
-            p.birth = Date (e.date)
-            p.birth_place = get_place (e, "name")
-            p.birth_sources = e.sources
+            p.birth = e
 
          elif e.type_id == models.Event_Type.death \
                and role == models.Event_Type_Role.principal:
-            p.death = Date (e.date)
-            p.death_place = get_place (e, "name")
-            p.death_sources = e.sources
+            p.death = e
 
          elif e.type_id == models.Event_Type.marriage \
                and role == models.Event_Type_Role.principal:
-            p.marriage = Date (e.date)
-            p.marriage_sources = e.sources
-            p.marriage_event = e
+            p.marriage = e
 
    # Process styles after we have computed birth (since we need age)
    for e in events:

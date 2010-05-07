@@ -72,7 +72,7 @@ def alive (person):
 
    return not person.death \
          and (not person.birth 
-              or Date.today().years_since (person.birth) <= max_age)
+             or Date.today().years_since (person.birth.Date) <= max_age)
 
 def get_place (event, part):
    """From an instance of Event, return the name of the place where the
@@ -106,9 +106,9 @@ rules_func = (
    lambda exp,value: value >= exp,         # GREATER_EQUAL
    lambda exp,value: value > exp,          # GREATER
 
-   lambda exp,value: Date (value) < exp,   # BEFORE
-   lambda exp,value: Date (value) > exp,   # AFTER
-   lambda exp,value: Date (value) == exp,  # ON
+   lambda exp,value: value < exp,   # BEFORE
+   lambda exp,value: value > exp,   # AFTER
+   lambda exp,value: value == exp,  # ON
 
    lambda exp,value: value in exp,         # IN
 )
@@ -127,6 +127,7 @@ class Styles ():
 
       self.tree  = tree
       self.rules = []
+      self.today = Date.today ()
       self.counts = [None] * len (rules)  # the "count" rules: (test, value)
 
       for index, r in enumerate (rules):
@@ -192,8 +193,8 @@ class Styles ():
             match = True
             for t in r[1]:
                if t[0] == "age":
-                  if person.birth:
-                     value = Date (e.date).years_since (person.birth)
+                  if person.birth and e.Date:
+                     value = e.Date.years_since (person.birth.Date)
                   else:
                      value = None
                elif t[0].startswith("place."):
@@ -203,7 +204,7 @@ class Styles ():
                elif t[0] == "type":
                   value = e.type_id
                elif t[0] == "date":
-                  value = e.date
+                  value = e.Date
                else:
                   print "Error, invalid field: " + t[0]
                   continue
@@ -253,7 +254,10 @@ class Styles ():
                elif t[0] == "SEX":
                   value = person.sex
                elif t[0] == "age":
-                  value = Date.today().years_since (person.birth)
+                  if person.birth:
+                     value = self.today.years_since (person.birth.Date)
+                  else:
+                     value = ""
                elif t[0] == "ancestor":
                   match = person.id in t[1]
                   if not match:

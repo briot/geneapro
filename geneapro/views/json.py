@@ -3,6 +3,7 @@
 from django.utils import simplejson
 from mysites.geneapro import models
 from mysites.geneapro.utils.date import Date
+from mysites.geneapro.views.styles import get_place
 
 def to_json (obj, year_only):
    """Converts a type to json data, properly converting database instances.
@@ -16,32 +17,43 @@ def to_json (obj, year_only):
          """See inherited documentation"""
 
          if isinstance (obj, models.Persona):
+            b = None
+            bp = None
+            bs = None
+            if obj.birth:
+               b = obj.birth.Date
+               bp = get_place (obj.birth, "name")
+               bs = obj.birth.sources
+
             d = ""
+            dp = None
+            ds = None
             if obj.death:
-               d = obj.death.display (year_only=year_only)
-               if not year_only:
-                  a = obj.death.years_since (obj.birth)
+               d = obj.death.Date
+               if d:
+                  d = d.display (year_only=year_only)
+               if not year_only and b and d:
+                  a = d.years_since (b)
                   if a:
                      d += " (age " + str (a) + ")"
-            elif not year_only:
-               a = Date.today().years_since (obj.birth)
+               dp = get_place (obj.death, "name")
+               ds = obj.death.sources
+            elif not year_only and b:
+               a = Date.today().years_since (b)
                if a:
                   d = "(age " + str (a) + ")"
 
             return {"id":obj.id, "givn":obj.given_name,
-                    'surn':obj.surname,
+                    'surn':obj.surname, 'sex':obj.sex,
                     'styles':obj.styles,
-                    'birth':obj.birth, 'sex':obj.sex, 'death':d,
-                    'birthp':obj.birth_place or "",
-                    'deathp':obj.death_place or "",
-                    'births':obj.birth_sources or "",
-                    'deaths':obj.death_sources or ""}
+                    'birth':b, 'birthp':bp, 'births':bs,
+                    'death':d, 'deathp':dp, 'deaths':ds}
 
          elif isinstance (obj, Date):
             return obj.display (year_only=year_only)
 
          elif isinstance (obj, models.Event):
-            return {"date":    Date (obj.date),
+            return {"date":    obj.Date,
                     "sources": obj.sources}
 
          elif isinstance (obj, models.GeneaproModel):
