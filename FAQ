@@ -21,3 +21,99 @@ Q. How do I start the server ?
    Use ./manage.py runserver
    and then open a web browser and connect to
       http://127.0.0.1:8000/geneapro
+   Support web browers include Firefox and Chrome. Internet Explorer
+   does not currently support svg, except maybe through external
+   plugins. Opera does not properly support text in svg.
+
+Q. Why did you implement this as a web server ?
+
+   A traditional GUI (based on a native API like gtk+, QT or Win32)
+   provide greater efficiency and flexibility in a lot of cases. However,
+   web technologies are far more portable. In particular, since the server
+   is written using a standard python framework (django), you could
+   install it at your ISP, and then access your genealogy from anywhere
+   using a mobile device. Since Geneapro is implemented using standard
+   web technologies (as opposed to Flash), this also increases its
+   portability.
+
+Q. What is the data model used in the database ?
+
+   Although this should be transparent to the end user, the data model
+   is almost a 1-to-1 mapping of the GenTech datamodel, which is based
+   on assertions and avoids any limitations like a unique birth date per
+   person for instance. Technically, you could also store negative
+   assertions ("this person is _not_ born on that date"), which might be
+   useful later on.
+
+Q. What is the license ?
+
+   This is GPL version 3 software, copyright Emmanuel Briot
+
+Q. What format should I use for dates ?
+
+   Geneapro supports multiple input formats for dates. In particular,
+   the usual formats yyyy-mm-dd, dd-mm-yyyy, "yyyy mm, dd", as well as
+   ambiguous formats like "about yyyy", "ca yyyy", "between yyyy-mm and yyyy".
+   It also supports other calendars like Julian dates and the French
+   revolutionary calendar.
+   In fact, you are free to use any format you want, and geneapro will
+   store it exactly as is in its database, and print it exactly as. But
+   it will try internally to make sense out of it, for sorting purposes.
+   This is done automatically.
+
+Q. Does geneapro support same-sex marriages ?
+
+   Yes, a marriage is just an event where several people took part,
+   just as in any other event. These persons are given a role in the
+   event (for instance "husband" and "wife"), but nothing prevents you
+   from either creating new roles ("partner"), or using two husbands or
+   two wifes.
+   Some events and roles plays a special part since they are used to
+   display the pedigree and fan charts (father and mother of a child for
+   instance).
+
+Q. Is there limit to the number of persons in the database ?
+
+   No, geneapro uses a real database (postgreSQL, mySQL or sqlite) as
+   its data storage, and they do not impose limits.
+   Geneapro is carefully optimized to limit the number of queries. For
+   instance, to display the pedigree, it needs one query per generation
+   in your whole tree (even in the parts that are not displayed), plus
+   a few others to get the birth and death dates. Using style highlighting
+   for the persons does not add more than a few extra SQL queries, so these
+   are all pretty cheap, especially when the database is also running
+   locally on the same machine.
+
+Q. I like The Master Genealogist's accents feature
+
+   Good thing. Geneapro has a similar feature, although more powerful.
+   You will currently have to manually edit the pedigree.py python
+   file to specify your highlight rules, but they are extremely
+   powerful, allowing you to choose background color, text color,
+   text weight, font and many other aspects depending on the attributes
+   of the person or the events in which she took part. For instance,
+   you can highlight with special colors:
+     - The persons born in a specific city before a specific date
+     - The persons that have any event in a specific city
+     - The persons that died before 60
+     - The persons born in other countries
+     - The persons with inconsistencies, like too young at the birth
+       of their first child or too old at their recorded death
+     - The persons with more than one registered marriage data
+     - All the male ancestors of a given person
+   and many other types of rules
+
+Q. Can I see a tree of my ancestors ?
+
+   Yes, that and a fanchart are actually the only two "reports" that
+   have been implemented in Geneapro so far. But they impose no limit on
+   the depth of the pedigree and fanchart, except for that related to
+   current browser technology limitation (most of them are still a bit
+   slow manipulating huge SVG drawings).
+
+Q. Does Geneapro support sources ?
+
+   Although support for sources is currently limited, Geneapro will
+   nonetheless show a special tick mark next to birth, marriage or
+   death events when they have a proper associated source. This is
+   a convenient way to find out which sources should be updated.
