@@ -6,8 +6,6 @@
    (Assertion.subject2, Assertion.value)   ???
    Assertion.Value should point into a table rather than be a text
 
-* GEDCOM import
-
 * Pedigree View
 ** BACK button should go back to previous pedigree view
    Or perhaps use the area on the right to show the history
@@ -35,6 +33,8 @@
 ** Display last name on a separate line to make it more readable
 ** Editing fanchart's config graphically
    As opposed to modifying defaultConfig in fanchart.js
+** Display ticks when there are sources
+** Display marriage dates
 
 * Model
 ** Need to take into account persona and all its aliases in all queries

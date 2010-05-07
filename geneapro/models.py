@@ -468,65 +468,6 @@ class Citation_Part (GeneaproModel):
       """Meta data for the model"""
       db_table = "citation_part"
 
-def get_related_persons (queryset, person_ids):
-   """For each event in queryset (Event.objects.....) to which the
-      specified person(s) took part, adds additional fields:
-        'role': the role played by this person in the event
-        'related': the name of one of the other persons taking part in
-                   the same event
-        'related_role': the role of that person
-        'sources': ids of the sources that justify this event
-      An event will therefore match multiple entries, one for each person
-      taking part in the event excep the one passed in parameter.
-
-      Example of use:
-         get_related_p (Event.objects.filter (type=1), person_ids=1)
-      reports all birth events in which person 1 took part, and the other
-      persons that also took part (either the parents, or the other parent
-      and the child, depending on the role played by person_id)
-
-      You can also specify multiple persons:
-         get_related_p (Event.objects.filter (type=1), [1,2])
-
-      You can also filter on these new fields:
-         get_related_p (Event.objects.filter(type=1), 1)
-            .extra(where=('p2e.role_id=5',))
-      if you only want the events where the person was playing the
-      principal role.
-
-      This queryset can be used for instance to find the parents, children
-      and spouse(s) of an individual in a single query
-   """
-   queryset = queryset or Event.objects.all ()
-   queryset.query.pre_sql_setup()
-   alias1 = queryset.query.join (('event', 'p2e', 'id', 'event_id'))
-   queryset.query.join          ((alias1, 'persona', 'person_id', 'id'))
-   alias = queryset.query.join  ((alias1, 'p2e', 'event_id', 'event_id'),
-                                 promote=True)
-        # Need to add a test that alias.person_id!=persona.id inside the
-        # LEFT JOIN
-        # That would limit the size of the data returned
-
-   alias2 = queryset.query.join (('event','place','place_id','id'),
-                                 promote=True)
-   alias3 = queryset.query.join (('p2e','assertion','assertion_ptr_id','id'))
-
-   if not isinstance (person_ids, list):
-      person_ids = [person_ids]
-   return queryset.extra (select={'person':       'persona.id',
-                                  'role':         alias1 + '.role_id',
-                                  'related':      alias  + '.person_id',
-                                  'related_role': alias  + '.role_id',
-                                  'place':        alias2 + '.name',
-                                  'sources':      alias3 + '.source_id'},
-                          where=('persona.id IN (%s)'
-                                 % ",".join(["%d"%id for id in person_ids]),
-                                ),
-                          # ??? This is strongly related to code in queries.py
-                          order_by=['event.id','persona.id',alias+".person_id",
-                                   alias+".role_id"],
-                         )
-
 class Persona (GeneaproModel):
    """
    Contains the core identification for individuals. Such individuals
