@@ -88,7 +88,7 @@ function drawBox (svg, person, x, y, sosa, config) {
          );
     } else {
       svg.rect (x, y, boxWidth, boxHeight,
-               {"stroke-dasharray":"3",
+               {"stroke-dasharray":"3", fill:"white", stroke:"black",
                 onmouseover:'onMouseOver(evt)',
                 onmouseout:'onMouseOut(evt)'});
   }

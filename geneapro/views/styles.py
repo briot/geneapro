@@ -16,9 +16,11 @@ this is a list of simple rules, each of which is one of:
   (RULE_ATTR, [tests], css)
       format is similar to EVENT, but these are tested on the person,
       not once per event. The "field" would be one of "surname", "given",
-      "age",...
+      "age","ancestor", "ALIVE", "SEX", "UNKNOWN_FATHER", "UNKNOWN_MOTHER"...
       The "age" is computed from the person's birth, not checking whether that
       person is still alive.
+      "ancestor" is true if the person is an ancestor of the person(s) given
+      by the RULE_IS or RULE_IN test.
 
 In all cases, css is similar to a W3C style description, ie a
 dictionary of key-value pairs that describe the list. The keys
@@ -46,7 +48,8 @@ RULE_ON                   = 11
 
 RULE_IN                   = 12   # for sets
 
-__all__ = ["alive", "Styles",
+__all__ = ["alive", "get_place",
+           "Styles",
            "RULE_EVENT", "RULE_ATTR",
            "RULE_CONTAINS", "RULE_CONTAINS_INSENSITIVE", "RULE_IS",
            "RULE_IS_INSENSITIVE", "RULE_BEFORE", "RULE_IN",
@@ -69,6 +72,15 @@ def alive (person):
    return not person.death \
          and (not person.birth 
               or Date.today().years_since (person.birth) <= max_age)
+
+def get_place (event):
+   """From an instance of Event, return the name of the place where the
+      event occurred
+   """
+   if event.place:
+      return event.place.name
+   else:
+      return None
 
 rules_func = (
    lambda exp,value: exp in value,         # CONTAINS
@@ -96,11 +108,12 @@ class Styles ():
    by caching data when appropriate.
    """
 
-   def __init__ (self, rules):
+   def __init__ (self, rules, tree):
       """Rules specifies the rules to use for the highlighting."""
 
       # Preprocess the rules for faster computation
 
+      self.tree  = tree
       self.rules = []
       self.counts = [None] * len (rules)  # the "count" rules: (test, value)
 
@@ -108,9 +121,12 @@ class Styles ():
          if r[0] in (RULE_EVENT, RULE_ATTR):
             tests = []
             for t in r[1]:
-               if t[0] == "count":
+               if t[0] == "count" and r[0] == RULE_EVENT:
                   # Handled separately at the end
                   self.counts [index] = (rules_func [t[1]], t[2])
+                  continue
+               elif t[0] == "ancestor" and r[0] == RULE_ATTR:
+                  tests.append ((t[0], tree.ancestors (t[2])))
                   continue
 
                if t[1] == RULE_CONTAINS_INSENSITIVE \
@@ -145,11 +161,13 @@ class Styles ():
 
       self.cache = dict ()
 
-   def process (self, person, e):
+   def process (self, person, role, e, sources):
       """Process an event into the cache.
          The event is considered in relation to person. The same event might
          be processed multiple times, for each person that are part of this
-         event (principals, witnesses,...)"""
+         event (principals, witnesses,...)
+         SOURCES is the list of source_id corresponding to the event
+      """
 
       if person.id not in self.cache:
          pr1 = self.cache [person.id] = list (self.no_match)
@@ -162,11 +180,20 @@ class Styles ():
             for t in r[1]:
                if t[0] == "age":
                   if person.birth:
-                     value = Date (e["date"]).years_since (person.birth)
+                     value = Date (e.date).years_since (person.birth)
                   else:
                      value = None
+               elif t[0] == "place":
+                  value = get_place (e)
+               elif t[0] == "role":
+                  value = role
+               elif t[0] == "type":
+                  value = e.type_id
+               elif t[0] == "date":
+                  value = e.date
                else:
-                  value = e[t[0]]
+                  print "Error, invalid field: " + t[0]
+                  continue
 
                if value is None \
                  or not t[1] (exp=t[2], value=value):
@@ -177,7 +204,9 @@ class Styles ():
                pr1[index] = pr1[index] + 1
 
    def compute (self, person):
-      """Returns the styles to use for that person"""
+      """Sets person.styles to contain the list of styles for that person.
+         Nothing is computing if the style is already known.
+      """
 
       styles = {}
       cache = self.cache.get (person.id, self.no_match)
@@ -196,10 +225,27 @@ class Styles ():
                      value = "Y"
                   else:
                      value = "N"
+               elif t[0] == "UNKNOWN_FATHER":
+                  f, m = self.tree.parents.get (person.id, (None, None))
+                  if f is None:
+                     value = "Y"
+                  else:
+                     value = "N"
+               elif t[0] == "UNKNOWN_MOTHER":
+                  f, m = self.tree.parents.get (person.id, (None, None))
+                  if m is None:
+                     value = "Y"
+                  else:
+                     value = "N"
                elif t[0] == "SEX":
                   value = person.sex
                elif t[0] == "age":
                   value = Date.today().years_since (person.birth)
+               elif t[0] == "ancestor":
+                  match = person.id in t[1]
+                  if not match:
+                     break
+                  continue
                else:
                   value = None
 
@@ -222,4 +268,4 @@ class Styles ():
 
       # Default background value
 
-      return self._merge (styles, {"fill":"white"})
+      person.styles = self._merge (styles, {"fill":"white"})
