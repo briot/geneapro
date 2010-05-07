@@ -208,13 +208,19 @@ function drawFan (svg, config, centerx, centery) {
                }
                svg.path (svg.defs(), textPath, {id:"Path"+(minIndex + id)})
 
+               var birth = person.birth;
+               if (birth)
+                  birth += (person.births ? " \u2713" : " \u2717");
+               var death = person.death;
+               if (death)
+                  death += (person.deaths ? " \u2713" : " \u2717");
+
                var text = svg.text ("");
                svg.textpath(text, "#Path"+(minIndex + id),
                   svg.createText().string("")
                   .span (person.surn.toUpperCase())
                   .span (person.givn, {dx:5})
-                  .span ((person.birth || "?") + "-"
-                         + (person.death || "?"),
+                  .span ((birth || "?") + "-" + (death || "?"),
                          {x:"10",dy:"1.1em"}),
                   getAttr ({class:"gen" + gen, startOffset:5},
                            person, true));
@@ -310,13 +316,20 @@ function drawSOSA (conf) {
    config.decujusy = centery - 5;
 
    var person = sosa [1];
+   var birth = person.birth;
+   if (birth)
+      birth += (person.births ? " \u2713" : " \u2717");
+   var death = person.death;
+   if (death)
+      death += (person.deaths ? " \u2713" : " \u2717");
+
    svg.text(config.decujusx, config.decujusy,
             svg.createText().string(person.surn + " " + person.givn)
                .span ("b:", {x:config.decujusx, dy:"1.4em"})
-               .span (person.birth, {"font-weight":"normal",
+               .span (birth, {"font-weight":"normal",
                                      "font-style":"italic"})
                .span ("d:", {x:config.decujusx, dy:"1.2em"})
-               .span (person.death, {"font-weight":"normal",
+               .span (death, {"font-weight":"normal",
                                      "font-style":"italic"}),
             getAttr ({"pointer-events":"none"}, person, true));
 

@@ -33,7 +33,6 @@
 ** Display last name on a separate line to make it more readable
 ** Editing fanchart's config graphically
    As opposed to modifying defaultConfig in fanchart.js
-** Display ticks when there are sources
 ** Display marriage dates
 
 * Model

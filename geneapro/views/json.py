@@ -23,21 +23,23 @@ def to_json (obj, year_only):
             if obj.birth:
                b = obj.birth.Date
                bp = get_place (obj.birth, "name")
-               bs = obj.birth.sources
+               if obj.birth.sources:
+                  bs = obj.birth.sources
 
             d = ""
             dp = None
             ds = None
             if obj.death:
-               d = obj.death.Date
-               if d:
-                  d = d.display (year_only=year_only)
+               D = obj.death.Date
+               if D:
+                  d = D.display (year_only=year_only)
                if not year_only and b and d:
-                  a = d.years_since (b)
+                  a = D.years_since (b)
                   if a:
                      d += " (age " + str (a) + ")"
                dp = get_place (obj.death, "name")
-               ds = obj.death.sources
+               if obj.death.sources:
+                  ds = obj.death.sources
             elif not year_only and b:
                a = Date.today().years_since (b)
                if a:
