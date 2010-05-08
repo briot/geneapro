@@ -323,21 +323,14 @@ function drawSOSA (conf) {
    if (death)
       death += (person.deaths ? " \u2713" : " \u2717");
 
-   svg.text(config.decujusx, config.decujusy,
-            svg.createText().string(person.surn + " " + person.givn)
-               .span ("b:", {x:config.decujusx, dy:"1.4em"})
-               .span (birth, {"font-weight":"normal",
-                                     "font-style":"italic"})
-               .span ("d:", {x:config.decujusx, dy:"1.2em"})
-               .span (death, {"font-weight":"normal",
-                                     "font-style":"italic"}),
-            getAttr ({"pointer-events":"none"}, person, true));
+   drawBox (svg, person, config.decujusx,
+            config.decujusy - config.boxHeight / 2, 1, config);
 
    /* Draw children */
 
    if (children) {
       var y = (maxHeight - childrenHeight) / 2;
-      for (var c=0; c < children.length; c++) {
+      for (var c=0, len=children.length; c < len; c++) {
          drawBox (svg, children [c], 1, y, -1 - c, config);
          y += config.boxHeight + config.vertPadding;
       }
