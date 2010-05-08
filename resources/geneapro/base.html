@@ -39,16 +39,20 @@
  <link rel="stylesheet" href="{{MEDIA_URL}}ui.tabs.css"/>
 </head>
 <body>
- <ul class="iconBox">
- {% block iconBox %}
-  <li>People</li>
-  <li>Places</li>
-  <li><a href="sources">Sources</a></li>
-  <li><a href="pedigree">Pedigree</a></li>
-  <li><a href="fanchart">Fan Chart</a></li>
-  <li>Search</li>
- {% endblock iconBox %}
- </ul>
+ <div id="leftside">>
+   <ul class="iconBox">
+   {% block iconBox %}
+    <li>People</li>
+    <li>Places</li>
+    <li><a href="sources">Sources</a></li>
+    <li><a href="pedigree">Pedigree</a></li>
+    <li><a href="fanchart">Fan Chart</a></li>
+    <li>Search</li>
+   </ul>
+   {% endblock iconBox %}
+   {% block leftside %}
+   {% endblock leftside %}
+ </div>
 
  <div id="rightside">
   {% block rightside %}

@@ -36,8 +36,8 @@ body {font-size:62.5%;  /* so that 1em=10px, when default font-size is 16px */
          border-top:1px solid #999;
          border-bottom:1px solid #999; margin-top:8px}
 
-.iconBox {width:140px; float:left; list-style-type:none; position:absolute;
-          padding:0 10px;}
+#leftside {float:left; position:absolute}
+.iconBox {width:140px; list-style-type:none; padding:0 10px;}
 .iconBox li {border:1px solid black; font-size:1.4em; line-height:2em; padding:2px 10px 2px 10px; margin:20px 0 20px 0}
 
 #rightside {position:fixed; right:10px; top:10px; height:auto;
