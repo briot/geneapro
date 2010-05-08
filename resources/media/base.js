@@ -78,11 +78,11 @@ function drawBox (svg, person, x, y, sosa, config) {
      svg.text(g, 4, "1em",
           svg.createText().string(person.surn + " " + person.givn)
           .span ("b:", {x:4, dy:"1.2em"})
-          .span (birth, {x:16,"font-weight":"normal","font-style":"italic"})
-          .span (birthp, {x:16,dy:"1.1em","font-weight":"normal","font-style":"italic"})
+          .span (birth, {x:16,"font-style":"italic"})
+          .span (birthp, {x:16,dy:"1.1em","font-style":"italic"})
           .span ("d:", {x:4, dy:"1.2em"})
-          .span (death, {x:16,"font-weight":"normal", "font-style":"italic"})
-          .span (deathp, {x:16,dy:"1.1em","font-weight":"normal","font-style":"italic"}),
+          .span (death, {x:16,"font-style":"italic"})
+          .span (deathp, {x:16,dy:"1.1em","font-style":"italic"}),
         getAttr ({"clip-path":"url(#p"+pId+")", "pointer-events":"none"},
                  person, true)
          );

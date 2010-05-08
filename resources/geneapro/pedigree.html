@@ -6,7 +6,7 @@
 #stats {margin:0; padding:0}
 #stats li {margin-bottom:20px; list-style-type:none}
 {% endblock css %}
-{% block header %}
+{% block endbody %}
 {% ifequal type "fanchart" %}
 <script type="text/javascript" src="{{MEDIA_URL}}fanchart.js"></script>
 {% else %}
@@ -22,7 +22,7 @@ function changeGenerations () {
   getPedigree ();
 }
 </script>
-{% endblock header %}
+{% endblock endbody %}
 {% block contents %}
 Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
   <option>1</option>

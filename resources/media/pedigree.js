@@ -135,7 +135,7 @@ function drawSOSA() {
       var space = (maxHeight - children.length * boxHeight)
          / (children.length + 1);
       var y = space;
-      for (var c=0; c < children.length; c++) {
+      for (var c=0, len=children.length; c < len; c++) {
          var x2 = x + boxWidth + horizPadding;
          var y2 = tops[2 * index + 2] + boxHeight / 2;
          svg.path (svg.createPath()

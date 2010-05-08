@@ -62,13 +62,15 @@ style_rules = [
    ("role", RULE_IS, models.Event_Type_Role.principal),
    ("age",  RULE_GREATER, 110)], {"fill":"red"}),
 
- # All ancestors of person id=14. Use different colors depending on the
+ # All ancestors of person id=1. Use different colors depending on the
  # sex. These two rules do not cost any additional query if "14" is in the
  # ancestor tree of the decujus
  (RULE_ATTR,
-   [("ancestor", RULE_IS, 14), ("SEX", RULE_IS, "M")], {"fill":"#0CA3D4"}),
+   [("ancestor", RULE_IS, 1), ("SEX", RULE_IS, "M")],
+  {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
  (RULE_ATTR,
-   [("ancestor", RULE_IS, 14), ("SEX", RULE_IS, "F")], {"fill":"#9C03D4"}),
+   [("ancestor", RULE_IS, 1), ("SEX", RULE_IS, "F")],
+  {"fill":"#E9DAF1", "stroke":"#fF2080"}),
 
  # Do we know both parents ?
  (RULE_ATTR, [("UNKNOWN_FATHER", RULE_IS, "Y")], {"color":"violet"}),
@@ -78,9 +80,6 @@ style_rules = [
  (RULE_ATTR,
    [("surname", RULE_IS_INSENSITIVE, "delamotte")], {"color":"green"}),
 
- # Default rules, related to the sex of the person
- (RULE_ATTR, [("SEX", RULE_IS, "M")], {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
- (RULE_ATTR, [("SEX", RULE_IS, "F")], {"fill":"#E9DAF1", "stroke":"#fF2080"}),
 ] 
 # ??? Other rules that would be nice to have:
 #   "Is descendant of ..."

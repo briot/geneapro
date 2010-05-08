@@ -8,6 +8,10 @@ defaultConfig = {
       make it more readable */
    genThreshold: 4,
 
+   /* Extra blank spaces between layers rings. This is used to display
+      marriage information (if 0, no marriage info is displayed) */
+   sepBetweenGens: 20,
+
    /* row height for generations >= genThreshold */
    rowHeightAfterThreshold: 120, 
 
@@ -148,6 +152,9 @@ function drawFan (svg, config, centerx, centery) {
          var maxRadius = minRadius + config.rowHeightAfterThreshold;
       }
 
+      if (gen <= 7) 
+         minRadius += config.sepBetweenGens;
+
       var minIndex = Math.pow (2, gen); /* first SOSA in that gen, and number
                                            of persons in that gen */
       var angleInc = (maxAngleRad - minAngleRad) / minIndex;
@@ -206,7 +213,7 @@ function drawFan (svg, config, centerx, centery) {
                        maxAngle, minAngle, false, true);
                  }
                }
-               svg.path (svg.defs(), textPath, {id:"Path"+(minIndex + id)})
+               svg.path (svg.defs(), textPath, {id:"Path"+num})
 
                var birth = person.birth;
                if (birth)
@@ -216,7 +223,7 @@ function drawFan (svg, config, centerx, centery) {
                   death += (person.deaths ? " \u2713" : " \u2717");
 
                var text = svg.text ("");
-               svg.textpath(text, "#Path"+(minIndex + id),
+               svg.textpath(text, "#Path"+num,
                   svg.createText().string("")
                   .span (person.surn.toUpperCase())
                   .span (person.givn, {dx:5})
@@ -224,6 +231,36 @@ function drawFan (svg, config, centerx, centery) {
                          {x:"10",dy:"1.1em"}),
                   getAttr ({class:"gen" + gen, startOffset:5},
                            person, true));
+
+               if (num % 2 == 0 && config.sepBetweenGens > 10
+                   && marriage[num] && gen <= 7)
+               {
+                 if (gen == 1) {
+                    var textPath = svg.createPath ()
+                       .moveTo (centerx - config.rowHeight, centery - 10)
+                       .lineTo (centerx + config.rowHeight, centery - 10);
+
+                 } else if (minAngle < 0 || !config.readable_names) {
+                    var textPath = createPath (
+                          minRadius - config.sepBetweenGens,
+                          minRadius - config.sepBetweenGens, 
+                          minAngle - angleInc, maxAngle, false);
+                 } else {
+                    var textPath = createPath (minRadius, minRadius, 
+                          maxAngle, minAngle - angleInc, false, true);
+                 }
+                 svg.path (svg.defs(), textPath, {id:"PathM"+num})
+
+                 var mar = marriage [num].date || "";
+                 if (mar)
+                    mar += (marriage [num].sources ? " \u2713":" \u2717");
+
+                 svg.textpath (text, "#PathM"+num,
+                    svg.createText ().string (mar),
+                    {stroke:"black", "stroke-width":0,
+                     startOffset:"50%", "text-anchor":"middle"});
+
+               }
             }
          } else {
             svg.path (p, {class:"u",
@@ -297,6 +334,8 @@ function chartDimensions (config) {
 function drawSOSA (conf) {
    config = $.extend (true, {}, defaultConfig, conf);
 
+   config.rowHeight += config.sepBetweenGens;
+
    var childrenHeight = children
        ? children.length * (config.boxHeight + config.vertPadding)
        : 0;
@@ -304,7 +343,7 @@ function drawSOSA (conf) {
    var maxHeight = Math.max (childrenHeight, dimensions.height);
    var maxWidth = config.boxWidth + config.horizPadding + dimensions.width;
 
-   var svg = $('#pedigreeSVG').height (maxHeight).width (maxWidth).svg('get');
+   var svg = $("#pedigreeSVG").height (maxHeight).width (maxWidth).svg('get');
    svg.clear ();
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
                   preserveAspectRatio:"xMinYMid"},true);

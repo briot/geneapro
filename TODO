@@ -23,6 +23,10 @@
    but should fallback on "baptism" and "burial" for instance, or the user
    might want to see other info (if "residence", there can be multiple of
    them)
+** javascript should send person data separately, to detect duplicate
+   persons in the tree (and avoid drawing them twice when possible)
+** Use engagement instead of marriage, burial instead of death when the user
+   wants (or any other custom event)
 
 * FanChart
 ** Possibility to fold part of the fanchart to concentrate on specific
@@ -33,7 +37,7 @@
 ** Display last name on a separate line to make it more readable
 ** Editing fanchart's config graphically
    As opposed to modifying defaultConfig in fanchart.js
-** Display marriage dates
+** Highlight F/M for descendants of 1
 
 * Model
 ** Need to take into account persona and all its aliases in all queries
