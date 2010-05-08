@@ -62,6 +62,9 @@ style_rules = [
    ("role", RULE_IS, models.Event_Type_Role.principal),
    ("age",  RULE_GREATER, 110)], {"fill":"red"}),
 
+ # If the person appears multiple time in the current tree
+ (RULE_ATTR, [("IMPLEX", RULE_GREATER, 1)], {"fill":"yellow"}),
+
  # All ancestors of person id=1. Use different colors depending on the
  # sex. These two rules do not cost any additional query if "14" is in the
  # ancestor tree of the decujus
@@ -89,9 +92,9 @@ style_rules = [
 
 def get_sosa_tree (id, max_levels, style_ruless):
    tree = Tree ()
-   ids  = tree.ancestors (id, generations=max_levels)
-   styles = Styles (style_rules, tree)
-   ids.add (id)  # we'll need info on the person
+   ids  = set (tree.ancestors (id, generations=max_levels).keys())
+   styles = Styles (style_rules, tree, decujus=id)
+   ids.add (id) # we'll need info on the person
 
    children = tree.children (id)
 

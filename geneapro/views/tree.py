@@ -104,15 +104,22 @@ class Tree (object):
          self._ancestors [id].update (tmpids)
 
    def ancestors (self, id, generations=-1):
-      """The set of ancestors for ID, up to GENERATIONS.
+      """The dict of ancestors for ID (value is the number of occurrences),
+         up to GENERATIONS.
          This does not include ID itself"""
 
-      self._compute_ancestors (id) # all ancestors
-      if generations == -1:
-         return self._ancestors [id]
+      def internal (p, gens):
+         father, mother = self.parents.get (p, (None, None))
+         if father:
+            result [father] = result.get (father, 0) + 1
+            if gens != 0: internal (father, gens - 1)
+         if mother:
+            result [mother] = result.get (mother, 0) + 1
+            if gens != 0: internal (mother, gens - 1)
 
-      result = set ()
-      self._add_ancestors (result, id, generations)
+      result = dict ()
+      self._compute_ancestors (id) # all ancestors
+      internal (id, generations)
       return result
 
    def children (self, id):

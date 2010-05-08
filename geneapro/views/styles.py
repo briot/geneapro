@@ -16,11 +16,14 @@ this is a list of simple rules, each of which is one of:
   (RULE_ATTR, [tests], css)
       format is similar to EVENT, but these are tested on the person,
       not once per event. The "field" would be one of "surname", "given",
-      "age","ancestor", "ALIVE", "SEX", "UNKNOWN_FATHER", "UNKNOWN_MOTHER"...
+      "age","ancestor", "ALIVE", "SEX", "UNKNOWN_FATHER", "UNKNOWN_MOTHER",
+      "IMPLEX"...
       The "age" is computed from the person's birth, not checking whether that
       person is still alive.
       "ancestor" is true if the person is an ancestor of the person(s) given
       by the RULE_IS or RULE_IN test.
+      "IMPLEX" is the number of times this person appears in the ancestor tree
+      of the current person.
 
 In all cases, css is similar to a W3C style description, ie a
 dictionary of key-value pairs that describe the list. The keys
@@ -117,7 +120,7 @@ class Styles ():
    by caching data when appropriate.
    """
 
-   def __init__ (self, rules, tree):
+   def __init__ (self, rules, tree, decujus):
       """Rules specifies the rules to use for the highlighting."""
 
       # Preprocess the rules for faster computation
@@ -138,6 +141,10 @@ class Styles ():
                   continue
                elif t[0] == "ancestor" and r[0] == RULE_ATTR:
                   tests.append ((t[0], tree.ancestors (t[2])))
+                  continue
+               elif t[0] == "IMPLEX" and r[0] == RULE_ATTR:
+                  tests.append ((t[0], rules_func [t[1]], t[2],
+                                 tree.ancestors (decujus)))
                   continue
                elif t[0].startswith ("place.") and t[0] != "place.name":
                   self._need_place_parts = True
@@ -257,6 +264,9 @@ class Styles ():
                      value = "N"
                elif t[0] == "SEX":
                   value = person.sex
+               elif t[0] == "IMPLEX":
+                  value = t[3].get (person.id, 0)
+                  print "implex=", value, " ", t[3]
                elif t[0] == "age":
                   if person.birth:
                      value = self.today.years_since (person.birth.Date)
