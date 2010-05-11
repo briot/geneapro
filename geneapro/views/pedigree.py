@@ -111,7 +111,11 @@ def get_sosa_tree (id, max_levels, style_ruless):
       children [index] = persons [c]
 
    sosa = tree.sosa_tree (id, persons, generations=max_levels)
-   return (sosa[0], sosa[1], children)
+   return {'generations': max_levels,
+           'sosa':        sosa[0],
+           'children':    children,
+           'marriage':    sosa[1],
+           'styles':      styles.all_styles()}
 
 def data (request):
    """Compute, and send back to the user, information about the pedigree of a
@@ -122,14 +126,8 @@ def data (request):
    year_only   = request.GET.get ("yearonly", "false") == "true"
    who         = int (request.GET ["id"])
 
-   def sort_by_birth (pers1, pers2):
-      """Compare two persons by birth date"""
-      return cmp (pers1.birth, pers2.birth)
-
-   tree, marriage, children = get_sosa_tree (who, generations, style_rules)
-   result = to_json ({'generations':generations, 'sosa':tree,
-                   'children':children, 'marriage':marriage},
-                  year_only=year_only)
+   result = get_sosa_tree (who, generations, style_rules)
+   result = to_json (result, year_only=year_only)
    return HttpResponse (result, mimetype="application/javascript")
 
 def pedigree_view (request):

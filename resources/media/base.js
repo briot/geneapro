@@ -1,3 +1,23 @@
+var data = null;  //  Data from JSON
+var decujus = 1;  //  Current decujus
+
+/************************************************
+ * Request JSON data for the pedigree
+ ************************************************/
+
+function getPedigree (p) {
+  var gen = Number (getSelectedValue ($("select[name=generations]")[0]))+1;
+  p = p || {};
+  decujus = p.id || decujus;
+  $.getJSON (pedigree_data_url,
+             {id:decujus, generations:gen, yearonly:p.yearonly},
+             function (d, status) {
+                unsetBusy ();
+                data = d;
+                drawSOSA ();
+             });
+}
+
 /************************************************
  * Display a busy image on top of the given element
  ************************************************/
@@ -35,7 +55,7 @@ function getSelectedValue (select) {
  ************************************************/
 
 function getAttr (svgDefault, person, foreground) {
-   var acc = $.extend ({}, svgDefault, person.styles);
+   var acc = $.extend ({}, svgDefault, data.styles [person.y]);
 
    if (foreground) {
       acc.fill = acc.color;
@@ -45,6 +65,20 @@ function getAttr (svgDefault, person, foreground) {
       delete acc["font-weight"];
    }
    return acc;
+}
+
+/********************************************************
+ * Event display
+ * The fields of the event depend on the order in json.py
+ ********************************************************/
+
+function event_to_string (e) {
+   if (e) {
+      var s = e[0] || "";
+      if (s) s += (e[2] ? " \u2713":" \u2717");
+      return s;
+   } else
+      return "";
 }
 
 /************************************************
@@ -64,16 +98,10 @@ function drawBox (svg, person, x, y, sosa, config) {
      var clip = svg.other (g, 'clipPath', {id:'p'+pId});
      svg.rect (clip, 0, 0, config.boxWidth, config.boxHeight);
 
-     var birth = person.birth;
-     if (person.birth)
-        birth += (person.births ? " \u2713" : " \u2717");
-
-     var death = person.death;
-     if (person.death)
-        death += (person.deaths ? " \u2713" : " \u2717");
-
-     var birthp = person.birthp || " ";
-     var deathp = person.deathp || " ";
+     var birth = event_to_string (person.b),
+         death = event_to_string (person.d),
+         birthp = person.b ? person.b[1] || "" : "",
+         deathp = person.d ? person.d[1] || "" : "";
 
      svg.text(g, 4, "1em",
           svg.createText().string(person.surn + " " + person.givn)

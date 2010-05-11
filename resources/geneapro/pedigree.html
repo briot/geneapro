@@ -6,22 +6,28 @@
 #stats {margin:0; padding:0}
 #stats li {margin-bottom:20px; list-style-type:none}
 {% endblock css %}
+
+{% block script %}
+function changeGenerations () {
+  getPedigree ();
+}
+pedigree_data_url="{% url pedigree_data %}";
+$(document).ready (function() {
+   $('#pedigreeSVG').svg ();
+{% ifequal type "fanchart" %}
+   getPedigree ({yearonly:true});
+{% else %}
+   getPedigree ({yearonly:false});
+{% endifequal %}
+   });
+{% endblock script %}
+
 {% block endbody %}
 {% ifequal type "fanchart" %}
 <script type="text/javascript" src="{{MEDIA_URL}}fanchart.js"></script>
 {% else %}
 <script type="text/javascript" src="{{MEDIA_URL}}pedigree.js"></script>
 {% endifequal %}
-<script type="text/javascript">
-function changeGenerations () {
-  getPedigree ();
-}
-$(document).ready (function() {
-   pedigree_data_url="{% url pedigree_data %}";
-  $('#pedigreeSVG').svg();
-  getPedigree ();
-});
-</script>
 {% endblock endbody %}
 {% block contents %}
 Generations:&nbsp;<select name="generations" onchange="changeGenerations()">

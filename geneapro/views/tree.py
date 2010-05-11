@@ -5,6 +5,7 @@ reusing known data as much as possible.
 The tree only contains the ids of the persons, not any other information."""
 
 from mysites.geneapro import models
+from mysites.geneapro.views.json import to_json
 
 __all__ = ["Tree"]
 

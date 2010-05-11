@@ -131,6 +131,9 @@ class Styles ():
       self.counts = [None] * len (rules)  # the "count" rules: (test, value)
       self._need_place_parts = False
 
+      self._all_styles = dict () # All required styles (id -> (index,{styles}))
+      self.styles_count = 0
+
       for index, r in enumerate (rules):
          if r[0] in (RULE_EVENT, RULE_ATTR):
             tests = []
@@ -170,16 +173,6 @@ class Styles ():
    def need_place_parts (self):
       """Whether we need extra SQL queries for the place parts"""
       return self._need_place_parts
-
-   def _merge (self, style1, style2):
-      """Merge the two styles.
-         If a key already exists in style1, it is not overridden.
-         Replacement is done in place.
-      """
-      for a in style2:
-         if a not in style1:
-            style1[a] = style2[a]
-      return style1
 
    def start (self):
       """Start processing a set of events for different persons
@@ -231,13 +224,25 @@ class Styles ():
             if match:
                pr1[index] = pr1[index] + 1
 
+   def _merge (self, styles, style):
+      """Merge style into styles
+         If a key already exists in style1, it is not overridden.
+         Replacement is done in place.
+      """
+      for a in style:
+         if a not in styles:
+            styles[a] = style[a]
+
    def compute (self, person):
       """Sets person.styles to contain the list of styles for that person.
          Nothing is computing if the style is already known.
       """
 
       styles = {}
-      cache = self.cache.get (person.id, self.no_match)
+      hashes = 0
+
+      cache    = self.cache.get (person.id, self.no_match)
+      tmp_hash = 1
 
       # We need to process the rules in the same order given by the user
       # since they override each other
@@ -293,17 +298,38 @@ class Styles ():
                   break
             if match:
                self._merge (styles, r[2])
+               hashes    += tmp_hash
 
          else:  # RULE_EVENT
             count = self.counts [index]
             if count is None:
                if cache [index] > 0:
                   self._merge (styles, r[2])
+                  hashes += tmp_hash
             else:
                # Need to check the count of the events
                if count[0] (exp=count[1], value=cache[index]):
                   self._merge (styles, r[2])
+                  hashes += tmp_hash
+
+         tmp_hash *= 2
 
       # Default background value
 
-      person.styles = self._merge (styles, {"fill":"white"})
+      if not "fill" in styles:
+         styles["fill"] = "white"
+
+      s = self._all_styles.get (hashes, None)
+      if not s:
+         self._all_styles [hashes] = (self.styles_count, styles)
+         person.styles = self.styles_count
+         self.styles_count += 1
+      else:
+         person.styles = s[0]
+
+   def all_styles (self):
+      """The list of all styles needed to render the tree"""
+      result = []
+      for s in sorted (self._all_styles.itervalues ()):
+         result.insert (s[0], s[1])
+      return result

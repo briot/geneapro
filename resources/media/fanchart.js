@@ -67,29 +67,13 @@ stylesheet =
   +" rect {stroke:#9CA3DA}"
   +" path.u {fill:white; stroke-dasharray:3}"; // person unknown
 
-/* Person for whom the fanchart is displayed */
-var decujus=1;
 var config=null;
 
-function getPedigree (id) {
-  decujus=id || decujus;
-  var gen = Number (getSelectedValue ($("select[name=generations]")[0]))+1;
-  $.getJSON (pedigree_data_url,
-             {id:decujus, generations:gen, yearonly:true},
-             function (data, status) {
-                unsetBusy ();
-                sosa = data.sosa;
-                generations = data.generations;
-                children = data.children;
-                marriage = data.marriage;
-                drawSOSA ();
-             });
-}
 function onClick (evt) {
-  var box = evt.target;
+  var box = evt.target, d=data;
   if (box.getAttribute ("sosa") != 1) {
      var num = box.getAttribute ("sosa");
-     var id = (num < 0) ? children[-1 - num].id : sosa[num].id;
+     var id = (num < 0) ? d.children[-1 - num].id : d.sosa[num].id;
      var targetX = config.decujusx + $('#pedigreeSVG').offset().left;
      var targetY = config.decujusy + $('#pedigreeSVG').offset().top;
 
@@ -98,7 +82,8 @@ function onClick (evt) {
      transform += (targetY - evt.pageY) + ")";
      $(box).animate ({'svg-transform':transform}, config.delay);
      $(box).animate({'svg-opacity':0}, config.delay);
-     setTimeout (function() {getPedigree (id);return false}, config.delay);
+     setTimeout (function() {getPedigree ({id:id,yearonly:true})},
+                 config.delay);
   }
 }
 function onMouseOver (evt) {
@@ -114,34 +99,36 @@ function onMouseOut (evt) {
 /* Draw the fanchart for the global variables sosa, based on the configuration
    This does not draw the decujus or its children */
 function drawFan (svg, config, centerx, centery) {
-
-   var minAngleRad = config.minAngle * Math.PI / 180;
-   var maxAngleRad = config.maxAngle * Math.PI / 180;
-   var margin = config.separator * Math.PI / 180;
+   var d = data,
+       minAngleRad = config.minAngle * Math.PI / 180,
+       maxAngleRad = config.maxAngle * Math.PI / 180,
+       margin = config.separator * Math.PI / 180;
 
    function createPath (minRadius, maxRadius, minAngle, maxAngle,
                         large, clockwise)
    {
+      var cma = Math.cos (maxAngle), sma = Math.sin (maxAngle),
+          cmi = Math.cos (minAngle), smi = Math.sin (minAngle);
       if (clockwise == null)  clockwise = false;
       var p = svg.createPath()
-         .moveTo (Math.round (centerx + maxRadius * Math.cos (minAngle)),
-                  Math.round (centery - maxRadius * Math.sin (minAngle)))
+         .moveTo (Math.round (centerx + maxRadius * cmi),
+                  Math.round (centery - maxRadius * smi))
          .arcTo  (maxRadius, maxRadius, 0, large, clockwise,
-                  Math.round (centerx + maxRadius * Math.cos (maxAngle)),
-                  Math.round (centery - maxRadius * Math.sin (maxAngle)));
+                  Math.round (centerx + maxRadius * cma),
+                  Math.round (centery - maxRadius * sma));
 
       if (minRadius == maxRadius) return p;
 
       return p
-         .lineTo (Math.round (centerx + minRadius * Math.cos (maxAngle)),
-                  Math.round (centery - minRadius * Math.sin (maxAngle)))
+         .lineTo (Math.round (centerx + minRadius * cma),
+                  Math.round (centery - minRadius * sma))
          .arcTo  (minRadius, minRadius, 0, false, !clockwise,
-                  Math.round (centerx + minRadius * Math.cos (minAngle)),
-                  Math.round (centery - minRadius * Math.sin (minAngle)))
+                  Math.round (centerx + minRadius * cmi),
+                  Math.round (centery - minRadius * smi))
          .close ();
    }
 
-   for (var gen=generations - 1; gen >= 1; gen--) {
+   for (var gen=d.generations - 1; gen >= 1; gen--) {
       if (gen < config.genThreshold) {
          var minRadius = config.rowHeight * (gen - 1) || config.innerCircle;
          var maxRadius = minRadius + config.rowHeight;
@@ -162,7 +149,7 @@ function drawFan (svg, config, centerx, centery) {
 
       for (var id=0; id < minIndex; id++) {
          var num = minIndex + id;
-         var person = sosa [num];
+         var person = d.sosa [num];
          var maxAngle = maxAngleRad - id * angleInc;
          var minAngle = maxAngle - angleInc;
 
@@ -215,25 +202,19 @@ function drawFan (svg, config, centerx, centery) {
                }
                svg.path (svg.defs(), textPath, {id:"Path"+num})
 
-               var birth = person.birth;
-               if (birth)
-                  birth += (person.births ? " \u2713" : " \u2717");
-               var death = person.death;
-               if (death)
-                  death += (person.deaths ? " \u2713" : " \u2717");
-
-               var text = svg.text ("");
+               var birth = event_to_string (person.b) || "?",
+                   death = event_to_string (person.d) || "?",
+                   text = svg.text ("");
                svg.textpath(text, "#Path"+num,
                   svg.createText().string("")
                   .span (person.surn.toUpperCase())
                   .span (person.givn, {dx:5})
-                  .span ((birth || "?") + "-" + (death || "?"),
-                         {x:"10",dy:"1.1em"}),
+                  .span (birth + "-" + death, {x:"10",dy:"1.1em"}),
                   getAttr ({class:"gen" + gen, startOffset:5},
                            person, true));
 
                if (num % 2 == 0 && config.sepBetweenGens > 10
-                   && marriage[num] && gen <= 7)
+                   && d.marriage[num] && gen <= 7)
                {
                  if (gen == 1) {
                     var textPath = svg.createPath ()
@@ -249,12 +230,9 @@ function drawFan (svg, config, centerx, centery) {
                     var textPath = createPath (minRadius, minRadius, 
                           maxAngle, minAngle - angleInc, false, true);
                  }
-                 svg.path (svg.defs(), textPath, {id:"PathM"+num})
+                 svg.path (svg.defs(), textPath, {id:"PathM"+num});
 
-                 var mar = marriage [num].date || "";
-                 if (mar)
-                    mar += (marriage [num].sources ? " \u2713":" \u2717");
-
+                 var mar = event_to_string (d.marriage [num])
                  svg.textpath (text, "#PathM"+num,
                     svg.createText ().string (mar),
                     {stroke:"black", "stroke-width":0,
@@ -277,11 +255,13 @@ function drawFan (svg, config, centerx, centery) {
  ********************************************************/
 
 function chartDimensions (config) {
-   if (generations < config.genThreshold) {
-      var radius = generations * config.rowHeight;
+   var d = data;
+
+   if (d.generations < config.genThreshold) {
+      var radius = d.generations * config.rowHeight;
    } else {
       var radius = (config.genThreshold - 1) * config.rowHeight
-          + (generations - config.genThreshold)
+          + (d.generations - config.genThreshold)
           * config.rowHeightAfterThreshold;
    }
 
@@ -333,44 +313,35 @@ function chartDimensions (config) {
 
 function drawSOSA (conf) {
    config = $.extend (true, {}, defaultConfig, conf);
-
    config.rowHeight += config.sepBetweenGens;
+   config.decujusx  = config.boxWidth + config.horizPadding;
 
-   var childrenHeight = children
-       ? children.length * (config.boxHeight + config.vertPadding)
-       : 0;
-   var dimensions = chartDimensions (config);
-   var maxHeight = Math.max (childrenHeight, dimensions.height);
-   var maxWidth = config.boxWidth + config.horizPadding + dimensions.width;
+   var d = data,
+       childrenHeight = d.children
+          ? d.children.length * (config.boxHeight + config.vertPadding)
+          : 0,
+       dimensions = chartDimensions (config),
+       maxHeight = Math.max (childrenHeight, dimensions.height),
+       maxWidth = config.boxWidth + config.horizPadding + dimensions.width,
+       svg = $("#pedigreeSVG").height (maxHeight).width (maxWidth).svg('get'),
+       centerx = config.decujusx + dimensions.centerX,
+       centery = dimensions.centerY;
 
-   var svg = $("#pedigreeSVG").height (maxHeight).width (maxWidth).svg('get');
    svg.clear ();
    svg.configure({viewBox:'0 0 ' + maxWidth + " " + maxHeight,
                   preserveAspectRatio:"xMinYMid"},true);
    svg.style (stylesheet);
 
-   config.decujusx = config.boxWidth + config.horizPadding;
-   var centerx = config.decujusx + dimensions.centerX;
-   var centery = dimensions.centerY;
    config.decujusy = centery - 5;
-
-   var person = sosa [1];
-   var birth = person.birth;
-   if (birth)
-      birth += (person.births ? " \u2713" : " \u2717");
-   var death = person.death;
-   if (death)
-      death += (person.deaths ? " \u2713" : " \u2717");
-
-   drawBox (svg, person, config.decujusx,
+   drawBox (svg, d.sosa[1], config.decujusx,
             config.decujusy - config.boxHeight / 2, 1, config);
 
    /* Draw children */
 
-   if (children) {
+   if (d.children) {
       var y = (maxHeight - childrenHeight) / 2;
-      for (var c=0, len=children.length; c < len; c++) {
-         drawBox (svg, children [c], 1, y, -1 - c, config);
+      for (var c=0, len=d.children.length; c < len; c++) {
+         drawBox (svg, d.children [c], 1, y, -1 - c, config);
          y += config.boxHeight + config.vertPadding;
       }
    }
@@ -381,24 +352,24 @@ function drawSOSA (conf) {
 
    $("#stats").empty()
 
-   for (var gen=1; gen < generations; gen++) {
+   for (var gen=1; gen < d.generations; gen++) {
       var minIndex = Math.pow (2, gen); /* first SOSA in that gen, and number
                                            of persons in that gen */
       var count = 0;
       var earliest = "9999-99-99";
       var latest = "0000-00-00";
       for (var p=minIndex; p < 2 * minIndex; p++) {
-         var person = sosa [p];
+         var person = d.sosa [p];
          if (person) {
             count ++;
-            if (person.birth && person.birth < earliest)
-               earliest = person.birth;
-            if (person.death && person.death < earliest)
-               earliest = person.death;
-            if (person.birth && person.birth > latest)
-               latest = person.birth;
-            if (person.death && person.death > latest)
-               latest = person.death;
+            if (person.b && person.b[0] && person.b[0] < earliest)
+               earliest = person.b[0];
+            if (person.d && person.d[0] && person.d[0] < earliest)
+               earliest = person.d[0];
+            if (person.b && person.b[0] && person.b[0] > latest)
+               latest = person.b[0];
+            if (person.d && person.d[0] && person.d[0] > latest)
+               latest = person.d[0];
          } 
       }
       if (earliest == "9999-99-99")
