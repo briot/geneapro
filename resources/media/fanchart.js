@@ -148,10 +148,10 @@ function drawFan (svg, config, centerx, centery) {
       var medRadius = (minRadius + maxRadius) / 2;
 
       for (var id=0; id < minIndex; id++) {
-         var num = minIndex + id;
-         var person = d.sosa [num];
-         var maxAngle = maxAngleRad - id * angleInc;
-         var minAngle = maxAngle - angleInc;
+         var num = minIndex + id,
+           person = d.sosa [num],
+           maxAngle = maxAngleRad - id * angleInc,
+           minAngle = maxAngle - angleInc;
 
          if (id % 2 == 0)
             maxAngle -= margin;
@@ -207,7 +207,7 @@ function drawFan (svg, config, centerx, centery) {
                    text = svg.text ("");
                svg.textpath(text, "#Path"+num,
                   svg.createText().string("")
-                  .span (person.surn.toUpperCase())
+                  .span (person.surn)
                   .span (person.givn, {dx:5})
                   .span (birth + "-" + death, {x:"10",dy:"1.1em"}),
                   getAttr ({class:"gen" + gen, startOffset:5},
