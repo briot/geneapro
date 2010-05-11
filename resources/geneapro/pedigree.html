@@ -13,14 +13,14 @@
 <script type="text/javascript" src="{{MEDIA_URL}}pedigree.js"></script>
 {% endifequal %}
 <script type="text/javascript">
-pedigree_data_url="{% url pedigree_data %}";
-$(function() {
-  $('#pedigreeSVG').svg();
-  getPedigree ();
-});
 function changeGenerations () {
   getPedigree ();
 }
+$(document).ready (function() {
+   pedigree_data_url="{% url pedigree_data %}";
+  $('#pedigreeSVG').svg();
+  getPedigree ();
+});
 </script>
 {% endblock endbody %}
 {% block contents %}

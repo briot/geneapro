@@ -70,10 +70,17 @@ style_rules = [
  # ancestor tree of the decujus
  (RULE_ATTR,
    [("ancestor", RULE_IS, 1), ("SEX", RULE_IS, "M")],
-  {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
+   {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
  (RULE_ATTR,
    [("ancestor", RULE_IS, 1), ("SEX", RULE_IS, "F")],
-  {"fill":"#E9DAF1", "stroke":"#fF2080"}),
+   {"fill":"#E9DAF1", "stroke":"#fF2080"}),
+ (RULE_ATTR,
+   [("descendant", RULE_IS, 1), ("SEX", RULE_IS, "M")],
+   {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
+ (RULE_ATTR,
+   [("descendant", RULE_IS, 1), ("SEX", RULE_IS, "F")],
+   {"fill":"#E9DAF1", "stroke":"#fF2080"}),
+
 
  # Do we know both parents ?
  (RULE_ATTR, [("UNKNOWN_FATHER", RULE_IS, "Y")], {"color":"violet"}),

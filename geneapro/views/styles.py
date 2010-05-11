@@ -17,7 +17,7 @@ this is a list of simple rules, each of which is one of:
       format is similar to EVENT, but these are tested on the person,
       not once per event. The "field" would be one of "surname", "given",
       "age","ancestor", "ALIVE", "SEX", "UNKNOWN_FATHER", "UNKNOWN_MOTHER",
-      "IMPLEX"...
+      "IMPLEX", "descendant", ...
       The "age" is computed from the person's birth, not checking whether that
       person is still alive.
       "ancestor" is true if the person is an ancestor of the person(s) given
@@ -141,6 +141,9 @@ class Styles ():
                   continue
                elif t[0] == "ancestor" and r[0] == RULE_ATTR:
                   tests.append ((t[0], tree.ancestors (t[2])))
+                  continue
+               elif t[0] == "descendant" and r[0] == RULE_ATTR:
+                  tests.append ((t[0], tree.descendants (t[2])))
                   continue
                elif t[0] == "IMPLEX" and r[0] == RULE_ATTR:
                   tests.append ((t[0], rules_func [t[1]], t[2],
@@ -266,13 +269,17 @@ class Styles ():
                   value = person.sex
                elif t[0] == "IMPLEX":
                   value = t[3].get (person.id, 0)
-                  print "implex=", value, " ", t[3]
                elif t[0] == "age":
                   if person.birth:
                      value = self.today.years_since (person.birth.Date)
                   else:
                      value = ""
                elif t[0] == "ancestor":
+                  match = person.id in t[1]
+                  if not match:
+                     break
+                  continue
+               elif t[0] == "descendant":
                   match = person.id in t[1]
                   if not match:
                      break

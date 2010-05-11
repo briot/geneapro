@@ -12,36 +12,51 @@ class Tree (object):
    def __init__ (self):
       """Encapsulates the notion of an ancestry tree"""
 
-      # indexed on the person's id, a set of all its ancestors
-      self._ancestors = dict ()
+      # List of persons for which we have already computed all ancestors
+      self._ancestors = set ()
+      self._descendants = set ()
 
       # indexed on the person's id, a list of tuples (father, mother)
       self.parents = dict ()
 
+      # indexed on the person's id, a list of ids for known children
+      self._children = dict ()
+
       # all persons for which we have already performed a database query
       self._processed = set ()
+      self._processed_children = set ()
 
-   def _add_ancestors (self, add_to, start_from, generations=10000):
-      """Add into self.ancestors all the ancestors of id that have already
-         been searched in the database. There is no need to search them
-         again
+   def _get_events (self, ids, roles):
+      """Get the list of events where any of the persons in IDS plays any of
+         the roles in ROLES.
+         Returns a dictionary indexed on event ids, containing tuples
+         (child,father,mother) for the corresponding births.
       """
-      check = []
-      for p in self.parents.get (start_from, (None, None)):
-          if p is not None:
-             check.append ((p, generations - 1))
 
-      while check:
-         p, gens = check.pop (0)
+      # Retrieve the ids of the parents of persons in check. We retrieve
+      # parents and child from every birth event (we need the child to
+      # associate it with the parents, through the event)
+      tmp = models.P2E_Assertion.objects.filter (
+         role__in = (models.Event_Type_Role.birth__father,
+                     models.Event_Type_Role.principal,
+                     models.Event_Type_Role.birth__mother),
+         event__in = models.P2E_Assertion.objects.filter (
+            event__type = models.Event_Type.birth,
+            role__in = roles,
+            person__in = list (ids)).values_list ('event', flat=True))
 
-         # Explicit test of whether we already know about p, to avoid infinite
-         # loops (A has parent B has parent A)
-         if p not in add_to:
-            add_to.add (p)
-            if gens > 0:
-               for p in self.parents.get (p, (None, None)):
-                  if p is not None:
-                     check.append ((p, gens - 1))
+      events = dict ()  # tuples (child, father, mother)
+
+      for p2e in tmp.values_list ('person','event','role'):
+         t = events.get (p2e[1], (None, None, None))
+         if p2e[2] == models.Event_Type_Role.principal:
+            events [p2e[1]] = (p2e[0], t[1], t[2])
+         elif p2e[2]== models.Event_Type_Role.birth__father:
+            events [p2e[1]] = (t[0], p2e[0], t[2])
+         elif p2e[2]== models.Event_Type_Role.birth__mother:
+            events [p2e[1]] = (t[0], t[1], p2e[0])
+
+      return events
 
    def _compute_ancestors (self, id):
       """Look for the ancestors of the person ID.
@@ -51,57 +66,64 @@ class Tree (object):
          database again.
       """
 
-      if self._ancestors.has_key (id):
+      if id in self._ancestors:
          return  # already done
 
-      self._ancestors [id] = set ()
-      self._add_ancestors (self._ancestors [id], id)
+      self._ancestors.add (id)
 
       check = set () # The ones we need to check next time
       check.add (id)
       check = check.difference (self._processed) # only those we don't know
 
-      # Reuse known data as much as possible: if there is at least one
-      # known parent, we know we have already queries that person, so no need
-      # to do so again
-
       while check:
-         # Retrieve the ids of the parents of persons in check. We retrieve
-         # parents and child from every birth event (we need the child to
-         # associate it with the parents, through the event)
-         tmp = models.P2E_Assertion.objects.filter (
-            role__in = (models.Event_Type_Role.birth__father,
-                        models.Event_Type_Role.principal,
-                        models.Event_Type_Role.birth__mother),
-            event__in = models.P2E_Assertion.objects.filter (
-               event__type = models.Event_Type.birth,
-               role = models.Event_Type_Role.principal,
-               person__in = list (check)).values_list ('event', flat=True))
+         events = self._get_events (check, (models.Event_Type_Role.principal,))
 
          tmpids = set ()   # All persons that are a father or mother
-         events = dict ()  # tuples (child, father, mother)
-
-         for p2e in tmp.values_list ('person','event','role'):
-            t = events.get (p2e[1], (None, None, None))
-            if p2e[2] == models.Event_Type_Role.principal:
-               events [p2e[1]] = (p2e[0], t[1], t[2])
-            elif p2e[2]== models.Event_Type_Role.birth__father:
-               events [p2e[1]] = (t[0], p2e[0], t[2])
-               tmpids.add (p2e[0])
-            elif p2e[2]== models.Event_Type_Role.birth__mother:
-               events [p2e[1]] = (t[0], t[1], p2e[0])
-               tmpids.add (p2e[0])
-
          self._processed.update (check)
+
+         for e in events.itervalues ():
+            self.parents [e[0]] = (e[1], e[2])
+            if e[1]: tmpids.add (e[1])
+            if e[2]: tmpids.add (e[2])
+
          check = tmpids.difference (self._processed)
 
-         for e in events:
-            e = events[e]
-            self.parents [e[0]] = (e[1], e[2])
-            if e[1]: self._add_ancestors (self._ancestors [id], e[1])
-            if e[2]: self._add_ancestors (self._ancestors [id], e[2])
+   def _compute_descendants (self, id):
+      """Look for the descendants of the person ID.
+         Whenever possible, information is reused instead of querying the
+         database again.
+      """
 
-         self._ancestors [id].update (tmpids)
+      if id in self._descendants:
+         return  # already done
+
+      self._descendants.add (id)
+
+      check = set () # The ones we need to check next time
+      check.add (id)
+      check = check.difference (self._processed_children)
+
+      while check:
+         events = self._get_events (
+            check, 
+            (models.Event_Type_Role.birth__father,
+             models.Event_Type_Role.birth__mother))
+
+         tmpids = set ()   # All persons that are a father or mother
+         self._processed_children.update (check)
+
+         for e in events.itervalues ():
+            tmpids.add (e[0])
+            if e[1]:
+               if not e[1] in self._children:
+                  self._children [e[1]] = set ()
+               self._children [e[1]].add (e[0])
+            if e[2]:
+               if not e[1] in self._children:
+                  self._children [e[1]] = set ()
+               self._children [e[1]].add (e[0])
+
+         check = tmpids.difference (self._processed_children)
 
    def ancestors (self, id, generations=-1):
       """The dict of ancestors for ID (value is the number of occurrences),
@@ -119,6 +141,21 @@ class Tree (object):
 
       result = dict ()
       self._compute_ancestors (id) # all ancestors
+      internal (id, generations)
+      return result
+
+   def descendants (self, id, generations=-1):
+      """The dict of ancestors for ID (value is the number of occurrences),
+         up to GENERATIONS.
+         This does not include ID itself"""
+
+      def internal (p, gens):
+         for c in self._children.get (p, []):
+            result [c] = result.get (c, 0) + 1
+            if gens != 0: internal (c, gens - 1)
+
+      result = dict ()
+      self._compute_descendants (id) # all descendants
       internal (id, generations)
       return result
 
