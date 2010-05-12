@@ -28,7 +28,6 @@ def view (request):
    father_ids = tree.ancestors (tree.father (decujus))
    mother_ids = tree.ancestors (tree.mother (decujus))
 
-   generations = []
    ranges = []
    for index, g in enumerate (tree.generations (decujus)):
       births = [None, None, "", ""]  # min Date, max Date, min dpy, max dpy
@@ -69,8 +68,6 @@ def view (request):
          gen_range[2] = gen_range[1] + 1
 
       ranges.append (gen_range)
-      generations.append ((index, len (g), 2 ** (index+1), 
-                           births[2], births[3], deaths[2], deaths[3]))
 
    ages = []
    for a in range (0, 120, 5):
@@ -87,7 +84,6 @@ def view (request):
       {"total_ancestors": len (ids),
        "total_father":    len (father_ids) + 1,  # +1 is for the father
        "total_mother":    len (mother_ids) + 1,
-       "generations":     generations,
        "ranges":          ranges,
        "ages":            ages,
       },

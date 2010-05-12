@@ -6,13 +6,7 @@
 {% endblock header %}
 
 {% block css %}
-table {width:100%; margin-top:30px; border:1px solid black }
-th {background:#CCC}
-th    {text-align:center}
-td    {text-align:center}
-td:first-child,
-td:first-child + td,
-td:first-child + td + td + td {border-right:1px solid black} 
+#genLegend table {width:100% }
 #genLegend td {text-align:left}
 .legendLabel i {float:right; margin-right:3px}
 .legendLabel span {font-size:smaller}
@@ -41,31 +35,6 @@ td:first-child + td + td + td {border-right:1px solid black}
     Sons:
     Daughters:
     -->
-
- <table cellpadding="0" cellspacing="0">
-    <tr>
-       <th>Generation</th>
-       <th>Known</th>
-       <th colspan="2">Births</th>
-       <th colspan="2">Deaths</th>
-    </tr>
-    <tr>
-       <th></th>
-       <th>ancestors</th>
-       <th>Oldest</th>
-       <th>Most recent</th>
-       <th>Oldest</th>
-       <th>Most recent</th>
-    </tr>
-    {% for index, known, total, bmin, bmax, dmin, dmax in generations %}
-    <tr>
-       <td>{{index}}</td>
-       <td>{{known}} / {{total}}</td>
-       <td>{{bmin}}</td><td>{{bmax}}</td>
-       <td>{{dmin}}</td><td>{{dmax}}</td>
-    </tr>
-    {% endfor %}
- </table>
 
  <h2>Generations timespan (oldest birth - latest death)</h2>
  <div id="generations" style="height:350px"></div>
