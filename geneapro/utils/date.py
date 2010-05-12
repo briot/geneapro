@@ -263,9 +263,13 @@ def get_ymd (txt, months):
 class Calendar (object):
    """Abstract base class for all types of calendars we support"""
 
-   def __init__ (self, suffixes):
+   def __init__ (self, suffixes, prefixes=None):
       self.__re = re.compile \
         ('\\s*\\(?(' + suffixes + ')\\)?\\s*', re.IGNORECASE)
+      #if prefixes:
+      #   self.__rep = re.compile ('^\\s*' + prefixes, re.IGNORECASE)
+      #else:
+      #   self.__rep = None
       self._month_names = MONTH_NAMES
 
    def is_a (self, text):
@@ -279,8 +283,11 @@ class Calendar (object):
       m = self.__re.search (text)
       if m:
          return text [:m.start(0)] + text[m.end(0):]
-      else:
-         return None
+      #elif self.__rep:
+         #   m = self.__rep.search (text)
+         #if m:
+            #   return text [m.end(0):]
+      return None
 
    def __str__ (self):
       """Convert to a string"""
@@ -497,7 +504,7 @@ class CalendarJulian (Calendar):
 
    def __init__ (self):
       # OS stands for "Old style"
-      Calendar.__init__ (self, "\\b(JU|J|Julian|OS)\\b")
+      Calendar.__init__ (self, "\\b(JU|J|Julian|OS)\\b|@#DJULIAN@")
       self._month_names = MONTH_NAMES
 
    def __str__ (self):
@@ -546,7 +553,7 @@ class Date (object):
       """Represents a point in time (not a range of dates). The date might be
          imprecise ("about 1700") or incomplete ("1802-02", no day)
       """
-      self.text = text or ""
+      self.text = text.strip () or ""
       self.calendar = None
       self.type = DATE_ON
       self.precision = PRECISION_EXACT
@@ -736,15 +743,17 @@ class Date (object):
        result.calendar) = date
       return result
 
-   def display (self, calendar=None, year_only=False):
+   def display (self, calendar=None, year_only=False, original=False):
       """Return a string representing string. By default, this uses the
          calendar parsed when the date was created, but it is possible to
          force the display in other date formats.
          If the date could not be parsed, it is returned exactly as written
          by the user.
+         If ORIGINAL is true, the date is output exactly as the user entered
+         it.
       """
 
-      if self.year_known and self.month_known and self.day_known:
+      if not original:
          cal = calendar or self.calendar
          result = ""
 
@@ -792,7 +801,7 @@ class DateRange (object):
          of a derived class of Calendar. If unspecified, the Date class
          will attempt to autodetect it"""
 
-      self.text = text
+      self.text = text.strip ()
       self.date = None
       self.__parse ()
 
@@ -805,16 +814,22 @@ class DateRange (object):
 
    def __str__ (self):
       """Convert to a string"""
+      return self.display ()
 
+   def display (self, calendar=None, year_only=False, original=False):
       if type (self.date) == tuple:
+         d1 = self.date[0].display (
+            calendar=calendar, year_only=year_only, original=original)
+         d2 = self.date[1].display (
+            calendar=calendar, year_only=year_only, original=original)
+
          if self.date[2] == SPAN_FROM:
-            return "from " + str (self.date[0]) + " to " + str (self.date[1])
+            return "from " + d1 + " to " + d2
          else:
-            return "between " + str (self.date[0]) \
-               + " and " + str (self.date[1])
+            return "between " + d1 + " and " + d2
       else:
          return str (self.date)
-
+      
    def __parse (self):
       """Parse the text field to create a date or a date range that can be
          more easily compared and manipulated

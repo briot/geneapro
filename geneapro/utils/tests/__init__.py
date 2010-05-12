@@ -75,16 +75,17 @@ class DateTestCase (unittest.TestCase):
          if type (day) != tuple:
             error = "expected a simple date for result"
          elif d.date[0].date != day[0]:
-            error = str (d.date[0].date) + " != " + str (day[0])
+            error = d.date[0].date + " != " + str (day[0])
          elif d.date[1].date != day[1]:
             error = str (d.date[1].date) + " != " + str (day[1])
       elif type (day) == tuple:
          error = "expected a range for result"
       elif d.date.date != day:
-         error = str (d.date.date) + " != " + str (day)
+         error = "[" + str (d.date.date) + "] != [" + str (day) + "]"
 
-      if expected and str (d) != expected:
-         error =  str (d) + "\n  != " + expected
+      if expected and d.display (original=False) != expected:
+         error =  "[" + d.display (original=False) \
+               + "]\n  != [" + expected + "]"
 
       self.assertFalse (error, "Error for: " + inputdate + "\n     " + error)
 
@@ -141,6 +142,7 @@ class DateTestCase (unittest.TestCase):
       self._assert_date ("15-01", JAN_15_UNDEFINED, "????-01-15")
       self._assert_date ("01-15", JAN_15_UNDEFINED, "????-01-15")
       self._assert_date ("1400-01-01", JAN_1_1400, "1400-01-01 (Julian)")
+      self._assert_date ("@#DJULIAN@ 1400", JAN_1_1400, "1400 (Julian)")
       self._assert_date ("1583-01-01", JAN_1_1583, "1583-01-01")
       self._assert_date ("1583-01-01 JU   ", JAN_1_1583_JU,
                         "1583-01-01 (Julian)")
