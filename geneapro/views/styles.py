@@ -86,8 +86,8 @@ def get_place (event, part):
       if event.place:
          if part == "name":
             return event.place.name
-         elif part == "country":
-            return event.place.CTRY
+         else:
+            return event.place.parts.get (part, "")
       else:
          return None
    except:

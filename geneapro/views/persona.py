@@ -114,9 +114,19 @@ def __get_events (persons, ids, styles):
 
    if compute_parts:
       parts = models.Place_Part.objects.filter (
-         place__in = places.keys ()).select_related ('type')
+         place__in = places.keys ()) \
+        .order_by ('place') \
+        .select_related ('type')
+
+      prev_place = None
+      d = None
       for p in parts:
-         setattr (places [p.place_id], p.type.gedcom, p.name)
+         if p.place_id != prev_place:
+            prev_place = p.place_id
+            d = dict ()
+            setattr (places [prev_place], "parts", d)
+
+         d [p.type.name] = p.name
 
    # Process styles after we have computed birth (since we need age)
    for e in events:
