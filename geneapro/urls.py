@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 from mysites.geneapro import views
 import mysites.geneapro.views.pedigree
 import mysites.geneapro.views.persona
+import mysites.geneapro.views.stats
 
 urlpatterns = patterns('',
 	(r'^$', views.index),
@@ -10,4 +11,5 @@ urlpatterns = patterns('',
 	url (r'^pedigreeData$', views.pedigree.data, name="pedigree_data"),
 	(r'^pedigree$',     views.pedigree.pedigree_view),
 	(r'^fanchart$',     views.pedigree.fanchart_view),
+	(r'^stats$',        views.stats.view),
 )

@@ -1,0 +1,106 @@
+{% extends "geneapro/base.html" %}
+{% block title %}GeneaPro: statistics{% endblock %}
+
+{% block header %}
+<script type="text/javascript" src="{{MEDIA_URL}}/jquery.flot.0.6.min.js"></script>
+{% endblock header %}
+
+{% block css %}
+table {width:100%; margin-top:30px; border:1px solid black }
+th {background:#CCC}
+th    {text-align:center}
+td    {text-align:center}
+td:first-child,
+td:first-child + td,
+td:first-child + td + td + td {border-right:1px solid black} 
+#genLegend td {text-align:left}
+.legendLabel i {float:right; margin-right:3px}
+.legendLabel span {font-size:smaller}
+{% endblock css %}
+
+{% block contents %}
+<div>
+ <h2>Statistics</h2>
+ Number of persons in the tree: {{total_ancestors}}<br>
+ Number of persons in father's tree: {{total_father}}<br>
+ Number of persons in mother's tree: {{total_mother}}<br>
+
+ <!--
+ For whole population, for males only, for females only
+ Includes population count, average, deviance, min, max, 
+ Age at first marriage:
+ Age at first child:
+ Age at last child:
+ Age at death:
+ #Name tags:
+ #Birth group tags:
+ #Death group tags:
+ #Marriage group tags:
+ #Divorce group tags:
+ #Child tags:
+    Sons:
+    Daughters:
+    -->
+
+ <table cellpadding="0" cellspacing="0">
+    <tr>
+       <th>Generation</th>
+       <th>Known</th>
+       <th colspan="2">Births</th>
+       <th colspan="2">Deaths</th>
+    </tr>
+    <tr>
+       <th></th>
+       <th>ancestors</th>
+       <th>Oldest</th>
+       <th>Most recent</th>
+       <th>Oldest</th>
+       <th>Most recent</th>
+    </tr>
+    {% for index, known, total, bmin, bmax, dmin, dmax in generations %}
+    <tr>
+       <td>{{index}}</td>
+       <td>{{known}} / {{total}}</td>
+       <td>{{bmin}}</td><td>{{bmax}}</td>
+       <td>{{dmin}}</td><td>{{dmax}}</td>
+    </tr>
+    {% endfor %}
+ </table>
+
+ <h2>Generations timespan (oldest birth - latest death)</h2>
+ <div id="generations" style="height:350px"></div>
+ <div id="genLegend"></div>
+
+ <h2>Lifespan age distribution (person in the tree, only)</h2>
+ <div id="lifespan" style="height:150px"></div>
+
+</div>
+{% endblock contents %}
+
+{% block script %}
+lifespan = [{% for age,count in ages %}[{{age}},{{count}}],{% endfor %}];
+ranges= [{% for gen,min,max,legend in ranges %}
+  {label:"{{legend}}",data: [[{{min}},{{gen}}],[{{max}},{{gen}}]]},{% endfor %}];
+function labelFormatter (label,series) {
+   var s = label.split (/(\([^\)]+\))/), result="";
+   label = "<b>" + s[0] + "</b><span>" + s[1] + "</span>" + s[2] + "<i>" + s[3] + "</i>";
+  return label;
+}
+$(document).ready (function() {
+  /*$("#lifespan").sparkline (
+     values, {type:'bar', barColor:'#cdf', barWidth:50, height:"150px"});*/
+  $.plot ('#lifespan', [{data:lifespan, label:"lifespan", color:'blue',
+                          bars:{show:true, barWidth:5 /*units of xaxis*/,
+                                fillColor:'rgba(200,210,255,0.5)'} }],
+             {legend:false});
+
+  $.plot ('#generations', ranges,
+          {legend:{show:true,container:"#genLegend",
+                   noColumns:3,
+                   labelFormatter:labelFormatter},
+           series:{shadowSize:2,lines:{lineWidth:9}}});
+});
+{% endblock script %}
+
+
+

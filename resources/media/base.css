@@ -62,11 +62,13 @@ h2 {background-color:#ECF2F9;
 .buttons span {font-style:italic; margin-left:10px; color:#BBB}
 
 .contents h2 {margin-top:15px}
+/*
 .contents table th {font-weight:normal; padding-left:1px; text-align:right;
                     width:100px; color:#777; padding-right:7px}
 .contents table input,
 .contents table textarea,
 .contents table select {width:20em; border:1px solid #999}
+*/
 
 .repositoryInfo {float:right; background-color:#F5F5F5; margin-right:10px;
           padding:10px; border:1px solid #ddd}

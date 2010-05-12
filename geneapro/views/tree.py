@@ -126,6 +126,16 @@ class Tree (object):
 
          check = tmpids.difference (self._processed_children)
 
+   def father (self, id):
+      """Return the id of the father (could be None)."""
+      self._compute_ancestors (id)
+      return self.parents.get (id, (None, None)) [0]
+
+   def mother (self, id):
+      """Return the id of the mother (could be None)."""
+      self._compute_ancestors (id)
+      return self.parents.get (id, (None, None)) [1]
+
    def ancestors (self, id, generations=-1):
       """The dict of ancestors for ID (value is the number of occurrences),
          up to GENERATIONS.
@@ -140,9 +150,35 @@ class Tree (object):
             result [mother] = result.get (mother, 0) + 1
             if gens != 0: internal (mother, gens - 1)
 
+      if id is None:
+         return dict ()
+
       result = dict ()
       self._compute_ancestors (id) # all ancestors
       internal (id, generations)
+      return result
+
+   def generations (self, id):
+      """Return a list of tuples. Each tuple corresponds to one generation
+         of ancestors, until the last known generation. The first entry is
+         id itself.
+      """
+
+      self._compute_ancestors (id) # all ancestors
+
+      result = []
+      gen = [id]
+      while gen:
+         current = set ()
+         for p in gen:
+            father, mother = self.parents.get (p, (None, None))
+            if father: current.add (father)
+            if mother: current.add (mother)
+
+         if current:
+            result.append (tuple (current))
+         gen = current
+
       return result
 
    def descendants (self, id, generations=-1):

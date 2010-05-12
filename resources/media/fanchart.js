@@ -347,42 +347,5 @@ function drawSOSA (conf) {
    }
 
    drawFan (svg, config, centerx, centery);
-
-   /* Generation information */
-
-   $("#stats").empty()
-
-   for (var gen=1; gen < d.generations; gen++) {
-      var minIndex = Math.pow (2, gen); /* first SOSA in that gen, and number
-                                           of persons in that gen */
-      var count = 0;
-      var earliest = "9999-99-99";
-      var latest = "0000-00-00";
-      for (var p=minIndex; p < 2 * minIndex; p++) {
-         var person = d.sosa [p];
-         if (person) {
-            count ++;
-            if (person.b && person.b[0] && person.b[0] < earliest)
-               earliest = person.b[0];
-            if (person.d && person.d[0] && person.d[0] < earliest)
-               earliest = person.d[0];
-            if (person.b && person.b[0] && person.b[0] > latest)
-               latest = person.b[0];
-            if (person.d && person.d[0] && person.d[0] > latest)
-               latest = person.d[0];
-         } 
-      }
-      if (earliest == "9999-99-99")
-         earliest = "";
-      if (latest == "0000-00-00")
-         latest = "";
-
-      $("#stats")
-         .append ("<li><b>Generation " + gen + "</b><br>"
-                  + count + "/" + minIndex + " individuals ("
-                  + (count / minIndex * 100) + "%)<br>"
-                  + " from " + earliest + " to " + latest
-                  + "</li>");
-   }
 }
 
