@@ -111,6 +111,17 @@ Q. Can I see a tree of my ancestors ?
    current browser technology limitation (most of them are still a bit
    slow manipulating huge SVG drawings).
 
+Q. Does Geneapro handle the implex ?
+
+   The implex is one person appears several times in a pedigree (for
+   instance, the same couple was the parents of two of your ancestors).
+   Like all other genealogical software, Geneapro will of course not
+   duplicate data about those persons in the database. In addition, you
+   can configure the highlighting styles so that a person that appears
+   multiple times in the tree or fanchart visible on the screen gets
+   special colors (background or foreground) and/or fonts. This makes
+   it easier to see them immediately.
+
 Q. Does Geneapro support sources ?
 
    Although support for sources is currently limited, Geneapro will
