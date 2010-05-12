@@ -9,17 +9,17 @@
 
 {% block script %}
 function changeGenerations () {
-  getPedigree ();
-}
-pedigree_data_url="{% url pedigree_data %}";
-$(document).ready (function() {
-   $('#pedigreeSVG').svg ();
 {% ifequal type "fanchart" %}
    getPedigree ({yearonly:true});
 {% else %}
    getPedigree ({yearonly:false});
 {% endifequal %}
-   });
+}
+pedigree_data_url="{% url pedigree_data %}";
+$(document).ready (function() {
+   $('#pedigreeSVG').svg ();
+   changeGenerations ();
+});
 {% endblock script %}
 
 {% block endbody %}
