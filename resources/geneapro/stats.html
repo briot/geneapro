@@ -3,6 +3,7 @@
 
 {% block header %}
 <script type="text/javascript" src="{{MEDIA_URL}}/jquery.flot.0.6.min.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}/jquery.flot.stack.min.js"></script>
 {% endblock header %}
 
 {% block css %}
@@ -47,7 +48,9 @@
 {% endblock contents %}
 
 {% block script %}
-lifespan = [{% for age,count in ages %}[{{age}},{{count}}],{% endfor %}];
+males = {label:"males",data:[{% for age,m,_,_ in ages %}[{{age}},{{m}}],{% endfor %}]};
+females = {label:"females",data:[{% for age,_,f,_ in ages %}[{{age}},{{f}}],{% endfor %}]};
+unknowns = {label:"unknowns",data:[{% for age,_,_,u in ages %}[{{age}},{{u}}],{% endfor %}]};
 ranges= [{% for gen,min,max,legend in ranges %}
   {label:"{{legend}}",data: [[{{min}},{{gen}}],[{{max}},{{gen}}]]},{% endfor %}];
 function labelFormatter (label,series) {
@@ -56,18 +59,12 @@ function labelFormatter (label,series) {
   return label;
 }
 $(document).ready (function() {
-  /*$("#lifespan").sparkline (
-     values, {type:'bar', barColor:'#cdf', barWidth:50, height:"150px"});*/
-  $.plot ('#lifespan', [{data:lifespan, label:"lifespan", color:'blue',
-                          bars:{show:true, barWidth:5 /*units of xaxis*/,
-                                fillColor:'rgba(200,210,255,0.5)'} }],
-             {legend:false});
-
+  $.plot ('#lifespan', [males,females,unknowns],
+      {series:{stack:true,bars:{show:true, barWidth:5}}});
   $.plot ('#generations', ranges,
-          {legend:{show:true,container:"#genLegend",
-                   noColumns:3,
-                   labelFormatter:labelFormatter},
-           series:{shadowSize:2,lines:{lineWidth:9}}});
+      {legend:{show:true,container:"#genLegend",
+               noColumns:3, labelFormatter:labelFormatter},
+       series:{lines:{show:true,lineWidth:9}}});
 });
 {% endblock script %}
 

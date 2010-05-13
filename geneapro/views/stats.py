@@ -18,40 +18,29 @@ def view (request):
    """Display the statistics for a given person"""
 
    decujus = 1
-
    tree = Tree ()
    styles = Styles ([], tree, decujus=decujus)
-
    ids = set (tree.ancestors (decujus).keys())
    persons = extended_personas (ids, styles)
-
    father_ids = tree.ancestors (tree.father (decujus))
    mother_ids = tree.ancestors (tree.mother (decujus))
 
    ranges = []
    for index, g in enumerate (tree.generations (decujus)):
-      births = [None, None, "", ""]  # min Date, max Date, min dpy, max dpy
-      deaths = [None, None, "", ""]
+      births = None
+      deaths = None
       gen_range = [index+1, "?", "?", ""] # gen, min, max, legend
       for p in g:
          p = persons [p]
          if p.birth and p.birth.Date:
-            if births[0] is None or p.birth.Date < births[0]:
-               births[0] = p.birth.Date
-               births[2] = births[0].display()
+            if births is None or p.birth.Date < births:
+               births = p.birth.Date
                if p.birth.Date.year_known:
                   gen_range[1] = p.birth.Date.year ()
-            if births[1] is None or p.birth.Date > births[1]:
-               births[1] = p.birth.Date
-               births[3] = births[1].display()
 
          if p.death and p.death.Date:
-            if deaths[0] is None or p.death.Date < deaths[0]:
-               deaths[0] = p.death.Date
-               deaths[2] = deaths[0].display ()
-            if deaths[1] is None or p.death.Date > deaths[1]:
-               deaths[1] = p.death.Date
-               deaths[3] = deaths[1].display()
+            if deaths is None or p.death.Date > deaths:
+               deaths = p.death.Date
                if p.death.Date.year_known:
                   gen_range[2] = p.death.Date.year ()
 
@@ -59,25 +48,34 @@ def view (request):
             % (index+1, len (g), 2 ** (index + 1),
                gen_range[1], gen_range[2])
 
-      if gen_range[1] == "?" and gen_range[2] == "?":
-         gen_range[1] = 'null'
-         gen_range[2] = 'null'
-      elif gen_range [1] == "?":
-         gen_range[1] = gen_range[2] - 1
-      elif gen_range [2] == "?":
-         gen_range[2] = gen_range[1] + 1
+      # Postprocess the ranges:
+      #   generation n's earliest date has to be at least 15 years before
+      #     its children's earliest date (can't have children before that)
+      #   generation n's latest date (death) has to be after the children's
+      #     generation earliest date (first birth)
+
+      if len (ranges) > 0:
+         if gen_range [1] == "?":
+            gen_range[1] = ranges[-1][1] - 15  
+         if gen_range [2] == "?" or gen_range[2] < ranges[-1][1]:
+            gen_range[2] = ranges[-1][1]
 
       ranges.append (gen_range)
 
    ages = []
    for a in range (0, 120, 5):
-      ages.append ([a,0])
+      ages.append ([a,0,0,0])  # date_range, males, females, unknown
 
    for p in persons.itervalues ():
       if p.birth and p.birth.Date and p.death and p.death.Date:
          age = p.death.Date.years_since (p.birth.Date)
          if age:
-            ages [int (age / 5)][1] += 1;
+            if p.sex == "M":
+               ages [int (age / 5)][1] += 1;
+            elif p.sex == "F":
+               ages [int (age / 5)][2] += 1;
+            else:
+               ages [int (age / 5)][3] += 1;
 
    return render_to_response (
        'geneapro/stats.html',

@@ -41,9 +41,11 @@ class Tree (object):
          role__in = (models.Event_Type_Role.birth__father,
                      models.Event_Type_Role.principal,
                      models.Event_Type_Role.birth__mother),
+         disproved = False,
          event__in = models.P2E_Assertion.objects.filter (
             event__type = models.Event_Type.birth,
             role__in = roles,
+            disproved = False,
             person__in = list (ids)).values_list ('event', flat=True))
 
       events = dict ()  # tuples (child, father, mother)
@@ -202,11 +204,13 @@ class Tree (object):
       child_births = models.P2E_Assertion.objects.filter (
          person = id,
          event__type = models.Event_Type.birth,
+         disproved = False,
          role__in = (models.Event_Type_Role.birth__father,
                      models.Event_Type_Role.birth__mother))
 
       p2e = models.P2E_Assertion.objects.filter (
          event__in = child_births.values_list ('event', flat=True),
+         disproved = False,
          role__in  = (models.Event_Type_Role.principal,
                       models.Event_Type_Role.birth__father,
                       models.Event_Type_Role.birth__mother)) \
