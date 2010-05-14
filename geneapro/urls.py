@@ -10,6 +10,7 @@ urlpatterns = patterns('',
    (r'^persona/(\d+)', views.persona.view),
 	url (r'^pedigreeData$', views.pedigree.data, name="pedigree_data"),
 	(r'^pedigree$',     views.pedigree.pedigree_view),
+	(r'^pedigree2$',    views.pedigree.pedigree_canvas_view),
 	(r'^fanchart$',     views.pedigree.fanchart_view),
 	(r'^stats$',        views.stats.view),
 )

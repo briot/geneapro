@@ -1,0 +1,57 @@
+{% extends "geneapro/base.html" %}
+{% block title %}GeneaPro: pedigree{% endblock %}
+{% block css %}
+.pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
+#pedigreeSVG {position:absolute;width:100%;height:100%;margin:10px 0 10px 0;border:0}
+{% endblock css %}
+
+{% block script %}
+function changeGenerations () {
+{% ifequal type "fanchart" %}
+   getPedigree ({yearonly:true});
+{% else %}
+   getPedigree ({yearonly:false});
+{% endifequal %}
+}
+pedigree_data_url="{% url pedigree_data %}";
+$(document).ready (function() {
+   changeGenerations ();
+});
+{% endblock script %}
+
+{% block endbody %}
+<script type="text/javascript" src="{{MEDIA_URL}}pedigree2.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.mousewheel.min.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.detectFontSize.js"></script>
+{% endblock endbody %}
+{% block contents %}
+Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
+  <option>1</option>
+  <option>2</option>
+  <option>3</option>
+  <option>4</option>
+  <option selected>5</option>
+  <option>6</option>
+  <option>7</option>
+  <option>8</option>
+  <option>9</option>
+  <option>10</option>
+  <option>11</option>
+  <option>12</option>
+  <option>13</option>
+  <option>14</option>
+  <option>15</option>
+  <option>16</option>
+  <option>17</option>
+  <option>18</option>
+  <option>19</option>
+  <option>20</option>
+  <option>21</option>
+  <option>22</option>
+  <option>23</option>
+  <option>24</option>
+</select>
+<div>
+<canvas id="pedigreeSVG"></canvas>
+</div>
+{% endblock contents %}

@@ -137,6 +137,12 @@ def pedigree_view (request):
       {"type":"pedigree"},
       context_instance=RequestContext(request))
 
+def pedigree_canvas_view (request):
+   """Display the pedigree of a person as a tree"""
+   return render_to_response (
+      'geneapro/pedigree2.html',
+      {}, context_instance=RequestContext(request))
+
 def fanchart_view (request):
    """Display the pedigree of a person as a fanchart"""
    return render_to_response (
