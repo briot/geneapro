@@ -128,39 +128,35 @@ Canvas.prototype.text = function (x, y, text, attr) {
       c.fillText (text, x, y);
    }
 };
-Canvas.prototype.drawBox = function (person, x, y, sosa, config) {
+Canvas.prototype.drawBox = function (person, x, y, sosa, width, height) {
    if (person) {
      var c = this.ctx,
-      pId = (sosa < 0 ? "c" + (-sosa) : sosa),
-      attr = data.styles [person.y],
-      birth = event_to_string (person.b),
-      death = event_to_string (person.d),
-      birthp = person.b ? person.b[1] || "" : "",
-      deathp = person.d ? person.d[1] || "" : "";
+         lh = this.lineHeight,
+         attr = data.styles [person.y],
+         birth = event_to_string (person.b),
+         death = event_to_string (person.d),
+         birthp = person.b ? person.b[1] || "" : "",
+         deathp = person.d ? person.d[1] || "" : "";
 
      c.save ();
-     this.rect (x, y, config.boxWidth, config.boxHeight, attr);
+     this.rect (x, y, width, height, attr);
      c.clip ();
-     this.text (x + 4, y + this.lineHeight,
-                person.surn + " " + person.givn, attr);
+     this.text (x + 4, y + lh, person.surn + " " + person.givn, attr);
 
      c.font = "bold 10px monospace";
-     c.fillText ("b:", x + 4, y + 2 * this.lineHeight);
-     c.fillText ("d:", x + 4, y + 4 * this.lineHeight);
+     c.fillText ("b:", x + 4, y + 2 * lh);
+     c.fillText ("d:", x + 4, y + 4 * lh);
 
-     c.font = "italic 10px monospace";
-     if (birth)  c.fillText (birth,  x + 20, y + 2 * this.lineHeight);
-     if (birthp) c.fillText (birthp, x + 20, y + 3 * this.lineHeight);
-     if (death)  c.fillText (death,  x + 20, y + 4 * this.lineHeight);
-     if (deathp) c.fillText (deathp, x + 20, y + 5 * this.lineHeight);
+     c.font = "italic " + this.baseFont;
+     if (birth)  c.fillText (birth,  x + lh * 2, y + 2 * lh);
+     if (birthp) c.fillText (birthp, x + lh * 2, y + 3 * lh);
+     if (death)  c.fillText (death,  x + lh * 2, y + 4 * lh);
+     if (deathp) c.fillText (deathp, x + lh * 2, y + 5 * lh);
 
      c.restore (); // unset clipping mask and font
 
     } else if (showUnknown) {
-      this.rect (x, y, boxWidth, boxHeight,
-               {"stroke-dasharray":"3", fill:"white", stroke:"black",
-                onmouseover:'onMouseOver(evt)',
-                onmouseout:'onMouseOut(evt)'});
+      this.rect (x, y, width, height, {fill:"white", stroke:"black"});
   }
 };
 
@@ -199,38 +195,58 @@ function doDraw (canvas) {
       tops[index] = (tops [2 * index + 1] + tops [2 * index + 2]) / 2;
    }
 
-   config = {
-     boxWidth: boxWidth,
-     boxHeight: boxHeight
-   };
+      // Basic manual clipping to save time
+      /*if (((x + config.boxWidth) * this.scale < this.scrollx
+           || (x - this.canvas.width) * this.scale > this.scrollx)
+          ||
+          ((y + config.boxHeight) * this.scale < this.scrolly
+           || (y - this.canvas.height) * this.scale > this.scrolly))
+        return
+        */
+
 
    index = 0;
    for (var gen = 0; gen < d.generations; gen++) {
       var x = (boxWidth + horizPadding) * gen + startX;
+      // basic clipping
+      if (x * canvas.scale + canvas.scrollx > canvas.canvas.width
+          || (x + boxWidth) * canvas.scale + canvas.scrollx < 0)
+      {
+         index += Math.pow (2, gen);
+         continue;
+      }
+
       for (var box = Math.pow (2, gen); box >= 1; box--) {
-         if (gen < d.generations - 1) {
-            var x2 = x + boxWidth + horizPadding;
-            var y1 = tops[2 * index + 1] + boxHeight / 2;
-            var y2 = tops[2 * index + 2] + boxHeight / 2;
+         // basic clipping
+         if (tops[index] * canvas.scale + canvas.scrolly > canvas.canvas.height
+             || (tops[index] + boxHeight) * canvas.scale + canvas.scrolly < 0)
+         {
+         } else {
+            if (gen < d.generations - 1) {
+               var x2 = x + boxWidth + horizPadding;
+               var y1 = tops[2 * index + 1] + boxHeight / 2;
+               var y2 = tops[2 * index + 2] + boxHeight / 2;
 
-            if (showUnknown || d.sosa [2 * index + 1]) {
-               canvas.ctx.beginPath ();
-               canvas.ctx.moveTo (x2, y1);
-               canvas.ctx.lineTo (x + boxWidth * 0.9, y1);
-               canvas.ctx.lineTo (x + boxWidth * 0.9, y2);
-               canvas.ctx.lineTo (x2, y2);
-               canvas.ctx.strokeStyle = "black";
-               canvas.ctx.stroke ();
+               if (showUnknown || d.sosa [2 * index + 1]) {
+                  canvas.ctx.beginPath ();
+                  canvas.ctx.moveTo (x2, y1);
+                  canvas.ctx.lineTo (x + boxWidth * 0.9, y1);
+                  canvas.ctx.lineTo (x + boxWidth * 0.9, y2);
+                  canvas.ctx.lineTo (x2, y2);
+                  canvas.ctx.strokeStyle = "black";
+                  canvas.ctx.stroke ();
+               }
+
+               if (gen < d.generations - 1 
+                   && d.marriage[2 * index + 2]) {
+
+                 var mar = event_to_string (d.marriage [2 * index + 2]);
+                 canvas.text (x2, (y1 + y2) / 2 + 4, mar, {stroke:"black"});
+               }
             }
-
-            if (gen < d.generations - 1 
-                && d.marriage[2 * index + 2]) {
-
-              var mar = event_to_string (d.marriage [2 * index + 2]);
-              canvas.text (x2, (y1 + y2) / 2 + 4, mar, {stroke:"black"});
-            }
+            canvas.drawBox (d.sosa [index + 1], x, tops[index], index + 1,
+                            boxWidth, boxHeight);
          }
-         canvas.drawBox (d.sosa [index + 1], x, tops[index], index + 1, config);
          index ++;
       }
    }
@@ -252,7 +268,7 @@ function doDraw (canvas) {
          canvas.ctx.strokeStyle = "black";
          canvas.ctx.stroke ();
 
-         canvas.drawBox (d.children [c], 1, y, -1 - c, config);
+         canvas.drawBox (d.children [c], 1, y, -1 - c, boxWidth, boxHeight);
          y += boxHeight + space;
       }
    }
