@@ -1,9 +1,13 @@
 // Needs the variable "pedigree_data_url" to be defined
-var boxWidth = 200;
-var horizPadding = 20;
-var boxHeight = 75;
-var vertPadding = 20; //  vertical padding at last gen
+var boxWidth = 300;
+var horizPadding = 0;
+var boxHeight = 15;
+var vertPadding = 2;    //  vertical padding at last gen
 var showUnknown = false; //  whether to draw a box when parent is unknown
+var ratio = 0.75;   //  size ratio for height from generation n to n+1
+var wratio = 0.75;  //  size ratio for width from generation n to n+1
+var baseFontSize = "16"; // pixels
+var minFont = 5;    // No need to draw text below this
 var tops=null;
 
 stylesheet = "rect {filter:url(#shadow)} rect.selected {fill:#CCC}";
@@ -56,14 +60,16 @@ function Canvas (selector, maxWidth, maxHeight) {
    this.canvas.width = w;
    this.canvas.height = h;
 
+   this.scale = 1;
    var ratiox = w / maxWidth,
        ratioy = h / maxHeight;
-   this.scale = Math.min (ratiox, ratioy);
-   this.ctx.scale (this.scale, this.scale);
+   //this.scale = Math.max (0.7, Math.min (ratiox, ratioy));
+   //this.ctx.scale (this.scale, this.scale);
 
-   this.baseFont = "10px sans";
+   this.baseFont = baseFontSize + "px sans";
    this.ctx.font = this.baseFont;
-   this.lineHeight = $.detectFontSize (10, "sans");
+   this.ctx.textBaseline = 'top';
+   this.lineHeight = $.detectFontSize (baseFontSize, "sans");
 
    this.scrollx = 0;
    this.scrolly = 0;
@@ -119,41 +125,46 @@ Canvas.prototype.rect = function (x, y, width, height, attr) {
    }
 };
 Canvas.prototype.text = function (x, y, text, attr) {
-   if (this.scale > 0.2) {
-      var c = this.ctx;
-
-      if (attr["font-weight"])
-         c.font = attr["font-weight"] + " " + this.baseFont;
-      c.fillStyle = attr.color || "black";
-      c.fillText (text, x, y);
-   }
+   var c = this.ctx;
+   c.save ();
+   if (attr["font-weight"])
+      c.font = attr["font-weight"] + " " + c.font;
+   c.fillStyle = attr.color || "black";
+   c.fillText (text, x, y);
+   c.restore ();
 };
-Canvas.prototype.drawBox = function (person, x, y, sosa, width, height) {
+Canvas.prototype.drawBox = function (person, x, y, sosa, width, height, lines) {
    if (person) {
      var c = this.ctx,
          lh = this.lineHeight,
+         font = height + "px sans",
          attr = data.styles [person.y],
          birth = event_to_string (person.b),
          death = event_to_string (person.d),
          birthp = person.b ? person.b[1] || "" : "",
          deathp = person.d ? person.d[1] || "" : "";
 
-     c.save ();
      this.rect (x, y, width, height, attr);
-     c.clip ();
-     this.text (x + 4, y + lh, person.surn + " " + person.givn, attr);
 
-     c.font = "bold 10px monospace";
-     c.fillText ("b:", x + 4, y + 2 * lh);
-     c.fillText ("d:", x + 4, y + 4 * lh);
+     if (height >= minFont) {
+        c.font = font;
 
-     c.font = "italic " + this.baseFont;
-     if (birth)  c.fillText (birth,  x + lh * 2, y + 2 * lh);
-     if (birthp) c.fillText (birthp, x + lh * 2, y + 3 * lh);
-     if (death)  c.fillText (death,  x + lh * 2, y + 4 * lh);
-     if (deathp) c.fillText (deathp, x + lh * 2, y + 5 * lh);
+        if (lines >= 1) {
+           c.save ();
+           c.clip ();
+           this.text (x + 1, y, person.surn + " " + person.givn, attr);
+           c.font = "bold " + font;
+           if (lines >=2) c.fillText ("b:", x + 1, y + 2 * lh);
+           if (lines >=4) c.fillText ("d:", x + 1, y + 4 * lh);
 
-     c.restore (); // unset clipping mask and font
+           c.font = "italic " + font;
+           if (lines >= 2 && birth)  c.fillText (birth,  x + lh, y + lh);
+           if (lines >= 3 && birthp) c.fillText (birthp, x + lh, y + 2 * lh);
+           if (lines >= 4 && death)  c.fillText (death,  x + lh, y + 3 * lh);
+           if (lines >= 5 && deathp) c.fillText (deathp, x + lh, y + 4 * lh);
+           c.restore (); // unset clipping mask and font
+        }
+     }
 
     } else if (showUnknown) {
       this.rect (x, y, width, height, {fill:"white", stroke:"black"});
@@ -163,10 +174,10 @@ Canvas.prototype.drawBox = function (person, x, y, sosa, width, height) {
 function drawSOSA() {
   var d = data,
       maxBoxes = Math.pow (2,d.generations-1),// max boxes at last generation
-      totalBoxes = Math.pow (2,d.generations) - 1, // geometrical summation
       startX = (d.children ? boxWidth + horizPadding : 0) + 1;
       maxWidth = (boxWidth + horizPadding) * d.generations + startX,
-      maxHeight = boxHeight * maxBoxes + vertPadding * (maxBoxes - 1) +1,
+      maxHeight = (boxHeight + vertPadding)
+         * Math.pow (ratio, d.generations - 1) * maxBoxes,
       canvas = new Canvas('#pedigreeSVG', maxWidth, maxHeight);
   doDraw (canvas);
 };
@@ -175,100 +186,164 @@ function doDraw (canvas) {
    var d = data,
        maxBoxes = Math.pow (2,d.generations-1),// max boxes at last generation
        totalBoxes = Math.pow (2,d.generations) - 1, // geometrical summation
-       startX = (d.children ? boxWidth + horizPadding : 0) + 1;
+       startX = (d.children ? boxWidth + horizPadding + 11 : 1),
+       tops = new Array(totalBoxes),
+       boxheights = new Array (d.generations);//[height, scale, lines]
 
    canvas.clear ();
-   tops = new Array(totalBoxes);
+
+   var maxLines = 1,  //  name, birth date and place, death date and place
+       lh       = canvas.lineHeight;
+
+   boxHeight = lh * maxLines;  //  ideal height, so that we have a scaling of
+                               //  1 for the first generation
+
+   //  Compute display data for all boxes.
+   //  Start with the last generation first: the height of boxes depends on the
+   //  generation number. Depending on this height, we compute how much
+   //  information should be displayed in the boxes. We display at most five
+   //  lines of info (name, birth date and place, death date and place), so
+   //  we round up as needed. And we want at least 1 pixel displayed.
+   //  We then compute the scaling to display that many lines. For instance,
+   //  if we wanted to display only one line (the minimum), say 10px, but only
+   //  have 1px max, the scaling is 1/10. This scaling will also be applied to
+   //  the width of the box. We do not compute the scaling based on the
+   //  maximum number of lines (5), since otherwise the box would become too
+   //  narrow, and the text unreadable even for early generations.
+   //  The padding between the boxes is only dependent on the generation.
+
+   var lastgen = d.generations - 1,
+       genscale = Math.pow (ratio, lastgen),
+       wscale   = Math.pow (wratio, lastgen),
+       maxheight = boxHeight * genscale,
+       lines = Math.max (1, Math.min (5, Math.round (maxheight / lh))),
+       scaling = (lines * lh) / maxHeight,
+       prevPadding = Math.round (vertPadding * genscale);
+
+   boxheights [lastgen] = [maxheight, genscale, lines, wscale];
 
    // Compute the positions for the last generation
 
-   var y = 0;
-   for (var index=totalBoxes - maxBoxes; index < totalBoxes; index++) {
+   for (var index = totalBoxes - maxBoxes, y=0; index < totalBoxes; index++) {
       tops[index] = y;
-      y += boxHeight + vertPadding;
+      y += maxheight + prevPadding;
    }
 
-   // For the other generations, the boxes are centered relatively to their
-   // ancestors in the next gen
+   index = totalBoxes - maxBoxes - 1;
 
-   for (index = totalBoxes - maxBoxes - 1; index >= 0; index--) {
-      tops[index] = (tops [2 * index + 1] + tops [2 * index + 2]) / 2;
+   //  Now for all previous generations: the maximum height is that given in
+   //  the config, but it must fit in the space between the two parents,
+   //  taking into account the pading
+
+   for (var gen = lastgen - 1; gen >= 0; gen --) {
+      genscale  = Math.pow (ratio, gen);
+      maxheight = boxHeight * genscale;
+      wscale    = Math.pow (wratio, gen);
+      var parentsHeight = 2 * boxheights [gen+1][0] + prevPadding,
+          padding = Math.round (vertPadding * genscale);
+      maxheight = Math.min (boxHeight * genscale,
+                            parentsHeight - padding);
+
+      lines = Math.max (1, Math.min (5, Math.round (maxheight / lh)));
+      scaling = (lines * lh) / maxheight;
+      boxheights [gen] = [maxheight, genscale, lines, wscale];
+
+      //  Compute positions for boxes in this generation
+      var lastIndex = index - Math.pow (2, gen);
+      for (; index > lastIndex; index--) {
+         tops[index] = (tops [2*index+2]
+                        + tops[2*index + 1] + boxheights[gen+1][0]
+                        - maxheight) / 2;
+      }
+
+      prevPadding = padding;
    }
 
-      // Basic manual clipping to save time
-      /*if (((x + config.boxWidth) * this.scale < this.scrollx
-           || (x - this.canvas.width) * this.scale > this.scrollx)
-          ||
-          ((y + config.boxHeight) * this.scale < this.scrolly
-           || (y - this.canvas.height) * this.scale > this.scrolly))
-        return
-        */
-
+   //console.log (boxheights);
 
    index = 0;
-   for (var gen = 0; gen < d.generations; gen++) {
-      var x = (boxWidth + horizPadding) * gen + startX;
-      // basic clipping
+   for (var gen = 0, x=startX; gen < d.generations; gen++) {
+      var w = boxWidth * boxheights[gen][3],
+          h = boxheights [gen][0],
+          x2 = Math.round (x + w + horizPadding * boxheights[gen][3]),
+          x3 = Math.round (x + w * 0.9);
+
+      // basic clipping (no one from this generation is visible)
       if (x * canvas.scale + canvas.scrollx > canvas.canvas.width
-          || (x + boxWidth) * canvas.scale + canvas.scrollx < 0)
+          || (x + w) * canvas.scale + canvas.scrollx < 0)
       {
          index += Math.pow (2, gen);
-         continue;
-      }
 
-      for (var box = Math.pow (2, gen); box >= 1; box--) {
-         // basic clipping
-         if (tops[index] * canvas.scale + canvas.scrolly > canvas.canvas.height
-             || (tops[index] + boxHeight) * canvas.scale + canvas.scrolly < 0)
-         {
-         } else {
-            if (gen < d.generations - 1) {
-               var x2 = x + boxWidth + horizPadding;
-               var y1 = tops[2 * index + 1] + boxHeight / 2;
-               var y2 = tops[2 * index + 2] + boxHeight / 2;
+      } else {
+         for (var box = Math.pow (2, gen); box >= 1; box--) {
+            var sosa = index + 1;
 
-               if (showUnknown || d.sosa [2 * index + 1]) {
-                  canvas.ctx.beginPath ();
-                  canvas.ctx.moveTo (x2, y1);
-                  canvas.ctx.lineTo (x + boxWidth * 0.9, y1);
-                  canvas.ctx.lineTo (x + boxWidth * 0.9, y2);
-                  canvas.ctx.lineTo (x2, y2);
+            // basic clipping
+            if (tops[index] * canvas.scale+canvas.scrolly > canvas.canvas.height
+                || (tops[index] + h) * canvas.scale + canvas.scrolly < 0)
+            {
+            } else {
+               if (gen < d.generations - 1) {
                   canvas.ctx.strokeStyle = "black";
-                  canvas.ctx.stroke ();
-               }
+                  if (showUnknown || d.sosa [2 * sosa]) {
+                     var y1 = tops[2 * index + 1] + boxheights[gen+1][0] / 2;
+                     canvas.ctx.beginPath ();
+                     canvas.ctx.moveTo (x2, y1);
+                     canvas.ctx.lineTo (x3, y1);
+                     canvas.ctx.lineTo (x3, tops[index]);
+                     canvas.ctx.stroke ();
+                  }
+                  if (showUnknown || d.sosa [2 * sosa + 1]) {
+                     var y2 = tops[2 * index + 2] + boxheights[gen+1][0] / 2;
+                     canvas.ctx.beginPath ();
+                     canvas.ctx.moveTo (x2, y2);
+                     canvas.ctx.lineTo (x3, y2);
+                     canvas.ctx.lineTo (x3, tops[index] + h);
+                     canvas.ctx.stroke ();
+                  }
 
-               if (gen < d.generations - 1 
-                   && d.marriage[2 * index + 2]) {
+                  if (h > minFont
+                      && gen < d.generations - 1 
+                      && d.marriage[2 * index + 2]) {
 
-                 var mar = event_to_string (d.marriage [2 * index + 2]);
-                 canvas.text (x2, (y1 + y2) / 2 + 4, mar, {stroke:"black"});
+                    var mar = event_to_string (d.marriage [2 * index + 2]);
+                    canvas.ctx.save ();
+                    canvas.ctx.font = (h * ratio) + "px sans";
+                    canvas.ctx.textBaseline = 'middle';
+                    canvas.text (x2 + 3, tops[index] + h/2, mar, {stroke:"black"});
+                    canvas.ctx.restore ();
+                  }
                }
+               canvas.drawBox (d.sosa [sosa], x, tops[index], index + 1,
+                               w, h, 1);
+               canvas.ctx.restore ();
             }
-            canvas.drawBox (d.sosa [index + 1], x, tops[index], index + 1,
-                            boxWidth, boxHeight);
+            index ++;
          }
-         index ++;
       }
+
+      x = x2;
    }
 
    // draw children
    if (d.children) {
-      var space = (maxHeight - d.children.length * boxHeight)
-         / (d.children.length + 1);
-      var y = space;
+      var space = 20,
+          childrenHeight = d.children.length * (space + boxHeight) - space,
+          //  center around decujus
+          y = tops[0] + boxHeight / 2 - childrenHeight / 2;
       for (var c=0, len=d.children.length; c < len; c++) {
-         var x2 = x + boxWidth + horizPadding;
+         var x2 = boxWidth + horizPadding;
          var y2 = tops[2 * index + 2] + boxHeight / 2;
 
          canvas.ctx.beginPath ();
          canvas.ctx.moveTo (startX, tops[0] + boxHeight / 2);
-         canvas.ctx.lineTo (startX - horizPadding / 2, tops[0] + boxHeight/2);
-         canvas.ctx.lineTo (startX - horizPadding / 2, y + boxHeight / 2);
-         canvas.ctx.lineTo (1 + boxWidth, y + boxHeight / 2);
+         canvas.ctx.lineTo (startX - 5, tops[0] + boxHeight/2);
+         canvas.ctx.lineTo (startX - 5, y + boxHeight / 2);
+         canvas.ctx.lineTo (boxWidth, y + boxHeight / 2);
          canvas.ctx.strokeStyle = "black";
          canvas.ctx.stroke ();
 
-         canvas.drawBox (d.children [c], 1, y, -1 - c, boxWidth, boxHeight);
+         canvas.drawBox (d.children [c], 0, y, -1 - c, boxWidth, boxHeight, 5);
          y += boxHeight + space;
       }
    }
