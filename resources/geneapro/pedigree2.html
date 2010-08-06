@@ -13,9 +13,12 @@ function changeGenerations () {
    getPedigree ({yearonly:false});
 {% endifequal %}
 }
+{# Preload the initial data. Faster display, and compatibility with #}
+{#   django-debug-toolbar #}
+data={{pedigree_data|safe}};
 pedigree_data_url="{% url pedigree_data %}";
 $(document).ready (function() {
-   changeGenerations ();
+   drawSOSA ();
 });
 {% endblock script %}
 

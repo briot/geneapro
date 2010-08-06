@@ -15,7 +15,7 @@ import time
 
 style = color.color_style ()
 
-show_SQL = False
+show_SQL = True
 
 class AJAXSimpleExceptionResponse:
     def process_request(self, request):
@@ -29,9 +29,15 @@ class AJAXSimpleExceptionResponse:
 
            if show_SQL:
               for r, q in enumerate (connection.queries):
-                 total += float (q['time'])
-                 print style.SQL_COLTYPE ("%d %ss => " % (r, q['time'])) \
-                    + q["sql"]
+                 if 'time' in q:   # default
+                    total += float (q['time'])
+                    print style.SQL_COLTYPE ("%d %ss => "
+                                             % (r, q['duration'])) \
+                        + q["sql"]
+                 else:  # with django toolbar
+                    total += float (q['duration'])
+                    print style.SQL_COLTYPE ("%d %sms => "%(r, q['duration']))\
+                       + q["sql"]  # or "raw_sql"
 
            if self.has_exception:
               print "Exception raised"

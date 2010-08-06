@@ -16,9 +16,10 @@ function changeGenerations () {
 {% endifequal %}
 }
 pedigree_data_url="{% url pedigree_data %}";
+data={{pedigree_data|safe}}
 $(document).ready (function() {
    $('#pedigreeSVG').svg ();
-   changeGenerations ();
+   drawSOSA ();
 });
 {% endblock script %}
 

@@ -117,35 +117,42 @@ def get_sosa_tree (id, max_levels, style_ruless):
            'marriage':    sosa[1],
            'styles':      styles.all_styles()}
 
-def data (request):
+def compute_data (generations, year_only, who):
    """Compute, and send back to the user, information about the pedigree of a
       specific person. This includes ancestors and children
    """
 
-   generations = int (request.GET.get ("generations", 4))
-   year_only   = request.GET.get ("yearonly", "false") == "true"
-   who         = int (request.GET ["id"])
-
    result = get_sosa_tree (who, generations, style_rules)
    result = to_json (result, year_only=year_only)
-   return HttpResponse (result, mimetype="application/javascript")
+   return result
+
+def data (request):
+   generations = int (request.GET.get ("generations", 5))
+   year_only   = request.GET.get ("yearonly", "false") == "true"
+   who         = int (request.GET.get ("id", 1))
+
+   return HttpResponse (compute_data (generations, year_only, who),
+                        mimetype="application/javascript")
 
 def pedigree_view (request):
    """Display the pedigree of a person as a tree"""
    return render_to_response (
       'geneapro/pedigree.html',
-      {"type":"pedigree"},
+      {"type":"pedigree",
+       "pedigree_data":compute_data(6, False, 1)},
       context_instance=RequestContext(request))
 
 def pedigree_canvas_view (request):
    """Display the pedigree of a person as a tree"""
    return render_to_response (
       'geneapro/pedigree2.html',
-      {}, context_instance=RequestContext(request))
+      {"pedigree_data":compute_data(6, False, 1)},
+      context_instance=RequestContext(request))
 
 def fanchart_view (request):
    """Display the pedigree of a person as a fanchart"""
    return render_to_response (
        'geneapro/pedigree.html',
-       {"type":"fanchart"},
+       {"type":"fanchart",
+        "pedigree_data":compute_data(6, True, 1)},
        context_instance=RequestContext(request))

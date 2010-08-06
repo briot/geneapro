@@ -74,7 +74,11 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+
+    # Should be last
+    'debug_toolbar.middleware.DebugToolbarMiddleware'
 )
+
 
 INTERNAL_IPS = ('192.168.1.102','127.0.0.1',)
 
@@ -97,4 +101,6 @@ INSTALLED_APPS = (
 
    # 'extensions',  # old name for django extensions (opensuse)
     'django_extensions', # new name for django extensions
+
+   'debug_toolbar',
 )
