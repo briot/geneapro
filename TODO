@@ -5,6 +5,9 @@
    (Assertion.subject1, Assertion.value)   ???
    (Assertion.subject2, Assertion.value)   ???
    Assertion.Value should point into a table rather than be a text
+** Investigate storing trees more efficiently
+   See for instance http://articles.sitepoint.com/print/hierarchical-data-database
+   and http://code.google.com/p/django-mptt/
 
 * Pedigree View
 ** BACK button should go back to previous pedigree view
