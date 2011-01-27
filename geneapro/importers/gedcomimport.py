@@ -107,10 +107,10 @@ class GedcomImporter (object):
          repo = sour.REPO
          caln = repo.CALN  # call number
          if caln:
-            medium = caln[0].MEDI.lower ()
-            medium_id = self._source_medium.get (medium_id)
+            medium = (caln[0].MEDI or "").lower()
+            medium_id = self._source_medium.get (medium)
             if not medium_id:
-               print "Unknown medium type for source %s: %s" % (id, medium)
+               print "Unknown medium type for source '%s'" % medium
                medium_id = 0
 
       try:
@@ -152,8 +152,13 @@ class GedcomImporter (object):
          print "Ignore OBJE reference: %s" % (data)
          return
 
-      form_to_mime = {"jpeg":"image/jpeg",
-                      "image/png":"image/png"}
+      form_to_mime = {"jpeg": "image/jpeg",      # Gramps
+                      "image/png": "image/png",  # Gramps
+                      "png": "image/png",        # RootsMagic
+                      "jpg": "image/jpg",        # RootsMagic
+                      "JPG": "image/jpg",        # RootsMagic
+                      "": "application/octet-stream"
+                      }
       mime = form_to_mime.get (data.FORM)
       if mime is None:
          print "Unknown mime type for object: " + data.FORM
@@ -185,22 +190,24 @@ class GedcomImporter (object):
               date=mar.DATE)
 
          for src in self._create_sources_ref (mar):
-            models.P2E_Assertion.objects.create (
-                 surety = self._default_surety,
-                 researcher = self._researcher,
-                 person = husb,
-                 source = src,
-                 event = evt,
-                 role_id= models.Event_Type_Role.principal,
-                 value = "event")
-            models.P2E_Assertion.objects.create (
-                 surety = self._default_surety,
-                 researcher = self._researcher,
-                 person = wife,
-                 source = src,
-                 event = evt,
-                 role_id = models.Event_Type_Role.principal,
-                 value = "event")
+            if husb:
+               models.P2E_Assertion.objects.create (
+                  surety = self._default_surety,
+                  researcher = self._researcher,
+                  person = husb,
+                  source = src,
+                  event = evt,
+                  role_id= models.Event_Type_Role.principal,
+                  value = "event")
+            if wife:
+               models.P2E_Assertion.objects.create (
+                  surety = self._default_surety,
+                  researcher = self._researcher,
+                  person = wife,
+                  source = src,
+                  event = evt,
+                  role_id = models.Event_Type_Role.principal,
+                  value = "event")
 
       children = data.CHIL
       # Mark the parents of the child
@@ -288,16 +295,17 @@ class GedcomImporter (object):
          # FORM would in fact tell us how to split the name to get its various
          # components, which we could use to initialize the place parts
       
-         for key, val in addr.__dict__.iteritems ():
-            if key != "value" and val:
-               part = self._place_part_types.get (key, None)
-               if not part:
-                  print "Unknown place part: " + key
-               else:
-                  pp = models.Place_Part.objects.create (
-                     place = p,
-                     type = part,
-                     name = val)
+         if addr:
+            for key, val in addr.__dict__.iteritems():
+               if key != "value" and val:
+                  part = self._place_part_types.get(key, None)
+                  if not part:
+                     print "Unknown place part: " + key
+                  else:
+                     pp = models.Place_Part.objects.create(
+                        place=p,
+                        type=part,
+                        name=val)
 
       return p
 
@@ -443,9 +451,13 @@ class GedcomImporter (object):
    def _create_indi (self, data):
       """Create the equivalent of an INDI in the database"""
 
+      if not data.NAME:
+         name = ""
+      else:
+         name = data.NAME[0].value  # Use first available name
+
       # The name to use is the first one in the list of names
-      indi = models.Persona.objects.create (
-         name=data.NAME[0].value, description="")
+      indi = models.Persona.objects.create(name=name, description="")
 
       # Now create the characteristics
       for char in self._char_types.keys ():
@@ -529,9 +541,14 @@ class GedcomImporter (object):
       file
       """
       subm = self._data.HEAD.SUBM
-      return models.Researcher.objects.create (
-          name= subm.NAME.value or "unknown",
-          comment= GedcomImporter._addr_to_string (subm.ADDR))
+      if subm:
+         return models.Researcher.objects.create(
+            name= subm.NAME.value or "unknown",
+            comment= GedcomImporter._addr_to_string (subm.ADDR))
+      else:
+         return models.Researcher.objects.create(
+            name="unknown",
+            comment="")
 
 ##################################
 ## GedcomFileImporter

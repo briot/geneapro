@@ -71,6 +71,7 @@ unlimited = 100000
 
 EVENT_DETAILS = (("TYPE", 0, 1, None),
                  ("DATE", 0, 1, None),
+                 ("_SDATE", 0, 1, None),  # ??? Sort date in RootsMagic
                  ("PLAC", 0, 1, "PLAC"),
                  ("ADDR", 0, 1, "ADDR"),
                  ("PHON", 0, 3, None), # In gedcom: part of ADDR
@@ -90,6 +91,7 @@ _GRAMMAR = dict (
              ("SOUR", 0, unlimited, "SOUR"),
              ("SUBM", 0, unlimited, "SUBM"),
              ("SUBN", 0, 1,         "SUBN"),
+             ("_EVDEF", 0, unlimited, "_EVDEF"),  # ??? RootsMagic
              ("TRLR", 1, 1,         None)),
 
     CHAN =  (("DATE", 1, 1,         # Change date
@@ -105,12 +107,16 @@ _GRAMMAR = dict (
              ("REFN", 0, unlimited,
                 (("TYPE", 0, 1, None),)),
              ("RIN",  0, 1,         None),
-             ("CHAN", 0, 1,         "CHAN")),
+             ("CHAN", 0, 1,         "CHAN"),
+             ),
 
-    MULTIMEDIA_LINK = 
+    MULTIMEDIA_LINK =
             (("FORM", 1, 1, None),
              ("TITL", 0, 1, None),
              ("FILE", 1, 1, None),
+             ("_TYPE", 0, 1, None),  # ??? RootsMagic extension
+             ("_SCBK", 0, 1, None),  # ??? RootsMagic extension
+             ("_PRIM", 0, 1, None),  # ??? RootsMagic extension
              ("NOTE", 0, unlimited, None)),
 
     SOURCE_CITATION =
@@ -124,14 +130,36 @@ _GRAMMAR = dict (
                  ("TEXT", 0, unlimited, None))),# Text from source
              ("QUAY", 0, 1,         None),      # Certainty assessment
              ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-             ("NOTE", 0, unlimited, None)),
+             ("NOTE", 0, unlimited, None),
+             ("_QUAL", 0, 1, None), # ??? RootsMagic extension
+             ("_INFO", 0, 1, None), # ??? RootsMagic extension
+             ("_TMPLT", 0, 1, "_TMPLT")),  # ??? RootsMagic extension
+
+    _TMPLT = # ??? RootsMagic only
+           (("TID", 0, 1, None),
+            ("FIELD", 0, unlimited, 
+             (("NAME", 0, unlimited, None),
+              ("VALUE", 0, unlimited, None),
+              )),
+            ),
+
+   _EVDEF = # ??? RootsMagic only   # eg./  "BIRT"
+          (("TYPE", 0, 1, None),    # eg./  "P"
+           ("TITL", 0, 1, None),   # eg./  "Birth"
+           ("ABBR",  0, 1, None),   # eg./  "Birth"
+           ("SENT",  0, 1, None),   # eg./ [person] was born< [Date]>< [PlaceDetails]>< [Place]>.
+           ("PLAC",  0, 1, None),   # eg./ "Y"
+           ("DATE",  0, 1, None),   # eg./ "Y"
+           ("DESC",  0, 1, None),   # eg./ "N"
+           ),
 
     ADDR =  (("ADR1", 0, 1, None),  # Address line 1
              ("ADR2", 0, 1, None),  # Address line 2
              ("CITY", 0, 1, None),  # Address city
              ("STAE", 0, 1, None),  # Address state
              ("POST", 0, 1, None),  # Address postal code
-             ("CTRY", 0, 1, None)), # Address country
+             ("CTRY", 0, 1, None), # Address country
+             ("NOTE", 0, unlimited, None)),  # ??? RootsMagic extension
 
     SOUR =  (("DATA", 0, 1,
                 (("EVEN", 0, unlimited, # Event recorded
@@ -159,7 +187,11 @@ _GRAMMAR = dict (
                     (("TIME", 0, 1, None), # Time value
                     )),
                  ("NOTE", 0, unlimited, None), # Note on change date
-            ))),
+                 )),
+             ("_SUBQ", 0, 1, None),  # ??? RootsMagic
+             ("_BIBL", 0, 1, None),  # ??? RootsMagic
+             ("_TMPLT", 0, 1, "_TMPLT"),  # ??? RootsMagic extension
+             ),
 
     PLAC =  (("FORM", 0, 1,         None),  # Place hierarchy
              ("SOUR", 0, unlimited, "SOURCE_CITATION"),
@@ -172,6 +204,7 @@ _GRAMMAR = dict (
     INDI =  (("RESN", 0, 1,         None),    # Restriction notice
              ("NAME", 0, unlimited, "NAME"),
              ("SEX",  0, 1,         None),    # Sex value
+             ("_UID", 0, 1,         None),    # ??? RootsMagic extension
              (("BIRT", "CHR"), 0, unlimited,
                 EVENT_DETAILS
                 + (("FAMC:XREF(FAM)", 0, 1, None),)),  # Child to family link
@@ -249,6 +282,7 @@ _GRAMMAR = dict (
           ),
 
     REPO =  (("NAME", 0, 1,         None),   # Name of repository
+             ("WWW",  0, unlimited, None),   # ??? Gramps extension
              ("ADDR", 0, 1,         "ADDR"), # Address of repository
              ("PHON", 0, 3,         None),
              ("NOTE", 0, unlimited, None),   # Repository notes
@@ -316,6 +350,7 @@ _GRAMMAR = dict (
                  ("NAME", 0, 1, None), # Name of product
                  ("CORP", 0, 1,  # Name of business
                     (("ADDR", 0, 1, "ADDR"),
+                     ("WWW", 0, 1, None), # ??? RootsMagic extension
                      ("PHON", 0, 3, None))),
                  ("DATA", 0, 1,  # Name of source data
                     (("DATE", 0, 1, None), # Publication date
@@ -324,7 +359,8 @@ _GRAMMAR = dict (
              ("DEST", 0, 1, None),       # Receiving system name
              ("DATE", 0, 1,        # Transmission date
                 (("TIME", 0, 1, None),)), # Time value
-             ("SUBM:XREF(SUBM)", 1, 1, None), # Xref to SUBM
+             ("SUBM:XREF(SUBM)", 0, 1, None), # Xref to SUBM
+                   # Gedcom says minimum is 1, but RootsMagic provides none
              ("SUBN:XREF(SUBN)", 0, 1, None), # Xref to SUBN
              ("FILE", 0, 1, None),       # File name
              ("COPR", 0, 1, None),       # Copyright Gedcom file
@@ -333,7 +369,7 @@ _GRAMMAR = dict (
                  ("FORM", 1, 1, None))), # Gedcom form
              ("CHAR", 1, 1,       # Character set
                 (("VERS", 0, 1, None),)), # Version number
-             ("LANG", 0, 1, None),       # Language of text 
+             ("LANG", 0, 1, None),       # Language of text
              ("PLAC", 0, 1,
                 (("FORM", 1, 1, None),)), # Place hierarchy
              ("_HME", 0, 1, None),        # ??? Extension from gedcom torture
@@ -375,12 +411,6 @@ class _Lexical (object):
       self.line = 0      # Current line
       self.current_line = None
       self.prefetch = self._parse_next_line () # Prefetched line, parsed
-      if self.prefetch:
-         if self.prefetch [_Lexical.LEVEL] != 0 \
-           or self.prefetch [_Lexical.TAG] != "HEAD":
-            raise Invalid_Gedcom (
-               "%s Invalid gedcom file, first line must be '0 HEAD'" %
-               self.get_location (1))
 
    def _parse_next_line (self):
       """Fetch the next relevant file of the GEDCOM stream,
@@ -389,16 +419,31 @@ class _Lexical (object):
       self.line = self.line + 1
       # Leading whitespace must be ignored in gedcom files
       line = self.file.readline ().lstrip ().rstrip ('\n')
-      if not line: 
+      if not line:
          return None
 
-      g = LINE_RE.match (line)
+      if self.line == 1 and line[0:3] == "\xEF\xBB\xBF":
+         print "Encoding is UTF8"
+         line = line[3:]
+
+      g = LINE_RE.match(line)
       if not g:
-         raise Invalid_Gedcom (
-           "%s Invalid line format: %s" % (self.get_location(1), line))
+         if self.line == 1:
+            raise Invalid_Gedcom (
+               "%s Invalid gedcom file, first line must be '0 HEAD'" %
+               self.get_location (1))
+         else:
+            raise Invalid_Gedcom (
+              "%s Invalid line format: '%s'" % (self.get_location(1), line))
+
+      if self.line == 1:
+         if g.group("level") != "0" or g.group("tag") != "HEAD":
+            raise Invalid_Gedcom (
+               "%s Invalid gedcom file, first line must be '0 HEAD'" %
+               self.get_location (1))
 
       return (int (g.group ("level")), g.group ("tag"),
-              g.group ("xref_id"), g.group ("value") or "") 
+              g.group ("xref_id"), g.group ("value") or "")
 
    def get_location (self, offset=0):
       """Return the current parser location
@@ -436,7 +481,7 @@ class _Lexical (object):
 
       # It seems that tags are case insensitive
       self.current_line = (result [_Lexical.LEVEL],
-                           result [_Lexical.TAG].upper (), 
+                           result [_Lexical.TAG].upper (),
                            result [_Lexical.XREF_ID],
                            value)
       return self.current_line
@@ -610,7 +655,7 @@ class _GedcomParser (object):
             is_xref=XREF_NONE
 
             if type is None:  # text only
-               handler = None 
+               handler = None
                result  = None
 
             elif isinstance (type, str): # ref to one of the toplevel nodes
@@ -703,7 +748,7 @@ class _GedcomParser (object):
             if p[1] == 1:
                if val:  # None or empty string
                   raise Invalid_Gedcom (
-                     "%s Too many occurrences of %s" % 
+                     "%s Too many occurrences of %s" %
                         (lexical.get_location(), tag))
                result.__dict__ [tag] = res
 
@@ -737,7 +782,7 @@ class _GedcomParser (object):
             raise Invalid_Gedcom (
                "%s Missing 1 occurrence of %s in %s" %
                (lexical.get_location(), tag, self.name))
-            
+
          elif p[0] > 1 and len (val) < p[0]:
             raise Invalid_Gedcom (
                "%s Missing %d occurrences of %s in %s" %
