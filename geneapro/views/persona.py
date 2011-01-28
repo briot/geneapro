@@ -38,7 +38,7 @@ def __get_characteristics (persons, ids):
    for p in models.P2C_Assertion.objects.filter (person__in = ids) \
       .values_list ('person', 'characteristic'):
 
-      p2c [p[1]] = persons [p[0]]  
+      p2c [p[1]] = persons [p[0]]
       chars.add (p[1])
 
    chars = models.Characteristic_Part.objects.filter (
@@ -79,38 +79,50 @@ def __get_events (persons, ids, styles):
 
       events.add (p.event_id)
 
-   events = models.Event.objects.filter (
-      id__in = events,
-      type__in = (models.Event_Type.birth,
-                  models.Event_Type.death,
-                  models.Event_Type.marriage)).select_related ('place')
-
    places = dict ()
+   all_events = []
 
-   for e in events:
-      if compute_parts and e.place:
-         if e.place_id not in places:
-            places [e.place_id] = e.place
-         else:
-            e.place = places [e.place_id]
+   def __add_events_for_id(ids, places, all_events):
+       events = models.Event.objects.filter (
+          id__in=ids,
+          type__in=(models.Event_Type.birth,
+                    models.Event_Type.death,
+                    models.Event_Type.marriage)).select_related ('place')
 
-      e.sources = sources [e.id]
-      if e.date:
-         e.Date = Date (e.date)
-      else:
-         e.Date = None
-      for p, role in p2e [e.id]:
-         if e.type_id == models.Event_Type.birth \
-               and role == models.Event_Type_Role.principal:
-            p.birth = e
+       for e in events.all():
+          all_events.append(e)
+          if compute_parts and e.place:
+             if e.place_id not in places:
+                places [e.place_id] = e.place
+             else:
+                e.place = places [e.place_id]
 
-         elif e.type_id == models.Event_Type.death \
-               and role == models.Event_Type_Role.principal:
-            p.death = e
+          e.sources = sources [e.id]
+          if e.date:
+             e.Date = Date (e.date)
+          else:
+             e.Date = None
+          for p, role in p2e [e.id]:
+             if e.type_id == models.Event_Type.birth \
+                   and role == models.Event_Type_Role.principal:
+                p.birth = e
 
-         elif e.type_id == models.Event_Type.marriage \
-               and role == models.Event_Type_Role.principal:
-            p.marriage = e
+             elif e.type_id == models.Event_Type.death \
+                   and role == models.Event_Type_Role.principal:
+                p.death = e
+
+             elif e.type_id == models.Event_Type.marriage \
+                   and role == models.Event_Type_Role.principal:
+                p.marriage = e
+
+   # SQLlite has a limitation that it will not return more than 1000 rows.
+   # So we use a sliding window here
+
+   offset = 0
+   events = list(events)
+   while offset < len(events):
+       __add_events_for_id(events[offset:offset + 800], places, all_events)
+       offset += 800
 
    if compute_parts:
       parts = models.Place_Part.objects.filter (
@@ -129,7 +141,8 @@ def __get_events (persons, ids, styles):
          d [p.type.name] = p.name
 
    # Process styles after we have computed birth (since we need age)
-   for e in events:
+
+   for e in all_events:
       source = sources [e.id]
       for p, role in p2e [e.id]:
          styles.process (p, role, e, source)
