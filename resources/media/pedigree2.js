@@ -8,6 +8,7 @@ var ratio = 0.75;   //  size ratio for height from generation n to n+1
 var wratio = 0.75;  //  size ratio for width from generation n to n+1
 var baseFontSize = "16"; // pixels
 var minFont = 5;    // No need to draw text below this
+var scaleStep = 1.1; // Multiply by this when zooming
 var tops=null;
 
 stylesheet = "rect {filter:url(#shadow)} rect.selected {fill:#CCC}";
@@ -50,39 +51,58 @@ function maximize (div) {
   d.width (win.width() - off.left).height (win.height () - off.top);
 };
 
-function Canvas (selector, maxWidth, maxHeight) {
+function Canvas (selector) {
+   //  We do not use setTransform for zooming and scrolling, but manage it
+   //  ourselves instead: while zooming with the canvas builtins might be
+   //  faster in some cases, it might result in blurry lines, which we want
+   //  to avoid.
+
    var elem = $(selector), canvas=this;
    this.canvas = elem[0];
    this.ctx = this.canvas.getContext ('2d');
 
    maximize (this.canvas);
-   var w = elem.width(), h = elem.height ();
-   this.canvas.width = w;
-   this.canvas.height = h;
-
-   this.scale = 1;
-   var ratiox = w / maxWidth,
-       ratioy = h / maxHeight;
-   //this.scale = Math.max (0.7, Math.min (ratiox, ratioy));
-   //this.ctx.scale (this.scale, this.scale);
+   this.canvas.width  = elem.width ();
+   this.canvas.height = elem.height ();
 
    this.baseFont = baseFontSize + "px sans";
    this.ctx.font = this.baseFont;
    this.ctx.textBaseline = 'top';
    this.lineHeight = $.detectFontSize (baseFontSize, "sans");
 
-   this.scrollx = 0;
-   this.scrolly = 0;
+   this.scale   = 1;
+   this.scrollx = 0;  //  the coordinates, in pixels, of the absolute point
+   this.scrolly = 0;  //  (0, 0)
 
    elem.mousewheel (function (event,delta) {
-     if (delta > 0) {
-        canvas.scale *= 1.2;
-     } else {
-        canvas.scale /= 1.2;
-     }
-     // ??? Should also scroll to zoom where the mouse is
-     canvas.ctx.setTransform (canvas.scale, 0, 0, canvas.scale,
-                              canvas.scrollx, canvas.scrolly);
+     //  The point we clicked on (in the canvas space) should remain at the
+     //  same place on the screen, so that we zoom towards that point. Thus
+     //  this is the only place that remains motionless while zooming.
+
+     var position = $(this).offset (),
+         xpixels = Math.round (event.pageX - position.left),
+         ypixels = Math.round (event.pageY - position.top),
+         xabs = canvas.toAbsX (xpixels),
+         yabs = canvas.toAbsY (ypixels);
+
+     console.log ("scale="+canvas.scale
+                  + " scroll=" + [canvas.scrollx, canvas.scrolly]
+                  + " pixels=" + [xpixels, ypixels]
+                  + " abs=" + [xabs, yabs]);
+
+     if (delta > 0)
+        canvas.scale *= scaleStep;
+     else
+        canvas.scale /= scaleStep;
+     
+     canvas.scrollx = Math.round (xpixels - xabs / canvas.scale);
+     canvas.scrolly = Math.round (ypixels - yabs / canvas.scale);
+
+     console.log ("   => scale="+canvas.scale
+                  + " scroll=" + [canvas.scrollx, canvas.scrolly]
+                  + " pixels=" + [xpixels, ypixels]
+                  + " abs=" + [canvas.toAbsX (xpixels),
+                               canvas.toAbsY (ypixels)]);
      doDraw (canvas);
   });
 
@@ -93,25 +113,42 @@ function Canvas (selector, maxWidth, maxHeight) {
          $(this).mousemove (function (event) {
             canvas.scrollx = _sx - _startx + event.screenX;
             canvas.scrolly = _sy - _starty + event.screenY;
-            canvas.ctx.setTransform (canvas.scale, 0, 0, canvas.scale,
-                                     canvas.scrollx, canvas.scrolly);
+            //canvas.ctx.setTransform (canvas.scale, 0, 0, canvas.scale,
+            //                         canvas.scrollx, canvas.scrolly);
             doDraw (canvas);
          }).mouse;
       }
    }).mouseup (function (event) {
       $(this).unbind ('mousemove');
    });
-};
+}
+Canvas.prototype.toAbsX = function (xpixel) {
+   // Convert the pixel coordinate XPIXEL to absolute coordinates
+   return ((xpixel - this.scrollx) * this.scale);
+}
+Canvas.prototype.toAbsY = function (ypixel) {
+   // Convert the pixel coordinate YPIXEL to absolute coordinates
+   return ((ypixel - this.scrolly) * this.scale);
+}
+Canvas.prototype.toPixelX = function (xabs) {
+   // Convert the absolute coordinate XABS into pixels coordinates
+   return (xabs / this.scale + this.scrollx);
+}
+Canvas.prototype.toPixelY = function (yabs) {
+   // Convert the absolute coordinate YABS into pixels coordinates
+   return (yabs / this.scale + this.scrolly);
+}
 Canvas.prototype.clear = function () {
    var c = this.ctx;
-   c.save ();
-   c.setTransform (1, 0, 0, 1, 0, 0);
-   c.fillStyle = "#eee";
-   c.fillRect (0, 0, this.canvas.width, this.canvas.height);
-   c.restore ();
-};
+   //c.save ();
+   //c.setTransform (1, 0, 0, 1, 0, 0);
+   c.clearRect (0, 0, this.canvas.width, this.canvas.height);
+   //c.restore ();
+}
 Canvas.prototype.rect = function (x, y, width, height, attr) {
    // Draw a rect with the attributes given in attr
+   // (x,y,width,height) are specified in pixels, so zooming and scrolling must
+   // have been applied
    var c = this.ctx;
    c.beginPath ();
    c.rect (x, y, width, height);
@@ -133,27 +170,28 @@ Canvas.prototype.text = function (x, y, text, attr) {
    c.fillText (text, x, y);
    c.restore ();
 };
-Canvas.prototype.drawBox = function (person, x, y, sosa, width, height, lines) {
+Canvas.prototype.drawBox = function (person, x, y, width, height, lines) {
+   // (x,y,width,height) are specified in pixels, so zooming and scrolling must
+   // have been applied
    if (person) {
-     var c = this.ctx,
-         lh = this.lineHeight,
-         font = height + "px sans",
-         attr = data.styles [person.y],
-         birth = event_to_string (person.b),
-         death = event_to_string (person.d),
-         birthp = person.b ? person.b[1] || "" : "",
-         deathp = person.d ? person.d[1] || "" : "";
-
+     var attr = data.styles [person.y];
      this.rect (x, y, width, height, attr);
 
-     if (height >= minFont) {
+     if (height >= minFont && lines >= 1) {
+        var c = this.ctx,
+            lh = this.lineHeight,
+            font = Math.round (height) + "px sans";
+        c.save ();
+        c.clip ();
         c.font = font;
+        this.text (x + 1, y, person.surn + " " + person.givn, attr);
 
-        if (lines >= 1) {
-           c.save ();
-           c.clip ();
-           this.text (x + 1, y, person.surn + " " + person.givn, attr);
+        if (lines >= 2) {
            c.font = "bold " + font;
+           var birth = event_to_string (person.b),
+               death = event_to_string (person.d),
+               birthp = person.b ? person.b[1] || "" : "",
+               deathp = person.d ? person.d[1] || "" : "";
            if (lines >=2) c.fillText ("b:", x + 1, y + 2 * lh);
            if (lines >=4) c.fillText ("d:", x + 1, y + 4 * lh);
 
@@ -162,23 +200,16 @@ Canvas.prototype.drawBox = function (person, x, y, sosa, width, height, lines) {
            if (lines >= 3 && birthp) c.fillText (birthp, x + lh, y + 2 * lh);
            if (lines >= 4 && death)  c.fillText (death,  x + lh, y + 3 * lh);
            if (lines >= 5 && deathp) c.fillText (deathp, x + lh, y + 4 * lh);
-           c.restore (); // unset clipping mask and font
         }
+        c.restore (); // unset clipping mask and font
      }
-
     } else if (showUnknown) {
       this.rect (x, y, width, height, {fill:"white", stroke:"black"});
   }
 };
 
 function drawSOSA() {
-  var d = data,
-      maxBoxes = Math.pow (2,d.generations-1),// max boxes at last generation
-      startX = (d.children ? boxWidth + horizPadding : 0) + 1;
-      maxWidth = (boxWidth + horizPadding) * d.generations + startX,
-      maxHeight = (boxHeight + vertPadding)
-         * Math.pow (ratio, d.generations - 1) * maxBoxes,
-      canvas = new Canvas('#pedigreeSVG', maxWidth, maxHeight);
+  var canvas = new Canvas('#pedigreeSVG');
   doDraw (canvas);
 };
 
@@ -186,17 +217,12 @@ function doDraw (canvas) {
    var d = data,
        maxBoxes = Math.pow (2,d.generations-1),// max boxes at last generation
        totalBoxes = Math.pow (2,d.generations) - 1, // geometrical summation
-       startX = (d.children ? boxWidth + horizPadding + 11 : 1),
-       tops = new Array(totalBoxes),
-       boxheights = new Array (d.generations);//[height, scale, lines]
-
-   canvas.clear ();
-
-   var maxLines = 1,  //  name, birth date and place, death date and place
+       tops = new Array(totalBoxes), //  Pixel coordinates
+       boxheights = new Array (d.generations), //[height, lines, wscale]
+       maxLines = 1,  //  name, birth date and place, death date and place
        lh       = canvas.lineHeight;
 
-   boxHeight = lh * maxLines;  //  ideal height, so that we have a scaling of
-                               //  1 for the first generation
+   canvas.clear ();
 
    //  Compute display data for all boxes.
    //  Start with the last generation first: the height of boxes depends on the
@@ -213,65 +239,54 @@ function doDraw (canvas) {
    //  The padding between the boxes is only dependent on the generation.
 
    var lastgen = d.generations - 1,
-       genscale = Math.pow (ratio, lastgen),
-       wscale   = Math.pow (wratio, lastgen),
-       maxheight = boxHeight * genscale,
-       lines = Math.max (1, Math.min (5, Math.round (maxheight / lh))),
-       scaling = (lines * lh) / maxHeight,
-       prevPadding = Math.round (vertPadding * genscale);
+       genscale = Math.pow (ratio, lastgen) * canvas.scale,
+       wscale   = Math.pow (wratio, lastgen) * canvas.scale,
+       spacing  = (boxHeight + vertPadding) * genscale;
 
-   boxheights [lastgen] = [maxheight, genscale, lines, wscale];
+   boxheights [lastgen] = [boxHeight * genscale, 1, wscale];
 
    // Compute the positions for the last generation
 
-   for (var index = totalBoxes - maxBoxes, y=0; index < totalBoxes; index++) {
+   var y = canvas.toPixelY (0);
+   for (var index = totalBoxes - maxBoxes; index < totalBoxes; index++) {
       tops[index] = y;
-      y += maxheight + prevPadding;
+      y += spacing;
    }
 
    index = totalBoxes - maxBoxes - 1;
 
-   //  Now for all previous generations: the maximum height is that given in
-   //  the config, but it must fit in the space between the two parents,
-   //  taking into account the pading
-
    for (var gen = lastgen - 1; gen >= 0; gen --) {
-      genscale  = Math.pow (ratio, gen);
-      maxheight = boxHeight * genscale;
-      wscale    = Math.pow (wratio, gen);
-      var parentsHeight = 2 * boxheights [gen+1][0] + prevPadding,
-          padding = Math.round (vertPadding * genscale);
-      maxheight = Math.min (boxHeight * genscale,
-                            parentsHeight - padding);
+      genscale  = Math.pow (ratio, gen) * canvas.scale;
+      wscale   = Math.pow (wratio, gen) * canvas.scale;
+      var height = boxHeight * genscale;
 
-      lines = Math.max (1, Math.min (5, Math.round (maxheight / lh)));
-      scaling = (lines * lh) / maxheight;
-      boxheights [gen] = [maxheight, genscale, lines, wscale];
+      boxheights [gen] = [height, 1, wscale];
 
       //  Compute positions for boxes in this generation
       var lastIndex = index - Math.pow (2, gen);
       for (; index > lastIndex; index--) {
-         tops[index] = (tops [2*index+2]
-                        + tops[2*index + 1] + boxheights[gen+1][0]
-                        - maxheight) / 2;
+         tops[index] = (tops [2*index+1]
+                        + tops[2*index + 2] + boxheights[gen+1][0]
+                        - height) / 2;
       }
-
-      prevPadding = padding;
    }
 
-   //console.log (boxheights);
+   console.log (d.sosa[5].givn + " tops[4]=" + tops[4]
+               + " height=" + boxheights[2][0] 
+               + " abs="    + canvas.toAbsY (tops[4])
+               + " absHeight=" + (boxheights[2][0] / canvas.scale));
 
+   var startX = canvas.toPixelX (d.children ? boxWidth + horizPadding + 10 : 0),
+       x = startX;
    index = 0;
-   for (var gen = 0, x=startX; gen < d.generations; gen++) {
-      var w = boxWidth * boxheights[gen][3],
+   for (var gen = 0; gen < d.generations; gen++) {
+      var w = boxWidth * boxheights[gen][2],
           h = boxheights [gen][0],
-          x2 = Math.round (x + w + horizPadding * boxheights[gen][3]),
-          x3 = Math.round (x + w * 0.9);
+          x2 = x + w + horizPadding * boxheights[gen][2],
+          x3 = x + w * 0.9;
 
       // basic clipping (no one from this generation is visible)
-      if (x * canvas.scale + canvas.scrollx > canvas.canvas.width
-          || (x + w) * canvas.scale + canvas.scrollx < 0)
-      {
+      if (x > canvas.canvas.width || x + w < 0) {
          index += Math.pow (2, gen);
 
       } else {
@@ -279,9 +294,7 @@ function doDraw (canvas) {
             var sosa = index + 1;
 
             // basic clipping
-            if (tops[index] * canvas.scale+canvas.scrolly > canvas.canvas.height
-                || (tops[index] + h) * canvas.scale + canvas.scrolly < 0)
-            {
+            if (tops[index] > canvas.canvas.height || tops[index] + h < 0) {
             } else {
                if (gen < d.generations - 1) {
                   canvas.ctx.strokeStyle = "black";
@@ -314,9 +327,7 @@ function doDraw (canvas) {
                     canvas.ctx.restore ();
                   }
                }
-               canvas.drawBox (d.sosa [sosa], x, tops[index], index + 1,
-                               w, h, 1);
-               canvas.ctx.restore ();
+               canvas.drawBox (d.sosa [sosa], x, tops[index], w, h, 1);
             }
             index ++;
          }
@@ -327,24 +338,35 @@ function doDraw (canvas) {
 
    // draw children
    if (d.children) {
-      var space = 20,
-          childrenHeight = d.children.length * (space + boxHeight) - space,
+      var space = 20 * canvas.scale,
+          childHeight = canvas.scale * (space + boxHeight);
+          childrenHeight = d.children.length * childHeight - space,
+          halfHeight = canvas.scale * boxHeight / 2;
           //  center around decujus
-          y = tops[0] + boxHeight / 2 - childrenHeight / 2;
-      for (var c=0, len=d.children.length; c < len; c++) {
-         var x2 = boxWidth + horizPadding;
-         var y2 = tops[2 * index + 2] + boxHeight / 2;
+          y = tops[0] + halfHeight - childrenHeight / 2;
 
+      var x  = canvas.toPixelX (0),
+          x2 = x + canvas.scale * boxWidth,
+          x3 = (startX + x2) / 2;
+
+      canvas.ctx.beginPath ();
+      canvas.ctx.moveTo (startX, tops[0] + halfHeight);
+      canvas.ctx.lineTo (x3, tops[0] + halfHeight);
+      canvas.ctx.strokeStyle = "black";
+      canvas.ctx.stroke ();
+
+      for (var c=0, len=d.children.length; c < len; c++) {
+         var y2 = tops[2 * index + 2] + halfHeight;
          canvas.ctx.beginPath ();
-         canvas.ctx.moveTo (startX, tops[0] + boxHeight / 2);
-         canvas.ctx.lineTo (startX - 5, tops[0] + boxHeight/2);
-         canvas.ctx.lineTo (startX - 5, y + boxHeight / 2);
-         canvas.ctx.lineTo (boxWidth, y + boxHeight / 2);
+         canvas.ctx.moveTo (x2, y + halfHeight);
+         canvas.ctx.lineTo (x3, y + halfHeight);
+         canvas.ctx.lineTo (x3, tops[0] + halfHeight);
          canvas.ctx.strokeStyle = "black";
          canvas.ctx.stroke ();
 
-         canvas.drawBox (d.children [c], 0, y, -1 - c, boxWidth, boxHeight, 5);
-         y += boxHeight + space;
+         canvas.drawBox (d.children [c], x, y,
+                   boxWidth * canvas.scale, 2 * halfHeight, 5);
+         y += childHeight;
       }
    }
 }
