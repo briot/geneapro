@@ -6,7 +6,7 @@ object appropriate for use by simplejson. For instance:
    class Persona (models.Model):
       name = models.CharField (max_length=10)
       def to_json (self):
-         return {"name": self.name} 
+         return {"name": self.name}
 """
 
 from django.db import models, backend, connection
@@ -80,7 +80,7 @@ class Researcher (GeneaproModel):
    """
 
    name = models.CharField (max_length=100)
-   comment = models.TextField (null=True, 
+   comment = models.TextField (null=True,
        help_text="Contact information for this researcher, like email"
                + " or postal addresses,...")
 
@@ -175,7 +175,7 @@ class Research_Objective (GeneaproModel):
    "find the father of x".
    An objective is accomplished in terms of activities.
    """
-   
+
    project         = models.ForeignKey (Project)
    name            = models.CharField (max_length=100)
    description     = models.TextField (null=True)
@@ -187,7 +187,7 @@ class Research_Objective (GeneaproModel):
       """Meta data for the model"""
       ordering = ("sequence_number", "name")
       db_table = "research_objective"
- 
+
 class Activity (GeneaproModel):
    """
    An activity allows a researcher to translate a Research_Objective
@@ -300,8 +300,8 @@ class Place_Part (GeneaproModel):
    # ??? Should the existence date be a place_part as well, or a field in
    # a place part, so that the same place with different names results in
    # a single id
-   place       = models.ForeignKey (Place)
-   type        = models.ForeignKey (Place_Part_Type)
+   place       = models.ForeignKey(Place)
+   type        = models.ForeignKey(Place_Part_Type)
    name        = models.CharField (max_length=200)
    sequence_number = models.PositiveSmallIntegerField (
       "Sequence number", default=1)
@@ -330,7 +330,7 @@ class Repository_Type (GeneaproModel):
       """Meta data for the model"""
       ordering = ("name",)
       db_table = "repository_type"
-    
+
 class Repository (GeneaproModel):
    """
    Contains information about the place where data was found. Most
@@ -715,7 +715,7 @@ class P2E_Assertion (Assertion):
          role = " (as " + self.role.name + ")"
       else:
          role = ""
-     
+
       return unicode (self.person) + " " + self.value + " " \
                       + unicode (self.event) + role
 
