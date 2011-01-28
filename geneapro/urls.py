@@ -5,7 +5,7 @@ import mysites.geneapro.views.persona
 import mysites.geneapro.views.stats
 
 urlpatterns = patterns('',
-	(r'^$', views.index),
+	(r'^$', views.pedigree.fanchart_view),  # used to be views.index
 	(r'^sources$', views.sources),
    (r'^persona/(\d+)', views.persona.view),
 	url (r'^pedigreeData$', views.pedigree.data, name="pedigree_data"),
