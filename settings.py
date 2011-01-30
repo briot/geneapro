@@ -77,7 +77,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 
     # Should be last
-    'debug_toolbar.middleware.DebugToolbarMiddleware'
+    #'debug_toolbar.middleware.DebugToolbarMiddleware'
 )
 
 
@@ -103,5 +103,5 @@ INSTALLED_APPS = (
    # 'extensions',  # old name for django extensions (opensuse)
     'django_extensions', # new name for django extensions
 
-   'debug_toolbar',
+    #'debug_toolbar',
 )

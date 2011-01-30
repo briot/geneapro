@@ -29,6 +29,9 @@ class AJAXSimpleExceptionResponse:
 
            if show_SQL:
               for r, q in enumerate (connection.queries):
+                 if not 'duration' in q:
+                    q['duration'] = 'unset'
+
                  if 'time' in q:   # default
                     total += float (q['time'])
                     print style.SQL_COLTYPE ("%d %ss => "
@@ -50,7 +53,7 @@ class AJAXSimpleExceptionResponse:
               "Total time: %fs" % (end - self.start))
 
         return response
-               
+
     def process_exception(self, request, exception):
         if settings.DEBUG:
             self.has_exception = True
@@ -59,7 +62,7 @@ class AJAXSimpleExceptionResponse:
                 (exc_type, exc_info, tb) = sys.exc_info()
                 response = "%s\n" % exc_type.__name__
                 response += "%s\n\n" % exc_info
-                response += "TRACEBACK:\n"    
+                response += "TRACEBACK:\n"
                 for tb in traceback.format_tb(tb):
                     response += "%s\n" % tb
                 print response
