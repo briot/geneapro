@@ -17,6 +17,7 @@ def index (request):
       'hello'      : _("Hello")},
      context_instance=RequestContext(request))
 
+
 def sources (request):
    """Display the Sources view"""
 

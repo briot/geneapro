@@ -13,89 +13,8 @@ from mysites.geneapro.views.tree import *
 from mysites.geneapro.views.styles import *
 from mysites.geneapro.views.persona import extended_personas
 from mysites.geneapro.views.json import to_json
-
-style_rules = [
- (RULE_ATTR, [("ALIVE", RULE_IS, "Y")], {"font-weight":"bold"}),
-
- # Born or dead in La Baussaine before 1862
- (RULE_EVENT,
-    [("type",  RULE_IN,         (models.Event_Type.birth,
-                                 models.Event_Type.death)),
-     ("place.name", RULE_CONTAINS_INSENSITIVE, "baussaine"),
-     ("role",  RULE_IS,         models.Event_Type_Role.principal),
-     ("date",  RULE_BEFORE,     "1862")], {"color":"red"}),
-
- # "Age at death" <= 60 years
- (RULE_EVENT,
-   [("type", RULE_IS, models.Event_Type.death),
-    ("role", RULE_IS, models.Event_Type_Role.principal),
-    ("age",  RULE_SMALLER_EQUAL, 60)],
-   {"color":"blue"}),
-
- # Person's age today is more than 80, and is alive
- (RULE_ATTR,
-   [("age",   RULE_GREATER, 80),
-    ("ALIVE", RULE_IS,      "Y")], {"color":"orange"}),
-
- # Foreign people in different color
- (RULE_EVENT,
-  [("type", RULE_IS, models.Event_Type.birth),
-   ("role", RULE_IS, models.Event_Type_Role.principal),
-   ("place.country", RULE_IS_NOT, ""),
-   ("place.country", RULE_CONTAINS_NOT_INSENSITIVE, "france")],
-  {"fill":"#AAAAAA"}),
-
- # Person's with more than one marriage
- (RULE_EVENT,
-   [("type",  RULE_IS, models.Event_Type.marriage),
-    ("role",  RULE_IS, models.Event_Type_Role.principal),
-    ("count", RULE_GREATER, 1)],  {"fill":"#AA0000"}),
-
- # Persons too young at birth of child, or too old at death
- (RULE_EVENT,
-  [("type", RULE_IS, models.Event_Type.birth),
-   ("role", RULE_IN, (models.Event_Type_Role.birth__father,
-                      models.Event_Type_Role.birth__mother)),
-   ("age",  RULE_SMALLER, 17)], {"fill":"red"}),
- (RULE_EVENT,
-  [("type", RULE_IS, models.Event_Type.death),
-   ("role", RULE_IS, models.Event_Type_Role.principal),
-   ("age",  RULE_GREATER, 110)], {"fill":"red"}),
-
- # If the person appears multiple time in the current tree
- (RULE_ATTR, [("IMPLEX", RULE_GREATER, 1)], {"fill":"yellow"}),
-
- # All ancestors of person id=1. Use different colors depending on the
- # sex. These two rules do not cost any additional query if "14" is in the
- # ancestor tree of the decujus
- (RULE_ATTR,
-   [("ancestor", RULE_IS, 1), ("SEX", RULE_IS, "M")],
-   {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
- (RULE_ATTR,
-   [("ancestor", RULE_IS, 1), ("SEX", RULE_IS, "F")],
-   {"fill":"#E9DAF1", "stroke":"#fF2080"}),
- (RULE_ATTR,
-   [("descendant", RULE_IS, 1), ("SEX", RULE_IS, "M")],
-   {"fill":"#D6E0EA", "stroke":"#9CA3D4"}),
- (RULE_ATTR,
-   [("descendant", RULE_IS, 1), ("SEX", RULE_IS, "F")],
-   {"fill":"#E9DAF1", "stroke":"#fF2080"}),
-
-
- # Do we know both parents ?
- (RULE_ATTR, [("UNKNOWN_FATHER", RULE_IS, "Y")], {"color":"violet"}),
- (RULE_ATTR, [("UNKNOWN_MOTHER", RULE_IS, "Y")], {"color":"violet"}),
-
- # "Person's name is DELAMOTTE"
- (RULE_ATTR,
-   [("surname", RULE_IS_INSENSITIVE, "delamotte")], {"color":"green"}),
-]
-
-# ??? Other rules that would be nice to have:
-#   "Is descendant of ..."
-#   "Project Explorer contains (or not) the person"
-#   "Son's name is"
-#   "Has sources", "Has sources with reliability >= "
+from mysites.geneapro.views.custom_highlight import style_rules
+from mysites.geneapro.views.rules import getLegend
 
 def get_sosa_tree (id, max_levels, style_ruless):
    tree = Tree ()
@@ -139,6 +58,7 @@ def pedigree_view (request):
    return render_to_response (
       'geneapro/pedigree.html',
       {"type":"pedigree",
+       "legend": getLegend(),
        "pedigree_data":compute_data(6, False, 1)},
       context_instance=RequestContext(request))
 
@@ -154,5 +74,6 @@ def fanchart_view (request):
    return render_to_response (
        'geneapro/pedigree.html',
        {"type":"fanchart",
+        "legend": getLegend(),
         "pedigree_data":compute_data(6, True, 1)},
        context_instance=RequestContext(request))

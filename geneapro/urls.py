@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 from mysites.geneapro import views
 import mysites.geneapro.views.pedigree
 import mysites.geneapro.views.persona
+import mysites.geneapro.views.rules
 import mysites.geneapro.views.stats
 
 urlpatterns = patterns('',

@@ -28,7 +28,7 @@ this is a list of simple rules, each of which is one of:
 In all cases, css is similar to a W3C style description, ie a
 dictionary of key-value pairs that describe the list. The keys
 can be any of "color" (text color), "fill" (background color),
-"font-weight",...
+"font-weight", "stroke" (border color)...
 """
 
 RULE_EVENT = 0
@@ -47,7 +47,7 @@ RULE_GREATER_EQUAL        = 8
 RULE_GREATER              = 9
 
 RULE_BEFORE               = 10   # for dates
-RULE_AFTER                = 11 
+RULE_AFTER                = 11
 RULE_ON                   = 12
 
 RULE_IN                   = 13   # for sets
@@ -74,7 +74,7 @@ def alive (person):
    # more expensive to compute
 
    return not person.death \
-         and (not person.birth 
+         and (not person.birth
              or Date.today().years_since (person.birth.Date) <= max_age)
 
 def get_place (event, part):
@@ -92,6 +92,7 @@ def get_place (event, part):
          return None
    except:
       return None
+
 
 rules_func = (
    lambda exp,value: exp in value,         # CONTAINS
@@ -113,14 +114,45 @@ rules_func = (
    lambda exp,value: value in exp,         # IN
 )
 
-class Styles ():
+
+def style_to_td(style):
+    """A style as defined in the rules. It behaves like a standard dict,
+       but provides additional methods for conversion in various contexts
+    """
+
+    st = []
+    borderWidth = ""
+    borderColor = "black"
+    borderStyle = "solid"
+
+    for k, v in style.iteritems():
+        if k == "fill":
+            k = "background"
+        elif k == "stroke":
+            borderWidth = borderWidth or "1"  # minimum 1px
+            borderColor = v
+            k = ""
+        elif k == "border-width":
+            borderWidth = v
+            k = ""
+        if k:
+            st.append("%s:%s" % (k, v))
+
+    if borderWidth:
+        st.append("border-width:%spx" % borderWidth)
+        st.append("border-color:%s" % borderColor)
+        st.append("border-style:%s" % borderStyle)
+    return ";".join(st)
+
+
+class Styles():
    """
    This class is responsible for computing the styles (colors and text
    styles) to apply to personas. It tries to be as efficient as possible
    by caching data when appropriate.
    """
 
-   def __init__ (self, rules, tree, decujus):
+   def __init__(self, rules, tree, decujus):
       """Rules specifies the rules to use for the highlighting."""
 
       # Preprocess the rules for faster computation
@@ -134,21 +166,23 @@ class Styles ():
       self._all_styles = dict () # All required styles (id -> (index,{styles}))
       self.styles_count = 0
 
-      for index, r in enumerate (rules):
-         if r[0] in (RULE_EVENT, RULE_ATTR):
+      for index, r in enumerate(rules):
+         rule_name, rule_type, rule_tests, rule_style = r
+
+         if rule_type in (RULE_EVENT, RULE_ATTR):
             tests = []
-            for t in r[1]:
-               if t[0] == "count" and r[0] == RULE_EVENT:
+            for t in rule_tests:
+               if t[0] == "count" and rule_type == RULE_EVENT:
                   # Handled separately at the end
                   self.counts [index] = (rules_func [t[1]], t[2])
                   continue
-               elif t[0] == "ancestor" and r[0] == RULE_ATTR:
+               elif t[0] == "ancestor" and rule_type == RULE_ATTR:
                   tests.append ((t[0], tree.ancestors (t[2])))
                   continue
-               elif t[0] == "descendant" and r[0] == RULE_ATTR:
+               elif t[0] == "descendant" and rule_type == RULE_ATTR:
                   tests.append ((t[0], tree.descendants (t[2])))
                   continue
-               elif t[0] == "IMPLEX" and r[0] == RULE_ATTR:
+               elif t[0] == "IMPLEX" and rule_type == RULE_ATTR:
                   tests.append ((t[0], rules_func [t[1]], t[2],
                                  tree.ancestors (decujus)))
                   continue
@@ -164,7 +198,7 @@ class Styles ():
                else:
                   tests.append ((t[0], rules_func [t[1]], t[2]))
 
-            self.rules.append ((r[0], tests, r[2]))
+            self.rules.append ((rule_type, tests, rule_style))
          else:
             print "Unknown rule tag in the style rules: %s" % r
 
