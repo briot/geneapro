@@ -89,8 +89,8 @@ style_rules = [
  # "Person's name is DELAMOTTE"
  (RULE_ATTR,
    [("surname", RULE_IS_INSENSITIVE, "delamotte")], {"color":"green"}),
+]
 
-] 
 # ??? Other rules that would be nice to have:
 #   "Is descendant of ..."
 #   "Project Explorer contains (or not) the person"

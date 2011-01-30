@@ -108,7 +108,7 @@ class Tree (object):
 
       while check:
          events = self._get_events (
-            check, 
+            check,
             (models.Event_Type_Role.birth__father,
              models.Event_Type_Role.birth__mother))
 
@@ -217,15 +217,18 @@ class Tree (object):
          .order_by ('event__date_sort')
 
       # Need to properly register the parents of the child, for later
-      # reuse and proper style highlighting
+      # reuse and proper style highlighting.
+      # Note: for a given event, a person might be registered multiple
+      # times as the principal, for instance because the gedcom is the result
+      # of a merge in some software.
 
-      children = []
+      children = set()
       events = dict ()  # event_id -> (child_id, father_id, mother_id)
       for c in p2e:
          t = events.get (c.event_id, (None, None, None))
          if c.role_id == models.Event_Type_Role.principal:
             events [c.event_id] = (c.person_id, t[1], t[2])
-            children.append (c.person_id)
+            children.add (c.person_id)
          elif c.role_id == models.Event_Type_Role.birth__father:
             events [c.event_id] = (t[0], c.person_id, t[2])
          elif c.role_id == models.Event_Type_Role.birth__mother:
@@ -234,7 +237,7 @@ class Tree (object):
       for e in events.itervalues ():
          self.parents [e[0]] = (e[1], e[2])
 
-      return children
+      return list(children)
 
    def sosa_tree (self, decujus, persons, generations):
       """Build a sosa tree: this is a dict indexed on the sosa number of the
