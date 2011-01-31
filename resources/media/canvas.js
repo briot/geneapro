@@ -81,23 +81,15 @@ Canvas.prototype.refresh = function (box) {
    if (!box)
       box = {x:0, y:0, w:this.canvas[0].width, h:this.canvas[0].height};
 
-   var ctx = this.ctx,
-       absBox = {x:this.toAbsX(box.x),
+   var ctx = this.ctx;
+       /*absBox = {x:this.toAbsX(box.x),
                  y:this.toAbsY(box.y),
                  w:this.lengthToAbs(box.w),
-                 h:this.lengthToAbs(box.h)};
+                 h:this.lengthToAbs(box.h)};*/
 
-   if ((absBox.x == undefined)
-         || (absBox.y == undefined)
-         || (absBox.w == undefined)
-         || (absBox.h == undefined)) {
-     console.log(box);
-     console.log(absBox);
-     console.log(absBox.y);
-   }
    ctx.save ();
      ctx.clearRect (box.x, box.y, box.w, box.h);
-     this.canvas.trigger ("draw", [ctx, absBox, this]);
+     this.canvas.trigger ("draw", [ctx, box, this]);
    ctx.restore ();
 }
 
@@ -153,6 +145,7 @@ Canvas.prototype.rect = function (x, y, width, height, attr) {
       c.strokeStyle = attr.stroke;
       c.stroke ();
    }
+   c.closePath();
 }
 
 function on_start_drag (e, dragdata) {
