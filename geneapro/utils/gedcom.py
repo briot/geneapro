@@ -137,7 +137,7 @@ _GRAMMAR = dict (
 
     _TMPLT = # ??? RootsMagic only
            (("TID", 0, 1, None),
-            ("FIELD", 0, unlimited, 
+            ("FIELD", 0, unlimited,
              (("NAME", 0, unlimited, None),
               ("VALUE", 0, unlimited, None),
               )),
@@ -204,7 +204,7 @@ _GRAMMAR = dict (
     INDI =  (("RESN", 0, 1,         None),    # Restriction notice
              ("NAME", 0, unlimited, "NAME"),
              ("SEX",  0, 1,         None),    # Sex value
-             ("_UID", 0, 1,         None),    # ??? RootsMagic extension
+             ("_UID", 0, unlimited, None),    # ??? RootsMagic extension
              (("BIRT", "CHR"), 0, unlimited,
                 EVENT_DETAILS
                 + (("FAMC:XREF(FAM)", 0, 1, None),)),  # Child to family link

@@ -86,8 +86,9 @@ Q. Is there limit to the number of persons in the database ?
 
 Q. I like The Master Genealogist's accents feature
 
-   Good thing. Geneapro has a similar feature, although more powerful.
-   You will currently have to manually edit the pedigree.py python
+   Good thing. Geneapro has a similar feature, although I believe
+   more powerful.
+   You will currently have to manually edit the custom_highlight.py python
    file to specify your highlight rules, but they are extremely
    powerful, allowing you to choose background color, text color,
    text weight, font and many other aspects depending on the attributes
