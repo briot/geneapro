@@ -288,6 +288,7 @@ function doDraw (evt, screenBox) {
 
    ctx.stroke();
 
+   ctx.textBaseline = 'top';
    for (var b=boxes.length - 1; b >= 0; b--) {
       var bo = boxes[b];
       drawBox (canvas, ctx, bo[0], bo[1], bo[2], bo[3], bo[4], bo[5]);
@@ -302,7 +303,6 @@ function doDraw (evt, screenBox) {
       if (te[0] != prev) {
          prev = te[0];
          ctx.font = Math.round (Math.min(maxFontSize, te[0])) + "px sans";
-         //console.log(ctx.font, te[3]);
       }
       ctx.fillText(te[3], te[1], te[2]);
    }

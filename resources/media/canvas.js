@@ -56,6 +56,16 @@ function ifnotDisabled(evt, callback) {
   }
 }
 
+function onResize() {
+   //  Changing the attributes on the canvas also sets the coordinate space
+   //  We always want a 1 to 1 mapping between canvas coordinates and pixels,
+   //  so that text is drawn sharp.
+   var elem = this.canvas[0];
+   elem.width  = this.canvas.width();
+   elem.height = this.canvas.height();
+   this.refresh();
+}
+
 function Canvas (options, elem) {
    // Create a Canvas object around a given html <canvas>
    this.options = $.extend ({}, defaultSettings, options);
@@ -65,32 +75,24 @@ function Canvas (options, elem) {
    this._disableClicks = false; // If true, disable click events
 
    this.ctx     = this.options.contextFactory (elem, this.options),
+   this.ctx.textBaseline = 'top';
+
    this.canvas  = $(elem);
 
-   //  Changing the attributes on the canvas also sets the coordinate space
-   //  We always want a 1 to 1 mapping between canvas coordinates and pixels,
-   //  so that text is drawn sharp.
-   elem.width  = this.canvas.width();
-   elem.height = this.canvas.height();
-
-   var t = this;
-
-   this.canvas.start_drag ($.proxy (on_start_drag, this))
-              .in_drag ($.proxy (on_in_drag, this))
-              .wheel ($.proxy (on_wheel, this));
+   this.canvas
+      .start_drag ($.proxy (on_start_drag, this))
+      .in_drag ($.proxy (on_in_drag, this))
+      .wheel ($.proxy (on_wheel, this));
+   $(window).resize ($.proxy (onResize, this))
 
    if (options.onDraw)
       this.canvas.bind ("draw", $.proxy (options.onDraw, this));
    if (options.onCtrlClick)
-      this.canvas.ctrl_click (function(evt){
-               ifnotDisabled.apply(t,[evt, options.onCtrlClick])});
+      this.canvas.ctrl_click ($.proxy
+         (function(e) {ifnotDisabled.apply(this, [e, options.onCtrlClick])},
+          this));
 
-   this.ctx.textBaseline = 'top';
-
-   //  Do the initial drawing in a timeout, so that the user can both create
-   //  the canvas and bind elements to it in the same call
-   //     $("...").canvas().bind ("draw", ...);
-   setTimeout (function(){t.refresh ()}, 100);
+   onResize.apply(this);
 }
 
 Canvas.prototype.refresh = function (box) {
