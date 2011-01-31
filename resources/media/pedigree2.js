@@ -52,9 +52,94 @@ function drawBox (canvas, c, person, x, y, width, height, lines) {
 function drawSOSA() {
    var opt = {
       lineHeight: $.detectFontSize (baseFontSize, "sans"),
+      onDraw: doDraw,
+      onCtrlClick: onCtrlClick,
    };
-   $("#pedigreeSVG").canvas(opt).bind("draw", doDraw);
+   $("#pedigreeSVG").canvas(opt);
 };
+
+function onCtrlClick(evt) {
+   var canvas = this,
+       off = $(this.canvas).offset(),
+       mx = evt.pageX - off.left,
+       my = evt.pageY - off.top,
+       selected = null;
+
+   forEachBox (canvas,
+         function(indiv, x, y, w, h, gen, sosa) {
+            if (x <= mx && mx <= x + w && y <= my && my <= y + h) {
+               selected = indiv;
+               return true;
+            }
+         });
+
+   if (selected) {
+      getPedigree (selected);
+      return true;
+   }
+}
+
+function forEachBox(canvas, callback, box) {
+   // for each box, calls 'callback' (indiv, x, y, w, h, gen, sosa)
+   // 'box' can be specified and indicates the pixels coordinates of the
+   // region we want to traverse (default is all canvas).
+   // Traversing stops when 'callback' returns true.
+   // 'sosa' parameter will be negative for children of the decujus.
+
+   var boxheights = canvas.boxheights,
+       tops = canvas.tops,
+       d = data,
+       baseY = canvas.toPixelY (0),
+       startX = canvas.toPixelX (d.children ? boxWidth+horizPadding+10 : 0),
+       index = 0,
+       x = startX;
+
+   if (!boxheights) {
+      return;
+   }
+
+   for (var gen = 0; gen < d.generations; gen++) {
+      var w = boxWidth * boxheights[gen][2],
+          h = boxheights [gen][0],
+          x2 = x + w + horizPadding * boxheights[gen][2];
+
+      if (box && (x > box.w || x + w < box.x)) { // clipping generation
+         index += Math.pow (2, gen);
+
+      } else {
+         for (var b = Math.pow (2, gen); b >= 1; b--) {
+            var sosa = index + 1, ti = tops[index] + baseY;
+
+            if (!box || (ti < box.h && ti + h > box.y)) { // clipping
+               if (callback (d.sosa[sosa], x, ti, w, h, gen, sosa)) {
+                  gen = 99999;
+                  break;
+               }
+            }
+            index ++;
+         }
+      }
+
+      x = x2;
+   }
+
+   if (gen != 99999 && d.children) {
+      var space = 20 * canvas.scale,
+          childHeight = canvas.scale * (space + boxHeight),
+          halfHeight = canvas.scale * boxHeight / 2,
+          childrenHeight = d.children.length * childHeight - space,
+          x = canvas.toPixelX (0),
+          y = baseY + tops[0] + halfHeight - childrenHeight / 2;
+
+      for (var c=0, len=d.children.length; c < len; c++) {
+         if (callback (d.children[c], x, y,
+                       boxWidth * canvas.scale, 2 * halfHeight, gen, -c))
+            break;
+         y += childHeight;
+      }
+   }
+}
+
 
 function computeBoxPositions (canvas) {
    //  Compute display data for all boxes, given the number of generations
@@ -127,25 +212,27 @@ function computeBoxPositions (canvas) {
    canvas.mariageHeight [lastgen - 1] = 0;
 }
 
-function doDraw (evt, ctx, screenBox, canvas) {
+function doDraw (evt, screenBox) {
    /* Do the actual drawing in the canvas.
     * The area included in refreshBox (real-world coordinates) needs to be
     * refreshed.
-    * 'this' is the <canvas> element */
+    * 'this' is the Canvas element */
 
-   computeBoxPositions (canvas);
-   var boxheights = canvas.boxheights,
+   computeBoxPositions (this);
+
+   var canvas = this,
+       ctx = this.ctx,
+       boxheights = canvas.boxheights,
        tops = canvas.tops,
        mariageHeight = canvas.mariageHeight,
        d = data,
-       maxLines = 1,  //  name, birth date and place, death date and place
-       lh       = canvas.options.lineHeight,
        startX = canvas.toPixelX (d.children ? boxWidth+horizPadding+10 : 0),
        baseY = canvas.toPixelY (0),
        boxes = [],
        text = [],
-       x = startX,
-       index = 0;
+       halfHeight = canvas.scale * boxHeight / 2,
+       yForChild = baseY + tops[0] + halfHeight,
+       seenChild = false;
 
    // First draw all lines, as a single path for more efficiency.
    // Compute the list of boxes at the same time, so that we can display
@@ -154,78 +241,50 @@ function doDraw (evt, ctx, screenBox, canvas) {
    ctx.beginPath();
    ctx.strokeStyle = "black";
 
-   for (var gen = 0; gen < d.generations; gen++) {
-      var w = boxWidth * boxheights[gen][2],
-          h = boxheights [gen][0],
-          x2 = x + w + horizPadding * boxheights[gen][2],
-          x3 = x + w * 0.9;
+   forEachBox (canvas,
+         function(indiv, x, y, w, h, gen, sosa) {
+            if (sosa <= 0) { // a child
+               ctx.moveTo (x + w, y + h / 2);
+               ctx.lineTo ((x + w + startX) / 2, y + h / 2);
+               ctx.lineTo ((x + w + startX) / 2, yForChild);
 
-      if (x > screenBox.w || x + w < screenBox.x) { // clipping generation
-         index += Math.pow (2, gen);
+               if (!seenChild) {
+                  seenChild = true;
+                  ctx.lineTo (startX, yForChild);
+               }
+               boxes.push([indiv, x, y, w, h, 5]);
 
-      } else {
-         for (var box = Math.pow (2, gen); box >= 1; box--) {
-            var sosa = index + 1, ti = tops[index] + baseY;
+            }
+            else if (gen < d.generations - 1) {
+               var x2 = x + w + horizPadding * boxheights[gen][2],
+                   x3 = x + w * 0.9;
 
-            if (ti < screenBox.h && ti + h > screenBox.y) { // clipping
-               if (gen < d.generations - 1) {
-                  if (showUnknown || d.sosa [2 * sosa]) {
-                     var y1 = baseY + tops[2 * index + 1]
+               if (showUnknown || d.sosa [2 * sosa]) {
+                     var y1 = baseY + tops[2 * sosa - 1]
                               + boxheights[gen+1][0] / 2;
                      ctx.moveTo (x2, y1);
                      ctx.lineTo (x3, y1);
-                     ctx.lineTo (x3, ti);
+                     ctx.lineTo (x3, y);
                   }
                   if (showUnknown || d.sosa [2 * sosa + 1]) {
-                     var y2 = baseY + tops[2 * index + 2]
+                     var y2 = baseY + tops[2 * sosa]
                               + boxheights[gen+1][0] / 2;
                      ctx.moveTo (x2, y2);
                      ctx.lineTo (x3, y2);
-                     ctx.lineTo (x3, ti + h);
+                     ctx.lineTo (x3, y + h);
                   }
 
                   if (mariageHeight[gen] > minFont
                       && gen < d.generations - 1
-                      && d.marriage[2 * index + 2]) {
+                      && d.marriage[2 * sosa]) {
 
-                    var mar = event_to_string (d.marriage [2 * index + 2]);
-                    text.push([mariageHeight[gen], x2 + 3, ti + h /2, mar]);
+                    var mar = event_to_string (d.marriage [2 * sosa]);
+                    text.push([mariageHeight[gen], x2 + 3, y + h /2, mar]);
                   }
                }
 
-               boxes.push([d.sosa[sosa], x, ti, w, h, 1]);
-            }
-            index ++;
-         }
-      }
-      x = x2;
-   }
-
-   // draw children
-   if (d.children) {
-      var space = 20 * canvas.scale,
-          childHeight = canvas.scale * (space + boxHeight);
-          childrenHeight = d.children.length * childHeight - space,
-          halfHeight = canvas.scale * boxHeight / 2;
-          //  center around decujus
-          y = baseY + tops[0] + halfHeight - childrenHeight / 2;
-
-      var x  = canvas.toPixelX (0),
-          x2 = x + canvas.scale * boxWidth,
-          x3 = (startX + x2) / 2;
-
-      ctx.moveTo (startX, baseY + tops[0] + halfHeight);
-      ctx.lineTo (x3, baseY + tops[0] + halfHeight);
-
-      for (var c=0, len=d.children.length; c < len; c++) {
-         ctx.moveTo (x2, y + halfHeight);
-         ctx.lineTo (x3, y + halfHeight);
-         ctx.lineTo (x3, baseY + tops[0] + halfHeight);
-         boxes.push([d.children[c], x, y, boxWidth * canvas.scale,
-                    2 * halfHeight, 5]);
-         y += childHeight;
-      }
-   }
+               boxes.push([indiv, x, y, w, h, 1]);
+         });
 
    ctx.stroke();
 

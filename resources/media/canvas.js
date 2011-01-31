@@ -42,6 +42,18 @@ var defaultSettings = {
   weight: 200, // 'weight' when drag-and-throwing the background.
                // Higher value means the scroll stops faster
   contextFactory: function (canvas,options) {return canvas.getContext ("2d")},
+  onDraw: null, // Called to redraw. 'this' is the Canvas object
+  onCtrlClick: null, // Called on control-click
+                // If returns true, prevents further clicks in the canvas
+}
+
+function ifnotDisabled(evt, callback) {
+  // Calls 'callback' if the click events are not disabled for the canvas
+  if (!this._disableClicks) {
+     this._disableClicks = true;
+     if (!callback.apply(this, [evt]))
+        this._disableClicks = false;
+  }
 }
 
 function Canvas (options, elem) {
@@ -50,6 +62,7 @@ function Canvas (options, elem) {
    this.scale   = 1.0;
    this.x       = 0.0;  // top-left corner, absolute coordinates
    this.y       = 0.0;
+   this._disableClicks = false; // If true, disable click events
 
    this.ctx     = this.options.contextFactory (elem, this.options),
    this.canvas  = $(elem);
@@ -60,16 +73,23 @@ function Canvas (options, elem) {
    elem.width  = this.canvas.width();
    elem.height = this.canvas.height();
 
+   var t = this;
+
    this.canvas.start_drag ($.proxy (on_start_drag, this))
               .in_drag ($.proxy (on_in_drag, this))
               .wheel ($.proxy (on_wheel, this));
+
+   if (options.onDraw)
+      this.canvas.bind ("draw", $.proxy (options.onDraw, this));
+   if (options.onCtrlClick)
+      this.canvas.ctrl_click (function(evt){
+               ifnotDisabled.apply(t,[evt, options.onCtrlClick])});
 
    this.ctx.textBaseline = 'top';
 
    //  Do the initial drawing in a timeout, so that the user can both create
    //  the canvas and bind elements to it in the same call
    //     $("...").canvas().bind ("draw", ...);
-   var t = this;
    setTimeout (function(){t.refresh ()}, 100);
 }
 
@@ -81,15 +101,12 @@ Canvas.prototype.refresh = function (box) {
    if (!box)
       box = {x:0, y:0, w:this.canvas[0].width, h:this.canvas[0].height};
 
-   var ctx = this.ctx;
-       /*absBox = {x:this.toAbsX(box.x),
-                 y:this.toAbsY(box.y),
-                 w:this.lengthToAbs(box.w),
-                 h:this.lengthToAbs(box.h)};*/
+   this._disableClicks = false; //  ??? or in canvas()
 
+   var ctx = this.ctx;
    ctx.save ();
      ctx.clearRect (box.x, box.y, box.w, box.h);
-     this.canvas.trigger ("draw", [ctx, box, this]);
+     this.canvas.trigger ("draw", box);
    ctx.restore ();
 }
 

@@ -263,7 +263,7 @@
    **********************************************************/
 
   var _minDist = 4 * 4,  //  square of min move distance before drag starts
-      dt = 0.02, // interval in seconds between two refresh when throwing
+      dt = 0.04, // interval in seconds between two refresh when throwing
       Threshold = 0.01,  // 1% of initial velocity stops the element
       Time = 0.7,        // stops moving at this many seconds
       storePast = 500,   // save position data for the last ... milliseconds
