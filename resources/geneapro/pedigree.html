@@ -24,6 +24,9 @@ $(document).ready (function() {
 {% endblock script %}
 
 {% block endbody %}
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.svg.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.svgfilter.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.svganim.pack.js"></script>
 {% ifequal type "fanchart" %}
 <script type="text/javascript" src="{{MEDIA_URL}}fanchart.js"></script>
 {% else %}

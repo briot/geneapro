@@ -9,183 +9,23 @@ var wratio = 0.75;  //  size ratio for width from generation n to n+1
 var baseFontSize = "16"; // pixels
 var maxFontSize = 16; //  maximum font size
 var minFont = 5;    // No need to draw text below this
-var scaleStep = 1.1; // Multiply by this when zooming
-var tops=null;
 
 stylesheet = "rect {filter:url(#shadow)} rect.selected {fill:#CCC}";
 
-function onMouseOver (evt) {
-  var box = evt.target;
-  box.setAttribute ('oldclass', box.getAttribute ('class'));
-  box.setAttribute ("class", "selected");
-}
-function onMouseOut (evt) {
-  var box = evt.target;
-  box.setAttribute ('class', box.getAttribute ('oldclass'));
-}
-function onClick (evt) {
-  var box = evt.target;
-  if (box.getAttribute ("sosa") != 1) {
-     var num = box.getAttribute ("sosa");
-     var id = (num < 0) ? data.children[-1 - num].id : data.sosa[num].id;
-     var startX = (data.children ? boxWidth + horizPadding : 0) + 1;
-     var delay = 200;
-     $(box.parentNode).animate ({'svg-x':startX, 'svg-y':tops[0]}, delay);
-     setTimeout (function() {getPedigree ({id:id});return false}, delay);
-  }
-}
-function onTxtMouseOver (evt) {
-  var box = evt.target;
-  box.setAttribute ('oldstroke', box.getAttribute ('stroke'));
-  box.setAttribute ('stroke', '#888');
-  box.setAttribute ('stroke-width', '1');
-}
-function onTxtMouseOut (evt) {
-  var box = evt.target;
-  box.setAttribute ('stroke', box.getAttribute ('oldstroke'));
-  box.setAttribute ('stroke-width', '0');
-};
-
-function maximize (div) {
-  // Maximize div so that is extends to the bottom and right of the browser
-  var d = $(div), off=$(div).offset(), win=$(window);
-  d.width (win.width() - off.left).height (win.height () - off.top);
-};
-
-function Canvas (selector) {
-   //  We do not use setTransform for zooming and scrolling, but manage it
-   //  ourselves instead: while zooming with the canvas builtins might be
-   //  faster in some cases, it might result in blurry lines, which we want
-   //  to avoid.
-
-   var elem = $(selector), canvas=this;
-   this.canvas = elem[0];
-   this.ctx = this.canvas.getContext ('2d');
-
-   maximize (this.canvas);
-   this.canvas.width  = elem.width ();
-   this.canvas.height = elem.height ();
-
-   this.baseFont = baseFontSize + "px sans";
-   this.ctx.font = this.baseFont;
-   this.ctx.textBaseline = 'top';
-   this.lineHeight = $.detectFontSize (baseFontSize, "sans");
-
-   this.scale   = 1;
-   this.scrollx = 0;  //  the coordinates, in pixels, of the absolute point
-   this.scrolly = 0;  //  (0, 0)
-
-   elem.mousewheel (function (event,delta) {
-     //  The point we clicked on (in the canvas space) should remain at the
-     //  same place on the screen, so that we zoom towards that point. Thus
-     //  this is the only place that remains motionless while zooming.
-
-     var position = $(this).offset (),
-         xpixels = Math.round (event.pageX - position.left),
-         ypixels = Math.round (event.pageY - position.top),
-         xabs = canvas.toAbsX (xpixels),
-         yabs = canvas.toAbsY (ypixels);
-
-     console.log ("scale="+canvas.scale
-                  + " scroll=" + [canvas.scrollx, canvas.scrolly]
-                  + " pixels=" + [xpixels, ypixels]
-                  + " abs=" + [xabs, yabs]);
-
-     if (delta > 0)
-        canvas.scale *= scaleStep;
-     else
-        canvas.scale /= scaleStep;
-
-     canvas.scrollx = Math.round (xpixels - xabs / canvas.scale);
-     canvas.scrolly = Math.round (ypixels - yabs / canvas.scale);
-
-     console.log ("   => scale="+canvas.scale
-                  + " scroll=" + [canvas.scrollx, canvas.scrolly]
-                  + " pixels=" + [xpixels, ypixels]
-                  + " abs=" + [canvas.toAbsX (xpixels),
-                               canvas.toAbsY (ypixels)]);
-     doDraw (canvas);
-  });
-
-   elem.mousedown (function (event) {
-      if (event.which == 1) {
-         var _startx = event.screenX, _starty = event.screenY,
-             _sx = canvas.scrollx, _sy = canvas.scrolly;
-         $(this).mousemove (function (event) {
-            canvas.scrollx = _sx - _startx + event.screenX;
-            canvas.scrolly = _sy - _starty + event.screenY;
-            //canvas.ctx.setTransform (canvas.scale, 0, 0, canvas.scale,
-            //                         canvas.scrollx, canvas.scrolly);
-            doDraw (canvas);
-         }).mouse;
-      }
-   }).mouseup (function (event) {
-      $(this).unbind ('mousemove');
-   });
-}
-Canvas.prototype.toAbsX = function (xpixel) {
-   // Convert the pixel coordinate XPIXEL to absolute coordinates
-   return ((xpixel - this.scrollx) * this.scale);
-}
-Canvas.prototype.toAbsY = function (ypixel) {
-   // Convert the pixel coordinate YPIXEL to absolute coordinates
-   return ((ypixel - this.scrolly) * this.scale);
-}
-Canvas.prototype.toPixelX = function (xabs) {
-   // Convert the absolute coordinate XABS into pixels coordinates
-   return (xabs / this.scale + this.scrollx);
-}
-Canvas.prototype.toPixelY = function (yabs) {
-   // Convert the absolute coordinate YABS into pixels coordinates
-   return (yabs / this.scale + this.scrolly);
-}
-Canvas.prototype.clear = function () {
-   var c = this.ctx;
-   //c.save ();
-   //c.setTransform (1, 0, 0, 1, 0, 0);
-   c.clearRect (0, 0, this.canvas.width, this.canvas.height);
-   //c.restore ();
-}
-Canvas.prototype.rect = function (x, y, width, height, attr) {
-   // Draw a rect with the attributes given in attr
-   // (x,y,width,height) are specified in pixels, so zooming and scrolling must
-   // have been applied
-   var c = this.ctx;
-   c.beginPath ();
-   c.rect (x, y, width, height);
-   if (attr.fill) {
-      c.fillStyle = attr.fill;
-      c.fill ();
-   }
-   if (attr.stroke) {
-      c.strokeStyle = attr.stroke;
-      c.stroke ();
-   }
-};
-Canvas.prototype.text = function (x, y, text, attr) {
-   var c = this.ctx;
-   c.save ();
-   if (attr["font-weight"])
-      c.font = attr["font-weight"] + " " + c.font;
-   c.fillStyle = attr.color || "black";
-   c.fillText (text, x, y);
-   c.restore ();
-};
-Canvas.prototype.drawBox = function (person, x, y, width, height, lines) {
+function drawBox (canvas, c, person, x, y, width, height, lines) {
    // (x,y,width,height) are specified in pixels, so zooming and scrolling must
    // have been applied
    if (person) {
      var attr = data.styles [person.y];
-     this.rect (x, y, width, height, attr);
+     canvas.rect (x, y, width, height, attr);
 
      if (height >= minFont && lines >= 1) {
-        var c = this.ctx,
-            lh = this.lineHeight,
+        var lh = canvas.options.lineHeight,
             font = Math.round (Math.min(maxFontSize,height)) + "px sans";
         c.save ();
         c.clip ();
         c.font = font;
-        this.text (x + 1, y, person.surn + " " + person.givn, attr);
+        canvas.text (x + 1, y, person.surn + " " + person.givn, attr);
 
         if (lines >= 2) {
            c.font = "bold " + font;
@@ -205,25 +45,30 @@ Canvas.prototype.drawBox = function (person, x, y, width, height, lines) {
         c.restore (); // unset clipping mask and font
      }
     } else if (showUnknown) {
-      this.rect (x, y, width, height, {fill:"white", stroke:"black"});
+      canvas.rect (x, y, width, height, {fill:"white", stroke:"black"});
   }
 };
 
 function drawSOSA() {
-  var canvas = new Canvas('#pedigreeSVG');
-  doDraw (canvas);
+   var opt = {
+      lineHeight: $.detectFontSize (baseFontSize, "sans"),
+   };
+   $("#pedigreeSVG").canvas(opt).bind("draw", doDraw);
 };
 
-function doDraw (canvas) {
+function doDraw (evt, ctx, refreshBox, canvas) {
+   /* Do the actual drawing in the canvas.
+    * The area included in refreshBox (real-world coordinates) needs to be
+    * refreshed.
+    * 'this' is the <canvas> element */
+
    var d = data,
        maxBoxes = Math.pow (2,d.generations-1),// max boxes at last generation
        totalBoxes = Math.pow (2,d.generations) - 1, // geometrical summation
        tops = new Array(totalBoxes), //  Pixel coordinates
        boxheights = new Array (d.generations), //[height, lines, wscale]
        maxLines = 1,  //  name, birth date and place, death date and place
-       lh       = canvas.lineHeight;
-
-   canvas.clear ();
+       lh       = canvas.options.lineHeight;
 
    //  Compute display data for all boxes.
    //  Start with the last generation first: the height of boxes depends on the
@@ -272,11 +117,6 @@ function doDraw (canvas) {
       }
    }
 
-   console.log (d.sosa[5].givn + " tops[4]=" + tops[4]
-               + " height=" + boxheights[2][0]
-               + " abs="    + canvas.toAbsY (tops[4])
-               + " absHeight=" + (boxheights[2][0] / canvas.scale));
-
    var startX = canvas.toPixelX (d.children ? boxWidth + horizPadding + 10 : 0),
        x = startX;
    index = 0;
@@ -298,22 +138,26 @@ function doDraw (canvas) {
             if (tops[index] > canvas.canvas.height || tops[index] + h < 0) {
             } else {
                if (gen < d.generations - 1) {
-                  canvas.ctx.strokeStyle = "black";
+                  ctx.strokeStyle = "black";
                   if (showUnknown || d.sosa [2 * sosa]) {
                      var y1 = tops[2 * index + 1] + boxheights[gen+1][0] / 2;
-                     canvas.ctx.beginPath ();
-                     canvas.ctx.moveTo (x2, y1);
-                     canvas.ctx.lineTo (x3, y1);
-                     canvas.ctx.lineTo (x3, tops[index]);
-                     canvas.ctx.stroke ();
+                     if (y1==undefined) {
+                        console.log("y1 is undefined");
+                        return;
+                     }
+                     ctx.beginPath ();
+                     ctx.moveTo (x2, y1);
+                     ctx.lineTo (x3, y1);
+                     ctx.lineTo (x3, tops[index]);
+                     ctx.stroke ();
                   }
                   if (showUnknown || d.sosa [2 * sosa + 1]) {
                      var y2 = tops[2 * index + 2] + boxheights[gen+1][0] / 2;
-                     canvas.ctx.beginPath ();
-                     canvas.ctx.moveTo (x2, y2);
-                     canvas.ctx.lineTo (x3, y2);
-                     canvas.ctx.lineTo (x3, tops[index] + h);
-                     canvas.ctx.stroke ();
+                     ctx.beginPath ();
+                     ctx.moveTo (x2, y2);
+                     ctx.lineTo (x3, y2);
+                     ctx.lineTo (x3, tops[index] + h);
+                     ctx.stroke ();
                   }
 
                   if (h > minFont
@@ -321,14 +165,14 @@ function doDraw (canvas) {
                       && d.marriage[2 * index + 2]) {
 
                     var mar = event_to_string (d.marriage [2 * index + 2]);
-                    canvas.ctx.save ();
-                    canvas.ctx.font = (h * ratio) + "px sans";
-                    canvas.ctx.textBaseline = 'middle';
+                    ctx.save ();
+                    ctx.font = (h * ratio) + "px sans";
+                    ctx.textBaseline = 'middle';
                     canvas.text (x2 + 3, tops[index] + h/2, mar, {stroke:"black"});
-                    canvas.ctx.restore ();
+                    ctx.restore ();
                   }
                }
-               canvas.drawBox (d.sosa [sosa], x, tops[index], w, h, 1);
+               drawBox (canvas, ctx, d.sosa [sosa], x, tops[index], w, h, 1);
             }
             index ++;
          }
@@ -350,22 +194,22 @@ function doDraw (canvas) {
           x2 = x + canvas.scale * boxWidth,
           x3 = (startX + x2) / 2;
 
-      canvas.ctx.beginPath ();
-      canvas.ctx.moveTo (startX, tops[0] + halfHeight);
-      canvas.ctx.lineTo (x3, tops[0] + halfHeight);
-      canvas.ctx.strokeStyle = "black";
-      canvas.ctx.stroke ();
+      ctx.beginPath ();
+      ctx.moveTo (startX, tops[0] + halfHeight);
+      ctx.lineTo (x3, tops[0] + halfHeight);
+      ctx.strokeStyle = "black";
+      ctx.stroke ();
 
       for (var c=0, len=d.children.length; c < len; c++) {
          var y2 = tops[2 * index + 2] + halfHeight;
-         canvas.ctx.beginPath ();
-         canvas.ctx.moveTo (x2, y + halfHeight);
-         canvas.ctx.lineTo (x3, y + halfHeight);
-         canvas.ctx.lineTo (x3, tops[0] + halfHeight);
-         canvas.ctx.strokeStyle = "black";
-         canvas.ctx.stroke ();
+         ctx.beginPath ();
+         ctx.moveTo (x2, y + halfHeight);
+         ctx.lineTo (x3, y + halfHeight);
+         ctx.lineTo (x3, tops[0] + halfHeight);
+         ctx.strokeStyle = "black";
+         ctx.stroke ();
 
-         canvas.drawBox (d.children [c], x, y,
+         drawBox (canvas, ctx, d.children [c], x, y,
                    boxWidth * canvas.scale, 2 * halfHeight, 5);
          y += childHeight;
       }
