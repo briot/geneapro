@@ -83,6 +83,7 @@ function computeBoxPositions (canvas) {
 
    canvas.boxheights = new Array (d.generations); //[height, lines, wscale]
    canvas.tops = new Array(totalBoxes); //  Pixel coordinates
+   canvas.mariageHeight = new Array (d.generations);
    canvas.__gens = d.generations;
    canvas.__scale = canvas.scale;
 
@@ -94,6 +95,7 @@ function computeBoxPositions (canvas) {
        spacing  = (boxHeight + vertPadding) * genscale;
 
    canvas.boxheights [lastgen] = [boxHeight * genscale, 1, wscale];
+   canvas.mariageHeight [lastgen] = 0;  // Can't display marriage for last
 
    // Start at last generation
 
@@ -111,6 +113,7 @@ function computeBoxPositions (canvas) {
       var height = boxHeight * genscale;
 
       canvas.boxheights [gen] = [height, 1, wscale];
+      canvas.mariageHeight [gen] = height * genscale;
 
       //  Compute positions for boxes in this generation
       var lastIndex = index - Math.pow (2, gen);
@@ -120,6 +123,8 @@ function computeBoxPositions (canvas) {
              - height) / 2;
       }
    }
+
+   canvas.mariageHeight [lastgen - 1] = 0;
 }
 
 function doDraw (evt, ctx, screenBox, canvas) {
@@ -131,6 +136,7 @@ function doDraw (evt, ctx, screenBox, canvas) {
    computeBoxPositions (canvas);
    var boxheights = canvas.boxheights,
        tops = canvas.tops,
+       mariageHeight = canvas.mariageHeight,
        d = data,
        maxLines = 1,  //  name, birth date and place, death date and place
        lh       = canvas.options.lineHeight,
@@ -178,43 +184,22 @@ function doDraw (evt, ctx, screenBox, canvas) {
                      ctx.lineTo (x3, ti + h);
                   }
 
-                  if (h * ratio > minFont
+                  if (mariageHeight[gen] > minFont
                       && gen < d.generations - 1
                       && d.marriage[2 * index + 2]) {
 
                     var mar = event_to_string (d.marriage [2 * index + 2]);
-                    text.push([h * ratio, x2 + 3, ti + h /2, mar]);
+                    text.push([mariageHeight[gen], x2 + 3, ti + h /2, mar]);
                   }
                }
 
-               boxes.push([sosa, x, ti, w, h]);
+               boxes.push([d.sosa[sosa], x, ti, w, h, 1]);
             }
             index ++;
          }
       }
       x = x2;
    }
-
-   ctx.stroke();
-
-   for (var b=boxes.length - 1; b >= 0; b--) {
-      var bo = boxes[b];
-      drawBox (canvas, ctx, d.sosa [bo[0]], bo[1], bo[2], bo[3], bo[4], 1);
-   }
-
-   ctx.save();
-   ctx.textBaseline = 'middle';
-   ctx.fillStyle = "black";
-   var prev=0;
-   for (var t=text.length - 1; t >= 0; t--) {
-      var te = text[t];
-      if (te[0] != prev) {
-         prev = te[0];
-         ctx.font = prev + "px sans";
-      }
-      ctx.fillText(te[3], te[1], te[2]);
-   }
-   ctx.restore();
 
    // draw children
    if (d.children) {
@@ -229,24 +214,39 @@ function doDraw (evt, ctx, screenBox, canvas) {
           x2 = x + canvas.scale * boxWidth,
           x3 = (startX + x2) / 2;
 
-      ctx.beginPath ();
       ctx.moveTo (startX, baseY + tops[0] + halfHeight);
       ctx.lineTo (x3, baseY + tops[0] + halfHeight);
-      ctx.strokeStyle = "black";
-      ctx.stroke ();
 
       for (var c=0, len=d.children.length; c < len; c++) {
-         var y2 = baseY + tops[2 * index + 2] + halfHeight;
-         ctx.beginPath ();
          ctx.moveTo (x2, y + halfHeight);
          ctx.lineTo (x3, y + halfHeight);
          ctx.lineTo (x3, baseY + tops[0] + halfHeight);
-         ctx.strokeStyle = "black";
-         ctx.stroke ();
-
-         drawBox (canvas, ctx, d.children [c], x, y,
-                   boxWidth * canvas.scale, 2 * halfHeight, 5);
+         boxes.push([d.children[c], x, y, boxWidth * canvas.scale,
+                    2 * halfHeight, 5]);
          y += childHeight;
       }
    }
+
+   ctx.stroke();
+
+   for (var b=boxes.length - 1; b >= 0; b--) {
+      var bo = boxes[b];
+      drawBox (canvas, ctx, bo[0], bo[1], bo[2], bo[3], bo[4], bo[5]);
+   }
+
+   ctx.save();
+   ctx.textBaseline = 'middle';
+   ctx.fillStyle = "black";
+   var prev=0;
+   for (var t=text.length - 1; t >= 0; t--) {
+      var te = text[t];
+      if (te[0] != prev) {
+         prev = te[0];
+         ctx.font = Math.round (Math.min(maxFontSize, te[0])) + "px sans";
+         //console.log(ctx.font, te[3]);
+      }
+      ctx.fillText(te[3], te[1], te[2]);
+   }
+   ctx.restore();
+
 }
