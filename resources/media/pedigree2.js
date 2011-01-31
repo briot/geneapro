@@ -1,12 +1,13 @@
 // Needs the variable "pedigree_data_url" to be defined
 var boxWidth = 300;
 var horizPadding = 0;
-var boxHeight = 15;
+var boxHeight = 35;
 var vertPadding = 2;    //  vertical padding at last gen
 var showUnknown = false; //  whether to draw a box when parent is unknown
 var ratio = 0.75;   //  size ratio for height from generation n to n+1
 var wratio = 0.75;  //  size ratio for width from generation n to n+1
 var baseFontSize = "16"; // pixels
+var maxFontSize = 16; //  maximum font size
 var minFont = 5;    // No need to draw text below this
 var scaleStep = 1.1; // Multiply by this when zooming
 var tops=null;
@@ -94,7 +95,7 @@ function Canvas (selector) {
         canvas.scale *= scaleStep;
      else
         canvas.scale /= scaleStep;
-     
+
      canvas.scrollx = Math.round (xpixels - xabs / canvas.scale);
      canvas.scrolly = Math.round (ypixels - yabs / canvas.scale);
 
@@ -180,7 +181,7 @@ Canvas.prototype.drawBox = function (person, x, y, width, height, lines) {
      if (height >= minFont && lines >= 1) {
         var c = this.ctx,
             lh = this.lineHeight,
-            font = Math.round (height) + "px sans";
+            font = Math.round (Math.min(maxFontSize,height)) + "px sans";
         c.save ();
         c.clip ();
         c.font = font;
@@ -272,7 +273,7 @@ function doDraw (canvas) {
    }
 
    console.log (d.sosa[5].givn + " tops[4]=" + tops[4]
-               + " height=" + boxheights[2][0] 
+               + " height=" + boxheights[2][0]
                + " abs="    + canvas.toAbsY (tops[4])
                + " absHeight=" + (boxheights[2][0] / canvas.scale));
 
@@ -316,7 +317,7 @@ function doDraw (canvas) {
                   }
 
                   if (h > minFont
-                      && gen < d.generations - 1 
+                      && gen < d.generations - 1
                       && d.marriage[2 * index + 2]) {
 
                     var mar = event_to_string (d.marriage [2 * index + 2]);
