@@ -10,6 +10,7 @@ var baseFontSize = "16"; // pixels
 var maxFontSize = 16; //  maximum font size
 var minFont = 5;    // No need to draw text below this
 var maxLines = 1;      // Number of lines to display in standard boxes
+var fontName = "sans"; // "Times New Roman";
 
 /*** All boxes have the same size and display birth and death info
 ratio = 1.0;
@@ -29,11 +30,12 @@ function drawBox (canvas, c, person, x, y, width, height, lines) {
    // have been applied
    if (person) {
      var attr = data.styles [person.y];
-     canvas.rect (x, y, width, height, attr);
+     attr.shadow = true; // force shadow
+     canvas.roundedRect (x, y, width, height, attr);
 
      if (height >= minFont && lines >= 1) {
         var lh = canvas.options.lineHeight,
-            font = Math.round (Math.min(maxFontSize,height)) + "px sans";
+            font = Math.round (Math.min(maxFontSize,height)) + "px " + fontName;
         c.save ();
         c.clip ();
         c.font = font;
@@ -57,13 +59,13 @@ function drawBox (canvas, c, person, x, y, width, height, lines) {
         c.restore (); // unset clipping mask and font
      }
     } else if (showUnknown) {
-      canvas.rect (x, y, width, height, {fill:"white", stroke:"black"});
+      canvas.roundedRect (x, y, width, height, {fill:"white", stroke:"black"});
   }
 };
 
 function drawSOSA() {
    var opt = {
-      lineHeight: $.detectFontSize (baseFontSize, "sans"),
+      lineHeight: $.detectFontSize (baseFontSize, fontName),
       onDraw: doDraw,
       onCtrlClick: onCtrlClick,
    };
@@ -314,7 +316,8 @@ function doDraw (evt, screenBox) {
       var te = text[t];
       if (te[0] != prev) {
          prev = te[0];
-         ctx.font = Math.round (Math.min(maxFontSize, te[0])) + "px sans";
+         ctx.font = Math.round (Math.min(maxFontSize, te[0]))
+            + "px " + fontName;
       }
       ctx.fillText(te[3], te[1], te[2]);
    }

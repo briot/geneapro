@@ -147,6 +147,32 @@ Canvas.prototype.text = function (x, y, text, attr) {
    c.fillText (text, x, y);
 }
 
+Canvas.prototype.drawPath = function (attr) {
+   //  draw the current Path with 'attr' attributes
+
+   var c = this.ctx;
+
+   if (attr.shadow){
+      c.save();
+      c.fillStyle = 'transparent';
+      c.shadowOffsetX = 3;
+      c.shadowOffsetY = 3;
+      c.shadowBlur    = 10;
+      c.shadowColor   = 'rgba(00,00,00,0.4)';
+      c.fill();
+      c.restore();
+   }
+
+   if (attr.fill) {
+      c.fillStyle = attr.fill || 'white';
+      c.fill ();
+   }
+   if (attr.stroke) {
+      c.strokeStyle = attr.stroke;
+      c.stroke ();
+   }
+}
+
 Canvas.prototype.rect = function (x, y, width, height, attr) {
    //  Draw a rectangle at the given pixel-coordinates 'x' and 'y',
    //  and with the given pixel size 'width' and 'height'.
@@ -154,15 +180,36 @@ Canvas.prototype.rect = function (x, y, width, height, attr) {
    var c = this.ctx;
    c.beginPath ();
    c.rect (x, y, width, height);
-   if (attr.fill) {
-      c.fillStyle = attr.fill;
-      c.fill ();
-   }
-   if (attr.stroke) {
-      c.strokeStyle = attr.stroke;
-      c.stroke ();
-   }
    c.closePath();
+   this.drawPath (attr);
+}
+
+Canvas.prototype.roundedRect = function (x, y, width, height, attr, radius) {
+   // Draws a rounded rectangle using the current state of the canvas.
+   // If you omit the last three params, it will draw a rectangle
+   // outline with a 5 pixel border radius
+   // @param {CanvasRenderingContext2D} ctx
+   // 'x', 'y' is the top-left corner, 'width' and 'height' its size.
+   // 'radius' is the corner radius.
+   // 'fill' should be true to fill the rectangle.
+
+   radius = radius || 6;
+
+   var c = this.ctx;
+
+   c.beginPath ();
+   c.moveTo(x + radius, y);
+   c.lineTo(x + width - radius, y);
+   c.quadraticCurveTo(x + width, y, x + width, y + radius);
+   c.lineTo(x + width, y + height - radius);
+   c.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+   c.lineTo(x + radius, y + height);
+   c.quadraticCurveTo(x, y + height, x, y + height - radius);
+   c.lineTo(x, y + radius);
+   c.quadraticCurveTo(x, y, x + radius, y);
+   c.closePath();
+
+   this.drawPath (attr);
 }
 
 function on_start_drag (e, dragdata) {
