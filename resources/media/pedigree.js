@@ -93,7 +93,7 @@ function drawSOSA() {
                       .vertTo (y2)
                       .horizTo (x2),
                       {stroke:'black', fill:'none'});
-            if (gen < d.generations - 1 
+            if (gen < d.generations - 1
                 && d.marriage[2 * index + 2]) {
 
               var mar = event_to_string (d.marriage [2 * index + 2]);

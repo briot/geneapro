@@ -9,6 +9,18 @@ var wratio = 0.75;  //  size ratio for width from generation n to n+1
 var baseFontSize = "16"; // pixels
 var maxFontSize = 16; //  maximum font size
 var minFont = 5;    // No need to draw text below this
+var maxLines = 1;      // Number of lines to display in standard boxes
+
+/*** All boxes have the same size and display birth and death info
+ratio = 1.0;
+wratio = 1.0;
+maxLines = 5;
+boxWidth = 200;
+boxHeight = 90;
+vertPadding = 20;
+horizPadding = 20;
+maxFontSize = 14;
+***/
 
 stylesheet = "rect {filter:url(#shadow)} rect.selected {fill:#CCC}";
 
@@ -28,13 +40,13 @@ function drawBox (canvas, c, person, x, y, width, height, lines) {
         canvas.text (x + 1, y, person.surn + " " + person.givn, attr);
 
         if (lines >= 2) {
-           c.font = "bold " + font;
+           //c.font = "bold " + font;
            var birth = event_to_string (person.b),
                death = event_to_string (person.d),
                birthp = person.b ? person.b[1] || "" : "",
                deathp = person.d ? person.d[1] || "" : "";
-           if (lines >=2) c.fillText ("b:", x + 1, y + 2 * lh);
-           if (lines >=4) c.fillText ("d:", x + 1, y + 4 * lh);
+           if (lines >=2) c.fillText ("b:", x + 1, y + lh);
+           if (lines >=4) c.fillText ("d:", x + 1, y + 3 * lh);
 
            c.font = "italic " + font;
            if (lines >= 2 && birth)  c.fillText (birth,  x + lh, y + lh);
@@ -283,7 +295,7 @@ function doDraw (evt, screenBox) {
                   }
                }
 
-               boxes.push([indiv, x, y, w, h, 1]);
+               boxes.push([indiv, x, y, w, h, maxLines]);
          });
 
    ctx.stroke();

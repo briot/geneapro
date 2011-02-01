@@ -141,12 +141,10 @@ Canvas.prototype.text = function (x, y, text, attr) {
    // Display 'text' at the pixel coordinates 'x' and 'y'.
    // 'attr' is the style to apply, in particular 'font-weight'
    var c = this.ctx;
-   c.save ();
    if (attr["font-weight"])
       c.font = attr["font-weight"] + " " + c.font;
    c.fillStyle = attr.color || "black";
    c.fillText (text, x, y);
-   c.restore ();
 }
 
 Canvas.prototype.rect = function (x, y, width, height, attr) {
