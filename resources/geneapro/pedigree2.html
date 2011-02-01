@@ -29,6 +29,8 @@ $(document).ready (function() {
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.detectFontSize.js"></script>
 {% endblock endbody %}
 {% block contents %}
+
+<div style="float">
 Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
   <option>1</option>
   <option>2</option>
@@ -44,6 +46,7 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
   <option>12</option>
   <option>13</option>
 </select>
+</div>
 
 {{legend|safe}}
 <canvas id="pedigreeSVG"></canvas>

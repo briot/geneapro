@@ -93,7 +93,7 @@ ADD_RE  = re.compile ("\s*([-+])\s*(\d+)\s*(days?|months?|years?|" +
                       RE_YEARS + ")\s*$", re.IGNORECASE)
 YEAR_RE = "(\d{1,4}|(?:an\s+)?[MDCXVI]+)"
 YYYYMMDD_RE = re.compile ("^\s*" + YEAR_RE + "[-/](\d?\d)[-/](\d?\d)$",
-                          re.IGNORECASE) 
+                          re.IGNORECASE)
 ISO_RE = re.compile ("^\s*" + YEAR_RE + "(\d{2})(\d{2})$", re.IGNORECASE)
 DDMMYYYY_RE = re.compile ("^\s*(\d\d)[/-](\d\d)[/-]" + YEAR_RE + "$",
                           re.IGNORECASE)
@@ -114,7 +114,7 @@ ABOUT_RE  = re.compile (
 
 # "cal" is used for "calculated" in gramps
 EST_RE    = re.compile ("\s*(estimated\s*|est\.?\s*|cal|\?\s*$)", re.IGNORECASE)
- 
+
 SPAN_FROM    = 1
 SPAN_BETWEEN = 2
 
@@ -154,13 +154,13 @@ def to_roman_literal (val):
 
    def proc (digit, ten, five, unit):
       """Convert a single digit to its roman literal representation"""
-      if digit == 0:   
+      if digit == 0:
          return ""
-      elif digit < 4:  
+      elif digit < 4:
          return unit * digit
       elif digit == 4:
          return unit + five
-      elif digit < 9:  
+      elif digit < 9:
          return five + unit * (digit - 5)
       else:
          return unit + ten
@@ -210,7 +210,7 @@ def get_ymd (txt, months):
          month, day = day, month
 
       return (__get_year (m.group (3)), month, day, True, True, True)
-      
+
    m = SPELLED_OUT_RE.search (txt)
    if m:
       try:
@@ -253,7 +253,7 @@ def get_ymd (txt, months):
                  True, True, False)
       else:
          return (__get_year (m.group (1)), 1, 1, True, False, False)
-      
+
    return (-4000, 1, 1, False, False, False)
 
 ########################
@@ -387,7 +387,7 @@ class CalendarGregorian (Calendar):
          m2 = m + 12 * a - 3
          d = d + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400\
            - feb_29_4800
-         return (d, year != None, month != None, day != None, self) 
+         return (d, year != None, month != None, day != None, self)
 
    @staticmethod
    def today ():
@@ -441,11 +441,11 @@ class CalendarFrench (Calendar):
    def is_a (self, text):
       """See inherited documentation"""
       result = Calendar.is_a (self, text)
-      if result: 
+      if result:
          return result
 
       m = self.__months_re.search (text)
-      if m: 
+      if m:
          return text
 
       return None
@@ -604,7 +604,7 @@ class Date (object):
       match = TIME_RE.search (txt)
       if match:
          if match.group (4):
-            secs = int (match.group (4)) 
+            secs = int (match.group (4))
          else:
             secs = 0
 
@@ -634,21 +634,21 @@ class Date (object):
            or re.match (RE_DAYS, match.group (3)):
             if match.group (1) == '+':
                add_days = add_days + int (match.group (2))
-            else:            
+            else:
                add_days = add_days - int (match.group (2))
 
          elif re.match ("months?", match.group (3)) \
               or re.match (RE_MONTHS, match.group (3)):
             if match.group (1) == '+':
                add_months = add_months + int (match.group (2))
-            else:            
+            else:
                add_months = add_months - int (match.group (2))
 
          elif re.match ("years?", match.group (3)) \
               or re.match (RE_YEARS, match.group (3)):
             if match.group (1) == '+':
                add_years = add_years + int (match.group (2))
-            else:            
+            else:
                add_years = add_years - int (match.group (2))
 
          txt = txt[:match.start (0)] + txt [match.end (0):]
@@ -678,7 +678,7 @@ class Date (object):
          return None  # Can't do any sorting
 
    def year (self, calendar=None):
-      """Return the year component of self"""
+      """Return the year component of self, in the associated calendar"""
       cal = calendar or self.calendar
       return cal.components (self.date)[0]
 
@@ -829,7 +829,7 @@ class DateRange (object):
             return "between " + d1 + " and " + d2
       else:
          return str (self.date)
-      
+
    def __parse (self):
       """Parse the text field to create a date or a date range that can be
          more easily compared and manipulated

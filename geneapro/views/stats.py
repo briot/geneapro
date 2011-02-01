@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from django.utils import simplejson
 from django.http import HttpResponse
 from mysites.geneapro import models
-from mysites.geneapro.utils.date import Date
+from mysites.geneapro.utils.date import Date, CalendarGregorian
 from mysites.geneapro.views.tree import *
 from mysites.geneapro.views.styles import *
 from mysites.geneapro.views.persona import extended_personas
@@ -25,6 +25,8 @@ def view (request):
    father_ids = tree.ancestors (tree.father (decujus))
    mother_ids = tree.ancestors (tree.mother (decujus))
 
+   cal = CalendarGregorian()
+
    ranges = []
    for index, g in enumerate (tree.generations (decujus)):
       births = None
@@ -36,13 +38,13 @@ def view (request):
             if births is None or p.birth.Date < births:
                births = p.birth.Date
                if p.birth.Date.year_known:
-                  gen_range[1] = p.birth.Date.year ()
+                  gen_range[1] = p.birth.Date.year (cal)
 
          if p.death and p.death.Date:
             if deaths is None or p.death.Date > deaths:
                deaths = p.death.Date
                if p.death.Date.year_known:
-                  gen_range[2] = p.death.Date.year ()
+                  gen_range[2] = p.death.Date.year (cal)
 
       gen_range[3] = "Generation %02d (%d out of %d) (%s - %s)" \
             % (index+1, len (g), 2 ** (index + 1),
@@ -56,7 +58,7 @@ def view (request):
 
       if len (ranges) > 0:
          if gen_range [1] == "?":
-            gen_range[1] = ranges[-1][1] - 15  
+            gen_range[1] = ranges[-1][1] - 15
          if gen_range [2] == "?" or gen_range[2] < ranges[-1][1]:
             gen_range[2] = ranges[-1][1]
 
