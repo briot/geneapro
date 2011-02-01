@@ -196,6 +196,17 @@ function computeBoxPositions (canvas) {
    canvas.boxheights [lastgen] = [boxHeight * genscale, 1, wscale];
    canvas.mariageHeight [lastgen] = 0;  // Can't display marriage for last
 
+   // Compute spacing between boxes at the last generation. We try to make the
+   // tree nicer by using the whole canvas height, at least (in particular useful
+   // when displaying few generations.
+   // On the initial display (scale=1), it looks nicer to always alter the
+   // spacing. But when zooming we should keep the previously computed positions...
+
+   var canvas_height = canvas.canvas[0].height, margin = 40;
+   if ((totalBoxes - maxBoxes) * spacing < canvas_height - margin) {
+      spacing = (canvas_height - margin) / (totalBoxes - maxBoxes);
+   }
+
    // Start at last generation
 
    var y = 0;
@@ -222,8 +233,6 @@ function computeBoxPositions (canvas) {
              - height) / 2;
       }
    }
-
-   canvas.mariageHeight [lastgen - 1] = 0;
 }
 
 function doDraw (evt, screenBox) {

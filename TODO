@@ -30,6 +30,10 @@
    persons in the tree (and avoid drawing them twice when possible)
 ** Tooltip to display person info
 
+* Canvas Pedigree View
+** Zoom and scroll with 10 generations, then go back to 3 generations.
+   The layout is not re-centered.
+
 * FanChart
 ** Possibility to fold part of the fanchart to concentrate on specific
    families
@@ -39,11 +43,9 @@
 ** Display last name on a separate line to make it more readable
 ** Editing fanchart's config graphically
    As opposed to modifying defaultConfig in fanchart.js
-** Highlight F/M for descendants of 1
 ** Tooltip to display person info
 
 * Styles
-** Special highlighting for descendants of
 
 * Model
 ** Need to take into account persona and all its aliases in all queries
