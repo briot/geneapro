@@ -1,21 +1,19 @@
 // Needs the variable "pedigree_data_url" to be defined
 var boxWidth = 300;
-var horizPadding = 0;
-var boxHeight = 35;
+var horizPadding = 10;
+var boxHeight = 40;
 var vertPadding = 2;    //  vertical padding at last gen
 var showUnknown = false; //  whether to draw a box when parent is unknown
 var ratio = 0.75;   //  size ratio for height from generation n to n+1
 var wratio = 0.75;  //  size ratio for width from generation n to n+1
 var baseFontSize = "16"; // pixels
 var maxFontSize = 16; //  maximum font size
-var minFont = 5;    // No need to draw text below this
-var maxLines = 1;      // Number of lines to display in standard boxes
+var minFont = 5;    // No need to draw text below this size
 var fontName = "sans"; // "Times New Roman";
 
 /*** All boxes have the same size and display birth and death info
 ratio = 1.0;
 wratio = 1.0;
-maxLines = 5;
 boxWidth = 200;
 boxHeight = 90;
 vertPadding = 20;
@@ -23,38 +21,42 @@ horizPadding = 20;
 maxFontSize = 14;
 ***/
 
-stylesheet = "rect {filter:url(#shadow)} rect.selected {fill:#CCC}";
-
-function drawBox (canvas, c, person, x, y, width, height, lines) {
+function drawBox (canvas, c, person, x, y, width, height, gen) {
    // (x,y,width,height) are specified in pixels, so zooming and scrolling must
    // have been applied
    if (person) {
-     var attr = data.styles [person.y];
+     var attr = data.styles [person.y],
+         lh = canvas.lineHeight[gen],
+         lines = canvas.lines[gen];
      attr.shadow = true; // force shadow
      canvas.roundedRect (x, y, width, height, attr);
 
-     if (height >= minFont && lines >= 1) {
-        var lh = canvas.options.lineHeight,
-            font = Math.round (Math.min(maxFontSize,height)) + "px " + fontName;
+     if (lh >= minFont && lines >= 1) {
+        var font = lh + "px " + fontName;
         c.save ();
         c.clip ();
+        c.translate(x, y);
         c.font = font;
-        canvas.text (x + 1, y, person.surn + " " + person.givn, attr);
+        canvas.text (1, 0, person.surn + " " + person.givn, attr);
 
-        if (lines >= 2) {
-           //c.font = "bold " + font;
+        if (lines >= 2 && lines < 5) {
+           var birth = event_to_string (person.b),
+               death = event_to_string (person.d);
+           c.fillText (birth + " - " + death, 1, lh);
+
+        } else if (lines > 2) {
            var birth = event_to_string (person.b),
                death = event_to_string (person.d),
                birthp = person.b ? person.b[1] || "" : "",
                deathp = person.d ? person.d[1] || "" : "";
-           if (lines >=2) c.fillText ("b:", x + 1, y + lh);
-           if (lines >=4) c.fillText ("d:", x + 1, y + 3 * lh);
+           if (lines >=2) c.fillText ("b:", 1, lh);
+           if (lines >=4) c.fillText ("d:", 1, 3 * lh);
 
            c.font = "italic " + font;
-           if (lines >= 2 && birth)  c.fillText (birth,  x + lh, y + lh);
-           if (lines >= 3 && birthp) c.fillText (birthp, x + lh, y + 2 * lh);
-           if (lines >= 4 && death)  c.fillText (death,  x + lh, y + 3 * lh);
-           if (lines >= 5 && deathp) c.fillText (deathp, x + lh, y + 4 * lh);
+           if (lines >= 2 && birth)  c.fillText (birth,  lh, lh);
+           if (lines >= 3 && birthp) c.fillText (birthp, lh, 2 * lh);
+           if (lines >= 4 && death)  c.fillText (death,  lh, 3 * lh);
+           if (lines >= 5 && deathp) c.fillText (deathp, lh, 4 * lh);
         }
         c.restore (); // unset clipping mask and font
      }
@@ -183,6 +185,8 @@ function computeBoxPositions (canvas) {
    canvas.boxheights = new Array (d.generations); //[height, lines, wscale]
    canvas.tops = new Array(totalBoxes); //  Pixel coordinates
    canvas.mariageHeight = new Array (d.generations);
+   canvas.lines = new Array (d.generations); // number of lines at each gen
+   canvas.lineHeight = new Array (d.generations); // font size at each gen
    canvas.__gens = d.generations;
    canvas.__scale = canvas.scale;
 
@@ -215,6 +219,13 @@ function computeBoxPositions (canvas) {
       y += spacing;
    }
 
+   canvas.lineHeight[lastgen] = Math.min(
+         maxFontSize, canvas.options.lineHeight * genscale * canvas.scale);
+   canvas.lines[lastgen] =
+      boxHeight * genscale * canvas.scale / canvas.lineHeight[lastgen];
+   /*log ("gen=", lastgen, " lineHeight=", canvas.lineHeight[lastgen],
+         " lines=", canvas.lines[lastgen]);*/
+
    index = totalBoxes - maxBoxes - 1;
 
    for (var gen = lastgen - 1; gen >= 0; gen --) {
@@ -222,8 +233,13 @@ function computeBoxPositions (canvas) {
       wscale   = Math.pow (wratio, gen) * canvas.scale;
       var height = boxHeight * genscale;
 
-      canvas.boxheights [gen] = [height, 1, wscale];
+      canvas.boxheights[gen] = [height, 1, wscale];
       canvas.mariageHeight [gen] = height * genscale;
+      canvas.lineHeight[gen] =
+         Math.min(maxFontSize, canvas.options.lineHeight * genscale);
+      canvas.lines[gen] = height / canvas.lineHeight[gen];
+      /*log ("gen=", gen, " lineHeight=", canvas.lineHeight[gen],
+           " lines=", canvas.lines[gen]);*/
 
       //  Compute positions for boxes in this generation
       var lastIndex = index - Math.pow (2, gen);
@@ -275,7 +291,7 @@ function doDraw (evt, screenBox) {
                   seenChild = true;
                   ctx.lineTo (startX, yForChild);
                }
-               boxes.push([indiv, x, y, w, h, 5]);
+               boxes.push([indiv, x, y, w, h, 0]);
 
             }
             else if (gen < d.generations - 1) {
@@ -306,7 +322,7 @@ function doDraw (evt, screenBox) {
                   }
                }
 
-               boxes.push([indiv, x, y, w, h, maxLines]);
+               boxes.push([indiv, x, y, w, h, gen]);
          });
 
    ctx.stroke();
