@@ -1,6 +1,6 @@
 // Needs the variable "pedigree_data_url" to be defined
 var boxWidth = 300;
-var horizPadding = 10;
+var horizPadding = 20;
 var boxHeight = 40;
 var vertPadding = 2;    //  vertical padding at last gen
 var showUnknown = false; //  whether to draw a box when parent is unknown
@@ -295,22 +295,30 @@ function doDraw (evt, screenBox) {
 
             }
             else if (gen < d.generations - 1) {
-               var x2 = x + w + horizPadding * boxheights[gen][2],
-                   x3 = x + w * 0.9;
+               if (showUnknown || d.sosa[2 * sosa] || d.sosa[2 * sosa + 1]) {
+                  var x2 = x + w + horizPadding * boxheights[gen][2],
+                        // x2=left edge of parent gen
+                      x3 = x + w,  // right edge for current gen
+                      y2 = y + h / 2, // middle of current box
+                      x4 = (x2 + x3) / 2; // half way between two boxes
 
-               if (showUnknown || d.sosa [2 * sosa]) {
+                  // At least one of the parents ?
+                  ctx.moveTo (x3, y2);
+                  ctx.lineTo (x4, y2);
+
+                  if (showUnknown || d.sosa [2 * sosa]) {
                      var y1 = baseY + tops[2 * sosa - 1]
                               + boxheights[gen+1][0] / 2;
-                     ctx.moveTo (x2, y1);
-                     ctx.lineTo (x3, y1);
-                     ctx.lineTo (x3, y);
+                     ctx.lineTo(x4, y1);
+                     ctx.lineTo(x2, y1);
                   }
+
                   if (showUnknown || d.sosa [2 * sosa + 1]) {
-                     var y2 = baseY + tops[2 * sosa]
+                     var y1 = baseY + tops[2 * sosa]
                               + boxheights[gen+1][0] / 2;
-                     ctx.moveTo (x2, y2);
-                     ctx.lineTo (x3, y2);
-                     ctx.lineTo (x3, y + h);
+                     ctx.moveTo(x4, y2);
+                     ctx.lineTo(x4, y1);
+                     ctx.lineTo(x2, y1);
                   }
 
                   if (mariageHeight[gen] > minFont
@@ -321,8 +329,9 @@ function doDraw (evt, screenBox) {
                     text.push([mariageHeight[gen], x2 + 3, y + h /2, mar]);
                   }
                }
+            }
 
-               boxes.push([indiv, x, y, w, h, gen]);
+            boxes.push([indiv, x, y, w, h, gen]);
          });
 
    ctx.stroke();
