@@ -33,6 +33,18 @@
 * Canvas Pedigree View
 ** Zoom and scroll with 10 generations, then go back to 3 generations.
    The layout is not re-centered.
+** Improve layout. Current layout requires a lot of vertical space compared
+   to horizontal space, when displaying lots of generations.
+** Display more information for each person, in particular when zooming
+** Highlight box when hover.
+   Display action buttons ("make decujus", "view info",...) for the active box.
+   Use a R-Tree for fast detection.
+
+* Highlight rules
+** Store them in the database
+** Create them graphically
+** Use presets
+** Make it possible to hide or move the legend
 
 * FanChart
 ** Possibility to fold part of the fanchart to concentrate on specific
@@ -44,6 +56,7 @@
 ** Editing fanchart's config graphically
    As opposed to modifying defaultConfig in fanchart.js
 ** Tooltip to display person info
+** Implement based on the canvas.
 
 * Styles
 

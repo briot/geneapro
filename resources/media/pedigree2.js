@@ -189,20 +189,19 @@ function computeBoxPositions (canvas) {
    var lastgen = d.generations - 1,
        maxBoxes = Math.pow (2,d.generations-1),// max boxes at last generation
        totalBoxes = Math.pow (2,d.generations) - 1, // geometrical summation
-       genscale = Math.pow (ratio, lastgen) * canvas.scale,
+       genscale = Math.pow (ratio, lastgen),
        wscale   = Math.pow (wratio, lastgen) * canvas.scale,
-       spacing  = (boxHeight + vertPadding) * genscale;
+       spacing  = (boxHeight + vertPadding) * genscale; // at scale 1.0
 
-   canvas.boxheights [lastgen] = [boxHeight * genscale, 1, wscale];
+   canvas.boxheights [lastgen] =
+      [boxHeight * genscale * canvas.scale, 1, wscale];
    canvas.mariageHeight [lastgen] = 0;  // Can't display marriage for last
 
    // Compute spacing between boxes at the last generation. We try to make the
-   // tree nicer by using the whole canvas height, at least (in particular useful
-   // when displaying few generations.
-   // On the initial display (scale=1), it looks nicer to always alter the
-   // spacing. But when zooming we should keep the previously computed positions...
+   // tree nicer by using the whole canvas height, at least (in particular
+   // useful when displaying few generations.
 
-   var canvas_height = canvas.canvas[0].height, margin = 40;
+   var canvas_height = canvas.canvas[0].height, margin = 30;
    if ((totalBoxes - maxBoxes) * spacing < canvas_height - margin) {
       spacing = (canvas_height - margin) / (totalBoxes - maxBoxes);
    }
@@ -210,6 +209,7 @@ function computeBoxPositions (canvas) {
    // Start at last generation
 
    var y = 0;
+   spacing = spacing * canvas.scale;  //  at current scale, for last generation
    for (var index = totalBoxes - maxBoxes; index < totalBoxes; index++) {
       canvas.tops[index] = y;
       y += spacing;
