@@ -2,7 +2,6 @@
 {% block title %}GeneaPro: pedigree{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
-#pedigreeSVG {position:absolute;width:100%;height:100%;margin:10px 0 10px 0;border:0}
 {% endblock css %}
 
 {% block script %}
@@ -23,14 +22,14 @@ $(document).ready (function() {
 {% endblock script %}
 
 {% block endbody %}
+{{legend|safe}}
 <script type="text/javascript" src="{{MEDIA_URL}}pedigree2.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.detectFontSize.js"></script>
 {% endblock endbody %}
-{% block contents %}
 
-<div style="position:absolute">
+{% block leftside %}
 Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
   <option>1</option>
   <option>2</option>
@@ -46,9 +45,10 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
   <option>12</option>
   <option>13</option>
 </select>
-</div>
+{% endblock leftside %}
 
-{{legend|safe}}
+{% block contents %}
 <canvas id="pedigreeSVG"></canvas>
 </div>
 {% endblock contents %}
+

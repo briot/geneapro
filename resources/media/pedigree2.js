@@ -28,7 +28,8 @@ function drawBox (canvas, c, person, x, y, width, height, gen) {
      var attr = data.styles [person.y],
          lh = canvas.lineHeight[gen],
          lines = canvas.lines[gen];
-     attr.shadow = true; // force shadow
+
+     attr.shadow = (height > 2); // force shadow
      canvas.roundedRect (x, y, width, height, attr);
 
      if (lh >= minFont && lines >= 1) {
