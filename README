@@ -22,7 +22,7 @@ Q. How do I start the server ?
 
    Use ./manage.py runserver
    and then open a web browser and connect to
-      http://127.0.0.1:8000/geneapro
+      http://127.0.0.1:8000/
    Support web browers include Firefox and Chrome. Internet Explorer
    does not currently support svg, except maybe through external
    plugins. Opera does not properly support text in svg.

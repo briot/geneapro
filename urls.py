@@ -21,10 +21,13 @@ urlpatterns = patterns('',
 	#            "document_root": settings.MEDIA_ROOT,
 	#        })
 
-    # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 
+    # Uncomment the admin/doc line below and add 'django.contrib.admindocs'
     # to INSTALLED_APPS to enable admin documentation:
     #(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
     (r'^admin/(.*)', admin.site.root),
+
+    # Default to geneapro
+	(r'^', include('mysites.geneapro.urls')),
 )
