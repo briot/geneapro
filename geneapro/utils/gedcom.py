@@ -523,10 +523,14 @@ class GedcomRecord (object):
                ...
    """
 
-   def __init__ (self):
+   def __init__ (self, **args):
       """LIST_FIELDS is the list of fields from gedcom that are lists, and
-         therefore need special handling when copying a gedcomRecord"""
+         therefore need special handling when copying a gedcomRecord.
+      """
       self.value = ""
+
+      for key, val in args.iteritems():
+          self.__dict__[key] = val
 
    def _xref_to (self, xref, gedcom):
       """Indicates that the record contains no real data, but is an xref

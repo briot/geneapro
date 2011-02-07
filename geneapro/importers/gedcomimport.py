@@ -255,12 +255,11 @@ class GedcomImporter(object):
     def _create_place(self, data, id=''):
         """If data contains a subnode PLAC, parse and returns it"""
 
-        if data is not None:
-            addr = data.ADDR
-            data = data.PLAC
-
-        if data is None:
+        if data is None or getattr(data, "ADDR", None) is None:
             return None
+
+        addr = data.ADDR
+        data = data.PLAC
 
         # Check if the place already exists, since GEDCOM will duplicate
         # places unfortunately.
@@ -311,9 +310,16 @@ class GedcomImporter(object):
     def _create_characteristic(self, key, value, indi):
         """Create a Characteristic for the person indi.
          Return True if a characteristic could be created, false otherwise.
-         (key,data) come from the GEDCOM structure, and could be:
-               {"SEX": "Male"}
-               {"NAME": {"value":"Smith", "GIVN":"Joe", "SURN":"Smith"}}
+         (key,value) come from the GEDCOM structure.
+
+         A call to this subprogram might look like:
+            self._create_characteristic(
+                key="NAME",
+                value=GedcomRecord(SURN=g.group(2), GIVN=g.group(1)),
+                indi=indi)
+
+            self._create_characteristic("SEX", "Male", indi)
+
          As defined in the GEDCOM standard, and except for the NAME which
          is special, all other attributes follow the following grammar:
              n TITL nobility_type_title
@@ -348,7 +354,7 @@ class GedcomImporter(object):
             else:
                 place = self._create_place(val)
                 c = models.Characteristic.objects.create(place=place,
-                        date=val.DATE)
+                        date=getattr(val, "DATA", None))
                 str_value = val.value
 
             # Associate the characteristic with the persona
@@ -377,16 +383,17 @@ class GedcomImporter(object):
                     t = self._char_types.get(k, None)
                     if t:
                         if k == 'GIVN' and GIVEN_NAME_TO_MIDDLE_NAME:
-                            n = v.replace(',', ' ').split(' ', 2)
-                            models.Characteristic_Part.objects.create(
-                                characteristic=c, type=t, name=n[0])
-
-                            if len(n) == 2:
+                            if v:
+                                n = v.replace(',', ' ').split(' ', 2)
                                 models.Characteristic_Part.objects.create(
-                                    characteristic=c,
-                                    type=self._char_types['MIDDLE_NAMES'],
-                                    name=n[1])
-                        else:
+                                    characteristic=c, type=t, name=n[0])
+
+                                if len(n) == 2:
+                                    models.Characteristic_Part.objects.create(
+                                        characteristic=c,
+                                        type=self._char_types['MIDDLE_NAMES'],
+                                        name=n[1])
+                        elif v:
                             models.Characteristic_Part.objects.create(
                                 characteristic=c, type=t, name=v)
 
@@ -442,7 +449,7 @@ class GedcomImporter(object):
          None. As a result, you can always iterate over the result to insert
          rows in the database."""
 
-        if not isinstance(data, str) and data.SOUR:
+        if not isinstance(data, str) and getattr(data, "SOUR", None):
             all_sources = []
 
             for s in data.SOUR:
@@ -464,11 +471,22 @@ class GedcomImporter(object):
         # The name to use is the first one in the list of names
         indi = models.Persona.objects.create(name=name, description='')
 
+        # Create characteristics for the name elements.
+        # Currently, we try to guess what is a given name, a surname,...
+        # ??? Why is this needed, the GEDCOM explicitly contains a NAME
+
+        g = re.search("(.*)/(.*)/", name)
+        if False and g:
+            self._create_characteristic(
+                key="NAME",
+                value=GedcomRecord(SURN=g.group(2), GIVN=g.group(1)),
+                indi=indi);
+
         # Now create the characteristics
-        for char in self._char_types.keys():
+        for char in ["NAME"] + self._char_types.keys():
             try:
-                if not self._create_characteristic(char, data.__dict__[char],
-                        indi):
+                if not self._create_characteristic(
+                   char, data.__dict__[char], indi):
                     print 'Could not create characteristic %s for indi %s' \
                         % (char, data.id)
             except KeyError:
