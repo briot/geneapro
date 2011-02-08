@@ -385,10 +385,27 @@ _GRAMMAR = dict (
              ("NOTE", 0, unlimited, None)))
 
 class Invalid_Gedcom (Exception):
-   def __init__ (self, msg):
+   def __init__(self, msg):
       self.msg = msg
-   def __str__ (self):
-      return self.msg
+   def __unicode__(self):
+      return unicode(self.msg)
+
+
+class GedcomString(unicode):
+    """A string that can be marked as processed"""
+
+    # Overriding __init__ seems problematic here. We can't add new
+    # parameters ("line=0" for instance), and calling unicode.__ini__
+    # shows a warning that "object.__ini__ doesn't take any argument".
+    # So we just use GedcomString as a small wrapper, to which we manually
+    # add .line and .processed fields
+
+    def __add__(self, value):
+        r = GedcomString(unicode(self) + value)
+        r.line = self.line
+        r.processed = False
+        return r
+
 
 class _Lexical (object):
    """Return lines of the GEDCOM file, taking care of concatenation when
@@ -410,13 +427,31 @@ class _Lexical (object):
       self.level = 0     # Level of the current line
       self.line = 0      # Current line
       self.current_line = None
+      self.encoding = 'iso_8859_1'
       self.prefetch = self._parse_next_line () # Prefetched line, parsed
+
+   def to_unicode(self, value):
+      """Converts value to a unicode string"""
+      if isinstance(value, unicode):
+          r = GedcomString(value)
+      else:
+          r = GedcomString(value,
+                           encoding=self.encoding,
+                           errors='replace')
+
+      #print type(value), value, " => "
+      #print "    ", [ord(c) for c in r]
+      #print "    ", r.encode("utf-8")
+      #print "    ", [ord(c) for c in r.encode("utf-8")]
+      r.line = self.line
+      return r
 
    def _parse_next_line (self):
       """Fetch the next relevant file of the GEDCOM stream,
          and split it into its fields"""
 
-      self.line = self.line + 1
+      self.line += 1
+
       # Leading whitespace must be ignored in gedcom files
       line = self.file.readline ().lstrip ().rstrip ('\n')
       if not line:
@@ -424,6 +459,7 @@ class _Lexical (object):
 
       if self.line == 1 and line[0:3] == "\xEF\xBB\xBF":
          print "Encoding is UTF8"
+         self.encoding = 'utf-8'
          line = line[3:]
 
       g = LINE_RE.match(line)
@@ -442,14 +478,21 @@ class _Lexical (object):
                "%s Invalid gedcom file, first line must be '0 HEAD'" %
                self.get_location (1))
 
-      return (int (g.group ("level")), g.group ("tag"),
-              g.group ("xref_id"), g.group ("value") or "")
+      r = (int (g.group ("level")), g.group ("tag"),
+           g.group ("xref_id"),
+           self.to_unicode(g.group("value") or u""))
+
+      if r[0] == 1 and r[1] == "CHAR":
+          print "Encoding is %s" % r[3]
+          self.encoding = r[3]
+
+      return r
 
    def get_location (self, offset=0):
       """Return the current parser location
          This is intended for error messages
       """
-      return self.file.name + ":" + str (self.line + offset - 1)
+      return self.file.name + ":" + unicode(self.line + offset - 1)
 
    def readline (self, skip_to_level=-1):
       """
@@ -468,13 +511,13 @@ class _Lexical (object):
             result = self._parse_next_line ()
             self.prefetch = result
 
-      value = result [_Lexical.VALUE]
+      value = result[_Lexical.VALUE]
       self.prefetch = self._parse_next_line ()
       while self.prefetch:
          if self.prefetch [_Lexical.TAG] == "CONT":
-            value = value + "\n" + self.prefetch [_Lexical.VALUE]
+            value += "\n" + self.prefetch[_Lexical.VALUE]
          elif self.prefetch [_Lexical.TAG] == "CONC":
-            value = value + self.prefetch [_Lexical.VALUE]
+            value += self.prefetch [_Lexical.VALUE]
          else:
             break
          self.prefetch = self._parse_next_line ()
@@ -527,10 +570,20 @@ class GedcomRecord (object):
       """LIST_FIELDS is the list of fields from gedcom that are lists, and
          therefore need special handling when copying a gedcomRecord.
       """
-      self.value = ""
+      self.value = GedcomString("")
 
       for key, val in args.iteritems():
           self.__dict__[key] = val
+
+   def set_processed(self):
+       """Mark self as processed"""
+       self.processed = True
+
+   def show_not_processed(self):
+       """Display the list of unprocessed fields from SELF, ie those that
+          have not been imported.
+       """
+       pass
 
    def _xref_to (self, xref, gedcom):
       """Indicates that the record contains no real data, but is an xref
@@ -619,7 +672,7 @@ class _GedcomParser (object):
          names = c[0]
          type = c[3]
 
-         if isinstance (names, str):
+         if isinstance (names, basestring):
             names = [c[0]]
 
          n = names[0]
@@ -637,7 +690,7 @@ class _GedcomParser (object):
             if type is None:
                is_xref = XREF_PURE
                handler = None
-            elif isinstance (type, str):
+            elif isinstance (type, basestring):
                is_xref = XREF_OR_INLINE
 
                # xref_to must be a superset of type
@@ -662,7 +715,8 @@ class _GedcomParser (object):
                handler = None
                result  = None
 
-            elif isinstance (type, str): # ref to one of the toplevel nodes
+            elif isinstance (type, basestring):
+               # ref to one of the toplevel nodes
                handler = all_parsers.get (type)
                if handler is None:
                   handler = _GedcomParser (type, _GRAMMAR[type], all_parsers,

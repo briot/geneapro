@@ -9,7 +9,9 @@ from django.utils import simplejson
 from django.http import HttpResponse
 from mysites.geneapro import models
 from mysites.geneapro.utils.date import Date
-from mysites.geneapro.views.styles import *
+from mysites.geneapro.views.custom_highlight import style_rules
+from mysites.geneapro.views.styles import Styles
+from mysites.geneapro.views.tree import Tree
 
 def __add_default_person_attributes (person):
    """Add the default computed attributes for the person.
@@ -27,67 +29,77 @@ def __add_default_person_attributes (person):
    else:
       person.surname = ""
 
-def __get_characteristics (persons, ids):
-   """Compute characteristics for all persons in IDS.
-      PERSONS is a dictionary associating an id to an instance of PERSONA
+
+def __get_characteristics(persons):
+   """Compute characteristics for all the PERSONS.
+      PERSONS is a dictionary associating an id to an instance of PERSONA.
+      This sets persons[*].chars to a list of the characteristics
    """
 
-   p2c = dict ()  # characteristic_id -> person
-   chars = set ()
+   for p in persons.itervalues():
+       p.all_chars = dict() # All characteristics of the person (id -> data)
 
-   for p in models.P2C_Assertion.objects.filter (person__in = ids) \
-      .values_list ('person', 'characteristic'):
+   p2c = dict()  # characteristic_id -> person
 
-      p2c [p[1]] = persons [p[0]]
-      chars.add (p[1])
+   all_p2c = models.P2C_Assertion.objects.filter(person__in=persons.keys())
 
-   chars = models.Characteristic_Part.objects.filter (
-      type__in = (models.Characteristic_Part_Type.sex,
-                  models.Characteristic_Part_Type.given_name,
-                  models.Characteristic_Part_Type.surname),
-      characteristic__in = chars)
+   for p in all_p2c.values_list('person', 'characteristic'):
+       p2c[p[1]] = persons[p[0]]
+
+   chars = models.Characteristic_Part.objects.filter(
+      characteristic__in=p2c.keys()).select_related()
 
    for c in chars:
-      if c.type_id == models.Characteristic_Part_Type.sex:
-         p2c [c.id].sex = c.name
-      elif c.type_id == models.Characteristic_Part_Type.given_name:
-         p2c [c.id].given_name = c.name
-      elif c.type_id == models.Characteristic_Part_Type.surname:
-         p2c [c.id].surname = c.name
+       p = p2c[c.characteristic_id]
+       ch = p.all_chars.get(c.characteristic_id, "")
+       ch += c.type.name + "=" + c.name + " "
+       p.all_chars[c.characteristic_id] = ch
 
-def __get_events (persons, ids, styles):
+       # Some special cases, for the sake of the pedigree view and the styles
+
+       if c.type_id == models.Characteristic_Part_Type.sex:
+          p.sex = c.name
+       elif c.type_id == models.Characteristic_Part_Type.given_name:
+          p.given_name = c.name
+       elif c.type_id == models.Characteristic_Part_Type.surname:
+          p.surname = c.name
+
+
+def __get_events(persons, styles):
    """Compute the events for the various persons in IDS"""
 
    compute_parts = styles.need_place_parts()
 
-   p2e = dict () # event_id -> person
-   events = set ()
-   sources = dict ()
+   p2e = dict()     # event_id -> (person, role_id)
+   sources = dict() # event_id -> [source_id...]
 
-   for p in models.P2E_Assertion.objects.filter (person__in = ids) \
-            .select_related ('assertion'):
+   all_p2e = models.P2E_Assertion.objects.filter(
+       person__in=persons.keys()).select_related('assertion')
+
+   for p in all_p2e:
       if p.event_id in p2e:
-         p2e [p.event_id].add ((persons [p.person_id], p.role_id))
+         p2e[p.event_id].add((persons[p.person_id], p.role_id))
          if p.source_id is not None:
-            sources [p.event_id].append (p.source_id)
+            sources[p.event_id].append(p.source_id)
       else:
-         p2e [p.event_id] = set ([(persons [p.person_id], p.role_id)])
+         p2e[p.event_id] = set([(persons[p.person_id], p.role_id)])
          if p.source_id is None:
-            sources [p.event_id] = []
+            sources[p.event_id] = []
          else:
-            sources [p.event_id] = [p.source_id]
+            sources[p.event_id] = [p.source_id]
 
-      events.add (p.event_id)
+   for p in persons.itervalues():
+       p.all_events = dict() # All events of the person (id -> data)
 
-   places = dict ()
+   places = dict()
    all_events = []
 
    def __add_events_for_id(ids, places, all_events):
-       events = models.Event.objects.filter (
+       events = models.Event.objects.filter(
           id__in=ids,
           type__in=(models.Event_Type.birth,
                     models.Event_Type.death,
-                    models.Event_Type.marriage)).select_related ('place')
+                    models.Event_Type.marriage)).select_related('place')
 
        for e in events.all():
           all_events.append(e)
@@ -99,27 +111,32 @@ def __get_events (persons, ids, styles):
 
           e.sources = sources [e.id]
           if e.date:
-             e.Date = Date (e.date)
+              e.Date = Date (e.date)
           else:
-             e.Date = None
+              e.Date = None
+
           for p, role in p2e [e.id]:
-             if e.type_id == models.Event_Type.birth \
-                   and role == models.Event_Type_Role.principal:
-                p.birth = e
+              p.all_events[e.id] = unicode(e)
 
-             elif e.type_id == models.Event_Type.death \
-                   and role == models.Event_Type_Role.principal:
-                p.death = e
+              if e.type_id == models.Event_Type.birth \
+                    and role == models.Event_Type_Role.principal:
+                 p.birth = e
 
-             elif e.type_id == models.Event_Type.marriage \
-                   and role == models.Event_Type_Role.principal:
-                p.marriage = e
+              elif e.type_id == models.Event_Type.death \
+                    and role == models.Event_Type_Role.principal:
+                 p.death = e
+
+              elif e.type_id == models.Event_Type.marriage \
+                    and role == models.Event_Type_Role.principal:
+                 p.marriage = e
 
    # SQLlite has a limitation that it will not return more than 1000 rows.
    # So we use a sliding window here
+   # ??? The limitation is rather in the length of __in parameter, but it can
+   # return more than 1000 rows
 
    offset = 0
-   events = list(events)
+   events = p2e.keys()
    while offset < len(events):
        __add_events_for_id(events[offset:offset + 800], places, all_events)
        offset += 800
@@ -135,10 +152,10 @@ def __get_events (persons, ids, styles):
       for p in parts:
          if p.place_id != prev_place:
             prev_place = p.place_id
-            d = dict ()
-            setattr (places [prev_place], "parts", d)
+            d = dict()
+            setattr(places[prev_place], "parts", d)
 
-         d [p.type.name] = p.name
+         d[p.type.name] = p.name
 
    # Process styles after we have computed birth (since we need age)
 
@@ -147,30 +164,66 @@ def __get_events (persons, ids, styles):
       for p, role in p2e [e.id]:
          styles.process (p, role, e, source)
 
-def extended_personas (ids, styles):
+
+def extended_personas(ids, styles):
    """Return a dict indexed on id containing extended instances of Persona,
       with additional fields for the birth, the death,...
    """
-   persons = dict () # id -> person
-   for p in models.Persona.objects.filter (id__in = ids):
-      persons [p.id] = p
-      __add_default_person_attributes (p)
+   persons = dict() # id -> person
+   for p in models.Persona.objects.filter(id__in=ids):
+      persons[p.id] = p
+      __add_default_person_attributes(p)
 
    styles.start ()
 
-   __get_characteristics (persons=persons, ids=ids)
-   __get_events (persons=persons, ids=ids, styles=styles)
+   __get_characteristics(persons=persons)
+   __get_events (persons=persons, styles=styles)
 
    for p in persons.itervalues():
       styles.compute (p)
 
    return persons
 
-def view (request, id):
+
+def unicode_escape(unistr):
+    """
+    Tidys up unicode entities into HTML friendly entities
+
+    Takes a unicode string as an argument
+
+    Returns a unicode string
+    """
+    import htmlentitydefs
+    escaped = ""
+
+    print type(unistr), len(unistr), unistr
+    for char in unistr:
+        if ord(char) in htmlentitydefs.codepoint2name:
+            name = htmlentitydefs.codepoint2name.get(ord(char))
+            entity = htmlentitydefs.name2codepoint.get(name)
+            escaped +="&#" + str(entity)
+
+        else:
+            escaped += char
+
+    print "   => ", escaped
+    return escaped
+
+
+def view(request, id):
    """Display all details known about persona ID"""
 
-   p = PersonsData (ids = int (id))
+   id = int(id)
 
+   tree = Tree()
+   styles = Styles(style_rules, tree, decujus=id)
+   p = extended_personas(ids=[id], styles=styles)
+
+   print [unicode(e) for e in p[id].all_events.itervalues()]
    return render_to_response (
        'geneapro/persona.html',
+       {"p":p,
+        "chars": [unicode(c) for c in p[id].all_chars.itervalues()],
+        "events": [unicode_escape(unicode(e)) for e in p[id].all_events.itervalues()],
+       },
        context_instance=RequestContext(request))

@@ -289,8 +289,8 @@ class Calendar (object):
             #   return text [m.end(0):]
       return None
 
-   def __str__ (self):
-      """Convert to a string"""
+   def __unicode__ (self):
+      """Convert to a unicode string"""
       return ""
 
    def parse (self, txt, add_year=0, add_month=0, add_day=0):
@@ -334,7 +334,7 @@ class Calendar (object):
       """Return a tuple (year, month, day) for the given day"""
       raise NotImplementedError
 
-   def date_str (self, julian_day, year_known=True,
+   def date_unicode(self, julian_day, year_known=True,
                  month_known=True, day_known=True, year_only=False):
       """Return a string representing the julian day in the self calendar.
          If year_only is true, only the year is returned"""
@@ -432,7 +432,7 @@ class CalendarFrench (Calendar):
          ("|".join ([k for k in self._month_names.keys() if k != ""]),
           re.IGNORECASE)
 
-   def __str__ (self):
+   def __unicode__ (self):
       # Do not return the name of the calendar when we spell out the month
       # name in date_str(), since there is no ambiguity in this case
       #return "French Republican"
@@ -476,7 +476,7 @@ class CalendarFrench (Calendar):
 
       return (y, m, d)
 
-   def date_str (self, julian_day, year_known=True, month_known=True,
+   def date_unicode(self, julian_day, year_known=True, month_known=True,
                  day_known=True, year_only=False):
       """See inherited documentation"""
       (y, m, d) = self.components (julian_day)
@@ -486,7 +486,7 @@ class CalendarFrench (Calendar):
          return to_roman_literal (y)
 
       if day_known:
-         output = str (d) + " "
+         output = unicode(d) + " "
 
       if month_known:
          if m == 13:
@@ -507,8 +507,8 @@ class CalendarJulian (Calendar):
       Calendar.__init__ (self, "\\b(JU|J|Julian|OS)\\b|@#DJULIAN@")
       self._month_names = MONTH_NAMES
 
-   def __str__ (self):
-      return "Julian"
+   def __unicode__(self):
+      return u"Julian"
 
    def from_components (self, year=None, month=None, day=None):
       """See inherited doc"""
@@ -553,7 +553,7 @@ class Date (object):
       """Represents a point in time (not a range of dates). The date might be
          imprecise ("about 1700") or incomplete ("1802-02", no day)
       """
-      self.text = text.strip () or ""
+      self.text = text.strip() or ""
       self.calendar = None
       self.type = DATE_ON
       self.precision = PRECISION_EXACT
@@ -661,10 +661,10 @@ class Date (object):
       else:
          self.date = None
 
-   def __repr__ (self):
-      return self.__str__ ()
+   def __repr__(self):
+      return self.__unicode__()
 
-   def __str__ (self):
+   def __unicode__(self):
       """Display the date, using either the parsed date, or if it could not be
          parsed the date as was entered by the user. The calendar used is the
          one parsed from the initial string"""
@@ -673,7 +673,7 @@ class Date (object):
    def sort_date (self):
       """Return a single date that can be used when sorting Dates"""
       if self.year_known:
-         return CalendarGregorian().date_str (self.date)
+         return CalendarGregorian().date_unicode(self.date)
       else:
          return None  # Can't do any sorting
 
@@ -755,34 +755,34 @@ class Date (object):
 
       if not original:
          cal = calendar or self.calendar
-         result = ""
+         result = u""
 
          if self.precision == PRECISION_ABOUT:
-            result = result + "ca "
+            result += "ca "
 
          if self.type == DATE_BEFORE:
-            result = result + "/"
+            result += "/"
 
-         result = result + cal.date_str \
-           (self.date, self.year_known, self.month_known, self.day_known,
-            year_only=year_only)
+         result = result + cal.date_unicode(
+             self.date, self.year_known, self.month_known, self.day_known,
+             year_only=year_only)
 
          if not year_only and self.seconds != None:
-            result = result + " " + str (self.seconds)
+            result += " " + unicode(self.seconds)
 
          if self.type == DATE_AFTER:
-            result = result + "/"
+            result += "/"
 
          if self.precision == PRECISION_ESTIMATED:
-            result = result + " ?"
+            result += " ?"
 
-         cal = str (cal)
+         cal = unicode (cal)
          if cal:
-            result = result + " (" + cal + ")"
+            result += " (" + cal + ")"
 
          return result
       else:
-         return self.text
+         return unicode(self.text)
 
 ##################
 ## DateRange
@@ -812,9 +812,9 @@ class DateRange (object):
       else:
          return self.date.sort_date ()
 
-   def __str__ (self):
+   def __unicode__ (self):
       """Convert to a string"""
-      return self.display ()
+      return self.display()
 
    def display (self, calendar=None, year_only=False, original=False):
       if type (self.date) == tuple:
@@ -824,11 +824,11 @@ class DateRange (object):
             calendar=calendar, year_only=year_only, original=original)
 
          if self.date[2] == SPAN_FROM:
-            return "from " + d1 + " to " + d2
+            return u"from " + d1 + " to " + d2
          else:
-            return "between " + d1 + " and " + d2
+            return u"between " + d1 + " and " + d2
       else:
-         return str (self.date)
+         return unicode(self.date)
 
    def __parse (self):
       """Parse the text field to create a date or a date range that can be

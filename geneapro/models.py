@@ -246,11 +246,11 @@ class Place (GeneaproModel):
 
    def __unicode__ (self):
       parts = self.place_part_set.all ()
-      name = ",".join ([p.name for p in parts]) + " " + str (self.date)
+      name = ",".join ([p.name for p in parts]) + " " + unicode(self.date)
       if self.parent_place:
-         return str (self.name) + " " + str (self.parent_place) + name
+         return unicode(self.name) + " " + unicode(self.parent_place) + name
       else:
-         return str (self.name) + " " + name
+         return unicode(self.name) + " " + name
 
    class Meta:
       """Meta data for the model"""
@@ -313,7 +313,7 @@ class Place_Part (GeneaproModel):
       db_table = "place_part"
 
    def __unicode__ (self):
-      return str (self.type) + "=" + self.name
+      return unicode(self.type) + "=" + self.name
 
 class Repository_Type (GeneaproModel):
    """
@@ -520,9 +520,9 @@ class Event_Type_Role (GeneaproModel):
 
    def __unicode__ (self):
       if self.type:
-         return str (self.id) + ": " + self.type.name + " => " + self.name
+         return unicode(self.id) + ": " + self.type.name + " => " + self.name
       else:
-         return str (self.id) + ": * =>" + self.name
+         return unicode(self.id) + ": * =>" + self.name
 
    # Some hard-coded values for efficiency. Ideally, we should look these
    # from the database. The problem is if the database gets translated
@@ -550,8 +550,9 @@ class Event (models.Model):
       db_table = "event"
 
    def __unicode__ (self):
-      if self.date:
-         date = " (on " + self.date + ")"
+      d = self.date
+      if d:
+         date = " (on " + d + ")"
       else:
          date = ""
 

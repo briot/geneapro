@@ -1,0 +1,34 @@
+{% extends "geneapro/base.html" %}
+{% block title %}GeneaPro: pedigree{% endblock %}
+{% block css %}
+.pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
+{% endblock css %}
+
+{% block script %}
+{% endblock script %}
+
+{% block endbody %}
+{% endblock endbody %}
+
+{% block leftside %}
+{% endblock leftside %}
+
+{% block contents %}
+
+<table>
+   {% for c in chars %}
+   <tr>
+      <td style="padding-right:10px">Char</td>
+      <td>{{c}}</td>
+   </tr>
+   {% endfor %}
+
+   {% for e in events %}
+   <tr>
+      <td style="padding-right:10px">Event</td>
+      <td>{{e|safe}}</td>
+   </tr>
+   {% endfor %}
+</table>
+{% endblock contents %}
+

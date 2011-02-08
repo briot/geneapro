@@ -3,7 +3,7 @@ Provides a gedcom importer
 """
 
 from django.utils.translation import ugettext as _
-from mysites.geneapro.utils.gedcom import Gedcom, Invalid_Gedcom, GedcomRecord
+from mysites.geneapro.utils.gedcom import Gedcom, Invalid_Gedcom, GedcomRecord, GedcomString
 from mysites.geneapro import models
 from django.db import transaction
 import mysites.geneapro.importers
@@ -74,9 +74,6 @@ class GedcomImporter(object):
 
             transaction.commit()
         except:
-            # for q in connection.queries:
-            #   print unicode (q["sql"]).encode ("ASCII", "replace")
-
             transaction.rollback()
             raise
 
@@ -153,7 +150,7 @@ class GedcomImporter(object):
         if data is None:
             return None
 
-        if isinstance(data, str):
+        if isinstance(data, unicode):
             print 'Ignore OBJE reference: %s' % data
             return
 
@@ -344,20 +341,24 @@ class GedcomImporter(object):
         if not isinstance(value, list):
             value = [value]
 
-        for val in value:
+        for val_index, val in enumerate(value):
             if val is None:
                 continue
 
-            if isinstance(val, str):
+            # Create the Characteristic object iself.
+            # This also computes its place and date.
+
+            if isinstance(val, GedcomString):
                 c = models.Characteristic.objects.create(place=None)
                 str_value = val
             else:
                 place = self._create_place(val)
                 c = models.Characteristic.objects.create(place=place,
-                        date=getattr(val, "DATA", None))
+                        date=getattr(val, "DATE", None))
                 str_value = val.value
 
-            # Associate the characteristic with the persona
+            # Associate the characteristic with the persona.
+            # Such an association is done via assertions, based on sources.
 
             for s in self._create_sources_ref(val):
                 models.P2C_Assertion.objects.create(
@@ -366,15 +367,16 @@ class GedcomImporter(object):
                     person=indi,
                     source=s,
                     characteristic=c,
-                    value='charac',
-                    )
+                    value='charac')
 
             # The main characteristic part is the value found on the same
-            # GEDCOM line as the characteristic itself.
+            # GEDCOM line as the characteristic itself. For simple characteristics
+            # like "SEX", this will in fact be the only part.
 
             if t:
                 models.Characteristic_Part.objects.create(characteristic=c,
                         type=t, name=str_value)
+                str_value.processed = True # str_value should be a GedcomString
 
             # We might have other characteristic part, most notably for names.
 
@@ -449,7 +451,7 @@ class GedcomImporter(object):
          None. As a result, you can always iterate over the result to insert
          rows in the database."""
 
-        if not isinstance(data, str) and getattr(data, "SOUR", None):
+        if not isinstance(data, unicode) and getattr(data, "SOUR", None):
             all_sources = []
 
             for s in data.SOUR:
@@ -470,17 +472,6 @@ class GedcomImporter(object):
 
         # The name to use is the first one in the list of names
         indi = models.Persona.objects.create(name=name, description='')
-
-        # Create characteristics for the name elements.
-        # Currently, we try to guess what is a given name, a surname,...
-        # ??? Why is this needed, the GEDCOM explicitly contains a NAME
-
-        g = re.search("(.*)/(.*)/", name)
-        if False and g:
-            self._create_characteristic(
-                key="NAME",
-                value=GedcomRecord(SURN=g.group(2), GIVN=g.group(1)),
-                indi=indi);
 
         # Now create the characteristics
         for char in ["NAME"] + self._char_types.keys():
