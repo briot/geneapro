@@ -384,505 +384,554 @@ _GRAMMAR = dict (
              ("SOUR", 0, unlimited, "SOURCE_CITATION"),
              ("NOTE", 0, unlimited, None)))
 
-class Invalid_Gedcom (Exception):
-   def __init__(self, msg):
-      self.msg = msg
-   def __unicode__(self):
-      return unicode(self.msg)
+
+class Invalid_Gedcom(Exception):
+
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __unicode__(self):
+        return unicode(self.msg)
 
 
 class GedcomString(unicode):
-    """A string that can be marked as processed"""
+    """A string that also stores a location in a file"""
 
     # Overriding __init__ seems problematic here. We can't add new
-    # parameters ("line=0" for instance), and calling unicode.__ini__
-    # shows a warning that "object.__ini__ doesn't take any argument".
+    # parameters ("line=0" for instance), and calling unicode.__init__
+    # shows a warning that "object.__init__ doesn't take any argument".
     # So we just use GedcomString as a small wrapper, to which we manually
-    # add .line and .processed fields
+    # add .line field
 
     def __add__(self, value):
         r = GedcomString(unicode(self) + value)
-        r.line = self.line
-        r.processed = False
+        r.line = getattr(self, "line", "???")
         return r
 
+    def _setLine(self, line):
+        """
+           LINES is the list of GEDCOM lines that were used in creating the value.
+           LINES can either be a single integer or a list of integers
+        """
+        self.line = line
 
-class _Lexical (object):
-   """Return lines of the GEDCOM file, taking care of concatenation when
-      needed, and potentially skipping levels
-   """
+    def location(self):
+        """A string showing the location where SELF was defined"""
+        return "line %s" % getattr(self, "line", "???")
 
-   # The components of the tuple returned by readline
-   LEVEL   = 0
-   TAG     = 1
-   XREF_ID = 2
-   VALUE   = 3
 
-   def __init__ (self, stream):
-      """Lexical parser for a GEDCOM file. This returns lines one by one,
-         after splitting them into components. This automatically groups
-         continuation lines as appropriate
-      """
-      self.file = stream
-      self.level = 0     # Level of the current line
-      self.line = 0      # Current line
-      self.current_line = None
-      self.encoding = 'iso_8859_1'
-      self.prefetch = self._parse_next_line () # Prefetched line, parsed
+class _Lexical(object):
+    """Return lines of the GEDCOM file, taking care of concatenation when
+       needed, and potentially skipping levels
+    """
 
-   def to_unicode(self, value):
-      """Converts value to a unicode string"""
-      if isinstance(value, unicode):
-          r = GedcomString(value)
-      else:
-          r = GedcomString(value,
-                           encoding=self.encoding,
-                           errors='replace')
+    # The components of the tuple returned by readline
+    LEVEL   = 0
+    TAG     = 1
+    XREF_ID = 2
+    VALUE   = 3
+    LINE    = 4
 
-      #print type(value), value, " => "
-      #print "    ", [ord(c) for c in r]
-      #print "    ", r.encode("utf-8")
-      #print "    ", [ord(c) for c in r.encode("utf-8")]
-      r.line = self.line
-      return r
+    def __init__(self, stream):
+        """Lexical parser for a GEDCOM file. This returns lines one by one,
+           after splitting them into components. This automatically groups
+           continuation lines as appropriate
+        """
+        self.file = stream
+        self.level = 0     # Level of the current line
+        self.line = 0      # Current line
+        self.current_line = None
+        self.encoding = 'iso_8859_1'
+        self.prefetch = self._parse_next_line() # Prefetched line, parsed
 
-   def _parse_next_line (self):
-      """Fetch the next relevant file of the GEDCOM stream,
-         and split it into its fields"""
+    def to_unicode(self, value):
+        """Converts value to a unicode string"""
+        if isinstance(value, unicode):
+            r = GedcomString(value)
+        else:
+            r = GedcomString(value,
+                             encoding=self.encoding,
+                             errors='replace')
 
-      self.line += 1
+        #print type(value), value, " => "
+        #print "    ", [ord(c) for c in r]
+        #print "    ", r.encode("utf-8")
+        #print "    ", [ord(c) for c in r.encode("utf-8")]
+        r._setLine(self.line)
+        return r
 
-      # Leading whitespace must be ignored in gedcom files
-      line = self.file.readline ().lstrip ().rstrip ('\n')
-      if not line:
-         return None
+    def _parse_next_line(self):
+        """Fetch the next relevant file of the GEDCOM stream,
+           and split it into its fields"""
 
-      if self.line == 1 and line[0:3] == "\xEF\xBB\xBF":
-         self.encoding = 'utf-8'
-         line = line[3:]
+        self.line += 1
 
-      g = LINE_RE.match(line)
-      if not g:
-         if self.line == 1:
-            raise Invalid_Gedcom (
-               "%s Invalid gedcom file, first line must be '0 HEAD'" %
-               self.get_location (1))
-         else:
-            raise Invalid_Gedcom (
-              "%s Invalid line format: '%s'" % (self.get_location(1), line))
+        # Leading whitespace must be ignored in gedcom files
+        line = self.file.readline().lstrip().rstrip('\n')
+        if not line:
+           return None
 
-      if self.line == 1:
-         if g.group("level") != "0" or g.group("tag") != "HEAD":
-            raise Invalid_Gedcom (
-               "%s Invalid gedcom file, first line must be '0 HEAD'" %
-               self.get_location (1))
+        if self.line == 1 and line[0:3] == "\xEF\xBB\xBF":
+           self.encoding = 'utf-8'
+           line = line[3:]
 
-      r = (int (g.group ("level")), g.group ("tag"),
-           g.group ("xref_id"),
-           self.to_unicode(g.group("value") or u""))
+        g = LINE_RE.match(line)
+        if not g:
+           if self.line == 1:
+              raise Invalid_Gedcom(
+                 "%s Invalid gedcom file, first line must be '0 HEAD'" %
+                 self.get_location(1))
+           else:
+              raise Invalid_Gedcom(
+                "%s Invalid line format: '%s'" % (self.get_location(1), line))
 
-      if r[0] == 1 and r[1] == "CHAR":
-          if r[3] != "ANSEL":
-              self.encoding = r[3]
+        if self.line == 1:
+           if g.group("level") != "0" or g.group("tag") != "HEAD":
+              raise Invalid_Gedcom(
+                 "%s Invalid gedcom file, first line must be '0 HEAD'" %
+                 self.get_location(1))
 
-      return r
+        r = (int(g.group("level")), g.group("tag"),
+             g.group("xref_id"),
+             self.to_unicode(g.group("value") or u""))
 
-   def get_location (self, offset=0):
-      """Return the current parser location
-         This is intended for error messages
-      """
-      return self.file.name + ":" + unicode(self.line + offset - 1)
+        if r[0] == 1 and r[1] == "CHAR":
+            if r[3] != "ANSEL":
+                self.encoding = r[3]
 
-   def readline (self, skip_to_level=-1):
-      """
-      Return the next line (after doing proper concatenation).
-      If skip_to_level is specified, skip all lines until the next one at
-      the specified level (or higher), ie skip current block potentially
-      """
-      if not self.prefetch:
-         self.current_line = None
-         return None
+        return r
 
-      result = self.prefetch
-      if skip_to_level != -1:
-         while result \
-           and result[_Lexical.LEVEL] > skip_to_level:
-            result = self._parse_next_line ()
-            self.prefetch = result
+    def get_location(self, offset=0):
+        """Return the current parser location
+           This is intended for error messages
+        """
+        return self.file.name + ":" + unicode(self.line + offset - 1)
 
-      value = result[_Lexical.VALUE]
-      self.prefetch = self._parse_next_line ()
-      while self.prefetch:
-         if self.prefetch [_Lexical.TAG] == "CONT":
-            value += "\n" + self.prefetch[_Lexical.VALUE]
-         elif self.prefetch [_Lexical.TAG] == "CONC":
-            value += self.prefetch [_Lexical.VALUE]
-         else:
-            break
-         self.prefetch = self._parse_next_line ()
+    def readline(self, skip_to_level=-1):
+        """
+        Return the next line (after doing proper concatenation).
+        If skip_to_level is specified, skip all lines until the next one at
+        the specified level (or higher), ie skip current block potentially
+        """
+        if not self.prefetch:
+           self.current_line = None
+           return None
 
-      # It seems that tags are case insensitive
-      self.current_line = (result [_Lexical.LEVEL],
-                           result [_Lexical.TAG].upper (),
-                           result [_Lexical.XREF_ID],
-                           value)
-      return self.current_line
+        result = self.prefetch
+        if skip_to_level != -1:
+           while result \
+             and result[_Lexical.LEVEL] > skip_to_level:
+              result = self._parse_next_line()
+              self.prefetch = result
 
-class GedcomRecord (object):
-   """A Gedcom record (either individual, source, family,...)
-      Each record contains one field per valid child node, even if the
-      corresponding node did not exist in the file:
+        value = result[_Lexical.VALUE]
+        self.prefetch = self._parse_next_line()
 
-      - If the value for this node is always a simple string, it is put as is.
-        This does not apply when the Gedcom grammar indicates that a field can
-        sometimes be a record with subfields.
-          e.g. n   @I0001@ INDI
-               n+1 NAME foo /bar/
-               n+2 SURN bar
-        is accessible as indi.NAME.SURN (a string)
-        If in fact this specific field does not occur in the gedcom file, None
-        is returned. If the node can be repeated multiple times,
-        a list of strings is returned (possibly empty if the node was not in
-        the file)
+        while self.prefetch:
+           if self.prefetch[_Lexical.TAG] == "CONT":
+              value += "\n"
+              value += self.prefetch[_Lexical.VALUE]
 
-      - If the value is itself a record, it is put in a GedcomRecord
-          e.g. n   @I0001@ INDI
-               n+1 ASSO @I00002@
-               n+2 RELA Godfather    (there is always one and only one)
-        is accessible as indi.ASSO
-        Often, the record itself has a value (like the id of the
-        individual I00002 above), which can be accessed via the "value" key,
-        for instance:
-           indi.ASSO.value
+           elif self.prefetch[_Lexical.TAG] == "CONC":
+              value += self.prefetch[_Lexical.VALUE]
 
-      - If the field could be repeated multiple times, it is a list:
-          e.g. n @I00001 INDI
-               n+1 NAME foo /bar/
-               n+2 NOTE note1
-               n+2 NOTE note2
-        You can traverse all notes with
-            for s in indi.NAME.NOTE:
-               ...
-   """
+           else:
+              break
 
-   def __init__ (self, **args):
-      """LIST_FIELDS is the list of fields from gedcom that are lists, and
-         therefore need special handling when copying a gedcomRecord.
-      """
-      self.value = GedcomString("")
+           self.prefetch = self._parse_next_line()
 
-      for key, val in args.iteritems():
-          self.__dict__[key] = val
+        # It seems that tags are case insensitive
+        self.current_line = (result[_Lexical.LEVEL],
+                             result[_Lexical.TAG].upper(),
+                             result[_Lexical.XREF_ID],
+                             value,
+                             self.line - 1)
+        return self.current_line
 
-   def set_processed(self):
-       """Mark self as processed"""
-       self.processed = True
 
-   def show_not_processed(self):
-       """Display the list of unprocessed fields from SELF, ie those that
-          have not been imported.
+class GedcomRecord(object):
+    """A Gedcom record (either individual, source, family,...)
+       Each record contains one field per valid child node, even if the
+       corresponding node did not exist in the file:
+
+       - If the value for this node is always a simple string, it is put as is.
+         This does not apply when the Gedcom grammar indicates that a field can
+         sometimes be a record with subfields.
+           e.g. n   @I0001@ INDI
+                n+1 NAME foo /bar/
+                n+2 SURN bar
+         is accessible as indi.NAME.SURN (a string)
+         If in fact this specific field does not occur in the gedcom file, None
+         is returned. If the node can be repeated multiple times,
+         a list of strings is returned (possibly empty if the node was not in
+         the file)
+
+       - If the value is itself a record, it is put in a GedcomRecord
+           e.g. n   @I0001@ INDI
+                n+1 ASSO @I00002@
+                n+2 RELA Godfather    (there is always one and only one)
+         is accessible as indi.ASSO
+         Often, the record itself has a value (like the id of the
+         individual I00002 above), which can be accessed via the "value" key,
+         for instance:
+            indi.ASSO.value
+
+       - If the field could be repeated multiple times, it is a list:
+           e.g. n @I00001 INDI
+                n+1 NAME foo /bar/
+                n+2 NOTE note1
+                n+2 NOTE note2
+         You can traverse all notes with
+             for s in indi.NAME.NOTE:
+                ...
+    """
+
+    def __init__(self, **args):
+       """LIST_FIELDS is the list of fields from gedcom that are lists, and
+          therefore need special handling when copying a gedcomRecord.
        """
-       pass
+       self.value = GedcomString("")
+       self._line = "???"  # Line where this record started
 
-   def _xref_to (self, xref, gedcom):
-      """Indicates that the record contains no real data, but is an xref
-         to some other record. Accessing the attributes of the record
-         automatically dereference the xref, so this is mostly transparent
-         to users
-      """
+       for key, val in args.iteritems():
+           self.__dict__[key] = val
 
-      # We'll need to lookup the attribute in the derefed object.
-      # Using __getattribute__ would be called for all attributes, including
-      # internal ones like __dict__, and is thus less efficient.
-      # However, __getattr__ will only be called if the attribute is not in
-      # the dictionary, so we remove the keys that are delegated.
-      #
-      # Note: it might too early to lookup the object in the gedcom file, since
-      # it might not have been parsed already. So we'll have to do it in
-      # __getattr__ if not available yet
+    def _xref_to(self, xref, gedcom):
+       """Indicates that the record contains no real data, but is an xref
+          to some other record. Accessing the attributes of the record
+          automatically dereference the xref, so this is mostly transparent
+          to users
+       """
 
-      if gedcom.ids.get (xref):
-         self._all = gedcom.ids [xref]
-      else:
-         self._gedcom = gedcom
+       # We'll need to lookup the attribute in the derefed object.
+       # Using __getattribute__ would be called for all attributes, including
+       # internal ones like __dict__, and is thus less efficient.
+       # However, __getattr__ will only be called if the attribute is not in
+       # the dictionary, so we remove the keys that are delegated.
+       #
+       # Note: it might too early to lookup the object in the gedcom file, since
+       # it might not have been parsed already. So we'll have to do it in
+       # __getattr__ if not available yet
 
-      self.xref = xref
-      fields = [k for k in self.__dict__.keys()
-                if k[0].isupper() or (k[0]=='_' and k[1].isupper())]
-      for key in fields:
-          del self.__dict__[key]
-      del self.__dict__ ['value']
+       if gedcom.ids.get(xref):
+          self._all = gedcom.ids[xref]
+       else:
+          self._gedcom = gedcom
 
-   def __getattr__ (self, name):
-      """Automatic dereference (self must be an xref)
-         In the case of XREF_AND_INLINE, some attributes are defined both
-         in SELF and in the dereferenced record."""
-      try:
-         xref = object.__getattribute__ (self, "xref")
-         if xref:
-            if name == "_all":
-               # Cache the derefenced object
-               obj = self._gedcom.ids [xref]
-               del self.__dict__ ["_gedcom"]  # no longer needed
-               self.__dict__ ["_all"] = obj
-               return obj
+       self.xref = xref
+       fields = [k for k in self.__dict__.keys()
+                 if k[0].isupper() or (k[0]=='_' and k[1].isupper())]
+       for key in fields:
+           del self.__dict__[key]
+       del self.__dict__['value']
 
-            return self._all.__getattribute__ (name)
-      except AttributeError:
-         pass
+    def __getattr__(self, name):
+       """Automatic dereference (self must be an xref)
+          In the case of XREF_AND_INLINE, some attributes are defined both
+          in SELF and in the dereferenced record."""
+       try:
+          xref = object.__getattribute__(self, "xref")
+          if xref:
+             if name == "_all":
+                # Cache the derefenced object
+                obj = self._gedcom.ids[xref]
+                del self.__dict__["_gedcom"]  # no longer needed
+                self.__dict__["_all"] = obj
+                return obj
 
-      return object.__getattribute__ (self, name)
+             return self._all.__getattribute__(name)
+       except AttributeError:
+          pass
+
+       return object.__getattribute__(self, name)
+
+    def _setLine(self, line):
+        """Set the line at which SELF started"""
+        self._line = line
+
+    def for_all_fields(self):
+        """A generator that returns each field of self (ignoring null
+           fields), as read from GEDCOM
+        """
+        for key, val in self.__dict__.iteritems():
+            if val is None or val == []:
+                pass   # Nothing to do, field is unset
+            elif key == "value":
+                pass   # Ignored, this is the simple value for the field
+            elif key == "_line":
+                pass   # Internal
+            elif key.startswith("__"):
+                pass   # python internal
+            else:
+                yield key, val
+
+    def __str__(self):
+        return "gedcomRecord(%s)" % self.value
+
+    def location(self):
+        """A string showing the location where SELF was defined"""
+        return "line %s" % self._line
+
 
 XREF_NONE=0       # No xref allowed
 XREF_PURE=1       # A pure xref (only textual value)
 XREF_OR_INLINE=2  # Either an xref or an inline record
 XREF_AND_INLINE=3 # An xref, with optional additional inline fields
 
-class _GedcomParser (object):
-   def __init__ (self, name, grammar, all_parsers, register=None):
-      """Parse the grammar and initialize all parsers. This is only
-         called once per element in the grammar, and no longer called
-         when parsing a gedcom file
-      """
 
-      self.name = name
+class _GedcomParser(object):
+    def __init__ (self, name, grammar, all_parsers, register=None):
+        """Parse the grammar and initialize all parsers. This is only
+           called once per element in the grammar, and no longer called
+           when parsing a gedcom file
+        """
 
-      if register   == "INDI":
-         self.result = GedcomIndi ()
-      elif register == "FAM":
-         self.result = GedcomFam ()
-      elif register == "SOUR":
-         self.result = GedcomSour ()
-      elif register == "SUBM":
-         self.result = GedcomSubm ()
-      elif name == "file":
-         self.result = GedcomFile ()
-      else:
-         self.result = GedcomRecord () # General type of the result
+        self.name = name
 
-      self.parsers = dict ()      # Parser for children nodes
+        if register   == "INDI":
+           self.result = GedcomIndi()
+        elif register == "FAM":
+           self.result = GedcomFam()
+        elif register == "SOUR":
+           self.result = GedcomSour()
+        elif register == "SUBM":
+           self.result = GedcomSubm()
+        elif name == "file":
+           self.result = GedcomFile()
+        else:
+           self.result = GedcomRecord() # General type of the result
 
-      if register:
-         # Register as soon as possible, in case the record contains XREF to
-         # itself
-         all_parsers [register] = self
+        self.parsers = dict()      # Parser for children nodes
 
-      for c in grammar:
-         names = c[0]
-         type = c[3]
+        if register:
+           # Register as soon as possible, in case the record contains XREF to
+           # itself
+           all_parsers[register] = self
 
-         if isinstance (names, basestring):
-            names = [c[0]]
+        for c in grammar:
+           names = c[0]
+           type = c[3]
 
-         n = names[0]
-         if n.find (":XREF(") != -1:
-            xref_to = n[n.find("(")+1:-1]
-            n = n[:n.find (":")]
-            names = [n]
+           if isinstance (names, basestring):
+              names = [c[0]]
 
-            handler = all_parsers.get (xref_to)
-            if handler is None:
-               handler = _GedcomParser (xref_to, _GRAMMAR[xref_to],
-                                        all_parsers, register=xref_to)
-            result = handler.result  # The type we are pointing to
+           n = names[0]
+           if n.find(":XREF(") != -1:
+              xref_to = n[n.find("(")+1:-1]
+              n = n[:n.find (":")]
+              names = [n]
 
-            if type is None:
-               is_xref = XREF_PURE
-               handler = None
-            elif isinstance (type, basestring):
-               is_xref = XREF_OR_INLINE
+              handler = all_parsers.get(xref_to)
+              if handler is None:
+                 handler = _GedcomParser(xref_to, _GRAMMAR[xref_to],
+                                         all_parsers, register=xref_to)
+              result = handler.result  # The type we are pointing to
 
-               # xref_to must be a superset of type
-               handler = all_parsers.get (type)
-               if handler is None:
-                  handler = _GedcomParser (type, _GRAMMAR[type], all_parsers,
-                                           register=type)
+              if type is None:
+                 is_xref = XREF_PURE
+                 handler = None
+              elif isinstance(type, basestring):
+                 is_xref = XREF_OR_INLINE
 
-            else:
-               is_xref = XREF_AND_INLINE
-               handler = _GedcomParser (n, type, all_parsers)
+                 # xref_to must be a superset of type
+                 handler = all_parsers.get(type)
+                 if handler is None:
+                    handler = _GedcomParser(type, _GRAMMAR[type], all_parsers,
+                                            register=type)
 
-               # The type of the result should be that of xref_to, so that
-               # the methods exist. However, the result has more fields,
-               # which are those inherited from handler.result.
-               # When parsing the file, we should merge the list of fields
+              else:
+                 is_xref = XREF_AND_INLINE
+                 handler = _GedcomParser(n, type, all_parsers)
 
-         else:
-            is_xref=XREF_NONE
+                 # The type of the result should be that of xref_to, so that
+                 # the methods exist. However, the result has more fields,
+                 # which are those inherited from handler.result.
+                 # When parsing the file, we should merge the list of fields
 
-            if type is None:  # text only
-               handler = None
-               result  = None
+           else:
+              is_xref=XREF_NONE
 
-            elif isinstance (type, basestring):
-               # ref to one of the toplevel nodes
-               handler = all_parsers.get (type)
-               if handler is None:
-                  handler = _GedcomParser (type, _GRAMMAR[type], all_parsers,
-                                           register=type)
-               result = handler.result
+              if type is None:  # text only
+                 handler = None
+                 result  = None
 
-            else:  # An inline list of nodes
-               handler = _GedcomParser (self.name + ":" + n, type, all_parsers)
-               result  = handler.result
+              elif isinstance(type, basestring):
+                 # ref to one of the toplevel nodes
+                 handler = all_parsers.get(type)
+                 if handler is None:
+                    handler = _GedcomParser(type, _GRAMMAR[type], all_parsers,
+                                            register=type)
+                 result = handler.result
 
-            # HANDLER points to the parser for the children, and is null for
-            # pure text nodes or pure xref. It will be set if we are expecting
-            # an inline record, or either an xref or an inline record. In both
-            # cases it has the ability to parse the inline record.
-            # IS_XREF is null if the node can be a pointer to a record result.
+              else:  # An inline list of nodes
+                 handler = _GedcomParser(self.name + ":" + n, type, all_parsers)
+                 result  = handler.result
 
-         for n in names:
-            self.parsers [n] = (c[1],  # min occurrences
-                                c[2],  # max occurrences
-                                handler,
-                                is_xref, # type of xref
-                                result)
+              # HANDLER points to the parser for the children, and is null for
+              # pure text nodes or pure xref. It will be set if we are expecting
+              # an inline record, or either an xref or an inline record. In both
+              # cases it has the ability to parse the inline record.
+              # IS_XREF is null if the node can be a pointer to a record result.
 
-            if c[2] > 1:    # A list of record
-               self.result.__dict__ [n] = []
-            elif handler is None:  # text only
-               self.result.__dict__ [n] = None
-            else:           # A single record
-               self.result.__dict__ [n] = None
+           for n in names:
+              self.parsers[n] = (c[1],  # min occurrences
+                                 c[2],  # max occurrences
+                                 handler,
+                                 is_xref, # type of xref
+                                 result)
 
-   def parse (self, lexical, gedcomFile=None, indent="   "):
-      # We don't do a deepcopy here, but instead we replace lists the first
-      # time they are referenced to make sure don't modify self.result
-      result = copy.copy (self.result)
-      line   = lexical.current_line
+              if c[2] > 1:    # A list of record
+                 self.result.__dict__[n] = []
+              elif handler is None:  # text only
+                 self.result.__dict__[n] = None
+              else:           # A single record
+                 self.result.__dict__[n] = None
 
-      if line:  # When parsing ROOT, there is no prefetch
-         if line [_Lexical.VALUE]:
-            result.value = line [_Lexical.VALUE]
-         startlevel = line [_Lexical.LEVEL]
+    def parse (self, lexical, gedcomFile=None, indent="   "):
+        # We don't do a deepcopy here, but instead we replace lists the first
+        # time they are referenced to make sure don't modify self.result
+        result = copy.copy(self.result)
+        line   = lexical.current_line
 
-         # Register the entity if need be
-         if startlevel == 0 and line [_Lexical.XREF_ID]:
-            result.id = line [_Lexical.XREF_ID]
-            gedcomFile.ids [line [_Lexical.XREF_ID]] = result
+        if line:  # When parsing ROOT, there is no prefetch
+           result._setLine(line[_Lexical.LINE]) # Store the line for error msg
 
-      else:
-         startlevel = -1
-         gedcomFile = result
+           if line[_Lexical.VALUE]:
+              result.value = line[_Lexical.VALUE]
+           startlevel = line[_Lexical.LEVEL]
 
-      line = lexical.readline () # Children start at next line
+           # Register the entity if need be
+           if startlevel == 0 and line[_Lexical.XREF_ID]:
+              result.id = line[_Lexical.XREF_ID]
+              gedcomFile.ids[line[_Lexical.XREF_ID]] = result
 
-      try:
-         while line and line [_Lexical.LEVEL] > startlevel:
-            tag = line [_Lexical.TAG]
-            p = self.parsers [tag]
-            value = line [_Lexical.VALUE]
-            xref = p[3]
+        else:
+           startlevel = -1
+           gedcomFile = result
 
-            if xref != XREF_NONE \
-               and value != "" \
-               and value[0] == '@' and value[-1] == '@':  # An xref
+        line = lexical.readline() # Children start at next line
 
-               if xref == XREF_AND_INLINE:
-                  res = p[2].parse (lexical, gedcomFile, indent=indent+"   ")
-                  line = lexical.current_line
-               else:
-                  res = copy.copy (p[4])
-                  line = lexical.readline ()
+        try:
+           while line and line[_Lexical.LEVEL] > startlevel:
+              tag = line[_Lexical.TAG]
+              p = self.parsers[tag]
+              value = line[_Lexical.VALUE]
+              xref = p[3]
 
-               res._xref_to (value, gedcomFile)
+              if xref != XREF_NONE \
+                 and value != "" \
+                 and value[0] == '@' and value[-1] == '@':  # An xref
 
-            elif p[2] and xref in (XREF_NONE, XREF_OR_INLINE): # inline record
-               res = p[2].parse (lexical, gedcomFile, indent=indent+"   ")
-               line = lexical.current_line
+                 if xref == XREF_AND_INLINE:
+                    res = p[2].parse(lexical, gedcomFile, indent=indent+"   ")
+                    line = lexical.current_line
+                 else:
+                    res = copy.copy(p[4])
+                    line = lexical.readline()
 
-            elif xref != XREF_NONE: # we should have had an xref
-               raise Invalid_Gedcom (
-                  "%s Expecting an xref for %s" % (lexical.get_location(), tag))
+                 res._xref_to(value, gedcomFile)
 
-            else: # A string, but not an xref (handled above)
-               res  = value
-               line = lexical.readline ()
+              elif p[2] and xref in (XREF_NONE, XREF_OR_INLINE): # inline record
+                 res = p[2].parse(lexical, gedcomFile, indent=indent+"   ")
+                 line = lexical.current_line
 
-            val = result.__dict__ [tag]
+              elif xref != XREF_NONE: # we should have had an xref
+                 raise Invalid_Gedcom(
+                    "%s Expecting an xref for %s" % (lexical.get_location(), tag))
 
-            if p[1] == 1:
-               if val:  # None or empty string
-                  raise Invalid_Gedcom (
-                     "%s Too many occurrences of %s" %
-                        (lexical.get_location(), tag))
-               result.__dict__ [tag] = res
+              else: # A string, but not an xref (handled above)
+                 res  = value
+                 line = lexical.readline()
 
-            elif p[1] == unlimited:
-               if val == []:  # Make sure we do not modify the original list
-                  val = []
-                  result.__dict__ [tag] = val
-               val.append (res)
+              val = result.__dict__[tag]
 
-            elif len (val) < p[1]:
-               if val == []:
-                  val = []
-                  result.__dict__ [tag] = val
-               val.append (res)
+              if p[1] == 1:
+                 if val:  # None or empty string
+                    raise Invalid_Gedcom (
+                       "%s Too many occurrences of %s" %
+                          (lexical.get_location(), tag))
+                 result.__dict__[tag] = res
 
-            else:
-               raise Invalid_Gedcom (
-                  "%s Too many occurrences (%d) of %s (max %d)" %
-                  (lexical.get_location(), p[1]+1, tag, len (val)))
+              elif p[1] == unlimited:
+                 if val == []:  # Make sure we do not modify the original list
+                    val = []
+                    result.__dict__[tag] = val
+                 val.append(res)
 
-      except KeyError, e:
-         raise Invalid_Gedcom (
-            "%s Invalid tag %s inside %s" %
-             (lexical.get_location(), tag, self.name))
+              elif len(val) < p[1]:
+                 if val == []:
+                    val = []
+                    result.__dict__[tag] = val
+                 val.append(res)
 
-      # Check we have reach the minimal number of occurrences
+              else:
+                 raise Invalid_Gedcom(
+                    "%s Too many occurrences (%d) of %s (max %d)" %
+                    (lexical.get_location(), p[1]+1, tag, len (val)))
 
-      for tag, p in self.parsers.iteritems ():
-         val = result.__dict__ [tag]
-         if p[0] != 0 and (val is None or val == ()):
-            raise Invalid_Gedcom (
-               "%s Missing 1 occurrence of %s in %s" %
+        except KeyError, e:
+           raise Invalid_Gedcom(
+              "%s Invalid tag %s inside %s" %
                (lexical.get_location(), tag, self.name))
 
-         elif p[0] > 1 and len (val) < p[0]:
-            raise Invalid_Gedcom (
-               "%s Missing %d occurrences of %s in %s" %
-               (lexical.get_location(), p[0] - len(val), tag, self.name))
+        # Check we have reach the minimal number of occurrences
 
-      return result
+        for tag, p in self.parsers.iteritems():
+           val = result.__dict__[tag]
+           if p[0] != 0 and (val is None or val == ()):
+              raise Invalid_Gedcom(
+                 "%s Missing 1 occurrence of %s in %s" %
+                 (lexical.get_location(), tag, self.name))
 
-class GedcomFile (GedcomRecord):
-   """Represents a whole GEDCOM file"""
+           elif p[0] > 1 and len(val) < p[0]:
+              raise Invalid_Gedcom(
+                 "%s Missing %d occurrences of %s in %s" %
+                 (lexical.get_location(), p[0] - len(val), tag, self.name))
 
-   def __init__ (self ):
-      super (GedcomFile, self).__init__ ()
-      self.ids = dict ()
+        return result
 
-class GedcomIndi (GedcomRecord):
-   """Represents an INDIvidual from a GEDCOM file"""
-   pass
 
-class GedcomFam (GedcomRecord):
-   """Represents a family from a GEDCOM file"""
-   pass
+class GedcomFile(GedcomRecord):
+    """Represents a whole GEDCOM file"""
 
-class GedcomSubm (GedcomRecord):
-   """Represents a SUBM in a GEDCOM file"""
-   pass
+    def __init__(self):
+        super(GedcomFile, self).__init__()
+        self.ids = dict()
 
-class GedcomSour (GedcomRecord):
-   """Represents a SOUR in a GEDCOM file"""
-   pass
 
-class Gedcom (object):
-   """This class provides parsers for GEDCOM files.
-      Only one instance of this class should be created even if you want to
-      parse multiple GEDCOM files, since the parsers can be reused multiple
-      times.
-   """
+class GedcomIndi(GedcomRecord):
+    """Represents an INDIvidual from a GEDCOM file"""
+    pass
 
-   def __init__ (self):
-      parsers = dict ()
-      self.parser = _GedcomParser ("file", _GRAMMAR["file"], parsers)
 
-   def parse (self, filename):
-      """Parse the specified GEDCOM file, check its syntax, and return a
-         GedcomFile instance.
-         Raise Invalid_Gedcom in case of error."""
-      return self.parser.parse (_Lexical (file (filename, "U")))
+class GedcomFam(GedcomRecord):
+    """Represents a family from a GEDCOM file"""
+    pass
+
+
+class GedcomSubm(GedcomRecord):
+    """Represents a SUBM in a GEDCOM file"""
+    pass
+
+
+class GedcomSour(GedcomRecord):
+    """Represents a SOUR in a GEDCOM file"""
+    pass
+
+
+class Gedcom(object):
+    """This class provides parsers for GEDCOM files.
+       Only one instance of this class should be created even if you want to
+       parse multiple GEDCOM files, since the parsers can be reused multiple
+       times.
+    """
+
+    def __init__(self):
+        parsers = dict()
+        self.parser = _GedcomParser("file", _GRAMMAR["file"], parsers)
+
+    def parse (self,filename):
+        """Parse the specified GEDCOM file, check its syntax, and return a
+           GedcomFile instance.
+          Raise Invalid_Gedcom in case of error."""
+        return self.parser.parse(_Lexical(file(filename, "U")))

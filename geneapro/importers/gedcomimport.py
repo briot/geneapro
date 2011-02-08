@@ -17,6 +17,17 @@ GIVEN_NAME_TO_MIDDLE_NAME = True
 DEBUG = True
 
 
+def location(obj):
+    """Return the location (in the gedcom file) of obj"""
+
+    try:
+        if isinstance(obj, list):
+            return obj[0].location()
+        else:
+            return obj.location()
+    except AttributeError:
+        return "???"
+
 ##################################
 ## GedcomImporter
 ##################################
@@ -72,6 +83,11 @@ class GedcomImporter(object):
             for s in data.FAM:
                 self._create_family(s)
 
+            for k, v in data.for_all_fields():
+                if k not in ("SOUR", "INDI", "FAM", "HEAD", "SUBM",
+                             "TRLR", "ids"):
+                    print "%s Unhandled FILE.%s" % (location(v), k)
+
             transaction.commit()
         except:
             transaction.rollback()
@@ -90,8 +106,10 @@ class GedcomImporter(object):
             if c.gedcom:
                 self._char_types[c.gedcom] = c
 
-        self._char_types['MIDDLE_NAMES'] = \
+        self._char_types['MIDDLE'] = \
             models.Characteristic_Part_Type.objects.get(id=40)
+
+        self._char_types['NAME'] = True  # Handled specially in _create_characteristic
 
         for p in models.Place_Part_Type.objects.exclude(gedcom__isnull=True):
             if p.gedcom:
@@ -114,6 +132,9 @@ class GedcomImporter(object):
                     print "Unknown medium type for source '%s'" % medium
                     medium_id = 0
 
+            for k, v in repo.for_all_fields():
+                print "%s Unhandled REPO.%s" % (location(v), k)
+
         try:
             comment = sour.TITL
         except:
@@ -135,7 +156,13 @@ class GedcomImporter(object):
             for o in obje:
                 obj = self._create_obje(o, src)
 
-      # ??? Missing import of NOTE and CHAN
+        for k, v in sour.for_all_fields():
+            if k == "id":
+                # ??? Should we preserve gedcom ids ?
+                pass
+
+            elif k not in ("REPO", "OBJE", "TITL"):
+                print "%s Unhandled SOUR.%s" % (location(v), k)
 
         try:
             self._sources[sour.id] = src
@@ -249,6 +276,10 @@ class GedcomImporter(object):
                         event=self._births[p.id],
                         role=self._birth__mother)
 
+        for k, v in data.for_all_fields():
+            if k not in ("CHIL", "SOUR", "HUSB", "WIFE", "id", "MARR"):
+                print "%s Unhandled FAM.%s" % (location(v), k)
+
     def _create_place(self, data, id=''):
         """If data contains a subnode PLAC, parse and returns it"""
 
@@ -293,7 +324,7 @@ class GedcomImporter(object):
             # parts
 
             if addr:
-                for (key, val) in addr.__dict__.iteritems():
+                for key, val in addr.for_all_fields():
                     if key != 'value' and val:
                         part = self._place_part_types.get(key, None)
                         if not part:
@@ -331,12 +362,7 @@ class GedcomImporter(object):
             # for the components of the name
             t = None
         else:
-            t = self._char_types.get(key, None)
-            if not t:
-                # This is not a GEDCOM attribute. We will test later on if this
-                # is an event, and report the error to the user when
-                # appropriate
-                return False
+            t = self._char_types[key]
 
         if not isinstance(value, list):
             value = [value]
@@ -376,12 +402,11 @@ class GedcomImporter(object):
             if t:
                 models.Characteristic_Part.objects.create(characteristic=c,
                         type=t, name=str_value)
-                str_value.processed = True # str_value should be a GedcomString
 
             # We might have other characteristic part, most notably for names.
 
             if isinstance(val, GedcomRecord):
-                for (k, v) in val.__dict__.iteritems():
+                for k, v in val.for_all_fields():
                     t = self._char_types.get(k, None)
                     if t:
                         if k == 'GIVN' and GIVEN_NAME_TO_MIDDLE_NAME:
@@ -393,7 +418,7 @@ class GedcomImporter(object):
                                 if len(n) == 2:
                                     models.Characteristic_Part.objects.create(
                                         characteristic=c,
-                                        type=self._char_types['MIDDLE_NAMES'],
+                                        type=self._char_types['MIDDLE'],
                                         name=n[1])
                         elif v:
                             models.Characteristic_Part.objects.create(
@@ -402,36 +427,37 @@ class GedcomImporter(object):
                     elif k == 'SOUR':
                         pass  # handled in the _create_sources_ref loop above
 
-                    elif k not in (
-                        'TYPE',
-                        'ADDR',
-                        'AGE',
-                        'AGNC',
-                        'CAUS',
-                        'NOTE',
-                        'MULT',
-                        'value',
-                        'DATE',
-                        'OBJE',
-                        'PLAC',
-                        'PHON',
-                        ):
-                        print 'Unknown characteristic: ' + k
+                    else:
+                        print "%s Unhandled characteristic: %s" % (
+                            location(val), k)
 
-        return True
+    def _create_event(self, indi, field, data):
+        """Create a new event, associated with INDI by way of one or more
+           assertions based on sources
+        """
 
-    def _create_event(self, indi, event_type, data):
-        """Create a new event, and return it"""
+        # This is how Gramps represents marriage events entered as
+        # a person's event (ie partner is not known)
+
+        if field == 'EVEN' and data.TYPE == 'Marriage':
+            event_type = self._event_types['MARR']
+        else:
+            event_type = self._event_types[field]
+
+        evt = None
+        name = ''
+
+        # Can we find a descriptive name for this event ?
 
         if event_type.gedcom == 'BIRT':
             name = 'Birth of ' + indi.name
             evt = self._births.get(indi.id, None)
         elif event_type.gedcom == 'MARR':
             name = 'Marriage'
-            evt = None
+        elif event_type.gedcom == "DEAT":
+            name = "Death of " + indi.name
         else:
-            evt = None
-            name = ''
+            name = "%s of %s" % (event_type.gedcom, indi.name)
 
         if not evt:
             place = self._create_place(data)
@@ -441,7 +467,21 @@ class GedcomImporter(object):
             if event_type.gedcom == 'BIRT':
                 self._births[indi.id] = evt
 
-        return evt
+        for k, v in data.for_all_fields():
+            # ADDR and PLAC are handled in create_place
+            # SOURCE is handled in create_sources_ref
+            if k not in ("DATE", "TYPE", "ADDR", "PLAC", "SOUR"):
+                print "%s Unhandled EVENT.%s" % (location(data), k)
+
+        for s in self._create_sources_ref(data):
+            models.P2E_Assertion.objects.create(
+                surety=self._default_surety,
+                researcher=self._researcher,
+                person=indi,
+                event=evt,
+                source=s,
+                role=self._principal,
+                value='')
 
     def _create_sources_ref(self, data):
         """Create a list of instances of Source for the record described by
@@ -473,43 +513,27 @@ class GedcomImporter(object):
         # The name to use is the first one in the list of names
         indi = models.Persona.objects.create(name=name, description='')
 
-        # Now create the characteristics
-        for char in ["NAME"] + self._char_types.keys():
-            try:
-                if not self._create_characteristic(
-                   char, data.__dict__[char], indi):
-                    print 'Could not create characteristic %s for indi %s' \
-                        % (char, data.id)
-            except KeyError:
+        # For all properties of the individual
+
+        for field, value in data.for_all_fields():
+            if field == "id":
+                # ??? Should we preserve the GEDCOM @ID001@
                 pass
 
-        # And finally create the events
-        for event in self._event_types.keys():
-            try:
-                for v in data.__dict__[event]:
-                    # This is how Gramps represents marriage events entered as
-                    # a person's event (ie partner is not known)
-                    if event == 'EVEN' and v.TYPE == 'Marriage':
-                        type = self._event_types['MARR']
-                    else:
-                        type = self._event_types[event]
-
-                    evt = self._create_event(indi=indi, event_type=type,
-                            data=v)
-                    sources = self._create_sources_ref(v)
-
-                    for s in sources:
-                        models.P2E_Assertion.objects.create(
-                            surety=self._default_surety,
-                            researcher=self._researcher,
-                            person=indi,
-                            event=evt,
-                            source=s,
-                            role=self._principal,
-                            value='')
-
-            except KeyError:
+            elif field in ("FAMC", "FAMS"):
+                # These are ignored: families are created through marriage or
+                # child births.
                 pass
+
+            elif field in self._char_types:
+                self._create_characteristic(field, value, indi)
+
+            elif field in self._event_types:
+                for v in value:
+                    self._create_event(indi=indi, field=field, data=v)
+
+            else:
+                print "%s Unhandled INDI.%s: %s" % (location(value), field, value)
 
         self._personas[data.id] = indi
         return indi
@@ -534,17 +558,17 @@ class GedcomImporter(object):
         if data:
             addr = data.value + '\n'
             if data.ADR1:
-                addr = addr + data.ADR1 + '\n'
+                addr += data.ADR1 + '\n'
             if data.ADR2:
-                addr = addr + data.ADR2 + '\n'
+                addr += data.ADR2 + '\n'
             if data.POST:
-                addr = addr + data.POST + '\n'
+                addr += data.POST + '\n'
             if data.CITY:
-                addr = addr + data.CITY + '\n'
+                addr += data.CITY + '\n'
             if data.STAE:
-                addr = addr + data.STAE + '\n'
+                addr += data.STAE + '\n'
             if data.CTRY:
-                addr = addr + data.CTRY + '\n'
+                addr += data.CTRY + '\n'
 
          # Gramps sets this when the address is not provided
             addr = addr.replace('Not Provided', '')
