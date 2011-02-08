@@ -1,1 +1,1183 @@
-[{"pk": 1, "model": "geneapro.surety_scheme", "fields": {"name": "Default scheme", "description": "This is the default surety scheme, based on five levels of certainty"}}, {"pk": 6, "model": "geneapro.surety_scheme_part", "fields": {"scheme": 1, "name": "very high", "sequence_number": 5, "description": ""}}, {"pk": 5, "model": "geneapro.surety_scheme_part", "fields": {"scheme": 1, "name": "high", "sequence_number": 4, "description": ""}}, {"pk": 4, "model": "geneapro.surety_scheme_part", "fields": {"scheme": 1, "name": "normal", "sequence_number": 3, "description": ""}}, {"pk": 3, "model": "geneapro.surety_scheme_part", "fields": {"scheme": 1, "name": "low", "sequence_number": 2, "description": ""}}, {"pk": 2, "model": "geneapro.surety_scheme_part", "fields": {"scheme": 1, "name": "very low", "sequence_number": 1, "description": ""}}, {"pk": 1, "model": "geneapro.source_medium", "fields": {"name": "article", "description": ""}}, {"pk": 0, "model": "geneapro.source_medium", "fields": {"name": "unknown", "description": ""}}, {"pk": 2, "model": "geneapro.source_medium", "fields": {"name": "audio", "description": ""}}, {"pk": 3, "model": "geneapro.source_medium", "fields": {"name": "birth certificate", "description": ""}}, {"pk": 4, "model": "geneapro.source_medium", "fields": {"name": "book", "description": ""}}, {"pk": 5, "model": "geneapro.source_medium", "fields": {"name": "census record", "description": ""}}, {"pk": 6, "model": "geneapro.source_medium", "fields": {"name": "court record", "description": ""}}, {"pk": 7, "model": "geneapro.source_medium", "fields": {"name": "death certificate", "description": ""}}, {"pk": 8, "model": "geneapro.source_medium", "fields": {"name": "email message", "description": ""}}, {"pk": 12, "model": "geneapro.source_medium", "fields": {"name": "familly bible", "description": ""}}, {"pk": 22, "model": "geneapro.source_medium", "fields": {"name": "immigration record", "description": ""}}, {"pk": 9, "model": "geneapro.source_medium", "fields": {"name": "interview", "description": ""}}, {"pk": 10, "model": "geneapro.source_medium", "fields": {"name": "letter", "description": ""}}, {"pk": 11, "model": "geneapro.source_medium", "fields": {"name": "magazine", "description": ""}}, {"pk": 14, "model": "geneapro.source_medium", "fields": {"name": "manuscript", "description": ""}}, {"pk": 15, "model": "geneapro.source_medium", "fields": {"name": "map", "description": ""}}, {"pk": 13, "model": "geneapro.source_medium", "fields": {"name": "marriage certificate", "description": ""}}, {"pk": 23, "model": "geneapro.source_medium", "fields": {"name": "military", "description": ""}}, {"pk": 16, "model": "geneapro.source_medium", "fields": {"name": "newspaper", "description": ""}}, {"pk": 17, "model": "geneapro.source_medium", "fields": {"name": "photograph", "description": ""}}, {"pk": 18, "model": "geneapro.source_medium", "fields": {"name": "tombstone", "description": ""}}, {"pk": 19, "model": "geneapro.source_medium", "fields": {"name": "video", "description": ""}}, {"pk": 20, "model": "geneapro.source_medium", "fields": {"name": "web page", "description": ""}}, {"pk": 21, "model": "geneapro.source_medium", "fields": {"name": "will", "description": ""}}, {"pk": 6, "model": "geneapro.place_part_type", "fields": {"name": "address", "gedcom": "ADR1"}}, {"pk": 10, "model": "geneapro.place_part_type", "fields": {"name": "address2", "gedcom": "ADR2"}}, {"pk": 3, "model": "geneapro.place_part_type", "fields": {"name": "city", "gedcom": "CITY"}}, {"pk": 1, "model": "geneapro.place_part_type", "fields": {"name": "country", "gedcom": "CTRY"}}, {"pk": 5, "model": "geneapro.place_part_type", "fields": {"name": "county", "gedcom": ""}}, {"pk": 8, "model": "geneapro.place_part_type", "fields": {"name": "GPS coordinates", "gedcom": "MAP"}}, {"pk": 9, "model": "geneapro.place_part_type", "fields": {"name": "monument", "gedcom": ""}}, {"pk": 4, "model": "geneapro.place_part_type", "fields": {"name": "province", "gedcom": ""}}, {"pk": 2, "model": "geneapro.place_part_type", "fields": {"name": "state", "gedcom": "STAE"}}, {"pk": 7, "model": "geneapro.place_part_type", "fields": {"name": "zipcode", "gedcom": "POST"}}, {"pk": 3, "model": "geneapro.repository_type", "fields": {"name": "album", "description": ""}}, {"pk": 2, "model": "geneapro.repository_type", "fields": {"name": "archive", "description": ""}}, {"pk": 4, "model": "geneapro.repository_type", "fields": {"name": "bookstore", "description": ""}}, {"pk": 5, "model": "geneapro.repository_type", "fields": {"name": "cemetery", "description": ""}}, {"pk": 6, "model": "geneapro.repository_type", "fields": {"name": "church", "description": ""}}, {"pk": 7, "model": "geneapro.repository_type", "fields": {"name": "collection", "description": ""}}, {"pk": 8, "model": "geneapro.repository_type", "fields": {"name": "library", "description": ""}}, {"pk": 9, "model": "geneapro.repository_type", "fields": {"name": "web site", "description": ""}}, {"pk": 2, "model": "geneapro.citation_part_type", "fields": {"name": "author", "gedcom": ""}}, {"pk": 6, "model": "geneapro.citation_part_type", "fields": {"name": "name", "gedcom": ""}}, {"pk": 5, "model": "geneapro.citation_part_type", "fields": {"name": "page", "gedcom": ""}}, {"pk": 1, "model": "geneapro.citation_part_type", "fields": {"name": "publication city", "gedcom": ""}}, {"pk": 3, "model": "geneapro.citation_part_type", "fields": {"name": "title", "gedcom": ""}}, {"pk": 4, "model": "geneapro.citation_part_type", "fields": {"name": "year", "gedcom": ""}}, {"pk": 32, "model": "geneapro.event_type", "fields": {"name": "acquittal", "gedcom": ""}}, {"pk": 8, "model": "geneapro.event_type", "fields": {"name": "adoption", "gedcom": "ADOP"}}, {"pk": 42, "model": "geneapro.event_type", "fields": {"name": "Adult Christening", "gedcom": "CHRA"}}, {"pk": 9, "model": "geneapro.event_type", "fields": {"name": "annulment", "gedcom": "ANUL"}}, {"pk": 29, "model": "geneapro.event_type", "fields": {"name": "arrest", "gedcom": ""}}, {"pk": 2, "model": "geneapro.event_type", "fields": {"name": "baptism", "gedcom": "BAPM"}}, {"pk": 10, "model": "geneapro.event_type", "fields": {"name": "bar mitzvah", "gedcom": "BARM"}}, {"pk": 11, "model": "geneapro.event_type", "fields": {"name": "bas mitzvah", "gedcom": "BASM"}}, {"pk": 1, "model": "geneapro.event_type", "fields": {"name": "birth", "gedcom": "BIRT"}}, {"pk": 12, "model": "geneapro.event_type", "fields": {"name": "blessing", "gedcom": "BLES"}}, {"pk": 6, "model": "geneapro.event_type", "fields": {"name": "burial", "gedcom": "BURI"}}, {"pk": 39, "model": "geneapro.event_type", "fields": {"name": "Censur", "gedcom": "CENS"}}, {"pk": 13, "model": "geneapro.event_type", "fields": {"name": "christening", "gedcom": "CHR"}}, {"pk": 36, "model": "geneapro.event_type", "fields": {"name": "civil union", "gedcom": ""}}, {"pk": 14, "model": "geneapro.event_type", "fields": {"name": "confirmation", "gedcom": "CONF"}}, {"pk": 31, "model": "geneapro.event_type", "fields": {"name": "conviction", "gedcom": ""}}, {"pk": 15, "model": "geneapro.event_type", "fields": {"name": "cremation", "gedcom": "CREM"}}, {"pk": 4, "model": "geneapro.event_type", "fields": {"name": "death", "gedcom": "DEAT"}}, {"pk": 16, "model": "geneapro.event_type", "fields": {"name": "divorce", "gedcom": "DIV"}}, {"pk": 44, "model": "geneapro.event_type", "fields": {"name": "Divorce Filed", "gedcom": "DIVF"}}, {"pk": 18, "model": "geneapro.event_type", "fields": {"name": "emigration", "gedcom": "EMIG"}}, {"pk": 19, "model": "geneapro.event_type", "fields": {"name": "engagement", "gedcom": "ENGA"}}, {"pk": 20, "model": "geneapro.event_type", "fields": {"name": "first communion", "gedcom": "FCOM"}}, {"pk": 21, "model": "geneapro.event_type", "fields": {"name": "graduation", "gedcom": "GRAD"}}, {"pk": 22, "model": "geneapro.event_type", "fields": {"name": "immigration", "gedcom": "IMMI"}}, {"pk": 30, "model": "geneapro.event_type", "fields": {"name": "indictement", "gedcom": ""}}, {"pk": 23, "model": "geneapro.event_type", "fields": {"name": "mariage banns", "gedcom": "MARB"}}, {"pk": 3, "model": "geneapro.event_type", "fields": {"name": "marriage", "gedcom": "MARR"}}, {"pk": 24, "model": "geneapro.event_type", "fields": {"name": "marriage contract", "gedcom": "MARC"}}, {"pk": 45, "model": "geneapro.event_type", "fields": {"name": "Marriage License", "gedcom": "MARL"}}, {"pk": 41, "model": "geneapro.event_type", "fields": {"name": "Marriage settlement", "gedcom": "MARS"}}, {"pk": 34, "model": "geneapro.event_type", "fields": {"name": "military service", "gedcom": ""}}, {"pk": 35, "model": "geneapro.event_type", "fields": {"name": "naturalization", "gedcom": "NATU"}}, {"pk": 33, "model": "geneapro.event_type", "fields": {"name": "occupation", "gedcom": "OCCU"}}, {"pk": 25, "model": "geneapro.event_type", "fields": {"name": "ordination", "gedcom": "ORDN"}}, {"pk": 40, "model": "geneapro.event_type", "fields": {"name": "Other event", "gedcom": "EVEN"}}, {"pk": 43, "model": "geneapro.event_type", "fields": {"name": "Probate", "gedcom": "PROB"}}, {"pk": 38, "model": "geneapro.event_type", "fields": {"name": "religious conversion", "gedcom": ""}}, {"pk": 7, "model": "geneapro.event_type", "fields": {"name": "residence", "gedcom": "RESI"}}, {"pk": 27, "model": "geneapro.event_type", "fields": {"name": "retirement", "gedcom": "RETI"}}, {"pk": 37, "model": "geneapro.event_type", "fields": {"name": "voyage", "gedcom": ""}}, {"pk": 28, "model": "geneapro.event_type", "fields": {"name": "will", "gedcom": "WILL"}}, {"pk": 5, "model": "geneapro.event_type_role", "fields": {"type": null, "name": "principal"}}, {"pk": 6, "model": "geneapro.event_type_role", "fields": {"type": 1, "name": "father"}}, {"pk": 7, "model": "geneapro.event_type_role", "fields": {"type": 1, "name": "mother"}}, {"pk": 35, "model": "geneapro.characteristic_part_type", "fields": {"name": "address", "is_name_part": false, "gedcom": ""}}, {"pk": 18, "model": "geneapro.characteristic_part_type", "fields": {"name": "AFN", "is_name_part": false, "gedcom": ""}}, {"pk": 20, "model": "geneapro.characteristic_part_type", "fields": {"name": "cause of death", "is_name_part": false, "gedcom": ""}}, {"pk": 37, "model": "geneapro.characteristic_part_type", "fields": {"name": "email", "is_name_part": false, "gedcom": ""}}, {"pk": 19, "model": "geneapro.characteristic_part_type", "fields": {"name": "ethnicity", "is_name_part": false, "gedcom": ""}}, {"pk": 26, "model": "geneapro.characteristic_part_type", "fields": {"name": "language", "is_name_part": false, "gedcom": ""}}, {"pk": 27, "model": "geneapro.characteristic_part_type", "fields": {"name": "literacy", "is_name_part": false, "gedcom": ""}}, {"pk": 32, "model": "geneapro.characteristic_part_type", "fields": {"name": "living", "is_name_part": false, "gedcom": ""}}, {"pk": 34, "model": "geneapro.characteristic_part_type", "fields": {"name": "marital status", "is_name_part": false, "gedcom": ""}}, {"pk": 5, "model": "geneapro.characteristic_part_type", "fields": {"name": "medical condition", "is_name_part": false, "gedcom": ""}}, {"pk": 25, "model": "geneapro.characteristic_part_type", "fields": {"name": "nationality", "is_name_part": false, "gedcom": ""}}, {"pk": 21, "model": "geneapro.characteristic_part_type", "fields": {"name": "number of children", "is_name_part": false, "gedcom": "NCHI"}}, {"pk": 33, "model": "geneapro.characteristic_part_type", "fields": {"name": "number of marriages", "is_name_part": false, "gedcom": ""}}, {"pk": 16, "model": "geneapro.characteristic_part_type", "fields": {"name": "patronymic", "is_name_part": false, "gedcom": ""}}, {"pk": 31, "model": "geneapro.characteristic_part_type", "fields": {"name": "personality", "is_name_part": false, "gedcom": ""}}, {"pk": 39, "model": "geneapro.characteristic_part_type", "fields": {"name": "Physical Description", "is_name_part": false, "gedcom": "DSCR"}}, {"pk": 3, "model": "geneapro.characteristic_part_type", "fields": {"name": "religion", "is_name_part": false, "gedcom": ""}}, {"pk": 28, "model": "geneapro.characteristic_part_type", "fields": {"name": "RFN", "is_name_part": false, "gedcom": ""}}, {"pk": 29, "model": "geneapro.characteristic_part_type", "fields": {"name": "RIN", "is_name_part": false, "gedcom": ""}}, {"pk": 1, "model": "geneapro.characteristic_part_type", "fields": {"name": "sex", "is_name_part": false, "gedcom": "SEX"}}, {"pk": 30, "model": "geneapro.characteristic_part_type", "fields": {"name": "social security number", "is_name_part": false, "gedcom": ""}}, {"pk": 36, "model": "geneapro.characteristic_part_type", "fields": {"name": "telephone", "is_name_part": false, "gedcom": ""}}, {"pk": 12, "model": "geneapro.characteristic_part_type", "fields": {"name": "title", "is_name_part": false, "gedcom": ""}}, {"pk": 14, "model": "geneapro.characteristic_part_type", "fields": {"name": "dit name", "is_name_part": true, "gedcom": ""}}, {"pk": 15, "model": "geneapro.characteristic_part_type", "fields": {"name": "farm name", "is_name_part": true, "gedcom": ""}}, {"pk": 17, "model": "geneapro.characteristic_part_type", "fields": {"name": "matronymic name", "is_name_part": true, "gedcom": ""}}, {"pk": 9, "model": "geneapro.characteristic_part_type", "fields": {"name": "mononame", "is_name_part": true, "gedcom": ""}}, {"pk": 7, "model": "geneapro.characteristic_part_type", "fields": {"name": "surname", "is_name_part": true, "gedcom": "SURN"}}, {"pk": 6, "model": "geneapro.characteristic_part_type", "fields": {"name": "given name", "is_name_part": true, "gedcom": "GIVN"}}, {"pk": 40, "model": "geneapro.characteristic_part_type", "fields": {"name": "middle names", "is_name_part": true, "gedcom": ""}}, {"pk": 10, "model": "geneapro.characteristic_part_type", "fields": {"name": "name prefix", "is_name_part": true, "gedcom": "NPFX"}}, {"pk": 8, "model": "geneapro.characteristic_part_type", "fields": {"name": "nickname", "is_name_part": true, "gedcom": "NICK"}}, {"pk": 41, "model": "geneapro.characteristic_part_type", "fields": {"name": "surname prefix", "is_name_part": true, "gedcom": "SPFX"}}, {"pk": 11, "model": "geneapro.characteristic_part_type", "fields": {"name": "name suffix", "is_name_part": true, "gedcom": "NSFX"}}, {"pk": 13, "model": "geneapro.characteristic_part_type", "fields": {"name": "religious name", "is_name_part": true, "gedcom": ""}}, {"pk": 5, "model": "geneapro.group_type", "fields": {"name": "association", "gedcom": ""}}, {"pk": 6, "model": "geneapro.group_type", "fields": {"name": "caste", "gedcom": ""}}, {"pk": 1, "model": "geneapro.group_type", "fields": {"name": "children of union", "gedcom": ""}}, {"pk": 7, "model": "geneapro.group_type", "fields": {"name": "friends", "gedcom": ""}}, {"pk": 2, "model": "geneapro.group_type", "fields": {"name": "neighbors", "gedcom": ""}}, {"pk": 8, "model": "geneapro.group_type", "fields": {"name": "passenger list", "gedcom": ""}}, {"pk": 3, "model": "geneapro.group_type", "fields": {"name": "passengers", "gedcom": ""}}, {"pk": 4, "model": "geneapro.group_type", "fields": {"name": "same person", "gedcom": ""}}]
+[
+    {
+        "fields": {
+            "description": "This is the default surety scheme, based on five levels of certainty", 
+            "name": "Default scheme"
+        }, 
+        "model": "geneapro.surety_scheme", 
+        "pk": 1
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "very high", 
+            "scheme": 1, 
+            "sequence_number": 5
+        }, 
+        "model": "geneapro.surety_scheme_part", 
+        "pk": 6
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "high", 
+            "scheme": 1, 
+            "sequence_number": 4
+        }, 
+        "model": "geneapro.surety_scheme_part", 
+        "pk": 5
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "normal", 
+            "scheme": 1, 
+            "sequence_number": 3
+        }, 
+        "model": "geneapro.surety_scheme_part", 
+        "pk": 4
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "low", 
+            "scheme": 1, 
+            "sequence_number": 2
+        }, 
+        "model": "geneapro.surety_scheme_part", 
+        "pk": 3
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "very low", 
+            "scheme": 1, 
+            "sequence_number": 1
+        }, 
+        "model": "geneapro.surety_scheme_part", 
+        "pk": 2
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "article"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 1
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "unknown"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 0
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "audio"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 2
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "birth certificate"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 3
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "book"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 4
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "census record"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 5
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "court record"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 6
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "death certificate"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 7
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "email message"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 8
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "familly bible"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 12
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "immigration record"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 22
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "interview"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 9
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "letter"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 10
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "magazine"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 11
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "manuscript"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 14
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "map"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 15
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "marriage certificate"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 13
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "military"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 23
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "newspaper"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 16
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "photograph"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 17
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "tombstone"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 18
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "video"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 19
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "web page"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 20
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "will"
+        }, 
+        "model": "geneapro.source_medium", 
+        "pk": 21
+    }, 
+    {
+        "fields": {
+            "gedcom": "ADR1", 
+            "name": "address"
+        }, 
+        "model": "geneapro.place_part_type", 
+        "pk": 6
+    }, 
+    {
+        "fields": {
+            "gedcom": "ADR2", 
+            "name": "address2"
+        }, 
+        "model": "geneapro.place_part_type", 
+        "pk": 10
+    }, 
+    {
+        "fields": {
+            "gedcom": "CITY", 
+            "name": "city"
+        }, 
+        "model": "geneapro.place_part_type", 
+        "pk": 3
+    }, 
+    {
+        "fields": {
+            "gedcom": "CTRY", 
+            "name": "country"
+        }, 
+        "model": "geneapro.place_part_type", 
+        "pk": 1
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "county"
+        }, 
+        "model": "geneapro.place_part_type", 
+        "pk": 5
+    }, 
+    {
+        "fields": {
+            "gedcom": "MAP", 
+            "name": "GPS coordinates"
+        }, 
+        "model": "geneapro.place_part_type", 
+        "pk": 8
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "monument"
+        }, 
+        "model": "geneapro.place_part_type", 
+        "pk": 9
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "province"
+        }, 
+        "model": "geneapro.place_part_type", 
+        "pk": 4
+    }, 
+    {
+        "fields": {
+            "gedcom": "STAE", 
+            "name": "state"
+        }, 
+        "model": "geneapro.place_part_type", 
+        "pk": 2
+    }, 
+    {
+        "fields": {
+            "gedcom": "POST", 
+            "name": "zipcode"
+        }, 
+        "model": "geneapro.place_part_type", 
+        "pk": 7
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "album"
+        }, 
+        "model": "geneapro.repository_type", 
+        "pk": 3
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "archive"
+        }, 
+        "model": "geneapro.repository_type", 
+        "pk": 2
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "bookstore"
+        }, 
+        "model": "geneapro.repository_type", 
+        "pk": 4
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "cemetery"
+        }, 
+        "model": "geneapro.repository_type", 
+        "pk": 5
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "church"
+        }, 
+        "model": "geneapro.repository_type", 
+        "pk": 6
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "collection"
+        }, 
+        "model": "geneapro.repository_type", 
+        "pk": 7
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "library"
+        }, 
+        "model": "geneapro.repository_type", 
+        "pk": 8
+    }, 
+    {
+        "fields": {
+            "description": "", 
+            "name": "web site"
+        }, 
+        "model": "geneapro.repository_type", 
+        "pk": 9
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "author"
+        }, 
+        "model": "geneapro.citation_part_type", 
+        "pk": 2
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "name"
+        }, 
+        "model": "geneapro.citation_part_type", 
+        "pk": 6
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "page"
+        }, 
+        "model": "geneapro.citation_part_type", 
+        "pk": 5
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "publication city"
+        }, 
+        "model": "geneapro.citation_part_type", 
+        "pk": 1
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "title"
+        }, 
+        "model": "geneapro.citation_part_type", 
+        "pk": 3
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "year"
+        }, 
+        "model": "geneapro.citation_part_type", 
+        "pk": 4
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "acquittal"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 32
+    }, 
+    {
+        "fields": {
+            "gedcom": "ADOP", 
+            "name": "adoption"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 8
+    }, 
+    {
+        "fields": {
+            "gedcom": "CHRA", 
+            "name": "Adult Christening"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 42
+    }, 
+    {
+        "fields": {
+            "gedcom": "ANUL", 
+            "name": "annulment"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 9
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "arrest"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 29
+    }, 
+    {
+        "fields": {
+            "gedcom": "BAPM", 
+            "name": "baptism"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 2
+    }, 
+    {
+        "fields": {
+            "gedcom": "BARM", 
+            "name": "bar mitzvah"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 10
+    }, 
+    {
+        "fields": {
+            "gedcom": "BASM", 
+            "name": "bas mitzvah"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 11
+    }, 
+    {
+        "fields": {
+            "gedcom": "BIRT", 
+            "name": "birth"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 1
+    }, 
+    {
+        "fields": {
+            "gedcom": "BLES", 
+            "name": "blessing"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 12
+    }, 
+    {
+        "fields": {
+            "gedcom": "BURI", 
+            "name": "burial"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 6
+    }, 
+    {
+        "fields": {
+            "gedcom": "CENS", 
+            "name": "Censur"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 39
+    }, 
+    {
+        "fields": {
+            "gedcom": "CHR", 
+            "name": "christening"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 13
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "civil union"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 36
+    }, 
+    {
+        "fields": {
+            "gedcom": "CONF", 
+            "name": "confirmation"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 14
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "conviction"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 31
+    }, 
+    {
+        "fields": {
+            "gedcom": "CREM", 
+            "name": "cremation"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 15
+    }, 
+    {
+        "fields": {
+            "gedcom": "DEAT", 
+            "name": "death"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 4
+    }, 
+    {
+        "fields": {
+            "gedcom": "DIV", 
+            "name": "divorce"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 16
+    }, 
+    {
+        "fields": {
+            "gedcom": "DIVF", 
+            "name": "Divorce Filed"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 44
+    }, 
+    {
+        "fields": {
+            "gedcom": "EMIG", 
+            "name": "emigration"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 18
+    }, 
+    {
+        "fields": {
+            "gedcom": "ENGA", 
+            "name": "engagement"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 19
+    }, 
+    {
+        "fields": {
+            "gedcom": "FCOM", 
+            "name": "first communion"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 20
+    }, 
+    {
+        "fields": {
+            "gedcom": "GRAD", 
+            "name": "graduation"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 21
+    }, 
+    {
+        "fields": {
+            "gedcom": "IMMI", 
+            "name": "immigration"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 22
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "indictement"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 30
+    }, 
+    {
+        "fields": {
+            "gedcom": "MARB", 
+            "name": "mariage banns"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 23
+    }, 
+    {
+        "fields": {
+            "gedcom": "MARR", 
+            "name": "marriage"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 3
+    }, 
+    {
+        "fields": {
+            "gedcom": "MARC", 
+            "name": "marriage contract"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 24
+    }, 
+    {
+        "fields": {
+            "gedcom": "MARL", 
+            "name": "Marriage License"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 45
+    }, 
+    {
+        "fields": {
+            "gedcom": "MARS", 
+            "name": "Marriage settlement"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 41
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "military service"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 34
+    }, 
+    {
+        "fields": {
+            "gedcom": "NATU", 
+            "name": "naturalization"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 35
+    }, 
+    {
+        "fields": {
+            "gedcom": "OCCU", 
+            "name": "occupation"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 33
+    }, 
+    {
+        "fields": {
+            "gedcom": "ORDN", 
+            "name": "ordination"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 25
+    }, 
+    {
+        "fields": {
+            "gedcom": "EVEN", 
+            "name": "Other event"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 40
+    }, 
+    {
+        "fields": {
+            "gedcom": "PROB", 
+            "name": "Probate"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 43
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "religious conversion"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 38
+    }, 
+    {
+        "fields": {
+            "gedcom": "RESI", 
+            "name": "residence"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 7
+    }, 
+    {
+        "fields": {
+            "gedcom": "RETI", 
+            "name": "retirement"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 27
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "voyage"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 37
+    }, 
+    {
+        "fields": {
+            "gedcom": "WILL", 
+            "name": "will"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 28
+    }, 
+    {
+        "fields": {
+            "name": "principal", 
+            "type": null
+        }, 
+        "model": "geneapro.event_type_role", 
+        "pk": 5
+    }, 
+    {
+        "fields": {
+            "name": "father", 
+            "type": 1
+        }, 
+        "model": "geneapro.event_type_role", 
+        "pk": 6
+    }, 
+    {
+        "fields": {
+            "name": "mother", 
+            "type": 1
+        }, 
+        "model": "geneapro.event_type_role", 
+        "pk": 7
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "address"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 35
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "AFN"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 18
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "cause of death"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 20
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "email"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 37
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "ethnicity"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 19
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "language"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 26
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "literacy"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 27
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "living"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 32
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "marital status"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 34
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "medical condition"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 5
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "nationality"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 25
+    }, 
+    {
+        "fields": {
+            "gedcom": "NCHI", 
+            "is_name_part": false, 
+            "name": "number of children"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 21
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "number of marriages"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 33
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "patronymic"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 16
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "personality"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 31
+    }, 
+    {
+        "fields": {
+            "gedcom": "DSCR", 
+            "is_name_part": false, 
+            "name": "Physical Description"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 39
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "religion"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 3
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "RFN"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 28
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "RIN"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 29
+    }, 
+    {
+        "fields": {
+            "gedcom": "SEX", 
+            "is_name_part": false, 
+            "name": "sex"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 1
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "social security number"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 30
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "telephone"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 36
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": false, 
+            "name": "title"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 12
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": true, 
+            "name": "dit name"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 14
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": true, 
+            "name": "farm name"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 15
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": true, 
+            "name": "matronymic name"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 17
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": true, 
+            "name": "mononame"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 9
+    }, 
+    {
+        "fields": {
+            "gedcom": "SURN", 
+            "is_name_part": true, 
+            "name": "surname"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 7
+    }, 
+    {
+        "fields": {
+            "gedcom": "GIVN", 
+            "is_name_part": true, 
+            "name": "given name"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 6
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": true, 
+            "name": "middle names"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 40
+    }, 
+    {
+        "fields": {
+            "gedcom": "NPFX", 
+            "is_name_part": true, 
+            "name": "name prefix"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 10
+    }, 
+    {
+        "fields": {
+            "gedcom": "NICK", 
+            "is_name_part": true, 
+            "name": "nickname"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 8
+    }, 
+    {
+        "fields": {
+            "gedcom": "SPFX", 
+            "is_name_part": true, 
+            "name": "surname prefix"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 41
+    }, 
+    {
+        "fields": {
+            "gedcom": "NSFX", 
+            "is_name_part": true, 
+            "name": "name suffix"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 11
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "is_name_part": true, 
+            "name": "religious name"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 13
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "association"
+        }, 
+        "model": "geneapro.group_type", 
+        "pk": 5
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "caste"
+        }, 
+        "model": "geneapro.group_type", 
+        "pk": 6
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "children of union"
+        }, 
+        "model": "geneapro.group_type", 
+        "pk": 1
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "friends"
+        }, 
+        "model": "geneapro.group_type", 
+        "pk": 7
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "neighbors"
+        }, 
+        "model": "geneapro.group_type", 
+        "pk": 2
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "passenger list"
+        }, 
+        "model": "geneapro.group_type", 
+        "pk": 8
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "passengers"
+        }, 
+        "model": "geneapro.group_type", 
+        "pk": 3
+    }, 
+    {
+        "fields": {
+            "gedcom": "", 
+            "name": "same person"
+        }, 
+        "model": "geneapro.group_type", 
+        "pk": 4
+    }
+]

@@ -14,7 +14,7 @@ full_reset: syncdb reset
 
 dump:
 	./manage.py dumpdata --format=xml geneapro > dump.xml
-	./manage.py dumpdata --format=json geneapro > dump.json
+	./manage.py dumpdata --format=json geneapro | python -mjson.tool > dump.json
 
 ## The following require the django extensions and graphviz
 ## See the list of installed apps in settings.py
