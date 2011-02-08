@@ -8,6 +8,7 @@ from mysites.geneapro import models
 from django.db import transaction
 import mysites.geneapro.importers
 import re
+import datetime
 
 # If true, the given name read from gedcom is split (on spaces) into
 # a given name and one or more middle names. This might not be appropriate
@@ -67,6 +68,7 @@ class GedcomImporter(object):
 
             self._event_types = dict()
             self._char_types = dict()
+            self._citation_part_types = dict()
             self._place_part_types = dict()
             self._get_all_event_types()
             self._places = dict()
@@ -108,16 +110,35 @@ class GedcomImporter(object):
 
         self._char_types['MIDDLE'] = \
             models.Characteristic_Part_Type.objects.get(id=40)
-
         self._char_types['NAME'] = True  # Handled specially in _create_characteristic
 
         for p in models.Place_Part_Type.objects.exclude(gedcom__isnull=True):
             if p.gedcom:
                 self._place_part_types[p.gedcom] = p
 
+        for p in models.Citation_Part_Type.objects.exclude(gedcom__isnull=True):
+            self._citation_part_types[p.gedcom] = p
+
     def _read_source_medium(self):
         for m in models.Source_Medium.objects.all():
             self._source_medium[m.name] = m.id
+
+    def _create_CHAN(self, data):
+        """data should be a form of CHAN"""
+
+        if data:
+            date = "01 JAN 1970"
+            time = "00:00:00"
+
+            if data.DATE:
+                date = data.DATE.value
+                if data.DATE.TIME:
+                    return datetime.datetime.strptime(
+                       date + " " + data.DATE.TIME, "%d %b %Y %H:%M:%S")
+                else:
+                    return datetime.datetime.strptime(date, "%d %b %Y")
+
+        return None
 
     def _create_source(self, sour):
         medium_id = 0
@@ -136,7 +157,7 @@ class GedcomImporter(object):
                 print "%s Unhandled REPO.%s" % (location(v), k)
 
         try:
-            comment = sour.TITL
+            comment = sour.TITL or sour.ABBR
         except:
             comment = ''
 
@@ -147,7 +168,19 @@ class GedcomImporter(object):
             researcher=self._researcher,
             subject_date=None,
             medium_id=medium_id,
+            last_change=self._create_CHAN(sour.CHAN),
             comments=comment)
+
+        if sour.ABBR:
+            cit = models.Citation_Part.objects.create(
+                source=src,
+                type=self._citation_part_types["ABBR"],
+                value=sour.ABBR)
+        if sour.TITL:
+            cit = models.Citation_Part.objects.create(
+                source=src,
+                type=self._citation_part_types["TITL"],
+                value=sour.TITL)
 
         obje = sour.OBJE
         if obje:
@@ -161,7 +194,7 @@ class GedcomImporter(object):
                 # ??? Should we preserve gedcom ids ?
                 pass
 
-            elif k not in ("REPO", "OBJE", "TITL"):
+            elif k not in ("REPO", "OBJE", "TITL", "CHAN", "ABBR"):
                 print "%s Unhandled SOUR.%s" % (location(v), k)
 
         try:
@@ -531,6 +564,26 @@ class GedcomImporter(object):
             elif field in self._event_types:
                 for v in value:
                     self._create_event(indi=indi, field=field, data=v)
+
+            elif field.startswith("_") \
+                    and (isinstance(value, basestring)
+                         or (isinstance(value, list)
+                             and isinstance(value[0], basestring))):
+                # A GEDCOM extension by an application.
+                # If this is a simple string value, assume this is a characteristic.
+                # Create the corresponding type in the database, and import the field
+
+                typ = models.Characteristic_Part_Type.objects.create(
+                    is_name_part=False,
+                    name=field,
+                    gedcom=field)
+                self._char_types[field] = typ
+
+                if not isinstance(value, list):
+                    value = [value]
+
+                for v in value:
+                    self._create_characteristic(field, v, indi)
 
             else:
                 print "%s Unhandled INDI.%s: %s" % (location(value), field, value)

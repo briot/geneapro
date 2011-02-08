@@ -427,7 +427,15 @@
     }, 
     {
         "fields": {
-            "gedcom": "", 
+            "gedcom": "ABBR", 
+            "name": "abbrev"
+        }, 
+        "model": "geneapro.citation_part_type", 
+        "pk": 7
+    }, 
+    {
+        "fields": {
+            "gedcom": "TITL", 
             "name": "title"
         }, 
         "model": "geneapro.citation_part_type", 

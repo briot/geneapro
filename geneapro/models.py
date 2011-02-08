@@ -10,6 +10,7 @@ object appropriate for use by simplejson. For instance:
 """
 
 from django.db import models, backend, connection
+import datetime
 from mysites.geneapro.utils import date
 
 class GeneaproModel (models.Model):
@@ -378,6 +379,8 @@ class Source (GeneaproModel):
                + " computed from subject_date, for sorting purposes")
    medium        = models.ForeignKey (Source_Medium)
    comments      = models.TextField (null=True)
+
+   last_change   = models.DateTimeField(default=datetime.datetime.now)
 
    class Meta:
       """Meta data for the model"""
