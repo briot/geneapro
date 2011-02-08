@@ -481,6 +481,7 @@ class Persona (GeneaproModel):
 
    name = models.TextField ()
    description = models.TextField (null=True)
+   last_change = models.DateTimeField(default=datetime.datetime.now)
 
    def __unicode__ (self):
       return self.name

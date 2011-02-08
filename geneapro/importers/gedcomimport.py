@@ -544,7 +544,10 @@ class GedcomImporter(object):
             name = data.NAME[0].value  # Use first available name
 
         # The name to use is the first one in the list of names
-        indi = models.Persona.objects.create(name=name, description='')
+        indi = models.Persona.objects.create(
+            name=name,
+            description='',
+            last_change=self._create_CHAN(data.CHAN))
 
         # For all properties of the individual
 
@@ -556,6 +559,10 @@ class GedcomImporter(object):
             elif field in ("FAMC", "FAMS"):
                 # These are ignored: families are created through marriage or
                 # child births.
+                pass
+
+            elif field in ("CHAN", ):
+                # Already handled
                 pass
 
             elif field in self._char_types:
