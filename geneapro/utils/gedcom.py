@@ -458,7 +458,6 @@ class _Lexical (object):
          return None
 
       if self.line == 1 and line[0:3] == "\xEF\xBB\xBF":
-         print "Encoding is UTF8"
          self.encoding = 'utf-8'
          line = line[3:]
 
@@ -483,8 +482,8 @@ class _Lexical (object):
            self.to_unicode(g.group("value") or u""))
 
       if r[0] == 1 and r[1] == "CHAR":
-          print "Encoding is %s" % r[3]
-          self.encoding = r[3]
+          if r[3] != "ANSEL":
+              self.encoding = r[3]
 
       return r
 

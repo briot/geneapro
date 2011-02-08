@@ -104,8 +104,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',         # Managing multiple sites with one install
 	'mysites.geneapro',
 
-   # 'extensions',  # old name for django extensions (opensuse)
-    'django_extensions', # new name for django extensions
+    #'django_extensions', # new name for django extensions
 
     #'debug_toolbar',
 )

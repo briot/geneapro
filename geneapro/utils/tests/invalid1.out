@@ -1,1 +1,1 @@
-<dir>/invalid1.ged:1 Invalid line format: FOO
+<dir>/invalid1.ged:1 Invalid gedcom file, first line must be '0 HEAD'
