@@ -65,8 +65,15 @@ def __get_characteristics(persons):
           p.surname = c.name
 
 
-def __get_events(persons, styles):
-   """Compute the events for the various persons in IDS"""
+event_types_for_pedigree = (
+    models.Event_Type.birth,
+    models.Event_Type.death,
+    models.Event_Type.marriage)
+
+
+def __get_events(persons, styles, types=None):
+   """Compute the events for the various persons in IDS.
+      Only the events of type in TYPES are returned"""
 
    compute_parts = styles.need_place_parts()
 
@@ -95,11 +102,12 @@ def __get_events(persons, styles):
    all_events = []
 
    def __add_events_for_id(ids, places, all_events):
-       events = models.Event.objects.filter(
-          id__in=ids,
-          type__in=(models.Event_Type.birth,
-                    models.Event_Type.death,
-                    models.Event_Type.marriage)).select_related('place')
+       if types:
+           events = models.Event.objects.filter(
+              id__in=ids, type__in=types).select_related('place')
+       else:
+           events = models.Event.objects.filter(
+              id__in=ids).select_related('place')
 
        for e in events.all():
           all_events.append(e)
@@ -165,7 +173,7 @@ def __get_events(persons, styles):
          styles.process (p, role, e, source)
 
 
-def extended_personas(ids, styles):
+def extended_personas(ids, styles, event_types=None):
    """Return a dict indexed on id containing extended instances of Persona,
       with additional fields for the birth, the death,...
    """
@@ -177,7 +185,7 @@ def extended_personas(ids, styles):
    styles.start ()
 
    __get_characteristics(persons=persons)
-   __get_events (persons=persons, styles=styles)
+   __get_events(persons=persons, styles=styles, types=event_types)
 
    for p in persons.itervalues():
       styles.compute (p)
@@ -196,7 +204,6 @@ def unicode_escape(unistr):
     import htmlentitydefs
     escaped = ""
 
-    print type(unistr), len(unistr), unistr
     for char in unistr:
         if ord(char) in htmlentitydefs.codepoint2name:
             name = htmlentitydefs.codepoint2name.get(ord(char))
@@ -206,7 +213,6 @@ def unicode_escape(unistr):
         else:
             escaped += char
 
-    print "   => ", escaped
     return escaped
 
 
@@ -224,6 +230,6 @@ def view(request, id):
        'geneapro/persona.html',
        {"p":p,
         "chars": [unicode(c) for c in p[id].all_chars.itervalues()],
-        "events": [unicode_escape(unicode(e)) for e in p[id].all_events.itervalues()],
+        "events": [unicode(e) for e in p[id].all_events.itervalues()],
        },
        context_instance=RequestContext(request))

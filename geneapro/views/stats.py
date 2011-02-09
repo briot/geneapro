@@ -11,7 +11,7 @@ from mysites.geneapro import models
 from mysites.geneapro.utils.date import Date, CalendarGregorian
 from mysites.geneapro.views.tree import *
 from mysites.geneapro.views.styles import *
-from mysites.geneapro.views.persona import extended_personas
+from mysites.geneapro.views.persona import extended_personas, event_types_for_pedigree
 from mysites.geneapro.views.json import to_json
 
 def view (request):
@@ -21,7 +21,7 @@ def view (request):
    tree = Tree ()
    styles = Styles ([], tree, decujus=decujus)
    ids = set (tree.ancestors (decujus).keys())
-   persons = extended_personas (ids, styles)
+   persons = extended_personas (ids, styles, types=event_types_for_pedigree)
    father_ids = tree.ancestors (tree.father (decujus))
    mother_ids = tree.ancestors (tree.mother (decujus))
 

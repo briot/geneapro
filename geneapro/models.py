@@ -710,6 +710,7 @@ class P2E_Assertion (Assertion):
    person     = models.ForeignKey (Persona, related_name="events")
    event      = models.ForeignKey (Event, related_name="actors")
    role       = models.ForeignKey (Event_Type_Role, null=True)
+   last_change = models.DateTimeField(default=datetime.datetime.now)
 
    class Meta:
       """Meta data for the model"""

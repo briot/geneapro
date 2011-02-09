@@ -11,7 +11,7 @@ from mysites.geneapro import models
 from mysites.geneapro.utils.date import Date
 from mysites.geneapro.views.tree import *
 from mysites.geneapro.views.styles import *
-from mysites.geneapro.views.persona import extended_personas
+from mysites.geneapro.views.persona import extended_personas, event_types_for_pedigree
 from mysites.geneapro.views.json import to_json
 from mysites.geneapro.views.custom_highlight import style_rules
 from mysites.geneapro.views.rules import getLegend
@@ -24,7 +24,8 @@ def get_sosa_tree (id, max_levels, style_ruless):
 
    children = tree.children (id)
 
-   persons = extended_personas (ids.union (children), styles)
+   persons = extended_personas (ids.union (children), styles,
+                                types=event_types_for_pedigree)
 
    for index,c in enumerate (children):
       children [index] = persons [c]

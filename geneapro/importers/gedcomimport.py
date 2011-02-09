@@ -138,7 +138,7 @@ class GedcomImporter(object):
                 else:
                     return datetime.datetime.strptime(date, "%d %b %Y")
 
-        return None
+        return datetime.datetime.now()
 
     def _create_source(self, sour):
         medium_id = 0
@@ -233,8 +233,6 @@ class GedcomImporter(object):
     def _create_family(self, data):
         """Create the equivalent of a FAMILY in the database"""
 
-        id = data.id
-
         husb = data.HUSB
         if husb:
             husb = self._personas[husb.id]
@@ -243,74 +241,27 @@ class GedcomImporter(object):
         if wife:
             wife = self._personas[wife.id]
 
-        for mar in data.MARR:
-            evt = models.Event.objects.create(type=self._event_types['MARR'],
-                    place=None, name='Marriage', date=mar.DATE)
+        family_events = ("MARR", "DIV", "CENS", "ENGA")
 
-            for src in self._create_sources_ref(mar):
-                if husb:
-                    models.P2E_Assertion.objects.create(
-                        surety=self._default_surety,
-                        researcher=self._researcher,
-                        person=husb,
-                        source=src,
-                        event=evt,
-                        role_id=models.Event_Type_Role.principal,
-                        value='event')
-                if wife:
-                    models.P2E_Assertion.objects.create(
-                        surety=self._default_surety,
-                        researcher=self._researcher,
-                        person=wife,
-                        source=src,
-                        event=evt,
-                        role_id=models.Event_Type_Role.principal,
-                        value='event')
+        for field in family_events:
+            for evt in getattr(data, field, []):
+                self._create_event(
+                    [(husb, self._principal), (wife, self._principal)],
+                    field, evt, CHAN=data.CHAN)
 
         children = data.CHIL
+        last_change = self._create_CHAN(data.CHAN)
 
-        # Mark the parents of the child
         for c in data.CHIL:
-            sources = self._create_sources_ref(c)
-
-            p = self._personas[c.id]
-            try:
-                evt = self._births[p.id]
-            except:
-                self._births[p.id] = models.Event.objects.create(
-                    type=self._event_types['BIRT'],
-                    place=None, name='Birth of ' + c.NAME[0].value)
-
-                for s in sources:
-                    models.P2E_Assertion.objects.create(
-                        surety=self._default_surety,
-                        researcher=self._researcher,
-                        source=s,
-                        person=p,
-                        event=self._births[p.id],
-                        role=self._principal)
-
-            for s in sources:
-                if husb:
-                    models.P2E_Assertion.objects.create(
-                        surety=self._default_surety,
-                        researcher=self._researcher,
-                        person=husb,
-                        source=s,
-                        event=self._births[p.id],
-                        role=self._birth__father)
-
-                if wife:
-                    models.P2E_Assertion.objects.create(
-                        surety=self._default_surety,
-                        researcher=self._researcher,
-                        person=wife,
-                        source=s,
-                        event=self._births[p.id],
-                        role=self._birth__mother)
+            self._create_event(
+                [(self._personas[c.id], self._principal),
+                 (husb, self._birth__father),
+                 (wife, self._birth__mother)],
+                "BIRT", data=c, CHAN=data.CHAN)
 
         for k, v in data.for_all_fields():
-            if k not in ("CHIL", "SOUR", "HUSB", "WIFE", "id", "MARR"):
+            if k not in ("CHIL", "SOUR", "HUSB", "WIFE", "id",
+                         "CHAN") + family_events:
                 print "%s Unhandled FAM.%s" % (location(v), k)
 
     def _create_place(self, data, id=''):
@@ -464,9 +415,14 @@ class GedcomImporter(object):
                         print "%s Unhandled characteristic: %s" % (
                             location(val), k)
 
-    def _create_event(self, indi, field, data):
+    def _create_event(self, indi, field, data, CHAN=None):
         """Create a new event, associated with INDI by way of one or more
-           assertions based on sources
+           assertions based on sources.
+           INDI is a list of (persona, role). If persona is None, it will be
+           ignored.
+           It can be a single persona, in which case the role is "principal".
+           For a BIRT event, no new event is created if one already exists for
+           the principal. There must be a single principal for a BIRT event.
         """
 
         # This is how Gramps represents marriage events entered as
@@ -477,44 +433,72 @@ class GedcomImporter(object):
         else:
             event_type = self._event_types[field]
 
+        # Find the principal for this event
+
+        if isinstance(indi, list):
+            principal = None
+            name = []
+
+            for (k, v) in indi:
+                if k and v == self._principal:
+                    name.append(k.name)
+                    principal = k
+
+            name = " and ".join(name)
+
+            if principal is None:
+                print "No principal given for event: ", data
+
+        else:
+            principal = indi
+            name = principal.name
+            indi = [(indi, self._principal)]
+
         evt = None
-        name = ''
 
         # Can we find a descriptive name for this event ?
 
         if event_type.gedcom == 'BIRT':
-            name = 'Birth of ' + indi.name
-            evt = self._births.get(indi.id, None)
+            name = 'Birth of ' + name
+            evt = self._births.get(principal.id, None)
         elif event_type.gedcom == 'MARR':
-            name = 'Marriage'
+            name = 'Marriage of ' + name
         elif event_type.gedcom == "DEAT":
-            name = "Death of " + indi.name
+            name = "Death of " + name
         else:
-            name = "%s of %s" % (event_type.gedcom, indi.name)
+            name = "%s of %s" % (event_type.name, name)
 
         if not evt:
             place = self._create_place(data)
             evt = models.Event.objects.create(type=event_type, place=place,
-                    name=name, date=data.DATE)
+                    name=name, date=getattr(data, "DATE", None))
 
             if event_type.gedcom == 'BIRT':
-                self._births[indi.id] = evt
+                self._births[principal.id] = evt
 
         for k, v in data.for_all_fields():
             # ADDR and PLAC are handled in create_place
             # SOURCE is handled in create_sources_ref
-            if k not in ("DATE", "TYPE", "ADDR", "PLAC", "SOUR"):
+            if k not in ("DATE", "TYPE", "ADDR", "PLAC", "SOUR",
+                         "_all", "xref"):
                 print "%s Unhandled EVENT.%s" % (location(data), k)
 
-        for s in self._create_sources_ref(data):
-            models.P2E_Assertion.objects.create(
-                surety=self._default_surety,
-                researcher=self._researcher,
-                person=indi,
-                event=evt,
-                source=s,
-                role=self._principal,
-                value='')
+        last_change = self._create_CHAN(CHAN)
+
+        for person, role in indi:
+            if person:
+                for s in self._create_sources_ref(data):
+                    models.P2E_Assertion.objects.create(
+                        surety=self._default_surety,
+                        researcher=self._researcher,
+                        person=person,
+                        event=evt,
+                        source=s,
+                        role=role,
+                        last_change=last_change,
+                        value='')
+
+        return evt
 
     def _create_sources_ref(self, data):
         """Create a list of instances of Source for the record described by
