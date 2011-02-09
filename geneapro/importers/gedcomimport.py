@@ -241,7 +241,7 @@ class GedcomImporter(object):
         if wife:
             wife = self._personas[wife.id]
 
-        family_events = ("MARR", "DIV", "CENS", "ENGA")
+        family_events = ("MARR", "DIV", "CENS", "ENGA", "EVEN")
 
         for field in family_events:
             for evt in getattr(data, field, []):
@@ -260,18 +260,24 @@ class GedcomImporter(object):
                 "BIRT", data=c, CHAN=data.CHAN)
 
         for k, v in data.for_all_fields():
-            if k not in ("CHIL", "SOUR", "HUSB", "WIFE", "id",
+            if k not in ("CHIL", "HUSB", "WIFE", "id",
                          "CHAN") + family_events:
                 print "%s Unhandled FAM.%s" % (location(v), k)
 
     def _create_place(self, data, id=''):
         """If data contains a subnode PLAC, parse and returns it"""
 
-        if data is None or getattr(data, "ADDR", None) is None:
+        if data is None:
             return None
 
-        addr = data.ADDR
-        data = data.PLAC
+        addr = getattr(data, "ADDR", None)
+        data = getattr(data, "PLAC", None)
+
+        if addr is None and data is None:
+            return None
+        if data is None and addr is not None:
+            print "%s Unexpected: got an ADDR without a PLAC" % (location(data))
+            return None
 
         # Check if the place already exists, since GEDCOM will duplicate
         # places unfortunately.
@@ -284,7 +290,7 @@ class GedcomImporter(object):
 
         long_name = data.value
         if addr:
-            for (key, val) in addr.__dict__.iteritems():
+            for (key, val) in addr.for_all_fields():
                 long_name = long_name + ' %s=%s' % (key, val)
         if data.MAP:
             long_name = long_name + ' MAP=%s,%s' % (data.MAP.LATI,
@@ -302,11 +308,6 @@ class GedcomImporter(object):
                         type=self._place_part_types['MAP'], name=data.MAP.LATI
                         + ' ' + data.MAP.LONG)
 
-            # ??? Unhandled attributes of PLAC: FORM, SOURCE and NOTE
-            # FORM would in fact tell us how to split the name to get its
-            # various components, which we could use to initialize the place
-            # parts
-
             if addr:
                 for key, val in addr.for_all_fields():
                     if key != 'value' and val:
@@ -316,6 +317,15 @@ class GedcomImporter(object):
                         else:
                             pp = models.Place_Part.objects.create(place=p,
                                     type=part, name=val)
+
+        # ??? Unhandled attributes of PLAC: FORM, SOURCE and NOTE
+        # FORM would in fact tell us how to split the name to get its
+        # various components, which we could use to initialize the place
+        # parts
+
+        for k, v in data.for_all_fields():
+            if k not in ("MAP", ):
+                print "%s Unhandled PLAC.%s" % (location(v), k)
 
         return p
 
