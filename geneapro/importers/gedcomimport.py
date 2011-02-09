@@ -435,11 +435,27 @@ class GedcomImporter(object):
            the principal. There must be a single principal for a BIRT event.
         """
 
-        # This is how Gramps represents marriage events entered as
+        evt_name = ""
+
+        # This is how Gramps represents events entered as
         # a person's event (ie partner is not known)
 
-        if field == 'EVEN' and data.TYPE == 'Marriage':
-            event_type = self._event_types['MARR']
+        if field == 'EVEN':
+            if data.TYPE == 'Marriage':
+                event_type = self._event_types['MARR']
+            elif data.TYPE == 'Engagement':
+                event_type = self._event_types['ENGA']
+            elif data.TYPE == 'Residence':
+                event_type = self._event_types['RESI']
+            elif data.TYPE == 'Separation':
+                event_type = self._event_types['DIV']  # ??? incorrect
+            elif data.TYPE == 'Military':
+                event_type = self._event_types['_MIL']
+            elif data.TYPE == 'Unknown':
+                event_type = self._event_types['EVEN']
+            else:
+                evt_name = "%s " % data.TYPE
+                event_type = self._event_types['EVEN']
         else:
             event_type = self._event_types[field]
 
@@ -476,7 +492,7 @@ class GedcomImporter(object):
         elif event_type.gedcom == "DEAT":
             name = "Death of " + name
         else:
-            name = "%s of %s" % (event_type.name, name)
+            name = "%s of %s" % (evt_name or event_type.name, name)
 
         if not evt:
             place = self._create_place(data)
@@ -489,7 +505,7 @@ class GedcomImporter(object):
         for k, v in data.for_all_fields():
             # ADDR and PLAC are handled in create_place
             # SOURCE is handled in create_sources_ref
-            if k not in ("DATE", "TYPE", "ADDR", "PLAC", "SOUR",
+            if k not in ("DATE", "ADDR", "PLAC", "SOUR", "TYPE",
                          "_all", "xref"):
                 print "%s Unhandled EVENT.%s" % (location(data), k)
 
@@ -540,7 +556,7 @@ class GedcomImporter(object):
         # The name to use is the first one in the list of names
         indi = models.Persona.objects.create(
             name=name,
-            description='',
+            description=data.NOTE,
             last_change=self._create_CHAN(data.CHAN))
 
         # For all properties of the individual
@@ -555,7 +571,7 @@ class GedcomImporter(object):
                 # child births.
                 pass
 
-            elif field in ("CHAN", ):
+            elif field in ("CHAN", "NOTE"):
                 # Already handled
                 pass
 

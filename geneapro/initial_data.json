@@ -699,7 +699,7 @@
     }, 
     {
         "fields": {
-            "gedcom": "", 
+            "gedcom": "_MIL", 
             "name": "military service"
         }, 
         "model": "geneapro.event_type", 
