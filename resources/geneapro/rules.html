@@ -1,5 +1,8 @@
-<div 
-        class="legend box_round box_shadow box_gradient">
+<p style="margin-top:20px">
+<input type="checkbox" onclick="$('#legend').toggle(300)" >Show legend</input>
+</p>
+
+<div id="legend" style="display:none" class="legend box_round box_shadow box_gradient">
   <table>
 {% for name, style in rules %}
    <tr>
@@ -11,5 +14,6 @@
   <hr>
   <p>
     <b>ctrl-click</b> to change focus
+    <b>dbl-click</b> to view person
   </p>
 </div>

@@ -11,6 +11,7 @@ from mysites.geneapro import models
 from mysites.geneapro.utils.date import Date
 from mysites.geneapro.views.custom_highlight import style_rules
 from mysites.geneapro.views.styles import Styles
+from mysites.geneapro.views.rules import getLegend
 from mysites.geneapro.views.tree import Tree
 
 
@@ -269,6 +270,7 @@ def view_list(request):
 
     return render_to_response(
         'geneapro/persona_list.html',
-        {"persons":all},
+        {"persons":all,
+         "legend":getLegend()},
         context_instance=RequestContext(request))
 

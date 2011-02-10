@@ -1,15 +1,15 @@
 {% extends "geneapro/base.html" %}
 {% block title %}GeneaPro: pedigree{% endblock %}
 {% block css %}
-table {margin: 20px 0 0 30px;
+table.list {margin: 20px 0 0 30px;
        border:1px solid #AAA;
        border-spacing:0;
        border-collapse:collapse}
-th {padding:5px;
+table.list th {padding:5px;
     background:#AAA;
     border-right:1px solid #444}
-tr > td:first-child {text-align:left; color:#AAA}
-td {border-right:1px solid #AAA; padding: 0 5px}
+table.list tr > td:first-child {text-align:left; color:#AAA}
+table.list td {border-right:1px solid #AAA; padding: 0 5px}
 
 {% endblock css %}
 
@@ -20,11 +20,12 @@ td {border-right:1px solid #AAA; padding: 0 5px}
 {% endblock endbody %}
 
 {% block leftside %}
+{{legend|safe}}
 {% endblock leftside %}
 
 {% block contents %}
 
-<table>
+<table class="list">
    <tr>
       <th>Surname</th>
       <th>Given name</th>

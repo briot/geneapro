@@ -161,6 +161,7 @@ div.hr {clear:both}
    float:left;
    height:900px;  /* page height, for some reason 100% does not work */
 
+   background-image: -moz-linear-gradient(top, #777, white);
    background-image: linear-gradient(top, #777/*from #head*/, white);
    background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #777),color-stop(1, white));   
 }
@@ -238,7 +239,10 @@ div.hr {clear:both}
 
 #roundedContents {
    margin-left:160px; /* = #sidebar'width */
+
    border-top-left-radius: 25px;
+   -moz-border-radius-topleft: 25px; /* FF1+ */
+
    height:10px;
    background:white; /* color background for the whole page */
    position:relative;
@@ -267,7 +271,7 @@ div.hr {clear:both}
 
 .legend {
    position:absolute;
-   left:5px;
+   left:160px; /* #sidebar'width */
    bottom:5px;
    z-index:100;
    padding:5px;

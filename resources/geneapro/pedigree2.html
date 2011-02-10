@@ -22,7 +22,6 @@ $(document).ready (function() {
 {% endblock script %}
 
 {% block endbody %}
-{{legend|safe}}
 <script type="text/javascript" src="{{MEDIA_URL}}pedigree2.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
@@ -45,10 +44,11 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
   <option>12</option>
   <option>13</option>
 </select>
+
+{{legend|safe}}
 {% endblock leftside %}
 
 {% block contents %}
 <canvas id="pedigreeSVG"></canvas>
-</div>
 {% endblock contents %}
 

@@ -33,7 +33,8 @@ $(document).ready (function() {
 <script type="text/javascript" src="{{MEDIA_URL}}pedigree.js"></script>
 {% endifequal %}
 {% endblock endbody %}
-{% block contents %}
+
+{% block leftside %}
 Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
   <option>1</option>
   <option>2</option>
@@ -51,6 +52,8 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
 </select>
 
 {{legend|safe}}
+{% endblock leftside %}
 
+{% block contents %}
 <div id="pedigreeSVG"></div>
 {% endblock contents %}
