@@ -200,9 +200,8 @@ def extended_personas(ids, styles, event_types=None, as_css=False):
    """
    persons = dict() # id -> person
 
-   if ids is None:
-       all = models.Persona.objects.all()
-   else:
+   all = models.Persona.objects.all()
+   if ids is not None:
        all = models.Persona.objects.filter(id__in=ids)
 
    for p in all:

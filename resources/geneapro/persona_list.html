@@ -33,18 +33,18 @@ td {border-right:1px solid #AAA; padding: 0 5px}
       <th>Birth</th>
       <th>Death</th>
       <th>Marriage</th>
-      <th>Last changed</th>
+      <!--<th>Last changed</th>-->
    </tr>
    {% for p in persons %}
    <tr>
       <td><a href="/persona/{{p.id}}">{{p.surname}}</a></td>
       <td><a href="/persona/{{p.id}}">{{p.given_name}}</a></td>
       <td style='{{p.styles}}'>{{p.name}}</td>
-      <td>{{p.description}}</td>
-      <td>{{p.birth}}</td>
-      <td>{{p.death}}</td>
-      <td>{{p.marriage}}</td>
-      <td>{{p.last_change}}</td>
+      <td>{{p.description|default:""}}</td>
+      <td>{{p.birth.date|default:"-"}}</td>
+      <td>{{p.death.date|default:"-"}}</td>
+      <td>{{p.marriage.date|default:"-"}}</td>
+      <!--<td>{{p.last_change}}</td>-->
    </tr>
    {% endfor %}
 </table>

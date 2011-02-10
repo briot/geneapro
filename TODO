@@ -13,9 +13,11 @@
 
 * Gedcom import
 ** Import all missing GEDCOM information (reported by ./manage.py import)
-** OCCU should be imported as a characteristic, not an event
 ** share NOTE, PLAC and SOUR in the database
    At least when they are shared in Gedcom, and if possible more
+** some INDI end up with a non-empty description, which is a xref to a NOTE.
+   We should create a proper note instead (but not clear how this is done in
+   GENTECH)
 
 * Pedigree View
 ** BACK button should go back to previous pedigree view

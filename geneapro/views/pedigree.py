@@ -25,12 +25,12 @@ def get_sosa_tree (id, max_levels, style_ruless):
    children = tree.children (id)
 
    persons = extended_personas (ids.union (children), styles,
-                                types=event_types_for_pedigree)
+                                event_types=event_types_for_pedigree)
 
    for index,c in enumerate (children):
-      children [index] = persons [c]
+      children[index] = persons[c]
 
-   sosa = tree.sosa_tree (id, persons, generations=max_levels)
+   sosa = tree.sosa_tree(id, persons, generations=max_levels)
    return {'generations': max_levels,
            'sosa':        sosa[0],
            'children':    children,
