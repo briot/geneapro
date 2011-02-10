@@ -229,6 +229,7 @@ class Source_Medium (GeneaproModel):
       ordering = ("name",)
       db_table = "source_medium"
 
+
 class Place (GeneaproModel):
    """
    Information about a historical place. Places are organized hierarchically,
@@ -257,6 +258,7 @@ class Place (GeneaproModel):
       """Meta data for the model"""
       ordering = ("date_sort",)
       db_table = "place"
+
 
 class Part_Type (GeneaproModel):
    """
@@ -348,7 +350,7 @@ class Repository (GeneaproModel):
       """Meta data for the model"""
       db_table = "repository"
 
-class Source (GeneaproModel):
+class Source(GeneaproModel):
    """
    A collection of data useful for genealogical research, such as a book,
    a compiled genealogy, an electronic database,... Generally, a
@@ -434,20 +436,22 @@ class Source_Group (GeneaproModel):
       """Meta data for the model"""
       db_table = "source_group"
 
-class Representation (GeneaproModel):
+
+class Representation(GeneaproModel):
    """
    Contains the representation of a source in a variete of formats.
    A given source can have multiple representations
    """
 
-   source = models.ForeignKey (Source)
    mime_type = models.CharField (max_length=40)
+   source = models.ForeignKey (Source)
    file = models.TextField ()
    comments = models.TextField (null=True)
 
    class Meta:
       """Meta data for the model"""
       db_table = "representation"
+
 
 class Citation_Part_Type (Part_Type):
    """
@@ -724,6 +728,14 @@ class P2E_Assertion (Assertion):
 
       return unicode (self.person) + " " + self.value + " " \
                       + unicode (self.event) + role
+
+#class E2C(Assertion):
+#    """Event-to-Characteristic assertions.
+#       Such assertions are not part of the GENTECH super-statement, but
+#       are used in particular to store event notes imported from GEDCOM
+#    """
+#   event      = models.ForeignKey (Event, related_name="characteristics")
+#   characteristic = models.ForeignKey (Characteristic, related_name="events")
 
 class Assertion_Assertion (GeneaproModel):
    original = models.ForeignKey (Assertion, related_name="leads_to")

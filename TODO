@@ -1,3 +1,5 @@
+# for Emacs: -*- mode: org; mode: flyspell; fill-column: 79 -*-
+
 * Database
 ** Create indexes in database:
    Assertion.subject1
@@ -8,6 +10,12 @@
 ** Investigate storing trees more efficiently
    See for instance http://articles.sitepoint.com/print/hierarchical-data-database
    and http://code.google.com/p/django-mptt/
+
+* Gedcom import
+** Import all missing GEDCOM information (reported by ./manage.py import)
+** OCCU should be imported as a characteristic, not an event
+** share NOTE, PLAC and SOUR in the database
+   At least when they are shared in Gedcom, and if possible more
 
 * Pedigree View
 ** BACK button should go back to previous pedigree view
@@ -26,8 +34,6 @@
    but should fallback on "baptism" and "burial" for instance, or the user
    might want to see other info (if "residence", there can be multiple of
    them) See also engagement instead of marriage
-** javascript should send person data separately, to detect duplicate
-   persons in the tree (and avoid drawing them twice when possible)
 ** Tooltip to display person info
 
 * Canvas Pedigree View
@@ -46,6 +52,9 @@
 ** Use presets
 ** Make it possible to hide or move the legend
 
+* Print
+** Should hide unwanted parts of the page when printing
+
 * FanChart
 ** Possibility to fold part of the fanchart to concentrate on specific
    families
@@ -63,5 +72,8 @@
 * Model
 ** Need to take into account persona and all its aliases in all queries
 
+* Groups
+** For: neighbor, friend, clergy, care-taker, and more
+
 * Ideas for names
-** Geneatica, Forebears
+** Geneatica, Forebears, Testimony

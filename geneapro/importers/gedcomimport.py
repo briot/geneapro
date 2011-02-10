@@ -140,7 +140,7 @@ class GedcomImporter(object):
 
         return datetime.datetime.now()
 
-    def _create_source(self, sour):
+    def _create_source(self, sour, subject_place=None):
         medium_id = 0
 
         if sour.__dict__.has_key('REPO') and sour.REPO:
@@ -163,7 +163,7 @@ class GedcomImporter(object):
 
         src = models.Source.objects.create(
             higher_source_id=None,
-            subject_place_id=None,
+            subject_place=subject_place,
             jurisdiction_place_id=None,
             researcher=self._researcher,
             subject_date=None,
@@ -494,6 +494,10 @@ class GedcomImporter(object):
         else:
             name = "%s of %s" % (evt_name or event_type.name, name)
 
+        # If we have a note associated with the event, we assume it deals with
+        # the event itself, not with its sources.
+
+
         if not evt:
             place = self._create_place(data)
             evt = models.Event.objects.create(type=event_type, place=place,
@@ -502,18 +506,38 @@ class GedcomImporter(object):
             if event_type.gedcom == 'BIRT':
                 self._births[principal.id] = evt
 
+        # If an event has an OBJE: since the source is an xref, the object
+        # is in fact associated with the place. Unfortunately, it will be duplicated
+        # among all other occurrences of that place (which itself is duplicated).
+
+        if getattr(data, "OBJE", None):
+            if getattr(data, "PLAC", None) and place:
+                for obj in data.OBJE:
+                    self._create_source(
+                        GedcomRecord(
+                            REPO=None,
+                            CHAN=CHAN,
+                            TITL='Source for %s' % data.PLAC.value,
+                            ABBR='Source for %s' % data.PLAC.value,
+                            OBJE=obj),
+                        subject_place=place)
+            else:
+                print "%s Unhandled EVENT.OBJE" % (location(data.OBJE))
+
+
         for k, v in data.for_all_fields():
             # ADDR and PLAC are handled in create_place
             # SOURCE is handled in create_sources_ref
-            if k not in ("DATE", "ADDR", "PLAC", "SOUR", "TYPE",
+            if k not in ("DATE", "ADDR", "PLAC", "SOUR", "TYPE", "OBJE",
                          "_all", "xref"):
-                print "%s Unhandled EVENT.%s" % (location(data), k)
+                print "%s Unhandled EVENT.%s" % (location(v), k)
 
         last_change = self._create_CHAN(CHAN)
+        all_src = self._create_sources_ref(data)
 
         for person, role in indi:
             if person:
-                for s in self._create_sources_ref(data):
+                for s in all_src:
                     models.P2E_Assertion.objects.create(
                         surety=self._default_surety,
                         researcher=self._researcher,
@@ -601,6 +625,13 @@ class GedcomImporter(object):
 
                 for v in value:
                     self._create_characteristic(field, v, indi)
+
+            elif field == "SOUR":
+                # The individual is apparently cited in a source, but is not related
+                # to a specific GEDCOM event. So instead we associate with a general
+                # census event.
+                evt_data = GedcomRecord(SOUR=value)
+                self._create_event(indi, field="CENS", data=evt_data)
 
             else:
                 print "%s Unhandled INDI.%s: %s" % (location(value), field, value)
