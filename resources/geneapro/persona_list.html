@@ -26,8 +26,8 @@ td {border-right:1px solid #AAA; padding: 0 5px}
 
 <table>
    <tr>
-      <th>Given name</th>
       <th>Surname</th>
+      <th>Given name</th>
       <th>Name</th>
       <th>Description</th>
       <th>Birth</th>
@@ -37,8 +37,8 @@ td {border-right:1px solid #AAA; padding: 0 5px}
    </tr>
    {% for p in persons %}
    <tr>
+      <td><a href="/persona/{{p.id}}">{{p.surname}}</a></td>
       <td><a href="/persona/{{p.id}}">{{p.given_name}}</a></td>
-      <td>{{p.surname}}</td>
       <td style='{{p.styles}}'>{{p.name}}</td>
       <td>{{p.description}}</td>
       <td>{{p.birth}}</td>

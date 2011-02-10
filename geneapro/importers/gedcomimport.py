@@ -354,9 +354,9 @@ class GedcomImporter(object):
             # Special handling for name: its value was used to create the
             # person itself, and now we are only looking into its subelements
             # for the components of the name
-            t = None
+            typ = None
         else:
-            t = self._char_types[key]
+            typ = self._char_types[key]
 
         if not isinstance(value, list):
             value = [value]
@@ -393,9 +393,9 @@ class GedcomImporter(object):
             # GEDCOM line as the characteristic itself. For simple characteristics
             # like "SEX", this will in fact be the only part.
 
-            if t:
+            if typ:
                 models.Characteristic_Part.objects.create(characteristic=c,
-                        type=t, name=str_value)
+                        type=typ, name=str_value)
 
             # We might have other characteristic part, most notably for names.
 
