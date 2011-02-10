@@ -277,3 +277,21 @@ div.hr {clear:both}
    padding:5px;
    border: 1px solid #ccc;
 }
+
+#legendButton {
+   margin-top:20px;
+
+   /*position:absolute;
+   width:100px;
+   height:15px;
+   background:#aaa;
+   left:120px;  #sidebar'width - #legendButton'width / 2
+   top:120px;  #head'height - #roundedCountents'top + #legendButton'height / 2
+   */
+   /*
+   -moz-transform:rotate(270deg);
+   -webkit-transform:rotate(270deg);
+   -o-transform:rotate(270deg);
+   */
+}
+
