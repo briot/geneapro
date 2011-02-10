@@ -37,6 +37,27 @@ def __add_default_person_attributes (person):
       person.surname = ""
 
 
+# Maximum number of elements in a SQL_IN
+MAX_SQL_IN = 900
+
+def sql_chunks(fn):
+    """FN is a function that takes a sequence that will be used in a SQL IN.
+       Multiple calls to fn are performed if FN is too big for sqlite3 (which
+       has a hard-coded limitation
+    """
+
+    def do_fn(ids, *args, **kwargs):
+        if ids is None:
+            fn(None, *args, **kwargs)
+        else:
+            offset = 0
+            while offset < len(ids):
+                fn(ids[offset:offset + MAX_SQL_IN], *args, **kwargs)
+                offset += MAX_SQL_IN
+
+    return do_fn
+
+
 def __get_characteristics(persons, ids):
    """Compute characteristics for all the PERSONS.
       PERSONS is a dictionary associating an id to an instance of PERSONA.
@@ -57,24 +78,31 @@ def __get_characteristics(persons, ids):
    for p, char in all_p2c.values_list('person', 'characteristic'):
        p2c[char] = persons[p]
 
-   chars = models.Characteristic_Part.objects.all()
-   if ids is not None:
-       chars = chars.filter(characteristic__in=p2c.keys())
+   @sql_chunks
+   def __add_chars_for_ids(ids):
+       chars = models.Characteristic_Part.objects.all()
+       if ids is not None:
+           chars = chars.filter(characteristic__in=ids)
 
-   for c in chars.select_related():
-       p = p2c[c.characteristic_id]
-       chars = p.all_chars
-       ch = chars.get(c.characteristic_id, "")
-       chars[c.characteristic_id] = ch + c.type.name + "=" + c.name + " "
+       for c in chars.select_related():
+           p = p2c[c.characteristic_id]
+           chars = p.all_chars
+           ch = chars.get(c.characteristic_id, "")
+           chars[c.characteristic_id] = ch + c.type.name + "=" + c.name + " "
 
-       # Some special cases, for the sake of the pedigree view and the styles
+           # Some special cases, for the sake of the pedigree view and the styles
 
-       if c.type_id == models.Characteristic_Part_Type.sex:
-          p.sex = c.name
-       elif c.type_id == models.Characteristic_Part_Type.given_name:
-          p.given_name = c.name
-       elif c.type_id == models.Characteristic_Part_Type.surname:
-          p.surname = c.name
+           if c.type_id == models.Characteristic_Part_Type.sex:
+              p.sex = c.name
+           elif c.type_id == models.Characteristic_Part_Type.given_name:
+              p.given_name = c.name
+           elif c.type_id == models.Characteristic_Part_Type.surname:
+              p.surname = c.name
+
+   if ids is None:
+       __add_chars_for_ids(None)
+   else:
+       __add_chars_for_ids(p2c.keys())
 
 
 def __get_events(persons, ids, styles, types=None):
@@ -111,16 +139,17 @@ def __get_events(persons, ids, styles, types=None):
    places = dict()
    all_events = []
 
+   @sql_chunks
    def __add_events_for_id(ids, places, all_events):
        """IDS can be None to fetch all from database"""
 
        events = models.Event.objects.all()
 
        if ids is not None:
-           events = events.filter(id__in=ids)
+          events = events.filter(id__in=ids)
 
        if types:
-           events = events.filter(type__in=types)
+          events = events.filter(type__in=types)
 
        for e in events.select_related('place'):
           all_events.append(e)
@@ -151,21 +180,10 @@ def __get_events(persons, ids, styles, types=None):
                     and role == models.Event_Type_Role.principal:
                  p.marriage = e
 
-   # SQLlite has a limitation that it will not return more than 1000 rows.
-   # So we use a sliding window here
-   # ??? The limitation is rather in the length of __in parameter, but it can
-   # return more than 1000 rows
-
-   offset = 0
-
    if ids is None:
        __add_events_for_id(None, places, all_events)
-
    else:
-       events = p2e.keys()
-       while offset < len(events):
-           __add_events_for_id(events[offset:offset + 800], places, all_events)
-           offset += 800
+       __add_events_for_id(p2e.keys(), places, all_events)
 
    if compute_parts:
       parts = models.Place_Part.objects.filter (

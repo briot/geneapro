@@ -20,8 +20,8 @@ def view (request):
    decujus = 1
    tree = Tree ()
    styles = Styles ([], tree, decujus=decujus)
-   ids = set (tree.ancestors (decujus).keys())
-   persons = extended_personas (ids, styles, types=event_types_for_pedigree)
+   ids = tree.ancestors (decujus).keys()
+   persons = extended_personas (ids, styles, event_types=event_types_for_pedigree)
    father_ids = tree.ancestors (tree.father (decujus))
    mother_ids = tree.ancestors (tree.mother (decujus))
 
