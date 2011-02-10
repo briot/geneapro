@@ -115,7 +115,7 @@ rules_func = (
 )
 
 
-def style_to_td(style):
+def style_to_css(style):
     """A style as defined in the rules. It behaves like a standard dict,
        but provides additional methods for conversion in various contexts
     """
@@ -163,7 +163,7 @@ class Styles():
       self.counts = [None] * len (rules)  # the "count" rules: (test, value)
       self._need_place_parts = False
 
-      self._all_styles = dict () # All required styles (id -> (index,{styles}))
+      self._all_styles = dict () # All required styles (id -> (index,{styles},CSS))
       self.styles_count = 0
 
       for index, r in enumerate(rules):
@@ -267,9 +267,11 @@ class Styles():
          if a not in styles:
             styles[a] = style[a]
 
-   def compute (self, person):
+   def compute (self, person, as_css=False):
       """Sets person.styles to contain the list of styles for that person.
          Nothing is computing if the style is already known.
+         if AS_CSS is True, person.styles is set to a valid CSS style, rather
+         than an index into all_styles
       """
 
       styles = {}
@@ -355,11 +357,14 @@ class Styles():
 
       s = self._all_styles.get (hashes, None)
       if not s:
-         self._all_styles [hashes] = (self.styles_count, styles)
-         person.styles = self.styles_count
+         s = (self.styles_count, styles, style_to_css(styles))
+         self._all_styles [hashes] = s
          self.styles_count += 1
+
+      if as_css:
+          person.styles = s[2]
       else:
-         person.styles = s[0]
+          person.styles = s[0]
 
    def all_styles (self):
       """The list of all styles needed to render the tree"""

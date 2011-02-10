@@ -1,0 +1,52 @@
+{% extends "geneapro/base.html" %}
+{% block title %}GeneaPro: pedigree{% endblock %}
+{% block css %}
+table {margin: 20px 0 0 30px;
+       border:1px solid #AAA;
+       border-spacing:0;
+       border-collapse:collapse}
+th {padding:5px;
+    background:#AAA;
+    border-right:1px solid #444}
+tr > td:first-child {text-align:left; color:#AAA}
+td {border-right:1px solid #AAA; padding: 0 5px}
+
+{% endblock css %}
+
+{% block script %}
+{% endblock script %}
+
+{% block endbody %}
+{% endblock endbody %}
+
+{% block leftside %}
+{% endblock leftside %}
+
+{% block contents %}
+
+<table>
+   <tr>
+      <th>Given name</th>
+      <th>Surname</th>
+      <th>Name</th>
+      <th>Description</th>
+      <th>Birth</th>
+      <th>Death</th>
+      <th>Marriage</th>
+      <th>Last changed</th>
+   </tr>
+   {% for p in persons %}
+   <tr>
+      <td><a href="/persona/{{p.id}}">{{p.given_name}}</a></td>
+      <td>{{p.surname}}</td>
+      <td style='{{p.styles}}'>{{p.name}}</td>
+      <td>{{p.description}}</td>
+      <td>{{p.birth}}</td>
+      <td>{{p.death}}</td>
+      <td>{{p.marriage}}</td>
+      <td>{{p.last_change}}</td>
+   </tr>
+   {% endfor %}
+</table>
+{% endblock contents %}
+
