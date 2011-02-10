@@ -45,6 +45,7 @@ var defaultSettings = {
   onDraw: null, // Called to redraw. 'this' is the Canvas object
   onCtrlClick: null, // Called on control-click
                 // If returns true, prevents further clicks in the canvas
+  onDblClick: null, // Called on double-click
 }
 
 function ifnotDisabled(evt, callback) {
@@ -91,6 +92,10 @@ function Canvas (options, elem) {
       this.canvas.ctrl_click ($.proxy
          (function(e) {ifnotDisabled.apply(this, [e, options.onCtrlClick])},
           this));
+   if (options.onDblClick)
+      this.canvas.dblclick($.proxy(
+               function(e){ifnotDisabled.apply(this, [e, options.onDblClick])},
+               this));
 
    onResize.apply(this);
 }

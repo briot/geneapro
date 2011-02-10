@@ -71,13 +71,16 @@ function drawSOSA() {
       lineHeight: $.detectFontSize (baseFontSize, fontName),
       onDraw: doDraw,
       onCtrlClick: onCtrlClick,
+      onDblClick: onDblClick,
    };
    $("#pedigreeSVG").canvas(opt);
 };
 
-function onCtrlClick(evt) {
-   var canvas = this,
-       off = $(this.canvas).offset(),
+function getSelected(canvas, evt) {
+   /* Return the id of the selected persona */
+
+   var canvas = canvas,
+       off = $(canvas.canvas).offset(),
        mx = evt.pageX - off.left,
        my = evt.pageY - off.top,
        selected = null;
@@ -89,9 +92,21 @@ function onCtrlClick(evt) {
                return true;
             }
          });
+   return selected;
+}
 
+function onCtrlClick(evt) {
+   var selected = getSelected(this, evt);
    if (selected) {
       getPedigree (selected);
+      return true;
+   }
+}
+
+function onDblClick(evt) {
+   var selected = getSelected(this, evt);
+   if (selected) {
+      window.location = "/persona/" + selected.id;
       return true;
    }
 }
