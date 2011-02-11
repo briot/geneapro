@@ -4,7 +4,7 @@
  <title>{% block title %}GeneaPro{% endblock title %}</title>
  {# <meta http-equiv="content-type" content="text/html;charset=utf-8"> #}
 
- <style>
+ <style type="text/css">
 {# Throbber image generated with http://www.ajaxload.info #}
 .throbber {background-image:url('{{MEDIA_URL}}ajax-loader.gif')}
    {% block css %}
@@ -12,6 +12,7 @@
  </style>
  <link rel="stylesheet" href="{{MEDIA_URL}}base.css"/>
  <script type="text/javascript" src="{{MEDIA_URL}}jquery-1.4.4.min.js"></script>
+ <script type="text/javascript" src="{{MEDIA_URL}}jquery.dataTables.min.js"></script>
  <script type="text/javascript" src="{{MEDIA_URL}}base.js"></script>
  {% block header %}
  {% endblock header %}
