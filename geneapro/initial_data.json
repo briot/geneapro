@@ -1074,7 +1074,7 @@
         "fields": {
             "gedcom": "_MIDL", 
             "is_name_part": true, 
-            "name": "middle names"
+            "name": "middle name"
         }, 
         "model": "geneapro.characteristic_part_type", 
         "pk": 40

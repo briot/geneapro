@@ -411,15 +411,16 @@ class GedcomImporter(object):
                     if t:
                         if k == 'GIVN' and GIVEN_NAME_TO_MIDDLE_NAME:
                             if v:
-                                n = v.replace(',', ' ').split(' ', 2)
+                                n = v.replace(',', ' ').split(' ')
                                 models.Characteristic_Part.objects.create(
                                     characteristic=c, type=t, name=n[0])
 
-                                if len(n) == 2:
-                                    models.Characteristic_Part.objects.create(
+                                for m in n[1:]:
+                                   if m:
+                                     models.Characteristic_Part.objects.create(
                                         characteristic=c,
                                         type=self._char_types['_MIDL'],
-                                        name=n[1])
+                                        name=m)
                         elif v:
                             models.Characteristic_Part.objects.create(
                                 characteristic=c, type=t, name=v)
