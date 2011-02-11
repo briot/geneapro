@@ -38,25 +38,35 @@ def __add_default_person_attributes (person):
       person.surname = ""
 
 
-# Maximum number of elements in a SQL_IN
-MAX_SQL_IN = 900
-
-def sql_chunks(fn):
-    """FN is a function that takes a sequence that will be used in a SQL IN.
-       Multiple calls to fn are performed if FN is too big for sqlite3 (which
-       has a hard-coded limitation
+def sql_in(objects, field_in, ids):
+    """A generator that performs the OBJECTS query, with extra filtering
+       on FIELD_IN. This is equivalent to
+           objects.filter("field_in"__in = ids)
+       except it repeats the query multiple times if there are too many
+       entries in IDS (a limitation of sqlite).
+       IDS should be None to just perform the OBJECTS query without any
+       additional filtering.
     """
 
-    def do_fn(ids, *args, **kwargs):
-        if ids is None:
-            fn(None, *args, **kwargs)
-        else:
-            offset = 0
-            while offset < len(ids):
-                fn(ids[offset:offset + MAX_SQL_IN], *args, **kwargs)
-                offset += MAX_SQL_IN
+    if ids is None:
+        for obj in objects.all():
+            yield obj
+    else:
+        # Maximum number of elements in a SQL_IN
+        MAX_SQL_IN = 900
 
-    return do_fn
+        field_in += "__in"   # Django syntax for SQL's IN operator
+        ids = list(ids)      # need a list to extract parts of it
+        offset = 0
+
+        while offset < len(ids):
+            query = apply(
+                objects.filter, [],
+                {field_in:ids[offset:offset + MAX_SQL_IN]})
+            for obj in query:
+                yield obj
+
+            offset += MAX_SQL_IN
 
 
 def __get_characteristics(persons, ids):
@@ -79,31 +89,23 @@ def __get_characteristics(persons, ids):
    for p, char in all_p2c.values_list('person', 'characteristic'):
        p2c[char] = persons[p]
 
-   @sql_chunks
-   def __add_chars_for_ids(ids):
-       chars = models.Characteristic_Part.objects.all()
-       if ids is not None:
-           chars = chars.filter(characteristic__in=ids)
+   chars = models.Characteristic_Part.objects.select_related()
 
-       for c in chars.select_related():
-           p = p2c[c.characteristic_id]
-           chars = p.all_chars
-           ch = chars.get(c.characteristic_id, "")
-           chars[c.characteristic_id] = ch + c.type.name + "=" + c.name + " "
+   # Query all chars if ids==None, otherwise a subset
+   for c in sql_in(chars, "characteristic", ids and p2c.keys()):
+       p = p2c[c.characteristic_id]
+       chars = p.all_chars
+       ch = chars.get(c.characteristic_id, "")
+       chars[c.characteristic_id] = ch + c.type.name + "=" + c.name + " "
 
-           # Some special cases, for the sake of the pedigree view and the styles
+       # Some special cases, for the sake of the pedigree view and the styles
 
-           if c.type_id == models.Characteristic_Part_Type.sex:
-              p.sex = c.name
-           elif c.type_id == models.Characteristic_Part_Type.given_name:
-              p.given_name = c.name
-           elif c.type_id == models.Characteristic_Part_Type.surname:
-              p.surname = c.name
-
-   if ids is None:
-       __add_chars_for_ids(None)
-   else:
-       __add_chars_for_ids(p2c.keys())
+       if c.type_id == models.Characteristic_Part_Type.sex:
+          p.sex = c.name
+       elif c.type_id == models.Characteristic_Part_Type.given_name:
+          p.given_name = c.name
+       elif c.type_id == models.Characteristic_Part_Type.surname:
+          p.surname = c.name
 
 
 def __get_events(persons, ids, styles, types=None):
@@ -117,12 +119,7 @@ def __get_events(persons, ids, styles, types=None):
    p2e = dict()     # event_id -> (person, role_id)
    sources = dict() # event_id -> [source_id...]
 
-   all_p2e = models.P2E_Assertion.objects.all()
-
-   if ids is not None:
-       all_p2e = all_p2e.filter(person__in=ids)
-
-   for p in all_p2e.select_related('assertion'):
+   for p in sql_in(models.P2E_Assertion.objects, "person", ids):
       if p.event_id in p2e:
          p2e[p.event_id].add((persons[p.person_id], p.role_id))
          if p.source_id is not None:
@@ -140,51 +137,36 @@ def __get_events(persons, ids, styles, types=None):
    places = dict()
    all_events = []
 
-   @sql_chunks
-   def __add_events_for_id(ids, places, all_events):
-       """IDS can be None to fetch all from database"""
+   events = models.Event.objects.select_related('place')
+   if types:
+       events = events.filter(type__in=types)
 
-       events = models.Event.objects.all()
-
-       if ids is not None:
-          events = events.filter(id__in=ids)
-
-       if types:
-          events = events.filter(type__in=types)
-
-       for e in events.select_related('place'):
-          all_events.append(e)
-          if compute_parts and e.place:
-             if e.place_id not in places:
-                places [e.place_id] = e.place
-             else:
-                e.place = places [e.place_id]
-
-          e.sources = sources [e.id]
-          if e.date:
-              e.Date = Date (e.date)
+   # Query all events if ids==None, otherwise a subset
+   for e in sql_in(events, "id", ids and p2e.keys()):
+       all_events.append(e)
+       if compute_parts and e.place:
+          if e.place_id not in places:
+             places [e.place_id] = e.place
           else:
-              e.Date = None
+             e.place = places [e.place_id]
 
-          for p, role in p2e [e.id]:
-              p.all_events[e.id] = unicode(e)
+       e.sources = sources [e.id]
+       e.Date = e.date and Date (e.date)
 
-              if e.type_id == models.Event_Type.birth \
-                    and role == models.Event_Type_Role.principal:
-                 p.birth = e
+       for p, role in p2e [e.id]:
+           p.all_events[e.id] = unicode(e)
 
-              elif e.type_id == models.Event_Type.death \
-                    and role == models.Event_Type_Role.principal:
-                 p.death = e
+           if e.type_id == models.Event_Type.birth \
+                 and role == models.Event_Type_Role.principal:
+              p.birth = e
 
-              elif e.type_id == models.Event_Type.marriage \
-                    and role == models.Event_Type_Role.principal:
-                 p.marriage = e
+           elif e.type_id == models.Event_Type.death \
+                 and role == models.Event_Type_Role.principal:
+              p.death = e
 
-   if ids is None:
-       __add_events_for_id(None, places, all_events)
-   else:
-       __add_events_for_id(p2e.keys(), places, all_events)
+           elif e.type_id == models.Event_Type.marriage \
+                 and role == models.Event_Type_Role.principal:
+              p.marriage = e
 
    if compute_parts:
       parts = models.Place_Part.objects.filter (
