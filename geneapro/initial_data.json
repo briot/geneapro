@@ -1072,7 +1072,7 @@
     }, 
     {
         "fields": {
-            "gedcom": "", 
+            "gedcom": "_MIDL", 
             "is_name_part": true, 
             "name": "middle names"
         }, 

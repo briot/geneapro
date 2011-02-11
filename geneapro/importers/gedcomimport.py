@@ -111,7 +111,7 @@ class GedcomImporter(object):
             if c.gedcom:
                 self._char_types[c.gedcom] = c
 
-        self._char_types['MIDDLE'] = \
+        self._char_types['_MIDL'] = \
             models.Characteristic_Part_Type.objects.get(id=40)
         self._char_types['NAME'] = True  # Handled specially in _create_characteristic
 
@@ -418,7 +418,7 @@ class GedcomImporter(object):
                                 if len(n) == 2:
                                     models.Characteristic_Part.objects.create(
                                         characteristic=c,
-                                        type=self._char_types['MIDDLE'],
+                                        type=self._char_types['_MIDL'],
                                         name=n[1])
                         elif v:
                             models.Characteristic_Part.objects.create(

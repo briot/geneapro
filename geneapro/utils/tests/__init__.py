@@ -114,11 +114,11 @@ class DateTestCase (unittest.TestCase):
       """Various tests for date parsing"""
       self._assert_date ("2008-01-01", JAN_1_2008, "2008-01-01")
       self._assert_date ("2008-01-01 1:01am", JAN_1_2008, "2008-01-01 01:01:00")
-      self._assert_date ("2008-01-01 11:01:12", JAN_1_2008, 
+      self._assert_date ("2008-01-01 11:01:12", JAN_1_2008,
                         "2008-01-01 11:01:12")
-      self._assert_date ("2008-01-01 00:00:00", JAN_1_2008, 
+      self._assert_date ("2008-01-01 00:00:00", JAN_1_2008,
                         "2008-01-01 00:00:00")
-      self._assert_date ("2008-01-01 23:59:59", JAN_1_2008, 
+      self._assert_date ("2008-01-01 23:59:59", JAN_1_2008,
                         "2008-01-01 23:59:59")
       self._assert_date ("20080101?", JAN_1_2008, "2008-01-01 ?")
       self._assert_date ("22/10/2008?", OCT_22_2008, "2008-10-22 ?")
@@ -146,9 +146,9 @@ class DateTestCase (unittest.TestCase):
       self._assert_date ("1583-01-01", JAN_1_1583, "1583-01-01")
       self._assert_date ("1583-01-01 JU   ", JAN_1_1583_JU,
                         "1583-01-01 (Julian)")
-      self._assert_date ("1583-01-01 OS   ", JAN_1_1583_JU, 
+      self._assert_date ("1583-01-01 OS   ", JAN_1_1583_JU,
                         "1583-01-01 (Julian)")
-      self._assert_date ("1583-01-01 (JU)   ", JAN_1_1583_JU, 
+      self._assert_date ("1583-01-01 (JU)   ", JAN_1_1583_JU,
                         "1583-01-01 (Julian)")
       self._assert_date ("1583-01-01 GR", JAN_1_1583, "1583-01-01")
       self._assert_date ("1 vendemiaire I F", 2375840, "1 vendemiaire I")
@@ -158,10 +158,10 @@ class DateTestCase (unittest.TestCase):
       self._assert_date ("1 brumaire XI F", 2379522, "1 brumaire XI")
       self._assert_date ("10 vendemiaire XI F", OCT_2_1802, "10 vendemiaire XI")
       self._assert_date ("10 vendemiaire XI", OCT_2_1802, "10 vendemiaire XI")
-      self._assert_date ("10 fructidor 11 (French Republican)", 
+      self._assert_date ("10 fructidor 11 (French Republican)",
                         AUG_28_1803, "10 fructidor XI")
       self._assert_date ("10 fructidor 11", AUG_28_1803, "10 fructidor XI")
-      self._assert_date ("before 10 fructidor 11 (French Republican)", 
+      self._assert_date ("before 10 fructidor 11 (French Republican)",
                         AUG_28_1803, "/10 fructidor XI")
       self._assert_date ("2008-01-01 - 12 days", DEC_20_2007, "2007-12-20")
       self._assert_date ("2008-01-01 - 12days", DEC_20_2007, "2007-12-20")
@@ -175,6 +175,10 @@ class DateTestCase (unittest.TestCase):
         "from ca /1700 (Julian) to 10 vendemiaire XI/")
       self._assert_date ("2008-11-20 - 1 year + 1 month", DEC_20_2007,
        "2007-12-20")
+
+      # Partially unknown dates
+
+      self._assert_date("1920-08-??", 2422538, "1920-08-01 ?")
 
       self._assert_date ("entre 1700 ju et 10 vendemiaire XI",
        (JAN_1_1700_JU, OCT_2_1802),

@@ -92,7 +92,10 @@ ADD_RE  = re.compile ("\s*([-+])\s*(\d+)\s*(days?|months?|years?|" +
                       RE_DAYS + "|" + RE_MONTHS + "|" +
                       RE_YEARS + ")\s*$", re.IGNORECASE)
 YEAR_RE = "(\d{1,4}|(?:an\s+)?[MDCXVI]+)"
-YYYYMMDD_RE = re.compile ("^\s*" + YEAR_RE + "[-/](\d?\d)[-/](\d?\d)$",
+
+OPTDAY = "(\d?\d|\?*)"  # day (one or two digits), or any number of "?"
+
+YYYYMMDD_RE = re.compile ("^\s*" + YEAR_RE + "[-/]"+OPTDAY+"[-/]"+OPTDAY+"$",
                           re.IGNORECASE)
 ISO_RE = re.compile ("^\s*" + YEAR_RE + "(\d{2})(\d{2})$", re.IGNORECASE)
 DDMMYYYY_RE = re.compile ("^\s*(\d\d)[/-](\d\d)[/-]" + YEAR_RE + "$",
@@ -180,6 +183,15 @@ def __get_year (text):
       text = re.sub ("an\s*", "", text)
       return from_roman_literal (text)
 
+def as_int(d):
+    """Converts d to an integer, or returns the empty string if not
+       an integer
+    """
+    try:
+        return int(d)
+    except:
+        return 0
+
 def get_ymd (txt, months):
    """Extracts year, month and day from txt. Returns a tuple with
       (year, month, day, year_specified, month_specified, day_specified)
@@ -193,8 +205,8 @@ def get_ymd (txt, months):
    m = YYYYMMDD_RE.search (txt) or ISO_RE.search (txt)
    if m:
       return (__get_year (m.group (1)),
-              int (m.group (2)),
-              int (m.group (3)),
+              as_int (m.group (2)),
+              as_int (m.group (3)),
               True, True, True)
 
    m = DDMMYYYY_RE.search (txt)
@@ -569,7 +581,7 @@ class Date (object):
       txt = self.text
 
       for cal in KNOWN_CALENDARS:
-         remain = cal.is_a (self.text)
+         remain = cal.is_a(self.text)
          if remain:
             self.calendar = cal
             txt = remain
@@ -577,6 +589,8 @@ class Date (object):
 
       if not self.calendar:
          self.calendar = CalendarGregorian ()
+
+      print "MANU calendar=", self.calendar
 
       self.type = DATE_ON
       match = BEFORE_RE.search (txt)
@@ -599,6 +613,8 @@ class Date (object):
          if match:
             self.precision = PRECISION_ESTIMATED
             txt = txt[:match.start(0)] + txt[match.end(0):]
+
+      print "MANU text2 = ", txt, " ", self.type, " ", self.precision
 
       # Do we have a time indicated ?
       match = TIME_RE.search (txt)
@@ -653,6 +669,8 @@ class Date (object):
 
          txt = txt[:match.start (0)] + txt [match.end (0):]
 
+      print "MANU handling to calendar: ", txt
+
       txt = txt.strip ()
       day = self.calendar.parse (txt, add_years, add_months, add_days)
       if day:
@@ -696,7 +714,13 @@ class Date (object):
       return self.date < date.date
 
    def __gt__ (self, date):
-      return self.date > date.date
+      if isinstance(date, DateRange):
+          if isinstance(date.date, tuple):
+             return self.date > date.date[0].date
+          else:   # date.date is an instance of Date
+             return self.date > date.date.date
+      else:
+          return self.date > date.date
 
    def __eq__ (self, date):
       return self.date == date.date
@@ -705,6 +729,12 @@ class Date (object):
       """Return the number of years between self and d.
          Only full years are counted
       """
+
+      if isinstance(date, DateRange):
+          if isinstance(date.date, tuple):
+              date = date.date[0]
+          else:
+              date = date.date
 
       if not date or not date.year_known or not self.year_known:
          return None
@@ -808,9 +838,17 @@ class DateRange (object):
    def sort_date (self):
       """Return a single date that can be used when sorting DateRanges"""
       if isinstance (self.date, tuple):
-         return self.date[0].sort_date ()
+         return self.date[0].sort_date()
       else:
-         return self.date.sort_date ()
+         return self.date.sort_date()
+
+   def years_since (self, date):
+       if self.date is None:
+           return -1
+       elif isinstance(self.date, tuple):
+           return self.date[0].years_since(date)
+       else:
+           return self.date.years_since(date)
 
    def __unicode__ (self):
       """Convert to a string"""

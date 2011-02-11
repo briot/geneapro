@@ -235,7 +235,7 @@ class Styles():
             for t in r[1]:
                if t[0] == "age":
                   if person.birth and e.Date:
-                     value = e.Date.years_since (person.birth.Date)
+                     value = e.Date.years_since(person.birth.Date)
                   else:
                      value = None
                elif t[0].startswith("place."):

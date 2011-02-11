@@ -248,7 +248,7 @@ class Place (GeneaproModel):
 
    def __unicode__ (self):
       parts = self.place_part_set.all ()
-      name = ",".join ([p.name for p in parts]) + " " + unicode(self.date)
+      name = ",".join ([p.name for p in parts])
       if self.parent_place:
          return unicode(self.name) + " " + unicode(self.parent_place) + name
       else:

@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from django.utils import simplejson
 from django.http import HttpResponse
 from mysites.geneapro import models
-from mysites.geneapro.utils.date import Date
+from mysites.geneapro.utils.date import Date, DateRange
 from mysites.geneapro.views.custom_highlight import style_rules
 from mysites.geneapro.views.styles import Styles
 from mysites.geneapro.views.rules import getLegend
@@ -118,6 +118,10 @@ def __get_events(persons, ids, styles, types=None):
 
    p2e = dict()     # event_id -> (person, role_id)
    sources = dict() # event_id -> [source_id...]
+   roles = dict()   # role_id  -> name
+
+   for role in models.Event_Type_Role.objects.all():
+       roles[role.id] = role.name
 
    for p in sql_in(models.P2E_Assertion.objects, "person", ids):
       if p.event_id in p2e:
@@ -132,29 +136,33 @@ def __get_events(persons, ids, styles, types=None):
             sources[p.event_id] = [p.source_id]
 
    for p in persons.itervalues():
-       p.all_events = dict() # All events of the person (id -> data)
+       p.all_events = dict() # All events of the person (id -> Event)
+                             # where Event has fields like "source", "Date"
+                             # "place"
 
    places = dict()
-   all_events = []
 
-   events = models.Event.objects.select_related('place')
+   events = models.Event.objects.select_related('place', 'type')
    if types:
        events = events.filter(type__in=types)
 
    # Query all events if ids==None, otherwise a subset
-   for e in sql_in(events, "id", ids and p2e.keys()):
-       all_events.append(e)
+   # Store all events in a list, since we'll need to refer to them
+   # afterward anyway
+   all_events = list(sql_in(events, "id", ids and p2e.keys()))
+
+   for e in all_events:
        if compute_parts and e.place:
           if e.place_id not in places:
-             places [e.place_id] = e.place
+             places[e.place_id] = e.place
           else:
-             e.place = places [e.place_id]
+             e.place = places[e.place_id]
 
-       e.sources = sources [e.id]
-       e.Date = e.date and Date (e.date)
+       e.sources = sources[e.id]
+       e.Date = e.date and DateRange(e.date)
 
-       for p, role in p2e [e.id]:
-           p.all_events[e.id] = unicode(e)
+       for p, role in p2e[e.id]:
+           p.all_events[e.id] = (e, roles[role])
 
            if e.type_id == models.Event_Type.birth \
                  and role == models.Event_Type_Role.principal:
@@ -169,14 +177,14 @@ def __get_events(persons, ids, styles, types=None):
               p.marriage = e
 
    if compute_parts:
-      parts = models.Place_Part.objects.filter (
-         place__in = places.keys ()) \
-        .order_by ('place') \
-        .select_related ('type')
-
       prev_place = None
       d = None
-      for p in parts:
+
+      for p in sql_in(models.Place_Part.objects
+          .order_by('place').select_related('type'),
+          "place", places.keys()):
+
+         # ??? We should also check the parent place to gets its own parts
          if p.place_id != prev_place:
             prev_place = p.place_id
             d = dict()
@@ -233,7 +241,7 @@ def view(request, id):
        'geneapro/persona.html',
        {"p":p,
         "chars": [unicode(c) for c in p[id].all_chars.itervalues()],
-        "events": [unicode(e) for e in p[id].all_events.itervalues()],
+        "events": p[id].all_events,
        },
        context_instance=RequestContext(request))
 

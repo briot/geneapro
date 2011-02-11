@@ -2,9 +2,31 @@
 {% block title %}GeneaPro: pedigree{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
+
+#containers tr > td:first-child {
+   text-transform:capitalize;
+   font-weight:bold;
+}
+#containers tr > td:first-child + td {
+   text-transform:capitalize;
+}
+   
 {% endblock css %}
 
+{% block header %}
+<link rel="stylesheet" href="{{MEDIA_URL}}datatables.css"/>
+{% endblock header %}
+
 {% block script %}
+$(document).ready(function() {
+$("#list").dataTable(
+  {"bPaginate": false,
+   "sDom": '<"top"fi>rt',
+   "aaSorting": [[ 3, "asc" ]], // on dates
+  }
+);
+});
+
 {% endblock script %}
 
 {% block endbody %}
@@ -22,13 +44,33 @@
       <td>{{c}}</td>
    </tr>
    {% endfor %}
-
-   {% for e in events %}
-   <tr>
-      <td style="padding-right:10px">Event</td>
-      <td>{{e|safe}}</td>
-   </tr>
-   {% endfor %}
 </table>
+
+<div id="containers">
+ <table id="list">
+   <thead>
+      <tr>
+         <th>Type</th>
+         <th>Name</th>
+         <th>Role</th>
+         <th>Date</th>
+         <th>Place</th>
+         <th>Sources</th>
+      </tr>
+   </thead>
+   <tbody>
+   {% for i, e in events.items %}
+      <tr>
+         <td>{{e.0.type.name}}</td>
+         <td>{{e.0.name}}</td>
+         <td>{{e.1}}</td>
+         <td>{{e.0.Date}}</td>
+         <td>{{e.0.place}}</td>
+         <td>{{e.0.sources|length}}</td>
+      </tr>
+   {% endfor %}
+   </tbody>
+ </table>
+</div>
 {% endblock contents %}
 
