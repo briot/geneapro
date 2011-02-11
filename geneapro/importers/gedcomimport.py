@@ -59,6 +59,9 @@ class GedcomImporter(object):
 
             self._births = dict()  # Index on persona id, contains Event
 
+            self._objects = dict() # Objects that were inserted in this import
+                                # to avoid duplicates.  file => Representation
+
             self._principal = models.Event_Type_Role.objects.get(
                 pk=models.Event_Type_Role.principal)
             self._birth__father = models.Event_Type_Role.objects.get(
@@ -227,8 +230,11 @@ class GedcomImporter(object):
             print 'Unknown mime type for object: ' + data.FORM
             return
 
-        repr = models.Representation.objects.create(source=source,
-                mime_type=mime, file=data.FILE, comments=data.TITL)
+        obj = self._objects.get(data.FILE, None)
+        if not obj or obj.comments != data.TITL:
+            self._objects[data.FILE] = models.Representation.objects.create(
+                source=source, mime_type=mime, file=data.FILE,
+                comments=data.TITL)
 
     def _create_family(self, data):
         """Create the equivalent of a FAMILY in the database"""
