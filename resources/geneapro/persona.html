@@ -8,7 +8,31 @@
    font-weight:bold;
    color:#AAA;
 }
-   
+
+h3 {
+   border-top: 1px solid black;
+   border-bottom: 2px solid black;
+   margin:15px 0 10px 30px;
+   padding: 8px 0;
+   width:900px; /* #containers'width */
+}
+
+h3 span.life {
+   margin-left: 30px;
+   font-weight: normal;
+}
+h3 span.id   {
+   color:#AAA;
+   margin-right:20px;
+   font-size:0.8em;
+   font-style:italic;
+}
+.char {
+  font-style:italic;
+  font-size:0.9em;
+  color:#AAA;
+}
+
 {% endblock css %}
 
 {% block header %}
@@ -35,6 +59,12 @@ $("#list").dataTable(
 
 {% block contents %}
 
+<h3>
+   <span class="id">{{p.id}}</span>
+   <span class="name">{{p.name}}</span>
+   <span class="life">({{p.birth.date}} - {{p.death.date}})</span>
+</h3>
+
 <div id="containers">
  <table id="list">
    <thead>
@@ -51,18 +81,27 @@ $("#list").dataTable(
 
    {% for k, c in chars.items %}
    <tr>
+      {% if c.parts|length == 1 %}
+      <td>{{c.parts.0.0}}</td>
+      <td>{{c.parts.0.1}}</td>
+      {% else %}
       <td>Char.</td>
       <td>
 
       {% for pname, pval in c.parts %}
-      <i>{{pname}}</i> = {{pval}}<br>
+      <span class="char">{{pname}}</span>: {{pval}}<br>
       {% endfor %}
       </td>
+      {% endif %}
 
       <td></td>
       <td>{{c.Date|default:"-"}}</td>
       <td>{{c.place|default:"-"}}</td>
-      <td>{{c.sources|length}}</td>
+      <td>
+         {% for s in c.sources %}
+         <a href="/sources/{{s}}">{{s}}</a>
+         {% endfor %}
+      </td>
    </tr>
    {% endfor %}
 
@@ -73,7 +112,11 @@ $("#list").dataTable(
          <td>{{e.1}}</td>
          <td>{{e.0.Date|default:"-"}}</td>
          <td>{{e.0.place|default:"-"}}</td>
-         <td>{{e.0.sources|length}}</td>
+         <td>
+            {% for s in e.0.sources %}
+            <a href="/sources/{{s}}">{{s}}</a>
+            {% endfor %}
+         </td>
       </tr>
    {% endfor %}
    </tbody>

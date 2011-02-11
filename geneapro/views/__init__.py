@@ -16,12 +16,3 @@ def index (request):
       'places'     : places,
       'hello'      : _("Hello")},
      context_instance=RequestContext(request))
-
-
-def sources (request):
-   """Display the Sources view"""
-
-   return render_to_response (
-      'geneapro/sources.html',
-      {},
-      context_instance=RequestContext(request))

@@ -255,7 +255,7 @@ def view(request, id):
 
    return render_to_response(
        'geneapro/persona.html',
-       {"p":p,
+       {"p":p[id],
         "chars": p[id].all_chars,
         "events": p[id].all_events,
        },
