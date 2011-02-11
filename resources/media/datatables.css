@@ -99,7 +99,6 @@
     border-bottom: 2px solid black;
 }
 #containers tr:hover {background-color: #BBB}
-#containers tr > td:first-child {text-align:left; color:#AAA}
 #containers td {
     border-right:1px solid #AAA;
     white-space:nowrap;

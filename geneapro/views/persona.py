@@ -81,13 +81,22 @@ def __get_characteristics(persons, ids):
        p.all_chars = dict() # All characteristics of the person (id -> data)
 
    p2c = dict()  # characteristic_id -> person
+   sources = dict() # event_id -> [source_id...]
 
    all_p2c = models.P2C_Assertion.objects.all()
    if ids is not None:
        all_p2c = all_p2c.filter(person__in=ids)
 
-   for p, char in all_p2c.values_list('person', 'characteristic'):
+   for p, s, char in all_p2c.values_list(
+       'person', 'source_id', 'characteristic'):
+
        p2c[char] = persons[p]
+
+       if s:
+           if sources.get(char, None) is None:
+               sources[char] = [s]
+           else:
+               sources[char].append(s)
 
    chars = models.Characteristic_Part.objects.select_related()
 
@@ -95,8 +104,15 @@ def __get_characteristics(persons, ids):
    for c in sql_in(chars, "characteristic", ids and p2c.keys()):
        p = p2c[c.characteristic_id]
        chars = p.all_chars
-       ch = chars.get(c.characteristic_id, "")
-       chars[c.characteristic_id] = ch + c.type.name + "=" + c.name + " "
+       ch = chars.get(c.characteristic_id, None)
+       if not ch:
+           ch = chars[c.characteristic_id] = {
+               "place":c.characteristic.place,
+               "Date":c.characteristic.date and Date(c.characteristic.date),
+               "sources":sources.get(c.characteristic_id, []),
+               "parts":[]}
+
+       ch["parts"].append ((c.type.name, c.name))
 
        # Some special cases, for the sake of the pedigree view and the styles
 
@@ -240,7 +256,7 @@ def view(request, id):
    return render_to_response(
        'geneapro/persona.html',
        {"p":p,
-        "chars": [unicode(c) for c in p[id].all_chars.itervalues()],
+        "chars": p[id].all_chars,
         "events": p[id].all_events,
        },
        context_instance=RequestContext(request))

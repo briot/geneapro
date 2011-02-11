@@ -590,8 +590,6 @@ class Date (object):
       if not self.calendar:
          self.calendar = CalendarGregorian ()
 
-      print "MANU calendar=", self.calendar
-
       self.type = DATE_ON
       match = BEFORE_RE.search (txt)
       if match:
@@ -613,8 +611,6 @@ class Date (object):
          if match:
             self.precision = PRECISION_ESTIMATED
             txt = txt[:match.start(0)] + txt[match.end(0):]
-
-      print "MANU text2 = ", txt, " ", self.type, " ", self.precision
 
       # Do we have a time indicated ?
       match = TIME_RE.search (txt)
@@ -668,8 +664,6 @@ class Date (object):
                add_years = add_years - int (match.group (2))
 
          txt = txt[:match.start (0)] + txt [match.end (0):]
-
-      print "MANU handling to calendar: ", txt
 
       txt = txt.strip ()
       day = self.calendar.parse (txt, add_years, add_months, add_days)
@@ -833,6 +827,7 @@ class DateRange (object):
 
       self.text = text.strip ()
       self.date = None
+      self.year_known = False
       self.__parse ()
 
    def sort_date (self):
@@ -849,6 +844,12 @@ class DateRange (object):
            return self.date[0].years_since(date)
        else:
            return self.date.years_since(date)
+
+   def year (self, calendar=None):
+       if isinstance(self.date, tuple):
+           return self.date[0].year(calendar)
+       else:
+           return self.date.year(calendar)
 
    def __unicode__ (self):
       """Convert to a string"""
@@ -885,3 +886,8 @@ class DateRange (object):
                          SPAN_BETWEEN)
          else:
             self.date = Date (self.text)
+
+      if isinstance(self.date, tuple):
+          self.year_known = self.date[0].year_known
+      else:
+          self.year_known = self.date.year_known

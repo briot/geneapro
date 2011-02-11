@@ -6,9 +6,7 @@
 #containers tr > td:first-child {
    text-transform:capitalize;
    font-weight:bold;
-}
-#containers tr > td:first-child + td {
-   text-transform:capitalize;
+   color:#AAA;
 }
    
 {% endblock css %}
@@ -37,15 +35,6 @@ $("#list").dataTable(
 
 {% block contents %}
 
-<table>
-   {% for c in chars %}
-   <tr>
-      <td style="padding-right:10px">Char</td>
-      <td>{{c}}</td>
-   </tr>
-   {% endfor %}
-</table>
-
 <div id="containers">
  <table id="list">
    <thead>
@@ -59,13 +48,31 @@ $("#list").dataTable(
       </tr>
    </thead>
    <tbody>
+
+   {% for k, c in chars.items %}
+   <tr>
+      <td>Char.</td>
+      <td>
+
+      {% for pname, pval in c.parts %}
+      <i>{{pname}}</i> = {{pval}}<br>
+      {% endfor %}
+      </td>
+
+      <td></td>
+      <td>{{c.Date|default:"-"}}</td>
+      <td>{{c.place|default:"-"}}</td>
+      <td>{{c.sources|length}}</td>
+   </tr>
+   {% endfor %}
+
    {% for i, e in events.items %}
       <tr>
          <td>{{e.0.type.name}}</td>
          <td>{{e.0.name}}</td>
          <td>{{e.1}}</td>
-         <td>{{e.0.Date}}</td>
-         <td>{{e.0.place}}</td>
+         <td>{{e.0.Date|default:"-"}}</td>
+         <td>{{e.0.place|default:"-"}}</td>
          <td>{{e.0.sources|length}}</td>
       </tr>
    {% endfor %}
