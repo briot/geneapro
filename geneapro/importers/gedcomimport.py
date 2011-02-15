@@ -76,11 +76,14 @@ class GedcomImporter(object):
             self._get_all_event_types()
             self._places = dict()
             self._personas = dict()  # Indexes on ids from gedcom
+            self._repo = dict()
 
             self._source_medium = dict()
             self._read_source_medium()
 
             self._sources = dict()
+            for r in data.REPO:
+                self._create_repo(r)
             for s in data.SOUR:
                 self._create_source(s)
             for s in data.INDI:
@@ -143,11 +146,46 @@ class GedcomImporter(object):
 
         return datetime.datetime.now()
 
+    def _create_repo(self, data):
+        if data.value and self._repo.get(data.value, None):
+            return self._repo[data.value]
+
+        info = ""
+        if getattr(data, "WWW", None):
+            info += "\nURL=".join(data.WWW)
+        if getattr(data, "PHON", None):
+            info += "\nPhone=".join(data.PHON)
+        if getattr(data, "RIN", None):
+            info += "\nRIN=" + data.RIN
+        if getattr(data, "NOTE", None):
+            info += "\nNote=".join(data.NOTE)
+
+        r = None
+
+        if info or getattr(data, "ADDR", None):
+            r = models.Repository.objects.create(
+                place=self._create_place(data),  # Parses ADDR
+                name=getattr(data, "NAME", info),
+                # type=None,
+                info=info)
+
+            if data.value:
+                self._repo[data.value] = r
+
+        for k, v in data.for_all_fields():
+            if k not in ("NAME", "ADDR", "WWW", "PHON", "RIN", "NOTE"):
+                print "%s Unhandled REPO.%s" % (location(v), k)
+
+        return r
+
     def _create_source(self, sour, subject_place=None):
         medium_id = 0
+        rep = None
 
         if sour.__dict__.has_key('REPO') and sour.REPO:
             repo = sour.REPO
+            rep = self._create_repo(repo)
+
             caln = repo.CALN  # call number
             if caln:
                 medium = (caln[0].MEDI or '').lower()
@@ -173,6 +211,13 @@ class GedcomImporter(object):
             medium_id=medium_id,
             last_change=self._create_CHAN(sour.CHAN),
             comments=comment)
+        if rep:
+            models.Repository_Source.objects.create(
+                repository=rep,
+                source=src,
+                #activity=None,
+                call_number=None,
+                description=None)
 
         if sour.ABBR:
             cit = models.Citation_Part.objects.create(
@@ -270,6 +315,13 @@ class GedcomImporter(object):
                          "CHAN") + family_events:
                 print "%s Unhandled FAM.%s" % (location(v), k)
 
+    def _addr_image(self, data):
+        result = ""
+        if data:
+            for (key, val) in data.for_all_fields():
+                result += ' %s=%s' % (key, val)
+        return result
+
     def _create_place(self, data, id=''):
         """If data contains a subnode PLAC, parse and returns it"""
 
@@ -294,10 +346,7 @@ class GedcomImporter(object):
         # few of these for a PLAC, but software such a gramps add quite a
         # number of fields
 
-        long_name = data.value
-        if addr:
-            for (key, val) in addr.for_all_fields():
-                long_name = long_name + ' %s=%s' % (key, val)
+        long_name = data.value + self._addr_image(addr)
         if data.MAP:
             long_name = long_name + ' MAP=%s,%s' % (data.MAP.LATI,
                     data.MAP.LONG)

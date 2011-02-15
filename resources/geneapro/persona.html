@@ -8,25 +8,6 @@
    font-weight:bold;
    color:#AAA;
 }
-
-h3 {
-   border-top: 1px solid black;
-   border-bottom: 2px solid black;
-   margin:15px 0 10px 30px;
-   padding: 8px 0;
-   width:900px; /* #containers'width */
-}
-
-h3 span.life {
-   margin-left: 30px;
-   font-weight: normal;
-}
-h3 span.id   {
-   color:#AAA;
-   margin-right:20px;
-   font-size:0.8em;
-   font-style:italic;
-}
 .char {
   font-style:italic;
   font-size:0.9em;
@@ -59,10 +40,11 @@ $("#list").dataTable(
 
 {% block contents %}
 
-<h3>
+<h3 id="title">
    <span class="id">{{p.id}}</span>
-   <span class="name">{{p.name}}</span>
-   <span class="life">({{p.birth.date}} - {{p.death.date}})</span>
+   <span class="givenName">{{p.base_given_name}}</span>
+   <span class="surName">{{p.base_surname}}</span>
+   <span class="details">({{p.birth.date}} - {{p.death.date}})</span>
 </h3>
 
 <div id="containers">

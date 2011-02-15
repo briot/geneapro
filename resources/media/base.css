@@ -47,12 +47,22 @@ h2 {background-color:#ECF2F9;
 .repositoryInfo {float:right; background-color:#F5F5F5; margin-right:10px;
           padding:10px; border:1px solid #ddd}
 .repositoryInfo h3 {margin:0 0 10px 0}
+.repositoryInfo select,
+.repositoryInfo textarea,
+.repositoryInfo input {width:250px}
+
+.sourceDetails select,
+.sourceDetails textarea,
+.sourceDetails input {width:250px}
+.sourceDetails th {
+   text-align:right;
+   padding-right:10px;
+}
 
 .sourceInfo {width:64em}
 .sourcepartDetails {margin-bottom:30px}
 
 .sourcepart h3 {margin:10px 0; padding-left:10px; }
-.sourcepartInfo {margin-top:30px}
 .sourcepartInfo td {white-space:nowrap}
 .sourcepartInfo table {border-collapse:collapse}
 .sourcepartInfo table th {text-align:right}
@@ -61,24 +71,6 @@ h2 {background-color:#ECF2F9;
 .sourcepartData {border-bottom:1px dotted #999}
 .sourcepartInfo td {height:2.5em}
 .sourcepartInfo td.factType {text-align:left; color:#777; padding-right:7px}
-
-.sourceGallery ul {list-style-type:none}
-.sourceGallery ul.carousel li {	display:block;
-	float:left;
-	margin-right:8px;
-	width:88px;
-	height:66px;
-	color:#ccc;
-	line-height:66px;
-	text-decoration:none;
-	text-align:center;
-	cursor:pointer;
- }
-.sourceGallery ul.carousel li span {font-size:20px}
-.sourceGallery ul.carousel li:hover {color:#999}
-.sourceGallery ul.carousel li:active {color:#555;
-    background-position:-174px 0;
-    cursor:default}
 
 .actions {color:#CAD4DE; float:right; padding:2px 10px 5px 10px;
           line-height:1.22em}
@@ -103,8 +95,19 @@ a {color:#16B; text-decoration:none; cursor:pointer}
           background:#ECF397}
 .tooltip ul {margin:0; padding-left:20px}
 
-div.scrollable {border:1px solid #ddd}
-img.scrollable {height:50%; width:100%; min-height:300px}
+div.scrollable {
+   margin:0 10px 10px 0;
+}
+div.scrollable img,
+div.scrollable canvas {
+   height:50%;
+   width:100%;
+   min-height:400px;
+   border:1px solid black;
+   -moz-box-shadow: 3px 3px 5px black; /* FF3.5+ */
+   -webkit-box-shadow: 3px 3px 5px black; /* Saf3.0+, Chrome */
+   box-shadow: 3px 3px 5px black; /* Opera 10.5, IE9 */
+}
 
 div.hr {clear:both}
 #footer_wrap {
@@ -165,7 +168,7 @@ div.hr {clear:both}
    background-image: linear-gradient(top, #777/*from #head*/, white);
    background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #777),color-stop(1, white));   
 }
-#sidebar h2 {
+#sidebarMenu h2 {
    margin:5px 5px 0 5px;
    padding:3px 3px 3px 8px;
    color:black;
@@ -185,19 +188,19 @@ div.hr {clear:both}
    width:137px; /* = #sidebar'width - h2'margin-left - h2'padding-left
                     - h2'padding-right */
 }
-#sidebar h2.selected {background:#39414A}
-#sidebar h2 a {
+#sidebarMenu h2.selected {background:#39414A}
+#sidebarMenu h2 a {
    text-decoration:none;
    color:black; /* #sidebar h2'color */
    white-space:nowrap;
    display:inline-block; width:100%}
-#sidebar h2 a:hover,
-#sidebar li a:hover {color:white}
-#sidebar ul {list-style:none; margin:8px 0 10px 20px; padding:0}
-#sidebar li {width:100%}
-#sidebar li a {text-decoration:none; color:black; white-space:nowrap;
+#sidebarMenu h2 a:hover,
+#sidebarMenu li a:hover {color:white}
+#sidebarMenu ul {list-style:none; margin:8px 0 10px 20px; padding:0}
+#sidebarMenu li {width:100%}
+#sidebarMenu li a {text-decoration:none; color:black; white-space:nowrap;
    width:100%; display:inline-block}
-#sidebar li a:before {content:"\00BB"; padding-right:5px}
+#sidebarMenu li a:before {content:"\00BB"; padding-right:5px}
 
 /**********************************************
  * Rounded corners (see http://css3please.com/)
@@ -258,7 +261,7 @@ div.hr {clear:both}
    padding:0;
    margin:0;
 }
-#contents canvas {
+#contents canvas.graph {
    z-index:100;
    width:100%;
    height:100%;
@@ -295,3 +298,43 @@ div.hr {clear:both}
    */
 }
 
+/*************************************************
+ * Titles
+ *************************************************/
+
+#title {
+   border-top: 1px solid black;
+   border-bottom: 2px solid black;
+   margin:15px 0 10px 30px;
+   padding: 8px 0;
+   width:900px; /* #containers'width */
+}
+
+#title span.details {
+   margin-left: 30px;
+   font-weight: normal;
+}
+#title span.givenName {
+}
+#title span.surName {
+   font-size:1.2em;
+}
+
+#title span.id   {
+   color:#AAA;
+   margin-right:20px;
+   font-size:0.8em;
+   font-style:italic;
+}
+
+/***************************************************
+ * Tabs and canvas
+ * Do not hide the invisible tabs, otherwise size computation is wrong and
+ * the canvas will be distorted. Instead, put them some other place.
+ * See http://jqueryui.com/demos/tabs/#...my_slider.2C_Google_Map.2C_sIFR_etc._not_work_when_placed_in_a_hidden_.28inactive.29_tab.3F
+ ***************************************************/
+
+.ui-tabs .ui-tabs-hide {
+  position: absolute;
+  left: -10000px;
+}

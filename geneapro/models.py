@@ -343,7 +343,7 @@ class Repository (GeneaproModel):
 
    place = models.ForeignKey (Place, null=True)
    name  = models.CharField (max_length=200)
-   type  = models.ForeignKey (Repository_Type)
+   type  = models.ForeignKey(Repository_Type, null=True)
    info  = models.TextField (null=True)
 
    class Meta:
@@ -360,7 +360,7 @@ class Source(GeneaproModel):
    """
 
    repositories = models.ManyToManyField (Repository,
-       related_name="repositories",
+       related_name="sources",
        through="Repository_Source")
    higher_source = models.ForeignKey ("self", related_name="lower_sources",
                                       null=True)
@@ -396,7 +396,7 @@ class Repository_Source (GeneaproModel):
 
    repository  = models.ForeignKey (Repository)
    source      = models.ForeignKey (Source)
-   activity    = models.ForeignKey (Activity)
+   activity    = models.ForeignKey (Activity, null=True)
    call_number = models.CharField (max_length=200, null=True)
    description = models.TextField (null=True)
 
@@ -444,7 +444,7 @@ class Representation(GeneaproModel):
    """
 
    mime_type = models.CharField (max_length=40)
-   source = models.ForeignKey (Source)
+   source = models.ForeignKey (Source, related_name="representations")
    file = models.TextField ()
    comments = models.TextField (null=True)
 

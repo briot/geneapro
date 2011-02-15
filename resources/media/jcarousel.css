@@ -1,60 +1,15 @@
-/**
- * This <div> element is wrapped by jCarousel around the list
- * and has the classname "jcarousel-container".
- */
-.jcarousel-container {
-    position: relative;
-}
-
-.jcarousel-clip {
-    z-index: 2;
-    padding: 0;
-    margin: 0;
-    overflow: hidden;
-    position: relative;
-}
-
-.jcarousel-list {
-    z-index: 1;
-    overflow: hidden;
-    position: relative;
-    top: 0;
-    left: 0;
-    margin: 0;
-    padding: 0;
-}
-
-.jcarousel-list li,
-.jcarousel-item {
-    float: left;
-    list-style: none;
-    /* We set the width/height explicitly. No width/height causes infinite loops. */
-    width: 75px;
-    height: 75px;
-}
-
-/**
- * The buttons are added dynamically by jCarousel before
- * the <ul> list (inside the <div> described above) and
- * have the classnames "jcarousel-next" and "jcarousel-prev".
- */
-.jcarousel-next {
-    z-index: 3;
-    display: none;
-}
-
-.jcarousel-prev {
-    z-index: 3;
-    display: none;
-}
 .jcarousel-skin-tango .jcarousel-container {
     -moz-border-radius: 10px;
     background: #F0F6F9;
     border: 1px solid #346F97;
 }
 
+.jcarousel-skin-tango .jcarousel-direction-rtl {
+	direction: rtl;
+}
+
 .jcarousel-skin-tango .jcarousel-container-horizontal {
-    margin-right:70px;  /* for Add/Remove buttons */
+    width: 245px;
     padding: 20px 40px;
 }
 
@@ -65,22 +20,28 @@
 }
 
 .jcarousel-skin-tango .jcarousel-clip-horizontal {
-    /*width:  245px;*/
+    width:  245px;
     height: 75px;
 }
 
 .jcarousel-skin-tango .jcarousel-clip-vertical {
-    width:  90px;
+    width:  75px;
     height: 245px;
 }
 
 .jcarousel-skin-tango .jcarousel-item {
-    width: 90px;
+    width: 75px;
     height: 75px;
 }
 
 .jcarousel-skin-tango .jcarousel-item-horizontal {
+	margin-left: 0;
     margin-right: 10px;
+}
+
+.jcarousel-skin-tango .jcarousel-direction-rtl .jcarousel-item-horizontal {
+	margin-left: 10px;
+    margin-right: 0;
 }
 
 .jcarousel-skin-tango .jcarousel-item-vertical {
@@ -103,6 +64,12 @@
     height: 32px;
     cursor: pointer;
     background: transparent url(next-horizontal.png) no-repeat 0 0;
+}
+
+.jcarousel-skin-tango .jcarousel-direction-rtl .jcarousel-next-horizontal {
+    left: 5px;
+    right: auto;
+    background-image: url(prev-horizontal.png);
 }
 
 .jcarousel-skin-tango .jcarousel-next-horizontal:hover {
@@ -128,6 +95,12 @@
     height: 32px;
     cursor: pointer;
     background: transparent url(prev-horizontal.png) no-repeat 0 0;
+}
+
+.jcarousel-skin-tango .jcarousel-direction-rtl .jcarousel-prev-horizontal {
+    left: auto;
+    right: 5px;
+    background-image: url(next-horizontal.png);
 }
 
 .jcarousel-skin-tango .jcarousel-prev-horizontal:hover {

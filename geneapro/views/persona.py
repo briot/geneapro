@@ -13,6 +13,7 @@ from mysites.geneapro.views.custom_highlight import style_rules
 from mysites.geneapro.views.styles import Styles
 from mysites.geneapro.views.rules import getLegend
 from mysites.geneapro.views.tree import Tree
+from mysites.geneapro.views.queries import sql_in
 
 
 event_types_for_pedigree = (
@@ -29,45 +30,20 @@ def __add_default_person_attributes (person):
    person.birth = None
    person.death = None
    person.marriage = None
+   person.all_events = dict() # All events of the person (id -> Event)
+                              # where Event has fields like "source", "Date"
+                              # "place"
+   person.all_chars = dict()  # All characteristics of the person (id -> data)
 
-   n = person.name.split ('/',3)
+   n = person.name.split('/', 2)
    person.given_name = n[0]
-   if len (n) >= 2:
+   person.base_given_name = n[0]
+   if len(n) >= 2:
       person.surname = n[1]
    else:
       person.surname = ""
 
-
-def sql_in(objects, field_in, ids):
-    """A generator that performs the OBJECTS query, with extra filtering
-       on FIELD_IN. This is equivalent to
-           objects.filter("field_in"__in = ids)
-       except it repeats the query multiple times if there are too many
-       entries in IDS (a limitation of sqlite).
-       IDS should be None to just perform the OBJECTS query without any
-       additional filtering.
-    """
-
-    if ids is None:
-        for obj in objects.all():
-            yield obj
-    else:
-        # Maximum number of elements in a SQL_IN
-        MAX_SQL_IN = 900
-
-        field_in += "__in"   # Django syntax for SQL's IN operator
-        ids = list(ids)      # need a list to extract parts of it
-        offset = 0
-
-        while offset < len(ids):
-            query = apply(
-                objects.filter, [],
-                {field_in:ids[offset:offset + MAX_SQL_IN]})
-            for obj in query:
-                yield obj
-
-            offset += MAX_SQL_IN
-
+   person.base_surname = person.surname
 
 def __get_characteristics(persons, ids):
    """Compute characteristics for all the PERSONS.
@@ -76,9 +52,6 @@ def __get_characteristics(persons, ids):
       IDS is the list of IDS for the persons. If it is None, we query info for
       all personas in the database.
    """
-
-   for p in persons.itervalues():
-       p.all_chars = dict() # All characteristics of the person (id -> data)
 
    p2c = dict()  # characteristic_id -> person
    sources = dict() # event_id -> [source_id...]
@@ -151,11 +124,6 @@ def __get_events(persons, ids, styles, types=None):
          else:
             sources[p.event_id] = [p.source_id]
 
-   for p in persons.itervalues():
-       p.all_events = dict() # All events of the person (id -> Event)
-                             # where Event has fields like "source", "Date"
-                             # "place"
-
    places = dict()
 
    events = models.Event.objects.select_related('place', 'type')
@@ -225,11 +193,7 @@ def extended_personas(ids, styles, event_types=None, as_css=False):
    """
    persons = dict() # id -> person
 
-   all = models.Persona.objects.all()
-   if ids is not None:
-       all = models.Persona.objects.filter(id__in=ids)
-
-   for p in all:
+   for p in sql_in(models.Persona.objects, "id", ids):
       persons[p.id] = p
       __add_default_person_attributes(p)
 

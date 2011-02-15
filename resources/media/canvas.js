@@ -7,8 +7,8 @@
  * The code below does not do any drawing in the canvas, just prepares the
  * context of it. When actual drawing is needed, the signal "draw" is
  * emitted on the canvas. Therefore you also need to bind to that signal
- *     $("selector").canvas ().bind ("draw", do_my_drawing);
- *     function do_my_drawing(event, ctx, box) {...}
+ *     $("selector").canvas ({onDraw:do_my_drawing});
+ *     function do_my_drawing(event, box) {  // use this.ctx}
  *        # where box is the real-world coordinates for the area that needs
  *        # to be refreshed. The area has already been cleared.
  *
@@ -84,7 +84,7 @@ function Canvas (options, elem) {
       .start_drag ($.proxy (on_start_drag, this))
       .in_drag ($.proxy (on_in_drag, this))
       .wheel ($.proxy (on_wheel, this));
-   $(window).resize ($.proxy (onResize, this))
+   $(window).resize ($.proxy (onResize, this));
 
    if (options.onDraw)
       this.canvas.bind ("draw", $.proxy (options.onDraw, this));

@@ -10,165 +10,149 @@
 .jcarousel-skin-tango .jcarousel-prev-horizontal {background: transparent url({{MEDIA_URL}}prev-horizontal.png) no-repeat 0 0}
 
 .sourceGallery ul.carousel li {background:url({{MEDIA_URL}}entry.gif) 0 0 no-repeat}
+
 {% endblock css %}
 {% block header %}
 <link rel="stylesheet" href="{{MEDIA_URL}}jcarousel.css"/>
 <link rel="stylesheet" href="{{MEDIA_URL}}ui.tabs.css"/>
-
-<script type="text/javascript" src="{{MEDIA_URL}}ui.tabs.min.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery-ui-1.8.9.custom.min.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.dragpane.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.jcarousel.pack.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.jcarousel.0.2.7.min.js"></script>
+<!--
 <script type="text/javascript" src="{{MEDIA_URL}}adacore.tooltips.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.watermark.pack.js"></script>
+-->
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.sprintf.js"></script>
 {% endblock header %}
-{% block rightside %}
- <div id="clipboard">
-  <h2><img src="{{MEDIA_URL}}trash.png" alt="">Clipboard</h2>
-  <ul>
-   <li><a class="person">Emmanuel Briot</a></li>
-   <li><a class="person">Erwann Briot</a></li>
-   <li><a class="date">1809-05-28 ?</a></li>
-   <li><a class="place">Missillac, France</a></li>
-  </ul>
- </div>
-{% endblock rightside %}
+
+{% block leftside %}
+   <div class="sourceGallery">
+    <div id="sourceGalleryCarousel">
+     <ul id="carousel" class="jcarousel-skin-tango">
+        {% for r in s.representations.all %}
+        <li title="{{r.comments}}"><img width="75" height="75" src="/repr/75/{{r.id}}"></li>
+        <li title="{{r.comments}}"><img width="75" src="/repr/75/{{r.id}}"></li>
+        <li title="{{r.comments}}"><img width="75" src="/repr/75/{{r.id}}"></li>
+        <li title="{{r.comments}}"><img width="75" src="/repr/75/{{r.id}}"></li>
+        {% endfor %}
+     </ul>
+     <div style="text-align:right; margin-right:10px">
+      <ul style="list-style-type:none">
+       <li><a href="#">add</a></li>
+       <li style="margin-top:10px"><a href="#">remove</a></li>
+      </ul>
+     </div>
+    </div> <!-- sourceGalleryCarousel -->
+   </div> <!-- sourceGallery -->
+
+{% endblock leftside %}
+
 {% block contents %}
-  <h1>Source (Id: S0001)<span id="titleAbbrev">N, Missillac, 1809</span></h1>
-  <ul id="tabs">
-   <li><a href="#info"><span>Information</span></a></li>
-   <li><a href="#extracts"><span>Evidences</span></a></li>
+
+<h3 id="title">
+   <span class="id">Source {{s.id}}</span>
+   <span class="name">
+      {% if s.title %}
+         {{s.title}}
+      {% else %}
+        {% if s.abbrev %}
+         {{s.abbrev}}
+        {% else %}
+         {# Should try to build the citation properly #}
+         {{s.comments}}
+        {% endif %}
+      {% endif %}
+   </span>
+</h3>
+
+<div id="tabs">
+  <ul>
+    <li><a href="#info"><span>Information</span></a></li>
+    <li><a href="#extracts"><span>Evidences</span></a></li>
   </ul>
 
-  <div id="info">
-   <div class="sourceInfo">
-    <div class="repositoryInfo">
-     <h3>Where was this source found ?</h3>
-     <table>
-      <tr><th>Repository Name</td>
-          <td><input type="text" value="Conseil General de la Loire Atlantique" title="A repository is a physical (or Internet) location where the source was found. It will in general give access to several sources"></td></tr>
-      <tr><th>Repository Type</td>
-          <td><select name="repositoryType">
-               <option>Album</option>
-               <option>Archive</option>
-               <option>Bookstore</option>
-               <option>Cemetery</option>
-               <option>Church</option>
-               <option>Collection (Archive dept, communales,...)</option>
-               <option>Library</option>
-               <option selected>Web site</option>
-              </select></td></tr>
-       <tr><th>Address/URL</td>
-           <td><textarea lines="3">www.cg44.fr</textarea></td></tr>
-     </table>
-    </div> <!-- repositoryInfo -->
-
+<div id="info">
+ <div class="sourceInfo">
     <div class="sourceDetails">
      <table>
-      <tr><th>Part of</th>
-          <td><select name="parentSource"><option>Missillac N, 1809</option></select></td></tr>
       <tr><th>Source type</th>
-          <!--  How to cite sources - http://www.genealogy.com/19_wylie.html-->
           <td><select name="sourceMediaType">
-               <option>Article</option>
-               <option>Audio</option>
-               <option>Birth certificate</option>
-               <option>Book</option>
-               <option>Census record</option>
-               <option>Court record</option>
-               <option>Death certificate</option>
-               <option>Email message</option>
-               <option>Interview</option>
-               <option>Letter</option>
-               <option>Livret de famille</option>
-               <option>Magazine</option>
-               <option>Marriage certificate</option>
-               <option>Manuscript</option>
-               <option>Map</option>
-               <option>Newspaper</option>
-               <option selected>Registre paroissial des naissances</option>
-               <option>Registre paroissial des mariages</option>
-               <option>Registre paroissial des deces</option>
-               <option>Photograph</option>
-               <option>Table decenale</option>
-               <option>Tombstone</option>
-               <option>Video</option>
-               <option>Web site</option>
-             </select></td></tr>
-             <!--  See Source type (original,...) and subtype (duplicate original, image copy, record (clerk's) copy, transcript, extract, abstract) in "10 things genealogy software should do" -->
-      <tr><th>Date</td>
-          <td><input type="text" class="date" value="1809"/></td></tr>
-      <tr><th>Confidence</td>
-          <td><select title="This is the general level of confidence in this source. This will be the default confidence set for all source extracts" name="sourceConfidence">
-              <option selected>5 - Very High</option>
-              <option>4 - High</option>
-              <option>3 - Normal</option>
-              <option>2 - Low</option>
-              <option>1 - Very Low</option>
+             <option selected>{{c.medium.name}}</option>
+             {% for t in source_mediums %}
+             <option>{{t.name}}</option>
+             {% endfor %}
              </select></td>
-      <tr><th>Title</th>
-          <td><input type="text" watermark="Show parent's name"></td></tr>
-      <tr><th>Volume/Page</th>
-          <td><input type="text" name="page" value="p7" watermark="Show parent's page"/></td></tr>
-      <tr><th>Author</th>
-          <td><input type="text" watermark="Show parent's author"></td></tr>
-      <tr><th>Publisher Name</th>
-          <td><input type="text" watermark="Show parent's publisher"></td></tr>
-      <tr><th>Publisher Addr.</th>
-          <td><textarea lines="3" watermark="Show parent's publisher add">Missillac, France</textarea></td></tr>
+      </tr>
+
+      <tr><th>Subject Date</td>
+         <td><input type="text" class="date" title="The date the source is about" value="{{s.subject_date|default:""}}"/></td></tr>
+
+      <tr><th>Subject Place</td>
+         <td><input type="text" class="place" title="The place the source is about" value="{{s.subject_place|default:""}}"/></td></tr>
+
+      <tr><th>Jurisdiction Place</td>
+         <td><input type="text" class="place" title="Where the source was found" value="{{s.jurisdiction_place|default:""}}"/></td></tr>
+
+      {% for c in s.citations %}
+      <tr><th>{{c.type.name}}</th>
+         <td><input type="text" value="{{c.value}}"/></td></tr>
+      {% endfor %}
+
+      <tr><th>Comments</th>
+         <td><textarea>{{s.comments}}</textarea></td></tr>
+
+      <tr><th>Researched by</th>
+         <td><input type="text" value="{{s.researcher.name}}"/></td></tr>
+
      </table>
-    </div> <!-- sourceDetails -->
-   </div> <!-- sourceInfo -->
+    </div>{# sourceDetails #}
+   </div>{# sourceInfo #}
 
-   <div class="sourceNotes">
-    <div class="actions"><a href="#">add</a> | <a onclick='hideOrShow(this,".notesList")'>hide</a></div>
-    <h2>Notes</h2>
-    <div class="notesList">
-     <ul>
-      <li>This is the first note</li>
-      <li>This is the second note,<br>
-on multiple lines</li>
-     </ul>
-    </div> <!-- notesList -->
-   </div> <!-- sourceNotes -->
+   {# Repositories #}
 
-   <div class="sourceActions">
+   <div class="sourceRepos" style="clear:both; margin-top:20px">
+    <div class="actions"><a href="#">add</a> | <a onclick='hideOrShow(this,".repoList")'>hide</a></div>
+    <h2>Repositories</h2>
+    <div class="repoList">
+  {% for r in s.repositories.all %}
+      <div class="repositoryInfo">
+        <h3>This source was found in:</h3>
+        <table>
+         <tr><th>Repository Name</td>
+            <td><input type="text" value="{{r.name}}"
+                 title="A repository is a physical (or Internet) location where the source was found. It will in general give access to several sources"></td></tr>
+           <tr><th>Repository Type</td>
+               <td><select name="repositoryType">
+                 {% for t in repository_types %}
+                    <option>{{t.name}}</option>
+                 {% endfor %}
+                   </select></td></tr>
+            <tr><th>Address/URL</td>
+                <td><textarea lines="3">{{s.repo.url}}</textarea></td></tr>
+          </table>
+         </div> <!-- repositoryInfo -->
+  {% endfor %}
+     </div>
+   </div>
+
+   <div class="sourceActions" style="margin-top:20px">
     <div class="actions"><a href="#">add</a> | <a onclick='hideOrShow(this,".actionsList")'>hide</a></div>
     <h2>Research to be done</h2>
     <div class="actionsList">
      <ul>
-      <li>TODO: <input type="txt" value="Investigate her death certificate"/></li>
+        <li>Not implemented yet</li>
      </ul>
     </div> <!-- actionsList -->
    </div> <!-- sourceActions -->
   </div> <!-- #info -->
 
   <div id="extracts">
-   <div class="sourceGallery">
-    <div id="sourceGalleryCarousel">
-     <div style="float:right">
-      <ul>
-       <li><a href="#">add</a></li>
-       <li style="margin-top:10px"><a href="#">remove</a></li>
-      </ul>
-     </div>
-     <ul class="jcarousel-skin-tango carousel">
-      <li title="missillac, 1809, p17"><img src="{{MEDIA_URL}}thumbs/missillac-1809-p17.png"></li>
-      <li title="p10"><span>p10</span></li>
-      <li title="missillac, 1808, p9"><img src="{{MEDIA_URL}}thumbs/missillac-1808-p9.png"></li>
-      <li title="missillac, 1851, p8"><img src="{{MEDIA_URL}}thumbs/missillac-census-1851-p8.png"></li>
-      <li title="missillac, 1886, p6"><img src="{{MEDIA_URL}}thumbs/missillac-census-1886-p6.png"></li>
-      <li><span title="Extract 101">Extract 101</span></li>
-      <li><span>p11</span></li>
-      <li><span>p12</span></li>
-      <li><span>p13</span></li>
-      <li><span>p14</span></li>
-     </ul>
-    </div> <!-- sourceGalleryCarousel -->
-   </div> <!-- sourceGallery -->
-
    <div class="sourcepartInfo">
-    <img class="scrollable" src="{{MEDIA_URL}}missillac-1809-p17.png">
+      <div class="scrollable">
+         <img src="/repr/full/{{s.representations.all.0.id}}">
+      </div>
 
      <h3>Transcripts</h3>
      <!-- Add support for editing transcripts of the extract -->
@@ -285,45 +269,9 @@ on multiple lines</li>
       <option selected>Witness</option>
      </select>
 
-    <h3>Conclusions</h3>
-    <div class="onUse">This section is used to draw conclusions from the evidences laid above, and can be used to related the above persons to existing persons in the database.</div>
-    <table>
-     <tr><td><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
-         <td><a href="#" class="person">Julienne Thomas</a></td>
-         <td><select>
-               <option>is same as</option>
-               <option>is different from</option>
-             </select></td>
-         <td><input type="text" class="person" value="Julienne Thomas (I0002)">
-         </td></tr>
-     <tr><th colspan="3">Why:</th>
-         <td><textarea rows="3"></textarea></td></tr>
-
-     <tr><td><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
-         <td><a href="#" class="person">Francois Thomas</a></td>
-         <td><select>
-               <option>is same as</option>
-               <option selected>is different from</option>
-             </select></td>
-         <td><input type="text" class="person" value=""></td></tr>
-     <tr><th colspan="3">Why:</th>
-         <td><textarea rows="3"></textarea></td></tr>
-
-     <tr><td><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
-         <td><a href="#" class="person">Francois Thomas (2)</a></td>
-         <td><select>
-               <option selected>is same as</option>
-               <option>is different from</option>
-             </select></td>
-         <td><input type="text" class="person" value=""></td></tr>
-     <tr><th colspan="3">Why:</th>
-         <td><textarea rows="3"></textarea></td></tr>
-
-     <tr><td><img src="{{MEDIA_URL}}add.png" alt="add new todo"></td></tr>
-    </table>
-
    </div> <!-- sourcepartDetails -->
   </div> <!-- #evidences -->
+</div> {# #tabs #}
 
 {% endblock contents %}
 {% block script %}
@@ -347,14 +295,23 @@ function onTitleChange() {
 }
 
 $(document).ready(function(){
-  $("img.scrollable").DragPane({disable:false, zoomFactor:1});
-  $("[tooltip],[title]").tooltip ();
-  //  $(".mediaView img").imgAreaSelect({selectionColor:'blue'});
-  $(".sourceGallery ul.carousel").jcarousel();
   $("#tabs").tabs ({selected:0});
-  $("form").watermark ();
-  $("input[name=page],select[name=parentSource]")
-     .keyup (onTitleChange).change (onTitleChange);
-  onTitleChange ();
+  $("div.scrollable img").dragPane();
+  $("#carousel").jcarousel({vertical:true, visible:3, scroll:2});
+  $("#carousel img").click(function() {
+     // $("img.scrollable")[0].src = this.src;
+     // $("canvas.scrollable")[0].refresh();
+
+  });
+
+  // $("[tooltip],[title]").tooltip ();
+  //$(".mediaView img").imgAreaSelect({selectionColor:'blue'});
+
+
+
+  // $("form").watermark ();
+  // $("input[name=page],select[name=parentSource]")
+  //    .keyup (onTitleChange).change (onTitleChange);
+  // onTitleChange ();
 });
 {% endblock script %}
