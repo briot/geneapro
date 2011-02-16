@@ -29,12 +29,6 @@ function log () {
    }
 }
 
-function maximize (div) {
-  // Maximize div so that is extends to the bottom and right of the browser
-  var d = $(div), off=$(div).offset(), win=$(window);
-  d.width (win.width() - off.left).height (win.height () - off.top);
-}
-
 (function ($) {
 
 var defaultSettings = {
@@ -46,6 +40,8 @@ var defaultSettings = {
   onCtrlClick: null, // Called on control-click
                 // If returns true, prevents further clicks in the canvas
   onDblClick: null, // Called on double-click
+  actions: {},  // "name":function,  for methods to add to the object
+                // When function is called, "this" is the instance of Canvas
 }
 
 function ifnotDisabled(evt, callback) {
@@ -96,6 +92,10 @@ function Canvas (options, elem) {
       this.canvas.dblclick($.proxy(
                function(e){ifnotDisabled.apply(this, [e, options.onDblClick])},
                this));
+
+   for (var a in options.actions) {
+      elem[a] = $.proxy(options.actions[a], this);
+   }
 
    onResize.apply(this);
 }
@@ -258,12 +258,13 @@ function on_wheel (e) {
    return false;  // prevent main window from scrolling
 }
 
-$.fn.canvas = function (options) {
-  return this.each (function() {
+$.fn.canvas = function (arg) {
+  return this.map (function() {
      var inst = $.data (this, "Canvas");
-     if (!inst) {
-        $.data (this, "Canvas", new Canvas (options, this));
-     } else {
+     if (typeof arg === "object" || !arg) {
+        if (!inst)
+           $(this).data ("Canvas", new Canvas (arg, this));
+     } else if (arg == "refresh") {
         inst.refresh();
      }
   });

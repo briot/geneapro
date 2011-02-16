@@ -1,5 +1,5 @@
 {% extends "geneapro/base.html" %}
-{% block title %}GeneaPro: sources{% endblock %}
+{% block title %}GeneaPro: source {{s.id}} {% endblock %}
 {% block css %}
 {# Defined in line to get variable replacement #}
 .person {background:url("{{MEDIA_URL}}user.png") no-repeat left center}
@@ -16,9 +16,9 @@
 <link rel="stylesheet" href="{{MEDIA_URL}}jcarousel.css"/>
 <link rel="stylesheet" href="{{MEDIA_URL}}ui.tabs.css"/>
 <script type="text/javascript" src="{{MEDIA_URL}}jquery-ui-1.8.9.custom.min.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.dragpane.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.dragpane.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.jcarousel.0.2.7.min.js"></script>
 <!--
 <script type="text/javascript" src="{{MEDIA_URL}}adacore.tooltips.js"></script>
@@ -33,9 +33,6 @@
      <ul id="carousel" class="jcarousel-skin-tango">
         {% for r in s.representations.all %}
         <li title="{{r.comments}}"><img width="75" height="75" src="/repr/75/{{r.id}}"></li>
-        <li title="{{r.comments}}"><img width="75" src="/repr/75/{{r.id}}"></li>
-        <li title="{{r.comments}}"><img width="75" src="/repr/75/{{r.id}}"></li>
-        <li title="{{r.comments}}"><img width="75" src="/repr/75/{{r.id}}"></li>
         {% endfor %}
      </ul>
      <div style="text-align:right; margin-right:10px">
@@ -50,6 +47,13 @@
 {% endblock leftside %}
 
 {% block contents %}
+<div id="tabs" style="margin-top:10px">
+  <ul>
+    <li><a href="#info"><span>Information</span></a></li>
+    <li><a href="#extracts"><span>Evidences</span></a></li>
+  </ul>
+
+<div id="info">
 
 <h3 id="title">
    <span class="id">Source {{s.id}}</span>
@@ -67,13 +71,6 @@
    </span>
 </h3>
 
-<div id="tabs">
-  <ul>
-    <li><a href="#info"><span>Information</span></a></li>
-    <li><a href="#extracts"><span>Evidences</span></a></li>
-  </ul>
-
-<div id="info">
  <div class="sourceInfo">
     <div class="sourceDetails">
      <table>
@@ -150,6 +147,14 @@
 
   <div id="extracts">
    <div class="sourcepartInfo">
+      <input type="button" value="grayscale"
+          onclick="$('div.scrollable canvas').dragPane('grayscale')"/>
+      <input type="button" value="Edges"
+          onclick="$('div.scrollable canvas').dragPane('edgeDetect')"/>
+      <input type="button" value="Invert"
+          onclick="$('div.scrollable canvas').dragPane('invert')"/>
+      <input type="button" value="Remove noise"
+          onclick="$('div.scrollable canvas').dragPane('removeNoise')"/>
       <div class="scrollable">
          <img src="/repr/full/{{s.representations.all.0.id}}">
       </div>
@@ -299,9 +304,9 @@ $(document).ready(function(){
   $("div.scrollable img").dragPane();
   $("#carousel").jcarousel({vertical:true, visible:3, scroll:2});
   $("#carousel img").click(function() {
-     // $("img.scrollable")[0].src = this.src;
-     // $("canvas.scrollable")[0].refresh();
-
+     var src = this.src.split("/");
+     src[src.length - 2] = "full";
+     $("div.scrollable canvas").dragPane("setsrc", src.join("/"));
   });
 
   // $("[tooltip],[title]").tooltip ();

@@ -109,6 +109,7 @@ div.scrollable canvas {
    box-shadow: 3px 3px 5px black; /* Opera 10.5, IE9 */
 }
 
+/*
 div.hr {clear:both}
 #footer_wrap {
    background-color:gray;
@@ -123,6 +124,7 @@ div.hr {clear:both}
    line-height:2em;
    font-size:1.1em;
 }
+   */
 
 .throbber {filter:alpha(opacity=30); opacity:0.3;
            cursor:wait; display:inline; position:absolute;
@@ -159,14 +161,33 @@ div.hr {clear:both}
  * Leftside box
  **********************************************/
 
+#body {
+   margin:0;
+   padding:0;
+   height:900px;  /* page height, for some reason 100% does not work */
+   width:100%;
+}
+
 #sidebar {
    width:160px;
+   height:100%;
    float:left;
-   height:900px;  /* page height, for some reason 100% does not work */
 
    background-image: -moz-linear-gradient(top, #777, white);
    background-image: linear-gradient(top, #777/*from #head*/, white);
    background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #777),color-stop(1, white));   
+}
+#collapseSidebar {
+   background:transparent;
+   position:absolute;
+   left:150px;  /* #sidebar'width - #collapseSidebar'width */
+   width:10px;
+   height:100%;
+}
+#collapseSidebar:hover {
+   /* If we want a collapsible sidebar, we should show this when mouse is
+    * hover, and have a callback */
+   /*background:red;*/
 }
 #sidebarMenu h2 {
    margin:5px 5px 0 5px;
@@ -184,9 +205,6 @@ div.hr {clear:both}
    -moz-border-radius: 12px; /* FF1+ */
    -webkit-border-radius: 12px; /* Saf3-4 */
    border-radius: 12px; /* Opera 10.5, IE9, Saf5, Chrome */
-
-   width:137px; /* = #sidebar'width - h2'margin-left - h2'padding-left
-                    - h2'padding-right */
 }
 #sidebarMenu h2.selected {background:#39414A}
 #sidebarMenu h2 a {
@@ -241,8 +259,6 @@ div.hr {clear:both}
  **********************************************/
 
 #roundedContents {
-   margin-left:160px; /* = #sidebar'width */
-
    border-top-left-radius: 25px;
    -moz-border-radius-topleft: 25px; /* FF1+ */
 
@@ -252,14 +268,41 @@ div.hr {clear:both}
    top:-20px; /* for some reason: = -(#roundedContents'height + 10) */
    padding: 5px 30px;
 }
-#contents {
-   position:absolute;
-   left:160px; /* = #sidebar'width */
+#bodyMain {
+   height:100%;
+
+   /* Using absolute positioning here requires knowing various dimensions
+    * for proper placement. This creates an issue if we made #sidebar
+    * resizable. It would be nicer to use "float:left", but then we do not
+    * use the full remaining with of the page, up to the right margin.
+    * Setting "width:100%" puts #bodyMain below #sidebar */
+
+   /*float:left;  /* on the right of #sidebar */
+
+   /* Another approach is not to use floating or absolute positioning,
+    * just a margin the right size. This fails because the contents of the
+    * tabs have a "clear" and thus go below the #sidebar (we should have
+    * another layout context) */
+
+   /*margin-left:160px; /* #sidebar'width + #sidebar'border-right */
+
+   /* Absolute positioning works, but requires knowing the various sizes
+    * for proper layout. Thus collapsing the sidebar requires changing the
+    * sizes here too */
+
+   position:absolute; /* on the right of #sidebar */
+   left:160px;        /* #sidebar'width + #sidebar'border-right */
    right:0;
-   top:70px; /* = #head'height - #roundedContents'top */
    bottom:0;
+   top:90px;  /* #head'height */
+}
+#contents {
+   position:relative;
+   top:-20px;  /* #roundedContents'top */
    padding:0;
    margin:0;
+   width:100%;
+   height:100%;
 }
 #contents canvas.graph {
    z-index:100;
@@ -283,19 +326,6 @@ div.hr {clear:both}
 
 #legendButton {
    margin-top:20px;
-
-   /*position:absolute;
-   width:100px;
-   height:15px;
-   background:#aaa;
-   left:120px;  #sidebar'width - #legendButton'width / 2
-   top:120px;  #head'height - #roundedCountents'top + #legendButton'height / 2
-   */
-   /*
-   -moz-transform:rotate(270deg);
-   -webkit-transform:rotate(270deg);
-   -o-transform:rotate(270deg);
-   */
 }
 
 /*************************************************

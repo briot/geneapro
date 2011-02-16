@@ -23,7 +23,9 @@
    <div class="tagline">Evidence your genealogy</div>
  </div>
 
- <div id="sidebar" class="noselect">
+ <div id="body">
+  <div id="sidebar" class="noselect">
+     <div id="collapseSidebar"></div>
    <div id="sidebarMenu">
       <h2><a href="/personas">People</a></h2>
       <h2>Places</h2>
@@ -42,19 +44,21 @@
    {% block leftside %}
    {% endblock leftside %}
    </div>
-</div>
+  </div> {# sidebar #}
 
- <div id="rightside">
-  {% block rightside %}
-  {% endblock rightside %}
- </div>
+  <div id="bodyMain">
+    <div id="roundedContents" class="noselect">
+    </div>
 
- <div id="roundedContents" class="noselect">
- </div>
- <div id="contents" class="noselect">
-  {% block contents %}
-  {% endblock contents %}
- </div>
+    <div id="contents" class="noselect">
+     {% block contents %}
+     {% endblock contents %}
+    </div>
+  </div> {# bodyMain #}
+
+  <div style="clear:both">
+  </div>
+ </div> {# body #}
 
  <script type="text/javascript">
   {% block script %}
