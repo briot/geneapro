@@ -16,7 +16,11 @@ fg_red    = '\033[1;31m'
 fg_green  = '\033[1;32m'
 fg_yellow = '\033[1;33m'
 
-gedcom = file(sys.argv[1])
+if len(sys.argv) == 1:
+    gedcom = sys.stdin
+else:
+    gedcom = file(sys.argv[1])
+
 line_num=1
 for line in gedcom.readlines():
     comps = line.split()
