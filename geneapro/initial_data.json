@@ -715,14 +715,6 @@
     }, 
     {
         "fields": {
-            "gedcom": "OCCU", 
-            "name": "occupation"
-        }, 
-        "model": "geneapro.event_type", 
-        "pk": 33
-    }, 
-    {
-        "fields": {
             "gedcom": "ORDN", 
             "name": "ordination"
         }, 
@@ -817,6 +809,42 @@
         }, 
         "model": "geneapro.characteristic_part_type", 
         "pk": 35
+    }, 
+    {
+        "fields": {
+            "gedcom": "NOTE", 
+            "is_name_part": false,
+            "name": "note"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 44
+    }, 
+    {
+        "fields": {
+            "gedcom": "FACT", 
+            "is_name_part": false,
+            "name": "other"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 45
+    }, 
+    {
+        "fields": {
+            "gedcom": "_IMG", 
+            "is_name_part": false,
+            "name": "image"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 46
+    }, 
+    {
+        "fields": {
+            "gedcom": "OCCU", 
+            "is_name_part": false,
+            "name": "occupation"
+        }, 
+        "model": "geneapro.characteristic_part_type", 
+        "pk": 43
     }, 
     {
         "fields": {

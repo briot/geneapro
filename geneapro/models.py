@@ -334,21 +334,24 @@ class Repository_Type (GeneaproModel):
       ordering = ("name",)
       db_table = "repository_type"
 
-class Repository (GeneaproModel):
+
+class Repository(GeneaproModel):
    """
    Contains information about the place where data was found. Most
    fields from the gentech model were grouped into the info field.
    A repository might also be a person you interviewed one or more times
    """
 
-   place = models.ForeignKey (Place, null=True)
-   name  = models.CharField (max_length=200)
+   place = models.ForeignKey(Place, null=True)
+   name  = models.CharField(max_length=200)
    type  = models.ForeignKey(Repository_Type, null=True)
-   info  = models.TextField (null=True)
+   info  = models.TextField(null=True)
+   addr  = models.TextField(null=True)
 
    class Meta:
       """Meta data for the model"""
       db_table = "repository"
+
 
 class Source(GeneaproModel):
    """

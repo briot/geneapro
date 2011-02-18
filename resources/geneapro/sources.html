@@ -159,8 +159,8 @@
          <img src="/repr/full/{{s.representations.all.0.id}}">
       </div>
 
+<!--
      <h3>Transcripts</h3>
-     <!-- Add support for editing transcripts of the extract -->
      Transcripts could be either a free-form text, or we specify some columns
      that correspond to this typical source faster. Then we can register a
      post-processor for that custom table to automatically enter data from
@@ -168,8 +168,9 @@
         Columns=["Number", "Name", "Birth Date", "Birth Place", "Mariage Date",
                  "Mariage Place", "Death Date", "Death Place"]
         Postprocessor: enter these using Sosa numerotation
+-->
 
-     <h3>Facts</h3>
+     <h3>Information</h3>
      <div class="onUse">The persons cited in this section are the ones referenced in the source document. They are not related to existing persons in the database. Such links are created in the Conclusions section below.</div>
      <table class="sourcepartData">
 
@@ -274,6 +275,8 @@
       <option selected>Witness</option>
      </select>
 
+     <h3>Evidence</h3>
+     <div class="onUse">They represent our interpretation of information we consider relevant to the research question</div>
    </div> <!-- sourcepartDetails -->
   </div> <!-- #evidences -->
 </div> {# #tabs #}

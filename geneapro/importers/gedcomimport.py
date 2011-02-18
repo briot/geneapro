@@ -164,7 +164,8 @@ class GedcomImporter(object):
 
         if info or getattr(data, "ADDR", None):
             r = models.Repository.objects.create(
-                place=self._create_place(data),  # Parses ADDR
+                place=None,
+                addr=getattr(data, "ADDR", None),
                 name=getattr(data, "NAME", info),
                 # type=None,
                 info=info)
@@ -173,7 +174,9 @@ class GedcomImporter(object):
                 self._repo[data.value] = r
 
         for k, v in data.for_all_fields():
-            if k not in ("NAME", "ADDR", "WWW", "PHON", "RIN", "NOTE"):
+            # CALN is handled directly in the source itself
+            if k not in ("NAME", "ADDR", "WWW", "PHON", "RIN", "NOTE", "id",
+                         "CALN"):
                 print "%s Unhandled REPO.%s" % (location(v), k)
 
         return r
@@ -184,7 +187,13 @@ class GedcomImporter(object):
 
         if sour.__dict__.has_key('REPO') and sour.REPO:
             repo = sour.REPO
-            rep = self._create_repo(repo)
+            if repo.value:
+                # If we just have a "CALN", no need to create a repository
+                rep = self._create_repo(repo)
+            else:
+                for k, v in repo.for_all_fields():
+                    if k not in ("CALN", ):
+                        print "%s Unhandled REPO.%s" % (location(v), k)
 
             caln = repo.CALN  # call number
             if caln:
@@ -195,7 +204,8 @@ class GedcomImporter(object):
                     medium_id = 0
 
             for k, v in repo.for_all_fields():
-                print "%s Unhandled REPO.%s" % (location(v), k)
+                if k not in ("CALN", ):
+                    print "%s Unhandled REPO.%s" % (location(v), k)
 
         try:
             comment = sour.TITL or sour.ABBR
@@ -219,12 +229,12 @@ class GedcomImporter(object):
                 call_number=None,
                 description=None)
 
-        if sour.ABBR:
+        if getattr(sour, "ABBR", None):
             cit = models.Citation_Part.objects.create(
                 source=src,
                 type=self._citation_part_types["ABBR"],
                 value=sour.ABBR)
-        if sour.TITL:
+        if getattr(sour, "TITL", None):
             cit = models.Citation_Part.objects.create(
                 source=src,
                 type=self._citation_part_types["TITL"],
@@ -323,7 +333,8 @@ class GedcomImporter(object):
         return result
 
     def _create_place(self, data, id=''):
-        """If data contains a subnode PLAC, parse and returns it"""
+        """If data contains a subnode PLAC, parse and returns it.
+        """
 
         if data is None:
             return None
@@ -334,7 +345,8 @@ class GedcomImporter(object):
         if addr is None and data is None:
             return None
         if data is None and addr is not None:
-            print "%s Unexpected: got an ADDR without a PLAC" % (location(data))
+            print "%s Unexpected: got an ADDR without a PLAC" % (
+                location(addr))
             return None
 
         # Check if the place already exists, since GEDCOM will duplicate
@@ -427,7 +439,10 @@ class GedcomImporter(object):
                 c = models.Characteristic.objects.create(place=None)
                 str_value = val
             else:
+                # Processes ADDR and PLAC
                 place = self._create_place(val)
+                self._create_obje_for_place(val, place) # processes OBJE
+
                 c = models.Characteristic.objects.create(place=place,
                         date=getattr(val, "DATE", None))
                 str_value = val.value
@@ -477,9 +492,36 @@ class GedcomImporter(object):
                     elif k == 'SOUR':
                         pass  # handled in the _create_sources_ref loop above
 
+                    elif k in ("ADDR", "PLAC", "OBJE"):
+                        pass  # handled in _create_place
+
+                    elif k == "DATE":
+                        pass  # handled above
+
                     else:
-                        print "%s Unhandled characteristic: %s" % (
-                            location(val), k)
+                        print "%s Unhandled %s.%s" % (
+                            location(val), key, k)
+
+    def _create_obje_for_place(self, data, place, CHAN=None):
+        # If an event has an OBJE: since the source is an xref, the object
+        # is in fact associated with the place. Unfortunately, it will be
+        # duplicated among all other occurrences of that place (which itself
+        # is duplicated).
+
+        if getattr(data, "OBJE", None):
+            if getattr(data, "PLAC", None) and place:
+                for obj in data.OBJE:
+                    self._create_source(
+                        GedcomRecord(
+                            REPO=None,
+                            CHAN=CHAN,
+                            TITL='Source for %s' % data.PLAC.value,
+                            ABBR='Source for %s' % data.PLAC.value,
+                            OBJE=obj),
+                        subject_place=place)
+            else:
+                print "%s Unhandled OBJE" % (location(data.OBJE))
+
 
     def _create_event(self, indi, field, data, CHAN=None):
         """Create a new event, associated with INDI by way of one or more
@@ -556,30 +598,12 @@ class GedcomImporter(object):
 
         if not evt:
             place = self._create_place(data)
+            self._create_obje_for_place(data, place, CHAN) # processes OBJE
             evt = models.Event.objects.create(type=event_type, place=place,
                     name=name, date=getattr(data, "DATE", None))
 
             if event_type.gedcom == 'BIRT':
                 self._births[principal.id] = evt
-
-        # If an event has an OBJE: since the source is an xref, the object
-        # is in fact associated with the place. Unfortunately, it will be duplicated
-        # among all other occurrences of that place (which itself is duplicated).
-
-        if getattr(data, "OBJE", None):
-            if getattr(data, "PLAC", None) and place:
-                for obj in data.OBJE:
-                    self._create_source(
-                        GedcomRecord(
-                            REPO=None,
-                            CHAN=CHAN,
-                            TITL='Source for %s' % data.PLAC.value,
-                            ABBR='Source for %s' % data.PLAC.value,
-                            OBJE=obj),
-                        subject_place=place)
-            else:
-                print "%s Unhandled EVENT.OBJE" % (location(data.OBJE))
-
 
         for k, v in data.for_all_fields():
             # ADDR and PLAC are handled in create_place
@@ -618,9 +642,17 @@ class GedcomImporter(object):
             all_sources = []
 
             for s in data.SOUR:
-                all_sources.append(self._sources[s.value])
-            # src = self._create_source (s)
-            # all_sources.append (src)
+                # As a convenience for the python API (this doesn't happen in a
+                # Gedcom file), we allow direct source creation here. In
+                # Gedcom, this is always an xref.
+
+                if not s.value or s.value not in self._sources:
+                    sour = self._create_source(s)
+                else:
+                    sour = self._sources[s.value]
+
+                all_sources.append(sour)
+
             return all_sources
 
         return [None]
@@ -683,14 +715,27 @@ class GedcomImporter(object):
                     self._create_characteristic(field, v, indi)
 
             elif field == "SOUR":
-                # The individual is apparently cited in a source, but is not related
-                # to a specific GEDCOM event. So instead we associate with a general
-                # census event.
+                # The individual is apparently cited in a source, but is not
+                # related to a specific GEDCOM event. So instead we associate
+                # with a general census event.
                 evt_data = GedcomRecord(SOUR=value)
                 self._create_event(indi, field="CENS", data=evt_data)
 
+            elif field == "OBJE":
+                self._create_characteristic(
+                    key="_IMG",
+                    value=GedcomRecord(
+                        value='',
+                        SOUR=[GedcomRecord(
+                           TITLE=data.TITL,  # used both for object and source
+                           ABBR=data.TITL,
+                           CHAN=None,
+                           OBJE=value)]),
+                    indi=indi)
+
             else:
-                print "%s Unhandled INDI.%s: %s" % (location(value), field, value)
+                print "%s Unhandled INDI.%s: %s" % (
+                    location(value), field, value)
 
         self._personas[data.id] = indi
         return indi

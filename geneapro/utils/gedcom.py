@@ -491,8 +491,7 @@ class _Lexical(object):
                  "%s Invalid gedcom file, first line must be '0 HEAD'" %
                  self.get_location(1))
 
-        r = (int(g.group("level")), g.group("tag"),
-             g.group("xref_id"),
+        r = (int(g.group("level")), g.group("tag"), g.group("xref_id"),
              self.to_unicode(g.group("value") or u""))
 
         if r[0] == 1 and r[1] == "CHAR":
