@@ -6,6 +6,7 @@ The tree only contains the ids of the persons, not any other information."""
 
 from mysites.geneapro import models
 from mysites.geneapro.views.json import to_json
+from mysites.geneapro.views.queries import sql_in
 
 __all__ = ["Tree"]
 
@@ -37,20 +38,25 @@ class Tree (object):
       # Retrieve the ids of the parents of persons in check. We retrieve
       # parents and child from every birth event (we need the child to
       # associate it with the parents, through the event)
+
+      all_events = models.P2E_Assertion.objects.filter (
+         event__type = models.Event_Type.birth,
+         role__in = roles,
+         disproved = False).values_list('event', flat=True)
+      all_events = sql_in(all_events, "person", ids)
+
+      events = [e for e in all_events]
+
       tmp = models.P2E_Assertion.objects.filter (
          role__in = (models.Event_Type_Role.birth__father,
                      models.Event_Type_Role.principal,
                      models.Event_Type_Role.birth__mother),
-         disproved = False,
-         event__in = models.P2E_Assertion.objects.filter (
-            event__type = models.Event_Type.birth,
-            role__in = roles,
-            disproved = False,
-            person__in = list (ids)).values_list ('event', flat=True))
+         disproved = False).values_list('person', 'event', 'role')
+      tmp = sql_in(tmp, "event", events)
 
       events = dict ()  # tuples (child, father, mother)
 
-      for p2e in tmp.values_list ('person','event','role'):
+      for p2e in tmp:
          t = events.get (p2e[1], (None, None, None))
          if p2e[2] == models.Event_Type_Role.principal:
             events [p2e[1]] = (p2e[0], t[1], t[2])
