@@ -482,6 +482,10 @@ class _Lexical(object):
            self.encoding = 'utf-8'
            line = line[3:]
 
+        if len(line) > 255:
+            print "%s Line is too long (%d characters)" % (
+                self.get_location(), len(line))
+
         g = LINE_RE.match(line)
         if not g:
            if self.line == 1:
