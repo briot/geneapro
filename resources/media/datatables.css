@@ -87,6 +87,7 @@
    width:100%;
    border-spacing:0;
    border-bottom: 2px solid black;
+   clear:both;
 }
 #containers thead th {
     padding: 5px 18px 5px 10px;
