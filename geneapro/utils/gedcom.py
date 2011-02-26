@@ -45,6 +45,8 @@ LINE_RE = re.compile ('^(?P<level>\d+)\s' + OPTIONAL_XREF_ID
                       + '(?P<tag>\w+)' + '(?:\s(?P<value>.*))?')
 unlimited = 100000
 
+DEBUG = True
+
 # _GRAMMAR is a tuple of tuples, each of which describes one of the nodes
 # that the record accepts:
 #   (tag_name, min_occurrences, max_occurrences, handler)
@@ -324,6 +326,7 @@ _GRAMMAR = dict (
 
     SUBM =  (("NAME", 1, 1,         "NAME"), # Submitter name
              ("ADDR", 0, 1,         "ADDR"), # Current address of submitter
+             ("EMAIL", 0, 1,        None),   # ??? Heredis extension
              ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
              ("LANG", 0, 3,         None),   # Language preference
              ("RFN",  0, 1,         None),   # Submitter registered rfn
@@ -351,6 +354,7 @@ _GRAMMAR = dict (
                  ("CORP", 0, 1,  # Name of business
                     (("ADDR", 0, 1, "ADDR"),
                      ("WWW", 0, 1, None), # ??? RootsMagic extension
+                     ("WEB", 0, 1, None), # ??? Heredis extension
                      ("PHON", 0, 3, None))),
                  ("DATA", 0, 1,  # Name of source data
                     (("DATE", 0, 1, None), # Publication date
@@ -392,6 +396,9 @@ class Invalid_Gedcom(Exception):
 
     def __unicode__(self):
         return unicode(self.msg)
+
+    def __str__(self):
+        return self.msg
 
 
 class GedcomString(unicode):
@@ -494,8 +501,15 @@ class _Lexical(object):
         r = (int(g.group("level")), g.group("tag"), g.group("xref_id"),
              self.to_unicode(g.group("value") or u""))
 
+        if DEBUG:
+            print "%04d: %s" % (self.line, r)
+
         if r[0] == 1 and r[1] == "CHAR":
-            if r[3] != "ANSEL":
+            if r[3] == "ANSEL":
+                self.encoding = "iso-8859-1"
+            elif r[3] == "ANSI":
+                self.encoding = "iso-8859-1"
+            else:
                 self.encoding = r[3]
 
         return r
@@ -933,4 +947,6 @@ class Gedcom(object):
         """Parse the specified GEDCOM file, check its syntax, and return a
            GedcomFile instance.
           Raise Invalid_Gedcom in case of error."""
-        return self.parser.parse(_Lexical(file(filename, "U")))
+        result = self.parser.parse(_Lexical(file(filename, "U")))
+        result.filename = filename
+        return result

@@ -9,6 +9,7 @@ from django.db import transaction
 import mysites.geneapro.importers
 import re
 import datetime
+import traceback
 
 # If true, the given name read from gedcom is split (on spaces) into
 # a given name and one or more middle names. This might not be appropriate
@@ -93,7 +94,7 @@ class GedcomImporter(object):
 
             for k, v in data.for_all_fields():
                 if k not in ("SOUR", "INDI", "FAM", "HEAD", "SUBM",
-                             "TRLR", "ids"):
+                             "TRLR", "ids", "filename"):
                     print "%s Unhandled FILE.%s" % (location(v), k)
 
             transaction.commit()
@@ -275,6 +276,7 @@ class GedcomImporter(object):
         form_to_mime = {
             'jpeg': 'image/jpeg', # Gramps
             'image/png': 'image/png', # Gramps
+            'image/jpeg': 'image/jpeg',
             'png': 'image/png', # rootsMagic
             'jpg': 'image/jpg', # rootsMagic
             'JPG': 'image/jpg', # rootsMagic
@@ -743,8 +745,9 @@ class GedcomImporter(object):
     def _create_project(self, researcher):
         """Register the project in the database"""
 
+        filename = getattr(self._data.HEAD, "FILE", "") or self._data.filename
         p = models.Project.objects.create(name='Gedcom import',
-                description='Import from ' + self._data.HEAD.FILE,
+                description='Import from ' + filename,
                 scheme=models.Surety_Scheme.objects.get(id=1))
         models.Researcher_Project.objects.create(researcher=researcher,
                 project=p, role='Generated GEDCOM file')
@@ -821,3 +824,6 @@ class GedcomFileImporter(mysites.geneapro.importers.Importer):
             GedcomImporter(parsed)
         except Invalid_Gedcom, e:
             print e
+        except Exception, e:
+            print "Unexpected Exception", e
+            print traceback.print_exc(e)
