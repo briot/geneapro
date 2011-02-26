@@ -6,6 +6,7 @@ import sys
 from mysites.geneapro.importers.gedcomimport import GedcomFileImporter
 from django.utils import termcolors
 from django.core.management.base import LabelCommand
+import time
 
 STYLE = termcolors.make_style (fg='green', opts=('bold',))
 
@@ -20,5 +21,10 @@ class Command (LabelCommand):
    def handle_label (self, label, **options):
       """Process the import command"""
       sys.stdout.write (STYLE  ('Importing %s' % label) + '\n')
+      start = time.time()
       GedcomFileImporter ().parse (label)
-      sys.stdout.write (STYLE  ('Done importing\n'))
+
+      end = time.time()
+
+      sys.stdout.write(
+          STYLE('Done importing (%0.3f s)\n' % (end - start,)))

@@ -305,12 +305,27 @@ class GedcomImporter(object):
             wife = self._personas[wife.id]
 
         family_events = ("MARR", "DIV", "CENS", "ENGA", "EVEN")
+        found = 0
 
         for field in family_events:
             for evt in getattr(data, field, []):
+                found += 1
                 self._create_event(
                     [(husb, self._principal), (wife, self._principal)],
                     field, evt, CHAN=data.CHAN)
+
+        # if there is no event to "build" the family, we generate a dummy
+        # one. Otherwise there would be no relationship between husband and
+        # wife in the geneapro database, thus losing information from gedcom
+
+        if found == 0:
+            self._create_event(
+                [(husb, self._principal), (wife, self._principal)],
+                "MARR",
+                GedcomRecord(),
+                CHAN=data.CHAN)
+
+        # Now add the children
 
         children = data.CHIL
         last_change = self._create_CHAN(data.CHAN)
