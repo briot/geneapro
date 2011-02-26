@@ -45,7 +45,7 @@ LINE_RE = re.compile ('^(?P<level>\d+)\s' + OPTIONAL_XREF_ID
                       + '(?P<tag>\w+)' + '(?:\s(?P<value>.*))?')
 unlimited = 100000
 
-DEBUG = True
+DEBUG = False
 
 # _GRAMMAR is a tuple of tuples, each of which describes one of the nodes
 # that the record accepts:
@@ -509,6 +509,8 @@ class _Lexical(object):
                 self.encoding = "iso-8859-1"
             elif r[3] == "ANSI":
                 self.encoding = "iso-8859-1"
+            elif r[3] == "UNICODE":
+                self.encoding = "utf-16"
             else:
                 self.encoding = r[3]
 
