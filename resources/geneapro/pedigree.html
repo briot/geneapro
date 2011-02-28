@@ -2,9 +2,6 @@
 {% block title %}GeneaPro: pedigree{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
-#pedigreeSVG {width:100%;height:600px;margin:10px 0 10px 0;border:0}
-#stats {margin:0; padding:0}
-#stats li {margin-bottom:20px; list-style-type:none}
 {% endblock css %}
 
 {% block script %}
@@ -15,23 +12,20 @@ function changeGenerations () {
    getPedigree ({yearonly:false});
 {% endifequal %}
 }
+{# Preload the initial data. Faster display, and compatibility with #}
+{#   django-debug-toolbar #}
+data={{pedigree_data|safe}};
 pedigree_data_url="{% url pedigree_data %}";
-data={{pedigree_data|safe}}
 $(document).ready (function() {
-   $('#pedigreeSVG').svg ();
-   drawSOSA ();
+   drawSOSA();
 });
 {% endblock script %}
 
 {% block endbody %}
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.svg.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.svgfilter.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.svganim.pack.js"></script>
-{% ifequal type "fanchart" %}
-<script type="text/javascript" src="{{MEDIA_URL}}fanchart.js"></script>
-{% else %}
-<script type="text/javascript" src="{{MEDIA_URL}}pedigree.js"></script>
-{% endifequal %}
+<script type="text/javascript" src="{{MEDIA_URL}}pedigree2.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.detectFontSize.js"></script>
 {% endblock endbody %}
 
 {% block leftside %}
@@ -51,9 +45,13 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
   <option>13</option>
 </select>
 
+<br>
+Same size: <input type="checkbox" id="sameSize" onchange="setUp(this.checked);$('#pedigreeSVG').canvas('refresh')"/>
+
 {{legend|safe}}
 {% endblock leftside %}
 
 {% block contents %}
-<div id="pedigreeSVG"></div>
+<canvas class="graph" id="pedigreeSVG"></canvas>
 {% endblock contents %}
+

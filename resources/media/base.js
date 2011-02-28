@@ -14,7 +14,7 @@ function getPedigree (p) {
              function (d, status) {
                 unsetBusy ();
                 data = d;
-                drawSOSA ();
+                $("#pedigreeSVG").canvas("refresh");
              });
 }
 

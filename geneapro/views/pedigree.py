@@ -58,15 +58,6 @@ def pedigree_view (request):
    """Display the pedigree of a person as a tree"""
    return render_to_response (
       'geneapro/pedigree.html',
-      {"type":"pedigree",
-       "legend": getLegend(),
-       "pedigree_data":compute_data(6, False, 1)},
-      context_instance=RequestContext(request))
-
-def pedigree_canvas_view (request):
-   """Display the pedigree of a person as a tree"""
-   return render_to_response (
-      'geneapro/pedigree2.html',
       {"pedigree_data":compute_data(6, False, 1),
        "legend": getLegend()},
       context_instance=RequestContext(request))
@@ -74,7 +65,7 @@ def pedigree_canvas_view (request):
 def fanchart_view (request):
    """Display the pedigree of a person as a fanchart"""
    return render_to_response (
-       'geneapro/pedigree.html',
+       'geneapro/fanchart.html',
        {"type":"fanchart",
         "legend": getLegend(),
         "pedigree_data":compute_data(6, True, 1)},

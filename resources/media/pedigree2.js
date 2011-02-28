@@ -1,25 +1,41 @@
 // Needs the variable "pedigree_data_url" to be defined
+var showUnknown = false; //  whether to draw a box when parent is unknown
+var baseFontSize = "16"; // pixels
+var minFont = 5;    // No need to draw text below this size
+var fontName = "sans"; // "Times New Roman";
+
+// The following variables are initialized in setUp
+var maxFontSize = 16; //  maximum font size
 var boxWidth = 300;
 var horizPadding = 20;
 var boxHeight = 40;
 var vertPadding = 2;    //  vertical padding at last gen
-var showUnknown = false; //  whether to draw a box when parent is unknown
 var ratio = 0.75;   //  size ratio for height from generation n to n+1
 var wratio = 0.75;  //  size ratio for width from generation n to n+1
-var baseFontSize = "16"; // pixels
-var maxFontSize = 16; //  maximum font size
-var minFont = 5;    // No need to draw text below this size
-var fontName = "sans"; // "Times New Roman";
 
-/*** All boxes have the same size and display birth and death info
-ratio = 1.0;
-wratio = 1.0;
-boxWidth = 200;
-boxHeight = 90;
-vertPadding = 20;
-horizPadding = 20;
-maxFontSize = 14;
-***/
+function setUp (sameSize) {
+   // setup the canvas. If sameSize is True, then all boxes will have the
+   // same size, otherwise the size decreases as the generation number
+   // increases.
+
+   if (sameSize) {
+      ratio = 1.0;
+      wratio = 1.0;
+      boxWidth = 200;
+      boxHeight = 75;
+      vertPadding = 2;
+      horizPadding = 20;
+      maxFontSize = 13;
+   } else {
+      boxWidth = 300;
+      horizPadding = 20;
+      boxHeight = 40;
+      vertPadding = 2;
+      ratio = 0.75;
+      wratio = 0.75;
+      maxFontSize = 16;
+   }
+}
 
 function drawBox (canvas, c, person, x, y, width, height, gen) {
    // (x,y,width,height) are specified in pixels, so zooming and scrolling must
@@ -73,6 +89,7 @@ function drawSOSA() {
       onCtrlClick: onCtrlClick,
       onDblClick: onDblClick,
    };
+   setUp($("#sameSize")[0].checked);
    $("#pedigreeSVG").canvas(opt);
 };
 
@@ -195,7 +212,8 @@ function computeBoxPositions (canvas) {
    var d = data;
 
    if (canvas.__gens == d.generations
-       && canvas.__scale == canvas.scale)
+       && canvas.__scale == canvas.scale
+       && canvas.__ratio == ratio)
       return; // nothing to do
 
    canvas.boxheights = new Array (d.generations); //[height, lines, wscale]
@@ -205,6 +223,7 @@ function computeBoxPositions (canvas) {
    canvas.lineHeight = new Array (d.generations); // font size at each gen
    canvas.__gens = d.generations;
    canvas.__scale = canvas.scale;
+   canvas.__ratio = ratio;
 
    var lastgen = d.generations - 1,
        maxBoxes = Math.pow (2,d.generations-1),// max boxes at last generation
@@ -372,5 +391,4 @@ function doDraw (evt, screenBox) {
       ctx.fillText(te[3], te[1], te[2]);
    }
    ctx.restore();
-
 }
