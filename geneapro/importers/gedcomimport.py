@@ -10,13 +10,14 @@ import mysites.geneapro.importers
 import re
 import datetime
 import traceback
+import time
 
 # If true, the given name read from gedcom is split (on spaces) into
 # a given name and one or more middle names. This might not be appropriate
 # for all languages
 GIVEN_NAME_TO_MIDDLE_NAME = True
 
-DEBUG = True
+DEBUG = False
 
 
 def location(obj):
@@ -48,6 +49,9 @@ class GedcomImporter(object):
         the format in gedcom.py), creates corresponding data in the database.
         data is an instance of GedcomData.
         """
+
+        if DEBUG:
+            print "Start import", time.time()
 
         try:
             self._data = data
@@ -85,12 +89,33 @@ class GedcomImporter(object):
             self._sources = dict()
             for r in data.REPO:
                 self._create_repo(r)
+            if DEBUG:
+                print "Done importing repositories"
+
+            if DEBUG:
+                print "Importing %d sources" % (len(data.SOUR))
             for s in data.SOUR:
                 self._create_source(s)
-            for s in data.INDI:
+            if DEBUG:
+                print "Done importing sources"
+
+            max = len(data.INDI)
+            if DEBUG:
+                print "Importing %d indi" % max
+            for index, s in enumerate(data.INDI):
                 self._create_indi(s)
+                if DEBUG and index % 20 == 0:
+                    print "%d / %d (%0.2f %%)" % (
+                        index, max, float(index)/float(max) * 100.0)
+            if DEBUG:
+                print "Done importing indi"
+
+            if DEBUG:
+                print "Importing %d families" % (len(data.FAM))
             for s in data.FAM:
                 self._create_family(s)
+            if DEBUG:
+                print "Done importing families"
 
             for k, v in data.for_all_fields():
                 if k not in ("SOUR", "INDI", "FAM", "HEAD", "SUBM",

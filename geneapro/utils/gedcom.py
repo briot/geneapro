@@ -46,6 +46,7 @@ LINE_RE = re.compile ('^(?P<level>\d+)\s' + OPTIONAL_XREF_ID
 unlimited = 100000
 
 DEBUG = False
+PROGRESS = False
 
 # _GRAMMAR is a tuple of tuples, each of which describes one of the nodes
 # that the record accepts:
@@ -507,6 +508,9 @@ class _Lexical(object):
 
         if DEBUG:
             print "%04d: %s" % (self.line, r)
+
+        if PROGRESS and self.line % 1000 == 0:
+            print "Gedcom: line %d" % (self.line, )
 
         if r[0] == 1 and r[1] == "CHAR":
             if r[3] == "ANSEL":
