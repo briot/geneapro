@@ -32,7 +32,7 @@
     <div id="sourceGalleryCarousel">
      <ul id="carousel" class="jcarousel-skin-tango">
         {% for r in s.representations.all %}
-        <li title="{{r.comments}}"><img width="75" height="75" src="/repr/75/{{r.id}}"></li>
+        <li title="{{r.comments}}"><img src="/repr/75/{{r.id}}"></li>
         {% endfor %}
      </ul>
      <div style="text-align:right; margin-right:10px">

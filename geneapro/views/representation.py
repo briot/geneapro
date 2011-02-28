@@ -31,10 +31,9 @@ def create_resized_image(image_name, original_location,
     if not os.path.exists(name):
         unsized_image = urllib.urlretrieve(str(original_location))
         unsized_image = Image.open(unsized_image[0])
-        resized_image = ImageOps.fit(
-            unsized_image, (xconstrain, yconstrain), Image.ANTIALIAS)
-        resized_image = resized_image.convert("RGB")
-        resized_image.save(name)
+        unsized_image = unsized_image.convert("RGB")
+        unsized_image.thumbnail((xconstrain, yconstrain), Image.ANTIALIAS)
+        unsized_image.save(name)
 
     return name
 
