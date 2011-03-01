@@ -1,6 +1,16 @@
 This is Geneapro, a web-based genealogical software.
 This README is organized as a FAQ, hopefully this will make it more readable.
 
+Q. What do I need to install first ?
+
+   You will need python 2.6 or 2.7, Django >= 1.2.4 and sqlite >= 3.6.
+   We know that things will not work as well with older versions, and the
+   current priority of the project is to implement new features rather than
+   support obsolete versions of these tools.
+
+   The only database backend that has been tested so far is Sqlite, although
+   Django is such that it might work with other backends.
+
 Q. How do I setup the application ?
 
    You need to edit the file settings.py to point to the database
