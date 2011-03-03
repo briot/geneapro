@@ -457,9 +457,7 @@ class _Lexical(object):
         if isinstance(value, unicode):
             r = GedcomString(value)
         else:
-            r = GedcomString(value,
-                             encoding=self.encoding,
-                             errors='replace')
+            r = GedcomString(value.decode(self.encoding, "replace"))
 
         #print type(value), value, " => "
         #print "    ", [ord(c) for c in r]

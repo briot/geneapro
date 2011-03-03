@@ -5,7 +5,7 @@ Provides a gedcom importer
 from django.utils.translation import ugettext as _
 from mysites.geneapro.utils.gedcom import Gedcom, Invalid_Gedcom, GedcomRecord, GedcomString
 from mysites.geneapro import models
-from django.db import transaction
+from django.db import transaction, connection
 import mysites.geneapro.importers
 import re
 import datetime
@@ -493,7 +493,7 @@ class GedcomImporter(object):
             # Such an association is done via assertions, based on sources.
 
             for s in self._create_sources_ref(val):
-                models.P2C_Assertion.objects.create(
+                models.P2C.objects.create(
                     surety=self._default_surety,
                     researcher=self._researcher,
                     person=indi,
@@ -660,7 +660,7 @@ class GedcomImporter(object):
         for person, role in indi:
             if person:
                 for s in all_src:
-                    models.P2E_Assertion.objects.create(
+                    models.P2E.objects.create(
                         surety=self._default_surety,
                         researcher=self._researcher,
                         person=person,

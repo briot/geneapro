@@ -69,6 +69,7 @@ h2 {background-color:#ECF2F9;
 .sourcepartInfo table select {width:10em}
 .sourcepartInfo tr.fact {border-top:1px dotted #999}
 .sourcepartData {border-bottom:1px dotted #999}
+.sourcepartData tr.disproved {text-decoration:line-through}
 .sourcepartInfo td {height:2.5em}
 .sourcepartInfo td.factType {text-align:left; color:#777; padding-right:7px}
 

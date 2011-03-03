@@ -39,15 +39,15 @@ class Tree (object):
       # parents and child from every birth event (we need the child to
       # associate it with the parents, through the event)
 
-      all_events = models.P2E_Assertion.objects.filter (
-         event__type = models.Event_Type.birth,
-         role__in = roles,
-         disproved = False).values_list('event', flat=True)
+      all_events = models.P2E.objects.filter(
+         event__type=models.Event_Type.birth,
+         role__in=roles,
+         disproved=False).values_list('event', flat=True)
       all_events = sql_in(all_events, "person", ids)
 
       events = [e for e in all_events]
 
-      tmp = models.P2E_Assertion.objects.filter (
+      tmp = models.P2E.objects.filter (
          role__in = (models.Event_Type_Role.birth__father,
                      models.Event_Type_Role.principal,
                      models.Event_Type_Role.birth__mother),
@@ -207,14 +207,14 @@ class Tree (object):
    def children (self, id):
       """Return the list of children (ids) of the person"""
 
-      child_births = models.P2E_Assertion.objects.filter (
+      child_births = models.P2E.objects.filter (
          person = id,
          event__type = models.Event_Type.birth,
          disproved = False,
          role__in = (models.Event_Type_Role.birth__father,
                      models.Event_Type_Role.birth__mother))
 
-      p2e = models.P2E_Assertion.objects.filter (
+      p2e = models.P2E.objects.filter (
          event__in = child_births.values_list ('event', flat=True),
          disproved = False,
          role__in  = (models.Event_Type_Role.principal,

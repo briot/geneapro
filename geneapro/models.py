@@ -514,22 +514,23 @@ class Event_Type (Part_Type):
    marriage = 3
    death = 4
 
-class Event_Type_Role (GeneaproModel):
+
+class Event_Type_Role(GeneaproModel):
    """
    The individual roles of a defined event type, such as "witness",
    "chaplain"
    """
 
-   type = models.ForeignKey (Event_Type, null=True, blank=True,
+   type = models.ForeignKey(Event_Type, null=True, blank=True,
        help_text="The event type for which the role is defined. If unset,"
                + " this applies to all events")
-   name = models.CharField (max_length=50)
+   name = models.CharField(max_length=50)
 
    class Meta:
       """Meta data for the model"""
       db_table = "event_type_role"
 
-   def __unicode__ (self):
+   def __unicode__(self):
       if self.type:
          return unicode(self.id) + ": " + self.type.name + " => " + self.name
       else:
@@ -582,6 +583,7 @@ class Characteristic_Part_Type (Part_Type):
    given_name = 6
    surname = 7
 
+
 class Characteristic (models.Model):
    """
    A characteristic is any data that distinguishes one person from another.
@@ -589,12 +591,13 @@ class Characteristic (models.Model):
    assertion.
    """
 
-   place = models.ForeignKey (Place, null=True)
-   date  = PartialDateField (null=True)
+   place = models.ForeignKey(Place, null=True)
+   date  = PartialDateField(null=True)
 
    class Meta:
       """Meta data for the model"""
       db_table = "characteristic"
+
 
 class Characteristic_Part (GeneaproModel):
    """
@@ -615,6 +618,7 @@ class Characteristic_Part (GeneaproModel):
 
    def __unicode__ (self):
       return self.type.name + "=" + self.name
+
 
 class Group_Type (Part_Type):
    """
@@ -703,34 +707,34 @@ class Assertion (GeneaproModel):
       """Meta data for the model"""
       db_table = "assertion"
 
-class P2C_Assertion (Assertion):
+class P2C(Assertion):
    """Persona-to-Characteristic assertions"""
-   person = models.ForeignKey (Persona, related_name="characteristics")
-   characteristic = models.ForeignKey (Characteristic, related_name="persons")
+   person = models.ForeignKey(Persona, related_name="characteristics")
+   characteristic = models.ForeignKey(Characteristic, related_name="persons")
 
    class Meta:
       """Meta data for the model"""
       db_table = "p2c"
 
-class P2E_Assertion (Assertion):
+class P2E(Assertion):
    """Persona-to-Event assertions"""
-   person     = models.ForeignKey (Persona, related_name="events")
-   event      = models.ForeignKey (Event, related_name="actors")
-   role       = models.ForeignKey (Event_Type_Role, null=True)
+   person     = models.ForeignKey(Persona, related_name="events")
+   event      = models.ForeignKey(Event, related_name="actors")
+   role       = models.ForeignKey(Event_Type_Role, null=True)
    last_change = models.DateTimeField(default=datetime.datetime.now)
 
    class Meta:
       """Meta data for the model"""
       db_table = "p2e"
 
-   def __unicode__ (self):
+   def __unicode__(self):
       if self.role:
          role = " (as " + self.role.name + ")"
       else:
          role = ""
 
-      return unicode (self.person) + " " + self.value + " " \
-                      + unicode (self.event) + role
+      return unicode(self.person) + " " + self.value + " " \
+                      + unicode(self.event) + role
 
 #class E2C(Assertion):
 #    """Event-to-Characteristic assertions.
@@ -766,26 +770,26 @@ def sql_field_name (cls, field_name):
       sql_table_name (cls), connection.ops.quote_name (f.column))
 
 all_fields = {
-   'char_part.name': sql_field_name (Characteristic_Part, "name"),
-   'char_part':      sql_table_name (Characteristic_Part),
-   'assert':         sql_table_name (Assertion),
-   'p2c':     sql_table_name (P2C_Assertion),
-   'p2e':     sql_table_name (P2E_Assertion),
-   'char_part.char': sql_field_name (Characteristic_Part, "characteristic"),
-   'assert.pk':      sql_field_name (Assertion, "pk"),
-   'p2e.pk':  sql_field_name (P2E_Assertion, "pk"),
-   'p2c.pk':  sql_field_name (P2C_Assertion, "pk"),
-   'p2c.char': sql_field_name (P2C_Assertion, "characteristic"),
-   'p2c.person': sql_field_name (P2C_Assertion, "person"),
-   'p2e.person': sql_field_name (P2E_Assertion, "person"),
-   'p2e.event':  sql_field_name (P2E_Assertion, "event"),
-   'p2e.role':  sql_field_name (P2E_Assertion, "role"),
-   'char_part.type': sql_field_name (Characteristic_Part, "type"),
-   'persona.id'    : sql_field_name (Persona, "pk"),
-   'assert.value'  : sql_field_name (Assertion, "value"),
-   'event.date'    : sql_field_name (Event, "date"),
-   'event':          sql_table_name (Event),
-   'event.id':       sql_field_name (Event, "pk"),
-   'event.type':     sql_field_name (Event, "type"),
+   'char_part.name': sql_field_name(Characteristic_Part, "name"),
+   'char_part':      sql_table_name(Characteristic_Part),
+   'assert':         sql_table_name(Assertion),
+   'p2c':            sql_table_name(P2C),
+   'p2e':            sql_table_name(P2E),
+   'char_part.char': sql_field_name(Characteristic_Part, "characteristic"),
+   'assert.pk':      sql_field_name(Assertion, "pk"),
+   'p2e.pk':         sql_field_name(P2E, "pk"),
+   'p2c.pk':         sql_field_name(P2C, "pk"),
+   'p2c.char':       sql_field_name(P2C, "characteristic"),
+   'p2c.person':     sql_field_name(P2C, "person"),
+   'p2e.person':     sql_field_name(P2E, "person"),
+   'p2e.event':      sql_field_name(P2E, "event"),
+   'p2e.role':       sql_field_name(P2E, "role"),
+   'char_part.type': sql_field_name(Characteristic_Part, "type"),
+   'persona.id'    : sql_field_name(Persona, "pk"),
+   'assert.value'  : sql_field_name(Assertion, "value"),
+   'event.date'    : sql_field_name(Event, "date"),
+   'event':          sql_table_name(Event),
+   'event.id':       sql_field_name(Event, "pk"),
+   'event.type':     sql_field_name(Event, "type"),
 }
 

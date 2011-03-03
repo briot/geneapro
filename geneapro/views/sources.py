@@ -8,6 +8,22 @@ from mysites.geneapro import models
 from mysites.geneapro.views.queries import sql_in
 
 
+class Fact(object):
+    """Describes a fact extracted from an assertion"""
+
+    __slots__ = ("surety", "value", "rationale", "disproved",
+                 "subject1", "subject2")
+
+    def __init__(self, surety, value, rationale, disproved,
+                 subject1, subject2):
+        self.surety    = surety
+        self.value     = value
+        self.rationale = rationale
+        self.disproved = disproved
+        self.subject1  = subject1
+        self.subject2  = subject2
+
+
 def extended_sources(ids):
     """Return a dict of Source instances, with extra attributes"""
 
@@ -20,12 +36,27 @@ def extended_sources(ids):
                     "id", ids):
         sources[s.id] = s
         s.citations = []
-        print s.repositories.all()
+        s.asserts = []
 
     # ??? Should include parent source's citations
     for c in sql_in(models.Citation_Part.objects.select_related("type"),
                     "source", ids):
         sources[c.source_id].citations.append(c)
+
+    # Assertions deducted from this source
+
+    p2e = models.P2E.objects.select_related()
+
+    for c in sql_in(p2e, "source", ids):
+        f = Fact(
+            surety=c.surety.name,
+            value=c.value,
+            rationale=c.rationale,
+            disproved=c.disproved,
+            subject1=c.person.name,
+            subject2="%s (%s)" % (c.event.name, c.role.name)
+        )
+        sources[c.source_id].asserts.append(f)
 
     return sources
 

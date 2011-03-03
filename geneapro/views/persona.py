@@ -56,7 +56,7 @@ def __get_characteristics(persons, ids):
    p2c = dict()  # characteristic_id -> person
    sources = dict() # event_id -> [source_id...]
 
-   all_p2c = models.P2C_Assertion.objects.all()
+   all_p2c = models.P2C.objects.all()
    if ids is not None:
        all_p2c = all_p2c.filter(person__in=ids)
 
@@ -71,7 +71,8 @@ def __get_characteristics(persons, ids):
            else:
                sources[char].append(s)
 
-   chars = models.Characteristic_Part.objects.select_related()
+   chars = models.Characteristic_Part.objects.select_related(
+       'type', 'characteristic', 'characteristic__place')
 
    # Query all chars if ids==None, otherwise a subset
    for c in sql_in(chars, "characteristic", ids and p2c.keys()):
@@ -85,7 +86,7 @@ def __get_characteristics(persons, ids):
                "sources":sources.get(c.characteristic_id, []),
                "parts":[]}
 
-       ch["parts"].append ((c.type.name, c.name))
+       ch["parts"].append((c.type.name, c.name))
 
        # Some special cases, for the sake of the pedigree view and the styles
 
@@ -112,7 +113,7 @@ def __get_events(persons, ids, styles, types=None):
    for role in models.Event_Type_Role.objects.all():
        roles[role.id] = role.name
 
-   for p in sql_in(models.P2E_Assertion.objects, "person", ids):
+   for p in sql_in(models.P2E.objects, "person", ids):
       if p.event_id in p2e:
          p2e[p.event_id].add((persons[p.person_id], p.role_id))
          if p.source_id is not None:
@@ -142,10 +143,10 @@ def __get_events(persons, ids, styles, types=None):
           else:
              e.place = places[e.place_id]
 
-       e.sources = sources[e.id]
+       e.sources = sources.get(e.id, None)
        e.Date = e.date and DateRange(e.date)
 
-       for p, role in p2e[e.id]:
+       for p, role in p2e.get(e.id, []):
            p.all_events[e.id] = (e, roles[role])
 
            if e.type_id == models.Event_Type.birth \
@@ -179,8 +180,8 @@ def __get_events(persons, ids, styles, types=None):
    # Process styles after we have computed birth (since we need age)
 
    for e in all_events:
-      source = sources [e.id]
-      for p, role in p2e [e.id]:
+      source = sources.get(e.id, None)
+      for p, role in p2e.get(e.id, []):
          styles.process (p, role, e, source)
 
 
@@ -241,6 +242,7 @@ def view_list(request):
     return render_to_response(
         'geneapro/persona_list.html',
         {"persons":all,
+         "name":[p.name.encode("utf-8") for p in all],
          "legend":getLegend()},
         context_instance=RequestContext(request))
 

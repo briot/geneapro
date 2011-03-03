@@ -32,7 +32,7 @@
     <div id="sourceGalleryCarousel">
      <ul id="carousel" class="jcarousel-skin-tango">
         {% for r in s.representations.all %}
-        <li title="{{r.comments}}"><img src="/repr/75/{{r.id}}"></li>
+        <li title="{{r.comments}}"><img alt="not found" src="/repr/75/{{r.id}}"></li>
         {% endfor %}
      </ul>
      <div style="text-align:right; margin-right:10px">
@@ -156,7 +156,8 @@
       <input type="button" value="Remove noise"
           onclick="$('div.scrollable canvas').dragPane('removeNoise')"/>
       <div class="scrollable">
-         <img src="/repr/full/{{s.representations.all.0.id}}">
+         <img alt="Document not found"
+              src="/repr/full/{{s.representations.all.0.id}}">
       </div>
 
 <!--
@@ -172,69 +173,33 @@
 
      <h3>Information</h3>
      <div class="onUse">The persons cited in this section are the ones referenced in the source document. They are not related to existing persons in the database. Such links are created in the Conclusions section below.</div>
-     <table class="sourcepartData">
 
-      <tr class="fact">
-          <td rowspan="4"><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
-          <td rowspan="4" class="factType">Birth</td>
-          <td rowspan="4"><input type="text" class="person" value="Julienne Thomas"></td>
-          <th>Date:</th>
-          <td><input type="text" class="date" value="1809-05-28"></td>
-      </tr>
-      <tr><th>Place:</th>
-          <td><input type="text" class="place" value="Missillac, France"></td>
-      </tr>
-      <tr><th>Gallery:</th>
-          <td><input type="text" value=""></td>
-      </tr>
-      <tr><th>Notes:</th>
-          <td><input type="text" value=""></td>
-      </tr>
-      <tr><td><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
-          <td colpan="1" class="factType">Witness</td>
-          <td><input type="text" class="person" value="Francois Thomas (2)"></td>
-          </tr>
+     <table id="facts" class="sourcepartData" cellspacing="0" cellpadding="0">
+        <thead>
+           <tr>
+              <td>Subject1</td>
+              <td>Subject2</td>
+              <td>Value</td>
+              <td>Surety</td>
+              <td>Rationale</td>
+           </tr>
+        </thead>
+        <tbody>
+           {% for a in s.asserts %}
+             {% if a.disproved %}
+           <tr class="disproved">
+             {% else %}
+           <tr>
+             {% endif %}
 
-      <tr class="fact">
-          <td rowspan="4"><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
-          <td rowspan="4" class="factType">Marriage</td>
-          <td rowspan="2"><input type="text" class="person" value="Francois Thomas"></td>
-          <th>Date:</th>
-          <td><input type="text" class="date" value="1780-01-01"></td>
-      </tr>
-      <tr><th>Place:</th>
-          <td><input type="text" class="place" value="Missillac, France"></td>
-      </tr>
-      </tr><td rowspan="2"><input type="text" class="person" value="Estelle Noblet"></td>
-          <th>Gallery:</th>
-          <td><input type="text" value=""></td>
-      </tr>
-      <tr><th>Notes:</th>
-          <td><input type="text" value=""></td>
-      </tr>
-
-      <tr class="fact">
-          <td rowspan="1"><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
-          <td rowspan="1" class="factType">Father of</td>
-          <td><input type="text" class="person" value="Julienne Thomas"></td>
-          <th>is:</th>
-          <td><input type="text" class="person" value="Francois Thomas"></td>
-      </tr>
-
-      <tr class="fact">
-          <td rowspan="4"><img src="{{MEDIA_URL}}remove.png" alt="remove"></td>
-          <td rowspan="4" class="factType">Sosa</td>
-          <td rowspan="4"><input type="text" value="10001"></td>
-          <th>Name:</th>
-          <td><input type="text" class="person" value="Francois Thomas"></td>
-      </tr>
-      <tr><th>Birth:</th>
-          <td><input type="text" class="date" value="1922-02-12"></td></tr>
-      <tr><th>Mariage:</th>
-          <td><input type="text" class="date" value=""></td></tr>
-      <tr><th>Death:</th>
-          <td><input type="text" class="date" value=""></td></tr>
-
+             <td>{{a.subject1}}</td>
+             <td>{{a.subject2}}</td>
+             <td>{{a.value}}</td>
+             <td>{{a.surety}}</td>
+             <td>{{a.rationale}}</td>
+           </tr>
+           {% endfor %}
+        </tbody>
      </table>
 
      <img src="{{MEDIA_URL}}add.png" alt="add new event">
@@ -283,6 +248,12 @@
 
 {% endblock contents %}
 {% block script %}
+
+$("#facts").dataTable(
+  {"sDom": '<"top"f><"top2"pi>rt',
+  }
+);
+
 function hideOrShow(button,selector) {
   $(selector).toggle("fast");
   var b = $(button);
