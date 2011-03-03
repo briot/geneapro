@@ -457,7 +457,13 @@ class _Lexical(object):
         if isinstance(value, unicode):
             r = GedcomString(value)
         else:
-            r = GedcomString(value.decode(self.encoding, "replace"))
+            if self.encoding == "heredis-ansi":
+                value = value.replace(chr(135), chr(225))  # a-acute
+                value = value.replace(chr(141), chr(231))  # c-cedilla
+                r = GedcomString(value.decode('iso-8859-1', "replace"))
+
+            else:
+                r = GedcomString(value.decode(self.encoding, "replace"))
 
         #print type(value), value, " => "
         #print "    ", [ord(c) for c in r]
@@ -514,7 +520,8 @@ class _Lexical(object):
             if r[3] == "ANSEL":
                 self.encoding = "iso-8859-1"
             elif r[3] == "ANSI":
-                self.encoding = "iso-8859-1"
+                # ??? Heredis specific
+                self.encoding = "heredis-ansi"
             elif r[3] == "UNICODE":
                 self.encoding = "utf-16"
             else:
