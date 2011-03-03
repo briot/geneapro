@@ -6,19 +6,23 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from mysites.geneapro import models
 from mysites.geneapro.views.queries import sql_in
+from mysites.geneapro.utils.date import Date, DateRange
 
 
 class Fact(object):
     """Describes a fact extracted from an assertion"""
 
-    __slots__ = ("surety", "value", "rationale", "disproved",
-                 "subject1", "subject2")
+    __slots__ = ("surety", "value", "rationale", "disproved", "date",
+                 "subject1", "subject2", "place", "parts")
 
-    def __init__(self, surety, value, rationale, disproved,
-                 subject1, subject2):
+    def __init__(self, surety, value, rationale, disproved, date, place,
+                 subject1, subject2, parts=None):
         self.surety    = surety
         self.value     = value
         self.rationale = rationale
+        self.date      = date
+        self.place     = place
+        self.parts     = parts
         self.disproved = disproved
         self.subject1  = subject1
         self.subject2  = subject2
@@ -46,16 +50,35 @@ def extended_sources(ids):
     # Assertions deducted from this source
 
     p2e = models.P2E.objects.select_related()
-
     for c in sql_in(p2e, "source", ids):
         f = Fact(
             surety=c.surety.name,
             value=c.value,
             rationale=c.rationale,
+            date=c.event.date and DateRange(c.event.date),
+            place=c.event.place and c.event.place.name,
             disproved=c.disproved,
             subject1=c.person.name,
-            subject2="%s (%s)" % (c.event.name, c.role.name)
-        )
+            subject2="%s (%s)" % (c.event.name, c.role.name))
+        sources[c.source_id].asserts.append(f)
+
+    p2c = models.P2C.objects.select_related()
+    for c in sql_in(p2c, "source", ids):
+        parts = []
+        for p in models.Characteristic_Part.objects.filter(characteristic=c.characteristic) \
+                 .select_related():
+            parts.append((p.type.name, p.name))
+
+        f = Fact(
+            surety=c.surety.name,
+            value=c.value,
+            rationale=c.rationale,
+            date=c.characteristic.date and DateRange(c.characteristic.date),
+            place=c.characteristic.place and c.characteristic.place.name,
+            parts=parts,
+            disproved=c.disproved,
+            subject1=c.person.name,
+            subject2="")
         sources[c.source_id].asserts.append(f)
 
     return sources

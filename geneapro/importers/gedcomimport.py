@@ -499,7 +499,7 @@ class GedcomImporter(object):
                     person=indi,
                     source=s,
                     characteristic=c,
-                    value='charac')
+                    value='')
 
             # The main characteristic part is the value found on the same
             # GEDCOM line as the characteristic itself. For simple characteristics

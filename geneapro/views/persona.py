@@ -82,7 +82,8 @@ def __get_characteristics(persons, ids):
        if not ch:
            ch = chars[c.characteristic_id] = {
                "place":c.characteristic.place,
-               "Date":c.characteristic.date and Date(c.characteristic.date),
+               "Date":c.characteristic.date
+                  and DateRange(c.characteristic.date),
                "sources":sources.get(c.characteristic_id, []),
                "parts":[]}
 

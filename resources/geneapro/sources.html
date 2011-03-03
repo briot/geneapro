@@ -15,6 +15,7 @@
 {% block header %}
 <link rel="stylesheet" href="{{MEDIA_URL}}jcarousel.css"/>
 <link rel="stylesheet" href="{{MEDIA_URL}}ui.tabs.css"/>
+<link rel="stylesheet" href="{{MEDIA_URL}}datatables.css"/>
 <script type="text/javascript" src="{{MEDIA_URL}}jquery-ui-1.8.9.custom.min.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
@@ -160,28 +161,20 @@
               src="/repr/full/{{s.representations.all.0.id}}">
       </div>
 
-<!--
-     <h3>Transcripts</h3>
-     Transcripts could be either a free-form text, or we specify some columns
-     that correspond to this typical source faster. Then we can register a
-     post-processor for that custom table to automatically enter data from
-     here. For instance, when importing an existing genealogy:<br>
-        Columns=["Number", "Name", "Birth Date", "Birth Place", "Mariage Date",
-                 "Mariage Place", "Death Date", "Death Place"]
-        Postprocessor: enter these using Sosa numerotation
--->
-
      <h3>Information</h3>
      <div class="onUse">The persons cited in this section are the ones referenced in the source document. They are not related to existing persons in the database. Such links are created in the Conclusions section below.</div>
 
-     <table id="facts" class="sourcepartData" cellspacing="0" cellpadding="0">
+     <div id="containers">
+      <table id="facts" class="sourcepartData" cellspacing="0" cellpadding="0">
         <thead>
            <tr>
-              <td>Subject1</td>
-              <td>Subject2</td>
-              <td>Value</td>
-              <td>Surety</td>
-              <td>Rationale</td>
+              <th>Subject1</th>
+              <th>Subject2</th>
+              <th>Date</th>
+              <th>Place</th>
+              <th>Value</th>
+              <th>Surety</th>
+              <th>Rationale</th>
            </tr>
         </thead>
         <tbody>
@@ -193,14 +186,22 @@
              {% endif %}
 
              <td>{{a.subject1}}</td>
-             <td>{{a.subject2}}</td>
-             <td>{{a.value}}</td>
+             <td>{{a.subject2}}
+                {% for pname, pval in a.parts %}
+                <span class="char">{{pname}}</span>: {{pval}}<br>
+                {% endfor %}
+             
+             </td>
+             <td>{{a.date|default:""}}</td>
+             <td>{{a.place|default:""}}</td>
+             <td>{{a.value|default:""}}</td>
              <td>{{a.surety}}</td>
-             <td>{{a.rationale}}</td>
+             <td>{{a.rationale|default:""}}</td>
            </tr>
            {% endfor %}
         </tbody>
-     </table>
+      </table>
+     </div>
 
      <img src="{{MEDIA_URL}}add.png" alt="add new event">
      <select type="eventType1" style="font-style:italic">
@@ -250,7 +251,13 @@
 {% block script %}
 
 $("#facts").dataTable(
-  {"sDom": '<"top"f><"top2"pi>rt',
+  {"sDom": '<"top"lf><"top2"pi>rt',
+   "bPaginate": false,
+   "bLengthChange": false,
+   "bFilter": true,
+   "bSort": false,
+   "bInfo": false,
+   "bAutoWidth": false
   }
 );
 
