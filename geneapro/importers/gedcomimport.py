@@ -17,7 +17,18 @@ import time
 # for all languages
 GIVEN_NAME_TO_MIDDLE_NAME = True
 
+# If true, a different persona is created for each source. For instance,
+# if person ID001 has two events (birth and death) each with its own sources,
+# then two personas (or more) will be created for ID001, all joined through
+# a "sameAs" group
+MULTIPLE_PERSONAS = False
+
 DEBUG = False
+
+# Id used for inlined sources in gedcom (ie there is no id in the gedcom
+# file)
+INLINE_SOURCE = -2
+NO_SOURCE = -1
 
 
 def location(obj):
@@ -80,8 +91,16 @@ class GedcomImporter(object):
             self._place_part_types = dict()
             self._get_all_event_types()
             self._places = dict()
-            self._personas = dict()  # Indexes on ids from gedcom
             self._repo = dict()
+
+            self._samePersonGroups = dict() # Indexed on gedcom's id,
+               # contains the Group for "samePerson" which is used to group
+               # personas representing the same physical person.
+
+            self._sourcePersona = dict() # Indexed on (sourceId, personId)
+               # returns the Persona to use for that source. As a special
+               # case, sourceId is set to NO_SOURCE for those events and
+               # characteristics with no source.
 
             self._source_medium = dict()
             self._read_source_medium()
@@ -323,14 +342,25 @@ class GedcomImporter(object):
 
         husb = data.HUSB
         if husb:
-            husb = self._personas[husb.id]
+            husb = self._sourcePersona[(NO_SOURCE, husb.id)]
 
         wife = data.WIFE
         if wife:
-            wife = self._personas[wife.id]
+            wife = self._sourcePersona[(NO_SOURCE, wife.id)]
 
         family_events = ("MARR", "DIV", "CENS", "ENGA", "EVEN")
         found = 0
+
+        # We might have a family with children only.
+        # Or a family with only one parent.
+        # In such cases, we create the missing parents, so the the siblings
+        # are not lost (if we created a single parent, their might still
+        # be ambiguities if that parent also belonged to another family
+
+        if not husb:
+            husb = models.Persona.objects.create(name="Unknown husband")
+        if not wife:
+            wife = models.Persona.objects.create(name="Unknown wife")
 
         for field in family_events:
             for evt in getattr(data, field, []):
@@ -357,7 +387,7 @@ class GedcomImporter(object):
 
         for c in data.CHIL:
             self._create_event(
-                [(self._personas[c.id], self._principal),
+                [(self._sourcePersona[(NO_SOURCE, c.id)], self._principal),
                  (husb, self._birth__father),
                  (wife, self._birth__mother)],
                 "BIRT", data=c, CHAN=data.CHAN)
@@ -438,6 +468,61 @@ class GedcomImporter(object):
 
         return p
 
+    def _indi_for_source(self, sourceId, indi):
+        """Return the instance of Persona to use for the given source.
+           A new one is created as needed.
+           sourceId should be "INLINE_SOURCE" for inline sources (since this
+           source cannot occur in a different place anyway).
+           sourceId should be "NO_SOURCE" when not talking about a specific
+           source.
+        """
+
+        if not MULTIPLE_PERSONAS \
+           or sourceId == NO_SOURCE \
+           or not hasattr(indi, "_gedcom_id"):
+            return indi
+
+        if sourceId != INLINE_SOURCE:
+            p = self._sourcePersona.get((sourceId,indi._gedcom_id), None)
+            if p:
+                return p
+
+        ind = models.Persona.objects.create(
+            name=indi.name,
+            description='',  # was set for the first persona already
+            last_change=indi.last_change)
+
+        # Put the new persona in the "samePerson" group
+
+        gr = self._samePersonGroups.get(indi._gedcom_id, None)
+        if not gr:
+            gr = models.Group.objects.create(
+                type_id=models.Group_Type.samePerson,
+                name="Personas of %s" % indi.name)
+            self._samePersonGroups[indi._gedcom_id] = gr
+
+            # Put the no-source persona into the group
+            models.P2G.objects.create(
+                surety=self._default_surety,
+                researcher=self._researcher,
+                person=indi,
+                group=gr,
+                role=None,
+                value='')
+
+        models.P2G.objects.create(
+            surety=self._default_surety,
+            researcher=self._researcher,
+            person=ind,
+            group=gr,
+            role=None,
+            value='')
+
+        if sourceId != INLINE_SOURCE:
+            self._sourcePersona[(sourceId, indi._gedcom_id)] = ind
+
+        return ind
+
     def _create_characteristic(self, key, value, indi):
         """Create a Characteristic for the person indi.
          Return True if a characteristic could be created, false otherwise.
@@ -492,18 +577,19 @@ class GedcomImporter(object):
             # Associate the characteristic with the persona.
             # Such an association is done via assertions, based on sources.
 
-            for s in self._create_sources_ref(val):
+            for sid, s in self._create_sources_ref(val):
+                ind = self._indi_for_source(sourceId=sid, indi=indi)
                 models.P2C.objects.create(
                     surety=self._default_surety,
                     researcher=self._researcher,
-                    person=indi,
+                    person=ind,
                     source=s,
                     characteristic=c,
                     value='')
 
             # The main characteristic part is the value found on the same
-            # GEDCOM line as the characteristic itself. For simple characteristics
-            # like "SEX", this will in fact be the only part.
+            # GEDCOM line as the characteristic itself. For simple
+            # characteristics like "SEX", this will in fact be the only part.
 
             if typ:
                 models.Characteristic_Part.objects.create(characteristic=c,
@@ -613,7 +699,8 @@ class GedcomImporter(object):
             name = " and ".join(name)
 
             if principal is None:
-                print "No principal given for event: ", data
+                print "%s No principal given for event: %s - %s" % (
+                    location(data), field, data)
 
         else:
             principal = indi
@@ -637,6 +724,9 @@ class GedcomImporter(object):
         # If we have a note associated with the event, we assume it deals with
         # the event itself, not with its sources.
 
+        # ??? NOT IMPLEMENTED YET
+
+        # Create the event if needed.
 
         if not evt:
             place = self._create_place(data)
@@ -659,11 +749,12 @@ class GedcomImporter(object):
 
         for person, role in indi:
             if person:
-                for s in all_src:
+                for sid, s in all_src:
+                    ind = self._indi_for_source(sourceId=sid, indi=person)
                     models.P2E.objects.create(
                         surety=self._default_surety,
                         researcher=self._researcher,
-                        person=person,
+                        person=ind,
                         event=evt,
                         source=s,
                         role=role,
@@ -676,6 +767,7 @@ class GedcomImporter(object):
         """Create a list of instances of Source for the record described by
          DATA. For instance, if Data is an event, these are all the sources in
          which the event was references.
+         The return value is a list of tuples (source_id, Source instance).
          If there are no reference, this returns a list with a single element,
          None. As a result, you can always iterate over the result to insert
          rows in the database."""
@@ -689,15 +781,15 @@ class GedcomImporter(object):
                 # Gedcom, this is always an xref.
 
                 if not s.value or s.value not in self._sources:
-                    sour = self._create_source(s)
+                    sour = (INLINE_SOURCE, self._create_source(s))
                 else:
-                    sour = self._sources[s.value]
+                    sour = (s.value, self._sources[s.value])
 
                 all_sources.append(sour)
 
             return all_sources
 
-        return [None]
+        return [(NO_SOURCE, None)]
 
     def _create_indi(self, data):
         """Create the equivalent of an INDI in the database"""
@@ -712,6 +804,9 @@ class GedcomImporter(object):
             name=name,
             description=data.NOTE,
             last_change=self._create_CHAN(data.CHAN))
+        indi._gedcom_id = data.id
+
+        self._sourcePersona[(NO_SOURCE, data.id)] = indi
 
         # For all properties of the individual
 
@@ -779,7 +874,6 @@ class GedcomImporter(object):
                 print "%s Unhandled INDI.%s: %s" % (
                     location(value), field, value)
 
-        self._personas[data.id] = indi
         return indi
 
     def _create_project(self, researcher):

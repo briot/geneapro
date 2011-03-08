@@ -478,26 +478,28 @@ class Citation_Part (GeneaproModel):
       """Meta data for the model"""
       db_table = "citation_part"
 
-class Persona (GeneaproModel):
-   """
-   Contains the core identification for individuals. Such individuals
-   are grouped into group to represent a real individual. A persona
-   really represents some data about an individual found in one source
-   (when we are sure all attributes apply to the same person)
-   """
 
-   name = models.TextField ()
-   description = models.TextField (null=True)
-   last_change = models.DateTimeField(default=datetime.datetime.now)
+class Persona(GeneaproModel):
+    """
+    Contains the core identification for individuals. Such individuals
+    are grouped into group to represent a real individual. A persona
+    really represents some data about an individual found in one source
+    (when we are sure all attributes apply to the same person)
+    """
 
-   def __unicode__ (self):
-      return self.name
+    name = models.TextField()
+    description = models.TextField(null=True)
+    last_change = models.DateTimeField(default=datetime.datetime.now)
 
-   objects = models.Manager ()
+    def __unicode__(self):
+        return self.name
 
-   class Meta:
-      """Meta data for the model"""
-      db_table = "persona"
+    # objects = models.Manager()
+
+    class Meta:
+        """Meta data for the model"""
+        db_table = "persona"
+
 
 class Event_Type (Part_Type):
    """
@@ -620,17 +622,20 @@ class Characteristic_Part (GeneaproModel):
       return self.type.name + "=" + self.name
 
 
-class Group_Type (Part_Type):
-   """
-   A group is any way in which persons might be grouped: students from
-   the same class, members of the same church, an army regiment,...
-   Each member in a group might have a different role, which is
-   described by a Group_Type_Role
-   """
+class Group_Type(Part_Type):
+    """
+    A group is any way in which persons might be grouped: students from
+    the same class, members of the same church, an army regiment,...
+    Each member in a group might have a different role, which is
+    described by a Group_Type_Role
+    """
 
-   class Meta:
-      """Meta data for the model"""
-      db_table = "group_type"
+    class Meta:
+        """Meta data for the model"""
+        db_table = "group_type"
+
+    samePerson = 4  # Group whose personas represent the same physical person
+
 
 class Group_Type_Role (GeneaproModel):
    """
@@ -669,7 +674,7 @@ class Group (models.Model):
 class Assertion (GeneaproModel):
    """
    Links two entities together, describing various facts we have learned
-  about in a source.
+   about in a source.
    Not all combination of subject1 and subject2 make sense as per the
    GenTech standard (although they are all allowed). The following
    combination are described in the standard:
@@ -685,8 +690,10 @@ class Assertion (GeneaproModel):
      (Characteristic, Group)   # occupation members of all jobs done by a
                                # given person
 
-   It seems that the following are also expected
-     (Persona, Persona)  # When two persona represent the same person
+   In Gentech, personas can be grouped to indicate they represent the same
+   physical persona. To do this, you would create a group to which they all
+   belong. We could also have used an assertion that connects two
+   personas (Persona,Persona).
    """
 
    surety     = models.ForeignKey (Surety_Scheme_Part)
@@ -702,39 +709,54 @@ class Assertion (GeneaproModel):
                + " on the type of assertion")
    rationale  = models.TextField (null=True)
    disproved  = models.BooleanField (default=False)
+   last_change = models.DateTimeField(
+       default=datetime.datetime.now,
+       help_text="When was the assertion last modified")
 
    class Meta:
       """Meta data for the model"""
       db_table = "assertion"
 
-class P2C(Assertion):
-   """Persona-to-Characteristic assertions"""
-   person = models.ForeignKey(Persona, related_name="characteristics")
-   characteristic = models.ForeignKey(Characteristic, related_name="persons")
 
-   class Meta:
-      """Meta data for the model"""
-      db_table = "p2c"
+class P2C(Assertion):
+    """Persona-to-Characteristic assertions"""
+    person = models.ForeignKey(Persona, related_name="characteristics")
+    characteristic = models.ForeignKey(Characteristic, related_name="persons")
+
+    class Meta:
+       """Meta data for the model"""
+       db_table = "p2c"
+
 
 class P2E(Assertion):
-   """Persona-to-Event assertions"""
-   person     = models.ForeignKey(Persona, related_name="events")
-   event      = models.ForeignKey(Event, related_name="actors")
-   role       = models.ForeignKey(Event_Type_Role, null=True)
-   last_change = models.DateTimeField(default=datetime.datetime.now)
+    """Persona-to-Event assertions"""
+    person     = models.ForeignKey(Persona, related_name="events")
+    event      = models.ForeignKey(Event, related_name="actors")
+    role       = models.ForeignKey(Event_Type_Role, null=True)
 
-   class Meta:
-      """Meta data for the model"""
-      db_table = "p2e"
+    def __unicode__(self):
+        if self.role:
+            role = " (as " + self.role.name + ")"
+        else:
+            role = ""
+        return unicode(self.person) + " " + self.value + " " \
+            + unicode(self.event) + role
 
-   def __unicode__(self):
-      if self.role:
-         role = " (as " + self.role.name + ")"
-      else:
-         role = ""
+    class Meta:
+       """Meta data for the model"""
+       db_table = "p2e"
 
-      return unicode(self.person) + " " + self.value + " " \
-                      + unicode(self.event) + role
+
+class P2G(Assertion):
+    """Persona-to-Group assertions"""
+    person = models.ForeignKey(Persona, related_name="groups")
+    group  = models.ForeignKey(Group, related_name="personas")
+    role   = models.ForeignKey(Group_Type_Role, null=True)
+
+    class Meta:
+       """Meta data for the model"""
+       db_table = "p2g"
+
 
 #class E2C(Assertion):
 #    """Event-to-Characteristic assertions.

@@ -96,6 +96,22 @@ $("#list").dataTable(
          </td>
       </tr>
    {% endfor %}
+
+   {% for i, g in groups.items %}
+      <tr>
+         <td>Group</td>
+         <td>{{g.name}}</td>
+         <td>{{g.role|default:""}}</td>
+         <td>{{g.date|default:"-"}}</td>
+         <td>{{g.place|default:"-"}}</td>
+         <td>
+            {% for s in g.sources %}
+            <a href="/sources/{{s}}">{{s}}</a>
+            {% endfor %}
+         </td>
+      </tr>
+
+   {% endfor %}
    </tbody>
  </table>
 </div>

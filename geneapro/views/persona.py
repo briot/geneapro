@@ -34,6 +34,8 @@ def __add_default_person_attributes (person):
                               # where Event has fields like "source", "Date"
                               # "place"
    person.all_chars = dict()  # All characteristics of the person (id -> data)
+   person.all_groups = dict() # All groups the person belongs to (id -> Group)
+                              # Where Group has fields like "source", "Date"
 
    n = person.name.split('/', 2)
    person.given_name = n[0]
@@ -105,7 +107,16 @@ def __get_events(persons, ids, styles, types=None):
       Only the events of type in TYPES are returned
    """
 
-   compute_parts = styles.need_place_parts()
+   groups = models.P2G.objects.select_related()
+   for gr in sql_in(groups, "person", ids):
+       persons[gr.person_id].all_groups[gr.group_id] = gr.group
+       if gr.source_id:
+           src = getattr(gr.group, "sources", [])
+           src.append(gr.source_id)
+           gr.group.sources = src
+       gr.group.role = gr.role
+
+   compute_parts = styles and styles.need_place_parts()
 
    p2e = dict()     # event_id -> (person, role_id)
    sources = dict() # event_id -> [source_id...]
@@ -180,10 +191,11 @@ def __get_events(persons, ids, styles, types=None):
 
    # Process styles after we have computed birth (since we need age)
 
-   for e in all_events:
-      source = sources.get(e.id, None)
-      for p, role in p2e.get(e.id, []):
-         styles.process (p, role, e, source)
+   if styles:
+       for e in all_events:
+          source = sources.get(e.id, None)
+          for p, role in p2e.get(e.id, []):
+             styles.process (p, role, e, source)
 
 
 def extended_personas(ids, styles, event_types=None, as_css=False):
@@ -199,13 +211,15 @@ def extended_personas(ids, styles, event_types=None, as_css=False):
       persons[p.id] = p
       __add_default_person_attributes(p)
 
-   styles.start ()
+   if styles:
+       styles.start ()
 
    __get_characteristics(persons=persons, ids=ids)
    __get_events(persons=persons, ids=ids, styles=styles, types=event_types)
 
-   for p in persons.itervalues():
-      styles.compute (p, as_css=as_css)
+   if styles:
+       for p in persons.itervalues():
+          styles.compute (p, as_css=as_css)
 
    return persons
 
@@ -216,7 +230,8 @@ def view(request, id):
    id = int(id)
 
    tree = Tree()
-   styles = Styles(style_rules, tree, decujus=id)
+   # styles = Styles(style_rules, tree, decujus=id)
+   styles = None
    p = extended_personas(ids=[id], styles=styles, as_css=True)
 
    return render_to_response(
@@ -224,6 +239,7 @@ def view(request, id):
        {"p":p[id],
         "chars": p[id].all_chars,
         "events": p[id].all_events,
+        "groups": p[id].all_groups,
        },
        context_instance=RequestContext(request))
 
