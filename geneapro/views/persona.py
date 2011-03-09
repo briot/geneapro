@@ -99,129 +99,144 @@ def __get_characteristics(persons, ids):
           p.given_name = c.name
        elif c.type_id == models.Characteristic_Part_Type.surname:
           p.surname = c.name
+        if sourceId != INLINE_SOURCE:
+            self._sourcePersona[(sourceId, indi._gedcom_id)] = ind
+
+
+def __get_groups(persons, ids):
+    """Get all groups to which the persons belong"""
+
+    groups = models.P2G.objects.select_related()
+    for gr in sql_in(groups, "person", ids):
+        persons[gr.person_id].all_groups[gr.group_id] = gr.group
+        if gr.source_id:
+            src = getattr(gr.group, "sources", [])
+            src.append(gr.source_id)
+            gr.group.sources = src
+        gr.group.role = gr.role
 
 
 def __get_events(persons, ids, styles, types=None):
-   """Compute the events for the various persons in IDS (all all persons in the
-      database if None)
-      Only the events of type in TYPES are returned
-   """
+    """Compute the events for the various persons in IDS (all all persons in
+       the database if None)
+       Only the events of type in TYPES are returned
+    """
 
-   groups = models.P2G.objects.select_related()
-   for gr in sql_in(groups, "person", ids):
-       persons[gr.person_id].all_groups[gr.group_id] = gr.group
-       if gr.source_id:
-           src = getattr(gr.group, "sources", [])
-           src.append(gr.source_id)
-           gr.group.sources = src
-       gr.group.role = gr.role
+    compute_parts = styles and styles.need_place_parts()
 
-   compute_parts = styles and styles.need_place_parts()
+    p2e = dict()     # event_id -> (person, role_id)
+    sources = dict() # event_id -> [source_id...]
+    roles = dict()   # role_id  -> name
+    places = dict()
 
-   p2e = dict()     # event_id -> (person, role_id)
-   sources = dict() # event_id -> [source_id...]
-   roles = dict()   # role_id  -> name
+    # The query used to retrieve event details
 
-   for role in models.Event_Type_Role.objects.all():
-       roles[role.id] = role.name
+    events_query = models.Event.objects.select_related('place', 'type')
+    if types:
+        events_query = events_query.filter(type__in=types)
 
-   for p in sql_in(models.P2E.objects, "person", ids):
-      if p.event_id in p2e:
-         p2e[p.event_id].add((persons[p.person_id], p.role_id))
-         if p.source_id is not None:
-            sources[p.event_id].append(p.source_id)
-      else:
-         p2e[p.event_id] = set([(persons[p.person_id], p.role_id)])
-         if p.source_id is None:
-            sources[p.event_id] = []
-         else:
-            sources[p.event_id] = [p.source_id]
+    # Get the role names
 
-   places = dict()
+    for role in models.Event_Type_Role.objects.all():
+        roles[role.id] = role.name
 
-   events = models.Event.objects.select_related('place', 'type')
-   if types:
-       events = events.filter(type__in=types)
+    # Check all events that the persons where involved in.
+    # For efficiency, we query P2E and Events separately, because if we have
+    # multiple sources for an event (which for a given persona is unlikely)
+    # we would end up downloading the same event twice.
 
-   # Query all events if ids==None, otherwise a subset
-   # Store all events in a list, since we'll need to refer to them
-   # afterward anyway
-   all_events = list(sql_in(events, "id", ids and p2e.keys()))
-
-   for e in all_events:
-       if compute_parts and e.place:
-          if e.place_id not in places:
-             places[e.place_id] = e.place
+    for p in sql_in(models.P2E.objects, "person", ids):
+       if p.event_id in p2e:
+          p2e[p.event_id].add((persons[p.person_id], p.role_id))
+          if p.source_id is not None:
+             sources[p.event_id].append(p.source_id)
+       else:
+          p2e[p.event_id] = set([(persons[p.person_id], p.role_id)])
+          if p.source_id is None:
+             sources[p.event_id] = []
           else:
-             e.place = places[e.place_id]
+             sources[p.event_id] = [p.source_id]
 
-       e.sources = sources.get(e.id, None)
-       e.Date = e.date and DateRange(e.date)
+    # Query all events if ids==None, otherwise a subset
+    # Store all events in a list, since we'll need to refer to them
+    # afterward anyway
+    all_events = list(sql_in(events_query, "id", ids and p2e.keys()))
 
-       for p, role in p2e.get(e.id, []):
-           p.all_events[e.id] = (e, roles[role])
+    for e in all_events:
+        if compute_parts and e.place:
+           if e.place_id not in places:
+              places[e.place_id] = e.place
+           else:
+              e.place = places[e.place_id]
 
-           if e.type_id == models.Event_Type.birth \
-                 and role == models.Event_Type_Role.principal:
-              p.birth = e
+        e.sources = sources.get(e.id, None)
+        e.Date = e.date and DateRange(e.date)
 
-           elif e.type_id == models.Event_Type.death \
-                 and role == models.Event_Type_Role.principal:
-              p.death = e
+        for p, role in p2e.get(e.id, []):
+            p.all_events[e.id] = (e, roles[role])
 
-           elif e.type_id == models.Event_Type.marriage \
-                 and role == models.Event_Type_Role.principal:
-              p.marriage = e
+            if e.type_id == models.Event_Type.birth \
+                  and role == models.Event_Type_Role.principal:
+               p.birth = e
 
-   if compute_parts:
-      prev_place = None
-      d = None
+            elif e.type_id == models.Event_Type.death \
+                  and role == models.Event_Type_Role.principal:
+               p.death = e
 
-      for p in sql_in(models.Place_Part.objects
-          .order_by('place').select_related('type'),
-          "place", places.keys()):
+            elif e.type_id == models.Event_Type.marriage \
+                  and role == models.Event_Type_Role.principal:
+               p.marriage = e
 
-         # ??? We should also check the parent place to gets its own parts
-         if p.place_id != prev_place:
-            prev_place = p.place_id
-            d = dict()
-            setattr(places[prev_place], "parts", d)
+    if compute_parts:
+       prev_place = None
+       d = None
 
-         d[p.type.name] = p.name
+       for p in sql_in(models.Place_Part.objects
+           .order_by('place').select_related('type'),
+           "place", places.keys()):
 
-   # Process styles after we have computed birth (since we need age)
+          # ??? We should also check the parent place to gets its own parts
+          if p.place_id != prev_place:
+             prev_place = p.place_id
+             d = dict()
+             setattr(places[prev_place], "parts", d)
 
-   if styles:
-       for e in all_events:
-          source = sources.get(e.id, None)
-          for p, role in p2e.get(e.id, []):
-             styles.process (p, role, e, source)
+          d[p.type.name] = p.name
+
+    # Process styles after we have computed birth (since we need age)
+
+    if styles:
+        for e in all_events:
+           source = sources.get(e.id, None)
+           for p, role in p2e.get(e.id, []):
+              styles.process (p, role, e, source)
 
 
 def extended_personas(ids, styles, event_types=None, as_css=False):
-   """Return a dict indexed on id containing extended instances of Persona,
-      with additional fields for the birth, the death,...
-      IDS can be None to get all persons from the database.
-      AS_CSS should be True to get the styles as a CSS string rather than a python
-      dict.
-   """
-   persons = dict() # id -> person
+    """Return a dict indexed on id containing extended instances of Persona,
+       with additional fields for the birth, the death,...
+       IDS can be None to get all persons from the database.
+       AS_CSS should be True to get the styles as a CSS string rather than a
+       python dict.
+    """
+    persons = dict() # id -> person
 
-   for p in sql_in(models.Persona.objects, "id", ids):
-      persons[p.id] = p
-      __add_default_person_attributes(p)
+    for p in sql_in(models.Persona.objects, "id", ids):
+        persons[p.id] = p
+        __add_default_person_attributes(p)
 
-   if styles:
-       styles.start ()
+    if styles:
+        styles.start ()
 
-   __get_characteristics(persons=persons, ids=ids)
-   __get_events(persons=persons, ids=ids, styles=styles, types=event_types)
+    __get_events(persons=persons, ids=ids, styles=styles, types=event_types)
+    __get_groups(persons=persons, ids=ids)
+    __get_characteristics(persons=persons, ids=ids)
 
-   if styles:
-       for p in persons.itervalues():
-          styles.compute (p, as_css=as_css)
+    if styles:
+        for p in persons.itervalues():
+            styles.compute (p, as_css=as_css)
 
-   return persons
+    return persons
 
 
 def view(request, id):
