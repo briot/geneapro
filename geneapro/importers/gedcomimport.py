@@ -354,9 +354,9 @@ class GedcomImporter(object):
         # be ambiguities if that parent also belonged to another family
 
         if not husb:
-            husb = models.Persona.objects.create(name="Unknown husband")
+            husb = models.Persona.objects.create(name="@Unknown@")
         if not wife:
-            wife = models.Persona.objects.create(name="Unknown wife")
+            wife = models.Persona.objects.create(name="@Unknown@")
 
         for field in family_events:
             for evt in getattr(data, field, []):
@@ -498,7 +498,7 @@ class GedcomImporter(object):
             researcher=self._researcher,
             person1=indi,
             person2=ind,
-            typ=models.P2P.sameAs,
+            type=models.P2P.sameAs,
             value='Single individual in the gedcom file')
 
         return ind

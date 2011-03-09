@@ -720,7 +720,7 @@ class P2P(Assertion):
     """
     person1 = models.ForeignKey(Persona, related_name="sameAs1")
     person2 = models.ForeignKey(Persona, related_name="sameAs2")
-    typ = models.IntegerField()
+    type = models.IntegerField()
 
     class Meta:
         db_table = "p2p"

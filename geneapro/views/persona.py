@@ -12,7 +12,7 @@ from mysites.geneapro.utils.date import Date, DateRange
 from mysites.geneapro.views.custom_highlight import style_rules
 from mysites.geneapro.views.styles import Styles
 from mysites.geneapro.views.rules import getLegend
-from mysites.geneapro.views.tree import Tree
+from mysites.geneapro.views.tree import Tree, SameAs
 from mysites.geneapro.views.queries import sql_in
 import collections
 
@@ -48,71 +48,25 @@ def __add_default_person_attributes (person):
 
    person.base_surname = person.surname
 
-def __get_characteristics(persons, ids):
-   """Compute characteristics for all the PERSONS.
-      PERSONS is a dictionary associating an id to an instance of PERSONA.
-      This sets persons[*].chars to a list of the characteristics.
-      IDS is the list of IDS for the persons. If it is None, we query info for
-      all personas in the database.
-   """
 
-   p2c = dict()  # characteristic_id -> person
-   sources = collections.defaultdict(set) # event_id -> [source_id...]
-
-   all_p2c = models.P2C.objects.select_related(
-       'characteristic', 'characteristic__place')
-   if ids is not None:
-       all_p2c = all_p2c.filter(person__in=ids)
-
-   for p in all_p2c:
-       c = p.characteristic
-       person = persons[p.person_id]
-       p2c[c.id] = person
-       sources[c.id].add(p.source_id)
-       person.all_chars[c.id] = {
-           "place":c.place,
-           "Date":c.date and DateRange(c.date),
-           "sources":sources[c.id],
-           "parts":[]}
-
-   chars = models.Characteristic_Part.objects.select_related(
-       'type', 'characteristic', 'characteristic__place')
-
-   for part in sql_in(chars, "characteristic", ids and p2c.keys()):
-       person = p2c[part.characteristic_id]
-       ch = person.all_chars[part.characteristic_id]
-       ch["parts"].append((part.type.name, part.name))
-
-       if part.type_id == models.Characteristic_Part_Type.sex:
-          person.sex = part.name
-       elif part.type_id == models.Characteristic_Part_Type.given_name:
-          person.given_name = part.name
-       elif part.type_id == models.Characteristic_Part_Type.surname:
-          person.surname = part.name
-
-
-def __get_groups(persons, ids):
-    """Get all groups to which the persons belong"""
-
-    groups = models.P2G.objects.select_related('group')
-    for gr in sql_in(groups, "person", ids):
-        persons[gr.person_id].all_groups[gr.group_id] = gr.group
-        if gr.source_id:
-            src = getattr(gr.group, "sources", [])
-            src.append(gr.source_id)
-            gr.group.sources = src
-        gr.group.role = gr.role
-
-
-def __get_events(persons, ids, styles, types=None):
+def __get_events(ids, styles, same, types=None):
     """Compute the events for the various persons in IDS (all all persons in
        the database if None)
+       SAME must be an instance of SameAs, that could have already been
+       partially populated.
+       Returns a dictionary of Persona instances, indexed on persona_id.
+       This sets persons[*].chars to a list of the characteristics.
+       IDS is the list of IDS for the persons. If it is None, we query info for
+       all personas in the database.
        Only the events of type in TYPES are returned
     """
 
     compute_parts = styles and styles.need_place_parts()
 
     sources = collections.defaultdict(set) # event_id -> [source_id...]
+
+    same.compute(ids)
+
     roles = dict()  # role_id  -> name
     places = dict() # place_id -> place
 
@@ -121,16 +75,32 @@ def __get_events(persons, ids, styles, types=None):
     for role in models.Event_Type_Role.objects.all():
         roles[role.id] = role.name
 
-    # Check all events that the persons where involved in.
+    ##############
+    # Create the personas that will be returned. Doing this after resolving
+    # the links above means that we are potentially storing fewer instances
+    # of personas, thus reducing memory usage
+    ##############
+
+    persons = dict() # id -> person
+    for p in sql_in(models.Persona.objects, "id", ids):
+        if same.is_main(p.id):
+            persons[p.id] = p
+            __add_default_person_attributes(p)
+
+    ################
+    # Check all events that the persons were involved in.
+    ################
 
     events = models.P2E.objects.select_related(
         'event', 'event__place', 'event__type')
     if types:
         events = events.filter(event__type__in=types)
 
-    for p in sql_in(events, "person", ids):
+    main_ids = ids and same.main_ids(ids)  # None if ids is None
+
+    for p in sql_in(events, "person", main_ids):
         e = p.event
-        person = persons[p.person_id]
+        person = persons[same.main(p.person_id)]
         person.all_events[e.id] = (e, roles[p.role_id])
         sources[e.id].add(p.source_id)
         e.sources = sources[e.id]
@@ -150,6 +120,65 @@ def __get_events(persons, ids, styles, types=None):
             elif e.type_id == models.Event_Type.marriage:
                 person.marriage = e
 
+    #########
+    # Get all groups to which the personas belong
+    #########
+
+    groups = models.P2G.objects.select_related('group')
+    for gr in sql_in(groups, "person", main_ids):
+        person = persons[same.main(gr.person_id)]
+        person.all_groups[gr.group_id] = gr.group
+        if gr.source_id:
+            src = getattr(gr.group, "sources", [])
+            src.append(gr.source_id)
+            gr.group.sources = src
+        gr.group.role = gr.role
+
+    #########
+    # Get all characteristics of these personas
+    #########
+
+    p2c = dict()  # characteristic_id -> person
+    sources = collections.defaultdict(set) # char_id -> [source_id...]
+
+    all_p2c = models.P2C.objects.select_related(
+        'characteristic', 'characteristic__place')
+
+    for p in sql_in(all_p2c, "person", main_ids):
+        c = p.characteristic
+        person = persons[same.main(p.person_id)]
+        p2c[c.id] = person
+        sources[c.id].add(p.source_id)
+        person.all_chars[c.id] = {
+            "place":c.place,
+            "Date":c.date and DateRange(c.date),
+            "sources":sources[c.id],
+            "parts":[]}
+
+        if compute_parts and c.place:
+            places[c.place_id] = c.place
+
+    chars = models.Characteristic_Part.objects.select_related(
+        'type', 'characteristic', 'characteristic__place')
+
+    for part in sql_in(chars, "characteristic", ids and p2c.keys()):
+        person = p2c[part.characteristic_id]
+        ch = person.all_chars[part.characteristic_id]
+        ch["parts"].append((part.type.name, part.name))
+
+        if part.type_id == models.Characteristic_Part_Type.sex:
+           person.sex = part.name
+        elif part.type_id == models.Characteristic_Part_Type.given_name:
+           person.given_name = part.name
+        elif part.type_id == models.Characteristic_Part_Type.surname:
+           person.surname = part.name
+
+    ########
+    # Compute place parts once, to limit the number of queries
+    # These are only used for styles, not for actual display, although we
+    # could benefit from them.
+    ########
+
     if compute_parts:
        prev_place = None
        d = None
@@ -166,26 +195,23 @@ def __get_events(persons, ids, styles, types=None):
 
           d[p.type.name] = p.name
 
+    return persons
 
-def extended_personas(ids, styles, event_types=None, as_css=False):
+
+def extended_personas(ids, styles, event_types=None, as_css=False, same=None):
     """Return a dict indexed on id containing extended instances of Persona,
        with additional fields for the birth, the death,...
        IDS can be None to get all persons from the database.
        AS_CSS should be True to get the styles as a CSS string rather than a
        python dict.
+       If specified, SAME must be an instance of SameAs
     """
-    persons = dict() # id -> person
-
-    for p in sql_in(models.Persona.objects, "id", ids):
-        persons[p.id] = p
-        __add_default_person_attributes(p)
-
     if styles:
         styles.start ()
 
-    __get_events(persons=persons, ids=ids, styles=styles, types=event_types)
-    __get_groups(persons=persons, ids=ids)
-    __get_characteristics(persons=persons, ids=ids)
+    same = same or SameAs()
+    persons = __get_events(
+        ids=ids, styles=styles, same=same, types=event_types)
 
     if styles:
         for p in persons.itervalues():
@@ -200,7 +226,7 @@ def view(request, id):
    id = int(id)
 
    tree = Tree()
-   # styles = Styles(style_rules, tree, decujus=id)
+   # styles = Styles(style_rules, tree, decujus=id) # Not needed for now
    styles = None
    p = extended_personas(ids=[id], styles=styles, as_css=True)
 

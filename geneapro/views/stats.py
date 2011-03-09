@@ -9,7 +9,7 @@ from django.utils import simplejson
 from django.http import HttpResponse
 from mysites.geneapro import models
 from mysites.geneapro.utils.date import Date, CalendarGregorian
-from mysites.geneapro.views.tree import *
+from mysites.geneapro.views.tree import Tree, SameAs
 from mysites.geneapro.views.styles import *
 from mysites.geneapro.views.persona import extended_personas, event_types_for_pedigree
 from mysites.geneapro.views.json import to_json
@@ -18,17 +18,25 @@ def view (request):
    """Display the statistics for a given person"""
 
    decujus = 1
-   tree = Tree ()
-   styles = Styles ([], tree, decujus=decujus)
-   ids = tree.ancestors (decujus).keys()
-   persons = extended_personas (ids, styles, event_types=event_types_for_pedigree)
-   father_ids = tree.ancestors (tree.father (decujus))
-   mother_ids = tree.ancestors (tree.mother (decujus))
+   same = SameAs()
+   same.compute(None) # Compute all "same as" relationships
+   tree = Tree(same=same)
+   styles = None # Don't need style here
+
+   # ??? The stats includes persons "Unknown" that were created during a
+   # gedcom import for the purpose of preserving families. Will be fixed
+   # when we store children differently (for instance in a group)
+
+   ids = tree.ancestors(decujus).keys()
+   persons = extended_personas(
+       ids, styles, event_types=event_types_for_pedigree, same=same)
+   father_ids = tree.ancestors(tree.father(decujus))
+   mother_ids = tree.ancestors(tree.mother(decujus))
 
    cal = CalendarGregorian()
 
    ranges = []
-   for index, g in enumerate (tree.generations (decujus)):
+   for index, g in enumerate(tree.generations(decujus)):
       births = None
       deaths = None
       gen_range = [index+1, "?", "?", ""] # gen, min, max, legend
@@ -62,7 +70,7 @@ def view (request):
          if gen_range [2] == "?" or gen_range[2] < ranges[-1][1]:
             gen_range[2] = ranges[-1][1]
 
-      ranges.append (gen_range)
+      ranges.append(gen_range)
 
    ages = []
    for a in range (0, 120, 5):

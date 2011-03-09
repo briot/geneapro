@@ -153,7 +153,8 @@ class Styles():
    """
 
    def __init__(self, rules, tree, decujus):
-      """Rules specifies the rules to use for the highlighting."""
+      """Rules specifies the rules to use for the highlighting.
+      """
 
       # Preprocess the rules for faster computation
 
