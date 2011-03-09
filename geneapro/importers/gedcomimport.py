@@ -14,14 +14,14 @@ import time
 
 # If true, the given name read from gedcom is split (on spaces) into
 # a given name and one or more middle names. This might not be appropriate
-# for all languages
+# for all languages.
 GIVEN_NAME_TO_MIDDLE_NAME = True
 
 # If true, a different persona is created for each source. For instance,
 # if person ID001 has two events (birth and death) each with its own sources,
 # then two personas (or more) will be created for ID001, all joined through
-# a "sameAs" group
-MULTIPLE_PERSONAS = False
+# a "sameAs" persona-to-persona relationship.
+MULTIPLE_PERSONAS = True
 
 DEBUG = False
 
@@ -92,10 +92,6 @@ class GedcomImporter(object):
             self._get_all_event_types()
             self._places = dict()
             self._repo = dict()
-
-            self._samePersonGroups = dict() # Indexed on gedcom's id,
-               # contains the Group for "samePerson" which is used to group
-               # personas representing the same physical person.
 
             self._sourcePersona = dict() # Indexed on (sourceId, personId)
                # returns the Persona to use for that source. As a special
@@ -492,34 +488,18 @@ class GedcomImporter(object):
             description='',  # was set for the first persona already
             last_change=indi.last_change)
 
-        # Put the new persona in the "samePerson" group
-
-        gr = self._samePersonGroups.get(indi._gedcom_id, None)
-        if not gr:
-            gr = models.Group.objects.create(
-                type_id=models.Group_Type.samePerson,
-                name="Personas of %s" % indi.name)
-            self._samePersonGroups[indi._gedcom_id] = gr
-
-            # Put the no-source persona into the group
-            models.P2G.objects.create(
-                surety=self._default_surety,
-                researcher=self._researcher,
-                person=indi,
-                group=gr,
-                role=None,
-                value='')
-
-        models.P2G.objects.create(
-            surety=self._default_surety,
-            researcher=self._researcher,
-            person=ind,
-            group=gr,
-            role=None,
-            value='')
-
         if sourceId != INLINE_SOURCE:
             self._sourcePersona[(sourceId, indi._gedcom_id)] = ind
+
+        # Link old and new personas
+
+        models.P2P.objects.create(
+            surety=self._default_surety,
+            researcher=self._researcher,
+            person1=indi,
+            person2=ind,
+            typ=models.P2P.sameAs,
+            value='Single individual in the gedcom file')
 
         return ind
 

@@ -216,12 +216,11 @@ class Styles():
 
       self.cache = dict ()
 
-   def process (self, person, role, e, sources):
+   def process(self, person, role, e):
       """Process an event into the cache.
          The event is considered in relation to person. The same event might
          be processed multiple times, for each person that are part of this
          event (principals, witnesses,...)
-         SOURCES is the list of source_id corresponding to the event
       """
 
       if person.id not in self.cache:

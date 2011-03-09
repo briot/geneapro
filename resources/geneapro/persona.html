@@ -76,7 +76,9 @@ $("#list").dataTable(
       <td>{{c.place|default:"-"}}</td>
       <td>
          {% for s in c.sources %}
+            {% if s %}
          <a href="/sources/{{s}}">{{s}}</a>
+            {% endif %}
          {% endfor %}
       </td>
    </tr>
@@ -91,7 +93,9 @@ $("#list").dataTable(
          <td>{{e.0.place|default:"-"}}</td>
          <td>
             {% for s in e.0.sources %}
-            <a href="/sources/{{s}}">{{s}}</a>
+               {% if s %}
+             <a href="/sources/{{s}}">{{s}}</a>
+               {% endif %}
             {% endfor %}
          </td>
       </tr>
@@ -106,7 +110,9 @@ $("#list").dataTable(
          <td>{{g.place|default:"-"}}</td>
          <td>
             {% for s in g.sources %}
+               {% if s %}
             <a href="/sources/{{s}}">{{s}}</a>
+               {% endif %}
             {% endfor %}
          </td>
       </tr>

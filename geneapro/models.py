@@ -494,8 +494,6 @@ class Persona(GeneaproModel):
     def __unicode__(self):
         return self.name
 
-    # objects = models.Manager()
-
     class Meta:
         """Meta data for the model"""
         db_table = "persona"
@@ -634,8 +632,6 @@ class Group_Type(Part_Type):
         """Meta data for the model"""
         db_table = "group_type"
 
-    samePerson = 4  # Group whose personas represent the same physical person
-
 
 class Group_Type_Role (GeneaproModel):
    """
@@ -716,6 +712,25 @@ class Assertion (GeneaproModel):
    class Meta:
       """Meta data for the model"""
       db_table = "assertion"
+
+
+class P2P(Assertion):
+    """Persona-to-Persona assertions, to represent the Persona.sameAs
+       relationship.
+    """
+    person1 = models.ForeignKey(Persona, related_name="sameAs1")
+    person2 = models.ForeignKey(Persona, related_name="sameAs2")
+    typ = models.IntegerField()
+
+    class Meta:
+        db_table = "p2p"
+
+    sameAs = 1
+    # valid values for typ.
+    # "sameAs" => connects two personas that represent the same real world
+    #   person (along with a rationale). One persona might be linked to
+    #   several other personas, which in turn can be linked to other
+    #   personas.
 
 
 class P2C(Assertion):

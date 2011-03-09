@@ -55,6 +55,9 @@ def to_json (obj, year_only):
          elif isinstance (obj, models.Event):
             return self._event (obj)
 
+         elif isinstance(obj, set):
+             return list(obj)
+
          elif isinstance (obj, models.GeneaproModel):
             return obj.to_json()
 

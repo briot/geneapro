@@ -14,6 +14,7 @@ from mysites.geneapro.views.styles import Styles
 from mysites.geneapro.views.rules import getLegend
 from mysites.geneapro.views.tree import Tree
 from mysites.geneapro.views.queries import sql_in
+import collections
 
 
 event_types_for_pedigree = (
@@ -56,57 +57,44 @@ def __get_characteristics(persons, ids):
    """
 
    p2c = dict()  # characteristic_id -> person
-   sources = dict() # event_id -> [source_id...]
+   sources = collections.defaultdict(set) # event_id -> [source_id...]
 
-   all_p2c = models.P2C.objects.all()
+   all_p2c = models.P2C.objects.select_related(
+       'characteristic', 'characteristic__place')
    if ids is not None:
        all_p2c = all_p2c.filter(person__in=ids)
 
-   for p, s, char in all_p2c.values_list(
-       'person', 'source_id', 'characteristic'):
-
-       p2c[char] = persons[p]
-
-       if s:
-           if sources.get(char, None) is None:
-               sources[char] = [s]
-           else:
-               sources[char].append(s)
+   for p in all_p2c:
+       c = p.characteristic
+       person = persons[p.person_id]
+       p2c[c.id] = person
+       sources[c.id].add(p.source_id)
+       person.all_chars[c.id] = {
+           "place":c.place,
+           "Date":c.date and DateRange(c.date),
+           "sources":sources[c.id],
+           "parts":[]}
 
    chars = models.Characteristic_Part.objects.select_related(
        'type', 'characteristic', 'characteristic__place')
 
-   # Query all chars if ids==None, otherwise a subset
-   for c in sql_in(chars, "characteristic", ids and p2c.keys()):
-       p = p2c[c.characteristic_id]
-       chars = p.all_chars
-       ch = chars.get(c.characteristic_id, None)
-       if not ch:
-           ch = chars[c.characteristic_id] = {
-               "place":c.characteristic.place,
-               "Date":c.characteristic.date
-                  and DateRange(c.characteristic.date),
-               "sources":sources.get(c.characteristic_id, []),
-               "parts":[]}
+   for part in sql_in(chars, "characteristic", ids and p2c.keys()):
+       person = p2c[part.characteristic_id]
+       ch = person.all_chars[part.characteristic_id]
+       ch["parts"].append((part.type.name, part.name))
 
-       ch["parts"].append((c.type.name, c.name))
-
-       # Some special cases, for the sake of the pedigree view and the styles
-
-       if c.type_id == models.Characteristic_Part_Type.sex:
-          p.sex = c.name
-       elif c.type_id == models.Characteristic_Part_Type.given_name:
-          p.given_name = c.name
-       elif c.type_id == models.Characteristic_Part_Type.surname:
-          p.surname = c.name
-        if sourceId != INLINE_SOURCE:
-            self._sourcePersona[(sourceId, indi._gedcom_id)] = ind
+       if part.type_id == models.Characteristic_Part_Type.sex:
+          person.sex = part.name
+       elif part.type_id == models.Characteristic_Part_Type.given_name:
+          person.given_name = part.name
+       elif part.type_id == models.Characteristic_Part_Type.surname:
+          person.surname = part.name
 
 
 def __get_groups(persons, ids):
     """Get all groups to which the persons belong"""
 
-    groups = models.P2G.objects.select_related()
+    groups = models.P2G.objects.select_related('group')
     for gr in sql_in(groups, "person", ids):
         persons[gr.person_id].all_groups[gr.group_id] = gr.group
         if gr.source_id:
@@ -124,16 +112,9 @@ def __get_events(persons, ids, styles, types=None):
 
     compute_parts = styles and styles.need_place_parts()
 
-    p2e = dict()     # event_id -> (person, role_id)
-    sources = dict() # event_id -> [source_id...]
-    roles = dict()   # role_id  -> name
-    places = dict()
-
-    # The query used to retrieve event details
-
-    events_query = models.Event.objects.select_related('place', 'type')
-    if types:
-        events_query = events_query.filter(type__in=types)
+    sources = collections.defaultdict(set) # event_id -> [source_id...]
+    roles = dict()  # role_id  -> name
+    places = dict() # place_id -> place
 
     # Get the role names
 
@@ -141,51 +122,33 @@ def __get_events(persons, ids, styles, types=None):
         roles[role.id] = role.name
 
     # Check all events that the persons where involved in.
-    # For efficiency, we query P2E and Events separately, because if we have
-    # multiple sources for an event (which for a given persona is unlikely)
-    # we would end up downloading the same event twice.
 
-    for p in sql_in(models.P2E.objects, "person", ids):
-       if p.event_id in p2e:
-          p2e[p.event_id].add((persons[p.person_id], p.role_id))
-          if p.source_id is not None:
-             sources[p.event_id].append(p.source_id)
-       else:
-          p2e[p.event_id] = set([(persons[p.person_id], p.role_id)])
-          if p.source_id is None:
-             sources[p.event_id] = []
-          else:
-             sources[p.event_id] = [p.source_id]
+    events = models.P2E.objects.select_related(
+        'event', 'event__place', 'event__type')
+    if types:
+        events = events.filter(event__type__in=types)
 
-    # Query all events if ids==None, otherwise a subset
-    # Store all events in a list, since we'll need to refer to them
-    # afterward anyway
-    all_events = list(sql_in(events_query, "id", ids and p2e.keys()))
-
-    for e in all_events:
-        if compute_parts and e.place:
-           if e.place_id not in places:
-              places[e.place_id] = e.place
-           else:
-              e.place = places[e.place_id]
-
-        e.sources = sources.get(e.id, None)
+    for p in sql_in(events, "person", ids):
+        e = p.event
+        person = persons[p.person_id]
+        person.all_events[e.id] = (e, roles[p.role_id])
+        sources[e.id].add(p.source_id)
+        e.sources = sources[e.id]
         e.Date = e.date and DateRange(e.date)
 
-        for p, role in p2e.get(e.id, []):
-            p.all_events[e.id] = (e, roles[role])
+        if compute_parts and e.place:
+            places[e.place_id] = e.place
 
-            if e.type_id == models.Event_Type.birth \
-                  and role == models.Event_Type_Role.principal:
-               p.birth = e
+        if styles:
+            styles.process(person, p.role_id, e)
 
-            elif e.type_id == models.Event_Type.death \
-                  and role == models.Event_Type_Role.principal:
-               p.death = e
-
-            elif e.type_id == models.Event_Type.marriage \
-                  and role == models.Event_Type_Role.principal:
-               p.marriage = e
+        if p.role_id == models.Event_Type_Role.principal:
+            if e.type_id == models.Event_Type.birth:
+                person.birth = e
+            elif e.type_id == models.Event_Type.death:
+                person.death = e
+            elif e.type_id == models.Event_Type.marriage:
+                person.marriage = e
 
     if compute_parts:
        prev_place = None
@@ -202,14 +165,6 @@ def __get_events(persons, ids, styles, types=None):
              setattr(places[prev_place], "parts", d)
 
           d[p.type.name] = p.name
-
-    # Process styles after we have computed birth (since we need age)
-
-    if styles:
-        for e in all_events:
-           source = sources.get(e.id, None)
-           for p, role in p2e.get(e.id, []):
-              styles.process (p, role, e, source)
 
 
 def extended_personas(ids, styles, event_types=None, as_css=False):
