@@ -211,9 +211,6 @@ class Tree(object):
 
          check = tmpids.difference(self._processed)
 
-      file("foo", "w").write(
-      "\n".join(["%s => %s" % (k, p) for (k,p) in self.parents.iteritems()]))
-
    def _compute_descendants(self, id):
       """Look for the descendants of the person ID.
          Whenever possible, information is reused instead of querying the
