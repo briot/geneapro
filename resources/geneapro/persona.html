@@ -97,7 +97,7 @@ $("#list").dataTable(
          <td>{{e.1}}</td>
          <td class="date">{{e.0.Date|default:"-"}}</td>
          <td>{{e.0.place|default:"-"}}</td>
-         <td>{{e.2.value}}</td>
+         <td class="assert">{{e.2.value|linebreaks}}</td>
          <td>
             {% for s in e.0.sources %}
                {% if s %}

@@ -80,7 +80,7 @@ h2 {background-color:#ECF2F9;
 
 a {color:#16B; text-decoration:none; cursor:pointer}
 
-.date, .person, .place   {padding-left:2em; width:18em!important}
+.person, .place   {padding-left:2em; width:18em!important}
 
 .sourceNotes ul, .sourceActions ul {margin-left:30px}
 .sourceNotes li, .sourceActions li {margin-bottom:20px}

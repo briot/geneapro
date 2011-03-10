@@ -106,6 +106,12 @@
 #containers td.date {
    white-space:nowrap;
 }
+#containers td.assert {
+   min-width:150px;
+}
+#containers td.assert p {
+   margin-bottom:10px;
+}
 
 .sorting_asc {
    background: url('/media/dt/sort_asc.png') no-repeat center right;
