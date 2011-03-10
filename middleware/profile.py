@@ -3,7 +3,7 @@ import cProfile
 
 # Invokes the profiler when processing a query.
 # Postprocess results with:
-#     pyprof2calltree -i /tmp/*.pro -k
+#     pyprof2calltree -k -i /tmp/*.pro
 
 
 class ProfileMiddleware(object):
@@ -23,4 +23,5 @@ class ProfileMiddleware(object):
             stamp = "%s" % (request.path.replace("/", "__"),)
             #stamp = "%s-%s" % (request.META['REMOTE_ADDR'], datetime.now())
             request.profiler.dump_stats('/tmp/%s.pro' % stamp)
+            print "Dumped profile info in /tmp/%s.pro" % stamp
         return response
