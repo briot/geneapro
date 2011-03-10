@@ -112,11 +112,14 @@ def __get_events(ids, styles, same, types=None):
         if styles:
             styles.process(person, p.role_id, e)
 
-        if p.role_id == models.Event_Type_Role.principal:
+        if not p.disproved \
+           and p.role_id == models.Event_Type_Role.principal:
             if e.type_id == models.Event_Type.birth:
-                person.birth = e
+                if person.birth is None or person.birth.Date > e.Date:
+                    person.birth = e
             elif e.type_id == models.Event_Type.death:
-                person.death = e
+                if person.death is None or person.death.Date < e.Date:
+                    person.death = e
             elif e.type_id == models.Event_Type.marriage:
                 person.marriage = e
 

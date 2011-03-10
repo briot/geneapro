@@ -705,7 +705,13 @@ class Date (object):
       return cal.components (self.date)[0]
 
    def __lt__ (self, date):
-      return self.date < date.date
+      if isinstance(date, DateRange):
+          if isinstance(date.date, tuple):
+             return self.date < date.date[0].date
+          else:   # date.date is an instance of Date
+             return self.date < date.date.date
+      else:
+          return self.date > date.date
 
    def __gt__ (self, date):
       if isinstance(date, DateRange):
@@ -850,6 +856,18 @@ class DateRange (object):
            return self.date[0].year(calendar)
        else:
            return self.date.year(calendar)
+
+   def __lt__ (self, date):
+      if isinstance(self.date, tuple):
+          return self.date[0] < date
+      else:
+          return self.date < date
+
+   def __gt__ (self, date):
+      if isinstance(self.date, tuple):
+          return self.date[0] > date
+      else:
+          return self.date > date
 
    def __unicode__ (self):
       """Convert to a string"""
