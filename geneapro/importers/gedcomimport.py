@@ -701,11 +701,6 @@ class GedcomImporter(object):
         else:
             name = "%s of %s" % (evt_name or event_type.name, name)
 
-        # If we have a note associated with the event, we assume it deals with
-        # the event itself, not with its sources.
-
-        # ??? NOT IMPLEMENTED YET
-
         # Create the event if needed.
 
         if not evt:
@@ -717,21 +712,30 @@ class GedcomImporter(object):
             if event_type.gedcom == 'BIRT':
                 self._births[principal.id] = evt
 
-        for k, v in data.for_all_fields():
-            # ADDR and PLAC are handled in create_place
-            # SOURCE is handled in create_sources_ref
-            if k not in ("DATE", "ADDR", "PLAC", "SOUR", "TYPE", "OBJE",
-                         "_all", "xref"):
-                print "%s Unhandled EVENT.%s" % (location(v), k)
-
         last_change = self._create_CHAN(CHAN)
         all_src = self._create_sources_ref(data)
 
         for person, role in indi:
             if person:
+                n = ""
+                if role == self._principal:
+                    # If we have a note associated with the event, we assume it
+                    # deals with the event itself, not with its sources.  Since
+                    # the note also appears in the context of an INDI, we store
+                    # it in the assertion.
+
+                    n = []
+                    for p in getattr(data, "NOTE", []):
+                        if p.startswith("@") and p.endswith("@"):
+                            n.append(self._data.ids[p].value)
+                        else:
+                            n.append(p)
+
+                    n = "\n\n".join(n)
+
                 for sid, s in all_src:
                     ind = self._indi_for_source(sourceId=sid, indi=person)
-                    models.P2E.objects.create(
+                    a = models.P2E.objects.create(
                         surety=self._default_surety,
                         researcher=self._researcher,
                         person=ind,
@@ -739,7 +743,14 @@ class GedcomImporter(object):
                         source=s,
                         role=role,
                         last_change=last_change,
-                        value='')
+                        value=n)
+
+        for k, v in data.for_all_fields():
+            # ADDR and PLAC are handled in create_place
+            # SOURCE is handled in create_sources_ref
+            if k not in ("DATE", "ADDR", "PLAC", "SOUR", "TYPE", "OBJE",
+                         "NOTE", "_all", "xref"):
+                print "%s Unhandled EVENT.%s" % (location(v), k)
 
         return evt
 

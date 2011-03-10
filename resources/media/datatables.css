@@ -102,8 +102,10 @@
 #containers tr:hover {background-color: #BBB}
 #containers td {
     border-right:1px solid #AAA;
-    white-space:nowrap;
     padding: 0 5px}
+#containers td.date {
+   white-space:nowrap;
+}
 
 .sorting_asc {
    background: url('/media/dt/sort_asc.png') no-repeat center right;

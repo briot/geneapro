@@ -31,9 +31,9 @@ def __add_default_person_attributes (person):
    person.birth = None
    person.death = None
    person.marriage = None
-   person.all_events = dict() # All events of the person (id -> Event)
-                              # where Event has fields like "source", "Date"
-                              # "place"
+   person.all_events = dict() # All events of the person
+      # {event_id -> (Event, role, assertion)}
+      # where Event has fields like "source", "Date", "place"
    person.all_chars = dict()  # All characteristics of the person (id -> data)
    person.all_groups = dict() # All groups the person belongs to (id -> Group)
                               # Where Group has fields like "source", "Date"
@@ -101,7 +101,7 @@ def __get_events(ids, styles, same, types=None):
     for p in sql_in(events, "person", main_ids):
         e = p.event
         person = persons[same.main(p.person_id)]
-        person.all_events[e.id] = (e, roles[p.role_id])
+        person.all_events[e.id] = (e, roles[p.role_id], p)
         sources[e.id].add(p.source_id)
         e.sources = sources[e.id]
         e.Date = e.date and DateRange(e.date)
@@ -229,7 +229,6 @@ def view(request, id):
    id = int(id)
 
    tree = Tree()
-   # styles = Styles(style_rules, tree, decujus=id) # Not needed for now
    styles = None
    p = extended_personas(ids=[id], styles=styles, as_css=True)
 
