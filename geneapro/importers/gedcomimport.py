@@ -556,15 +556,19 @@ class GedcomImporter(object):
             # This also computes its place and date.
 
             if isinstance(val, GedcomString):
-                c = models.Characteristic.objects.create(place=None)
+                c = models.Characteristic.objects.create(
+                    place=None,
+                    name=(typ and typ.name) or key.capitalize())
                 str_value = val
             else:
                 # Processes ADDR and PLAC
                 place = self._create_place(val)
                 self._create_obje_for_place(val, place) # processes OBJE
 
-                c = models.Characteristic.objects.create(place=place,
-                        date=getattr(val, "DATE", None))
+                c = models.Characteristic.objects.create(
+                    place=place,
+                    name=(typ and typ.name) or key.capitalize(),
+                    date=getattr(val, "DATE", None))
                 str_value = val.value
 
             # Associate the characteristic with the persona.

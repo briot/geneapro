@@ -591,6 +591,8 @@ class Characteristic (models.Model):
    assertion.
    """
 
+   name  = models.TextField(
+       help_text="""Name of the characteristic. This could be guessed from its parts only if there is one of the latter, so we store it here""")
    place = models.ForeignKey(Place, null=True)
    date  = PartialDateField(null=True)
 

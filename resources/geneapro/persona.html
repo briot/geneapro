@@ -20,7 +20,7 @@ $(document).ready(function() {
 $("#list").dataTable(
   {"bPaginate": false,
    "sDom": '<"top"fi>rt',
-   "aaSorting": [[ 3, "asc" ]], // on dates
+   "aaSorting": [[ 2, "asc" ]], // on dates
   }
 );
 });
@@ -46,9 +46,8 @@ $("#list").dataTable(
  <table id="list">
    <thead>
       <tr>
-         <th>Type</th>
+         <th>Type (Role)</th>
          <th>Name</th>
-         <th>Role</th>
          <th>Date</th>
          <th>Place</th>
          <th>Assertion</th>
@@ -59,28 +58,26 @@ $("#list").dataTable(
 
    {% for k, c in chars.items %}
    <tr>
+      <td>{{c.char.name}}</td>
+
       {% if c.parts|length == 1 %}
-      <td>{{c.parts.0.name}}</td>
       <td>{{c.parts.0.value}}</td>
       {% else %}
-      <td>Char.</td>
       <td>
-
-      {% for p in c.parts %}
-      <span class="char">{{p.name}}</span>: {{p.value}}<br>
-      {% endfor %}
+         {% for p in c.parts %}
+         <span class="char">{{p.name}}</span>: {{p.value}}<br>
+         {% endfor %}
       </td>
       {% endif %}
 
-      <td></td>
-      <td class="date">{{c.Date|default:"-"}}</td>
-      <td class="place">{{c.place|default:"-"}}</td>
+      <td class="date">{{c.char.Date|default:"-"}}</td>
+      <td class="place">{{c.char.place|default:"-"}}</td>
       <td class="assert">
          {{c.assertion.value|linebreaks}}
          <span class="persona">{{c.assertion.person_id}}</span>
          <span class="surety">{{c.assertion.surety}}</span></td>
       <td>
-         {% for s in c.sources %}
+         {% for s in c.char.sources %}
             {% if s %}
          <a href="/sources/{{s}}">{{s}}</a>
             {% endif %}
@@ -95,9 +92,12 @@ $("#list").dataTable(
       {% else %}
       <tr>
       {% endif %}
+         {% if e.role == "principal" %}
          <td>{{e.event.type.name}}</td>
+         {% else %}
+         <td>{{e.event.type.name}} ({{e.role|default:""}})</td>
+         {% endif %}
          <td>{{e.event.name}}</td>
-         <td>{{e.role}}</td>
          <td class="date">{{e.event.Date|default:"-"}}</td>
          <td class="place">{{e.event.place|default:"-"|linebreaks}}</td>
          <td class="assert">
@@ -117,8 +117,7 @@ $("#list").dataTable(
    {% for i, g in groups.items %}
       <tr>
          <td>Group</td>
-         <td>{{g.group.name}}</td>
-         <td>{{g.group.role|default:""}}</td>
+         <td>{{g.group.name}} ({{g.group.role|default:""}})</td>
          <td class="date">{{g.group.date|default:"-"}}</td>
          <td class="place">{{g.group.place|default:"-"}}</td>
          <td class="assert">

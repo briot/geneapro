@@ -24,9 +24,10 @@ event_types_for_pedigree = (
 
 EventInfo = collections.namedtuple(
     'EventInfo', 'event, role, assertion')
-    # "event" has fields like "source", "Date", "place"
+    # "event" has fields like "sources", "Date", "place"
 CharInfo = collections.namedtuple(
-    'CharInfo', 'place, Date, sources, parts, assertion')
+    'CharInfo', 'char, parts, assertion')
+    # "char" has fields like "Date", "place", "sources"
     # parts = [CharPartInfo]
 CharPartInfo = collections.namedtuple(
     'CharPartInfo', 'name, value')
@@ -72,8 +73,6 @@ def __get_events(ids, styles, same, types=None):
 
     compute_parts = styles and styles.need_place_parts()
 
-    sources = collections.defaultdict(set) # event_id -> [source_id...]
-
     same.compute(ids)
 
     roles = dict()  # role_id  -> name
@@ -112,8 +111,9 @@ def __get_events(ids, styles, same, types=None):
         person = persons[same.main(p.person_id)]
         person.all_events[e.id] = EventInfo(
             event=e, role=roles[p.role_id], assertion=p)
-        sources[e.id].add(p.source_id)
-        e.sources = sources[e.id]
+
+        e.sources = getattr(e, "sources", set())
+        e.sources.add(p.source_id)
         e.Date = e.date and DateRange(e.date)
 
         if compute_parts and e.place:
@@ -153,8 +153,6 @@ def __get_events(ids, styles, same, types=None):
     #########
 
     p2c = dict()  # characteristic_id -> person
-    sources = collections.defaultdict(set) # char_id -> [source_id...]
-
     all_p2c = models.P2C.objects.select_related(
         'characteristic', 'characteristic__place')
 
@@ -162,11 +160,13 @@ def __get_events(ids, styles, same, types=None):
         c = p.characteristic
         person = persons[same.main(p.person_id)]
         p2c[c.id] = person
-        sources[c.id].add(p.source_id)
+
+        c.Date = c.date and DateRange(c.date)
+        c.sources = getattr(c, "sources", set())
+        c.sources.add(p.source_id)
+
         person.all_chars[c.id] = CharInfo(
-            place=c.place,
-            Date=c.date and DateRange(c.date),
-            sources=sources[c.id],
+            char=c,
             assertion=p,
             parts=[])
 
