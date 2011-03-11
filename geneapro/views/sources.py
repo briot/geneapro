@@ -13,10 +13,12 @@ class Fact(object):
     """Describes a fact extracted from an assertion"""
 
     __slots__ = ("surety", "value", "rationale", "disproved", "date",
+                 "subject1_url", "subject2_url",
                  "subject1", "subject2", "place", "parts")
 
     def __init__(self, surety, value, rationale, disproved, date, place,
-                 subject1, subject2, parts=None):
+                 subject1, subject2, subject1_url=None,
+                 subject2_url=None, parts=None):
         self.surety    = surety
         self.value     = value
         self.rationale = rationale
@@ -25,7 +27,9 @@ class Fact(object):
         self.parts     = parts
         self.disproved = disproved
         self.subject1  = subject1
+        self.subject1_url = subject1_url
         self.subject2  = subject2
+        self.subject2_url = subject2_url
 
 
 def extended_sources(ids):
@@ -59,6 +63,7 @@ def extended_sources(ids):
             place=c.event.place and c.event.place.name,
             disproved=c.disproved,
             subject1=c.person.name,
+            subject1_url="/persona/%d" % c.person.id,
             subject2="%s (%s)" % (c.event.name, c.role.name))
         sources[c.source_id].asserts.append(f)
 
@@ -78,6 +83,7 @@ def extended_sources(ids):
             parts=parts,
             disproved=c.disproved,
             subject1=c.person.name,
+            subject1_url="/persona/%d" % c.person.id,
             subject2="")
         sources[c.source_id].asserts.append(f)
 

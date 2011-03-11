@@ -193,8 +193,24 @@
            <tr>
              {% endif %}
 
-             <td>{{a.subject1}}</td>
-             <td>{{a.subject2}}
+             <td>
+                {% if a.subject1_url %}
+                <a href="{{a.subject1_url}}">
+                {{a.subject1}}
+                </a>
+                {% else %}
+                {{a.subject1}}
+                {% endif %}
+             </td>
+             <td>
+                {% if a.subject2_url %}
+                <a href="{{a.subject2_url}}">
+                {{a.subject2}}
+                </a>
+                {% else %}
+                {{a.subject2}}
+                {% endif %}
+
                 {% for pname, pval in a.parts %}
                 <span class="char">{{pname}}</span>: {{pval}}<br>
                 {% endfor %}
