@@ -103,14 +103,17 @@
 #containers td {
     border-right:1px solid #AAA;
     padding: 0 5px}
+#containers td.place {
+   min-width:150px;
+}
 #containers td.date {
    white-space:nowrap;
 }
 #containers td.assert {
    min-width:150px;
 }
-#containers td.assert p {
-   margin-bottom:10px;
+#containers td.assert p + f {
+   margin-top:10px;
 }
 
 .sorting_asc {

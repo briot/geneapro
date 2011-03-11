@@ -22,6 +22,18 @@ event_types_for_pedigree = (
     models.Event_Type.death,
     models.Event_Type.marriage)
 
+EventInfo = collections.namedtuple(
+    'EventInfo', 'event, role, assertion')
+    # "event" has fields like "source", "Date", "place"
+CharInfo = collections.namedtuple(
+    'CharInfo', 'place, Date, sources, parts, assertion')
+    # parts = [CharPartInfo]
+CharPartInfo = collections.namedtuple(
+    'CharPartInfo', 'name, value')
+GroupInfo = collections.namedtuple(
+    'GroupInfo', 'group, assertion')
+    # "group" has fields like "source", "Date", ...
+
 
 def __add_default_person_attributes (person):
    """Add the default computed attributes for the person.
@@ -31,12 +43,9 @@ def __add_default_person_attributes (person):
    person.birth = None
    person.death = None
    person.marriage = None
-   person.all_events = dict() # All events of the person
-      # {event_id -> (Event, role, assertion)}
-      # where Event has fields like "source", "Date", "place"
-   person.all_chars = dict()  # All characteristics of the person (id -> data)
-   person.all_groups = dict() # All groups the person belongs to (id -> Group)
-                              # Where Group has fields like "source", "Date"
+   person.all_events = dict() # All events of the person {evt_id -> EventInfo}
+   person.all_chars = dict()  # Characteristics of the person (id -> CharInfo)
+   person.all_groups = dict() # Groups the person belongs to (id -> GroupInfo)
 
    n = person.name.split('/', 2)
    person.given_name = n[0]
@@ -92,7 +101,7 @@ def __get_events(ids, styles, same, types=None):
     ################
 
     events = models.P2E.objects.select_related(
-        'event', 'event__place', 'event__type')
+        'event', 'event__place', 'event__type', 'surety')
     if types:
         events = events.filter(event__type__in=types)
 
@@ -101,7 +110,8 @@ def __get_events(ids, styles, same, types=None):
     for p in sql_in(events, "person", main_ids):
         e = p.event
         person = persons[same.main(p.person_id)]
-        person.all_events[e.id] = (e, roles[p.role_id], p)
+        person.all_events[e.id] = EventInfo(
+            event=e, role=roles[p.role_id], assertion=p)
         sources[e.id].add(p.source_id)
         e.sources = sources[e.id]
         e.Date = e.date and DateRange(e.date)
@@ -130,7 +140,8 @@ def __get_events(ids, styles, same, types=None):
     groups = models.P2G.objects.select_related('group')
     for gr in sql_in(groups, "person", main_ids):
         person = persons[same.main(gr.person_id)]
-        person.all_groups[gr.group_id] = gr.group
+        person.all_groups[gr.group_id] = GroupInfo(
+            group=gr.group, assertion=gr)
         if gr.source_id:
             src = getattr(gr.group, "sources", [])
             src.append(gr.source_id)
@@ -152,11 +163,12 @@ def __get_events(ids, styles, same, types=None):
         person = persons[same.main(p.person_id)]
         p2c[c.id] = person
         sources[c.id].add(p.source_id)
-        person.all_chars[c.id] = {
-            "place":c.place,
-            "Date":c.date and DateRange(c.date),
-            "sources":sources[c.id],
-            "parts":[]}
+        person.all_chars[c.id] = CharInfo(
+            place=c.place,
+            Date=c.date and DateRange(c.date),
+            sources=sources[c.id],
+            assertion=p,
+            parts=[])
 
         if compute_parts and c.place:
             places[c.place_id] = c.place
@@ -167,7 +179,7 @@ def __get_events(ids, styles, same, types=None):
     for part in sql_in(chars, "characteristic", ids and p2c.keys()):
         person = p2c[part.characteristic_id]
         ch = person.all_chars[part.characteristic_id]
-        ch["parts"].append((part.type.name, part.name))
+        ch.parts.append(CharPartInfo(name=part.type.name, value=part.name))
 
         if part.type_id == models.Characteristic_Part_Type.sex:
            person.sex = part.name
@@ -227,10 +239,10 @@ def view(request, id):
    """Display all details known about persona ID"""
 
    id = int(id)
-
-   tree = Tree()
+   same = SameAs()
+   tree = Tree(same=same)
    styles = None
-   p = extended_personas(ids=[id], styles=styles, as_css=True)
+   p = extended_personas(ids=[id], styles=styles, as_css=True, same=same)
 
    return render_to_response(
        'geneapro/persona.html',
@@ -238,6 +250,7 @@ def view(request, id):
         "chars": p[id].all_chars,
         "events": p[id].all_events,
         "groups": p[id].all_groups,
+        "p2p": same.main_and_reason(id),
        },
        context_instance=RequestContext(request))
 

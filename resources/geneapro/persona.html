@@ -60,22 +60,25 @@ $("#list").dataTable(
    {% for k, c in chars.items %}
    <tr>
       {% if c.parts|length == 1 %}
-      <td>{{c.parts.0.0}}</td>
-      <td>{{c.parts.0.1}}</td>
+      <td>{{c.parts.0.name}}</td>
+      <td>{{c.parts.0.value}}</td>
       {% else %}
       <td>Char.</td>
       <td>
 
-      {% for pname, pval in c.parts %}
-      <span class="char">{{pname}}</span>: {{pval}}<br>
+      {% for p in c.parts %}
+      <span class="char">{{p.name}}</span>: {{p.value}}<br>
       {% endfor %}
       </td>
       {% endif %}
 
       <td></td>
-      <td>{{c.Date|default:"-"}}</td>
-      <td>{{c.place|default:"-"}}</td>
-      <td></td>
+      <td class="date">{{c.Date|default:"-"}}</td>
+      <td class="place">{{c.place|default:"-"}}</td>
+      <td class="assert">
+         {{c.assertion.value|linebreaks}}
+         <span class="persona">{{c.assertion.person_id}}</span>
+         <span class="surety">{{c.assertion.surety}}</span></td>
       <td>
          {% for s in c.sources %}
             {% if s %}
@@ -87,19 +90,22 @@ $("#list").dataTable(
    {% endfor %}
 
    {% for i, e in events.items %}
-      {% if e.2.disproved %}
+      {% if e.assertion.disproved %}
       <tr class="disproved">
       {% else %}
       <tr>
       {% endif %}
-         <td>{{e.0.type.name}}</td>
-         <td>{{e.0.name}}</td>
-         <td>{{e.1}}</td>
-         <td class="date">{{e.0.Date|default:"-"}}</td>
-         <td>{{e.0.place|default:"-"}}</td>
-         <td class="assert">{{e.2.value|linebreaks}}</td>
+         <td>{{e.event.type.name}}</td>
+         <td>{{e.event.name}}</td>
+         <td>{{e.role}}</td>
+         <td class="date">{{e.event.Date|default:"-"}}</td>
+         <td class="place">{{e.event.place|default:"-"|linebreaks}}</td>
+         <td class="assert">
+            {{e.assertion.value|linebreaks}}
+            <span class="persona">{{e.assertion.person_id}}</span>
+            <span class="surety">{{e.assertion.surety}}</span></td>
          <td>
-            {% for s in e.0.sources %}
+            {% for s in e.event.sources %}
                {% if s %}
              <a href="/sources/{{s}}">{{s}}</a>
                {% endif %}
@@ -111,13 +117,15 @@ $("#list").dataTable(
    {% for i, g in groups.items %}
       <tr>
          <td>Group</td>
-         <td>{{g.name}}</td>
-         <td>{{g.role|default:""}}</td>
-         <td>{{g.date|default:"-"}}</td>
-         <td>{{g.place|default:"-"}}</td>
-         <td></td>
+         <td>{{g.group.name}}</td>
+         <td>{{g.group.role|default:""}}</td>
+         <td class="date">{{g.group.date|default:"-"}}</td>
+         <td class="place">{{g.group.place|default:"-"}}</td>
+         <td class="assert">
+            {{g.assertion.value|linebreaks}}
+            <span class="persona">{{g.assertion.person_id}}</span>
          <td>
-            {% for s in g.sources %}
+            {% for s in g.group.sources %}
                {% if s %}
             <a href="/sources/{{s}}">{{s}}</a>
                {% endif %}
@@ -128,6 +136,46 @@ $("#list").dataTable(
    {% endfor %}
    </tbody>
  </table>
+
+ {% if p2p|length %}
+ <p class="onUse" style="margin-top:10px">
+ This person is made up of several persona in the database. Each of
+ these persona was constructed from one or more sources, and then they
+ were all linked together with the following assertions. Disproving any
+ of these will change the information displayed above.
+ </p>
+
+ <table>
+   <thead>
+      <tr>
+         <th>Persona1</th>
+         <th>Persona2</th>
+         <th>These are the same because</th>
+         <th>Comments</th>
+         <th>Surety</th>
+      </tr>
+   </thead>
+   <tbody>
+      {% for p in p2p %}
+        {% if p.1.person1_id != p.1.person2_id %}
+          {% if p.1.disproved %}
+      <tr class="disproved">
+          {% else %}
+      <tr>
+          {% endif %}
+        {# ??? Should we show sources and researcher #}
+        <td><span class="persona">{{p.1.person1_id}}</span></td>
+        <td><span class="persona">{{p.1.person2_id}}</span></td>
+        <td>{{p.1.rationale|default:""}}</td>
+        <td>{{p.1.value|default:""}}</td>
+        <td class="surety">{{p.1.surety}}</td>
+     </tr>
+        {% endif %}
+      {% endfor %}
+   </tbody>
+ </table>
+ {% endif %}  {# p2p|length #}
+
 </div>
 {% endblock contents %}
 

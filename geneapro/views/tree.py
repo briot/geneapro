@@ -27,7 +27,7 @@ class SameAs(object):
 
         # Given a persona_id, contains the persona_id that should be updated
         # to represent the real world person. Only personas where
-        #    self._main[id] == id
+        #    self._main[id] == (id, "reason")
         # are the toplevel persons and should be shown to the user.
 
         self._main = dict()
@@ -41,9 +41,11 @@ class SameAs(object):
 
         if ids:
             for p in ids:
-                m.setdefault(p, p)  # m[p]=p if not already set
+                m.setdefault(p, (p, None))  # m[p]=p if not already set
 
-        query = models.P2P.objects.filter(type=models.P2P.sameAs)
+        query = models.P2P.objects.filter(
+            type=models.P2P.sameAs,
+            disproved=False).select_related('surety')
 
         pid = ids
         processed = set()
@@ -64,17 +66,17 @@ class SameAs(object):
 
                     if p1 is not None:
                         if p2 is None:
-                            m[p.person2_id] = p1
+                            m[p.person2_id] = (p1[0], p)
                             if ids and p.person2_id not in processed:
                                 pid.add(p.person2_id)
                     else:
                         if p2 is not None:
-                            m[p.person1_id] = p2
+                            m[p.person1_id] = (p2[0], p)
                             if ids and p.person1_id not in processed:
                                 pid.add(p.person1_id)
                         else:
-                            m[p.person1_id] = p.person1_id
-                            m[p.person2_id] = p.person1_id
+                            m[p.person1_id] = (p.person1_id, None)
+                            m[p.person2_id] = (p.person1_id, p)
                             # No need to add to pid, since this can only occur
                             # when querying all personas, and we are not going
                             # to loop anyway.
@@ -88,11 +90,11 @@ class SameAs(object):
            You should have called self.compute() first to initialize the
            cache.
         """
-        return self._main.setdefault(id, id)
+        return self._main.setdefault(id, (id, None))[0]
 
     def is_main(self, id):
         """Whether ID is a main person"""
-        return self._main.setdefault(id, id) == id
+        return self.main(id) == id
 
     def main_ids(self, ids):
         """Return the ids of all known main personas (or the ones associated
@@ -112,12 +114,20 @@ class SameAs(object):
             ids = [ids]
 
         # Start with all direct main persons for personas in IDS
-        result = set([self._main.setdefault(id, id) for id in ids])
+        result = set([self.main(id) for id in ids])
 
         # Then add all personas that have one of those main personas too
-        result.update([id for id,main in self._main.iteritems()
-                       if main in result])
+        result.update([id for id, main in self._main.iteritems()
+                       if main[0] in result])
         return result
+
+    def main_and_reason(self, id):
+        """Return a list of [(id, "reason")] for all persona that represent
+           the same physical person as IDS
+        """
+        # Start with all direct main persons for personas in IDS
+        result = self.main_ids([id])
+        return [(p, self._main[p][1]) for p in result]
 
 
 class Tree(object):

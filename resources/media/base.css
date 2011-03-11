@@ -65,6 +65,16 @@ h2 {background-color:#ECF2F9;
   color:#AAA;
 }
 
+.assert .surety,
+.assert .persona {
+   font-style:italic;
+   font-size:0.9em;
+   color:#AAA;
+}
+.persona:before {
+   content:"id";
+}
+
 .sourceInfo {width:64em}
 .sourcepartDetails {margin-bottom:30px}
 

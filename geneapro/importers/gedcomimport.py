@@ -499,7 +499,7 @@ class GedcomImporter(object):
             person1=indi,
             person2=ind,
             type=models.P2P.sameAs,
-            value='Single individual in the gedcom file')
+            rationale='Single individual in the gedcom file')
 
         return ind
 
