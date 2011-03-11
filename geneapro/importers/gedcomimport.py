@@ -503,6 +503,19 @@ class GedcomImporter(object):
 
         return ind
 
+    def _get_note(self, data):
+        """Retrieves the NOTE information from data, if any. Such notes can
+           be xref, which are automatically resolved here.
+        """
+        n = []
+        for p in getattr(data, "NOTE", []):
+            if p.startswith("@") and p.endswith("@"):
+                n.append(self._data.ids[p].value)
+            else:
+                n.append(p)
+
+        return "\n\n".join(n)
+
     def _create_characteristic(self, key, value, indi):
         """Create a Characteristic for the person indi.
          Return True if a characteristic could be created, false otherwise.
@@ -581,7 +594,18 @@ class GedcomImporter(object):
                 for k, v in val.for_all_fields():
                     t = self._char_types.get(k, None)
                     if t:
-                        if k == 'GIVN' and GIVEN_NAME_TO_MIDDLE_NAME:
+                        if k == 'NOTE':
+                            # This will be automatically added as a
+                            # characteristic part because initialdata.txt
+                            # defines this. However, in gedcom these notes can
+                            # be xref, so resolve them here.
+
+                            n = self._get_note(val)
+                            if n:
+                                models.Characteristic_Part.objects.create(
+                                    characteristic=c, type=t, name=n)
+
+                        elif k == 'GIVN' and GIVEN_NAME_TO_MIDDLE_NAME:
                             if v:
                                 n = v.replace(',', ' ').split(' ')
                                 models.Characteristic_Part.objects.create(
@@ -724,14 +748,7 @@ class GedcomImporter(object):
                     # the note also appears in the context of an INDI, we store
                     # it in the assertion.
 
-                    n = []
-                    for p in getattr(data, "NOTE", []):
-                        if p.startswith("@") and p.endswith("@"):
-                            n.append(self._data.ids[p].value)
-                        else:
-                            n.append(p)
-
-                    n = "\n\n".join(n)
+                    n = self._get_note(data)
 
                 for sid, s in all_src:
                     ind = self._indi_for_source(sourceId=sid, indi=person)
