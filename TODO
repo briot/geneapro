@@ -22,23 +22,17 @@
 * Pedigree View
 ** BACK button should go back to previous pedigree view
    Or perhaps use the area on the right to show the history
-   In fact, when changing the current de cujus, we should highlighting in
-   the next pedigree the child or parent on which we should click to get
-   back to the previous view (the previous de cujus might not be visible)
 ** Dnd on Pedigree icon should display the pedigree for that person
 ** Should cache pedigree data locally to avoid reloading when going back
    (perhaps only save a few generations, although this is not big)
 ** When showing children, show the name of the matching spouse
 ** Support for multiple parents (foster parents, ambiguities,...)
-** Search for parents in aliases personas
 ** Make pedigree configurable:
    Chose which events to show in each boxes ("birth" and "death" by default,
    but should fallback on "baptism" and "burial" for instance, or the user
    might want to see other info (if "residence", there can be multiple of
    them) See also engagement instead of marriage
 ** Tooltip to display person info
-
-* Canvas Pedigree View
 ** Zoom and scroll with 10 generations, then go back to 3 generations.
    The layout is not re-centered.
 ** Improve layout. Current layout requires a lot of vertical space compared
@@ -52,7 +46,6 @@
 ** Store them in the database
 ** Create them graphically
 ** Use presets
-** Make it possible to hide or move the legend
 
 * Print
 ** Should hide unwanted parts of the page when printing
@@ -69,10 +62,11 @@
 ** Tooltip to display person info
 ** Implement based on the canvas.
 
-* Styles
+* Person View
+** For each event, add an "downarrow" to show event details
+   In particular, all personas that took part in the event.
 
-* Model
-** Need to take into account persona and all its aliases in all queries
+* Styles
 
 * Groups
 ** For: neighbor, friend, clergy, care-taker, and more
