@@ -1,4 +1,3 @@
-// Needs the variable "pedigree_data_url" to be defined
 var showUnknown = false; //  whether to draw a box when parent is unknown
 var baseFontSize = "16"; // pixels
 var minFont = 5;    // No need to draw text below this size
@@ -115,7 +114,7 @@ function getSelected(canvas, evt) {
 function onCtrlClick(evt) {
    var selected = getSelected(this, evt);
    if (selected) {
-      getPedigree (selected);
+      window.location = "/pedigree/" + selected.id + "?gens=" + data.generations;
       return true;
    }
 }

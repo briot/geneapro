@@ -2,23 +2,6 @@ var data = null;  //  Data from JSON
 var decujus = 1;  //  Current decujus
 
 /************************************************
- * Request JSON data for the pedigree
- ************************************************/
-
-function getPedigree (p) {
-  var gen = Number (getSelectedValue ($("select[name=generations]")[0]))+1;
-  p = p || {};
-  decujus = p.id || decujus;
-  $.getJSON (pedigree_data_url,
-             {id:decujus, generations:gen, yearonly:p.yearonly},
-             function (d, status) {
-                unsetBusy ();
-                data = d;
-                $("#pedigreeSVG").canvas("refresh");
-             });
-}
-
-/************************************************
  * Display a busy image on top of the given element
  ************************************************/
 function setBusy (elemt) {

@@ -48,35 +48,34 @@ def compute_data(generations, year_only, who):
    """Compute, and send back to the user, information about the pedigree of a
       specific person. This includes ancestors and children
    """
-
    result = get_sosa_tree(who, generations, style_rules)
    result = to_json(result, year_only=year_only)
    return result
 
 
-def data(request):
-   generations = int(request.GET.get ("generations", 5))
-   year_only   = request.GET.get("yearonly", "false") == "true"
-   who         = int(request.GET.get("id", 1))
-
-   return HttpResponse(compute_data(generations, year_only, who),
-                       mimetype="application/javascript")
-
-
-def pedigree_view(request):
+def pedigree_view(request, decujus):
    """Display the pedigree of a person as a tree"""
+   decujus = int(decujus)
+   gens = int(request.GET.get("gens", 6))
    return render_to_response(
-      'geneapro/pedigree.html',
-      {"pedigree_data":compute_data(6, False, 1),
-       "legend": getLegend()},
-      context_instance=RequestContext(request))
+       'geneapro/pedigree.html',
+       {"pedigree_data": compute_data(gens, False, decujus),
+        "genrange": range(1, 13),
+        "decujus": decujus,
+        "generations": gens,
+        "legend": getLegend()},
+       context_instance=RequestContext(request))
 
 
-def fanchart_view(request):
+def fanchart_view(request, decujus):
    """Display the pedigree of a person as a fanchart"""
+   decujus = int(decujus)
+   gens = int(request.GET.get("gens", 6))
    return render_to_response(
        'geneapro/fanchart.html',
-       {"type":"fanchart",
-        "legend": getLegend(),
-        "pedigree_data":compute_data(6, True, 1)},
+       {"legend": getLegend(),
+        "generations": gens,
+        "decujus": decujus,
+        "genrange": range(1, 13),
+        "pedigree_data":compute_data(gens, True, decujus)},
        context_instance=RequestContext(request))

@@ -1,21 +1,15 @@
 {% extends "geneapro/base.html" %}
-{% block title %}GeneaPro: pedigree{% endblock %}
+{% block title %}GeneaPro: pedigree {{decujus}}{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
 {% endblock css %}
 
 {% block script %}
 function changeGenerations () {
-{% ifequal type "fanchart" %}
-   getPedigree ({yearonly:true});
-{% else %}
-   getPedigree ({yearonly:false});
-{% endifequal %}
+   var gen = Number (getSelectedValue ($("select[name=generations]")[0]));
+   window.location = "/pedigree/{{decujus}}?gens=" + gen;
 }
-{# Preload the initial data. Faster display, and compatibility with #}
-{#   django-debug-toolbar #}
 data={{pedigree_data|safe}};
-pedigree_data_url="{% url pedigree_data %}";
 $(document).ready (function() {
    drawSOSA();
 });
@@ -30,19 +24,13 @@ $(document).ready (function() {
 
 {% block leftside %}
 Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
-  <option>1</option>
-  <option>2</option>
-  <option>3</option>
-  <option>4</option>
-  <option selected>5</option>
-  <option>6</option>
-  <option>7</option>
-  <option>8</option>
-  <option>9</option>
-  <option>10</option>
-  <option>11</option>
-  <option>12</option>
-  <option>13</option>
+   {% for g in genrange %}
+      {% if g == generations %}
+      <option selected>{{g}}</option>
+      {% else %}
+      <option>{{g}}</option>
+      {% endif %}
+   {% endfor %}
 </select>
 
 <br>

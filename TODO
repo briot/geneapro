@@ -20,8 +20,6 @@
    GENTECH)
 
 * Pedigree View
-** BACK button should go back to previous pedigree view
-   Or perhaps use the area on the right to show the history
 ** Dnd on Pedigree icon should display the pedigree for that person
 ** Should cache pedigree data locally to avoid reloading when going back
    (perhaps only save a few generations, although this is not big)

@@ -1,5 +1,3 @@
-// Needs the variable "pedigree_data_url" to be defined
-
 defaultConfig = {
    /* Height of a row in the circle, for one generation */
    rowHeight: 60,
@@ -13,7 +11,7 @@ defaultConfig = {
    sepBetweenGens: 20,
 
    /* row height for generations >= genThreshold */
-   rowHeightAfterThreshold: 120, 
+   rowHeightAfterThreshold: 120,
 
    /* Height of the inner (white) circle. This height is substracted from
       rowHeight for the parent's row */
@@ -82,8 +80,9 @@ function onClick (evt) {
      transform += (targetY - evt.pageY) + ")";
      $(box).animate ({'svg-transform':transform}, config.delay);
      $(box).animate({'svg-opacity':0}, config.delay);
-     setTimeout (function() {getPedigree ({id:id,yearonly:true})},
-                 config.delay);
+     setTimeout (function() {
+           window.location = "/fanchart/" + id + "?gens=" + data.generations},
+        config.delay);
   }
 }
 function onMouseOver (evt) {
@@ -139,7 +138,7 @@ function drawFan (svg, config, centerx, centery) {
          var maxRadius = minRadius + config.rowHeightAfterThreshold;
       }
 
-      if (gen <= 7) 
+      if (gen <= 7)
          minRadius += config.sepBetweenGens;
 
       var minIndex = Math.pow (2, gen); /* first SOSA in that gen, and number
@@ -193,10 +192,10 @@ function drawFan (svg, config, centerx, centery) {
 
                } else {
                  if (minAngle < 0 || !config.readable_names) {
-                    var textPath = createPath (medRadius, medRadius, 
+                    var textPath = createPath (medRadius, medRadius,
                        minAngle, maxAngle, false);
                  } else {
-                    var textPath = createPath (medRadius, medRadius, 
+                    var textPath = createPath (medRadius, medRadius,
                        maxAngle, minAngle, false, true);
                  }
                }
@@ -224,10 +223,10 @@ function drawFan (svg, config, centerx, centery) {
                  } else if (minAngle < 0 || !config.readable_names) {
                     var textPath = createPath (
                           minRadius - config.sepBetweenGens,
-                          minRadius - config.sepBetweenGens, 
+                          minRadius - config.sepBetweenGens,
                           minAngle - angleInc, maxAngle, false);
                  } else {
-                    var textPath = createPath (minRadius, minRadius, 
+                    var textPath = createPath (minRadius, minRadius,
                           maxAngle, minAngle - angleInc, false, true);
                  }
                  svg.path (svg.defs(), textPath, {id:"PathM"+num});

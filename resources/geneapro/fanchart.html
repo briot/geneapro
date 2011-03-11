@@ -1,5 +1,5 @@
 {% extends "geneapro/base.html" %}
-{% block title %}GeneaPro: pedigree{% endblock %}
+{% block title %}GeneaPro: fanchart {{decujus}}{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
 #pedigreeSVG {width:100%;height:600px;margin:10px 0 10px 0;border:0}
@@ -8,18 +8,14 @@
 {% endblock css %}
 
 {% block script %}
-function changeGenerations () {
-{% ifequal type "fanchart" %}
-   getPedigree ({yearonly:true});
-{% else %}
-   getPedigree ({yearonly:false});
-{% endifequal %}
+function changeGenerations() {
+   var gen = Number (getSelectedValue ($("select[name=generations]")[0]));
+   window.location = "/fanchart/{{decujus}}?gens=" + gen;
 }
-pedigree_data_url="{% url pedigree_data %}";
 data={{pedigree_data|safe}}
-$(document).ready (function() {
-   $('#pedigreeSVG').svg ();
-   drawSOSA ();
+$(document).ready(function() {
+   $('#pedigreeSVG').svg();
+   drawSOSA();
 });
 {% endblock script %}
 
@@ -27,28 +23,18 @@ $(document).ready (function() {
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.svg.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.svgfilter.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.svganim.pack.js"></script>
-{% ifequal type "fanchart" %}
 <script type="text/javascript" src="{{MEDIA_URL}}fanchart.js"></script>
-{% else %}
-<script type="text/javascript" src="{{MEDIA_URL}}pedigree.js"></script>
-{% endifequal %}
 {% endblock endbody %}
 
 {% block leftside %}
 Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
-  <option>1</option>
-  <option>2</option>
-  <option>3</option>
-  <option>4</option>
-  <option selected>5</option>
-  <option>6</option>
-  <option>7</option>
-  <option>8</option>
-  <option>9</option>
-  <option>10</option>
-  <option>11</option>
-  <option>12</option>
-  <option>13</option>
+   {% for g in genrange %}
+      {% if g == generations %}
+      <option selected>{{g}}</option>
+      {% else %}
+      <option>{{g}}</option>
+      {% endif %}
+   {% endfor %}
 </select>
 
 {{legend|safe}}
