@@ -119,23 +119,6 @@ div.scrollable canvas {
    box-shadow: 3px 3px 5px black; /* Opera 10.5, IE9 */
 }
 
-/*
-div.hr {clear:both}
-#footer_wrap {
-   background-color:gray;
-}
-#footer {
-   padding: 20px 30px 40px 30px;
-   clear: both;
-   width:100%;
-   margin:0 auto;
-}
-#footer p {
-   line-height:2em;
-   font-size:1.1em;
-}
-   */
-
 .throbber {filter:alpha(opacity=30); opacity:0.3;
            cursor:wait; display:inline; position:absolute;
            background-color:#EEE; background-repeat:no-repeat;

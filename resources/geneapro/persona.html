@@ -74,6 +74,7 @@ $("#list").dataTable(
       <td class="place">{{c.char.place|default:"-"}}</td>
       <td class="assert">
          {{c.assertion.value|linebreaks}}
+         {{c.assertion.rationale|default:""|linebreaks}}
          <span class="persona">{{c.assertion.person_id}}</span>
          <span class="surety">{{c.assertion.surety}}</span></td>
       <td>
@@ -102,6 +103,7 @@ $("#list").dataTable(
          <td class="place">{{e.event.place|default:"-"|linebreaks}}</td>
          <td class="assert">
             {{e.assertion.value|linebreaks}}
+            {{e.assertion.rationale|default:""|linebreaks}}
             <span class="persona">{{e.assertion.person_id}}</span>
             <span class="surety">{{e.assertion.surety}}</span></td>
          <td>
@@ -122,6 +124,7 @@ $("#list").dataTable(
          <td class="place">{{g.group.place|default:"-"}}</td>
          <td class="assert">
             {{g.assertion.value|linebreaks}}
+            {{g.assertion.rationale|default:""|linebreaks}}
             <span class="persona">{{g.assertion.person_id}}</span>
          <td>
             {% for s in g.group.sources %}
