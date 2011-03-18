@@ -127,7 +127,7 @@ class Surety_Scheme_Part (GeneaproModel):
 
    class Meta:
       """Meta data for the model"""
-      ordering = ('-sequence_number', 'name')
+      ordering = ('sequence_number', 'name')
       db_table = "surety_scheme_part"
 
 class Project (GeneaproModel):

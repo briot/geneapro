@@ -69,5 +69,10 @@
 * Groups
 ** For: neighbor, friend, clergy, care-taker, and more
 
+* Graphically editing the surety scheme
+** This scheme is properly taken into account when displaying assertions
+   in the person view, but currently the user cannot edit it.
+** Take these custom schemes into account when importing gedcom
+
 * Ideas for names
 ** Geneatica, Forebears, Testimony

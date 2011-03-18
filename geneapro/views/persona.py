@@ -59,12 +59,18 @@ def __add_default_person_attributes (person):
    person.base_surname = person.surname
 
 
-def __get_events(ids, styles, same, types=None):
+def __get_events(ids, styles, same, types=None, schemes=None):
     """Compute the events for the various persons in IDS (all all persons in
        the database if None)
        SAME must be an instance of SameAs, that could have already been
        partially populated.
-       Returns a dictionary of Persona instances, indexed on persona_id.
+       Returns a list of persons:
+          * persons is a dictionary of Persona instances, indexed on persona_id
+
+       SCHEMES is the list of ids of Surety_Scheme that are used. You
+          should pass a set() if you are interested in this. Otherwise, it is
+          just discarded.
+
        This sets persons[*].chars to a list of the characteristics.
        IDS is the list of IDS for the persons. If it is None, we query info for
        all personas in the database.
@@ -77,6 +83,8 @@ def __get_events(ids, styles, same, types=None):
 
     roles = dict()  # role_id  -> name
     places = dict() # place_id -> place
+
+    assert(schemes is None or isinstance(schemes, set))
 
     # Get the role names
 
@@ -117,6 +125,9 @@ def __get_events(ids, styles, same, types=None):
         e.sources.add(p.source_id)
         e.Date = e.date and DateRange(e.date)
 
+        if schemes is not None:
+            schemes.add(p.surety.scheme_id)
+
         if compute_parts and e.place:
             places[e.place_id] = e.place
 
@@ -149,6 +160,9 @@ def __get_events(ids, styles, same, types=None):
             gr.group.sources = src
         gr.group.role = gr.role
 
+        if schemes is not None:
+            schemes.add(gr.surety.scheme_id)
+
     #########
     # Get all characteristics of these personas
     #########
@@ -165,6 +179,9 @@ def __get_events(ids, styles, same, types=None):
         c.Date = c.date and DateRange(c.date)
         c.sources = getattr(c, "sources", set())
         c.sources.add(p.source_id)
+
+        if schemes is not None:
+            schemes.add(p.surety.scheme_id)
 
         person.all_chars[c.id] = CharInfo(
             char=c,
@@ -214,20 +231,23 @@ def __get_events(ids, styles, same, types=None):
     return persons
 
 
-def extended_personas(ids, styles, event_types=None, as_css=False, same=None):
+def extended_personas(ids, styles, event_types=None, as_css=False, same=None,
+                      schemes=None):
     """Return a dict indexed on id containing extended instances of Persona,
        with additional fields for the birth, the death,...
        IDS can be None to get all persons from the database.
        AS_CSS should be True to get the styles as a CSS string rather than a
        python dict.
-       If specified, SAME must be an instance of SameAs
+       If specified, SAME must be an instance of SameAs.
+
+       See __get_events for a definition of SCHEMES
     """
     if styles:
         styles.start ()
 
     same = same or SameAs()
     persons = __get_events(
-        ids=ids, styles=styles, same=same, types=event_types)
+        ids=ids, styles=styles, same=same, types=event_types, schemes=schemes)
 
     if styles:
         for p in persons.itervalues():
@@ -242,8 +262,14 @@ def view(request, id):
    id = int(id)
    same = SameAs()
    tree = Tree(same=same)
+   schemes = set() # The surety schemes that are needed
    styles = None
-   p = extended_personas(ids=[id], styles=styles, as_css=True, same=same)
+   p = extended_personas(ids=[id], styles=styles, as_css=True, same=same,
+                         schemes=schemes)
+
+   surety_schemes = dict()
+   for s in schemes:
+       surety_schemes[s] = models.Surety_Scheme.objects.get(id=s).parts.all()
 
    return render_to_response(
        'geneapro/persona.html',
@@ -252,6 +278,7 @@ def view(request, id):
         "chars": p[id].all_chars,
         "events": p[id].all_events,
         "groups": p[id].all_groups,
+        "schemes": surety_schemes,
         "p2p": same.main_and_reason(id),
        },
        context_instance=RequestContext(request))

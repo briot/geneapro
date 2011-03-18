@@ -10,16 +10,27 @@
 {% endblock header %}
 
 {% block script %}
+
+var schemes = {
+{% for i, s in schemes.items %}
+  {{i}}: [
+  {% for p in s %}
+    '{{p.name}}',
+  {% endfor %}
+  ],
+{% endfor %}
+};
+
+
 $(document).ready(function() {
 
 $(".surety").each(function() {
-  var $t=$(this), start=$t.text();
-  console.log("--" + $t.text() + "--");
+  var $t=$(this), val=$t.attr("_order"), s=$t.attr("_scheme");
   $t.empty().raty({
      path:'{{MEDIA_URL}}raty_img/',
-     number:5,  {# ??? Depends on surety scheme #}
-     hintList: ['very low', 'low', 'normal', 'high', 'very high'],
-     start:start,
+     number:schemes[s].length,
+     hintList: schemes[s],
+     start:val,
      cancel:true,
      cancelHint:'Unknown surety',
      readOnly:true,
@@ -95,7 +106,10 @@ $("#list").dataTable(
       <td class="assert">
          {{c.assertion.value|linebreaks}}
          {{c.assertion.rationale|default:""|linebreaks}}
-         <span class="surety" id="csurety{{k}}">{{c.assertion.surety.sequence_number}}</span></td>
+         <span class="surety" id="csurety{{k}}"
+               _scheme="{{c.assertion.surety.scheme_id}}"
+               _order="{{c.assertion.surety.sequence_number}}"/>
+      </td>
       <td class="persona">{{c.assertion.person_id}}</td>
       <td>
          {% for s in c.char.sources %}
@@ -124,7 +138,10 @@ $("#list").dataTable(
          <td class="assert">
             {{e.assertion.value|linebreaks}}
             {{e.assertion.rationale|default:""|linebreaks}}
-            <span class="surety" id="esurety{{i}}">{{e.assertion.surety.sequence_number}}</span></td>
+            <span class="surety" id="esurety{{i}}"
+                  _scheme="{{e.assertion.surety.scheme_id}}"
+                  _order="{{e.assertion.surety.sequence_number}}"/>
+         </td>
          <td class="persona">{{e.assertion.person_id}}</td>
          <td>
             {% for s in e.event.sources %}
@@ -145,7 +162,10 @@ $("#list").dataTable(
          <td class="assert">
             {{g.assertion.value|linebreaks}}
             {{g.assertion.rationale|default:""|linebreaks}}
-            <span class="surety" class="gsurety{{i}}">{{g.assertion.surety.sequence_number}}</span></td>
+            <span class="surety" id="gsurety{{i}}"
+                  _scheme="{{g.assertion.surety.scheme_id}}"
+                  _order="{{g.assertion.surety.sequence_number}}"/>
+         </td>
          <td class="persona">{{g.assertion.person_id}}</td>
          <td>
             {% for s in g.group.sources %}
@@ -191,7 +211,10 @@ $("#list").dataTable(
         <td class="persona">{{p.1.person2_id}}</td>
         <td>{{p.1.rationale|default:""}}</td>
         <td>{{p.1.value|default:""}}</td>
-        <td class="surety" id="asurety{{forloop.counter}}">{{p.1.surety.sequence_number}}</td>
+        <td class="surety" id="asurety{{forloop.counter}}"
+                  _scheme="{{p.1.surety.scheme_id}}"
+                  _order="{{p.1.surety.sequence_number}}"/>
+        </td>
      </tr>
         {% endif %}
       {% endfor %}
