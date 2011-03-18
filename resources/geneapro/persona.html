@@ -41,10 +41,13 @@ $(".surety").each(function() {
 $("#list").dataTable(
   {"bPaginate": false,
    "sDom": '<"top"fi>rt',
-   "aaSorting": [[ 3, "asc" ]], // on dates
+   "aaSorting": [[ 3, "asc" ]], // initial sort on dates
    "aoColumns": [
-      { "bSortable": false },
+      { "bSortable":false },
       null,
+      null,
+      { "iDataSort":4},    //  3: date
+      { "bVisible":false}, //  4: sortDate
       null,
       null,
       null,
@@ -79,10 +82,12 @@ $("#list").dataTable(
          <th>Type (Role)</th>
          <th>Name</th>
          <th>Date</th>
+         <th>sortDate</th>
          <th>Place</th>
-         <th>Assertion</th>
+         <th>Comment</th>
          <th>Persona</th>
          <th>Sources</th>
+         <th>Surety</th>
       </tr>
    </thead>
    <tbody>
@@ -101,14 +106,12 @@ $("#list").dataTable(
       </td>
       {% endif %}
 
-      <td class="date">{{c.char.Date|default:"-"}}</td>
-      <td class="place">{{c.char.place|default:"-"}}</td>
+      <td class="date">{{c.char.Date|default:""}}</td>
+      <td>{{c.char.date_sort|date:"c"}}</td>
+      <td class="place">{{c.char.place|default:""}}</td>
       <td class="assert">
          {{c.assertion.value|linebreaks}}
          {{c.assertion.rationale|default:""|linebreaks}}
-         <span class="surety" id="csurety{{k}}"
-               _scheme="{{c.assertion.surety.scheme_id}}"
-               _order="{{c.assertion.surety.sequence_number}}"/>
       </td>
       <td class="persona">{{c.assertion.person_id}}</td>
       <td>
@@ -118,6 +121,9 @@ $("#list").dataTable(
             {% endif %}
          {% endfor %}
       </td>
+      <td class="surety" id="csurety{{k}}"
+          _scheme="{{c.assertion.surety.scheme_id}}"
+          _order="{{c.assertion.surety.sequence_number}}"/>
    </tr>
    {% endfor %}
 
@@ -133,14 +139,12 @@ $("#list").dataTable(
          <td>{{e.event.type.name}} ({{e.role|default:""}})</td>
          {% endif %}
          <td>{{e.event.name}}</td>
-         <td class="date">{{e.event.Date|default:"-"}}</td>
-         <td class="place">{{e.event.place|default:"-"|linebreaks}}</td>
+         <td class="date">{{e.event.Date|default:""}}</td>
+         <td>{{e.event.date_sort|date:"c"}}</td>
+         <td class="place">{{e.event.place|default:""|linebreaks}}</td>
          <td class="assert">
             {{e.assertion.value|linebreaks}}
             {{e.assertion.rationale|default:""|linebreaks}}
-            <span class="surety" id="esurety{{i}}"
-                  _scheme="{{e.assertion.surety.scheme_id}}"
-                  _order="{{e.assertion.surety.sequence_number}}"/>
          </td>
          <td class="persona">{{e.assertion.person_id}}</td>
          <td>
@@ -150,6 +154,9 @@ $("#list").dataTable(
                {% endif %}
             {% endfor %}
          </td>
+         <td class="surety" id="esurety{{i}}"
+             _scheme="{{e.assertion.surety.scheme_id}}"
+             _order="{{e.assertion.surety.sequence_number}}"/>
       </tr>
    {% endfor %}
 
@@ -157,14 +164,12 @@ $("#list").dataTable(
       <tr>
          <td>Group</td>
          <td>{{g.group.name}} ({{g.group.role|default:""}})</td>
-         <td class="date">{{g.group.date|default:"-"}}</td>
-         <td class="place">{{g.group.place|default:"-"}}</td>
+         <td class="date">{{g.group.date|default:""}}</td>
+         <td>{{g.group.date_sort|date:"c"}}</td>
+         <td class="place">{{g.group.place|default:""}}</td>
          <td class="assert">
             {{g.assertion.value|linebreaks}}
             {{g.assertion.rationale|default:""|linebreaks}}
-            <span class="surety" id="gsurety{{i}}"
-                  _scheme="{{g.assertion.surety.scheme_id}}"
-                  _order="{{g.assertion.surety.sequence_number}}"/>
          </td>
          <td class="persona">{{g.assertion.person_id}}</td>
          <td>
@@ -174,8 +179,10 @@ $("#list").dataTable(
                {% endif %}
             {% endfor %}
          </td>
+         <td class="surety" id="gsurety{{i}}"
+             _scheme="{{g.assertion.surety.scheme_id}}"
+             _order="{{g.assertion.surety.sequence_number}}"/>
       </tr>
-
    {% endfor %}
    </tbody>
  </table>

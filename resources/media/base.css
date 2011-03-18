@@ -34,7 +34,6 @@ body {font-size:14px; font-family:Arial,Helvetica;,clean,sans-serif; }
 #clipboard li {line-height:1.5em}
 
 h1 {margin:20px 0 20px 0; font-size:x-large}
-#titleAbbrev {font-size:x-large; margin-left: 20px; font-style:italic}
 h2 {background-color:#ECF2F9;
     margin-bottom:15px;
     border-top:1px solid #CAD4DE;
@@ -65,8 +64,9 @@ h2 {background-color:#ECF2F9;
   color:#AAA;
 }
 
-.assert span.surety,
-
+td.surety {
+   white-space:nowrap;
+}
 td.persona {
    font-style:italic;
    font-size:0.9em;
@@ -123,7 +123,7 @@ td.persona:before {
           line-height:1.22em}
 .actions a {font-weight:bold; font-size:10px}
 
-.onUse {font-size:10px; color: #999; font-style:italic}
+.onUse {font-size:0.9em; color: #999; font-style:italic}
 
 a {color:#16B; text-decoration:none; cursor:pointer}
 
@@ -362,11 +362,14 @@ div.scrollable canvas {
  * Titles
  *************************************************/
 
+#titleAbbrev {font-size:x-large; margin-left: 20px; font-style:italic}
+
 #title {
-   border-top: 1px solid black;
+   /*border-top: 1px solid black;*/
    border-bottom: 2px solid black;
-   margin:15px 0 10px 30px;
-   padding: 8px 0;
+   font-size:1.8em;
+   margin:15px 0 30px 30px;
+   padding: 0 0 4px 0;
    width:900px; /* #containers'width */
 }
 
@@ -377,7 +380,7 @@ div.scrollable canvas {
 #title span.givenName {
 }
 #title span.surName {
-   font-size:1.2em;
+   /*font-size:1.2em;*/
 }
 
 #title span.id   {

@@ -140,6 +140,8 @@
 */
 #containers table.persona tr:hover {background-color: #FFFDAB}
 
+#containers tr td {border-bottom:1px solid #DDD}
+
 .paging_full_numbers {
    width: 400px;
    height: 22px;

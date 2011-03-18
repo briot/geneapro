@@ -56,10 +56,10 @@ class PartialDateField (models.CharField):
 
    def pre_save(self, model_instance, add):
       """Update the value of the sort field based on the contents of self"""
-      val = super (PartialDateField, self).pre_save (model_instance, add)
+      val = super(PartialDateField, self).pre_save(model_instance, add)
       if val:
-         sort = date.DateRange (val).sort_date ()
-         setattr (model_instance, self._sortfield, sort)
+         sort = date.DateRange(val).sort_date()
+         setattr(model_instance, self._sortfield, sort)
       return val
 
 class Config (GeneaproModel):
