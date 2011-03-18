@@ -21,6 +21,7 @@ def get_sosa_tree(id, max_levels, style_ruless):
    same = SameAs()
    same.compute(None) # Compute all "same as" groups. This is more efficient
                       # at least for small databases.
+   id = same.main(id)
 
    tree = Tree(same=same)
    ids  = set(tree.ancestors(id, generations=max_levels).keys())

@@ -1,26 +1,45 @@
 {% extends "geneapro/base.html" %}
-{% block title %}GeneaPro: pedigree{% endblock %}
+{% block title %}GeneaPro: person {{decujus.id}}{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
-
-#containers tr > td:first-child {
-   text-transform:capitalize;
-   font-weight:bold;
-   color:#AAA;
-}
-
 {% endblock css %}
 
 {% block header %}
 <link rel="stylesheet" href="{{MEDIA_URL}}datatables.css"/>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.raty.min.js"></script>
 {% endblock header %}
 
 {% block script %}
 $(document).ready(function() {
+
+$(".surety").each(function() {
+  var $t=$(this), start=$t.text();
+  console.log("--" + $t.text() + "--");
+  $t.empty().raty({
+     path:'{{MEDIA_URL}}raty_img/',
+     number:5,  {# ??? Depends on surety scheme #}
+     hintList: ['very low', 'low', 'normal', 'high', 'very high'],
+     start:start,
+     cancel:true,
+     cancelHint:'Unknown surety',
+     readOnly:true,
+     })
+  });
+
+
 $("#list").dataTable(
   {"bPaginate": false,
    "sDom": '<"top"fi>rt',
-   "aaSorting": [[ 2, "asc" ]], // on dates
+   "aaSorting": [[ 3, "asc" ]], // on dates
+   "aoColumns": [
+      { "bSortable": false },
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+   ],
   }
 );
 });
@@ -36,14 +55,14 @@ $("#list").dataTable(
 {% block contents %}
 
 <h3 id="title">
-   <span class="id">{{p.id}}</span>
-   <span class="givenName">{{p.base_given_name}}</span>
-   <span class="surName">{{p.base_surname}}</span>
-   <span class="details">({{p.birth.date}} - {{p.death.date}})</span>
+   <span class="id">{{decujus.id}}</span>
+   <span class="givenName">{{decujus.base_given_name}}</span>
+   <span class="surName">{{decujus.base_surname}}</span>
+   <span class="details">({{decujus.birth.date}} - {{decujus.death.date}})</span>
 </h3>
 
 <div id="containers">
- <table id="list">
+ <table id="list" class="persona">
    <thead>
       <tr>
          <th>Type (Role)</th>
@@ -51,6 +70,7 @@ $("#list").dataTable(
          <th>Date</th>
          <th>Place</th>
          <th>Assertion</th>
+         <th>Persona</th>
          <th>Sources</th>
       </tr>
    </thead>
@@ -75,8 +95,8 @@ $("#list").dataTable(
       <td class="assert">
          {{c.assertion.value|linebreaks}}
          {{c.assertion.rationale|default:""|linebreaks}}
-         <span class="persona">{{c.assertion.person_id}}</span>
-         <span class="surety">{{c.assertion.surety}}</span></td>
+         <span class="surety" id="csurety{{k}}">{{c.assertion.surety.sequence_number}}</span></td>
+      <td class="persona">{{c.assertion.person_id}}</td>
       <td>
          {% for s in c.char.sources %}
             {% if s %}
@@ -104,8 +124,8 @@ $("#list").dataTable(
          <td class="assert">
             {{e.assertion.value|linebreaks}}
             {{e.assertion.rationale|default:""|linebreaks}}
-            <span class="persona">{{e.assertion.person_id}}</span>
-            <span class="surety">{{e.assertion.surety}}</span></td>
+            <span class="surety" id="esurety{{i}}">{{e.assertion.surety.sequence_number}}</span></td>
+         <td class="persona">{{e.assertion.person_id}}</td>
          <td>
             {% for s in e.event.sources %}
                {% if s %}
@@ -125,7 +145,8 @@ $("#list").dataTable(
          <td class="assert">
             {{g.assertion.value|linebreaks}}
             {{g.assertion.rationale|default:""|linebreaks}}
-            <span class="persona">{{g.assertion.person_id}}</span>
+            <span class="surety" class="gsurety{{i}}">{{g.assertion.surety.sequence_number}}</span></td>
+         <td class="persona">{{g.assertion.person_id}}</td>
          <td>
             {% for s in g.group.sources %}
                {% if s %}
@@ -166,11 +187,11 @@ $("#list").dataTable(
       <tr>
           {% endif %}
         {# ??? Should we show sources and researcher #}
-        <td><span class="persona">{{p.1.person1_id}}</span></td>
-        <td><span class="persona">{{p.1.person2_id}}</span></td>
+        <td class="persona">{{p.1.person1_id}}</td>
+        <td class="persona">{{p.1.person2_id}}</td>
         <td>{{p.1.rationale|default:""}}</td>
         <td>{{p.1.value|default:""}}</td>
-        <td class="surety">{{p.1.surety}}</td>
+        <td class="surety" id="asurety{{forloop.counter}}">{{p.1.surety.sequence_number}}</td>
      </tr>
         {% endif %}
       {% endfor %}

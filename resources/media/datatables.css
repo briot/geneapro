@@ -99,7 +99,6 @@
     border-right:1px solid #444;
     border-bottom: 2px solid black;
 }
-#containers tr:hover {background-color: #BBB}
 #containers td {
     border-right:1px solid #AAA;
     padding: 0 5px}
@@ -116,11 +115,11 @@
    margin-top:10px;
 }
 
-.sorting_asc {
+.sorting_desc {
    background: url('/media/dt/sort_asc.png') no-repeat center right;
 }
  
-.sorting_desc {
+.sorting_asc {
    background: url('/media/dt/sort_desc.png') no-repeat center right;
 }
  
@@ -128,16 +127,18 @@
    background: url('/media/dt/sort_both.png') no-repeat center right;
 }
  
-.sorting_asc_disabled {
+.sorting_desc_disabled {
    background: url('/media/dt/sort_asc_disabled.png') no-repeat center right;
 }
  
-.sorting_desc_disabled {
+.sorting_asc_disabled {
    background: url('/media/dt/sort_desc_disabled.png') no-repeat center right;
 }
 
-tr.odd { background-color: #dfd }
-tr.even { background-color: #efe }
+/*tr.odd { background-color: #dfd }
+  tr.even { background-color: #efe }
+*/
+#containers table.persona tr:hover {background-color: #FFFDAB}
 
 .paging_full_numbers {
    width: 400px;

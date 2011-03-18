@@ -91,8 +91,9 @@ def __get_events(ids, styles, same, types=None):
 
     persons = dict() # id -> person
     for p in sql_in(models.Persona.objects, "id", ids):
-        if same.is_main(p.id):
-            persons[p.id] = p
+        mid = same.main(p.id)
+        if mid not in persons:
+            persons[mid] = p
             __add_default_person_attributes(p)
 
     ################
@@ -246,7 +247,8 @@ def view(request, id):
 
    return render_to_response(
        'geneapro/persona.html',
-       {"p":p[id],
+       {"decujus":p[id],
+        "decujusid":same.main(id),
         "chars": p[id].all_chars,
         "events": p[id].all_events,
         "groups": p[id].all_groups,

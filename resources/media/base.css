@@ -65,15 +65,52 @@ h2 {background-color:#ECF2F9;
   color:#AAA;
 }
 
-.assert .surety,
-.assert .persona {
+.assert span.surety,
+
+td.persona {
    font-style:italic;
    font-size:0.9em;
    color:#AAA;
 }
-.persona:before {
-   content:"id";
+td.persona:before {
+   content:"id ";
 }
+
+#containers table.persona td:first-child {
+   /*background-image: url(/media/advanced_arrow.gif);*/
+   /*background: transparent none no-repeat 2px 0px;*/
+   width:10px;
+   font-size:0.7em;
+   text-align:center;
+   color:#16B;
+}
+#containers table.persona td.open:before {
+   content:"\25BC";
+}
+#containers table.persona td.closed:before {
+   /*a:before {*/
+   content:"\25B6";
+}
+
+#containers table.persona tr > td:nth-child(2) {
+   text-transform:capitalize;
+   font-weight:bold;
+   color:#AAA;
+}
+
+#containers td.extra {
+   /*background-image: -moz-linear-gradient(top, #39414A, #777);*/
+   /*background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #39414A),color-stop(1, #777));   */
+   /*background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #777),color-stop(1, #EEE));   */
+   /*background-image: linear-gradient(top, #39414A, #777);*/
+   background-color:#EEE;
+}
+#containers td.extra div {
+   color:black;
+   min-height:50px;
+   margin:0;
+}
+
 
 .sourceInfo {width:64em}
 .sourcepartDetails {margin-bottom:30px}

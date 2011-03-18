@@ -7,6 +7,7 @@ from django.template import RequestContext
 from mysites.geneapro import models
 from mysites.geneapro.views.queries import sql_in
 from mysites.geneapro.utils.date import Date, DateRange
+from mysites.geneapro.views.tree import SameAs
 
 
 class Fact(object):
@@ -39,6 +40,8 @@ def extended_sources(ids):
 
     sources = dict() # id -> Source
 
+    same = SameAs()
+
     for s in sql_in(models.Source.objects.select_related(
                          "medium", "repositories", "researcher"),
                     "id", ids):
@@ -55,6 +58,9 @@ def extended_sources(ids):
 
     p2e = models.P2E.objects.select_related()
     for c in sql_in(p2e, "source", ids):
+        same.compute([c.person_id])
+        pid = same.main(c.person_id)  # ??? Useless, main should always be min
+
         f = Fact(
             surety=c.surety.name,
             value=c.value,
@@ -63,15 +69,18 @@ def extended_sources(ids):
             place=c.event.place and c.event.place.name,
             disproved=c.disproved,
             subject1=c.person.name,
-            subject1_url="/persona/%d" % c.person.id,
+            subject1_url="/persona/%d" % pid,
             subject2="%s (%s)" % (c.event.name, c.role.name))
         sources[c.source_id].asserts.append(f)
 
     p2c = models.P2C.objects.select_related()
     for c in sql_in(p2c, "source", ids):
+        same.compute([c.person_id])
+        pid = same.main(c.person_id)
+
         parts = []
-        for p in models.Characteristic_Part.objects.filter(characteristic=c.characteristic) \
-                 .select_related():
+        for p in models.Characteristic_Part.objects.filter(
+           characteristic=c.characteristic).select_related():
             parts.append((p.type.name, p.name))
 
         f = Fact(
@@ -83,7 +92,7 @@ def extended_sources(ids):
             parts=parts,
             disproved=c.disproved,
             subject1=c.person.name,
-            subject1_url="/persona/%d" % c.person.id,
+            subject1_url="/persona/%d" % pid,
             subject2="")
         sources[c.source_id].asserts.append(f)
 
