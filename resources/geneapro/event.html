@@ -1,0 +1,54 @@
+<!--
+<table>
+   <tr>
+      <td>Name:</td>
+      <td>{{e.name}}</td>
+      <td>Type:</td>
+      <td>{{e.type.name}}</td>
+   </tr>
+   <tr>
+   </tr>
+   <tr>
+      <td>Place:</td>
+      <td>{{e.place|default:""}}</td>
+      <td>Date:</td>
+      <td>{{e.date|default:""}}</td>
+   </tr>
+   <tr>
+      <td>Id:</td>
+      <td>{{e.id}}</td>
+   </tr>
+</table>
+-->
+
+<table>
+   <tr>
+      <th>Person</th>
+      <th>Role</th>
+      <th>Comment</th>
+      <th>Rationale</th>
+      <th>Surety</th>
+      <th>Sources</th>
+   </tr>
+{% for p in e.p2e %}
+   {% if p.disproved %}
+   <tr class="disproved">
+   {% else %}
+   <tr>
+   {% endif %}
+      <td style="white-space:nowrap"><a href="/persona/{{p.person_id}}">{{p.person.name}}</a></td>
+      <td>{{p.role.name}}</td>
+      <td>{{p.value|default:""}}</td>
+      <td>{{p.rationale|default:""}}</td>
+      <td class="surety" id="psurety{{forloop.counter}}"
+         _scheme="{{p.surety.scheme_id}}"
+         _order="{{p.surety.sequence_number}}"/>
+      {% if p.source_id %}
+      <td><a href="/sources/{{p.source_id}}">{{p.source_id}}</td>
+      {% else %}
+      <td></td>
+      {% endif %}
+   </tr>
+{% endfor %}
+</table>
+

@@ -89,6 +89,9 @@
    border-bottom: 2px solid black;
    clear:both;
 }
+#containers table table {
+   border-bottom: 0
+}
 #containers thead th {
     padding: 5px 18px 5px 10px;
     font-weight: bold;

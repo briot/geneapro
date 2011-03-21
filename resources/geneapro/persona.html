@@ -56,6 +56,35 @@ $("#list").dataTable(
    ],
   }
 );
+
+$("#list th").click(function() {
+   {# Remove all extra information #}
+   $("#list td.open").removeClass("open").addClass("closed");
+});
+
+$("#list tr>td:first-child").click(function() {
+  var td=$(this), tr=td.parent(), url=td.attr("_url");
+  if (!url) 
+     return;
+  if (td.hasClass("open")) {
+     tr.next().hide();
+     td.removeClass("open").addClass("closed");
+  } else {
+     var n = tr.next();
+     if (n[0].className == tr[0].className) {
+        n.show();
+     } else {
+        n = $("<tr><td></td><td class='extra' colspan='10'>"
+              + "<div></div></td></tr>");
+        $.get(url, function(data) {n.find("div").html(data)});
+        tr.after(n);
+        n[0].className = tr[0].className;
+     }
+     td.removeClass("closed").addClass("open");
+  }
+
+});
+
 });
 
 {% endblock script %}
@@ -79,6 +108,7 @@ $("#list").dataTable(
  <table id="list" class="persona">
    <thead>
       <tr>
+         <th></th>
          <th>Type (Role)</th>
          <th>Name</th>
          <th>Date</th>
@@ -94,7 +124,8 @@ $("#list").dataTable(
 
    {% for k, c in chars.items %}
    <tr>
-      <td>{{c.char.name}}</td>
+      <td class="closed"></td>
+      <td class="type">{{c.char.name}}</td>
 
       {% if c.parts|length == 1 %}
       <td>{{c.parts.0.value}}</td>
@@ -106,7 +137,7 @@ $("#list").dataTable(
       </td>
       {% endif %}
 
-      <td class="date">{{c.char.Date|default:""}}</td>
+      <td class="date">{{c.char.date|default:""}}</td>
       <td>{{c.char.date_sort|date:"c"}}</td>
       <td class="place">{{c.char.place|default:""}}</td>
       <td class="assert">
@@ -133,13 +164,14 @@ $("#list").dataTable(
       {% else %}
       <tr>
       {% endif %}
+         <td class="closed" _url="/event/{{e.event.id}}"></td>
          {% if e.role == "principal" %}
-         <td>{{e.event.type.name}}</td>
+         <td class="type">{{e.event.type.name}}</td>
          {% else %}
-         <td>{{e.event.type.name}} ({{e.role|default:""}})</td>
+         <td class="type">{{e.event.type.name}} ({{e.role|default:""}})</td>
          {% endif %}
          <td>{{e.event.name}}</td>
-         <td class="date">{{e.event.Date|default:""}}</td>
+         <td class="date">{{e.event.date|default:""}}</td>
          <td>{{e.event.date_sort|date:"c"}}</td>
          <td class="place">{{e.event.place|default:""|linebreaks}}</td>
          <td class="assert">
@@ -162,7 +194,8 @@ $("#list").dataTable(
 
    {% for i, g in groups.items %}
       <tr>
-         <td>Group</td>
+         <td class="closed"></td>
+         <td class="type">Group</td>
          <td>{{g.group.name}} ({{g.group.role|default:""}})</td>
          <td class="date">{{g.group.date|default:""}}</td>
          <td>{{g.group.date_sort|date:"c"}}</td>

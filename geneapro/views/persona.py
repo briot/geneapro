@@ -8,7 +8,6 @@ from django.utils.translation import ugettext as _
 from django.utils import simplejson
 from django.http import HttpResponse
 from mysites.geneapro import models
-from mysites.geneapro.utils.date import Date, DateRange
 from mysites.geneapro.views.custom_highlight import style_rules
 from mysites.geneapro.views.styles import Styles
 from mysites.geneapro.views.rules import getLegend
@@ -24,16 +23,16 @@ event_types_for_pedigree = (
 
 EventInfo = collections.namedtuple(
     'EventInfo', 'event, role, assertion')
-    # "event" has fields like "sources", "Date", "place"
+    # "event" has fields like "sources", "place"
 CharInfo = collections.namedtuple(
     'CharInfo', 'char, parts, assertion')
-    # "char" has fields like "Date", "place", "sources"
+    # "char" has fields like "place", "sources"
     # parts = [CharPartInfo]
 CharPartInfo = collections.namedtuple(
     'CharPartInfo', 'name, value')
 GroupInfo = collections.namedtuple(
     'GroupInfo', 'group, assertion')
-    # "group" has fields like "source", "Date", ...
+    # "group" has fields like "source",...
 
 
 def __add_default_person_attributes (person):
@@ -123,7 +122,6 @@ def __get_events(ids, styles, same, types=None, schemes=None):
 
         e.sources = getattr(e, "sources", set())
         e.sources.add(p.source_id)
-        e.Date = e.date and DateRange(e.date)
 
         if schemes is not None:
             schemes.add(p.surety.scheme_id)
@@ -137,10 +135,12 @@ def __get_events(ids, styles, same, types=None, schemes=None):
         if not p.disproved \
            and p.role_id == models.Event_Type_Role.principal:
             if e.type_id == models.Event_Type.birth:
-                if person.birth is None or person.birth.Date > e.Date:
+                if person.birth is None \
+                   or person.birth.date_sort > e.date_sort:
                     person.birth = e
             elif e.type_id == models.Event_Type.death:
-                if person.death is None or person.death.Date < e.Date:
+                if person.death is None \
+                   or person.death.date_sort < e.date_sort:
                     person.death = e
             elif e.type_id == models.Event_Type.marriage:
                 person.marriage = e
@@ -176,7 +176,6 @@ def __get_events(ids, styles, same, types=None, schemes=None):
         person = persons[same.main(p.person_id)]
         p2c[c.id] = person
 
-        c.Date = c.date and DateRange(c.date)
         c.sources = getattr(c, "sources", set())
         c.sources.add(p.source_id)
 

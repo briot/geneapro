@@ -6,11 +6,13 @@ import mysites.geneapro.views.representation
 import mysites.geneapro.views.rules
 import mysites.geneapro.views.stats
 import mysites.geneapro.views.sources
+import mysites.geneapro.views.events
 
 urlpatterns = patterns('',
 	(r'^$', views.pedigree.pedigree_view),
 	(r'^sources$', views.sources.source_list),
 	(r'^sources/(\d+)$', views.sources.view),
+    (r'^event/(\d+)$', views.events.view),
     (r'^personas$',  views.persona.view_list),
     (r'^persona/(\d+)$', views.persona.view),
     (r'^repr/(.*)/(\d+)$', views.representation.view),
