@@ -8,6 +8,7 @@ from django.utils.translation import ugettext as _
 from django.utils import simplejson
 from django.http import HttpResponse
 from mysites.geneapro import models
+from mysites.geneapro.utils.date import Date, DateRange
 from mysites.geneapro.views.custom_highlight import style_rules
 from mysites.geneapro.views.styles import Styles
 from mysites.geneapro.views.rules import getLegend
@@ -23,10 +24,12 @@ event_types_for_pedigree = (
 
 EventInfo = collections.namedtuple(
     'EventInfo', 'event, role, assertion')
-    # "event" has fields like "sources", "place"
+    # "event" has fields like "sources", "place", "Date"
+    #   where "Date" is a geneapro.utils.DateRange object and should not be
+    #   used for display
 CharInfo = collections.namedtuple(
     'CharInfo', 'char, parts, assertion')
-    # "char" has fields like "place", "sources"
+    # "char" has fields like "place", "sources", "Date"
     # parts = [CharPartInfo]
 CharPartInfo = collections.namedtuple(
     'CharPartInfo', 'name, value')
@@ -122,6 +125,7 @@ def __get_events(ids, styles, same, types=None, schemes=None):
 
         e.sources = getattr(e, "sources", set())
         e.sources.add(p.source_id)
+        e.Date = e.date and DateRange(e.date)
 
         if schemes is not None:
             schemes.add(p.surety.scheme_id)
@@ -178,6 +182,7 @@ def __get_events(ids, styles, same, types=None, schemes=None):
 
         c.sources = getattr(c, "sources", set())
         c.sources.add(p.source_id)
+        c.date = c.date and DateRange(c.date)
 
         if schemes is not None:
             schemes.add(p.surety.scheme_id)
