@@ -10,10 +10,10 @@
 ** Investigate storing trees more efficiently
    See for instance http://articles.sitepoint.com/print/hierarchical-data-database
    and http://code.google.com/p/django-mptt/
-
+  
 * Gedcom import
 ** Import all missing GEDCOM information (reported by ./manage.py import)
-** share NOTE, PLAC and SOUR in the database
+** TODO share NOTE, PLAC and SOUR in the database
    At least when they are shared in Gedcom, and if possible more
 ** some INDI end up with a non-empty description, which is a xref to a NOTE.
    We should create a proper note instead (but not clear how this is done in
@@ -61,7 +61,8 @@
 ** Implement based on the canvas.
 
 * Person View
-** For each event, add an "downarrow" to show event details
+** DONE For each event, add an "downarrow" to show event details
+   CLOSED: [2011-03-21 Mon 15:27]
    In particular, all personas that took part in the event.
 
 * Styles
@@ -72,7 +73,20 @@
 * Graphically editing the surety scheme
 ** This scheme is properly taken into account when displaying assertions
    in the person view, but currently the user cannot edit it.
-** Take these custom schemes into account when importing gedcom
-
+** Take these custom schemes into account when importing ge  
 * Ideas for names
-** Geneatica, Forebears, Testimony
+** Geneatica, Forebears, Testimony, Testimology
+
+* Design
+** Should we be using groups to store families ?
+  Currently, a child belongs to a family through his birth (that gives his
+  parents).
+  But we have to create dummy personas sometimes to preserve the information on
+  siblings (when none or only one of the parents is known).
+  We could instead create a group "Family" in which personas are added as
+  "child" or "father" or "mother".
+  Main drawback is in the GUI, since we don't want users to have to create
+  such a family every time. Perhaps when entering a birth event Geneapro could
+  transparently create the group. Likewise, have dummy persona-to-persona
+  relationships like "sibling", which are saved in the group rather than as
+  assertions in P2P.
