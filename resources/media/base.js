@@ -2,6 +2,52 @@ var data = null;  //  Data from JSON
 var decujus = 1;  //  Current decujus
 
 /************************************************
+ * Open up an extra row of information in a table.
+ * Initial html setup is
+ *   <table>
+ *     <tr>
+ *       <td class="closed" _url="..."></td>
+ *       <td>....</td>
+ *     </tr>
+ * When clicking in the first <td>, an extra row will be
+ * added after the current row. The contents of this extra row
+ * is given by the _url attribute.
+ * THIS is the first <td>
+ ************************************************/
+
+function toggleExtra(td) {
+  var td = $(this),
+      tr=td.parent(), url=td.attr("_url");
+
+  if (!url)
+     return;
+
+  if (td.hasClass("open")) {
+     // Fold current extra panel
+     tr.next().find("td.extra > div").slideUp(
+        200,
+        function(){tr.next().hide();
+                   td.removeClass("open").addClass("closed");
+         });
+
+  } else {
+     var n = tr.next();
+
+     if (n.hasClass("extra")) {
+        n.show().find("td.extra > div").slideDown(200);
+
+     } else {
+        n = $("<tr><td></td><td class='extra' colspan='10'>"
+              + "<div></div></td></tr>").insertAfter(tr);
+        var div = n.find("td.extra > div").hide();
+        n.addClass("extra");
+        $.get(url, function(data){div.html(data).slideDown(200)});
+     }
+     td.removeClass("closed").addClass("open");
+  }
+}
+
+/************************************************
  * Display a busy image on top of the given element
  ************************************************/
 function setBusy (elemt) {

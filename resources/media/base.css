@@ -101,12 +101,18 @@ td.persona:before {
    /*background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #39414A),color-stop(1, #777));   */
    /*background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #777),color-stop(1, #EEE));   */
    /*background-image: linear-gradient(top, #39414A, #777);*/
+   background-color:white;
+}
+#containers td.extra > div {
+   color:black;
+   margin:0 10px 10px 10px;
+   border-right:1px solid #AAA;
+   border-left:1px solid #AAA;
+   border-bottom:1px solid #AAA;
    background-color:#EEE;
 }
-#containers td.extra div {
-   color:black;
-   min-height:50px;
-   margin:0;
+#containers td.extra > div td {
+   text-align:center;
 }
 
 

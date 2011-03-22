@@ -103,7 +103,7 @@
     border-bottom: 2px solid black;
 }
 #containers td {
-    border-right:1px solid #AAA;
+    /*border-right:1px solid #AAA;*/
     padding: 0 5px}
 #containers td.place {
    min-width:150px;

@@ -37,7 +37,6 @@ $(".surety").each(function() {
      })
   });
 
-
 $("#list").dataTable(
   {"bPaginate": false,
    "sDom": '<"top"fi>rt',
@@ -58,32 +57,10 @@ $("#list").dataTable(
 );
 
 $("#list th").click(function() {
-   {# Remove all extra information #}
-   $("#list td.open").removeClass("open").addClass("closed");
+    $("#list td.open").removeClass("open").addClass("closed");
 });
 
-$("#list tr>td:first-child").click(function() {
-  var td=$(this), tr=td.parent(), url=td.attr("_url");
-  if (!url) 
-     return;
-  if (td.hasClass("open")) {
-     tr.next().hide();
-     td.removeClass("open").addClass("closed");
-  } else {
-     var n = tr.next();
-     if (n[0].className == tr[0].className) {
-        n.show();
-     } else {
-        n = $("<tr><td></td><td class='extra' colspan='10'>"
-              + "<div></div></td></tr>");
-        $.get(url, function(data) {n.find("div").html(data)});
-        tr.after(n);
-        n[0].className = tr[0].className;
-     }
-     td.removeClass("closed").addClass("open");
-  }
-
-});
+$("#list tr>td:first-child").click(toggleExtra);
 
 });
 
