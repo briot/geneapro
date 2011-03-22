@@ -16,8 +16,13 @@ var decujus = 1;  //  Current decujus
  ************************************************/
 
 function toggleExtra(td) {
-  var td = $(this),
+  var td=$(this),
       tr=td.parent(), url=td.attr("_url");
+
+  if (!url) {
+     td = td.prev();
+     url = td.attr("_url");
+  }
 
   if (!url)
      return;
@@ -29,6 +34,7 @@ function toggleExtra(td) {
         function(){tr.next().hide();
                    td.removeClass("open").addClass("closed");
          });
+     td.html("<span>&#x25B6;</span>");
 
   } else {
      var n = tr.next();
@@ -44,6 +50,7 @@ function toggleExtra(td) {
         $.get(url, function(data){div.html(data).slideDown(200)});
      }
      td.removeClass("closed").addClass("open");
+     td.html("<span>&#x25BC;</span>");
   }
 }
 

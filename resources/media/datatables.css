@@ -80,13 +80,13 @@
 }
  
 #containers {
-   margin: 20px 30px;
+   margin: 20px 0;
    max-width: 900px;
 }
 #containers table {
    width:100%;
    border-spacing:0;
-   border-bottom: 2px solid black;
+   /*border-bottom: 2px solid black;*/
    clear:both;
 }
 #containers table table {
@@ -144,6 +144,7 @@
 #containers table.persona tr:hover {background-color: #FFFDAB}
 
 #containers tr td {border-bottom:1px solid #DDD}
+#containers td table td {border-bottom:0}
 
 .paging_full_numbers {
    width: 400px;

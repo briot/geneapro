@@ -60,7 +60,9 @@ $("#list th").click(function() {
     $("#list td.open").removeClass("open").addClass("closed");
 });
 
-$("#list tr>td:first-child").click(toggleExtra);
+//$("#list td.open").html("<span>&#x25BC;</span>");
+$("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
+  .click(toggleExtra).next().click(toggleExtra).css("cursor", "pointer");
 
 });
 
@@ -141,7 +143,7 @@ $("#list tr>td:first-child").click(toggleExtra);
       {% else %}
       <tr>
       {% endif %}
-         <td class="closed" _url="/event/{{e.event.id}}"></td>
+         <td _url="/event/{{e.event.id}}"></td>
          {% if e.role == "principal" %}
          <td class="type">{{e.event.type.name}}</td>
          {% else %}
@@ -198,14 +200,14 @@ $("#list tr>td:first-child").click(toggleExtra);
  </table>
 
  {% if p2p|length %}
- <p class="onUse" style="margin-top:10px">
+ <p class="onUse" style="margin-top:10px; margin-left:20px;">
  This person is made up of several persona in the database. Each of
  these persona was constructed from one or more sources, and then they
  were all linked together with the following assertions. Disproving any
  of these will change the information displayed above.
  </p>
 
- <table>
+ <table style="margin-left:20px">
    <thead>
       <tr>
          <th>Persona1</th>
