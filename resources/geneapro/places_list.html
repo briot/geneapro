@@ -1,0 +1,60 @@
+{% extends "geneapro/base.html" %}
+{% block title %}GeneaPro: places{% endblock %}
+{% block header %}
+<link rel="stylesheet" href="{{MEDIA_URL}}datatables.css"/>
+{% endblock header %}
+
+{% block script %}
+$(document).ready(function() {
+$("#list").dataTable(
+  {"sPaginationType": "full_numbers",
+   "aLengthMenu": [[10, 20, 30, 40, 50, 60, 70, 80, 100, -1],
+                   [10, 20, 30, 40, 50, 60, 70, 80, 100, "All"]],
+   "iDisplayLength":30,
+/*   "sScrollX":"100%",*/
+   "sDom": '<"top"lf><"top2"pi>rt',
+  }
+);
+});
+{% endblock script %}
+
+{% block endbody %}
+{% endblock endbody %}
+
+{% block leftside %}
+{{legend|safe}}
+{% endblock leftside %}
+
+{% block contents %}
+
+<div id="containers">
+
+<table cellspacing="0" cellpadding="0" border="0" id="list">
+ <thead>
+   <tr>
+      <th>Name</th>
+      <th>Id</th>
+      <th>Details</th>
+   </tr>
+ </thead>
+ <tbody>
+   {% for p in places %}
+   <tr>
+      <td>{{p.name}}</td>
+      <td>{{p.id}}</td>
+      <td>
+         {% for pa in p.parts.all %}
+         <span class="char">{{pa.type.name}}</span>: {{pa.name}}<br>
+         {% endfor %}
+
+         {% if p.parent_place %}
+         <span class="char">Parent place</span>: {{p.parent_place.name}}<br>
+         {% endif %}
+      </td>
+   </tr>
+   {% endfor %}
+ </tbody>
+</table>
+</div>
+{% endblock contents %}
+

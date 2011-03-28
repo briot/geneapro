@@ -36,10 +36,3 @@ def view(request, id):
         {"e": e.get(id, None),
         },
         context_instance=RequestContext(request))
-
-    return None
-
-
-def source_list(request):
-    """View the list of all sources"""
-    return None

@@ -2,6 +2,7 @@ from django.conf.urls.defaults import *
 from mysites.geneapro import views
 import mysites.geneapro.views.pedigree
 import mysites.geneapro.views.persona
+import mysites.geneapro.views.places
 import mysites.geneapro.views.representation
 import mysites.geneapro.views.rules
 import mysites.geneapro.views.stats
@@ -15,6 +16,7 @@ urlpatterns = patterns('',
     (r'^event/(\d+)$', views.events.view),
     (r'^personas$',  views.persona.view_list),
     (r'^persona/(\d+)$', views.persona.view),
+    (r'^places$', views.places.view_list),
     (r'^repr/(.*)/(\d+)$', views.representation.view),
     #url (r'^pedigreeData$', views.pedigree.data, name="pedigree_data"),
 	(r'^pedigree/(\d+)$', views.pedigree.pedigree_view),

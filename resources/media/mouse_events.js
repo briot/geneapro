@@ -263,7 +263,7 @@
    **********************************************************/
 
   var _minDist = 4 * 4,  //  square of min move distance before drag starts
-      dt = 0.04, // interval in seconds between two refresh when throwing
+      dt = 0.01, // interval in seconds between two refresh when throwing
       Threshold = 0.01,  // 1% of initial velocity stops the element
       Time = 0.7,        // stops moving at this many seconds
       storePast = 500,   // save position data for the last ... milliseconds
@@ -290,7 +290,7 @@
              weight: $(this).data (_weight) || 0,
              _elem: this,
              _indrag: false,
-             _past:  [{t:e.timeStamp, x:e.pageX, y:e.pageY}], // compute speed
+             _past:  [{t:e.timeStamp, x:e.pageX, y:e.pageY}], // for speed
              _click: {x:e.pageX, y:e.pageY}};
 
      terminate_throw ($(this));
@@ -306,11 +306,11 @@
         if (diffX * diffX + diffY * diffY > _minDist) {
            d._indrag = true;
            $(d._elem).trigger ('start-drag', d);
-           d._click.x += d.offset.left
-           d._click.y += d.offset.top
+           d._click.x -= d.offset.left;
+           d._click.y -= d.offset.top;
         }
      } else {
-       d.offset = {top:d._click.y - e.pageY, left:d._click.x - e.pageX}
+       d.offset = {top:e.pageY-d._click.y, left:e.pageX-d._click.x}
 
        // Preserve the last 1s or so of movement, so that we can compute
        // an acceleration when the mouse is released
@@ -352,15 +352,15 @@
   function _mouseupTHROW (e) {
      var d = e.data, $e=$(d._elem), r=d._past.length - 2;
      if (d._indrag && r >= 0) {
-        if (d.weight) {  // not undefined, and not 0
+        if (d.weight != 0) {
            function thrown () {
               v *= k;
               var xd = v*cosA,  yd = v*sinA;
               if (Math.abs (xd)<2 && Math.abs (yd)<2) {
                  terminate_throw ($e);
               } else {
-                 x -= xd; // use floating point here
-                 y -= yd;
+                 x += xd; // use floating point here
+                 y += yd;
                  d.offset={left:Math.round (x), top:Math.round (y)};
                  $e.trigger ('in-drag', d);
               }
@@ -384,8 +384,7 @@
 
      //  Always stop following mouse events
      $(window).unbind (".THROW");
-     e.stopImmediatePropagation();
-     return false;
+     return e.stopImmediatePropagation() || false;
   }
 
   // Setup all three events, so that the user only has to connect to at least

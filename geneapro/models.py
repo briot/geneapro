@@ -230,7 +230,7 @@ class Source_Medium (GeneaproModel):
       db_table = "source_medium"
 
 
-class Place (GeneaproModel):
+class Place(GeneaproModel):
    """
    Information about a historical place. Places are organized hierarchically,
    to avoid duplicating information whenever possible (for instance, if a
@@ -240,15 +240,15 @@ class Place (GeneaproModel):
    The actual info for a place is defined in terms of Place_Part
    """
 
-   date = PartialDateField ()
-   parent_place = models.ForeignKey ('self', null=True,
+   date = PartialDateField()
+   parent_place = models.ForeignKey('self', null=True,
        help_text = "The parent place, that contains this one")
-   name = models.CharField (max_length=100,
+   name = models.CharField(max_length=100,
        help_text = "Short description of the place")
 
-   def __unicode__ (self):
-      parts = self.place_part_set.all ()
-      name = ",".join ([p.name for p in parts])
+   def __unicode__(self):
+      parts = self.parts.all()
+      name = ",".join([p.name for p in parts])
       if self.parent_place:
          return unicode(self.name) + " " + unicode(self.parent_place) + name
       else:
@@ -293,30 +293,32 @@ class Place_Part_Type (Part_Type):
       """Meta data for the model"""
       db_table = "place_part_type"
 
-class Place_Part (GeneaproModel):
-   """
-   Specific information about a place
-   """
 
-   # ??? How do we know where the place_part was found (ie for instance an
-   # alternate name for the place found in a different document ?)
-   # ??? Should the existence date be a place_part as well, or a field in
-   # a place part, so that the same place with different names results in
-   # a single id
-   place       = models.ForeignKey(Place)
-   type        = models.ForeignKey(Place_Part_Type)
-   name        = models.CharField (max_length=200)
-   sequence_number = models.PositiveSmallIntegerField (
-      "Sequence number", default=1)
+class Place_Part(GeneaproModel):
+    """
+    Specific information about a place
+    """
 
-   class Meta:
-      """Meta data for the model"""
-      order_with_respect_to = 'place'
-      ordering = ('sequence_number', 'name')
-      db_table = "place_part"
+    # ??? How do we know where the place_part was found (ie for instance an
+    # alternate name for the place found in a different document ?)
+    # ??? Should the existence date be a place_part as well, or a field in
+    # a place part, so that the same place with different names results in
+    # a single id
+    place       = models.ForeignKey(Place, related_name="parts")
+    type        = models.ForeignKey(Place_Part_Type)
+    name        = models.CharField(max_length=200)
+    sequence_number = models.PositiveSmallIntegerField(
+       "Sequence number", default=1)
 
-   def __unicode__ (self):
-      return unicode(self.type) + "=" + self.name
+    class Meta:
+       """Meta data for the model"""
+       order_with_respect_to = 'place'
+       ordering = ('sequence_number', 'name')
+       db_table = "place_part"
+
+    def __unicode__(self):
+       return unicode(self.type) + "=" + self.name
+
 
 class Repository_Type (GeneaproModel):
    """

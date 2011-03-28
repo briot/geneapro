@@ -1,77 +1,101 @@
 /************************************************
- * A resizable and zoomable canvas
- * To use:
- *    $("selector").canvas ({options});
- * Where the list of valid options is described in defaultSettings below
+ * A resizable and zoomable canvas class.
+ *
+ * Dependencies
+ * ============
+ * Requires:  adacore-mouse_events.js
+ *
+ * Description
+ * ===========
+ *
+ * This module exports the Canvas class, which can be instantiated on its
+ * own via a call similar to:
+ *    c = new Canvas(options, element);
+ *       // element is a DOM object
+ *       // for this of valid options, see $.fn.canvas.defaults below
+ *
+ *    c.init(options, element)
+ *       // Initializes C (just like the constructor above) but does not
+ *       // create a new instance.
+ *
+ * The following methods are available:
+ *    c.refresh(box=fullscreen);
+ *       // force a redraw of the whole canvas
+ *       // BOX is the area that should be refreshed, in pixel coordinates.
+ *    c.toPixelLength(length);
+ *    c.toPixelAbs(length);
+ *       // converts a length from pixel to absolute coordinates, depending
+ *       // on current zoom level. This ignores any scrolling offset.
+ *    c.toPixelX(xbas);
+ *    c.toPixelY(yabs);
+ *    c.toAbsX(xpixel);
+ *    c.toAbsY(ypixel);
+ *       // converts from pixel to absolute coordinates and back. This takes
+ *       // scrolling and zooming into account.
+ *    c.text(x, y, text, attr);
+ *       // display some text at the given pixel coordinates. 'attr' can be
+ *       // used to specify the style: 'attr.fill', 'attr.font-weight' and
+ *       // 'attr.stroke', in particular.
+ *    c.drawPath(attr);
+ *       // draw the current path set in c.ctx with the given attributes.
+ *       // In particular 'attr.fill', 'attr.stroke' and 'attr.shadow'. The
+ *       // latter is a boolean that indicates if a shadow should be added.
+ *    c.rect(x,y,width,height,attr);
+ *       // draw a rectangle at the given pixel coordinates
+ *    c.roundedRect(x,y,width,height, radius=6)
+ *       // draw a rounded rectangle at the given pixel coordinates
  *
  * The code below does not do any drawing in the canvas, just prepares the
- * context of it. When actual drawing is needed, the signal "draw" is
+ * context for it. When actual drawing is needed, the signal "draw" is
  * emitted on the canvas. Therefore you also need to bind to that signal
+ *
  *     $("selector").canvas ({onDraw:do_my_drawing});
  *     function do_my_drawing(event, box) {  // use this.ctx}
  *        # where box is the real-world coordinates for the area that needs
  *        # to be refreshed. The area has already been cleared.
  *
- * The canvas does not use the scale() function, because it would end up
- * drawing fuzzy lines rather then sharp lines when zoomed. Instead, the
- * "draw" callback must take care of converting from absolute coordinates to
- * pixel coordinates as needed, via the
- *      toPixelX()
- *      toPixelY()
- * functions. This is however slightly slower.
- ************************************************/
+ * It is left to the user to convert from absolute to pixel coordinates. The
+ * canvas does not automatically converts them (for instance by setting the
+ * scaling factor on its context), because fonts should not be zoomed but
+ * rendered at the appropriate size directly for better rendering. Likewise,
+ * lines would end up blurry.
+ *
+ * Jquery integration
+ * ==================
+ *
+ * For convenience, a jQuery integration is provided, so that you can write:
+ *   $("selector").canvas ({options});
+ *      This automatically wraps each element in the jQuery set inside a Canvas
+ *      instance.
+ *   $("selector").canvas.refresh();
+ *      Redraws all the canvas.
+ *   $.fn.canvas.defaults
+ *      Can be used to modify the defaults
+ */
 ;
 
 function log () {
    //  print the arguments in the console, if visible
    if (window.console) {
-      console.log.apply (null, arguments);
+      console.log(arguments);
    }
 }
 
-(function ($) {
-
-var defaultSettings = {
-  scaleStep: 1.1,  // Multiplier when zooming
-  weight: 200, // 'weight' when drag-and-throwing the background.
-               // Higher value means the scroll stops faster
-  contextFactory: function (canvas,options) {return canvas.getContext ("2d")},
-  onDraw: null, // Called to redraw. 'this' is the Canvas object
-  onCtrlClick: null, // Called on control-click
-                // If returns true, prevents further clicks in the canvas
-  onDblClick: null, // Called on double-click
-  actions: {},  // "name":function,  for methods to add to the object
-                // When function is called, "this" is the instance of Canvas
-}
-
-function ifnotDisabled(evt, callback) {
-  // Calls 'callback' if the click events are not disabled for the canvas
-  if (!this._disableClicks) {
-     this._disableClicks = true;
-     if (!callback.apply(this, [evt]))
-        this._disableClicks = false;
-  }
-}
-
-function onResize() {
-   //  Changing the attributes on the canvas also sets the coordinate space
-   //  We always want a 1 to 1 mapping between canvas coordinates and pixels,
-   //  so that text is drawn sharp.
-   var elem = this.canvas[0];
-   elem.width  = this.canvas.width();
-   elem.height = this.canvas.height();
-   this.refresh();
-}
+var Canvas = (function ($) {
 
 function Canvas (options, elem) {
-   // Create a Canvas object around a given html <canvas>
-   this.options = $.extend ({}, defaultSettings, options);
+   if (elem)
+      this.init(options, elem);
+}
+
+Canvas.prototype.init = function(options, elem) {
+   this.options = $.extend ({}, $.fn.canvas.defaults, options);
    this.scale   = 1.0;
    this.x       = 0.0;  // top-left corner, absolute coordinates
    this.y       = 0.0;
    this._disableClicks = false; // If true, disable click events
 
-   this.ctx     = this.options.contextFactory (elem, this.options),
+   this.ctx     = elem.getContext("2d");
    this.ctx.textBaseline = 'top';
 
    this.canvas  = $(elem);
@@ -101,10 +125,6 @@ function Canvas (options, elem) {
 }
 
 Canvas.prototype.refresh = function (box) {
-   // Redraw the contents of the canvas
-   // 'box' is the area of the canvas that should be refreshed, in pixels.
-   // If unspecified, the whole visible area is refreshed.
-
    if (!box)
       box = {x:0, y:0, w:this.canvas[0].width, h:this.canvas[0].height};
 
@@ -117,46 +137,33 @@ Canvas.prototype.refresh = function (box) {
    ctx.restore ();
 }
 
-Canvas.prototype.lengthToPixel = function (length) {
-   // Convert a real-world length into a pixels length
+Canvas.prototype.toPixelLength = function (length) {
    return length * this.scale;
 }
-Canvas.prototype.lengthToAbs = function (length) {
+Canvas.prototype.toPixelAbs = function (length) {
    return length / this.scale;
 }
-
 Canvas.prototype.toPixelX = function (xabs) {
-   // Convert from absolute to pixel coordinates. Takes into account
-   // scrolling and scaling.
    return (xabs - this.x) * this.scale;
 }
 Canvas.prototype.toPixelY = function (yabs) {
    return (yabs - this.y) * this.scale;
 }
-
 Canvas.prototype.toAbsX = function (xpixel) {
-   // Convert from pixel to absolute coordinates
    return xpixel / this.scale + this.x;
 }
 Canvas.prototype.toAbsY = function (ypixel) {
    return ypixel / this.scale + this.y;
 }
-
 Canvas.prototype.text = function (x, y, text, attr) {
-   // Display 'text' at the pixel coordinates 'x' and 'y'.
-   // 'attr' is the style to apply, in particular 'font-weight'
    var c = this.ctx;
-   if (attr["font-weight"])
+   if (attr && attr["font-weight"])
       c.font = attr["font-weight"] + " " + c.font;
-   c.fillStyle = attr.color || "black";
+   c.fillStyle = (attr && attr.color) || "black";
    c.fillText (text, x, y);
 }
-
 Canvas.prototype.drawPath = function (attr) {
-   //  draw the current Path with 'attr' attributes
-
    var c = this.ctx;
-
    if (attr.shadow){
       c.save();
       c.fillStyle = 'transparent';
@@ -167,7 +174,6 @@ Canvas.prototype.drawPath = function (attr) {
       c.fill();
       c.restore();
    }
-
    if (attr.fill) {
       c.fillStyle = attr.fill || 'white';
       c.fill ();
@@ -177,11 +183,7 @@ Canvas.prototype.drawPath = function (attr) {
       c.stroke ();
    }
 }
-
 Canvas.prototype.rect = function (x, y, width, height, attr) {
-   //  Draw a rectangle at the given pixel-coordinates 'x' and 'y',
-   //  and with the given pixel size 'width' and 'height'.
-   //  'attr' is the style to apply
    var c = this.ctx;
    c.beginPath ();
    c.rect (x, y, width, height);
@@ -190,18 +192,8 @@ Canvas.prototype.rect = function (x, y, width, height, attr) {
 }
 
 Canvas.prototype.roundedRect = function (x, y, width, height, attr, radius) {
-   // Draws a rounded rectangle using the current state of the canvas.
-   // If you omit the last three params, it will draw a rectangle
-   // outline with a 5 pixel border radius
-   // @param {CanvasRenderingContext2D} ctx
-   // 'x', 'y' is the top-left corner, 'width' and 'height' its size.
-   // 'radius' is the corner radius.
-   // 'fill' should be true to fill the rectangle.
-
    radius = radius || 6;
-
    var c = this.ctx;
-
    c.beginPath ();
    c.moveTo(x + radius, y);
    c.lineTo(x + width - radius, y);
@@ -213,8 +205,26 @@ Canvas.prototype.roundedRect = function (x, y, width, height, attr, radius) {
    c.lineTo(x, y + radius);
    c.quadraticCurveTo(x, y, x + radius, y);
    c.closePath();
-
    this.drawPath (attr);
+}
+
+function ifnotDisabled(evt, callback) {
+  // Calls 'callback' if the click events are not disabled for the canvas
+  if (!this._disableClicks) {
+     this._disableClicks = true;
+     if (!callback.apply(this, [evt]))
+        this._disableClicks = false;
+  }
+}
+
+function onResize() {
+   //  Changing the attributes on the canvas also sets the coordinate space
+   //  We always want a 1 to 1 mapping between canvas coordinates and pixels,
+   //  so that text is drawn sharp.
+   var elem = this.canvas[0];
+   elem.width  = this.canvas.width();
+   elem.height = this.canvas.height();
+   this.refresh();
 }
 
 function on_start_drag (e, dragdata) {
@@ -226,9 +236,8 @@ function on_start_drag (e, dragdata) {
 function on_in_drag (e, dragdata) {
    // Called when some item in the canvas is dragged.
    // 'this' is the Canvas instance
-
-   this.x = dragdata.canvas.x + this.lengthToAbs(dragdata.offset.left);
-   this.y = dragdata.canvas.y + this.lengthToAbs(dragdata.offset.top);
+   this.x = dragdata.canvas.x - this.toPixelAbs(dragdata.offset.left);
+   this.y = dragdata.canvas.y - this.toPixelAbs(dragdata.offset.top);
    this.refresh ();
 }
 
@@ -258,16 +267,38 @@ function on_wheel (e) {
    return false;  // prevent main window from scrolling
 }
 
-$.fn.canvas = function (arg) {
-  return this.map (function() {
-     var inst = $.data (this, "Canvas");
-     if (typeof arg === "object" || !arg) {
-        if (!inst)
-           $(this).data ("Canvas", new Canvas (arg, this));
-     } else if (arg == "refresh") {
-        inst.refresh();
-     }
+$.fn.canvas = function (options) {
+  return this.each(function() {
+     var inst = $.data (this, "canvas");
+     if (!inst)
+        $(this).data ("canvas", new Canvas (options, this));
   });
 };
+
+$.fn.canvas.refresh = function() {
+   return this.each(function() {
+      $.data(this, "canvas").refresh();
+   });
+}
+
+$.fn.canvas.defaults = {
+  scaleStep: 1.1,   // Multiplier when zooming
+  weight: 200,      // 'weight' when drag-and-throwing the background.
+                    // Higher value means the scrolling stops faster
+  onDraw: null,     // Called to redraw. THIS is the Canvas object
+                    // You need to convert the coordinates to pixels.
+                    //     function doDraw(event, box) {...}
+                    // where box is the area to refresh.
+                    // doDraw can use "this.ctx" to access drawing context.
+  onCtrlClick: null,// Called on control-click
+                    // If returns true, prevents further clicks in the canvas
+                    //     function callback(event) {...}
+  onDblClick: null, // Called on double-click
+                    //     function callback(event) {...}
+  actions: {},      // "name":function,  for methods to add to the object
+                    // When function is called, THIS is the instance of Canvas
+}
+
+return Canvas;
 
 })(jQuery); // map "jQuery" to "$" in the function above
