@@ -83,6 +83,8 @@ EVENT_DETAILS = (("TYPE", 0, 1, None),
                  ("CAUS", 0, 1, None), # Cause of event
                  ("SOUR", 0, unlimited, "SOURCE_CITATION"),
                  ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
+                 ("ASSO", 0, unlimited, "_ASSOC"), # ??? Geneatique 2010
+                 ("_ACT", 0, unlimited, None), # ??? Geneatique 2010
                  ("NOTE", 0, unlimited, None)) # Note on event
 _GRAMMAR = dict (
     file =  (("HEAD", 1, 1,         "HEAD"),
@@ -113,8 +115,14 @@ _GRAMMAR = dict (
              ("CHAN", 0, 1,         "CHAN"),
              ),
 
+    _ASSOC = (("RELA", 0, 1,         None), # ??? Geneatique 20210
+              ("TYPE", 0, 1,         None),
+              ("NOTE", 0, unlimited, None),
+              ("SOUR", 0, unlimited, "SOURCE_CITATION")),
+
     MULTIMEDIA_LINK =
-            (("FORM", 1, 1, None),
+            (("FORM", 0, 1, None),   # ??? Optional for Geneatique 2010
+                                     # but mandatory in standard
              ("TITL", 0, 1, None),
              ("FILE", 1, 1, None),
              ("_TYPE", 0, 1, None),  # ??? RootsMagic extension
@@ -258,10 +266,16 @@ _GRAMMAR = dict (
                 (("RELA", 1, 1,         None), # Relation_is descriptor
                  ("NOTE", 0, unlimited, None),
                  ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
+             ("RELATION", 0, unlimited, # ??? Geneatique 2010
+                (("ASSO", 0, unlimited, "_ASSOC"),)), # ??? Geneatique 2010
+
              ("ALIA:XREF(INDI)", 0, unlimited, None),
              ("ANCI:XREF(SUBM)", 0, unlimited, None),
              ("DESI:XREF(SUBM)", 0, unlimited, None),
              ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+             ("IMAGE", 0, unlimited,  # ??? Geneatique 2010
+                (("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
+                 ("NOTE", 0, unlimited, None))),
              ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
              ("NOTE", 0, unlimited, None),
              ("RFN",  0, 1,         None),  # Permanent record file number
@@ -270,11 +284,15 @@ _GRAMMAR = dict (
                 (("TYPE", 0, 1, None), # User reference type
                 )),
              ("RIN",  0, 1,         None),  # Automated record Id
-             ("CHAN", 0, 1,         "CHAN"),  # Change date
+             ("CHAN", 0, unlimited,         "CHAN"),  # Change date
+                 # ??? CHAN unlimited in geneatique 2010, but standard stays
+                 # 1 occurrence max
+             ("SIGN", 0, 1,         None), # ??? Geneatique 2010
              ("FACT", 0, unlimited,  # ??? gramps extension
                 (("TYPE", 1, 1,         None), # type of fact ??? gramps
                  ("NOTE", 0, unlimited, None),
                  ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
+             ("_CHV", 0, 1, None), # ??? Geneatique 2010
              ("_MILT", 0, unlimited,  # ??? gramps extension for military
                 (("TYPE", 1, 1,         None),
                  ("DATE", 1, 1,         None),
@@ -354,6 +372,7 @@ _GRAMMAR = dict (
                  ("NAME", 0, 1, None), # Name of product
                  ("CORP", 0, 1,  # Name of business
                     (("ADDR", 0, 1, "ADDR"),
+                     ("_ADDR", 0, 1, "ADDR"), # ??? Geneatique 2010
                      ("WWW", 0, 1, None), # ??? RootsMagic extension
                      ("WEB", 0, 1, None), # ??? Heredis extension
                      ("PHON", 0, 3, None))),
@@ -386,6 +405,8 @@ _GRAMMAR = dict (
              ("SPFX", 0, 1,         None),  # Name piece surname prefix
              ("SURN", 0, 1,         None),  # Name piece surname
              ("NSFX", 0, 1,         None),  # Name piece suffix
+             ("POST", 0, 1,         None),  # ??? Geneatique 2010
+             ("CITY", 0, 1,         None),  # ??? Geneatique 2010
              ("SOUR", 0, unlimited, "SOURCE_CITATION"),
              ("NOTE", 0, unlimited, None)))
 

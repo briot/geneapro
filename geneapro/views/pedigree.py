@@ -53,7 +53,7 @@ def compute_data(generations, year_only, who):
    return result
 
 
-def pedigree_view(request, decujus):
+def pedigree_view(request, decujus=1):
    """Display the pedigree of a person as a tree"""
    decujus = int(decujus)
    gens = int(request.GET.get("gens", 6))
@@ -67,7 +67,7 @@ def pedigree_view(request, decujus):
        context_instance=RequestContext(request))
 
 
-def fanchart_view(request, decujus):
+def fanchart_view(request, decujus=1):
    """Display the pedigree of a person as a fanchart"""
    decujus = int(decujus)
    gens = int(request.GET.get("gens", 6))

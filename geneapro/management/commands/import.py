@@ -10,7 +10,8 @@ import time
 
 STYLE = termcolors.make_style (fg='green', opts=('bold',))
 
-class Command (LabelCommand):
+
+class Command(LabelCommand):
    """A new command that imports a GEDCOM file"""
 
    help = 'Import a GEDCOM file into the database'
@@ -18,13 +19,14 @@ class Command (LabelCommand):
    args = ''
    requires_model_validation = True
 
-   def handle_label (self, label, **options):
-      """Process the import command"""
-      sys.stdout.write (STYLE  ('Importing %s' % label) + '\n')
+   def handle_label(self, filename, **options):
+      """Process the import command.
+         This function is called for each file specified on the command line
+      """
+      sys.stdout.write(STYLE('Importing %s' % filename) + '\n')
       start = time.time()
-      GedcomFileImporter ().parse (label)
+      GedcomFileImporter().parse (filename)
 
       end = time.time()
-
       sys.stdout.write(
           STYLE('Done importing (%0.3f s)\n' % (end - start,)))

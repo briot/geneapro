@@ -173,19 +173,32 @@ class GedcomImporter(object):
     def _create_CHAN(self, data):
         """data should be a form of CHAN"""
 
-        if data:
+        # In Geneatique 2010, there can be several occurrences of CHAN. But
+        # we only preserve the most recent one
+
+        result = None
+
+        if not data:
+            data = []
+        elif not isinstance(data, list):
+            data = [data]
+
+        for d in data:
             date = "01 JAN 1970"
             time = "00:00:00"
 
-            if data.DATE:
-                date = data.DATE.value
-                if data.DATE.TIME:
-                    return datetime.datetime.strptime(
-                       date + " " + data.DATE.TIME, "%d %b %Y %H:%M:%S")
+            if d.DATE:
+                date = d.DATE.value
+                if d.DATE.TIME:
+                    tmp = datetime.datetime.strptime(
+                       date + " " + d.DATE.TIME, "%d %b %Y %H:%M:%S")
                 else:
-                    return datetime.datetime.strptime(date, "%d %b %Y")
+                    tmp = datetime.datetime.strptime(date, "%d %b %Y")
 
-        return datetime.datetime.now()
+                if result is None or tmp > result:
+                    result = tmp
+
+        return result or datetime.datetime.now()
 
     def _create_repo(self, data):
         if data.value and self._repo.get(data.value, None):
@@ -253,6 +266,11 @@ class GedcomImporter(object):
         except:
             comment = ''
 
+        try:
+            chan = sour.CHAN
+        except:
+            chan = None
+
         src = models.Source.objects.create(
             higher_source_id=None,
             subject_place=subject_place,
@@ -260,7 +278,7 @@ class GedcomImporter(object):
             researcher=self._researcher,
             subject_date=None,
             medium_id=medium_id,
-            last_change=self._create_CHAN(sour.CHAN),
+            last_change=self._create_CHAN(chan),
             comments=comment)
         if rep:
             models.Repository_Source.objects.create(
@@ -324,7 +342,7 @@ class GedcomImporter(object):
 
         mime = form_to_mime.get(data.FORM)
         if mime is None:
-            print 'Unknown mime type for object: ' + data.FORM
+            print 'Unknown mime type for object: %s' % data.FORM
             return
 
         obj = self._objects.get(data.FILE, None)
