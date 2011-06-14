@@ -14,10 +14,10 @@ from mysites.geneapro.views.styles import *
 from mysites.geneapro.views.persona import extended_personas, event_types_for_pedigree
 from mysites.geneapro.views.json import to_json
 
-def view (request):
+def view (request, decujus=1):
    """Display the statistics for a given person"""
 
-   decujus = 1
+   decujus = int(decujus)
    same = SameAs()
    same.compute(None) # Compute all "same as" relationships
    tree = Tree(same=same)

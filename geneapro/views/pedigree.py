@@ -62,6 +62,7 @@ def pedigree_view(request, decujus=1):
        {"pedigree_data": compute_data(gens, False, decujus),
         "genrange": range(1, 13),
         "decujus": decujus,
+        "decujusid": decujus,
         "generations": gens,
         "legend": getLegend()},
        context_instance=RequestContext(request))
@@ -76,6 +77,7 @@ def fanchart_view(request, decujus=1):
        {"legend": getLegend(),
         "generations": gens,
         "decujus": decujus,
+        "decujusid": decujus,
         "genrange": range(1, 13),
         "pedigree_data":compute_data(gens, True, decujus)},
        context_instance=RequestContext(request))

@@ -22,4 +22,5 @@ urlpatterns = patterns('',
 	(r'^pedigree/(\d+)$', views.pedigree.pedigree_view),
 	(r'^fanchart/(\d+)$', views.pedigree.fanchart_view),
 	(r'^stats$',        views.stats.view),
+	(r'^stats/(\d+)$',  views.stats.view),
 )
