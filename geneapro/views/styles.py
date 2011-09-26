@@ -61,7 +61,7 @@ __all__ = ["alive", "get_place",
            "RULE_SMALLER", "RULE_SMALLER_EQUAL", "RULE_AFTER",
            "RULE_ON", "RULE_CONTAINS_NOT_INSENSITIVE"]
 
-from mysites.geneapro.utils.date import Date
+from mysites.geneapro.utils.date import DateRange
 
 max_age = 110
 # maximum age before we consider a person to be dead
@@ -75,7 +75,7 @@ def alive (person):
 
    return not person.death \
          and (not person.birth
-             or Date.today().years_since (person.birth.Date) <= max_age)
+             or DateRange.today().years_since(person.birth.Date) <= max_age)
 
 def get_place (event, part):
    """From an instance of Event, return the name of the place where the
@@ -160,7 +160,7 @@ class Styles():
 
       self.tree  = tree
       self.rules = []
-      self.today = Date.today ()
+      self.today = DateRange.today()
       self.counts = [None] * len (rules)  # the "count" rules: (test, value)
       self._need_place_parts = False
 
@@ -195,7 +195,7 @@ class Styles():
                   or t[1] == RULE_IS_INSENSITIVE:
                   tests.append ((t[0], rules_func [t[1]], t[2].lower ()))
                elif t[1] == RULE_BEFORE:
-                  tests.append ((t[0], rules_func [t[1]], Date (t[2])))
+                  tests.append ((t[0], rules_func [t[1]], DateRange(t[2])))
                else:
                   tests.append ((t[0], rules_func [t[1]], t[2]))
 

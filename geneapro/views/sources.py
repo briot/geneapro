@@ -6,7 +6,7 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from mysites.geneapro import models
 from mysites.geneapro.views.queries import sql_in
-from mysites.geneapro.utils.date import Date, DateRange
+from mysites.geneapro.utils.date import DateRange
 from mysites.geneapro.views.tree import SameAs
 
 

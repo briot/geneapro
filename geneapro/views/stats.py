@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from django.utils import simplejson
 from django.http import HttpResponse
 from mysites.geneapro import models
-from mysites.geneapro.utils.date import Date, CalendarGregorian
+from mysites.geneapro.utils.date import CalendarGregorian
 from mysites.geneapro.views.tree import Tree, SameAs
 from mysites.geneapro.views.styles import *
 from mysites.geneapro.views.persona import extended_personas, event_types_for_pedigree

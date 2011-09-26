@@ -66,25 +66,25 @@ class DateTestCase (unittest.TestCase):
 
    def _assert_date (self, inputdate, day, expected):
       """Ensure that a date was correctly parsed"""
-      d = date.DateRange (inputdate)
+      d = date.DateRange(inputdate)
       error = ""
 
-      if not d.date:
+      if not d.ends[0]:
          error = "Could not parse date"
-      elif type (d.date) == tuple:
-         if type (day) != tuple:
+      elif d.ends[1] is not None:
+         if type(day) != tuple:
             error = "expected a simple date for result"
-         elif d.date[0].date != day[0]:
-            error = d.date[0].date + " != " + str (day[0])
-         elif d.date[1].date != day[1]:
-            error = str (d.date[1].date) + " != " + str (day[1])
-      elif type (day) == tuple:
+         elif d.ends[0].date != day[0]:
+            error = d.ends[0].date + " != " + str (day[0])
+         elif d.ends[1].date != day[1]:
+            error = str (d.ends[1].date) + " != " + str (day[1])
+      elif type(day) == tuple:
          error = "expected a range for result"
-      elif d.date.date != day:
-         error = "[" + str (d.date.date) + "] != [" + str (day) + "]"
+      elif d.ends[0].date != day:
+         error = "[" + str (d.ends[0].date) + "] != [" + str (day) + "]"
 
-      if expected and d.display (original=False) != expected:
-         error =  "[" + d.display (original=False) \
+      if expected and d.display(original=False) != expected:
+         error =  "[" + d.display(original=False) \
                + "]\n  != [" + expected + "]"
 
       self.assertFalse (error, "Error for: " + inputdate + "\n     " + error)
@@ -189,10 +189,12 @@ class DateTestCase (unittest.TestCase):
       self._assert_date ("1583-01-01 - 3 years", JAN_1_1581_JU,
                         "1580-01-01 (Julian)")
 
-      self.assertFalse (date.Date ("1896-11-20") < date.Date ("1894-06-20"))
-      self.assertTrue (date.Date ("1896-11-20") > date.Date ("1894-06-20"))
-      self.assertEqual (cmp (date.Date ("1896-11-20"),
-                             date.Date ("1894-06-20")),
+      self.assertFalse (date.DateRange("1896-11-20")
+                        < date.DateRange("1894-06-20"))
+      self.assertTrue (date.DateRange("1896-11-20")
+                       > date.DateRange("1894-06-20"))
+      self.assertEqual (cmp(date.DateRange("1896-11-20"),
+                            date.DateRange("1894-06-20")),
                         1)
 
 

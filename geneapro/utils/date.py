@@ -25,7 +25,7 @@ except:
 
 import datetime, re, time
 
-__all__ = ["from_roman_literal", "to_roman_literal", "DateRange", "Date",
+__all__ = ["from_roman_literal", "to_roman_literal", "DateRange",
            "Calendar", "CalendarGregorian", "CalendarFrench",
            "CalendarJulian"]
 
@@ -553,359 +553,355 @@ class CalendarJulian (Calendar):
 KNOWN_CALENDARS = [CalendarJulian(), CalendarFrench(), CalendarGregorian()]
 
 #####################
-## Date
+## _Date
 #####################
 
-class Date (object):
-   """Interprets a textual date entered by the user into a machine-usable
-      date
-   """
+class _Date(object):
+    """Internal representation for a specific point in time (not a range of
+       dates).
+       The date might be imprecise ("about 1700") or incomplete ("1802-02",
+       no day).
+       This class is for internal use. Users should use the Date class, which
+       can be used to represent either a date or a range of dates, and provides
+       the operations on such dates.
+    """
 
-   def __init__ (self, text):
-      """Represents a point in time (not a range of dates). The date might be
-         imprecise ("about 1700") or incomplete ("1802-02", no day)
-      """
-      self.text = text.strip() or ""
-      self.calendar = None
-      self.type = DATE_ON
-      self.precision = PRECISION_EXACT
-      self.seconds = None
-      self.date = None
-      self.month_known = False
-      self.year_known = False
-      self.day_known = False
-      self.__parse ()
+    def __init__(self, text, calendar=None):
+        """Unless specified, the calendar will be auto-detected."""
+        self.text = text.strip() or ""
+        self.calendar = calendar
+        self.type = DATE_ON
+        self.precision = PRECISION_EXACT
+        self.seconds = None
+        self.date = None
+        self.month_known = False
+        self.year_known = False
+        self.day_known = False
+        self.__parse ()
 
-   def __parse (self):
-      """Parse self.text into a meaningful date"""
-      txt = self.text
+    def __parse (self):
+       """Parse self.text into a meaningful date"""
+       txt = self.text
 
-      for cal in KNOWN_CALENDARS:
-         remain = cal.is_a(self.text)
-         if remain:
-            self.calendar = cal
-            txt = remain
-            break
+       for cal in KNOWN_CALENDARS:
+          remain = cal.is_a(self.text)
+          if remain:
+             self.calendar = cal
+             txt = remain
+             break
 
-      if not self.calendar:
-         self.calendar = CalendarGregorian ()
+       if not self.calendar:
+          self.calendar = CalendarGregorian ()
 
-      self.type = DATE_ON
-      match = BEFORE_RE.search (txt)
-      if match:
-         self.type = DATE_BEFORE
-         txt = (match.group (2) or "") + txt[match.end(1):]
-      else:
-         match = AFTER_RE.search (txt)
-         if match:
-            self.type = DATE_AFTER
-            txt = (match.group (2) or "") + txt[match.end(1):]
+       self.type = DATE_ON
+       match = BEFORE_RE.search (txt)
+       if match:
+          self.type = DATE_BEFORE
+          txt = (match.group (2) or "") + txt[match.end(1):]
+       else:
+          match = AFTER_RE.search (txt)
+          if match:
+             self.type = DATE_AFTER
+             txt = (match.group (2) or "") + txt[match.end(1):]
 
-      self.precision = PRECISION_EXACT
-      match = ABOUT_RE.search (txt)
-      if match:
-         self.precision = PRECISION_ABOUT
-         txt = txt[:match.start(0)] + txt[match.end(0):]
-      else:
-         match = EST_RE.search (txt)
-         if match:
-            self.precision = PRECISION_ESTIMATED
-            txt = txt[:match.start(0)] + txt[match.end(0):]
+       self.precision = PRECISION_EXACT
+       match = ABOUT_RE.search (txt)
+       if match:
+          self.precision = PRECISION_ABOUT
+          txt = txt[:match.start(0)] + txt[match.end(0):]
+       else:
+          match = EST_RE.search (txt)
+          if match:
+             self.precision = PRECISION_ESTIMATED
+             txt = txt[:match.start(0)] + txt[match.end(0):]
 
-      # Do we have a time indicated ?
-      match = TIME_RE.search (txt)
-      if match:
-         if match.group (4):
-            secs = int (match.group (4))
-         else:
-            secs = 0
-
-         if match.group (5) == "pm":
-            hour = int (match.group (1)) + 12
-         else:
-            hour = int (match.group (1))
-
-         self.seconds = datetime.time (hour=hour,
-                                       minute=int (match.group (2)),
-                                       second=secs)
-         txt = txt[:match.start(0)]
-      else:
-         self.seconds = None
-
-      # Are we doing additions or substractions here ?
-      add_days   = 0
-      add_months = 0
-      add_years  = 0
-
-      while True:
-         match = ADD_RE.search (txt)
-         if not match:
-            break
-
-         if re.match ("day?", match.group (3)) \
-           or re.match (RE_DAYS, match.group (3)):
-            if match.group (1) == '+':
-               add_days = add_days + int (match.group (2))
-            else:
-               add_days = add_days - int (match.group (2))
-
-         elif re.match ("months?", match.group (3)) \
-              or re.match (RE_MONTHS, match.group (3)):
-            if match.group (1) == '+':
-               add_months = add_months + int (match.group (2))
-            else:
-               add_months = add_months - int (match.group (2))
-
-         elif re.match ("years?", match.group (3)) \
-              or re.match (RE_YEARS, match.group (3)):
-            if match.group (1) == '+':
-               add_years = add_years + int (match.group (2))
-            else:
-               add_years = add_years - int (match.group (2))
-
-         txt = txt[:match.start (0)] + txt [match.end (0):]
-
-      txt = txt.strip ()
-      day = self.calendar.parse (txt, add_years, add_months, add_days)
-      if day:
-         (self.date, self.year_known, self.month_known, self.day_known,
-          self.calendar) = day
-      else:
-         self.date = None
-
-   def __repr__(self):
-      return self.__unicode__()
-
-   def __unicode__(self):
-      """Display the date, using either the parsed date, or if it could not be
-         parsed the date as was entered by the user. The calendar used is the
-         one parsed from the initial string"""
-      return self.display (calendar=None)
-
-   def sort_date (self):
-      """Return a single date that can be used when sorting Dates"""
-      if self.year_known:
-         return CalendarGregorian().date_unicode(self.date)
-      else:
-         return None  # Can't do any sorting
-
-   def year (self, calendar=None):
-      """Return the year component of self, in the associated calendar"""
-      cal = calendar or self.calendar
-      return cal.components (self.date)[0]
-
-   def month (self, calendar=None):
-      """Return the year component of self"""
-      cal = calendar or self.calendar
-      return cal.components (self.date)[0]
-
-   def day (self, calendar=None):
-      """Return the year component of self"""
-      cal = calendar or self.calendar
-      return cal.components (self.date)[0]
-
-   def __lt__ (self, date):
-      if isinstance(date, DateRange):
-          if isinstance(date.date, tuple):
-             return self.date < date.date[0].date
-          else:   # date.date is an instance of Date
-             return self.date < date.date.date
-      else:
-          return self.date > date.date
-
-   def __gt__ (self, date):
-      if isinstance(date, DateRange):
-          if isinstance(date.date, tuple):
-             return self.date > date.date[0].date
-          else:   # date.date is an instance of Date
-             return self.date > date.date.date
-      else:
-          return self.date > date.date
-
-   def __eq__ (self, date):
-      return self.date == date.date
-
-   def years_since (self, date):
-      """Return the number of years between self and d.
-         Only full years are counted
-      """
-
-      if isinstance(date, DateRange):
-          if isinstance(date.date, tuple):
-              date = date.date[0]
+       # Do we have a time indicated ?
+       match = TIME_RE.search (txt)
+       if match:
+          if match.group (4):
+             secs = int (match.group (4))
           else:
-              date = date.date
+             secs = 0
 
-      if not date or not date.year_known or not self.year_known:
-         return None
+          if match.group (5) == "pm":
+             hour = int (match.group (1)) + 12
+          else:
+             hour = int (match.group (1))
 
-      comps = self.calendar.components (self.date)
-      dcomps = self.calendar.components (date.date)
+          self.seconds = datetime.time (hour=hour,
+                                        minute=int (match.group (2)),
+                                        second=secs)
+          txt = txt[:match.start(0)]
+       else:
+          self.seconds = None
 
-      if comps[1] > dcomps [1]:
-         return comps[0] - dcomps [0]
-      elif comps[1] == dcomps [1] \
-         and comps [2] > dcomps [2]:
-         return comps [0] - dcomps [0]
-      else:
-         return comps [0] - dcomps [0] - 1
+       # Are we doing additions or substractions here ?
+       add_days   = 0
+       add_months = 0
+       add_years  = 0
 
-   def add_days (self, days):
-      """Return a new date, DAYS days later"""
+       while True:
+          match = ADD_RE.search (txt)
+          if not match:
+             break
 
-      result = Date ("")
-      result.date = self.date + days
-      result.year_known = self.year_known
-      result.month_known = self.month_known
-      result.day_known = self.day_known
-      result.type = self.type
-      result.text = ""
-      result.calendar = self.calendar
-      result.precision = self.precision
-      return result
+          if re.match ("day?", match.group (3)) \
+            or re.match (RE_DAYS, match.group (3)):
+             if match.group (1) == '+':
+                add_days = add_days + int (match.group (2))
+             else:
+                add_days = add_days - int (match.group (2))
 
-   @staticmethod
-   def today ():
-      """Return today's date"""
-      date = CalendarGregorian().today ()
-      result = Date ("")
-      (result.date, result.year_known, result.month_known, result.day_known,
-       result.calendar) = date
-      return result
+          elif re.match ("months?", match.group (3)) \
+               or re.match (RE_MONTHS, match.group (3)):
+             if match.group (1) == '+':
+                add_months = add_months + int (match.group (2))
+             else:
+                add_months = add_months - int (match.group (2))
 
-   def display (self, calendar=None, year_only=False, original=False):
-      """Return a string representing string. By default, this uses the
-         calendar parsed when the date was created, but it is possible to
-         force the display in other date formats.
-         If the date could not be parsed, it is returned exactly as written
-         by the user.
-         If ORIGINAL is true, the date is output exactly as the user entered
-         it.
-      """
+          elif re.match ("years?", match.group (3)) \
+               or re.match (RE_YEARS, match.group (3)):
+             if match.group (1) == '+':
+                add_years = add_years + int (match.group (2))
+             else:
+                add_years = add_years - int (match.group (2))
 
-      if not original:
-         cal = calendar or self.calendar
-         result = u""
+          txt = txt[:match.start (0)] + txt [match.end (0):]
 
-         if self.precision == PRECISION_ABOUT:
-            result += "ca "
+       txt = txt.strip ()
+       day = self.calendar.parse (txt, add_years, add_months, add_days)
+       if day:
+          (self.date, self.year_known, self.month_known, self.day_known,
+           self.calendar) = day
+       else:
+          self.date = None
 
-         if self.type == DATE_BEFORE:
-            result += "/"
+    def __repr__(self):
+        return self.__unicode__()
 
-         result = result + cal.date_unicode(
-             self.date, self.year_known, self.month_known, self.day_known,
-             year_only=year_only)
+    def __unicode__(self):
+        """Display the date, using either the parsed date, or if it could not be
+           parsed the date as was entered by the user. The calendar used is the
+           one parsed from the initial string"""
+        return self.display(calendar=None)
 
-         if not year_only and self.seconds != None:
-            result += " " + unicode(self.seconds)
+    def sort_date (self):
+        """Return a single date that can be used when sorting Dates"""
+        if self.year_known:
+           return CalendarGregorian().date_unicode(self.date)
+        else:
+           return None  # Can't do any sorting
 
-         if self.type == DATE_AFTER:
-            result += "/"
+    def year(self, calendar=None):
+        """Return the year component of self, in the associated calendar"""
+        cal = calendar or self.calendar
+        return cal.components(self.date)[0]
 
-         if self.precision == PRECISION_ESTIMATED:
-            result += " ?"
+    def __eq__(self, date):
+        return self.date == date.date
 
-         cal = unicode (cal)
-         if cal:
-            result += " (" + cal + ")"
+    @staticmethod
+    def today ():
+       """Return today's date"""
+       date = CalendarGregorian().today ()
+       result = _Date("")
+       (result.date, result.year_known, result.month_known, result.day_known,
+        result.calendar) = date
+       return result
 
+    def display(self, calendar=None, year_only=False, original=False):
+       """Return a string representing string. By default, this uses the
+          calendar parsed when the date was created, but it is possible to
+          force the display in other date formats.
+          If the date could not be parsed, it is returned exactly as written
+          by the user.
+          If ORIGINAL is true, the date is output exactly as the user entered
+          it.
+       """
+
+       if original and self.text:
+          return unicode(self.text)
+
+       else:
+          cal = calendar or self.calendar
+          result = u""
+
+          if self.precision == PRECISION_ABOUT:
+             result += "ca "
+
+          if self.type == DATE_BEFORE:
+             result += "/"
+
+          result = result + cal.date_unicode(
+              self.date, self.year_known, self.month_known, self.day_known,
+              year_only=year_only)
+
+          if not year_only and self.seconds != None:
+             result += " " + unicode(self.seconds)
+
+          if self.type == DATE_AFTER:
+             result += "/"
+
+          if self.precision == PRECISION_ESTIMATED:
+             result += " ?"
+
+          cal = unicode (cal)
+          if cal:
+             result += " (" + cal + ")"
+
+          return result
+
+    def add_days (self, days):
+         """Return a new date, DAYS days later"""
+
+         result = _Date("")
+         result.date = self.date + days
+         result.year_known = self.year_known
+         result.month_known = self.month_known
+         result.day_known = self.day_known
+         result.type = self.type
+         result.text = ""
+         result.calendar = self.calendar
+         result.precision = self.precision
          return result
-      else:
-         return unicode(self.text)
+
 
 ##################
 ## DateRange
 ##################
 
-class DateRange (object):
-   """This class represents a date or a range of date, as read from the
-      user. Such dates might be incomplete or unprecise. The text entered
-      by the user is meant to be kept forever, this class provides an
-      interpretation of the text more suitable for machin use
-   """
+class DateRange(object):
+    """This class represents a date or a range of date, as read from the
+       user. Such dates might be incomplete or unprecise. The text entered
+       by the user is meant to be kept forever, this class provides an
+       interpretation of the text more suitable for machin use
+    """
 
-   def __init__ (self, text):
-      """Represents a potentially partial and potentially unprecise date
-         or date range, in a specific calendar. calendar should be an instance
-         of a derived class of Calendar. If unspecified, the Date class
-         will attempt to autodetect it"""
+    def __init__(self, text):
+        """Represents a potentially partial and potentially unprecise date
+           or date range, in a specific calendar. calendar should be an instance
+           of a derived class of Calendar. If unspecified, the Date class
+           will attempt to autodetect it"""
 
-      self.text = text.strip ()
-      self.date = None
-      self.year_known = False
-      self.__parse ()
+        self.text = text.strip()  # Date as the user entered it
+        self.ends = [None, None]  # The two ends of the range (_Date instances)
+        self.span = SPAN_FROM     # or SPAN_BETWEEN, to describe the range
+        self.__parse()
 
-   def sort_date (self):
-      """Return a single date that can be used when sorting DateRanges"""
-      if isinstance (self.date, tuple):
-         return self.date[0].sort_date()
-      else:
-         return self.date.sort_date()
+    @staticmethod
+    def today():
+        """Return today's date"""
+        today = _Date.today()
+        result = DateRange("")
+        result.ends = (today, None)
+        return result
 
-   def years_since (self, date):
-       if self.date is None:
-           return -1
-       elif isinstance(self.date, tuple):
-           return self.date[0].years_since(date)
-       else:
-           return self.date.years_since(date)
+    def sort_date(self):
+        """Return a single date that can be used when sorting DateRanges.
+           For a range of dates, we have chosen (randomly) to return the
+           first date in the range."""
+        if self.ends[0]:
+            return self.ends[0].sort_date()
+        else:
+            return None
 
-   def year (self, calendar=None):
-       if isinstance(self.date, tuple):
-           return self.date[0].year(calendar)
-       else:
-           return self.date.year(calendar)
+    def years_since(self, date):
+        """Return the number of years since a given date"""
+        if self.ends[0] is None:
+            return -1
+        else:
+            return self.ends[0].years_since(date)
 
-   def __lt__ (self, date):
-      if isinstance(self.date, tuple):
-          return self.date[0] < date
-      else:
-          return self.date < date
+    def year(self, calendar=None):
+        """Return the year to be used for the range, when sorting"""
+        return self.ends[0].year(calendar)
 
-   def __gt__ (self, date):
-      if isinstance(self.date, tuple):
-          return self.date[0] > date
-      else:
-          return self.date > date
+    def __eq__(self, date):
+        return self.ends == date.ends
 
-   def __unicode__ (self):
-      """Convert to a string"""
-      return self.display()
+    def __lt__(self, date):
+        """Compare two DateRange"""
+        return self.ends[0].date < date.ends[0].date
 
-   def display (self, calendar=None, year_only=False, original=False):
-      if type (self.date) == tuple:
-         d1 = self.date[0].display (
-            calendar=calendar, year_only=year_only, original=original)
-         d2 = self.date[1].display (
-            calendar=calendar, year_only=year_only, original=original)
+    def __gt__(self, date):
+        """Compare two DateRange"""
+        return self.ends[0].date > date.ends[0].date
 
-         if self.date[2] == SPAN_FROM:
-            return u"from " + d1 + " to " + d2
-         else:
-            return u"between " + d1 + " and " + d2
-      else:
-         return unicode(self.date)
+    def __unicode__(self):
+        """Convert to a string"""
+        return self.display()
 
-   def __parse (self):
-      """Parse the text field to create a date or a date range that can be
-         more easily compared and manipulated
-      """
-      groups = FROM_RE.search (self.text)
-      if groups:
-         self.date = (Date (groups.group (2)),
-                      Date (groups.group (4)),
-                      SPAN_FROM)
-      else:
-         groups = BETWEEN_RE.search (self.text)
-         if groups:
-            self.date = (Date (groups.group (2)),
-                         Date (groups.group (4)),
-                         SPAN_BETWEEN)
-         else:
-            self.date = Date (self.text)
+    def display(self, calendar=None, year_only=False, original=False):
+        if original and self.text:
+            return unicode(self.text)
 
-      if isinstance(self.date, tuple):
-          self.year_known = self.date[0].year_known
-      else:
-          self.year_known = self.date.year_known
+        d1 = self.ends[0].display(
+           calendar=calendar, year_only=year_only, original=original)
+
+        if self.ends[1] is not None:
+            d2 = self.ends[1].display(
+               calendar=calendar, year_only=year_only, original=original)
+
+            if self.span == SPAN_FROM:
+                return u"from %s to %s" % (d1, d2)
+            else:
+                return u"between %s and %s" % (d1, d2)
+        else:
+            return d1
+
+    def years_since(self, date):
+        """Return the number of years between two DateRange.
+           Only full years are counted
+        """
+
+        if date is None:
+            return None
+
+        d1 = self.ends[0]
+        d2 = date.ends[0]
+
+        if not d1.year_known or not d2.year_known:
+           return None
+
+        comps = d1.calendar.components(d1.date)
+        dcomps = d2.calendar.components(d2.date)
+
+        if comps[1] > dcomps[1]:
+           return comps[0] - dcomps[0]
+        elif comps[1]== dcomps[1] \
+           and comps[2] > dcomps[2]:
+           return comps[0] - dcomps[0]
+        else:
+           return comps[0] - dcomps[0] - 1
+
+    def add_days(self, days):
+        """Return a new date, DAYS days later"""
+        d1 = self.ends[0].add_days(days)
+        if self.ends[1]:
+            d2 = self.ends[1].add_days(days)
+        else:
+            d2 = None
+
+        result = DateRange("")
+        result.text("")
+        result.ends = (d1, d2)
+        return result
+
+    def __parse(self):
+        """Parse the text field to create a date or a date range that can be
+           more easily compared and manipulated
+        """
+        groups = FROM_RE.search(self.text)
+        if groups:
+           self.ends = (_Date(groups.group(2)),
+                        _Date(groups.group(4)))
+           self.span = SPAN_FROM
+
+        else:
+           groups = BETWEEN_RE.search(self.text)
+           if groups:
+              self.ends = (_Date(groups.group(2)),
+                           _Date(groups.group(4)))
+              self.span = SPAN_BETWEEN
+           else:
+              self.ends = (_Date(self.text), None)

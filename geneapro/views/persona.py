@@ -8,7 +8,7 @@ from django.utils.translation import ugettext as _
 from django.utils import simplejson
 from django.http import HttpResponse
 from mysites.geneapro import models
-from mysites.geneapro.utils.date import Date, DateRange
+from mysites.geneapro.utils.date import DateRange
 from mysites.geneapro.views.custom_highlight import style_rules
 from mysites.geneapro.views.styles import Styles
 from mysites.geneapro.views.rules import getLegend
@@ -61,7 +61,8 @@ def __add_default_person_attributes (person):
    person.base_surname = person.surname
 
 
-def __get_events(ids, styles, same, types=None, schemes=None):
+def __get_events(ids, styles, same, types=None, schemes=None,
+                 query_groups=True):
     """Compute the events for the various persons in IDS (all all persons in
        the database if None)
        SAME must be an instance of SameAs, that could have already been
@@ -153,19 +154,20 @@ def __get_events(ids, styles, same, types=None, schemes=None):
     # Get all groups to which the personas belong
     #########
 
-    groups = models.P2G.objects.select_related('group')
-    for gr in sql_in(groups, "person", main_ids):
-        person = persons[same.main(gr.person_id)]
-        person.all_groups[gr.group_id] = GroupInfo(
-            group=gr.group, assertion=gr)
-        if gr.source_id:
-            src = getattr(gr.group, "sources", [])
-            src.append(gr.source_id)
-            gr.group.sources = src
-        gr.group.role = gr.role
+    if query_groups:
+        groups = models.P2G.objects.select_related('group')
+        for gr in sql_in(groups, "person", main_ids):
+            person = persons[same.main(gr.person_id)]
+            person.all_groups[gr.group_id] = GroupInfo(
+                group=gr.group, assertion=gr)
+            if gr.source_id:
+                src = getattr(gr.group, "sources", [])
+                src.append(gr.source_id)
+                gr.group.sources = src
+            gr.group.role = gr.role
 
-        if schemes is not None:
-            schemes.add(gr.surety.scheme_id)
+            if schemes is not None:
+                schemes.add(gr.surety.scheme_id)
 
     #########
     # Get all characteristics of these personas
@@ -236,7 +238,7 @@ def __get_events(ids, styles, same, types=None, schemes=None):
 
 
 def extended_personas(ids, styles, event_types=None, as_css=False, same=None,
-                      schemes=None):
+                      schemes=None, query_groups=True):
     """Return a dict indexed on id containing extended instances of Persona,
        with additional fields for the birth, the death,...
        IDS can be None to get all persons from the database.
@@ -251,11 +253,12 @@ def extended_personas(ids, styles, event_types=None, as_css=False, same=None,
 
     same = same or SameAs()
     persons = __get_events(
-        ids=ids, styles=styles, same=same, types=event_types, schemes=schemes)
+        ids=ids, styles=styles, same=same, types=event_types, schemes=schemes,
+        query_groups=query_groups)
 
     if styles:
         for p in persons.itervalues():
-            styles.compute (p, as_css=as_css)
+            styles.compute(p, as_css=as_css)
 
     return persons
 

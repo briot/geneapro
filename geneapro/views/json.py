@@ -2,7 +2,7 @@
 
 from django.utils import simplejson
 from mysites.geneapro import models
-from mysites.geneapro.utils.date import Date
+from mysites.geneapro.utils.date import DateRange
 from mysites.geneapro.views.styles import get_place
 
 def to_json (obj, year_only):
@@ -41,7 +41,7 @@ def to_json (obj, year_only):
                      d[0] += age
                else:
                   age = " (age " \
-                        + str (Date.today().years_since (obj.birth.Date)) \
+                        + str (DateRange.today().years_since (obj.birth.Date)) \
                         + ")"
                   d = [age, None, None]
 
@@ -49,8 +49,8 @@ def to_json (obj, year_only):
                     'surn':obj.surname, 'sex':obj.sex,
                     'y':obj.styles, 'b':b, 'd':d}
 
-         elif isinstance (obj, Date):
-            return obj.display (year_only=year_only)
+         elif isinstance (obj, DateRange):
+            return obj.display(year_only=year_only)
 
          elif isinstance (obj, models.Event):
             return self._event (obj)
