@@ -64,6 +64,14 @@ MAY_1_UNDEFINED   = 260211
 class DateTestCase (unittest.TestCase):
    """tests for date.py"""
 
+   def _assert_delta(self, expected, fromDate, toDate):
+       delta = toDate - fromDate
+       self.assertTrue(expected.years == delta.years
+                       and expected.months == delta.months
+                       and expected.days == delta.days,
+                       "Expected '%s', got '%s' for '%s - %s'" %
+                          (expected, delta, toDate, fromDate))
+
    def _assert_date (self, inputdate, day, expected):
       """Ensure that a date was correctly parsed"""
       d = date.DateRange(inputdate)
@@ -196,6 +204,28 @@ class DateTestCase (unittest.TestCase):
       self.assertEqual (cmp(date.DateRange("1896-11-20"),
                             date.DateRange("1894-06-20")),
                         1)
+
+   def test_delta(self):
+       self._assert_delta(date.TimeDelta(years=1),
+                          date.DateRange("2011-01-01"),
+                          date.DateRange("2012-01-01"))
+       self._assert_delta(date.TimeDelta(months=11),
+                          date.DateRange("2010-04-26"),
+                          date.DateRange("2011-03-26"))
+       self._assert_date("2010-04-30 + 10month", 2455623, "2011-03-02")
+       self._assert_date("2010-04-30 + 9month + 30days", 2455622, "2011-03-01")
+       self._assert_delta(date.TimeDelta(months=9, days=30),
+                          date.DateRange("2010-04-30"),
+                          date.DateRange("2011-03-01"))
+       self.assertEqual(305,
+                        date.DateRange("2011-03-01").days_since
+                          (date.DateRange("2010-04-30")))
+       self.assertEqual(0,
+                        date.DateRange("2011-03-01").years_since
+                          (date.DateRange("2010-04-30")))
+       self.assertEqual(1,
+                        date.DateRange("2011-05-01").years_since
+                          (date.DateRange("2010-04-30")))
 
 
 

@@ -36,9 +36,9 @@ RE_FROM    = _("de")     # for span ranges: "from"
 RE_TO      = _("a")      # for span ranges: "to"
 RE_BETWEEN = _("entre")  # for between ranges: "between"
 RE_AND     = _("et")     # for between ranges: "and"
-RE_DAYS    = _("jours?") # When adding delta (your language only)
-RE_MONTHS  = _("mois?")  # When adding delta (your language only)
-RE_YEARS   = _("ans?")   # When adding delta (your language only)
+RE_DAYS    = _("d|days?|jours?")   # When adding delta
+RE_MONTHS  = _("m|months?|mois?")  # When adding delta
+RE_YEARS   = _("y|years?|ans?")    # When adding delta
 DEFAULT_DDMM_FORMAT = _("mm/dd/yyyy")  # or "mm/dd/yyy" depending on locale
 
 # Month names should be all lower cases
@@ -66,6 +66,8 @@ MONTH_NAMES = {_("jan"):1,
                _("dec"):12,
                _("december"):12}
 
+DAYS_IN_MONTH=[31,28,31,30,31,30,31,31,30,31,30,31]
+
 FRENCH_MONTHS = [
   ("vendemiaire", "vend"),
   ("brumaire", "brum"),
@@ -88,9 +90,16 @@ FROM_RE = re.compile ("^\s*(from|" + RE_FROM + ")\s+(.+)\s+(to|" +
 BETWEEN_RE = re.compile ("^\s*(between|" + RE_BETWEEN + ")\s+(.+)\s+(and|" +
                          RE_AND + ")\s+(.*)\s*$", re.IGNORECASE)
 TIME_RE = re.compile ("\s*(\d?\d):(\d?\d)(:(\d?\d))?(am|pm)?")
-ADD_RE  = re.compile ("\s*([-+])\s*(\d+)\s*(days?|months?|years?|" +
-                      RE_DAYS + "|" + RE_MONTHS + "|" +
-                      RE_YEARS + ")\s*$", re.IGNORECASE)
+
+DELTA_YEARS = "(\d+)\s*(?:" + RE_YEARS + ")"
+DELTA_MONTHS = "(\d+)\s*(?:" + RE_MONTHS + ")"
+DELTA_DAYS = "(\d+)\s*(?:" + RE_DAYS + ")"
+DELTA_RE = ("(?:" + DELTA_YEARS + ")?"
+            + "\s*(?:" + DELTA_MONTHS + ")?"
+            + "\s*(?:" + DELTA_DAYS + ")?")
+ADD_RE  = re.compile("\s*([-+])\s*" + DELTA_RE + "\s*$", re.IGNORECASE)
+# Recognizes a delta:  $1=>sign $2=>years  $3=>months,  $4=>days
+
 YEAR_RE = "(\d{1,4}|(?:an\s+)?[MDCXVI]+)"
 
 OPTDAY = "(\d?\d|\?*)"  # day (one or two digits), or any number of "?"
@@ -305,7 +314,7 @@ class Calendar (object):
       """Convert to a unicode string"""
       return ""
 
-   def parse (self, txt, add_year=0, add_month=0, add_day=0):
+   def parse(self, txt, add=None):
       """Parse a simple date expressed in this calendar. str contains
          information about day, month and year only, although some of this
          info might be missing. Classes are encouraged to support as many
@@ -314,24 +323,27 @@ class Calendar (object):
          This returns a tuple containing
             (julian_day_number, year_specified, month_specified, day_specified,
              calendar)
-         The add_* parameters specify offsets to add to year, month and day.
+         The add parameter specifies a TimeDelta offset to add. Adding one
+         month keeps the same day, except when that day does not exist in the
+         next month. In this case, the first day in the next month is selected.
+         For instance "Oct-31 + 1month" is not "Nov-30" but "Dec-1st".
          In general, the calendar will be self, except if it could not parse
          the date and we defaulted to another calendar.
       """
       year, month, day, y_known, m_known, d_known = \
          get_ymd (txt, self._month_names)
       if y_known:
-         year += add_year
+         year += add.years
       else:
          year = None
 
       if m_known:
-         month += add_month
+         month += add.months
       else:
          month = None
 
       if d_known:
-         day  += add_day
+         day  += add.days
       else:
          day = None
 
@@ -350,7 +362,7 @@ class Calendar (object):
                  month_known=True, day_known=True, year_only=False):
       """Return a string representing the julian day in the self calendar.
          If year_only is true, only the year is returned"""
-      (year, month, day) = self.components (julian_day)
+      (year, month, day) = self.components(julian_day)
 
       if year_only:
          if year_known:
@@ -553,6 +565,74 @@ class CalendarJulian (Calendar):
 KNOWN_CALENDARS = [CalendarJulian(), CalendarFrench(), CalendarGregorian()]
 
 #####################
+## Time Delta
+#####################
+
+class TimeDelta(object):
+    """A difference between two dates.
+       You can add a number of years or months to a date. This directly
+       adds on the components of the dates (which are then normalized).
+       However, when you do a difference between two days, it is always
+       returned as a number of days to keep precision (since a year does
+       not have a fixed duration).
+    """
+
+    def __init__(self, years=0, months=0, days=0, weeks=0):
+        self.days = days + weeks * 7
+        self.months = months
+        self.years = years
+
+        # Normalize:
+        #    1 year is always 12 months.
+        #    The number of months must be between 0 and 11
+
+        self.years += self.months / 12
+        self.months = self.months % 12
+
+    def __str__(self):
+        result = []
+        if self.years != 0:
+            result.append("%dy" % self.years)
+        if self.months != 0:
+            result.append("%dm" % self.months)
+        if self.days != 0:
+            result.append("%dd" % self.days)
+        return " ".join(result)
+
+    def parse(self, txt):
+        """Parse a text description of the delta. This extracts the relevant
+           information from TXT, and returns the original TXT minus this
+           info.
+        """
+
+        self.days   = 0
+        self.months = 0
+        self.years  = 0
+        mult = 1
+
+        while True:
+           match = ADD_RE.search(txt)
+           if not match:
+               break
+
+           if match.group(1) == "+":
+               mult = 1
+           else:
+               mult = -1
+
+           if match.group(2):
+               self.years += mult * int(match.group(2))
+           if match.group(3):
+               self.months += mult * int(match.group(3))
+           if match.group(4):
+               self.days += mult * int(match.group(4))
+
+           txt = txt[:match.start(0)] + txt [match.end(0):]
+
+        return txt
+
+
+#####################
 ## _Date
 #####################
 
@@ -635,41 +715,11 @@ class _Date(object):
        else:
           self.seconds = None
 
-       # Are we doing additions or substractions here ?
-       add_days   = 0
-       add_months = 0
-       add_years  = 0
+       delta = TimeDelta()
+       txt = delta.parse(txt)
 
-       while True:
-          match = ADD_RE.search (txt)
-          if not match:
-             break
-
-          if re.match ("day?", match.group (3)) \
-            or re.match (RE_DAYS, match.group (3)):
-             if match.group (1) == '+':
-                add_days = add_days + int (match.group (2))
-             else:
-                add_days = add_days - int (match.group (2))
-
-          elif re.match ("months?", match.group (3)) \
-               or re.match (RE_MONTHS, match.group (3)):
-             if match.group (1) == '+':
-                add_months = add_months + int (match.group (2))
-             else:
-                add_months = add_months - int (match.group (2))
-
-          elif re.match ("years?", match.group (3)) \
-               or re.match (RE_YEARS, match.group (3)):
-             if match.group (1) == '+':
-                add_years = add_years + int (match.group (2))
-             else:
-                add_years = add_years - int (match.group (2))
-
-          txt = txt[:match.start (0)] + txt [match.end (0):]
-
-       txt = txt.strip ()
-       day = self.calendar.parse (txt, add_years, add_months, add_days)
+       txt = txt.strip()
+       day = self.calendar.parse(txt, add=delta)
        if day:
           (self.date, self.year_known, self.month_known, self.day_known,
            self.calendar) = day
@@ -751,19 +801,51 @@ class _Date(object):
 
           return result
 
-    def add_days (self, days):
-         """Return a new date, DAYS days later"""
+    def __add__(self, delta):
+        """Add a delta to a date"""
+        result = _Date("")
 
-         result = _Date("")
-         result.date = self.date + days
-         result.year_known = self.year_known
-         result.month_known = self.month_known
-         result.day_known = self.day_known
-         result.type = self.type
-         result.text = ""
-         result.calendar = self.calendar
-         result.precision = self.precision
-         return result
+        (y, m, d) = self.calendar.components(self.date)
+        result.date, result.year_known, result.month_known, \
+           result.day_known, result.calendar = \
+            self.calendar.from_components(
+            y + delta.years, m + delta.months, d + delta.days)
+
+        result.type = self.type
+        result.text = ""
+        result.precision = self.precision
+        return result
+
+    def __sub__(self, date):
+        """Return a year-month-day difference between two dates.
+           The result is meant to be human readable, and matches the
+           computation done when entering dates. But it is less precise
+           than the number of days, as returned by days_since().
+        """
+
+        if isinstance(date, TimeDelta):
+            # ??? Error
+            return self
+
+        else:
+            (y1, m1, d1) = self.calendar.components(self.date)
+            (y2, m2, d2) = date.calendar.components(date.date)
+
+            # The number of months is normalized by TimeDelta. However, the
+            # number of days can only be normlized here, since we have to know
+            # which months we are talking about.
+
+            days = d1 - d2
+            years = y1 - y2 + (m1 - m2) / 12
+            months = (m1 - m2) % 12
+
+            while days < 0:
+                m1 = (m1 - 1) % 12
+                months -= 1
+                days += DAYS_IN_MONTH[m1 - 1]  # Indexing starts at 0
+
+            return TimeDelta(years=years, months=months, days=days)
+
 
 
 ##################
@@ -805,12 +887,35 @@ class DateRange(object):
         else:
             return None
 
+    def __sub__(self, date):
+        """Return a TimeDelta between the two dates"""
+        # ??? Should return a minimum and maximum difference, in the case of
+        # ranges.
+
+        if isinstance(date, TimeDelta):
+            d1 = self.ends[0] - date
+            if self.ends[1]:
+                d2 = self.ends[1] - date
+            else:
+                d2 = None
+
+            result = DateRange("")
+            result.ends = (d1, d2)
+            return result
+
+        else:
+            assert(isinstance(date, DateRange))
+            if self.ends[0] is None or date.ends[0] is None:
+                return None
+            return self.ends[0] - date.ends[0]
+
     def years_since(self, date):
         """Return the number of years since a given date"""
-        if self.ends[0] is None:
-            return -1
+        d = self - date
+        if d:
+            return d.years
         else:
-            return self.ends[0].years_since(date)
+            return None
 
     def year(self, calendar=None):
         """Return the year to be used for the range, when sorting"""
@@ -827,7 +932,7 @@ class DateRange(object):
         """Compare two DateRange"""
         return self.ends[0].date > date.ends[0].date
 
-    def __unicode__(self):
+    def __str__(self):
         """Convert to a string"""
         return self.display()
 
@@ -849,41 +954,27 @@ class DateRange(object):
         else:
             return d1
 
+    def days_since(self, date):
+        """"Return the number of days between two dates"""
+        delta = TimeDelta(days=self.ends[0].date - date.ends[0].date)
+        return delta.days
+
     def years_since(self, date):
         """Return the number of years between two DateRange.
            Only full years are counted
         """
+        return (self.ends[0] - date.ends[0]).years
 
-        if date is None:
-            return None
-
-        d1 = self.ends[0]
-        d2 = date.ends[0]
-
-        if not d1.year_known or not d2.year_known:
-           return None
-
-        comps = d1.calendar.components(d1.date)
-        dcomps = d2.calendar.components(d2.date)
-
-        if comps[1] > dcomps[1]:
-           return comps[0] - dcomps[0]
-        elif comps[1]== dcomps[1] \
-           and comps[2] > dcomps[2]:
-           return comps[0] - dcomps[0]
-        else:
-           return comps[0] - dcomps[0] - 1
-
-    def add_days(self, days):
-        """Return a new date, DAYS days later"""
-        d1 = self.ends[0].add_days(days)
+    def __add__(self, delta):
+        """Add a delta to a date range"""
+        assert(isinstance(delta, TimeDelta))
+        d1 = self.ends[0] + delta
         if self.ends[1]:
-            d2 = self.ends[1].add_days(days)
+            d2 = self.ends[1] + delta
         else:
             d2 = None
 
         result = DateRange("")
-        result.text("")
         result.ends = (d1, d2)
         return result
 
