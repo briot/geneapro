@@ -223,6 +223,8 @@ class DateTestCase (unittest.TestCase):
        self._assert_date("2003-04-30 +9m30d", None, "2004-02-29")
        self._assert_date("2003-04-30 +9m29d", None, "2004-02-28")
 
+       # timeanddate.com says it should be 2010-04-28, but that doesn't match
+       # the addition in this case.
        self._assert_date("2011-03-01 -10m1d", None, "2010-04-30")
        self._assert_date("2004-03-01 -10m1d", None, "2003-04-30")
        self._assert_date("2004-02-29 -9m",    None, "2003-05-29")
@@ -262,3 +264,18 @@ class DateTestCase (unittest.TestCase):
        self.assertEqual(1,
                         date.DateRange("2011-05-01").years_since
                           (date.DateRange("2010-04-30")))
+
+       self.assertEqual(
+           date.DateRange("1700-01-01").day_of_week(), "Friday")
+       self.assertEqual(
+           30575, date.DateRange("1783-09-18").days_since(
+               date.DateRange("1700-01-01")))
+       self.assertEqual(
+           date.DateRange("1783-09-18").day_of_week(), "Thursday")
+       self.assertEqual(
+           date.DateRange("1982-04-24").day_of_week(), "Saturday")
+       self.assertEqual(  # leap year
+           date.DateRange("2000-01-01").day_of_week(), "Saturday")
+       self.assertEqual(  # in the future
+           date.DateRange("2054-06-19").day_of_week(), "Friday")
+

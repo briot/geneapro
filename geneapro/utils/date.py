@@ -66,7 +66,8 @@ MONTH_NAMES = {_("jan"):1,
                _("dec"):12,
                _("december"):12}
 
-DAYS_IN_MONTH=[31,28,31,30,31,30,31,31,30,31,30,31]
+WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday",
+            "Thursday", "Friday", "Saturday"]
 
 FRENCH_MONTHS = [
   ("vendemiaire", "vend"),
@@ -849,6 +850,23 @@ class _Date(object):
 
             return TimeDelta(years=years, months=months, days=days)
 
+    def day_of_week(self):
+        """Return the day of week (as a string) for self.
+           This returns an empty string if the date is not fully known
+        """
+        # See http://en.wikipedia.org/wiki/Calculating_the_day_of_the_week
+        # We know that Jan 1st, 1700 was a Friday
+
+        if self.year_known \
+           and self.month_known \
+           and self.day_known:
+
+            JAN_01_1700 = 2341973  # Julian day
+
+            return WEEKDAYS[(self.date - JAN_01_1700 + 5) % 7]
+
+        return ""
+
 
 ##################
 ## DateRange
@@ -911,14 +929,6 @@ class DateRange(object):
                 return None
             return self.ends[0] - date.ends[0]
 
-    def years_since(self, date):
-        """Return the number of years since a given date"""
-        d = self - date
-        if d:
-            return d.years
-        else:
-            return None
-
     def year(self, calendar=None):
         """Return the year to be used for the range, when sorting"""
         return self.ends[0].year(calendar)
@@ -958,14 +968,17 @@ class DateRange(object):
 
     def days_since(self, date):
         """"Return the number of days between two dates"""
-        delta = TimeDelta(days=self.ends[0].date - date.ends[0].date)
-        return delta.days
+        return self.ends[0].date - date.ends[0].date
 
     def years_since(self, date):
         """Return the number of years between two DateRange.
            Only full years are counted
         """
         return (self.ends[0] - date.ends[0]).years
+
+    def day_of_week(self):
+        """Return the day of week for the start date"""
+        return self.ends[0].day_of_week()
 
     def __add__(self, delta):
         """Add a delta to a date range"""

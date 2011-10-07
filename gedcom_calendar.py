@@ -34,7 +34,7 @@ class StackMachine(object):
     # Stack history #
     #################
 
-    def __save_stack(self):
+    def save_stack(self):
         """Save the current stack for future reuse"""
         self.last_stacks = [self.contents] + self.last_stacks[0:MAX_UNDO]
 
@@ -57,19 +57,19 @@ class StackMachine(object):
 
     def push(self, obj, label=""):
         """Inserts a new object on the stack"""
-        self.__save_stack()
+        self.save_stack()
         self.contents.insert(0, (label, obj))
         self.update()
 
     def drop(self, *args):
         """Removes the last element on the stack"""
-        self.__save_stack()
+        self.save_stack()
         self.contents = self.contents[1:]
         self.update()
 
     def dup(self, count=1, *args):
         """Duplicate the count first elements on the stack"""
-        self.__save_stack()
+        self.save_stack()
         self.contents = self.contents[0:count] + self.contents
         self.update()
 
@@ -80,15 +80,30 @@ class StackMachine(object):
 
     def swap(self, *args):
         """Swap the last two elements on the stack"""
-        self.__save_stack()
+        self.save_stack()
         self.contents[1], self.contents[0] = self.contents[0], self.contents[1]
         self.update()
+
+    def first(self):
+        """Return the lowest element on the stack"""
+        return self.contents[0][1]
+
+    def unary(self, func):
+        """Apply an operator on the first element of the stack, and replace
+           it with the result. FUNC must always return a result.
+        """
+        self.enter()
+        if len(self.contents) >= 1:
+            self.save_stack()
+            first = self.contents[0][1]
+            self.contents[0] = (None, func(first))
+            self.update()
 
     def plus(self, *args):
         """Add the first two levels of the stack"""
         self.enter()
         if len(self.contents) >= 2:
-            self.__save_stack()
+            self.save_stack()
             d1 = self.contents[0][1]
             d2 = self.contents[1][1]
             self.contents = self.contents[2:]
@@ -99,7 +114,7 @@ class StackMachine(object):
         """Substract the first two levels of the stack"""
         self.enter()
         if len(self.contents) >= 2:
-            self.__save_stack()
+            self.save_stack()
             d1 = self.contents[0][1]
             d2 = self.contents[1][1]
             self.contents = self.contents[2:]
@@ -231,7 +246,7 @@ class GUIDateCalculator(StackMachine, gtk.Window):
              ("b-a", self.minus),
              ("a<>b", self.swap),
              ("+/-", None),
-             ("->day", None),
+             ("->day", self.day_of_week),
              ("drop", self.drop),
              ("Last Stack", self.prev_stack))):
 
@@ -286,6 +301,13 @@ class GUIDateCalculator(StackMachine, gtk.Window):
         else:
             self.dup()
 
+    def day_of_week(self, *args):
+        def compute(obj):
+            if isinstance(obj, DateRange):
+                return obj.day_of_week()
+            return obj
+        self.unary(compute)
+
     def enter(self, *args):
         """Validate the current edit widget"""
 
@@ -316,29 +338,9 @@ win.push(DateRange("~2011"))
 win.push(DateRange("<JUL 1975"))
 win.push(DateRange("10 vendemiaire XI"))
 win.push(DateRange("2011-07-07 - 11 months"), "07jul-11m")
-
 win.push(DateRange("NOV 20, 2011"))
 win.push(DateRange("7 JUL 1975"))
+win.push(DateRange("2011-10-07"))
 
-# Difference between 30/04/2010 and 01/03/2011
-#   on Android, "de temps and temps" says 10m 1d
-#   http://www.timeanddate.com/ says 10m 1d
-#   geneapro says  9m 30d
-
-# Difference between 30/04/2003 and 01/03/2004
-#   http://www.timeanddate.com/ says 10m 1d
-
-win.push(DateRange("2010-04-30 + 10m 1d"), "2011-03-01 ??")
-win.push(DateRange("2003-04-30 + 10m 1d"), "2004-03-01 ??")
-
-
-win.push(DateRange("2011-03-01"), "date1")
-win.push(DateRange("2010-04-30"), "date2")
-win.dup(2)
-win.minus()
-win.set_label("should be 10 months?")
-
-win.push(DateRange("2010-04-30"), "date2")
-win.push(TimeDelta(months=9, days=30))
-
+win.push(DateRange("1982-04-24"))
 gtk.main()
