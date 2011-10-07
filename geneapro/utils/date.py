@@ -287,10 +287,6 @@ class Calendar (object):
    def __init__ (self, suffixes, prefixes=None):
       self.__re = re.compile \
         ('\\s*\\(?(' + suffixes + ')\\)?\\s*', re.IGNORECASE)
-      #if prefixes:
-      #   self.__rep = re.compile ('^\\s*' + prefixes, re.IGNORECASE)
-      #else:
-      #   self.__rep = None
       self._month_names = MONTH_NAMES
 
    def is_a (self, text):
@@ -304,17 +300,13 @@ class Calendar (object):
       m = self.__re.search (text)
       if m:
          return text [:m.start(0)] + text[m.end(0):]
-      #elif self.__rep:
-         #   m = self.__rep.search (text)
-         #if m:
-            #   return text [m.end(0):]
       return None
 
    def __unicode__ (self):
       """Convert to a unicode string"""
       return ""
 
-   def parse(self, txt, add=None):
+   def parse(self, txt):
       """Parse a simple date expressed in this calendar. str contains
          information about day, month and year only, although some of this
          info might be missing. Classes are encouraged to support as many
@@ -323,38 +315,29 @@ class Calendar (object):
          This returns a tuple containing
             (julian_day_number, year_specified, month_specified, day_specified,
              calendar)
-         The add parameter specifies a TimeDelta offset to add. Adding one
-         month keeps the same day, except when that day does not exist in the
-         next month. In this case, the first day in the next month is selected.
-         For instance "Oct-31 + 1month" is not "Nov-30" but "Dec-1st".
-         In general, the calendar will be self, except if it could not parse
-         the date and we defaulted to another calendar.
       """
-      year, month, day, y_known, m_known, d_known = \
-         get_ymd (txt, self._month_names)
-      if y_known:
-         year += add.years
-      else:
+      year, month, day, yk, mk, dk = get_ymd (txt, self._month_names)
+      if not yk:
          year = None
 
-      if m_known:
-         month += add.months
-      else:
-         month = None
-
-      if d_known:
-         day  += add.days
-      else:
+      if not dk:
          day = None
 
-      return self.from_components (year, month, day)
+      if not mk:
+         month = None
 
-   def from_components (self, year=None, month=None, day=None):
+      return self.from_components(year, month, day)
+
+   def from_components(self, year=None, month=None, day=None):
       """Given an expanded (possibly partial) date, return the same result
-         as parse."""
+         as parse.
+         This returns a tuple containing
+            (julian_day_number, year_specified, month_specified, day_specified,
+             calendar)
+      """
       raise NotImplementedError
 
-   def components (self, julian_day):
+   def components(self, julian_day):
       """Return a tuple (year, month, day) for the given day"""
       raise NotImplementedError
 
@@ -402,14 +385,14 @@ class CalendarGregorian (Calendar):
       # a julian date
 
       if year and (y, m, d) < (1582, 2, 24):
-         return CalendarJulian ().from_components (year, month, day)
+         return CalendarJulian().from_components(year, month, day)
 
       else:
          feb_29_4800 = 32045 # Julian day for Feb 29th, -4800 in gregorian cal.
          a = (14 - m) / 12
          y2 = y + 4800 - a
          m2 = m + 12 * a - 3
-         d = d + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400\
+         d += (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400\
            - feb_29_4800
          return (d, year != None, month != None, day != None, self)
 
@@ -582,13 +565,6 @@ class TimeDelta(object):
         self.months = months
         self.years = years
 
-        # Normalize:
-        #    1 year is always 12 months.
-        #    The number of months must be between 0 and 11
-
-        self.years += self.months / 12
-        self.months = self.months % 12
-
     def __str__(self):
         result = []
         if self.years != 0:
@@ -598,6 +574,10 @@ class TimeDelta(object):
         if self.days != 0:
             result.append("%dd" % self.days)
         return " ".join(result)
+
+    def __neg__(self):
+        return TimeDelta(
+            years=-self.years, months=-self.months, days=-self.days)
 
     def parse(self, txt):
         """Parse a text description of the delta. This extracts the relevant
@@ -646,7 +626,7 @@ class _Date(object):
        the operations on such dates.
     """
 
-    def __init__(self, text, calendar=None):
+    def __init__(self, text="", calendar=None):
         """Unless specified, the calendar will be auto-detected."""
         self.text = text.strip() or ""
         self.calendar = calendar
@@ -657,7 +637,8 @@ class _Date(object):
         self.month_known = False
         self.year_known = False
         self.day_known = False
-        self.__parse ()
+        if text:
+            self.__parse ()
 
     def __parse (self):
        """Parse self.text into a meaningful date"""
@@ -719,12 +700,18 @@ class _Date(object):
        txt = delta.parse(txt)
 
        txt = txt.strip()
-       day = self.calendar.parse(txt, add=delta)
+       day = self.calendar.parse(txt)
+
        if day:
           (self.date, self.year_known, self.month_known, self.day_known,
            self.calendar) = day
        else:
           self.date = None
+
+       if delta.years or delta.months or delta.days:
+          r = self + delta
+          self.date = r.date
+          self.calendar = r.calendar
 
     def __repr__(self):
         return self.__unicode__()
@@ -803,14 +790,35 @@ class _Date(object):
 
     def __add__(self, delta):
         """Add a delta to a date"""
-        result = _Date("")
+        result = _Date()
 
         (y, m, d) = self.calendar.components(self.date)
-        result.date, result.year_known, result.month_known, \
-           result.day_known, result.calendar = \
-            self.calendar.from_components(
-            y + delta.years, m + delta.months, d + delta.days)
 
+        if self.year_known:
+            y += delta.years
+        if self.month_known and delta.months:
+            m += delta.months
+            julian = self.calendar.from_components(y, m, d)[0]
+            (y2, m2, d2) = self.calendar.components(julian)
+
+            if m2 != (m - 1) % 12 + 1:
+                if delta.months > 0:
+                    # Ended up on the next month, so back up a number of days
+                    d -= d2
+                else:
+                    # Ended up on the previous month, so add a few days
+                    # For instance,  2011-05-31 - 1m =>  2011-04-31, which
+                    # doesn't exist, so we want to use 2011-04-30 (we really
+                    # want the last day of the month though, which is a bit
+                    # more difficult for february)
+                    d -= 1
+
+        r = self.calendar.from_components(y, m, d)
+        if self.day_known and delta.days:
+            r = (r[0] + delta.days,) + r[1:]
+
+        result.date, result.year_known, result.month_known, \
+            result.day_known, result.calendar = r
         result.type = self.type
         result.text = ""
         result.precision = self.precision
@@ -824,28 +832,22 @@ class _Date(object):
         """
 
         if isinstance(date, TimeDelta):
-            # ??? Error
-            return self
+            return self + (-date)
 
         else:
             (y1, m1, d1) = self.calendar.components(self.date)
             (y2, m2, d2) = date.calendar.components(date.date)
 
-            # The number of months is normalized by TimeDelta. However, the
-            # number of days can only be normlized here, since we have to know
-            # which months we are talking about.
+            m = (y1 - y2) * 12 + m1 - m2  # Total months difference
+            if d1 != d2:
+                m -= 1
+            years = m / 12
+            months = m % 12
 
-            days = d1 - d2
-            years = y1 - y2 + (m1 - m2) / 12
-            months = (m1 - m2) % 12
-
-            while days < 0:
-                m1 = (m1 - 1) % 12
-                months -= 1
-                days += DAYS_IN_MONTH[m1 - 1]  # Indexing starts at 0
+            d = date + TimeDelta(years=years, months=months)
+            days = self.date - d.date
 
             return TimeDelta(years=years, months=months, days=days)
-
 
 
 ##################

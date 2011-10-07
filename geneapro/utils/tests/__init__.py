@@ -57,6 +57,7 @@ AUG_28_1803       = 2379831
 DEC_20_2007       = 2454455
 JAN_1_1996        = 2450084
 DEC_1_2008        = 2454802
+NOV_11_2008       = DEC_1_2008 - 1
 JAN_1_1700_JU     = 2341983
 JAN_15_UNDEFINED  = 260104
 MAY_1_UNDEFINED   = 260211
@@ -88,7 +89,7 @@ class DateTestCase (unittest.TestCase):
             error = str (d.ends[1].date) + " != " + str (day[1])
       elif type(day) == tuple:
          error = "expected a range for result"
-      elif d.ends[0].date != day:
+      elif day is not None and d.ends[0].date != day:
          error = "[" + str (d.ends[0].date) + "] != [" + str (day) + "]"
 
       if expected and d.display(original=False) != expected:
@@ -175,7 +176,7 @@ class DateTestCase (unittest.TestCase):
       self._assert_date ("2008-01-01 - 12days", DEC_20_2007, "2007-12-20")
       self._assert_date ("2008-01-01 - 12years", JAN_1_1996, "1996-01-01")
       self._assert_date ("2009-01-01 - 12months", JAN_1_2008, "2008-01-01")
-      self._assert_date ("2009-01-31 - 2months", DEC_1_2008, "2008-12-01")
+      self._assert_date ("2009-01-31 - 2months", NOV_11_2008, "2008-11-30")
       self._assert_date ("1 jan 2009 - 12  months", JAN_1_2008, "2008-01-01")
       self._assert_date (
         "  from before about 1700 JU to after 10 vendemiaire XI FR  ",
@@ -206,19 +207,54 @@ class DateTestCase (unittest.TestCase):
                         1)
 
    def test_delta(self):
+       # Test time delta (+1m means move to the next month, and if the date
+       # doesn't exist there move to the last day of that month). Baselines
+       # for these tests are from
+       #     http://www.timeanddate.com/
+       #
+       # Difference between 30/04/2010 and 01/03/2011:  10m 1d
+       # Difference between 30/04/2003 and 01/03/2004:  10m 1d
+       # Difference between 30/04/2003 and 29/02/2004:  9m 30d
+       # Difference between 30/04/2003 and 28/02/2004:  9m 29d
+
+       self._assert_date("2010-04-30 +10m1d", None, "2011-03-01")
+       self._assert_date("2003-04-30 +10m1d", None, "2004-03-01")
+       self._assert_date("2003-04-30 +9m",    None, "2004-01-30")
+       self._assert_date("2003-04-30 +9m30d", None, "2004-02-29")
+       self._assert_date("2003-04-30 +9m29d", None, "2004-02-28")
+
+       self._assert_date("2011-03-01 -10m1d", None, "2010-04-30")
+       self._assert_date("2004-03-01 -10m1d", None, "2003-04-30")
+       self._assert_date("2004-02-29 -9m",    None, "2003-05-29")
+       self._assert_date("2004-02-29 -9m30d", None, "2003-04-29")
+       self._assert_date("2004-02-28 -9m29d", None, "2003-04-29")
+
+       d1 = date.DateRange("2010-04-30") + date.TimeDelta(months=10, days=1)
+       d2 = date.DateRange("2011-03-01")
+       self.assertEqual(d2, d1, "Invalid date: %s != %s" % (d2, d1))
+
+       d1 = date.DateRange("2010-04-30")
+       d2 = date.DateRange("2011-03-01") - date.TimeDelta(months=10, days=1)
+       self.assertEqual(d2, d1, "Invalid date: %s != %s" % (d2, d1))
+
+       self._assert_delta(
+           date.TimeDelta(months=10, days=1),
+           date.DateRange("2010-04-30"),
+           date.DateRange("2011-03-01"))
+       self._assert_delta(
+           date.TimeDelta(months=9, days=30),
+           date.DateRange("2003-04-30"),
+           date.DateRange("2004-02-29"))
+
+       # Difference as a number of days is much less ambiguous
+
        self._assert_delta(date.TimeDelta(years=1),
                           date.DateRange("2011-01-01"),
                           date.DateRange("2012-01-01"))
        self._assert_delta(date.TimeDelta(months=11),
                           date.DateRange("2010-04-26"),
                           date.DateRange("2011-03-26"))
-       self._assert_date("2010-04-30 + 10month", 2455623, "2011-03-02")
-       self._assert_date("2010-04-30 + 9month + 30days", 2455622, "2011-03-01")
-       self._assert_delta(date.TimeDelta(months=9, days=30),
-                          date.DateRange("2010-04-30"),
-                          date.DateRange("2011-03-01"))
-       self.assertEqual(305,
-                        date.DateRange("2011-03-01").days_since
+       self.assertEqual(305, date.DateRange("2011-03-01").days_since
                           (date.DateRange("2010-04-30")))
        self.assertEqual(0,
                         date.DateRange("2011-03-01").years_since
@@ -226,6 +262,3 @@ class DateTestCase (unittest.TestCase):
        self.assertEqual(1,
                         date.DateRange("2011-05-01").years_since
                           (date.DateRange("2010-04-30")))
-
-
-

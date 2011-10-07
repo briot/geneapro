@@ -5,7 +5,7 @@ Provides an interactive date calculator
 
 import sys
 sys.path.insert(0, "geneapro/utils")
-from date import DateRange
+from date import DateRange, TimeDelta
 import gtk
 
 STACK_DEPTH = 20    # Number of lines in the GUI stack. Internally, the
@@ -21,11 +21,11 @@ class EntryNoFrame(gtk.Entry):
         self.set_can_focus(editable)
 
 
-class DateCalculator(object):
+class StackMachine(object):
     def __init__(self):
-        self.dates = []   # date for each level of the stack
-                          # dates[0] is the "a" level,...
-
+        self.contents = []   # contents for each level of the stack
+                             #   (label, object)
+                             # contents[0] is the "a" level,...
         self.last_stacks = [] # List of previous stacks
         self.__show_original = False # Whether to show process dates or dates
                                      # as entered by the user
@@ -36,12 +36,12 @@ class DateCalculator(object):
 
     def __save_stack(self):
         """Save the current stack for future reuse"""
-        self.last_stacks = [self.dates] + self.last_stacks[0:MAX_UNDO]
+        self.last_stacks = [self.contents] + self.last_stacks[0:MAX_UNDO]
 
     def prev_stack(self, *args):
         """Replace the current stack with the previous stack"""
         if len(self.last_stacks):
-            self.dates = self.last_stacks[0]
+            self.contents = self.last_stacks[0]
             self.last_stacks = self.last_stacks[1:]
             self.update()
 
@@ -49,33 +49,62 @@ class DateCalculator(object):
     # Operations on the stack #
     ###########################
 
-    def add_dates(self, *args):
-        """Add the first two levels of the stack"""
-        self.enter()
-        pass
-
-    def sub_dates(self, *args):
-        """Substract the first two levels of the stack"""
-        self.enter()
-        if len(self.dates) >= 2:
-            self.__save_stack()
-            d1 = self.dates[0]
-            d2 = self.dates[1]
-            self.dates = self.dates[2:]
-            self.dates.insert(0, "%s years" % d2.years_since(d1))
-            self.update()
-
     def enter(self, *args):
         """Add the currently edited widget onto the stack.
            This does nothing in non-gui mode.
         """
         pass
 
-    def push(self, date):
-        """Inserts a new date on the stack"""
+    def push(self, obj, label=""):
+        """Inserts a new object on the stack"""
         self.__save_stack()
-        self.dates.insert(0, date)
+        self.contents.insert(0, (label, obj))
         self.update()
+
+    def drop(self, *args):
+        """Removes the last element on the stack"""
+        self.__save_stack()
+        self.contents = self.contents[1:]
+        self.update()
+
+    def dup(self, count=1, *args):
+        """Duplicate the count first elements on the stack"""
+        self.__save_stack()
+        self.contents = self.contents[0:count] + self.contents
+        self.update()
+
+    def set_label(self, label):
+        """Set the label for the last element on the stack"""
+        self.contents[0] = (label, self.contents[0][1])
+        self.update()
+
+    def swap(self, *args):
+        """Swap the last two elements on the stack"""
+        self.__save_stack()
+        self.contents[1], self.contents[0] = self.contents[0], self.contents[1]
+        self.update()
+
+    def plus(self, *args):
+        """Add the first two levels of the stack"""
+        self.enter()
+        if len(self.contents) >= 2:
+            self.__save_stack()
+            d1 = self.contents[0][1]
+            d2 = self.contents[1][1]
+            self.contents = self.contents[2:]
+            self.contents.insert(0, (None, d2 + d1))
+            self.update()
+
+    def minus(self, *args):
+        """Substract the first two levels of the stack"""
+        self.enter()
+        if len(self.contents) >= 2:
+            self.__save_stack()
+            d1 = self.contents[0][1]
+            d2 = self.contents[1][1]
+            self.contents = self.contents[2:]
+            self.contents.insert(0, (None, d2 - d1))
+            self.update()
 
     ########################
     # Displaying the stack #
@@ -87,25 +116,31 @@ class DateCalculator(object):
 
     def img(self, idx):
         """Return the text to display for the given level of the stack"""
-        if idx == 0 or idx > len(self.dates):
+        if idx == 0 or idx > len(self.contents):
             return ""
 
-        elif isinstance(self.dates[idx - 1], DateRange):
-            return self.dates[idx - 1].display(original=self.__show_original)
+        label, obj = self.contents[idx - 1]
 
+        if isinstance(obj, DateRange):
+            dpy = obj.display(original=self.__show_original)
         else:
-            return unicode(self.dates[idx - 1])
+            dpy = unicode(obj)
+
+        if label:
+            return "%s: %s" % (label, dpy)
+        else:
+            return dpy
 
     def update(self):
         """Update the display of self"""
-        for idx, d in enumerate(self.dates):
+        for idx, d in enumerate(self.contents):
             print "%s: %s" % (chr(ord('a') + idx), self.img(idx))
 
 
-class GUIDateCalculator(DateCalculator, gtk.Window):
+class GUIDateCalculator(StackMachine, gtk.Window):
 
     def __init__(self):
-        DateCalculator.__init__(self)
+        StackMachine.__init__(self)
         gtk.Window.__init__(self)
 
         self.stack = []   # (entry, calendar) for the stack.
@@ -186,18 +221,19 @@ class GUIDateCalculator(DateCalculator, gtk.Window):
                      xpadding=5, ypadding=5)
 
         button = gtk.Button("Enter")
-        button.connect("clicked", self.enter)
+        button.connect("clicked", self.enter_or_dup)
         operations.attach(button, 0, 2, 0, 1,
                           xpadding=2, ypadding=2,
                           xoptions=gtk.FILL, yoptions=gtk.FILL)
 
         for idx, op in enumerate(
-            (("a+b", self.add_dates),
-             ("b-a", self.sub_dates),
-             ("a<>b", None),
+            (("a+b", self.plus),
+             ("b-a", self.minus),
+             ("a<>b", self.swap),
              ("+/-", None),
              ("->day", None),
-             ("Prev", self.prev_stack))):
+             ("drop", self.drop),
+             ("Last Stack", self.prev_stack))):
 
             button = gtk.Button(op[0])
             button.set_can_focus(False)
@@ -244,6 +280,12 @@ class GUIDateCalculator(DateCalculator, gtk.Window):
             ent.set_text(txt)
             cal.set_text("")
 
+    def enter_or_dup(self, *args):
+        if self.stack[0][0].get_text():
+            self.enter()
+        else:
+            self.dup()
+
     def enter(self, *args):
         """Validate the current edit widget"""
 
@@ -266,14 +308,37 @@ class GUIDateCalculator(DateCalculator, gtk.Window):
 
 
 win = GUIDateCalculator()
-win.push(DateRange("7 JUL 1975"))
-win.push(DateRange("NOV 20, 2011"))
-win.push(DateRange("Est JUL 1975"))
+win.push(DateRange("Est JUL 1975"), "estimated")
 win.push(DateRange("After JUL 1975"))
 #win.push(DateRange("7 JUL"))
 #win.push(DateRange("7-7"))
 win.push(DateRange("~2011"))
 win.push(DateRange("<JUL 1975"))
 win.push(DateRange("10 vendemiaire XI"))
-win.push(DateRange("2011-07-07 - 11 months"))
+win.push(DateRange("2011-07-07 - 11 months"), "07jul-11m")
+
+win.push(DateRange("NOV 20, 2011"))
+win.push(DateRange("7 JUL 1975"))
+
+# Difference between 30/04/2010 and 01/03/2011
+#   on Android, "de temps and temps" says 10m 1d
+#   http://www.timeanddate.com/ says 10m 1d
+#   geneapro says  9m 30d
+
+# Difference between 30/04/2003 and 01/03/2004
+#   http://www.timeanddate.com/ says 10m 1d
+
+win.push(DateRange("2010-04-30 + 10m 1d"), "2011-03-01 ??")
+win.push(DateRange("2003-04-30 + 10m 1d"), "2004-03-01 ??")
+
+
+win.push(DateRange("2011-03-01"), "date1")
+win.push(DateRange("2010-04-30"), "date2")
+win.dup(2)
+win.minus()
+win.set_label("should be 10 months?")
+
+win.push(DateRange("2010-04-30"), "date2")
+win.push(TimeDelta(months=9, days=30))
+
 gtk.main()
