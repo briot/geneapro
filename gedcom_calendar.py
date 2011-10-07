@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
 Provides an interactive date calculator
+Inspired by http://www.geditcom.com/DateCalculator/index.html#about
 """
 
 import sys
