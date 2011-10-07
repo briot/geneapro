@@ -245,7 +245,6 @@ class GUIDateCalculator(StackMachine, gtk.Window):
             (("a+b", self.plus),
              ("b-a", self.minus),
              ("a<>b", self.swap),
-             ("+/-", None),
              ("->day", self.day_of_week),
              ("drop", self.drop),
              ("Last Stack", self.prev_stack))):
@@ -313,7 +312,15 @@ class GUIDateCalculator(StackMachine, gtk.Window):
 
         ent, cal = self.stack[0]
         if ent.get_text():
-            self.push(DateRange(ent.get_text()))
+            txt = ent.get_text()
+
+            obj = TimeDelta()
+            txt2 = obj.parse(txt)
+
+            if txt2 == txt:
+                obj = DateRange(txt)
+
+            self.push(obj)
             ent.grab_focus()
 
     def insert(self, button, text):
@@ -332,8 +339,6 @@ class GUIDateCalculator(StackMachine, gtk.Window):
 win = GUIDateCalculator()
 win.push(DateRange("Est JUL 1975"), "estimated")
 win.push(DateRange("After JUL 1975"))
-#win.push(DateRange("7 JUL"))
-#win.push(DateRange("7-7"))
 win.push(DateRange("~2011"))
 win.push(DateRange("<JUL 1975"))
 win.push(DateRange("10 vendemiaire XI"))
@@ -341,6 +346,6 @@ win.push(DateRange("2011-07-07 - 11 months"), "07jul-11m")
 win.push(DateRange("NOV 20, 2011"))
 win.push(DateRange("7 JUL 1975"))
 win.push(DateRange("2011-10-07"))
+win.push(DateRange("from 2011-01-01 to 2011-02-01"))
 
-win.push(DateRange("1982-04-24"))
 gtk.main()

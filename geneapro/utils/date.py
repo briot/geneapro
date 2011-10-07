@@ -98,7 +98,7 @@ DELTA_DAYS = "(\d+)\s*(?:" + RE_DAYS + ")"
 DELTA_RE = ("(?:" + DELTA_YEARS + ")?"
             + "\s*(?:" + DELTA_MONTHS + ")?"
             + "\s*(?:" + DELTA_DAYS + ")?")
-ADD_RE  = re.compile("\s*([-+])\s*" + DELTA_RE + "\s*$", re.IGNORECASE)
+ADD_RE  = re.compile("\s*([-+])?\s*" + DELTA_RE + "\s*$", re.IGNORECASE)
 # Recognizes a delta:  $1=>sign $2=>years  $3=>months,  $4=>days
 
 YEAR_RE = "(\d{1,4}|(?:an\s+)?[MDCXVI]+)"
@@ -593,13 +593,13 @@ class TimeDelta(object):
 
         while True:
            match = ADD_RE.search(txt)
-           if not match:
+           if not match or len(match.group(0).strip()) == 0:
                break
 
-           if match.group(1) == "+":
-               mult = 1
-           else:
+           if match.group(1) == "-":
                mult = -1
+           else:
+               mult = 1
 
            if match.group(2):
                self.years += mult * int(match.group(2))
