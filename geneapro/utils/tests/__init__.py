@@ -78,25 +78,31 @@ class DateTestCase (unittest.TestCase):
       d = date.DateRange(inputdate)
       error = ""
 
+      def cmp_end(d, exp):
+          if isinstance(d, date._Date) or d.ends[1] is None:
+              if type(exp) == tuple:
+                 return "expected a range, got %s" % d
+              elif isinstance(d, date._Date):
+                  if d.date != exp:
+                      return "%s != %s" % (d.date, exp)
+              elif d.ends[0].date != exp:
+                 return "%s != %s" % (d.ends[0].date, exp)
+          else:
+              if type(exp) != tuple:
+                 return "expected a simple date, got %s" % d
+              return cmp_end(d.ends[0], exp[0]) \
+                 or cmp_end(d.ends[1], exp[1])
+          return ""
+
       if not d.ends[0]:
          error = "Could not parse date"
-      elif d.ends[1] is not None:
-         if type(day) != tuple:
-            error = "expected a simple date for result"
-         elif d.ends[0].date != day[0]:
-            error = d.ends[0].date + " != " + str (day[0])
-         elif d.ends[1].date != day[1]:
-            error = str (d.ends[1].date) + " != " + str (day[1])
-      elif type(day) == tuple:
-         error = "expected a range for result"
-      elif day is not None and d.ends[0].date != day:
-         error = "[" + str (d.ends[0].date) + "] != [" + str (day) + "]"
-
-      if expected and d.display(original=False) != expected:
+      elif expected and d.display(original=False) != expected:
          error =  "[" + d.display(original=False) \
                + "]\n  != [" + expected + "]"
+      elif day is not None:
+         error = cmp_end(d, day)
 
-      self.assertFalse (error, "Error for: " + inputdate + "\n     " + error)
+      self.assertFalse(error, "Error for: " + inputdate + "\n     " + error)
 
    def _assert_roman (self, text, val):
       """Ensure a number was correctly converted to and from roman literal"""
@@ -142,8 +148,9 @@ class DateTestCase (unittest.TestCase):
       self._assert_date ("2008-01-01 est", JAN_1_2008, "2008-01-01 ?")
       self._assert_date ("2008", JAN_1_2008, "2008")
       self._assert_date ("2008 ?  ", JAN_1_2008, "2008 ?")
-      self._assert_date ("ca 2008", JAN_1_2008, "ca 2008")
-      self._assert_date ("~2008", JAN_1_2008, "ca 2008")
+      self._assert_date ("ca 2008", JAN_1_2008, "~2008")
+      self._assert_date ("~2008", JAN_1_2008, "~2008")
+      self._assert_date ("~2008", JAN_1_2008, "~2008")
       self._assert_date ("<2008", JAN_1_2008, "/2008")
       self._assert_date (">1 jan 2008", JAN_1_2008, "2008-01-01/")
       self._assert_date ("2008-01", JAN_1_2008, "2008-01")
@@ -181,7 +188,7 @@ class DateTestCase (unittest.TestCase):
       self._assert_date (
         "  from before about 1700 JU to after 10 vendemiaire XI FR  ",
         (JAN_1_1700_JU, OCT_2_1802),
-        "from ca /1700 (Julian) to 10 vendemiaire XI/")
+        "from ~/1700 (Julian) to 10 vendemiaire XI/")
       self._assert_date ("2008-11-20 - 1 year + 1 month", DEC_20_2007,
        "2007-12-20")
 
@@ -205,6 +212,15 @@ class DateTestCase (unittest.TestCase):
       self.assertEqual (cmp(date.DateRange("1896-11-20"),
                             date.DateRange("1894-06-20")),
                         1)
+
+      # An example from the GEDC manual. A period (an event occurs during
+      # an extended period of time) whose start and end are ranges (event
+      # happened on a single data somewhere in the range).
+
+      self._assert_date(
+          "from bet 21 JUN 1876 and abt 2 MAR 1893 TO BEF SEP 1840",
+          ((2406427, 2412525), 2393350),
+          "from between 1876-06-21 and ~1893-03-02 to /1840-09-01")
 
    def test_delta(self):
        # Test time delta (+1m means move to the next month, and if the date

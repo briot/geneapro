@@ -32,13 +32,17 @@ __all__ = ["from_roman_literal", "to_roman_literal", "DateRange",
 ## The following strings indicate how to specify date ranges in your language.
 ## These are regexp, and should not include parenthesis groups
 
-RE_FROM    = _("de")     # for span ranges: "from"
-RE_TO      = _("a")      # for span ranges: "to"
-RE_BETWEEN = _("entre")  # for between ranges: "between"
-RE_AND     = _("et")     # for between ranges: "and"
+RE_FROM    = _("from|de")          # for span ranges: "from"
+RE_TO      = _("to|a")             # for span ranges: "to"
+RE_BETWEEN = _("bet|between|entre")    # for between ranges: "between"
+RE_AND     = _("and|et")           # for between ranges: "and"
 RE_DAYS    = _("d|days?|jours?")   # When adding delta
 RE_MONTHS  = _("m|months?|mois?")  # When adding delta
 RE_YEARS   = _("y|years?|ans?")    # When adding delta
+RE_BEFORE  = _("before|bef|avant")
+RE_AFTER   = _("after|aft|apres")
+RE_ABOUT   = _("about|abt\\.?|circa|ca|environ|env")
+RE_EST = _("estimated|est\.?|cal")  # "cal" is used for "calculated" in gramps
 DEFAULT_DDMM_FORMAT = _("mm/dd/yyyy")  # or "mm/dd/yyy" depending on locale
 
 # Month names should be all lower cases
@@ -86,9 +90,9 @@ FRENCH_MONTHS = [
 
 ## No translation below
 
-FROM_RE = re.compile ("^\s*(from|" + RE_FROM + ")\s+(.+)\s+(to|" +
+FROM_RE = re.compile ("^\s*(" + RE_FROM + ")\s+(.+)\s+(" +
                       RE_TO + ")\s+(.*)\s*$", re.IGNORECASE)
-BETWEEN_RE = re.compile ("^\s*(between|" + RE_BETWEEN + ")\s+(.+)\s+(and|" +
+BETWEEN_RE = re.compile ("^\s*(" + RE_BETWEEN + ")\s+(.+)\s+(" +
                          RE_AND + ")\s+(.*)\s*$", re.IGNORECASE)
 TIME_RE = re.compile ("\s*(\d?\d):(\d?\d)(:(\d?\d))?(am|pm)?")
 
@@ -117,16 +121,10 @@ SPELLED_OUT2_RE = re.compile ("^\s*(\w+)\s+(\d\d?),?\s*" + YEAR_RE + "$",
 YYYYMM_RE = re.compile ("^\s*" + YEAR_RE + "([-/](\d\d?))?$", re.IGNORECASE)
 DDMM_RE   = re.compile ("^\s*(\d{2})[-/](\d{2})$")
 
-BEFORE_RE = re.compile ("(<|before|bef|avant|[^\d]/(\\d))",
-                        re.IGNORECASE)
-AFTER_RE  = re.compile ("(>|after|aft|apres|(\\d)/[^\d])",
-                        re.IGNORECASE)
-ABOUT_RE  = re.compile (
-   "\s*(\\babout\\b|\\babt\\.?|\\bcirca\\b|\\bca\\b|" \
-   + "\\benviron\\b|\\benv\\b|~)\s*", re.IGNORECASE)
-
-# "cal" is used for "calculated" in gramps
-EST_RE    = re.compile ("\s*(estimated\s*|est\.?\s*|cal|\?\s*$)", re.IGNORECASE)
+BEFORE_RE = re.compile ("(<|" + RE_BEFORE + "|[^\d]/(\\d))", re.IGNORECASE)
+AFTER_RE  = re.compile ("(>|" + RE_AFTER + "|(\\d)/[^\d])", re.IGNORECASE)
+ABOUT_RE  = re.compile ("\s*(\\b(?:" + RE_ABOUT + ")|~)\s*", re.IGNORECASE)
+EST_RE    = re.compile ("\s*((?:" + RE_EST + ")\s*|\?\s*$)", re.IGNORECASE)
 
 SPAN_FROM    = 1
 SPAN_BETWEEN = 2
@@ -765,7 +763,7 @@ class _Date(object):
           result = u""
 
           if self.precision == PRECISION_ABOUT:
-             result += "ca "
+             result += "~"
 
           if self.type == DATE_BEFORE:
              result += "/"
@@ -886,8 +884,11 @@ class DateRange(object):
            will attempt to autodetect it"""
 
         self.text = text.strip()  # Date as the user entered it
-        self.ends = [None, None]  # The two ends of the range (_Date instances)
-        self.span = SPAN_FROM     # or SPAN_BETWEEN, to describe the range
+        self.ends = [None, None]  # The two ends of the range. These are
+                                  # either _Date instances or DateRange
+                                  # instances if self is a period whose
+                                  # start or end are ranges.
+        self.span = -1  # SPAN_FROM or SPAN_BETWEEN, to describe the range
         self.__parse()
 
     @staticmethod
@@ -995,19 +996,33 @@ class DateRange(object):
 
     def __parse(self):
         """Parse the text field to create a date or a date range that can be
-           more easily compared and manipulated
+           more easily compared and manipulated. We need to handle the
+           case of a period whose ends are ranges:
+               from <range1> to <range2>
+               where  range[12] = date | between <date1> and <date2>
         """
-        groups = FROM_RE.search(self.text)
-        if groups:
-           self.ends = (_Date(groups.group(2)),
-                        _Date(groups.group(4)))
-           self.span = SPAN_FROM
+        if self.span != SPAN_FROM:
+            groups = FROM_RE.search(self.text)
+            if groups:
+                e1 = DateRange(groups.group(2))
+                if e1.ends[1] is None:
+                    e1 = e1.ends[0]
 
-        else:
-           groups = BETWEEN_RE.search(self.text)
-           if groups:
-              self.ends = (_Date(groups.group(2)),
-                           _Date(groups.group(4)))
-              self.span = SPAN_BETWEEN
-           else:
-              self.ends = (_Date(self.text), None)
+                e2 = DateRange(groups.group(4))
+                if e2.ends[1] is None:
+                    e2 = e2.ends[0]
+
+                self.ends = (e1, e2)
+                self.span = SPAN_FROM
+                return
+
+        if self.span != SPAN_BETWEEN:
+            groups = BETWEEN_RE.search(self.text)
+            if groups:
+               self.ends = (_Date(groups.group(2)),
+                            _Date(groups.group(4)))
+               self.span = SPAN_BETWEEN
+               return
+
+        self.ends = (_Date(self.text), None)
+        self.span = -1
