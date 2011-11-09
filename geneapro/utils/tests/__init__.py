@@ -94,7 +94,7 @@ class DateTestCase (unittest.TestCase):
                  or cmp_end(d.ends[1], exp[1])
           return ""
 
-      if not d.ends[0]:
+      if not d.ends[0] and not d.ends[1]:
          error = "Could not parse date"
       elif expected and d.display(original=False) != expected:
          error =  "[" + d.display(original=False) \
@@ -221,6 +221,11 @@ class DateTestCase (unittest.TestCase):
           "from bet 21 JUN 1876 and abt 2 MAR 1893 TO BEF SEP 1840",
           ((2406427, 2412525), 2393350),
           "from between 1876-06-21 and ~1893-03-02 to /1840-09-01")
+
+      # Gedcom also says that one end of the periods is optional
+
+      self._assert_date("from 21 JUN 1876", None, "from 1876-06-21")
+      self._assert_date("to 1815", None, "to 1815")
 
    def test_delta(self):
        # Test time delta (+1m means move to the next month, and if the date

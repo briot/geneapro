@@ -90,8 +90,14 @@ FRENCH_MONTHS = [
 
 ## No translation below
 
-FROM_RE = re.compile ("^\s*(" + RE_FROM + ")\s+(.+)\s+(" +
-                      RE_TO + ")\s+(.*)\s*$", re.IGNORECASE)
+FROM_TEXT = "(" + RE_FROM + ")\s+(.+)"
+FROM_RE = re.compile("^\s*" + FROM_TEXT, re.IGNORECASE)
+
+TO_TEXT = "(" + RE_TO + ")\s+(.+)"
+TO_RE = re.compile("^\s*" + TO_TEXT, re.IGNORECASE)
+
+PERIOD_RE = re.compile (
+    "^" + FROM_TEXT + "\s+" + TO_TEXT + "\s*$", re.IGNORECASE)
 BETWEEN_RE = re.compile ("^\s*(" + RE_BETWEEN + ")\s+(.+)\s+(" +
                          RE_AND + ")\s+(.*)\s*$", re.IGNORECASE)
 TIME_RE = re.compile ("\s*(\d?\d):(\d?\d)(:(\d?\d))?(am|pm)?")
@@ -235,13 +241,15 @@ def get_ymd (txt, months):
    if m:
       try:
          month = months[m.group (2).lower()]
+         month_specified = True
       except KeyError:
-         month = months[""]
+         month = 1
+         month_specified = False
       try:
          day = int (m.group (1))
       except TypeError:
          day = 1
-      return (__get_year (m.group (3)), month, day, True, True, True)
+      return (__get_year(m.group (3)), month, day, True, month_specified, True)
 
    m = SPELLED_OUT2_RE.search (txt)
    if m:
@@ -953,6 +961,13 @@ class DateRange(object):
         if original and self.text:
             return unicode(self.text)
 
+        if self.ends[0] is None:
+            d2 = self.ends[1].display(
+               calendar=calendar, year_only=year_only, original=original)
+            if self.ends[1] is not None:
+                return u"to %s" % d2
+            return unicode(self.text)
+
         d1 = self.ends[0].display(
            calendar=calendar, year_only=year_only, original=original)
 
@@ -965,7 +980,10 @@ class DateRange(object):
             else:
                 return u"between %s and %s" % (d1, d2)
         else:
-            return d1
+            if self.span == SPAN_FROM:
+                return u"from %s" % d1
+            else:
+                return d1
 
     def days_since(self, date):
         """"Return the number of days between two dates"""
@@ -1002,7 +1020,7 @@ class DateRange(object):
                where  range[12] = date | between <date1> and <date2>
         """
         if self.span != SPAN_FROM:
-            groups = FROM_RE.search(self.text)
+            groups = PERIOD_RE.search(self.text)
             if groups:
                 e1 = DateRange(groups.group(2))
                 if e1.ends[1] is None:
@@ -1013,6 +1031,26 @@ class DateRange(object):
                     e2 = e2.ends[0]
 
                 self.ends = (e1, e2)
+                self.span = SPAN_FROM
+                return
+
+            groups = FROM_RE.search(self.text)
+            if groups:
+                e1 = DateRange(groups.group(2))
+                if e1.ends[1] is None:
+                    e1 = e1.ends[0]
+
+                self.ends = (e1, None)
+                self.span = SPAN_FROM
+                return
+
+            groups = TO_RE.search(self.text)
+            if groups:
+                e1 = DateRange(groups.group(2))
+                if e1.ends[1] is None:
+                    e1 = e1.ends[0]
+
+                self.ends = (None, e1)
                 self.span = SPAN_FROM
                 return
 
