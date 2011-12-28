@@ -18,6 +18,10 @@
 ** some INDI end up with a non-empty description, which is a xref to a NOTE.
    We should create a proper note instead (but not clear how this is done in
    GENTECH)
+** Option to capitalize last names, instead of preserving capitals from some
+   gedcoms.
+** See invalid tags list
+http://www.beholdgenealogy.com/blog/?p=876
 
 * Pedigree View
 ** Dnd on Pedigree icon should display the pedigree for that person
@@ -65,15 +69,21 @@
    CLOSED: [2011-03-21 Mon 15:27]
    In particular, all personas that took part in the event.
 
+* Person list view
+** Slow to display with big databases
+   If we paginate based on first letter of last name and only query those,
+   it might be made much faster, and also easier to navigate.
+
 * Styles
 
 * Groups
 ** For: neighbor, friend, clergy, care-taker, and more
 
 * Graphically editing the surety scheme
-** This scheme is properly taken into account when displaying assertions
+** DONE This scheme is properly taken into account when displaying assertions
    in the person view, but currently the user cannot edit it.
-** Take these custom schemes into account when importing ge  
+** Take these custom schemes into account when importing gedcom files
+
 * Ideas for names
 ** Geneatica, Forebears, Testimony, Testimology
 
@@ -90,3 +100,6 @@
   transparently create the group. Likewise, have dummy persona-to-persona
   relationships like "sibling", which are saved in the group rather than as
   assertions in P2P.
+
+* Face detection in images
+  See https://github.com/jaysalvat/jquery.facedetection

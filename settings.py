@@ -108,3 +108,21 @@ INSTALLED_APPS = (
 
     #'debug_toolbar',
 )
+
+
+# Prepare logging
+# Views can then do:
+#    import logging
+#    logging.debug("...")
+
+import logging
+logging.basicConfig(
+    level = logging.DEBUG,
+    #filename = 'log.txt',
+    #filemode = 'w',
+    format = '%(asctime)s %(levelname)s %(message)s'
+)
+
+# Debugging a view:
+# Add the following directly in the view:
+#     import pdb; pdb.set_trace()

@@ -7,6 +7,7 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
+	(r'^', include('mysites.geneapro.urls')),
 	(r'^geneapro/', include('mysites.geneapro.urls')),
 
     ## Serve static files (images and CSS). This is not recommended for use
@@ -26,8 +27,5 @@ urlpatterns = patterns('',
     #(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
     # Uncomment the next line to enable the admin:
-    (r'^admin/(.*)', admin.site.root),
-
-    # Default to geneapro
-	(r'^', include('mysites.geneapro.urls')),
+    #(r'^admin/(.*)', admin.site.root),
 )

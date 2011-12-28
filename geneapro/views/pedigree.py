@@ -14,6 +14,7 @@ from mysites.geneapro.views.persona import extended_personas, event_types_for_pe
 from mysites.geneapro.views.json import to_json
 from mysites.geneapro.views.custom_highlight import style_rules
 from mysites.geneapro.views.rules import getLegend
+import logging
 
 
 def get_sosa_tree(id, max_levels, style_ruless):

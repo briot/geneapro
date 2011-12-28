@@ -8,6 +8,7 @@ import mysites.geneapro.views.rules
 import mysites.geneapro.views.stats
 import mysites.geneapro.views.sources
 import mysites.geneapro.views.events
+import mysites.geneapro.views.merge
 
 urlpatterns = patterns('',
 	(r'^$', views.pedigree.pedigree_view),
@@ -23,4 +24,5 @@ urlpatterns = patterns('',
 	(r'^fanchart/(\d+)$', views.pedigree.fanchart_view),
 	(r'^stats$',        views.stats.view),
 	(r'^stats/(\d+)$',  views.stats.view),
+    (r'^merge$',        views.merge.view),
 )

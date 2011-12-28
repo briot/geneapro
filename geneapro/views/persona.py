@@ -139,7 +139,9 @@ def __get_events(ids, styles, same, types=None, schemes=None,
 
         if not p.disproved \
            and p.role_id == models.Event_Type_Role.principal:
-            if e.type_id == models.Event_Type.birth:
+            if not e.Date:
+                pass
+            elif e.type_id == models.Event_Type.birth:
                 if person.birth is None \
                    or person.birth.date_sort > e.date_sort:
                     person.birth = e

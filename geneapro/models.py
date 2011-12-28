@@ -260,7 +260,7 @@ class Place(GeneaproModel):
       db_table = "place"
 
 
-class Part_Type (GeneaproModel):
+class Part_Type(GeneaproModel):
    """
    An abstract base class for the various tables that store components of
    higher level entities. These are associated with a simple name in general,
@@ -268,9 +268,9 @@ class Part_Type (GeneaproModel):
    the Gedcom format
    """
 
-   name = models.CharField (max_length=100, blank=False, null=False)
-   gedcom = models.CharField (max_length=15, help_text="Name in Gedcom files",
-                              blank=True)
+   name = models.CharField(max_length=100, blank=False, null=False)
+   gedcom = models.CharField(max_length=15, help_text="Name in Gedcom files",
+                             blank=True)
 
    class Meta:
       """Meta data for the model"""
@@ -278,11 +278,12 @@ class Part_Type (GeneaproModel):
       ordering = ("name",)
       db_table = "part_type"
 
-   def __unicode__ (self):
+   def __unicode__(self):
       if self.gedcom:
          return self.name + " (gedcom: " + self.gedcom + ")"
       else:
          return self.name
+
 
 class Place_Part_Type (Part_Type):
    """
