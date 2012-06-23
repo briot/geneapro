@@ -3,10 +3,11 @@ Provides a gedcom importer
 """
 
 from django.utils.translation import ugettext as _
-from mysites.geneapro.utils.gedcom import Gedcom, Invalid_Gedcom, GedcomRecord, GedcomString
-from mysites.geneapro import models
+import django.utils.timezone
+from geneapro.utils.gedcom import Gedcom, Invalid_Gedcom, GedcomRecord, GedcomString
+from geneapro import models
 from django.db import transaction, connection
-import mysites.geneapro.importers
+import geneapro.importers
 import re
 import datetime
 import traceback
@@ -198,7 +199,11 @@ class GedcomImporter(object):
                 if result is None or tmp > result:
                     result = tmp
 
-        return result or datetime.datetime.now()
+        if result:
+            return django.utils.timezone.make_aware(
+                result, django.utils.timezone.get_default_timezone())
+        else:
+            return django.utils.timezone.now()
 
     def _create_repo(self, data):
         if data.value and self._repo.get(data.value, None):
@@ -967,7 +972,7 @@ class GedcomImporter(object):
 ## GedcomFileImporter
 ##################################
 
-class GedcomFileImporter(mysites.geneapro.importers.Importer):
+class GedcomFileImporter(geneapro.importers.Importer):
     """Register a new importer in geneapro: imports GEDCOM files"""
 
     class Meta:
@@ -978,7 +983,7 @@ class GedcomFileImporter(mysites.geneapro.importers.Importer):
 
     def __init__(self):
         self._parser = None  # The gedcom parser
-        mysites.geneapro.importers.Importer.__init__(self)
+        geneapro.importers.Importer.__init__(self)
 
     def parse(self, filename):
         """Parse and import a gedcom file"""

@@ -10,8 +10,9 @@ object appropriate for use by simplejson. For instance:
 """
 
 from django.db import models, backend, connection
+import django.utils.timezone
 import datetime
-from mysites.geneapro.utils import date
+from geneapro.utils import date
 
 class GeneaproModel (models.Model):
    def to_json (self):
@@ -28,7 +29,7 @@ class GeneaproModel (models.Model):
       """Meta data for the model"""
       abstract = True
 
-class PartialDateField (models.CharField):
+class PartialDateField(models.CharField):
    """
    A new type of field: this stores a date/time or date range exactly
    as was entered by the user (that is it fundamentally behaves as a
@@ -41,24 +42,24 @@ class PartialDateField (models.CharField):
 
    __metaclass__ = models.SubfieldBase
 
-   def __init__ (self, max_length=0, null=True, *args, **kwargs):
+   def __init__(self, max_length=0, null=True, *args, **kwargs):
       kwargs["null"] = null
-      super (PartialDateField, self).__init__ (
+      super (PartialDateField, self).__init__(
          self, max_length=100, *args, **kwargs)
 
-   def contribute_to_class (self, cls, name):
+   def contribute_to_class(self, cls, name):
       """Add the partialDateField to a class, as well as a second field
          used for sorting purposes"""
-      sortfield = models.DateTimeField ('used to sort', null=True)
+      sortfield = models.CharField('used to sort', null=True, max_length=100)
       self._sortfield = name + "_sort"
-      cls.add_to_class (self._sortfield, sortfield)
-      super (PartialDateField, self).contribute_to_class (cls, name)
+      cls.add_to_class(self._sortfield, sortfield)
+      super(PartialDateField, self).contribute_to_class(cls, name)
 
    def pre_save(self, model_instance, add):
       """Update the value of the sort field based on the contents of self"""
       val = super(PartialDateField, self).pre_save(model_instance, add)
       if val:
-         sort = date.DateRange(val).sort_date()
+         sort = date.DateRange("%s" % val).sort_date()
          setattr(model_instance, self._sortfield, sort)
       return val
 
@@ -388,7 +389,7 @@ class Source(GeneaproModel):
    medium        = models.ForeignKey (Source_Medium)
    comments      = models.TextField (null=True)
 
-   last_change   = models.DateTimeField(default=datetime.datetime.now)
+   last_change   = models.DateTimeField(default=django.utils.timezone.now)
 
    class Meta:
       """Meta data for the model"""
@@ -492,7 +493,7 @@ class Persona(GeneaproModel):
 
     name = models.TextField()
     description = models.TextField(null=True)
-    last_change = models.DateTimeField(default=datetime.datetime.now)
+    last_change = models.DateTimeField(default=django.utils.timezone.now)
 
     def __unicode__(self):
         return self.name
@@ -711,7 +712,7 @@ class Assertion (GeneaproModel):
    rationale  = models.TextField (null=True)
    disproved  = models.BooleanField (default=False)
    last_change = models.DateTimeField(
-       default=datetime.datetime.now,
+       default=django.utils.timezone.now,
        help_text="When was the assertion last modified")
 
    class Meta:

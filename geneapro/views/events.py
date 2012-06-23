@@ -4,8 +4,8 @@ Event-related views
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from mysites.geneapro import models
-from mysites.geneapro.views.queries import sql_in
+from geneapro import models
+from geneapro.views.queries import sql_in
 from collections import namedtuple
 
 

@@ -1,28 +1,27 @@
 from django.conf.urls.defaults import *
-from mysites.geneapro import views
-import mysites.geneapro.views.pedigree
-import mysites.geneapro.views.persona
-import mysites.geneapro.views.places
-import mysites.geneapro.views.representation
-import mysites.geneapro.views.rules
-import mysites.geneapro.views.stats
-import mysites.geneapro.views.sources
-import mysites.geneapro.views.events
-import mysites.geneapro.views.merge
+import geneapro.views.pedigree
+import geneapro.views.persona
+import geneapro.views.places
+import geneapro.views.representation
+import geneapro.views.rules
+import geneapro.views.stats
+import geneapro.views.sources
+import geneapro.views.events
+import geneapro.views.merge
 
 urlpatterns = patterns('',
-	(r'^$', views.pedigree.pedigree_view),
-	(r'^sources$', views.sources.source_list),
-	(r'^sources/(\d+)$', views.sources.view),
-    (r'^event/(\d+)$', views.events.view),
-    (r'^personas$',  views.persona.view_list),
-    (r'^persona/(\d+)$', views.persona.view),
-    (r'^places$', views.places.view_list),
-    (r'^repr/(.*)/(\d+)$', views.representation.view),
-    #url (r'^pedigreeData$', views.pedigree.data, name="pedigree_data"),
-	(r'^pedigree/(\d+)$', views.pedigree.pedigree_view),
-	(r'^fanchart/(\d+)$', views.pedigree.fanchart_view),
-	(r'^stats$',        views.stats.view),
-	(r'^stats/(\d+)$',  views.stats.view),
-    (r'^merge$',        views.merge.view),
+	(r'^$', geneapro.views.pedigree.pedigree_view),
+	(r'^sources$', geneapro.views.sources.source_list),
+	(r'^sources/(\d+)$', geneapro.views.sources.view),
+    (r'^event/(\d+)$', geneapro.views.events.view),
+    (r'^personas$',  geneapro.views.persona.view_list),
+    (r'^persona/(\d+)$', geneapro.views.persona.view),
+    (r'^places$', geneapro.views.places.view_list),
+    (r'^repr/(.*)/(\d+)$', geneapro.views.representation.view),
+    #url (r'^pedigreeData$', geneapro.views.pedigree.data, name="pedigree_data"),
+	(r'^pedigree/(\d+)$', geneapro.views.pedigree.pedigree_view),
+	(r'^fanchart/(\d+)$', geneapro.views.pedigree.fanchart_view),
+	(r'^stats$',        geneapro.views.stats.view),
+	(r'^stats/(\d+)$',  geneapro.views.stats.view),
+    (r'^merge$',        geneapro.views.merge.view),
 )

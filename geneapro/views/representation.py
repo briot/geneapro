@@ -5,7 +5,7 @@ Representation-related views
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from mysites.geneapro import models
+from geneapro import models
 import os.path
 
 

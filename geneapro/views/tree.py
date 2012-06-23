@@ -5,12 +5,15 @@ reusing known data as much as possible.
 The tree only contains the ids of the persons, not any other information."""
 
 from django.db.models import Q
-from mysites.geneapro import models
-from mysites.geneapro.views.json import to_json
-from mysites.geneapro.views.queries import sql_in, sql_split
+from geneapro import models
+from geneapro.views.json import to_json
+from geneapro.views.queries import sql_in, sql_split
 import collections
+import logging
 
 __all__ = ["Tree", "SameAs"]
+
+logger = logging.getLogger(__name__)
 
 
 class SameAs(object):
@@ -160,7 +163,9 @@ class Tree(object):
          All IDS in the result are ids of the main personas.
       """
       self._same.compute(ids)
+      logger.info("_get_events, got same(%s)" % ids)
       main_ids = self._same.main_ids(ids)
+      logger.info("_get_events, got main_ids")
 
       # Retrieve the ids of the parents of persons in check. We retrieve
       # parents and child from every birth event (we need the child to
@@ -177,9 +182,12 @@ class Tree(object):
                      models.Event_Type_Role.principal,
                      models.Event_Type_Role.birth__mother),
          disproved = False).values_list('person', 'event', 'role')
+
+      logger.info("_get_events, computing sql_in")
       tmp = sql_in(tmp, "event", list(all_events))
 
       events = dict()  # tuples (child, father, mother)
+      logger.info("_get_events, now processing all events")
 
       for p2e in tmp:
           t = events.get (p2e[1], (None, None, None))
@@ -210,7 +218,9 @@ class Tree(object):
       check = check.difference(self._processed) # only those we don't know
 
       while check:
+         logger.info("MANU getting events for %s" % check)
          events = self._get_events(check, (models.Event_Type_Role.principal,))
+         logger.info("MANU got events %d" % len(events))
          self._processed.update(check)
 
          tmpids = set()   # All persons that are a father or mother
@@ -287,7 +297,9 @@ class Tree(object):
 
       result = dict()
       id = self._same.main(id)
+      logger.info("ancestors(%s)" % (id,))
       self._compute_ancestors(id) # all ancestors
+      logger.info("done computing ancestors")
       internal(id, generations)
       return result
 

@@ -7,12 +7,12 @@ from django.template import RequestContext
 from django.utils.translation import ugettext as _
 from django.utils import simplejson
 from django.http import HttpResponse
-from mysites.geneapro import models
-from mysites.geneapro.utils.date import CalendarGregorian
-from mysites.geneapro.views.tree import Tree, SameAs
-from mysites.geneapro.views.styles import *
-from mysites.geneapro.views.persona import extended_personas, event_types_for_pedigree
-from mysites.geneapro.views.json import to_json
+from geneapro import models
+from geneapro.utils.date import CalendarGregorian
+from geneapro.views.tree import Tree, SameAs
+from geneapro.views.styles import *
+from geneapro.views.persona import extended_personas, event_types_for_pedigree
+from geneapro.views.json import to_json
 
 def view (request, decujus=1):
    """Display the statistics for a given person"""

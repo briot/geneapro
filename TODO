@@ -10,6 +10,11 @@
 ** Investigate storing trees more efficiently
    See for instance http://articles.sitepoint.com/print/hierarchical-data-database
    and http://code.google.com/p/django-mptt/
+
+* Trees
+** Look at H-Trees for efficient visualization
+  http://www.tco.utah.edu/NEWSLETTER/2011June/featured-article.php
+  http://rootstech.org/schedule/saturday/TD044
   
 * Gedcom import
 ** Import all missing GEDCOM information (reported by ./manage.py import)
@@ -103,3 +108,22 @@ http://www.beholdgenealogy.com/blog/?p=876
 
 * Face detection in images
   See https://github.com/jaysalvat/jquery.facedetection
+
+* Online courses
+** Inferential Genealogy
+  https://www.familysearch.org/learningcenter/lesson/inferential-genealogy/251
+
+* Gedcom replacements
+  Several models are proposed to replace Gedcom. Most of them share a number of
+  characteristics with the GenTech datamodel that geneapro uses, but with
+  slight differences. It would be useful to be able to export to one of those,
+  and perhaps to even change the internal datamodel if a clear contender
+  emerges.
+** http://gedcomx.net
+** http://gedcomx.org
+** http://github.com/FamilySearch/gedcomx
+** http://www.tamurajones.net/FamilySearchReleasesGEDCOMX.xhtml
+
+* web
+** timeline
+  http://www.chronozoomproject.org/

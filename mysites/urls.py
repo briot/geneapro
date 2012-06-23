@@ -1,14 +1,15 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.views import static
+import geneapro.urls
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = patterns('',
-	(r'^', include('mysites.geneapro.urls')),
-	(r'^geneapro/', include('mysites.geneapro.urls')),
+	(r'^', include(geneapro.urls)),
+	(r'^geneapro/', include(geneapro.urls)),
 
     ## Serve static files (images and CSS). This is not recommended for use
     ## in production since this is insecure and inefficient according to the

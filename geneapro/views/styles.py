@@ -61,7 +61,7 @@ __all__ = ["alive", "get_place",
            "RULE_SMALLER", "RULE_SMALLER_EQUAL", "RULE_AFTER",
            "RULE_ON", "RULE_CONTAINS_NOT_INSENSITIVE"]
 
-from mysites.geneapro.utils.date import DateRange
+from geneapro.utils.date import DateRange
 
 max_age = 110
 # maximum age before we consider a person to be dead

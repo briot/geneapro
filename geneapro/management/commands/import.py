@@ -3,7 +3,7 @@ Provides new commands to ./manage.py
 """
 
 import sys
-from mysites.geneapro.importers.gedcomimport import GedcomFileImporter
+from geneapro.importers.gedcomimport import GedcomFileImporter
 from django.utils import termcolors
 from django.core.management.base import LabelCommand
 import time
@@ -30,3 +30,6 @@ class Command(LabelCommand):
       end = time.time()
       sys.stdout.write(
           STYLE('Done importing (%0.3f s)\n' % (end - start,)))
+
+      print("\n")
+      print("Run 'ANALYZE;' in the database to optimize it")

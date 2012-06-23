@@ -7,13 +7,13 @@ from django.template import RequestContext
 from django.utils.translation import ugettext as _
 from django.utils import simplejson
 from django.http import HttpResponse
-from mysites.geneapro import models
-from mysites.geneapro.utils.date import DateRange
-from mysites.geneapro.views.custom_highlight import style_rules
-from mysites.geneapro.views.styles import Styles
-from mysites.geneapro.views.rules import getLegend
-from mysites.geneapro.views.tree import Tree, SameAs
-from mysites.geneapro.views.queries import sql_in
+from geneapro import models
+from geneapro.utils.date import DateRange
+from geneapro.views.custom_highlight import style_rules
+from geneapro.views.styles import Styles
+from geneapro.views.rules import getLegend
+from geneapro.views.tree import Tree, SameAs
+from geneapro.views.queries import sql_in
 import collections
 
 

@@ -2,8 +2,8 @@
 Various views related to displaying the pedgree of a person graphically
 """
 
-from mysites.geneapro import models
-from mysites.geneapro.views.styles import *
+from geneapro import models
+from geneapro.views.styles import *
 
 style_rules = [
     ("Persons that are alive",
