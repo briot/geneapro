@@ -8,6 +8,7 @@ import geneapro.views.stats
 import geneapro.views.sources
 import geneapro.views.events
 import geneapro.views.merge
+import geneapro.views.graph
 
 urlpatterns = patterns('',
 	(r'^$', geneapro.views.pedigree.pedigree_view),
@@ -23,5 +24,8 @@ urlpatterns = patterns('',
 	(r'^fanchart/(\d+)$', geneapro.views.pedigree.fanchart_view),
 	(r'^stats$',        geneapro.views.stats.view),
 	(r'^stats/(\d+)$',  geneapro.views.stats.view),
+
+    # Experimental, does not work yet
     (r'^merge$',        geneapro.views.merge.view),
+    (r'^graph$',        geneapro.views.graph.view),
 )
