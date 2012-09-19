@@ -211,7 +211,6 @@ class Digraph(object):
     DIRECTION_INCOMING = 2
 
     def breadth_first_search(self, roots, edgeiter=None,
-                             cluster=None,
                              direction=DIRECTION_OUTGOING):
 
         def bfs(seen, u):
@@ -219,17 +218,14 @@ class Digraph(object):
                Does not return u itself.
             """
 
-            clust = list(cluster(u))
             ends = []
-
-            for c in clust:
-                seen.add(c)
-                for edge in edgeiter(c):
-                    e = edge[edge_end]
-                    if e not in seen:
-                        yield e
-                        ends.append(e)
-                        seen.add(e)
+            seen.add(u)
+            for edge in edgeiter(u):
+                e = edge[edge_end]
+                if e not in seen:
+                    yield e
+                    ends.append(e)
+                    seen.add(e)
 
             for e in ends:
                 for d in bfs(seen, e):
@@ -240,9 +236,6 @@ class Digraph(object):
 
         edge_end = 1 if direction == Digraph.DIRECTION_OUTGOING else 0
 
-        if cluster is None:
-            cluster = lambda node: [node]
-
         seen = set()
 
         for node in roots:
@@ -252,7 +245,6 @@ class Digraph(object):
                     yield d
 
     def depth_first_search(self, roots=None, edgeiter=None,
-                           cluster=None,
                            direction=DIRECTION_OUTGOING):
         """
         Traverse the tree depth first search, and returns the children of
@@ -269,11 +261,6 @@ class Digraph(object):
            function takes one parameter, the node we are inspecting. The
            default is self.out_edges.
 
-        :param cluster: a function that takes a node and returns all the
-           nodes that should be part of the same cluster. Only the first
-           node of the cluster is returned. All edges from any of those
-           nodes are traversed.
-
         :param direction: whether we should look at the start of the edges
            (DIRECTION_INCOMING) or the end (DIRECTION_OUTGOING)
 
@@ -281,31 +268,25 @@ class Digraph(object):
         """
 
         def dfs(u):
-            clust = list(cluster(u))
-
-            for c in clust:
-                color[c] = 1  # GRAY
+            color[u] = 1  # GRAY
 
             # Since topological sort will reverse the list, we need to also
             # reverse the sort order so that the final order is that returned
             # by edgeiter
 
-            for c in clust:
-                for edge in reversed(list(edgeiter(c))):
-                    v = edge[edge_end]
-                    c = color[v]
-                    if c == 0:   # WHITE
-                        # predecessor[v] = u
-                        for d in dfs(v):
-                            yield d
+            for edge in reversed(list(edgeiter(u))):
+                v = edge[edge_end]
+                c = color[v]
+                if c == 0:   # WHITE
+                    # predecessor[v] = u
+                    for d in dfs(v):
+                        yield d
 
-                    elif c == 1:  # GRAY
-                        self.__backedges.add(edge)
-                        self.__cyclic = True
+                elif c == 1:  # GRAY
+                    self.__backedges.add(edge)
+                    self.__cyclic = True
 
-            for c in clust:
-                color[c] = 2  # BLACK
-
+            color[u] = 2  # BLACK
             yield u
 
         if roots is None:
@@ -320,9 +301,6 @@ class Digraph(object):
             edgeiter = self.out_edges
 
         edge_end = 1 if direction == Digraph.DIRECTION_OUTGOING else 0
-
-        if cluster is None:
-            cluster = lambda node: [node]
 
         self.__backedges = set()
         self.__cyclic = False

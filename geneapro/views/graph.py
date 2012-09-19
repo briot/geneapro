@@ -22,13 +22,27 @@ from geneapro.utils.graphs import Digraph
 class Persona_node(object):
     """A persona from the genealogy"""
 
-    def __init__(self, id, name):
-        self.id = id   # in the database
+    def __init__(self, ids, name):
+        """
+        Creates a new node to be stored in a graph.
+        Such a node represents a physical person, possibly constructed from
+        several personas. The ids set should indicate one or more database
+        ids for the personas. More can be added later.
+        
+        The name is for debugging purposes only
+        """
+
+        assert isinstance(ids, set)
+
+        self.ids = ids
         self.name = name
-        self.layer = -1
+
+        # When viewing the database as a Quilts diagram, persons are organized
+        # into layers.
+        self.quilts_layer = -1
 
     def _graphlabel(self):
-        return "%d-%s" % (self.id, self.name)
+        return "%s-%s" % (",".join("%s" % p for p in self.ids), self.name)
 
 
 class P2P_Link(object):
@@ -57,11 +71,19 @@ class P2P_Link(object):
 
 
 class GeneaGraph(Digraph):
+    """
+    A graph that represents various relationships between people in the
+    database. It does not contain all the info from the database, but should be
+    thought mostly as an index into the database, allowing us to find which
+    persons are needed for a query.
+    """
 
     def __init__(self):
         super(GeneaGraph, self).__init__()
 
-        # Fast mapping from database id to graph nodes
+        # Fast mapping from database id to graph nodes.
+        # There can be multiple ids mapping to the same node, when all the ids
+        # represent the same physical person.
         self.__nodes = dict()
 
     def node_from_id(self, id):
@@ -70,25 +92,53 @@ class GeneaGraph(Digraph):
     def from_db(self):
         """Create a graph from the data in the db"""
 
-        ######
-        # All the persona from the database
-
         self.__nodes = dict()   # id -> Persona()
+
+        sameas = dict()  # id -> [set of persona ids]
+
+        #####
+        # Group same-as personas into a single node.
+
+        query = models.P2P.objects.filter(
+            type=models.P2P.sameAs, disproved=False)
+        for p in query.values_list('person1', 'person2'):
+            p0 = sameas.get(p[0], None)
+            p1 = sameas.get(p[1], None)
+            if p0 is None:
+                if p1 is None:
+                    sameas[p[0]] = sameas[p[1]] = set((p[0], p[1]))
+                else:
+                    sameas[p[0]] = p1
+                    p1.add(p[0])
+            else:
+                if p1 is None:
+                    sameas[p[1]] = p0
+                    p0.add(p[1])
+                else:
+                    p0.update(p1)  # merge both groups
+                    sameas[p[1]] = p0
+
+        ######
+        # Create nodes for all the persona from the database
+
         for p in models.Persona.objects.values_list('id', 'name'):
-            self.__nodes[p[0]] = pa = Persona_node(id=p[0], name=p[1])
+            same = sameas.get(p[0], set((p[0], )))  # a set of persona ids
+            pa = Persona_node(ids=same, name=p[1])
+
+            for s in same:
+                self.__nodes[s] = pa
+
             self.add_node(pa)
 
         ######
         # Relationship between person through events
 
         p2e = models.P2E.objects.filter(
-            event__type__in=(models.Event_Type.birth,
-                     ),
+            event__type__in=(models.Event_Type.birth, ),
             disproved=False,
             role__in=(models.Event_Type_Role.principal,
                       models.Event_Type_Role.birth__father,
-                      models.Event_Type_Role.birth__mother)
-            )
+                      models.Event_Type_Role.birth__mother))
         events = dict()  # id -> (child, father, mother)
 
         for p in p2e.values_list('person', 'event', 'role'):
@@ -117,18 +167,6 @@ class GeneaGraph(Digraph):
                         toP=self.node_from_id(e[2]),
                         kind=P2P_Link.KIND_SPOUSE))
 
-       #####
-       # Relationship between persons through P2P
-
-        query = models.P2P.objects.filter(
-            type=models.P2P.sameAs,
-            disproved=False).select_related('surety')
-        for p in query.values_list('person1', 'person2'):
-            self.add_edge(P2P_Link(
-                    fromP=self.node_from_id(p[0]),
-                    toP=self.node_from_id(p[1]),
-                    kind=P2P_Link.KIND_SAME_AS))
-
     def ancestor_edges(self, node):
         """
         Iterate all "ancestor" edges for a node, ie return the genealogical
@@ -147,25 +185,6 @@ class GeneaGraph(Digraph):
             if e.kind in (P2P_Link.KIND_FATHER, P2P_Link.KIND_MOTHER):
                 yield e
 
-    def cluster_personas(self, node):
-        """
-        Group personas that match the same physical person.
-        """
-        def __local(seen, n):
-            if n not in seen:
-                seen.add(n)
-
-                for e in self.out_edges(n):
-                    if e.kind == P2P_Link.KIND_SAME_AS:
-                        __local(seen, e[1])
-                for e in self.in_edges(n):
-                    if e.kind == P2P_Link.KIND_SAME_AS:
-                        __local(seen, e[0])
-
-        seen = set()
-        __local(seen, node)
-        return [n for n in seen]
-
     def set_layers(self):
         """Assign layers to each persona in the graph, so that the following
            requirements are correct:
@@ -182,7 +201,6 @@ class GeneaGraph(Digraph):
         for n in self.breadth_first_search(
             roots=[e1],
             edgeiter=self.ancestor_edges,
-            cluster=self.cluster_personas,
             direction=Digraph.DIRECTION_INCOMING):
 
             print self.node_label(n).encode("utf-8") 
@@ -192,7 +210,6 @@ class GeneaGraph(Digraph):
             for n in self.breadth_first_search(
                 roots=[e1],
                 edgeiter=self.children_edges,
-                cluster=self.cluster_personas,
                 direction=Digraph.DIRECTION_OUTGOING))
 
 
