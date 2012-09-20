@@ -69,6 +69,11 @@ http://www.beholdgenealogy.com/blog/?p=876
 ** Tooltip to display person info
 ** Implement based on the canvas.
 
+** Rotation fan chart
+   See https://plus.google.com/u/0/115195430424417504730/posts/QrXM4z9JxrG
+** Half and Quarter circle view
+   http://www.gramps-project.org/wiki/index.php?title=GEPS_030:_New_Visualization_Techniques
+** Configure gradient of colors
 * Person View
 ** DONE For each event, add an "downarrow" to show event details
    CLOSED: [2011-03-21 Mon 15:27]

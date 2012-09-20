@@ -211,9 +211,10 @@ class Digraph(object):
     DIRECTION_INCOMING = 2
 
     def breadth_first_search(self, roots, edgeiter=None,
+                             maxdepth=-1,
                              direction=DIRECTION_OUTGOING):
 
-        def bfs(seen, u):
+        def bfs(seen, u, maxdepth):
             """Return all children of u, then their own children.
                Does not return u itself.
             """
@@ -227,9 +228,10 @@ class Digraph(object):
                     ends.append(e)
                     seen.add(e)
 
-            for e in ends:
-                for d in bfs(seen, e):
-                    yield d
+            if maxdepth > 0:
+                for e in ends:
+                    for d in bfs(seen, e, maxdepth - 1):
+                        yield d
 
         if edgeiter is None:
             edgeiter = self.out_edges
@@ -241,7 +243,7 @@ class Digraph(object):
         for node in roots:
             if node not in seen:
                 yield node
-                for d in bfs(seen, node):
+                for d in bfs(seen, node, maxdepth):
                     yield d
 
     def depth_first_search(self, roots=None, edgeiter=None,
@@ -267,7 +269,7 @@ class Digraph(object):
         :return: an iterator
         """
 
-        def dfs(u):
+        def dfs(u, color):
             color[u] = 1  # GRAY
 
             # Since topological sort will reverse the list, we need to also
@@ -279,7 +281,7 @@ class Digraph(object):
                 c = color[v]
                 if c == 0:   # WHITE
                     # predecessor[v] = u
-                    for d in dfs(v):
+                    for d in dfs(v, color):
                         yield d
 
                 elif c == 1:  # GRAY
@@ -291,7 +293,7 @@ class Digraph(object):
 
         if roots is None:
             # An iterator
-            roots = (r for r in self if self.isroot(r))
+            roots = list(self.roots())
         else:
             # Here as well we want to preserve the user's sort, and topological
             # is going to reverse the final list.
@@ -311,8 +313,8 @@ class Digraph(object):
             color[node] = 0   # WHITE
 
         for node in roots:
-            if color[node] == 0:
-                for d in dfs(node):
+            if color[node] == 0:   # WHITE
+                for d in dfs(node, color):
                     yield d
 
     def topological_sort(self, roots=None, edgeiter=None):
@@ -378,11 +380,13 @@ class Digraph(object):
 
         return (edge[1] for edge in edgeiter(node))
 
-    def parents(self, node):
+    def parents(self, node, edgeiter=None):
         """
         Iterate of all *nodes* that are the source of an edge incoming to node.
         """
-        return [edge[0] for edge in self.inedges[node]]
+        if edgeiter is None:
+            edgeiter = self.in_edges
+        return [edge[0] for edge in edgeiter(node)]
 
     def sorted_parents(self, node):
         """

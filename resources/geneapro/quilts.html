@@ -1,0 +1,33 @@
+{% extends "geneapro/base.html" %}
+{% block title %}GeneaPro: Quilts{% endblock %}
+
+{% block css %}
+{% endblock css %}
+
+{% block script %}
+$(document).ready(function() {
+  var data = {{data|safe}};
+  var families = [[1,1328,1542],
+            [438,1328,1754], /* MH, Roland, Anaelle */
+                  [438,672,1],  /* Anne, Roland, Manu */
+            [1959,1071,1328], /* Andre, Therese, MH */
+                  [557,579,1328], /* GilGin, MH */
+                  [332,345,672],  /* Rene, Jacky, Anne */
+                  [289,318,438],  /* Joseph, Marie, Roland */
+                  [1959,1071,579], /* Andre, Therese, Gin */
+                  [356,361,332], /* Augustin, Marie, Rene */
+  ];
+  quilts($("#quilts"), data, families);
+});
+{% endblock script %}
+
+{% block endbody %}
+<script type="text/javascript" src="{{MEDIA_URL}}quilts.js"></script>
+{% endblock endbody %}
+
+{% block leftside %}
+{% endblock leftside %}
+
+{% block contents %}
+<canvas id="quilts" style="width:100%;height:100%"></canvas>
+{% endblock contents %}

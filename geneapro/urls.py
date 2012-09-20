@@ -27,5 +27,5 @@ urlpatterns = patterns('',
 
     # Experimental, does not work yet
     (r'^merge$',        geneapro.views.merge.view),
-    (r'^graph$',        geneapro.views.graph.view),
+    (r'^quilts$',        geneapro.views.graph.view),
 )
