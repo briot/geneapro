@@ -87,10 +87,9 @@ class GeneaGraph(Digraph):
         # represent the same physical person.
         self.__nodes = dict()
 
-        # Quilts layers. Each element is a sorted list of the nodes in the given
-        # layer
+        # Number of generation layers
 
-        self.layers = dict()
+        self.layers_count = 0
 
     def node_from_id(self, id):
         return self.__nodes[id]
@@ -297,9 +296,7 @@ class GeneaGraph(Digraph):
         # N1. At the same time, we prepare a structure containing the nodes in
         # each layer, so that we can later organize them within their layers.
 
-        self.layers = dict()
-        for lay in range(0, layers_count + 1):
-            self.layers[lay] = []
+        self.layers_count = layers_count
 
         for node in self.depth_first_search(
             roots=list(self.nodes_with_no_ancestors()),
@@ -313,8 +310,6 @@ class GeneaGraph(Digraph):
             for c in self.parents(node, edgeiter=self.parent_edges):
                 min_parents = min(min_parents, c.quilts_layer)
             node.quilts_layer = max(node.quilts_layer, min_parents - 1)
-
-            self.layers[node.quilts_layer].append(node)
 
         # A database could be made up of several independent trees. For
         # instance, the user might have registered "possible ancestors" that
@@ -335,7 +330,162 @@ class GeneaGraph(Digraph):
         # layers (so that for instance the first persons in a layer should be
         # linked to the first persons in the next layer).
 
-        pass
+        pass  # Done on a subset of the graph when returning data to web
+
+    def get_layers(self, subset=None):
+        """
+        Return a list of list of people. Each element of the outter list is the
+        unsorted contents for one of the layers.
+              [  [layer1_node1, layer1_node2, ...],
+                 [layer2_node1, layer2_node2, ...], ...]
+        """
+
+        # Create a temporary structure, so that we can skip empty layers
+        layers = dict()
+        for n in subset or self:
+            layers.setdefault(n.quilts_layer, []).append(n)
+
+        result = []
+        for lay in sorted(layers.keys()):
+            result.append(layers[lay])
+        return result
+
+    def compute_families(self, subset=None):
+        """
+        Compute the list of families that include nodes from the subset (or
+        all the families in the database if subset is None).
+        Returns a tuple of two data structures:
+           * a set of  (parent, child)  tuples for each link in the graph.
+             This will be used to order nodes within a layer
+           * the list of families (tuples of nodes)
+        """
+
+        tmp = dict()  # families: (father,mother,child1,child2,...)
+                      # indexed on (father, mother)
+        links = set() # set ( (parent, child) )
+
+        for n in (subset or self):
+            father = mother = None
+
+            for e in self.in_edges(n):
+                if e.kind == P2P_Link.KIND_FATHER:
+                    if subset is None or e[0] in subset:
+                        father = e[0]
+                        links.add((father, n))
+                elif e.kind == P2P_Link.KIND_MOTHER:
+                    if subset is None or e[0] in subset:
+                        mother = e[0]
+                        links.add((mother, n))
+
+            d = tmp.get((father, mother), None)
+            if d is None:
+                d = tmp[(father, mother)] = [mother, father]
+            d.append(n)
+
+        return links, tmp.values()
+
+    def sort_families(self, layers, families):
+        """
+        Sort the families, so that they are organized by layer. A family is
+        associated with its right-most layer (in general to the left of the
+        layer that contains the children). Within each layer, the families are
+        sorted in the order in which they should be displayed in the matrix --
+        so for instance the first family should involve the first person of the
+        layer to limit crossings of links.
+        """
+
+        byLayer = dict()   # Contains list of families
+        for index, _ in enumerate(layers):
+            # make sure each layer has at least an empty list
+            byLayer[index] = [] 
+
+        for family in families:
+            rightMostLayer = min(
+                p.quilts_layer for p in family if p is not None)
+            byLayer[rightMostLayer].append(family)
+
+        indexInLayer = dict()
+        for layer in layers:
+            for index, node in enumerate(layer):
+                indexInLayer[node] = index
+
+        result = []
+        for r in byLayer.itervalues():
+            # Sort the families within each layer
+            r.sort(
+                key=lambda family: min(indexInLayer.get(family[0], -1),
+                                       indexInLayer.get(family[1], -1)))
+            
+            # Pass the ids of the family members, not the nodes
+            result.append(
+                [map(lambda node: min(node.ids) if node else -1,
+                     family) 
+                 for family in r])
+
+        return result
+
+    def barycenter_heuristic(self, layers, links):
+        """
+        Layers is a list of list of nodes, where each list is the list of
+        people on each layer.
+        Each layer is sorted so as to meet the following requirements:
+            - group spouses as much as possible
+            - persons with no spouse should be at the top (since they will
+              not need an entry in the matrix, and this will reduce the
+              number of lines in the matrix)
+            - group children from the same parents together (minus their
+              respective spouses)
+            - in layer n, the couples should be ordered as their children
+              in layer n - 1. This reduces the sizes of the matrix
+
+        Links should be a set of tuples (parent,child).
+
+        To do this, we use a Barycenter Heuristic.
+        This is also similar to what dot() uses to reorder nodes within a
+        layer to minimize edge crossing. See for instance:
+           "The barycenter Heuristic and the reorderable matrix"
+              Erkki Makinen, Harri Siirtola
+           http://www.informatica.si/PDF/29-3/"
+               13_Makinen-The%20Barycenter%20Heuristic....pdf
+
+        Basically, for each layer, we order the nodes based on the barycenter
+        of their neighbor nodes, and repeat for each layer.
+        We add a small offset to the weights so that:
+           - fathers appear before mothers (by convention)
+        """
+
+        def order_layer1(layer1, layer2):
+            weights = {}
+            for n in layer1:
+               total = 0 if n.sex == "M" else 0.5  # father first
+               count = 1
+               for index2, n2 in enumerate(layer2):
+                   if (n, n2) in links:
+                       total += index2 + 1
+                       count += 1
+               weights[n] = float(total) / float(count)
+
+            print ["%f %s" % (n, key.name.encode("utf-8"))
+                   for key, n in weights.iteritems()]
+            layer1.sort(key=lambda x: weights[x])
+
+        def order_layer2(layer1, layer2):
+            weights = {}
+            for n2 in layer2:
+               total = 0 if n2.sex == "M" else 0.5
+               count = 1
+               for index, n in enumerate(layer1):
+                   if (n, n2) in links:
+                       total += index + 1
+                       count += 1
+               weights[n2] = float(total) / float(count)
+
+            layer2.sort(key=lambda x: weights[x])
+
+        for index, layer in enumerate(layers):
+            if index > 0:
+                order_layer1(layer, layers[index - 1])
+        order_layer2(layers[len(layers) - 1], layers[len(layers) - 2])
 
     def json(self, id=None, maxdepth=-1):
         """
@@ -353,11 +503,8 @@ class GeneaGraph(Digraph):
 
         if id is not None:
             e1 = self.node_from_id(id)
-
-            # Also the spouse(s) of e1
             ids = [e1]
-            ids.extend(self.spouses(e1))
-
+            ids.extend(self.spouses(e1))  # Also analyze spouse(s)
             to_match = set(self.breadth_first_search(
                     roots=ids,
                     maxdepth=maxdepth,
@@ -369,14 +516,20 @@ class GeneaGraph(Digraph):
                     edgeiter=self.children_edges,
                     direction=Digraph.DIRECTION_OUTGOING))
 
+
+        links, families = self.compute_families(subset=to_match)
+        layers = self.get_layers(subset=to_match)
+        self.barycenter_heuristic(layers, links)
+        families = self.sort_families(layers, families)
+
         result = []
-        for lay in sorted(self.layers.keys()):
+        for lay in layers:
             result.append(
                 [(min(n.ids), n.name.encode("utf-8"), n.sex)
-                 for n in self.layers[lay]
-                 if to_match is None or n in to_match])
+                 for n in lay])
 
-        return json.to_json(result, year_only=True)
+        return {"data": json.to_json(result, year_only=True),
+                "families": families}
 
 
 def view(request):
@@ -389,6 +542,6 @@ def view(request):
 
     return render_to_response(
         'geneapro/quilts.html',
-        {"data": g.json(id=1, maxdepth=3)},
+        g.json(id=1, maxdepth=3),
         context_instance=RequestContext(request))
 

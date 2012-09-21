@@ -28,55 +28,33 @@ function maxOrUndef(a, b) {
 }
 
 /**
- * Preprocess the families data that comes the server.
- * @param {Array.<*>} layers   The data about layers, from the server.
+ * Analyze data from the families, needed for further display.
+ *
+ * @param {Object}  personToLayer   The info for each person
  * @param {Array.<*>} families
- *    The data from the server. It is a list of tuples, each of width contains
- *    the indices of the father, the mother, and each of the children.
- * @return {Object} A preprocessed list.
- *    It is a list of array. Each index in the list corresponds to the
- *    layer to the right of which the family is displayed (so to the right of
- *    a layer we need n columns for families, where n is the size of the array
- *    at index 'layer' in the returned array).
- *    For instance:
- *        [ // index 1, for the first layer
- *           [ each of the families displayed to the left of the layer ],
- *          // index 2 for the second layer
- *        ]
+ *    The data from the server. It has the following format:
+ *        families ::= [ families_in_layer+ ]
+ *        families_in_layer ::= [ family+ ]
+ *        family ::= [father || -1, mother || -1, child1, child2,...]
  */
 
-function preprocess_families(layers, personToLayer, families) {
-    var result = [];
+function preprocess_families(personToLayer, families) {
+    for (var layer = 0; layer < families.length; layer++) {
+        var families_in_layer = families[layer];
 
-    for (var layer = 0; layer < layers.length; layer++) {
-        result.push([]);
-    }
-
-    for (var fam = 0; fam < families.length; fam++) {
-        var maxLayer = undefined;
-
-        for (var person = 0; person < families[fam].length; person++) {
-            var p = families[fam][person];
-            maxLayer = minOrUndef(maxLayer, personToLayer[p][0]);
-        }
-        maxLayer ++;
-
-        for (var person = 0; person < 2; person++) {
-            var p = families[fam][person];
-            if (p) {
-                if (personToLayer[p][3] > maxLayer) {
-                    personToLayer[p][3] = maxLayer; // rightMostMarriageLayer
-                    personToLayer[p][4] = result[maxLayer].length + 1;  // rightMostMarriage index
-
+        for (var family = 0; family < families_in_layer.length; family++) {
+            var fam = families_in_layer[family];
+            for (var person = 0; person < fam.length; person++) {
+                var p = fam[person];
+                if (p != -1) {
+                    if (personToLayer[p][3] > layer) {
+                        personToLayer[p][3] = layer; // rightMostMarriageLayer
+                        personToLayer[p][4] = family; // rightMostMarriageIndex
+                    }
                 }
             }
         }
-            
-
-        result[maxLayer].push(families[fam]);
     }
-
-    return result;
 }
 
 function compute_personToLayer(layers) {
@@ -120,8 +98,7 @@ function quilts(canvas, data, families) {
     var ctx = c.getContext("2d");
 
     var personToLayer = compute_personToLayer(data);
-    var fams = preprocess_families(
-        data /* layers */,
+    preprocess_families(
         personToLayer /* personToLayer */,
         families /* families */);
 
@@ -147,7 +124,7 @@ function quilts(canvas, data, families) {
     // First display each layers. We need to know the position of each
     // rectangle before we can draw the matrices between them.
 
-    for (var layer = data.length - 1; layer > 0; layer--) {
+    for (var layer = data.length - 1; layer >= 0; layer--) {
         if (data[layer].length) {
             var y = layerY + lineSpacing;
             var maxWidth = 0;
@@ -179,9 +156,9 @@ function quilts(canvas, data, families) {
             lefts[layer] = layerX;
             rights[layer] = layerX + width;
             heights[layer] = height;
-            layerX = rights[layer] + fams[layer].length * colSpacing;
+            layerX = rights[layer] + families[layer].length * colSpacing;
 
-            if (fams[layer].length) {
+            if (families[layer].length) {
                 layerY += height + F_height;
             } else {
                 layerY += height;
@@ -192,7 +169,7 @@ function quilts(canvas, data, families) {
     //*************************
     // Now display the matrices for the couples (marriage,...) and children
 
-    for (var layer = data.length - 2; layer > 0; layer--) {
+    for (var layer = data.length - 2; layer >= 0; layer--) {
         if (data[layer].length) {
 
             if (prevLayer !== undefined) {
@@ -207,11 +184,11 @@ function quilts(canvas, data, families) {
 
                 ctx.strokeStyle = "gray";
                 ctx.fillStyle = "black";
-                for (var m = 0; m < fams[prevLayer].length; m++) {
+                for (var m = 0; m < families[prevLayer].length; m++) {
                     var minY   = tops[layer];
                     
                     for (var p = 0; p < 2; p++) {
-                        var person = fams[prevLayer][m][p];
+                        var person = families[prevLayer][m][p];
                         var info = personToLayer[person];
                         var y = tops[info[0]] + info[1] * lineSpacing;
                         minY = Math.min(minY, y);
@@ -229,7 +206,7 @@ function quilts(canvas, data, families) {
                 }
 
                 ctx.beginPath();
-                var x = fams[prevLayer].length * colSpacing;
+                var x = families[prevLayer].length * colSpacing;
                 mins[m] = minY;
                 ctx.moveTo(x, minY);
                 ctx.lineTo(x, tops[layer]);
@@ -311,9 +288,9 @@ function quilts(canvas, data, families) {
 
                 ctx.fillStyle = "black";
 
-                for (var m = 0; m < fams[prevLayer].length; m++) {
-                    for (var c = 2; c < fams[prevLayer][m].length; c++) {
-                        var child = fams[prevLayer][m][c];
+                for (var m = 0; m < families[prevLayer].length; m++) {
+                    for (var c = 2; c < families[prevLayer][m].length; c++) {
+                        var child = families[prevLayer][m][c];
                         var info = personToLayer[child];
                         drawSymbol(info[2] /* sex */,
                                    m * colSpacing,
@@ -323,7 +300,7 @@ function quilts(canvas, data, families) {
 
                 ctx.strokeStyle = "gray";
                 ctx.beginPath();
-                for (var p2 = 0; p2 < fams[prevLayer].length; p2++) {
+                for (var p2 = 0; p2 < families[prevLayer].length; p2++) {
                     var x = p2 * colSpacing;
                     ctx.moveTo(x, 0);
                     ctx.lineTo(x, heights[layer]);
