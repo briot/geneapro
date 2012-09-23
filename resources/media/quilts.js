@@ -169,7 +169,7 @@ function quilts(canvas, data, families) {
     //*************************
     // Now display the matrices for the couples (marriage,...) and children
 
-    for (var layer = data.length - 2; layer >= 0; layer--) {
+    for (var layer = data.length - 1; layer >= 0; layer--) {
         if (data[layer].length) {
 
             if (prevLayer !== undefined) {
@@ -189,10 +189,17 @@ function quilts(canvas, data, families) {
                     
                     for (var p = 0; p < 2; p++) {
                         var person = families[prevLayer][m][p];
-                        var info = personToLayer[person];
-                        var y = tops[info[0]] + info[1] * lineSpacing;
-                        minY = Math.min(minY, y);
-                        drawSymbol(info[2] /* sex */, m * colSpacing, y);
+                        if (person != -1) {
+                            var info = personToLayer[person];
+                            if (!info) {
+                                window.console.log("MANU no info for person ", person,
+                                                   " from family ", families[prevLayer],
+                                                   " in layer ", prevLayer);
+                            }
+                            var y = tops[info[0]] + info[1] * lineSpacing;
+                            minY = Math.min(minY, y);
+                            drawSymbol(info[2] /* sex */, m * colSpacing, y);
+                        }
                     }
 
                     mins[m] = Math.min(prevMinY, minY);

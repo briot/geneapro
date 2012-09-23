@@ -87,10 +87,6 @@ class GeneaGraph(Digraph):
         # represent the same physical person.
         self.__nodes = dict()
 
-        # Number of generation layers
-
-        self.layers_count = 0
-
     def node_from_id(self, id):
         return self.__nodes[id]
 
@@ -233,6 +229,20 @@ class GeneaGraph(Digraph):
             if no_ancestor:
                 yield n
 
+    def nodes_with_no_children(self):
+        """
+        All nodes with no genealogical parent.
+        """
+
+        for n in self:
+            no_children = True
+            for e in self.out_edges(n):
+                if e.kind in (P2P_Link.KIND_FATHER, P2P_Link.KIND_MOTHER):
+                    no_children = False
+                    break
+            if no_children:
+                yield n
+
     def spouses(self, node):
         """
         return the nodes representing the spouses of node.
@@ -255,61 +265,14 @@ class GeneaGraph(Digraph):
                 contradicts the above requirements. This is used to classify
                 independent personas.
         """
-        
-        # Traverse the tree so that children are seen before their parents.
-        # Start assigning layers from those childre, and propagate to the
-        # parents. This will not result in the best partioning. For instance,
-        # the following tree is numbered based on the order of traversal by the
-        # dfs algorithm. In parenthesis are the layers assigned by the
-        # algorithm:
-        #
-        #                           N11(5)
-        #        N7(4)  N8(4)    N10(4)
-        #            N6(3)     N9(3)
-        #              \    /
-        #                N5(2)
-        #               /   \
-        #             N1(0)  N4(1)
-        #                   /   \
-        #                  N2(0)  N3(0)
-        #
-        # This satisfies the requirement that layer of children < layer of
-        # parents. But N1 and N4 should ideally be on the same layer
 
-        layers_count = 0
+        layers = self.rank_longest_path(
+            roots=list(self.nodes_with_no_children()),
+            outedgesiter=self.parent_edges,
+            inedgesiter=self.children_edges)
 
-        for node in self.depth_first_search(
-            roots=list(self.nodes_with_no_ancestors()),
-            edgeiter=self.children_edges,
-            direction=Digraph.DIRECTION_OUTGOING):
-
-            layer = 0
-            for c in self.children(node, edgeiter=self.children_edges):
-                layer = max(layer, c.quilts_layer)
-
-            node.quilts_layer = layer + 1
-            layers_count = max(layers_count, layer + 1)
-
-        # Now a second traversal, similar to the one above. But we now check
-        # the parent's layer, and chose for the child the maximum of its
-        # current layer and that of the parent's - 1. This fixes the layer of
-        # N1. At the same time, we prepare a structure containing the nodes in
-        # each layer, so that we can later organize them within their layers.
-
-        self.layers_count = layers_count
-
-        for node in self.depth_first_search(
-            roots=list(self.nodes_with_no_ancestors()),
-            edgeiter=self.children_edges,
-            direction=Digraph.DIRECTION_OUTGOING):
-
-            # ??? Could look at the spouse relationships too, to try and
-            # put them in the same layer.
-
-            min_parents = layers_count
-            for c in self.parents(node, edgeiter=self.parent_edges):
-                min_parents = min(min_parents, c.quilts_layer)
-            node.quilts_layer = max(node.quilts_layer, min_parents - 1)
+        for node, layer in layers.iteritems():
+            node.quilts_layer = layer
 
         # A database could be made up of several independent trees. For
         # instance, the user might have registered "possible ancestors" that
@@ -324,13 +287,10 @@ class GeneaGraph(Digraph):
 
         pass
 
-        # Now organize the nodes withing each layer, by grouping spouses as
-        # much as possible, then grouping children of the same parents
-        # together. We also want to reduce the length of links between the
-        # layers (so that for instance the first persons in a layer should be
-        # linked to the first persons in the next layer).
+        # ??? Should we make the layering "proper", by inserting dummy
+        # invisible nodes for links that span multiple layers ? This might
+        # help ordering within layers, in fact.
 
-        pass  # Done on a subset of the graph when returning data to web
 
     def get_layers(self, subset=None):
         """
@@ -377,10 +337,11 @@ class GeneaGraph(Digraph):
                         mother = e[0]
                         links.add((mother, n))
 
-            d = tmp.get((father, mother), None)
-            if d is None:
-                d = tmp[(father, mother)] = [mother, father]
-            d.append(n)
+            if father is not None or mother is not None:
+                d = tmp.get((father, mother), None)
+                if d is None:
+                    d = tmp[(father, mother)] = [mother, father]
+                d.append(n)
 
         return links, tmp.values()
 
@@ -395,15 +356,16 @@ class GeneaGraph(Digraph):
         """
 
         byLayer = dict()   # Contains list of families
-        for index, _ in enumerate(layers):
+        for index in range(0, len(layers)):
             # make sure each layer has at least an empty list
             byLayer[index] = [] 
 
         for family in families:
             rightMostLayer = min(
                 p.quilts_layer for p in family if p is not None)
-            byLayer[rightMostLayer].append(family)
+            byLayer[rightMostLayer + 1].append(family)
 
+        # ??? Should be computed independently
         indexInLayer = dict()
         for layer in layers:
             for index, node in enumerate(layer):
@@ -411,10 +373,15 @@ class GeneaGraph(Digraph):
 
         result = []
         for r in byLayer.itervalues():
-            # Sort the families within each layer
+            # Sort the families within each layer. If one of the parents is in
+            # another layer, we want that marriage to appear first.
+            print "MANU len(r)=", len(r)
             r.sort(
-                key=lambda family: min(indexInLayer.get(family[0], -1),
-                                       indexInLayer.get(family[1], -1)))
+                key=lambda family: 
+                (-max(family[0].quilts_layer if family[0] else 0,
+                     family[1].quilts_layer if family[1] else 0),
+                 min(indexInLayer.get(family[0], -1),
+                     indexInLayer.get(family[1], -1))))
             
             # Pass the ids of the family members, not the nodes
             result.append(
@@ -455,6 +422,9 @@ class GeneaGraph(Digraph):
         """
 
         def order_layer1(layer1, layer2):
+            # ??? Should take into account links to higher layer, so that those
+            # children appear first in the list. This makes the children matrix
+            # more triangular.
             weights = {}
             for n in layer1:
                total = 0 if n.sex == "M" else 0.5  # father first
@@ -469,23 +439,9 @@ class GeneaGraph(Digraph):
                    for key, n in weights.iteritems()]
             layer1.sort(key=lambda x: weights[x])
 
-        def order_layer2(layer1, layer2):
-            weights = {}
-            for n2 in layer2:
-               total = 0 if n2.sex == "M" else 0.5
-               count = 1
-               for index, n in enumerate(layer1):
-                   if (n, n2) in links:
-                       total += index + 1
-                       count += 1
-               weights[n2] = float(total) / float(count)
-
-            layer2.sort(key=lambda x: weights[x])
-
         for index, layer in enumerate(layers):
             if index > 0:
                 order_layer1(layer, layers[index - 1])
-        order_layer2(layers[len(layers) - 1], layers[len(layers) - 2])
 
     def json(self, id=None, maxdepth=-1):
         """
@@ -508,14 +464,11 @@ class GeneaGraph(Digraph):
             to_match = set(self.breadth_first_search(
                     roots=ids,
                     maxdepth=maxdepth,
-                    edgeiter=self.parent_edges,
-                    direction=Digraph.DIRECTION_INCOMING))
+                    edgeiter=self.parent_edges))
             to_match.update(self.breadth_first_search(
                     roots=ids,
                     maxdepth=maxdepth,
-                    edgeiter=self.children_edges,
-                    direction=Digraph.DIRECTION_OUTGOING))
-
+                    edgeiter=self.children_edges))
 
         links, families = self.compute_families(subset=to_match)
         layers = self.get_layers(subset=to_match)
@@ -537,6 +490,8 @@ def view(request):
     g.from_db()
     #g.export(file("graph.pickle", "w"))
     #g.write_graphviz(file("graph.dot", "wb"))
+    #g.write_graphviz(file("genea.dot", "w"),
+    #                 edgeiter=g.children_edges)
 
     g.set_layers()
 

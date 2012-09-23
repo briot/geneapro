@@ -1,11 +1,25 @@
 """
 This package provides a graph datastructure and algorithms to manipulate it.
 It is independent of geneapro itself.
+
+Examples of use:
+
+# Create a graph
+
+links = [("a", "b"), ("b", "c"), ("c", "d"),
+         ("e", "g"), ("f", "g"), ("g", "h"),
+         ("d", "h"), ("a", "e"), ("a", "f")]
+g = graphs.Digraph(edges=links)
+
+
+
+
 """
 
 import pickle
 import sys
 import subprocess
+import heapq
 
 
 class Digraph(object):
@@ -207,12 +221,8 @@ class Digraph(object):
             if self.isleaf(n):
                 yield n
 
-    DIRECTION_OUTGOING = 1
-    DIRECTION_INCOMING = 2
-
     def breadth_first_search(self, roots, edgeiter=None,
-                             maxdepth=-1,
-                             direction=DIRECTION_OUTGOING):
+                             maxdepth=-1):
 
         def bfs(seen, u, maxdepth):
             """Return all children of u, then their own children.
@@ -222,7 +232,7 @@ class Digraph(object):
             ends = []
             seen.add(u)
             for edge in edgeiter(u):
-                e = edge[edge_end]
+                e = edge[1] if edge[0] == u else edge[0]
                 if e not in seen:
                     yield e
                     ends.append(e)
@@ -236,8 +246,6 @@ class Digraph(object):
         if edgeiter is None:
             edgeiter = self.out_edges
 
-        edge_end = 1 if direction == Digraph.DIRECTION_OUTGOING else 0
-
         seen = set()
 
         for node in roots:
@@ -246,8 +254,7 @@ class Digraph(object):
                 for d in bfs(seen, node, maxdepth):
                     yield d
 
-    def depth_first_search(self, roots=None, edgeiter=None,
-                           direction=DIRECTION_OUTGOING):
+    def depth_first_search(self, roots=None, edgeiter=None):
         """
         Traverse the tree depth first search, and returns the children of
         a node before the node itself.
@@ -263,9 +270,6 @@ class Digraph(object):
            function takes one parameter, the node we are inspecting. The
            default is self.out_edges.
 
-        :param direction: whether we should look at the start of the edges
-           (DIRECTION_INCOMING) or the end (DIRECTION_OUTGOING)
-
         :return: an iterator
         """
 
@@ -277,7 +281,7 @@ class Digraph(object):
             # by edgeiter
 
             for edge in reversed(list(edgeiter(u))):
-                v = edge[edge_end]
+                v = edge[1] if edge[0] == u else edge[0]
                 c = color[v]
                 if c == 0:   # WHITE
                     # predecessor[v] = u
@@ -301,8 +305,6 @@ class Digraph(object):
 
         if edgeiter is None:
             edgeiter = self.out_edges
-
-        edge_end = 1 if direction == Digraph.DIRECTION_OUTGOING else 0
 
         self.__backedges = set()
         self.__cyclic = False
@@ -450,7 +452,8 @@ class Digraph(object):
             return ""
 
     def write_graphviz(
-        self, file=sys.stdout, number_nodes=False, nodes=None):
+        self, file=sys.stdout, number_nodes=False, nodes=None,
+        edgeiter=None):
         """
         Write a representation of the graph in a format suitable for graphviz.
         Nodes should define a __str__ function to represent their label.
@@ -467,6 +470,9 @@ class Digraph(object):
         if nodes is None:
             nodes = self.__iter__()
 
+        if not edgeiter:
+            edgeiter=self.out_edges
+
         for index, node in enumerate(nodes):
             label = self.node_label(node)
             if number_nodes:
@@ -474,7 +480,7 @@ class Digraph(object):
             s = u"n_%s [label=<%s>]\n" % (id(node), label)
             file.write(s.encode("utf-8"))
 
-            for edge in self.out_edges(node):
+            for edge in edgeiter(node):
                 label = self.edge_label(edge)
                 if label is not None:
                     s = u"n_%s -> n_%s [%s]\n" % (
@@ -498,3 +504,113 @@ class Digraph(object):
         status = dot.wait()
         if status != 0:
             raise Exception("Error when running dot, exit status=%d" % status)
+
+    ##########
+    # Layout #
+    ##########
+
+    def rank_longest_path(self, roots=None, outedgesiter=None, inedgesiter=None):
+        """
+        Split the nodes into layers, so that:
+          * the head of edges are in strictly higher layers than the tail.
+        This is a rough (but fast) algorithm. It is possible that lots of
+        edges span multiple layers. However, this initial sorting can then
+        be used as a starting point for other enhanced algorithms.
+
+           1 - Put each node on layer 1
+           2 - Traverse the node in topological order.
+           3 - For each node traversed, assign it the layer:
+                layer(u) = max(layer(u), layer(v) + 1)
+                 for each v in the outset of u.
+        See:
+          "Graph Drawing and Applications for Software and Knowledge Engineers"
+           by Kozo Sugiyama,  p64
+
+        :return: a dict mapping edges to their layers. It is guaranteed
+           that the number of layers is equal to the longuest path in the
+           graph (provided the graph is not cyclic), i.e. the height is
+           optimal.
+        """
+
+        if not inedgesiter:
+            inedgesiter = self.in_edges
+
+        layers = dict()
+        for n in self:
+            layers[n] = 0
+        for n in self.topological_sort(roots=roots, edgeiter=outedgesiter):
+            for e in inedgesiter(n):
+                end = e[0] if e[1] == n else e[1]
+                layers[n] = max(layers[n], layers[end] + 1)
+
+        return layers
+
+    def rank_minimize_dummy_vertices(self):
+        """
+        Split the nodes into layers, similar to rank_with_longest_path.
+        However, this algorithm also attempts to minimize the number of
+        edges that span multiple years.
+
+        This algorithm is described in:
+            "A technique for Drawing Directed Graphs" (graphviz)
+        """
+
+        ranks = self.rank_longest_path()
+        
+        def feasible_tree():
+            """
+            Computes an initial feasible spanning tree. This is a spanning tree
+            build while ignoring the direction of edges, and such that the
+            length of each edge is greater or equal to its minimum length.
+            """
+
+            tree = set()             # nodes in the tree
+            not_in_tree = set(self)  # nodes in graph but not in tree
+            edges_from_tree = []     # possible edges from the tree nodes
+
+            def add_node(n):
+                try:
+                    not_in_tree.remove(n)
+                except:
+                    pass
+
+                tree.add(n)
+                for e in self.out_edges(n):
+                    if e[1] not in tree:
+                        heapq.heappush(edges_from_tree,
+                                       (ranks[e[1]] - ranks[e[0]] - 1,
+                                        e))
+                for e in self.in_edges(n):
+                    if e[0] not in tree:
+                        heapq.heappush(edges_from_tree,
+                                       (ranks[e[1]] - ranks[e[0]] - 1,
+                                        e))
+
+            # Start with a random node
+            for n in self:
+                add_node(n)
+                break
+
+            while not_in_tree:
+                while not edges_from_tree:
+                    if not not_in_tree:
+                        return
+                    n = not_in_tree.pop()
+                    add_node(n)
+                        
+                slack, e = heapq.heappop(edges_from_tree)
+
+                if e[0] in tree:
+                    end = e[1]
+                else:
+                    slack = -slack
+                    end = e[0]
+
+                for v in tree:
+                    ranks[v] += slack
+                add_node(end)
+
+        feasible_tree()
+
+        # ??? Real algorithm from graphviz also computes cutpoints
+        return ranks
