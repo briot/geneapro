@@ -40,10 +40,12 @@
  *    where
  *       dragdata = {offset: {top:..., left:...},
  *                   weight: 0,
+ *                   scale: 1,
  *                   parent:{top:..., left:...}}
  *
  *    "offset" are the coordinates of the element relative to the page.
  *       Originally set to the element's topcorner.
+ *    "scale" should be set to the current scaling of the canvas.
  *    "parent" are the coordinates relative to the parent element.
  *    "weight" is initially set to the same value you set through set_weight().
  *
@@ -288,6 +290,7 @@
              offset: off,
              parent: {left:e.pageX - off.left, top: e.pageY - off.top},
              weight: $(this).data (_weight) || 0,
+             scale: 1.0,
              _elem: this,
              _indrag: false,
              _past:  [{t:e.timeStamp, x:e.pageX, y:e.pageY}], // for speed
@@ -306,11 +309,11 @@
         if (diffX * diffX + diffY * diffY > _minDist) {
            d._indrag = true;
            $(d._elem).trigger ('start-drag', d);
-           d._click.x -= d.offset.left;
-           d._click.y -= d.offset.top;
+           d._offset = d.offset;  //  Copy of the user's offset
         }
      } else {
-       d.offset = {top:e.pageY-d._click.y, left:e.pageX-d._click.x}
+       d.offset = {top: d._offset.top + d.scale * (e.pageY - d._click.y),
+                   left: d._offset.left + d.scale * (e.pageX - d._click.x)};
 
        // Preserve the last 1s or so of movement, so that we can compute
        // an acceleration when the mouse is released
