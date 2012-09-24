@@ -247,6 +247,17 @@ class Digraph(object):
             if self.isleaf(n):
                 yield n
 
+    def edges(self):
+        """
+        Iter over all edges of the graph.
+        """
+        seen = set()
+        for n in self:
+            for e in self.outedges[n]:
+                if e not in seen:
+                    seen.add(e)
+                    yield e
+
     def breadth_first_search(self, roots, edgeiter=None,
                              maxdepth=-1):
 
@@ -348,8 +359,8 @@ class Digraph(object):
     def topological_sort(self, roots=None, outedgesiter=None):
         """
         Topological sorting of the graph. This is the list of nodes sorted
-        such that the tail of each edge returned by edgeiter is returned
-        before its head.
+        such that the head of each edge returned by edgeiter is returned
+        before its tail.
 
         roots is the list of nodes the search should start from. This can
         be used to restrict the nodes which will eventually be visited.
@@ -581,9 +592,9 @@ class Digraph(object):
            optimal.
         """
 
-        if not inedgesiter:
+        if inedgesiter is None:
             inedgesiter = self.in_edges
-        if not outedgesiter:
+        if outedgesiter is None:
             outedgesiter = self.out_edges
 
         layers = dict()
@@ -592,7 +603,7 @@ class Digraph(object):
 
         leaves = set()  # leaves node are dealt with in a separate pass
 
-        for n in self.topological_sort(roots=roots, outedgesiter=inedgesiter):
+        for n in self.topological_sort(roots=roots, outedgesiter=outedgesiter):
             is_leaf = True
             for e in outedgesiter(n):
                 is_leaf = False
@@ -600,14 +611,16 @@ class Digraph(object):
             if is_leaf:
                 leaves.add(n)
             else:
-                for e in outedgesiter(n):
+                for e in inedgesiter(n):
                     end = e[0] if e[1] == n else e[1]
                     layers[n] = max(layers[n], layers[end] + preferred_length(e))
 
         for n in leaves:
-            mins = [layers[m[0]] - preferred_length(m) for m in inedgesiter(n)]
-            if mins:
-                layers[n] = min(mins)
+            for m in inedgesiter(n):
+                if m[1] == n:
+                    layers[n] = max(layers[n], layers[m[0]] + preferred_length(m))
+                else:
+                    layers[n] = max(layers[n], layers[m[1]] - preferred_length(m))
 
         return layers
 
@@ -622,6 +635,11 @@ class Digraph(object):
         This algorithm is described in:
             "A technique for Drawing Directed Graphs" (graphviz)
         """
+
+        if not inedgesiter:
+            inedgesiter = self.in_edges
+        if not outedgesiter:
+            outedgesiter = self.out_edges
 
         ranks = self.rank_longest_path(
             roots=roots, outedgesiter=outedgesiter, inedgesiter=inedgesiter,

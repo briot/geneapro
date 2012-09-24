@@ -362,7 +362,7 @@ QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
     ctx.strokeStyle = "gray";
 
     var maxs = [];  //  for each vertical line, its maximum Y
-    var prevMaxY = 0;
+    var maxYsoFar = 0;
 
     for (var m = 0; m < prevFamilies.length; m++) {
         var maxY = 0;
@@ -373,8 +373,7 @@ QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
             maxY = Math.max(maxY, y);
             this.drawPersonSymbol_( ctx, info.sex, m * LINE_SPACING, y);
         }
-        maxs[m] = Math.max(prevMaxY, maxY);
-        prevMaxY = maxY;
+        maxYsoFar = maxs[m] = Math.max(maxYsoFar, maxY);
 
         ctx.beginPath();
         var x = m * LINE_SPACING;
@@ -388,9 +387,10 @@ QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
         var y = p1 * LINE_SPACING;
         var minX = this.lefts[layer] - right;
 
-        for (var m = maxs.length - 1; m > 0; m--) {
-            if (maxs[m] >= y) {
+        for (var m = 0; m < maxs.length; m++) {
+            if (maxs[m] >= y - LINE_SPACING) {
                 minX = m * LINE_SPACING;
+                break;
             }
         }
 

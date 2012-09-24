@@ -38,6 +38,9 @@ class Persona_node(object):
 
         self.sex = '?'   # or 'M' or 'F'
 
+    def __repr__(self):
+        return self.name.encode("utf-8")
+
     def _graphlabel(self):
         return "%s-%s" % (",".join("%s" % p for p in self.ids), self.name)
 
@@ -196,20 +199,28 @@ class GeneaGraph(Digraph):
         for c in models.Characteristic_Part.objects.raw(query):
             self.node_from_id(c.person).sex = c.name
 
-        # Assign generations to each persona in the graph, so that the
-        # following requirements are correct:
-        #    - a person is in a layer strictly greater than its children
-        #    - spouses are preferably in the same layer, unless this doesn't
-        #      match the first requirement.
-        #    - layers group persons born within the same period, unless it
-        #      contradicts the above requirements. This is used to classify
-        #      independent personas.
-
+        # Assign layers.
+        # We override the iterators so that children have lower layers than
+        # their parents (which is more natural in genealogy).
+ 
         self.layers__ = self.rank_longest_path(
             roots=list(self.nodes_with_no_children()),
-            inedgesiter=self.in_parent_edges,  # should include spouses
-            outedgesiter=self.out_children_edges,# should include spouses
+            outedgesiter=self.in_edges,  # include spouses
+            inedgesiter=self.out_edges,  # include spouses
             preferred_length=self.preferred_length)
+        self.check_ranking()
+
+    def check_ranking(self):
+        print "SLOW: checking whether the ranking is valid"
+        for e in self.edges():
+            if (self.layers__[e[0]] <
+                self.layers__[e[1]] + self.preferred_length(e)):
+                print "Invalid edge %s [%d] --[%s]--> %s [%d]" % (
+                    e[0].name.encode("utf-8"),
+                    self.layers__[e[0]],
+                    e.kind,
+                    e[1].name.encode("utf-8"),
+                    self.layers__[e[1]])
 
     def in_parent_edges(self, node):
         """
