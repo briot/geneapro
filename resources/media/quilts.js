@@ -361,27 +361,40 @@ QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
     ctx.fillStyle = "black";
     ctx.strokeStyle = "gray";
 
+    var maxs = [];  //  for each vertical line, its maximum Y
+    var prevMaxY = 0;
+
     for (var m = 0; m < prevFamilies.length; m++) {
+        var maxY = 0;
         for (var c = 2; c < prevFamilies[m].length; c++) {
             var child = prevFamilies[m][c];
             var info = this.personToLayer[child];
-            this.drawPersonSymbol_(
-                ctx,
-                info.sex,
-                m * LINE_SPACING,
-                info.index * LINE_SPACING);
+            var y = info.index * LINE_SPACING;
+            maxY = Math.max(maxY, y);
+            this.drawPersonSymbol_( ctx, info.sex, m * LINE_SPACING, y);
         }
+        maxs[m] = Math.max(prevMaxY, maxY);
+        prevMaxY = maxY;
+
+        ctx.beginPath();
+        var x = m * LINE_SPACING;
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, maxs[m]);
+        ctx.stroke();
     }
 
     ctx.beginPath();
-    for (var p2 = 0; p2 < prevFamilies.length; p2++) {
-        var x = p2 * LINE_SPACING;
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, this.heights[layer]);
-    }               
     for (var p1 = 1; p1 <= this.layers[layer].length; p1++) {
         var y = p1 * LINE_SPACING;
-        ctx.moveTo(0, y);
+        var minX = this.lefts[layer] - right;
+
+        for (var m = maxs.length - 1; m > 0; m--) {
+            if (maxs[m] >= y) {
+                minX = m * LINE_SPACING;
+            }
+        }
+
+        ctx.moveTo(minX, y);
         ctx.lineTo(this.lefts[layer] - right, y);
     }
     ctx.stroke();
