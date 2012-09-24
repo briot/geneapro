@@ -280,7 +280,7 @@ class Digraph(object):
                 for d in bfs(seen, node, maxdepth):
                     yield d
 
-    def depth_first_search(self, roots=None, edgeiter=None):
+    def depth_first_search(self, roots=None, outedgesiter=None):
         """
         Traverse the tree depth first search, and returns the children of
         a node before the node itself.
@@ -306,7 +306,7 @@ class Digraph(object):
             # reverse the sort order so that the final order is that returned
             # by edgeiter
 
-            for edge in reversed(list(edgeiter(u))):
+            for edge in reversed(list(outedgesiter(u))):
                 v = edge[1] if edge[0] == u else edge[0]
                 c = color[v]
                 if c == 0:   # WHITE
@@ -329,8 +329,8 @@ class Digraph(object):
             # is going to reverse the final list.
             roots = reversed(list(roots))
 
-        if edgeiter is None:
-            edgeiter = self.out_edges
+        if outedgesiter is None:
+            outedgesiter = self.out_edges
 
         self.__backedges = set()
         self.__cyclic = False
@@ -345,7 +345,7 @@ class Digraph(object):
                 for d in dfs(node, color):
                     yield d
 
-    def topological_sort(self, roots=None, edgeiter=None):
+    def topological_sort(self, roots=None, outedgesiter=None):
         """
         Topological sorting of the graph. This is the list of nodes sorted
         such that the tail of each edge returned by edgeiter is returned
@@ -362,7 +362,7 @@ class Digraph(object):
         This is only meaningful for directed acyclic graphs.
         """
         dfs = list(self.depth_first_search(
-                roots=roots, edgeiter=edgeiter))
+                roots=roots, outedgesiter=outedgesiter))
         dfs.reverse()
         return dfs
 
@@ -373,7 +373,7 @@ class Digraph(object):
         containing the same edges. This is slower than topological_sort.
         """
         return self.topological_sort(
-            roots=self.sorted_nodes(), edgeiter=self.sorted_edges)
+            roots=self.sorted_nodes(), outedgesiter=self.sorted_edges)
 
     ################
     # Traversing a node's out edges
@@ -545,7 +545,7 @@ class Digraph(object):
     ##########
 
     def rank_longest_path(self, roots=None,
-                          outedgesiter=None, inedgesiter=None,
+                          inedgesiter=None, outedgesiter=None,
                           preferred_length=lambda e: 1):
         """
         Split the nodes into layers, so that: the head of edges are in strictly
@@ -583,14 +583,31 @@ class Digraph(object):
 
         if not inedgesiter:
             inedgesiter = self.in_edges
+        if not outedgesiter:
+            outedgesiter = self.out_edges
 
         layers = dict()
         for n in self:
             layers[n] = 0
-        for n in self.topological_sort(roots=roots, edgeiter=outedgesiter):
-            for e in inedgesiter(n):
-                end = e[0] if e[1] == n else e[1]
-                layers[n] = max(layers[n], layers[end] + preferred_length(e))
+
+        leaves = set()  # leaves node are dealt with in a separate pass
+
+        for n in self.topological_sort(roots=roots, outedgesiter=inedgesiter):
+            is_leaf = True
+            for e in outedgesiter(n):
+                is_leaf = False
+                break
+            if is_leaf:
+                leaves.add(n)
+            else:
+                for e in outedgesiter(n):
+                    end = e[0] if e[1] == n else e[1]
+                    layers[n] = max(layers[n], layers[end] + preferred_length(e))
+
+        for n in leaves:
+            mins = [layers[m[0]] - preferred_length(m) for m in inedgesiter(n)]
+            if mins:
+                layers[n] = min(mins)
 
         return layers
 
@@ -653,6 +670,7 @@ class Digraph(object):
                     n = not_in_tree.pop()
                     add_node(n)
 
+                # Find the best possible edge.
                 slack, e = heapq.heappop(edges_from_tree)
 
                 if e[0] in tree:
@@ -691,7 +709,7 @@ class Digraph(object):
             result.append(tmp[lay])
         return result
 
-    def sort_nodes_within_layers(self, layers):
+    def sort_nodes_within_layers(self, layers, outedgesiter=None):
         """
         Sort nodes within each layer so as to minimize crossing of edges.
         Layers should be a list as returned by get_layers.
@@ -721,12 +739,15 @@ class Digraph(object):
                total = 0
                count = 1
                for index2, n2 in enumerate(layer2):
-                   if self.has_edge(n, n2, outedgesiter=self.children_edges):
+                   if self.has_edge(n, n2, outedgesiter=outedgesiter):
                        total += index2 + 1
                        count += 1
                weights[n] = float(total) / float(count)
 
             layer1.sort(key=lambda x: weights[x])
+
+        if outedgesiter is None:
+            outedgesiter = self.out_edges
 
         for index, layer in enumerate(layers):
             if index > 0:

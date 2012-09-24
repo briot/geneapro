@@ -205,13 +205,13 @@ class GeneaGraph(Digraph):
         #      contradicts the above requirements. This is used to classify
         #      independent personas.
 
-        self.layers__ = self.rank_minimize_dummy_vertices(
+        self.layers__ = self.rank_longest_path(
             roots=list(self.nodes_with_no_children()),
-            outedgesiter=self.parent_edges,
-            inedgesiter=self.children_edges,
+            inedgesiter=self.in_parent_edges,  # should include spouses
+            outedgesiter=self.out_children_edges,# should include spouses
             preferred_length=self.preferred_length)
 
-    def parent_edges(self, node):
+    def in_parent_edges(self, node):
         """
         Iterate all "ancestor" edges for a node, ie return the genealogical
         parents of the persona.
@@ -220,7 +220,7 @@ class GeneaGraph(Digraph):
             if e.kind in (P2P_Link.KIND_FATHER, P2P_Link.KIND_MOTHER):
                 yield e
 
-    def children_edges(self, node):
+    def out_children_edges(self, node):
         """
         Iterate all "children" edges for a node, ie return the genealogical
         parents of the persona.
@@ -361,7 +361,9 @@ class GeneaGraph(Digraph):
 
         families = self.compute_families(subset=subset)
         layers = self.get_layers(layers=self.layers__, subset=subset)
-        self.sort_nodes_within_layers(layers)
+        self.sort_nodes_within_layers(
+            layers,
+            outedgesiter=self.out_children_edges)
         families = self.sort_families(layers, families)
 
         result = []
@@ -398,11 +400,11 @@ class GeneaGraph(Digraph):
         to_match = set(self.breadth_first_search(
                 roots=ids,
                 maxdepth=maxdepth,
-                edgeiter=self.parent_edges))
+                edgeiter=self.in_parent_edges))
         to_match.update(self.breadth_first_search(
                 roots=ids,
                 maxdepth=maxdepth,
-                edgeiter=self.children_edges))
+                edgeiter=self.out_children_edges))
         return to_match
 
 
@@ -412,13 +414,16 @@ def view(request):
     #g.export(file("graph.pickle", "w"))
     #g.write_graphviz(file("graph.dot", "wb"))
     #g.write_graphviz(file("genea.dot", "w"),
-    #                 edgeiter=g.children_edges)
+    #                 edgeiter=g.out_children_edges)
 
     subset = g.people_in_tree(
         id=1, maxdepth=3, spouses_tree=True)
+
+    subset = None
 
     return render_to_response(
         'geneapro/quilts.html',
         g.json(subset),
         context_instance=RequestContext(request))
+
 
