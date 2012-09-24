@@ -4,15 +4,31 @@ It is independent of geneapro itself.
 
 Examples of use:
 
+################
 # Create a graph
 
-links = [("a", "b"), ("b", "c"), ("c", "d"),
-         ("e", "g"), ("f", "g"), ("g", "h"),
-         ("d", "h"), ("a", "e"), ("a", "f")]
-g = graphs.Digraph(edges=links)
+> links = [("a", "b"), ("b", "c"), ("c", "d"),
+           ("e", "g"), ("f", "g"), ("g", "h"),
+           ("d", "h"), ("a", "e"), ("a", "f")]
+> g = graphs.Digraph(edges=links)
 
+######################
+# Laying out the graph
 
+> layers = g.rank_minimize_dummy_vertices()
+> g.sort_nodes_within_layers(g.get_layers(layers))
+   => [ ["a"], ["e", "f", "b"], ["g", "c"], ["d"], ["h"]]
 
+   Which corresponds to a drawing like:
+                         a
+                       / |  \
+                      e  f   b
+                       \ |   |
+                         g   c
+                         |   |
+                         |   d
+                          \ /
+                           h
 
 """
 
@@ -69,11 +85,21 @@ class Digraph(object):
 
         return self.__cyclic
 
-    def has_edge(self, source, target):
+    def has_edge(self, source, target, outedgesiter=None):
         """
         Whether there is at least one edge from source to target.
+        outedgesiter can be used to restrict the search to a subset of
+        the edges outgoing from source.
         """
-        return not self.outedges[source].isdisjoint(self.inedges[target])
+        #return not self.outedges[source].isdisjoint(self.inedges[target])
+
+        if outedgesiter is None:
+            outedgesiter = self.out_edges
+
+        for e in outedgesiter(source):
+            if e[1] == target:
+                return True
+        return False
 
     ###############
     # Editing graphs
@@ -238,7 +264,7 @@ class Digraph(object):
                     ends.append(e)
                     seen.add(e)
 
-            if maxdepth > 0:
+            if maxdepth != 0:
                 for e in ends:
                     for d in bfs(seen, e, maxdepth - 1):
                         yield d
@@ -322,8 +348,17 @@ class Digraph(object):
     def topological_sort(self, roots=None, edgeiter=None):
         """
         Topological sorting of the graph. This is the list of nodes sorted
-        such that a node's ancestors are always returned before the node
-        itself.
+        such that the tail of each edge returned by edgeiter is returned
+        before its head.
+
+        roots is the list of nodes the search should start from. This can
+        be used to restrict the nodes which will eventually be visited.
+        If you want to have all nodes of the graph visited eventually,
+        roots should be set to the list of nodes that are not the tail
+        of any edge returned by edgeiter. The default is to use nodes that
+        do not have any incoming edge at all, but this isn't suitable if
+        edgeiter only looks at a subset of the edges for instance.
+
         This is only meaningful for directed acyclic graphs.
         """
         dfs = list(self.depth_first_search(
@@ -509,10 +544,24 @@ class Digraph(object):
     # Layout #
     ##########
 
-    def rank_longest_path(self, roots=None, outedgesiter=None, inedgesiter=None):
+    def rank_longest_path(self, roots=None,
+                          outedgesiter=None, inedgesiter=None,
+                          preferred_length=lambda e: 1):
         """
-        Split the nodes into layers, so that:
-          * the head of edges are in strictly higher layers than the tail.
+        Split the nodes into layers, so that: the head of edges are in strictly
+        higher layers than the tail.
+
+        The two iterators should be symmetrical: outedgesiter is used to make
+        sure the nodes are visited in the proper order internally, and
+        inedgesiter are the ones used to satisfy the constraint above. So
+        the head of all edges returned inedgesiter will be in a higher
+        layer than their tails. outedgesiter should return the opposite
+        edges.
+
+        preferred_length can be used to return the preferred length of edges.
+        1 means the head and the tail should preferrably be one generation
+        apart.
+
         This is a rough (but fast) algorithm. It is possible that lots of
         edges span multiple layers. However, this initial sorting can then
         be used as a starting point for other enhanced algorithms.
@@ -541,12 +590,13 @@ class Digraph(object):
         for n in self.topological_sort(roots=roots, edgeiter=outedgesiter):
             for e in inedgesiter(n):
                 end = e[0] if e[1] == n else e[1]
-                layers[n] = max(layers[n], layers[end] + 1)
+                layers[n] = max(layers[n], layers[end] + preferred_length(e))
 
         return layers
 
-    def rank_minimize_dummy_vertices(self, roots=None, 
-                                     outedgesiter=None, inedgesiter=None):
+    def rank_minimize_dummy_vertices(self, roots=None,
+                                     outedgesiter=None, inedgesiter=None,
+                                     preferred_length=lambda e: 1):
         """
         Split the nodes into layers, similar to rank_with_longest_path.
         However, this algorithm also attempts to minimize the number of
@@ -557,8 +607,9 @@ class Digraph(object):
         """
 
         ranks = self.rank_longest_path(
-            roots=roots, outedgesiter=outedgesiter, inedgesiter=inedgesiter)
-        
+            roots=roots, outedgesiter=outedgesiter, inedgesiter=inedgesiter,
+            preferred_length=preferred_length)
+
         def feasible_tree():
             """
             Computes an initial feasible spanning tree. This is a spanning tree
@@ -579,14 +630,16 @@ class Digraph(object):
                 tree.add(n)
                 for e in outedgesiter(n):
                     if e[1] not in tree:
-                        heapq.heappush(edges_from_tree,
-                                       (ranks[e[1]] - ranks[e[0]] - 1,
-                                        e))
+                        heapq.heappush(
+                            edges_from_tree,
+                            (ranks[e[1]] - ranks[e[0]] - preferred_length(e),
+                             e))
                 for e in inedgesiter(n):
                     if e[0] not in tree:
-                        heapq.heappush(edges_from_tree,
-                                       (ranks[e[1]] - ranks[e[0]] - 1,
-                                        e))
+                        heapq.heappush(
+                            edges_from_tree,
+                            (ranks[e[1]] - ranks[e[0]] - preferred_length(e),
+                             e))
 
             # Start with a random node
             for n in self:
@@ -599,7 +652,7 @@ class Digraph(object):
                         return
                     n = not_in_tree.pop()
                     add_node(n)
-                        
+
                 slack, e = heapq.heappop(edges_from_tree)
 
                 if e[0] in tree:
@@ -616,3 +669,66 @@ class Digraph(object):
 
         # ??? Real algorithm from graphviz also computes cutpoints
         return ranks
+
+    def get_layers(self, layers, subset=None):
+        """
+        Returns a list of layers, as sorted by rank_* above. Each element of
+        the list is itself is a list of nodes that belong to that layer, in no
+        particular order.
+
+        :param subset: can be a set or list of nodes we want to classify. If
+           unspecified, all the nodes of the graph are taken into account.
+        :return: a list of list of nodes
+        """
+
+        # Create a temporary structure, so that we can skip empty layers
+        tmp = dict()
+        for n in subset or self:
+            tmp.setdefault(layers[n], []).append(n)
+
+        result = []
+        for lay in sorted(tmp.keys()):
+            result.append(tmp[lay])
+        return result
+
+    def sort_nodes_within_layers(self, layers):
+        """
+        Sort nodes within each layer so as to minimize crossing of edges.
+        Layers should be a list as returned by get_layers.
+
+        To do this, we use a Barycenter Heuristic.
+        This is also similar to what dot() uses to reorder nodes within a
+        layer to minimize edge crossing. See for instance:
+           "The barycenter Heuristic and the reorderable matrix"
+              Erkki Makinen, Harri Siirtola
+           http://www.informatica.si/PDF/29-3/"
+               13_Makinen-The%20Barycenter%20Heuristic....pdf
+
+        Basically, for each layer, we order the nodes based on the barycenter
+        of their neighbor nodes, and repeat for each layer.
+
+        :param layers: a list of list of nodes
+           Each nested list is sorted in place.
+        :return:  layers itself, after sorting. The return value can be used in
+           case you directly passed the result of get_layers() as a parameter.
+        """
+
+        def order_layer1(layer1, layer2):
+            # ??? Should take into account links to higher layer, so that those
+            # children appear first in the list.
+            weights = {}
+            for n in layer1:
+               total = 0
+               count = 1
+               for index2, n2 in enumerate(layer2):
+                   if self.has_edge(n, n2, outedgesiter=self.children_edges):
+                       total += index2 + 1
+                       count += 1
+               weights[n] = float(total) / float(count)
+
+            layer1.sort(key=lambda x: weights[x])
+
+        for index, layer in enumerate(layers):
+            if index > 0:
+                order_layer1(layer, layers[index - 1])
+        return layers
