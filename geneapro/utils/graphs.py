@@ -545,7 +545,8 @@ class Digraph(object):
 
         return layers
 
-    def rank_minimize_dummy_vertices(self):
+    def rank_minimize_dummy_vertices(self, roots=None, 
+                                     outedgesiter=None, inedgesiter=None):
         """
         Split the nodes into layers, similar to rank_with_longest_path.
         However, this algorithm also attempts to minimize the number of
@@ -555,7 +556,8 @@ class Digraph(object):
             "A technique for Drawing Directed Graphs" (graphviz)
         """
 
-        ranks = self.rank_longest_path()
+        ranks = self.rank_longest_path(
+            roots=roots, outedgesiter=outedgesiter, inedgesiter=inedgesiter)
         
         def feasible_tree():
             """
@@ -575,12 +577,12 @@ class Digraph(object):
                     pass
 
                 tree.add(n)
-                for e in self.out_edges(n):
+                for e in outedgesiter(n):
                     if e[1] not in tree:
                         heapq.heappush(edges_from_tree,
                                        (ranks[e[1]] - ranks[e[0]] - 1,
                                         e))
-                for e in self.in_edges(n):
+                for e in inedgesiter(n):
                     if e[0] not in tree:
                         heapq.heappush(edges_from_tree,
                                        (ranks[e[1]] - ranks[e[0]] - 1,

@@ -7,18 +7,9 @@
 {% block script %}
 $(document).ready(function() {
   var data = {{data|safe}};
-  var families = [[1,1328,1542],
-            [438,1328,1754], /* MH, Roland, Anaelle */
-                  [438,672,1],  /* Anne, Roland, Manu */
-            [1959,1071,1328], /* Andre, Therese, MH */
-                  [557,579,1328], /* GilGin, MH */
-                  [332,345,672],  /* Rene, Jacky, Anne */
-                  [289,318,438],  /* Joseph, Marie, Roland */
-                  [1959,1071,579], /* Andre, Therese, Gin */
-                  [356,361,332], /* Augustin, Marie, Rene */
-  ];
   var families = {{families|safe}};
-  quilts($("#quilts"), data, families);
+  var q = new QuiltsCanvas($("#quilts"), data, families);
+  q.draw();
 });
 {% endblock script %}
 

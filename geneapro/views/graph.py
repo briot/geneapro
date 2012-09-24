@@ -266,7 +266,7 @@ class GeneaGraph(Digraph):
                 independent personas.
         """
 
-        layers = self.rank_longest_path(
+        layers = self.rank_minimize_dummy_vertices(
             roots=list(self.nodes_with_no_children()),
             outedgesiter=self.parent_edges,
             inedgesiter=self.children_edges)
@@ -375,7 +375,6 @@ class GeneaGraph(Digraph):
         for r in byLayer.itervalues():
             # Sort the families within each layer. If one of the parents is in
             # another layer, we want that marriage to appear first.
-            print "MANU len(r)=", len(r)
             r.sort(
                 key=lambda family: 
                 (-max(family[0].quilts_layer if family[0] else 0,
@@ -435,8 +434,6 @@ class GeneaGraph(Digraph):
                        count += 1
                weights[n] = float(total) / float(count)
 
-            print ["%f %s" % (n, key.name.encode("utf-8"))
-                   for key, n in weights.iteritems()]
             layer1.sort(key=lambda x: weights[x])
 
         for index, layer in enumerate(layers):
@@ -497,6 +494,6 @@ def view(request):
 
     return render_to_response(
         'geneapro/quilts.html',
-        g.json(id=1, maxdepth=3),
+        g.json(id=None, maxdepth=3),
         context_instance=RequestContext(request))
 
