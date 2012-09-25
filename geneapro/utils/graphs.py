@@ -706,6 +706,19 @@ class Digraph(object):
         # ??? Real algorithm from graphviz also computes cutpoints
         return ranks
 
+    def add_dummy_nodes(self, layers):
+        r = set()
+        for e in self.edges():
+            prev = e[0]
+            if layers[e[0]] - layers[e[1]] > 1:
+                for r in range(layers[e[0]] + 1, layers[e[1]] + 1):
+                    d = DummyNode()
+                    self.add_edge((prev, d))
+                    prev = d
+                r.add(e)
+        for e in r:
+            self.remove_edge(e)
+
     def get_layers(self, layers, subset=None):
         """
         Returns a list of layers, as sorted by rank_* above. Each element of
@@ -716,6 +729,7 @@ class Digraph(object):
            unspecified, all the nodes of the graph are taken into account.
         :return: a list of list of nodes
         """
+        # self.add_dummy_nodes(layers)
 
         # Create a temporary structure, so that we can skip empty layers
         tmp = dict()

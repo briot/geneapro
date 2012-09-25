@@ -430,7 +430,7 @@ def view(request):
     subset = g.people_in_tree(
         id=1, maxdepth=3, spouses_tree=True)
 
-    subset = None
+    #subset = None
 
     return render_to_response(
         'geneapro/quilts.html',

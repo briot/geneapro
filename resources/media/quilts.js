@@ -26,10 +26,14 @@ function QuiltsCanvas(canvas, layers, families) {
     this.canvas.width = canvas.width();
     this.canvas.height = canvas.height();
 
+    this.rtree_ = new RTree();
+    this.selected_ = {};
+
     canvas
         .wheel($.proxy(this.on_wheel_, this))
         .start_drag($.proxy(this.on_start_drag_, this))
         .in_drag($.proxy(this.on_in_drag_, this))
+        .click($.proxy(this.on_click_, this));
 
     // Preprocess the data to gather information relative to each person in a
     // datastructure easier to manipulate
@@ -216,12 +220,85 @@ QuiltsCanvas.prototype.on_in_drag_ = function(e, dragdata) {
 };
 
 /**
+ * Handles click events
+ */
+
+QuiltsCanvas.prototype.on_click_ = function(e) {
+    var canvas = this;
+    var id = this.rtree_.find(
+        this.toAbsX(e.offsetX),
+        this.toAbsY(e.offsetY), 
+        1, 1);
+    if (id.length) {
+        id = id[0];
+
+        // Find all related persons
+        this.selected_ = {};
+
+        function select_self_and_children(id) {
+            var info = canvas.personToLayer[id];
+            var families = canvas.families[info.layer];
+
+            canvas.selected_[id]= true;
+
+            if (!families) {
+                return;
+            }
+            
+            for (var fam = 0; fam < families.length; fam++) {
+                for (var p = 0; p < 2; p++) {
+                    var parent = families[fam][p];
+                    if (parent == id) {
+                        for (var c = 2; c < families[fam].length; c++) {
+                            select_self_and_children(families[fam][c]);
+                        }
+                        break;  //  no need to look for other parent
+                    }
+                }
+            }
+        }
+
+        function select_parents(id) {
+            var info = canvas.personToLayer[id];
+            var families = canvas.families[info.layer + 1];
+
+            canvas.selected_[id]= true;
+
+            if (!families) {
+                return;
+            }
+
+            for (var fam = 0; fam < families.length; fam++) {
+                for (var p = 2; p < families[fam].length; p++) {
+                    var child = families[fam][p];
+                    if (child == id) {
+                        for (var c = 0; c < 2; c++) {
+                            if (families[fam][c] && families[fam][c] != -1) {
+                                select_parents(families[fam][c]);
+                            }
+                        }
+                        break;  //  No need to look at other children
+                    }
+                }
+            }
+        }
+            
+        select_parents(id);
+        select_self_and_children(id);
+        this.draw();
+    }
+};
+
+/**
  * Draw either a square or circle in a matrix, depending on the sex of the
  * person.
  */
 
-QuiltsCanvas.prototype.drawPersonSymbol_ = function(ctx, sex, left, top) {
+QuiltsCanvas.prototype.drawPersonSymbol_ = function(
+    ctx, sex, left, top, selected) 
+{
     ctx.beginPath();
+    ctx.fillStyle = (selected ? "red" : "black");
     if (sex == "F") {
         ctx.arc(left + LINE_SPACING / 2,
                 top + LINE_SPACING / 2,
@@ -244,7 +321,15 @@ QuiltsCanvas.prototype.displayLayer_ = function(ctx, layer) {
     if (la.length) {
         var y = this.tops[layer] + LINE_SPACING - MARGIN;
         for (var p = 0; p < la.length; p++) {
+            ctx.fillStyle = (this.selected_[la[p][0]] ? "red" : "black");
             ctx.fillText(la[p].name, this.lefts[layer] + MARGIN, y);
+
+            this.rtree_.insert(
+                this.toAbsX(this.lefts[layer]),
+                this.toAbsY(y - LINE_SPACING + MARGIN),
+                this.rights[layer] - this.lefts[layer], LINE_SPACING,
+                la[p][0]);
+
             y += LINE_SPACING;
         }
         ctx.rect(this.lefts[layer], this.tops[layer], 
@@ -286,7 +371,8 @@ QuiltsCanvas.prototype.displayMarriages_ = function(ctx, layer) {
                 var y = this.tops[info.layer] + info.index * LINE_SPACING;
                 minY = Math.min(minY, y);
                 this.drawPersonSymbol_(
-                    ctx, info.sex, m * LINE_SPACING, y);
+                    ctx, info.sex, m * LINE_SPACING, y, 
+                    this.selected_[person]);
             }
         }
 
@@ -371,7 +457,8 @@ QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
             var info = this.personToLayer[child];
             var y = info.index * LINE_SPACING;
             maxY = Math.max(maxY, y);
-            this.drawPersonSymbol_( ctx, info.sex, m * LINE_SPACING, y);
+            this.drawPersonSymbol_(ctx, info.sex, m * LINE_SPACING, y, 
+                                   this.selected_[child]);
         }
         maxYsoFar = maxs[m] = Math.max(maxYsoFar, maxY);
 
@@ -408,6 +495,8 @@ QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
 QuiltsCanvas.prototype.draw = function() {
     var ctx = this.canvas.getContext("2d");
 
+    this.rtree_.clear();
+
     ctx.save();
     ctx.setTransform(
         1, 0, 0,
@@ -420,11 +509,17 @@ QuiltsCanvas.prototype.draw = function() {
         this.scale, 0, 0,
         this.scale, -this.scale * this.left, -this.scale * this.top);
 
+    var abs = new Rect(this.left, this.top,
+                       this.canvas.width / this.scale,
+                       this.canvas.height / this.scale);
+
     for (var layer = this.layers.length - 1; layer >= 0; layer--) {
         // only display visible layers
-        if (!(this.rights[layer] < this.left) ||
-            !(this.lefts[layer] > this.left + this.canvas.width))
-        {
+        r  = new Rect(this.rights[layer],
+                      this.tops[layer],
+                      this.lefts[layer] - this.rights[layer],
+                      this.heights[layer]);
+        if (r.intersects(abs)) {
             this.displayLayer_(ctx, layer);
 
             if (layer < this.layers.length - 1) {
