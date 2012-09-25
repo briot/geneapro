@@ -45,14 +45,16 @@ def view (request, decujus=1):
          if p.birth and p.birth.Date:
             if births is None or p.birth.Date < births:
                births = p.birth.Date
-               if p.birth.Date.year_known:
-                  gen_range[1] = p.birth.Date.year (cal)
+               year = p.birth.Date.year(cal)
+               if year is not None:
+                  gen_range[1] = year
 
          if p.death and p.death.Date:
             if deaths is None or p.death.Date > deaths:
                deaths = p.death.Date
-               if p.death.Date.year_known:
-                  gen_range[2] = p.death.Date.year (cal)
+               year = p.death.Date.year(cal)
+               if year is not None:
+                  gen_range[2] = year
 
       gen_range[3] = "Generation %02d (%d out of %d) (%s - %s)" \
             % (index+1, len (g), 2 ** (index + 1),
@@ -79,13 +81,13 @@ def view (request, decujus=1):
    for p in persons.itervalues ():
       if p.birth and p.birth.Date and p.death and p.death.Date:
          age = p.death.Date.years_since (p.birth.Date)
-         if age:
+         if age is not None:
             if p.sex == "M":
-               ages [int (age / 5)][1] += 1;
+               ages[int(age / 5)][1] += 1;
             elif p.sex == "F":
-               ages [int (age / 5)][2] += 1;
+               ages[int(age / 5)][2] += 1;
             else:
-               ages [int (age / 5)][3] += 1;
+               ages[int(age / 5)][3] += 1;
 
    return render_to_response (
        'geneapro/stats.html',

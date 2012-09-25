@@ -843,7 +843,7 @@ class _Date(object):
 
         else:
             (y1, m1, d1) = self.calendar.components(self.date)
-            (y2, m2, d2) = date.calendar.components(date.date)
+            (y2, m2, d2) = self.calendar.components(date.date)
 
             m = (y1 - y2) * 12 + m1 - m2  # Total months difference
             if d1 != d2:
@@ -940,7 +940,10 @@ class DateRange(object):
 
     def year(self, calendar=None):
         """Return the year to be used for the range, when sorting"""
-        return self.ends[0].year(calendar)
+        if self.ends[0] and self.ends[0].year_known:
+           return self.ends[0].year(calendar)
+        else:
+           return None
 
     def __eq__(self, date):
         return self.ends == date.ends
@@ -993,7 +996,13 @@ class DateRange(object):
         """Return the number of years between two DateRange.
            Only full years are counted
         """
-        return (self.ends[0] - date.ends[0]).years
+        if self.ends[0] is not None \
+               and self.ends[0].year_known \
+               and date.ends[0] is not None \
+               and date.ends[0].year_known:
+           return (self.ends[0] - date.ends[0]).years
+        else:
+           return None
 
     def day_of_week(self):
         """Return the day of week for the start date"""
