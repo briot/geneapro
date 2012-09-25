@@ -227,7 +227,7 @@ QuiltsCanvas.prototype.on_click_ = function(e) {
     var canvas = this;
     var id = this.rtree_.find(
         this.toAbsX(e.offsetX),
-        this.toAbsY(e.offsetY), 
+        this.toAbsY(e.offsetY),
         1, 1);
     if (id.length) {
         id = id[0];
@@ -244,7 +244,7 @@ QuiltsCanvas.prototype.on_click_ = function(e) {
             if (!families) {
                 return;
             }
-            
+
             for (var fam = 0; fam < families.length; fam++) {
                 for (var p = 0; p < 2; p++) {
                     var parent = families[fam][p];
@@ -282,7 +282,7 @@ QuiltsCanvas.prototype.on_click_ = function(e) {
                 }
             }
         }
-            
+
         select_parents(id);
         select_self_and_children(id);
         this.draw();
@@ -295,7 +295,7 @@ QuiltsCanvas.prototype.on_click_ = function(e) {
  */
 
 QuiltsCanvas.prototype.drawPersonSymbol_ = function(
-    ctx, sex, left, top, selected) 
+    ctx, sex, left, top, selected)
 {
     ctx.beginPath();
     ctx.fillStyle = (selected ? "red" : "black");
@@ -316,24 +316,24 @@ QuiltsCanvas.prototype.drawPersonSymbol_ = function(
  */
 
 QuiltsCanvas.prototype.displayLayer_ = function(ctx, layer) {
-    ctx.beginPath();   
+    ctx.beginPath();
     var la = this.layers[layer];
     if (la.length) {
         var y = this.tops[layer] + LINE_SPACING - MARGIN;
+        var w = this.rights[layer] - this.lefts[layer];
+
         for (var p = 0; p < la.length; p++) {
             ctx.fillStyle = (this.selected_[la[p][0]] ? "red" : "black");
             ctx.fillText(la[p].name, this.lefts[layer] + MARGIN, y);
 
             this.rtree_.insert(
-                this.toAbsX(this.lefts[layer]),
-                this.toAbsY(y - LINE_SPACING + MARGIN),
-                this.rights[layer] - this.lefts[layer], LINE_SPACING,
-                la[p][0]);
+                this.lefts[layer],
+                y - LINE_SPACING + MARGIN,
+                w, LINE_SPACING, la[p][0]);
 
             y += LINE_SPACING;
         }
-        ctx.rect(this.lefts[layer], this.tops[layer], 
-                 this.rights[layer] - this.lefts[layer], 
+        ctx.rect(this.lefts[layer], this.tops[layer], w,
                  this.heights[layer]);
     }
     ctx.stroke();
@@ -363,7 +363,7 @@ QuiltsCanvas.prototype.displayMarriages_ = function(ctx, layer) {
     ctx.fillStyle = "black";
     for (var m = 0; m < prevFamilies.length; m++) {
         var minY   = this.tops[layer];
-        
+
         for (var p = 0; p < 2; p++) {
             var person = prevFamilies[m][p];
             if (person != -1) {
@@ -371,7 +371,7 @@ QuiltsCanvas.prototype.displayMarriages_ = function(ctx, layer) {
                 var y = this.tops[info.layer] + info.index * LINE_SPACING;
                 minY = Math.min(minY, y);
                 this.drawPersonSymbol_(
-                    ctx, info.sex, m * LINE_SPACING, y, 
+                    ctx, info.sex, m * LINE_SPACING, y,
                     this.selected_[person]);
             }
         }
@@ -394,7 +394,7 @@ QuiltsCanvas.prototype.displayMarriages_ = function(ctx, layer) {
     ctx.stroke();
 
     var prevMaxX = right;
-    
+
     ctx.beginPath();
     for (var p1 = 0; p1 < prevLayer.length; p1++) {
         var id = prevLayer[p1][0];
@@ -441,7 +441,7 @@ QuiltsCanvas.prototype.displayMarriages_ = function(ctx, layer) {
 QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
     var right = this.rights[layer + 1];
     var prevFamilies = this.families[layer + 1];
-    
+
     ctx.save();
     ctx.translate(right, this.tops[layer]);
     ctx.fillStyle = "black";
@@ -457,7 +457,7 @@ QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
             var info = this.personToLayer[child];
             var y = info.index * LINE_SPACING;
             maxY = Math.max(maxY, y);
-            this.drawPersonSymbol_(ctx, info.sex, m * LINE_SPACING, y, 
+            this.drawPersonSymbol_(ctx, info.sex, m * LINE_SPACING, y,
                                    this.selected_[child]);
         }
         maxYsoFar = maxs[m] = Math.max(maxYsoFar, maxY);
@@ -524,9 +524,9 @@ QuiltsCanvas.prototype.draw = function() {
 
             if (layer < this.layers.length - 1) {
                 this.displayMarriages_(ctx, layer);
-                
+
                 // Display the row with "F" to separate couples and children
-                
+
                 ctx.save();
                 ctx.beginPath();
                 ctx.fillStyle = "#AAAAAA";
@@ -535,7 +535,7 @@ QuiltsCanvas.prototype.draw = function() {
                     this.lefts[layer] - this.rights[layer + 1], F_HEIGHT);
                 ctx.fill();
                 ctx.restore();
-                
+
                 this.displayChildren_(ctx, layer);
             }
         }
