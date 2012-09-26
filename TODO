@@ -54,6 +54,18 @@ http://www.beholdgenealogy.com/blog/?p=876
 ** Create them graphically
 ** Use presets
 
+* Quilts
+** Filtering to only show persons related to the current selection.
+** Multiple selections (in different colors)
+** Draw translucide rectangle from a selection's marriages and children, in
+   addition to drawing the text in red.
+** Easy navigation to parents and children (GeneaQuilts uses pie charts)
+** Clicking on a person should show his/her details
+** Geneaquilts has a timeline view
+** Geneaquilts automatically zooms in or out when navigating from the
+   overview canvas, to show the whole generation. Not sure whether this is
+   convenient.
+
 * Print
 ** Should hide unwanted parts of the page when printing
 
