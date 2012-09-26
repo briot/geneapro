@@ -59,4 +59,7 @@ Q. What is the data model used in the database ?
 
 Q. What is the license ?
 
-   This is GPL version 3 software, copyright Emmanuel Briot
+   This is GPL version 2 software, copyright Emmanuel Briot.
+
+   (we kept version 2 for compatibility with Gramps, so that code from
+   geneapro could eventually be of interest there)
