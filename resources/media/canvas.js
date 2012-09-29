@@ -23,11 +23,11 @@ function Canvas(elem) {
         .click($.proxy(this.onClick, this))
         .dblclick(
             $.proxy(
-                function(e) {this.ifnotDisabled(e, this.onDblClick)},
+                function(e) {this.ifnotDisabled_(e, this.onDblClick)},
                 this))
         .ctrl_click(
             $.proxy(
-                function(e) {this.ifnotDisabled(e, this.onCtrlClick)},
+                function(e) {this.ifnotDisabled_(e, this.onCtrlClick)},
                 this));
 
     $(window).resize($.proxy(this.onResize, this));
@@ -396,9 +396,13 @@ Canvas.prototype.onWheel = function(e) {
 
 Canvas.prototype.ifnotDisabled_ = function(evt, callback) {
     if (!this._disableClicks) {
-        this._disableClicks = true;
-        if (!callback.call(this, evt))
+        try {
+            this.checked._disableClicks = true;
+            var ret = callback.call(this, evt);
+        } finally {
             this._disableClicks = false;
+        }
+        return ret;
     }
 };
 

@@ -121,9 +121,10 @@ inherits(QuiltsCanvas, Canvas);
 
 QuiltsCanvas.prototype.onClick = function(e) {
     var canvas = this;
+    var off = this.canvas.offset();
     var id = this.rtree_.find(
-        this.toAbsX(e.offsetX),
-        this.toAbsY(e.offsetY),
+        this.toAbsX(e.pageX - off.left),
+        this.toAbsY(e.pageY - off.top),
         1, 1);
     if (id.length) {
         id = id[0];

@@ -9,9 +9,8 @@ function PedigreeCanvas(canvas, data, sameSize) {
     Canvas.call(this, canvas /* elem */);
 
     this.data = data;
-
     this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
-    this.setSameSize(sameSize);
+    this.setSameSize(sameSize, true /* norefresh */);
 }
 inherits(PedigreeCanvas, Canvas);
 
@@ -50,9 +49,10 @@ PedigreeCanvas.prototype.wratio;
 /**
  * Change the value of this.sameSize.
  * @param {boolean} sameSize   Whether all boxes have the same size.
+ * @param {boolean=} norefresh If true, do not refresh the canvas.
  */
 
-PedigreeCanvas.prototype.setSameSize = function(sameSize) {
+PedigreeCanvas.prototype.setSameSize = function(sameSize, norefresh) {
     this.sameSize = sameSize;
 
     if (sameSize) {
@@ -73,7 +73,9 @@ PedigreeCanvas.prototype.setSameSize = function(sameSize) {
         this.maxFontSize = 16;
     }
 
-    this.refresh();
+    if (!norefresh) {
+        this.refresh();
+    }
 };
 
 /**
@@ -387,10 +389,6 @@ PedigreeCanvas.prototype.computeBoxPositions = function() {
         this.lineHeights[gen] = Math.min(
             this.maxFontSize, this.lineHeight * genscale);
         this.lines[gen] = height / this.lineHeights[gen];
-        window.console.log("MANU gen=", gen,
-                           " height=", height,
-                           " lineh=", this.lineHeights[gen],
-                           " lines=", this.lines[gen]);
 
         //  Compute positions for boxes in this generation
         var lastIndex = index - Math.pow (2, gen);
