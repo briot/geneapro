@@ -1,14 +1,3 @@
-
-function inherits(childCtor, parentCtor) {
-  /** @constructor */
-  function tempCtor() {};
-  tempCtor.prototype = parentCtor.prototype;
-  childCtor.superClass_ = parentCtor.prototype;
-  childCtor.prototype = new tempCtor();
-  /** @override */
-  childCtor.prototype.constructor = childCtor;
-}
-
 /**
  * @fileoverview This file provides a R-Tree datastructure.
  * This is used for geospatial queries (find all objects within a given

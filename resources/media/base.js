@@ -1,6 +1,34 @@
 var data = null;  //  Data from JSON
 var decujus = 1;  //  Current decujus
 
+/**
+ * Simulate class inheritance (child inherits from Parent).
+ * @param {Object} childCtor   The child class.
+ * @param {Object} parentCtor  The parent class.
+ */
+
+function inherits(childCtor, parentCtor) {
+  function tempCtor() {};
+  tempCtor.prototype = parentCtor.prototype;
+  childCtor.superClass_ = parentCtor.prototype;
+  childCtor.prototype = new tempCtor();
+  childCtor.prototype.constructor = childCtor;
+}
+
+/**
+ * Print all its arguments in the console.
+ * @param {...}
+ */
+
+function log() {
+   //  print the arguments in the console, if visible
+   if (window.console) {
+      console.log(arguments);
+   }
+}
+
+
+
 /************************************************
  * Open up an extra row of information in a table.
  * Initial html setup is
@@ -86,21 +114,19 @@ function getSelectedValue (select) {
     : select.value;
 }
 
-/************************************************
- * Compute the SVG attributes for background or foreground
- ************************************************/
+/**
+ * Compute the display attributes for background or foreground
+ */
 
-function getAttr (svgDefault, person, foreground) {
-   var acc = $.extend ({}, svgDefault, data.styles [person.y]);
+function getAttr (defaultStyle, person, foreground) {
+    var acc = $.extend({}, defaultStyle, data.styles[person.y]);
 
-   if (foreground) {
-      acc.fill = acc.color;
-      delete acc.stroke;
-      delete acc.color;
-   } else {
-      delete acc["font-weight"];
-   }
-   return acc;
+    if (foreground) {
+        acc.fill = acc.color;
+        delete acc.stroke;
+        delete acc.color;
+    }
+    return acc;
 }
 
 /********************************************************
@@ -115,45 +141,4 @@ function event_to_string (e) {
       return s;
    } else
       return "";
-}
-
-/************************************************
- * Support for pedigree and fanchart
- ************************************************/
-
-function drawBox (svg, person, x, y, sosa, config) {
-  if (person) {
-     var g = svg.svg (x, y);
-     var pId = (sosa < 0 ? "c" + (-sosa) : sosa);
-     svg.rect (g, 0, 0, config.boxWidth, config.boxHeight,
-               getAttr ({sosa:sosa,
-                         onclick:'onClick(evt)',
-                         onmouseover:'onMouseOver(evt)',
-                         onmouseout:'onMouseOut(evt)'},
-                        person, false))
-     var clip = svg.other (g, 'clipPath', {id:'p'+pId});
-     svg.rect (clip, 0, 0, config.boxWidth, config.boxHeight);
-
-     var birth = event_to_string (person.b),
-         death = event_to_string (person.d),
-         birthp = person.b ? person.b[1] || "" : "",
-         deathp = person.d ? person.d[1] || "" : "";
-
-     svg.text(g, 4, "1em",
-          svg.createText().string(person.surn + " " + person.givn)
-          .span ("b:", {x:4, dy:"1.2em"})
-          .span (birth, {x:16,"font-style":"italic"})
-          .span (birthp, {x:16,dy:"1.1em","font-style":"italic"})
-          .span ("d:", {x:4, dy:"1.2em"})
-          .span (death, {x:16,"font-style":"italic"})
-          .span (deathp, {x:16,dy:"1.1em","font-style":"italic"}),
-        getAttr ({"clip-path":"url(#p"+pId+")", "pointer-events":"none"},
-                 person, true)
-         );
-    } else {
-      svg.rect (x, y, boxWidth, boxHeight,
-               {"stroke-dasharray":"3", fill:"white", stroke:"black",
-                onmouseover:'onMouseOver(evt)',
-                onmouseout:'onMouseOut(evt)'});
-  }
 }

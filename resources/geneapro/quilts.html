@@ -6,17 +6,18 @@
 
 {% block script %}
 $(document).ready(function() {
-  var data = {{data|safe}};
-  var families = {{families|safe}};
-  var q = new QuiltsCanvas($("#quilts"), data, families);
-  q.draw();
+  var data_ = {{data|safe}};
+  var families_ = {{families|safe}};
+  var q = new QuiltsCanvas($("#quilts")[0], data_, families_);
+  q.onResize();
 });
 {% endblock script %}
 
 {% block endbody %}
-<script type="text/javascript" src="{{MEDIA_URL}}quilts.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}rtree.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}quilts.js"></script>
 {% endblock endbody %}
 
 {% block leftside %}

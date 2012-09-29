@@ -1,3 +1,5 @@
+/* @requires: canvas.js */
+/* @requires: mouse_events.js */
 
 var LINE_SPACING = 10;
 var MARGIN = 2;
@@ -6,34 +8,26 @@ var F_HEIGHT = 10;       // height of the row with "F" (families)
 /**
  * Decorates a <canvas> element to show a quilts layout.
  *
- * @param {jQuery} canvas   The element to decorate.
+ * @param {Element} element   The DOM element to decorate.
+ * @param {} layers   The data sent by the server.
  * @param {Array.<*>} families
  *    The data from the server. It has the following format:
  *        families ::= [ families_in_layer+ ]
  *        families_in_layer ::= [ family+ ]
  *        family ::= [father || -1, mother || -1, child1, child2,...]
+ * @extends {Canvas}
  */
 
 function QuiltsCanvas(canvas, layers, families) {
-    this.scale = 1.0;
-    this.left = 0.0;
-    this.top = 0.0;
+    Canvas.call(this, canvas /* elem */);
+
+    this.ctx.font = this.fontName;
 
     this.layers = layers;  // list of people in each layer
     this.families = families;
 
-    this.canvas = canvas[0];
-    this.canvas.width = canvas.width();
-    this.canvas.height = canvas.height();
-
     this.rtree_ = new RTree();
     this.selected_ = {};
-
-    canvas
-        .wheel($.proxy(this.on_wheel_, this))
-        .start_drag($.proxy(this.on_start_drag_, this))
-        .in_drag($.proxy(this.on_in_drag_, this))
-        .click($.proxy(this.on_click_, this));
 
     // Preprocess the data to gather information relative to each person in a
     // datastructure easier to manipulate
@@ -80,7 +74,7 @@ function QuiltsCanvas(canvas, layers, families) {
     // because computing the size of text is relatively expensive). This also
     // allows us to only draw the visible layers later on.
 
-    var ctx = this.canvas.getContext("2d");
+    var ctx = this.ctx;
 
     this.lefts = [];          // left corner for each layer
     this.rights = [];         // right corner for each layer
@@ -121,109 +115,11 @@ function QuiltsCanvas(canvas, layers, families) {
         }
     }
 };
+inherits(QuiltsCanvas, Canvas);
 
-/**
- * Convert an X coordinate from pixels to absolute
- * @param {number} xpixel  pixel coordinate.
- * @return {number}        absolute coordinate.
- */
+/** @overrides */
 
-QuiltsCanvas.prototype.toAbsX = function(xpixel) {
-    return xpixel / this.scale + this.left;
-};
-
-/**
- * Convert a Y coordinate from pixels to absolute
- * @param {number} ypixel  pixel coordinate.
- * @return {number}        absolute coordinate.
- */
-
-QuiltsCanvas.prototype.toAbsY = function(ypixel) {
-    return ypixel / this.scale + this.top;
-};
-
-/**
- * Convert an X coordinate from absolute to pixels
- * @param {number} xabs    absolute coordinate.
- * @return {number}        pixel coordinate.
- */
-
-QuiltsCanvas.prototype.toPixelX = function(xabs) {
-    return (xabs - this.left) * this.scale;
-};
-
-/**
- * Convert a Y coordinate from absolute to pixels
- * @param {number} yabs    absolute coordinate.
- * @return {number}        pixel coordinate.
- */
-
-QuiltsCanvas.prototype.toPixelY = function(yabs) {
-    return (yabs - this.top) * this.scale;
-};
-
-/**
- * Update the scale of the canvas, keeping (xoffs, yoffs) in place.
- */
-
-QuiltsCanvas.prototype.updateZoom = function(newScale, xoffs, yoffs) {
-    var old_scale = this.scale;
-    var offset = $(this.canvas).offset();
-    var xabs = this.toAbsX(xoffs - offset.left);
-    var yabs = this.toAbsY(yoffs - offset.top);
-
-    this.scale = newScale;
-
-    // Keep the mouse position constant on the screen (ie do not move the
-    // pixel we are pointing to).
-    // if mx is screen coordinate of mouse, this must remain constant.
-    //   mx = (mxabs - oldx) * oldz
-    //      = (mxabs - this.x) * this.scale
-    //   => this.x = mxabs - (mxabs - oldx) * oldz / this.scale
-
-    this.left = xabs - (xabs - this.left) * old_scale / this.scale;
-    this.top = yabs - (yabs - this.top) * old_scale / this.scale;
-    this.draw();
-};
-
-/**
- * Mouse Wheel events
- */
-
-QuiltsCanvas.prototype.on_wheel_ = function(e) {
-    if (e.delta > 0) {
-        this.updateZoom(this.scale * 1.1, e.clientX, e.clientY);
-    } else {
-        this.updateZoom(this.scale / 1.1, e.clientX, e.clientY);
-    }
-    return false;
-};
-
-/**
- * Handles the beginning of a scroll operation (via drag).
- */
-
-QuiltsCanvas.prototype.on_start_drag_ = function(e, dragdata) {
-    dragdata.offset = {left: this.left,
-                       top: this.top};
-    dragdata.scale = 1 / -this.scale;
-};
-
-/**
- * Handles a scroll of the canvas via mouse drag.
- */
-
-QuiltsCanvas.prototype.on_in_drag_ = function(e, dragdata) {
-    this.left = dragdata.offset.left;
-    this.top = dragdata.offset.top;
-    this.draw();
-};
-
-/**
- * Handles click events
- */
-
-QuiltsCanvas.prototype.on_click_ = function(e) {
+QuiltsCanvas.prototype.onClick = function(e) {
     var canvas = this;
     var id = this.rtree_.find(
         this.toAbsX(e.offsetX),
@@ -285,7 +181,7 @@ QuiltsCanvas.prototype.on_click_ = function(e) {
 
         select_parents(id);
         select_self_and_children(id);
-        this.draw();
+        this.refresh();
     }
 };
 
@@ -295,29 +191,32 @@ QuiltsCanvas.prototype.on_click_ = function(e) {
  */
 
 QuiltsCanvas.prototype.drawPersonSymbol_ = function(
-    ctx, sex, left, top, selected)
+    sex, left, top, selected)
 {
-    ctx.beginPath();
-    ctx.fillStyle = (selected ? "red" : "black");
+    this.ctx.beginPath();
+    this.ctx.fillStyle = (selected ? "red" : "black");
     if (sex == "F") {
-        ctx.arc(left + LINE_SPACING / 2,
+        this.ctx.arc(left + LINE_SPACING / 2,
                 top + LINE_SPACING / 2,
                 LINE_SPACING / 2, 0, 2 * Math.PI);
     } else if (sex == "M") {
-        ctx.fillRect(left, top, LINE_SPACING, LINE_SPACING);
+        this.ctx.fillRect(left, top, LINE_SPACING, LINE_SPACING);
     } else {
-        ctx.fillRect(left + 4, top + 4, LINE_SPACING - 8, LINE_SPACING - 8);
+        this.ctx.fillRect(
+            left + 4, top + 4, LINE_SPACING - 8, LINE_SPACING - 8);
     }
-    ctx.fill();
+    this.ctx.fill();
 };
 
 /**
  * Display the box for a single layer
  */
 
-QuiltsCanvas.prototype.displayLayer_ = function(ctx, layer) {
-    ctx.beginPath();
+QuiltsCanvas.prototype.displayLayer_ = function(layer) {
+    var ctx = this.ctx;
     var la = this.layers[layer];
+
+    ctx.beginPath();
     if (la.length) {
         var y = this.tops[layer] + LINE_SPACING - MARGIN;
         var w = this.rights[layer] - this.lefts[layer];
@@ -347,7 +246,8 @@ QuiltsCanvas.prototype.displayLayer_ = function(ctx, layer) {
  * display a diagonal matrix when possible.
  */
 
-QuiltsCanvas.prototype.displayMarriages_ = function(ctx, layer) {
+QuiltsCanvas.prototype.displayMarriages_ = function(layer) {
+    var ctx = this.ctx;
     var right = this.rights[layer + 1];
     var top = this.tops[layer + 1];
     var prevFamilies = this.families[layer + 1];
@@ -362,7 +262,7 @@ QuiltsCanvas.prototype.displayMarriages_ = function(ctx, layer) {
     ctx.strokeStyle = "gray";
     ctx.fillStyle = "black";
     for (var m = 0; m < prevFamilies.length; m++) {
-        var minY   = this.tops[layer];
+        var minY = this.tops[layer];
 
         for (var p = 0; p < 2; p++) {
             var person = prevFamilies[m][p];
@@ -371,7 +271,7 @@ QuiltsCanvas.prototype.displayMarriages_ = function(ctx, layer) {
                 var y = this.tops[info.layer] + info.index * LINE_SPACING;
                 minY = Math.min(minY, y);
                 this.drawPersonSymbol_(
-                    ctx, info.sex, m * LINE_SPACING, y,
+                    info.sex, m * LINE_SPACING, y,
                     this.selected_[person]);
             }
         }
@@ -457,7 +357,7 @@ QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
             var info = this.personToLayer[child];
             var y = info.index * LINE_SPACING;
             maxY = Math.max(maxY, y);
-            this.drawPersonSymbol_(ctx, info.sex, m * LINE_SPACING, y,
+            this.drawPersonSymbol_(info.sex, m * LINE_SPACING, y,
                                    this.selected_[child]);
         }
         maxYsoFar = maxs[m] = Math.max(maxYsoFar, maxY);
@@ -488,42 +388,26 @@ QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
     ctx.restore();
 };
 
-/**
- * Redisplay the contents of the canvas.
- */
+/** @overrides */
 
-QuiltsCanvas.prototype.draw = function() {
-    var ctx = this.canvas.getContext("2d");
+QuiltsCanvas.prototype.onDraw = function() {
+    var ctx = this.ctx;
+    var abs = this.visibleAreaAbs();
 
     this.rtree_.clear();
-
-    ctx.save();
-    ctx.setTransform(
-        1, 0, 0,
-        1, 0, 0);
-    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    ctx.restore();
-
     ctx.fillStyle = "black";
-    ctx.setTransform(
-        this.scale, 0, 0,
-        this.scale, -this.scale * this.left, -this.scale * this.top);
-
-    var abs = new Rect(this.left, this.top,
-                       this.canvas.width / this.scale,
-                       this.canvas.height / this.scale);
 
     for (var layer = this.layers.length - 1; layer >= 0; layer--) {
         // only display visible layers
-        r  = new Rect(this.rights[layer],
+        r  = new Rect(this.lefts[layer],
                       this.tops[layer],
-                      this.lefts[layer] - this.rights[layer],
+                      this.rights[layer] - this.lefts[layer],
                       this.heights[layer]);
         if (r.intersects(abs)) {
-            this.displayLayer_(ctx, layer);
+            this.displayLayer_(layer);
 
             if (layer < this.layers.length - 1) {
-                this.displayMarriages_(ctx, layer);
+                this.displayMarriages_(layer);
 
                 // Display the row with "F" to separate couples and children
 

@@ -1,304 +1,467 @@
-/************************************************
- * A resizable and zoomable canvas class.
+/* @requires: mouse_events.js */
+/* @requires: rtree.js */
+
+/**
+ * A canvas class that provides various higher-level services.
+ * It can be zoomed and scrolled with the mouse.
  *
- * Dependencies
- * ============
- * Requires:  adacore-mouse_events.js
- *
- * Description
- * ===========
- *
- * This module exports the Canvas class, which can be instantiated on its
- * own via a call similar to:
- *    c = new Canvas(options, element);
- *       // element is a DOM object
- *       // for this of valid options, see $.fn.canvas.defaults below
- *
- *    c.init(options, element)
- *       // Initializes C (just like the constructor above) but does not
- *       // create a new instance.
- *
- * The following methods are available:
- *    c.refresh(box=fullscreen);
- *       // force a redraw of the whole canvas
- *       // BOX is the area that should be refreshed, in pixel coordinates.
- *    c.toPixelLength(length);
- *    c.toPixelAbs(length);
- *       // converts a length from pixel to absolute coordinates, depending
- *       // on current zoom level. This ignores any scrolling offset.
- *    c.toPixelX(xbas);
- *    c.toPixelY(yabs);
- *    c.toAbsX(xpixel);
- *    c.toAbsY(ypixel);
- *       // converts from pixel to absolute coordinates and back. This takes
- *       // scrolling and zooming into account.
- *    c.text(x, y, text, attr);
- *       // display some text at the given pixel coordinates. 'attr' can be
- *       // used to specify the style: 'attr.fill', 'attr.font-weight' and
- *       // 'attr.stroke', in particular.
- *    c.drawPath(attr);
- *       // draw the current path set in c.ctx with the given attributes.
- *       // In particular 'attr.fill', 'attr.stroke' and 'attr.shadow'. The
- *       // latter is a boolean that indicates if a shadow should be added.
- *    c.rect(x,y,width,height,attr);
- *       // draw a rectangle at the given pixel coordinates
- *    c.roundedRect(x,y,width,height, radius=6)
- *       // draw a rounded rectangle at the given pixel coordinates
- *
- * The code below does not do any drawing in the canvas, just prepares the
- * context for it. When actual drawing is needed, the signal "draw" is
- * emitted on the canvas. Therefore you also need to bind to that signal
- *
- *     $("selector").canvas ({onDraw:do_my_drawing});
- *     function do_my_drawing(event, box) {  // use this.ctx}
- *        # where box is the real-world coordinates for the area that needs
- *        # to be refreshed. The area has already been cleared.
- *
- * It is left to the user to convert from absolute to pixel coordinates. The
- * canvas does not automatically converts them (for instance by setting the
- * scaling factor on its context), because fonts should not be zoomed but
- * rendered at the appropriate size directly for better rendering. Likewise,
- * lines would end up blurry.
- *
- * Jquery integration
- * ==================
- *
- * For convenience, a jQuery integration is provided, so that you can write:
- *   $("selector").canvas ({options});
- *      This automatically wraps each element in the jQuery set inside a Canvas
- *      instance.
- *   $("selector").canvas.refresh();
- *      Redraws all the canvas.
- *   $.fn.canvas.defaults
- *      Can be used to modify the defaults
+ * @param {Element} elem   The DOM element to decorate.
  */
-;
 
-function log () {
-   //  print the arguments in the console, if visible
-   if (window.console) {
-      console.log(arguments);
-   }
+function Canvas(elem) {
+    this._disableClicks = false; // If true, disable click events
+
+    this.ctx = elem.getContext("2d");
+    this.ctx.textBaseline = 'top';
+
+    this.canvas = $(elem);
+    this.canvas
+        .start_drag($.proxy(this.onStartDrag, this))
+        .in_drag($.proxy(this.onInDrag, this))
+        .wheel($.proxy(this.onWheel, this))
+        .bind("draw", $.proxy(this.onDraw, this))
+        .click($.proxy(this.onClick, this))
+        .dblclick(
+            $.proxy(
+                function(e) {this.ifnotDisabled(e, this.onDblClick)},
+                this))
+        .ctrl_click(
+            $.proxy(
+                function(e) {this.ifnotDisabled(e, this.onCtrlClick)},
+                this));
+
+    $(window).resize($.proxy(this.onResize, this));
+
+    /*       this.actions = {};  // "name":function,  for methods to add to the object
+    // When function is called, THIS is the instance of Canvas
+    for (var a in options.actions) {
+    elem[a] = $.proxy(options.actions[a], this);
+    }
+    */
 }
 
-var Canvas = (function ($) {
+/** Current scale factor of the canvas
+ * @type {number}
+ */
 
-function Canvas (options, elem) {
-   if (elem)
-      this.init(options, elem);
-}
+Canvas.prototype.scale = 1.0;
 
-Canvas.prototype.init = function(options, elem) {
-   this.options = $.extend ({}, $.fn.canvas.defaults, options);
-   this.scale   = 1.0;
-   this.x       = 0.0;  // top-left corner, absolute coordinates
-   this.y       = 0.0;
-   this._disableClicks = false; // If true, disable click events
+/** Current scrolling position of the canvas, in absolute coordinates.
+ * @type {number}
+ */
+Canvas.prototype.left = 0.0;
+Canvas.prototype.top = 0.0;
 
-   this.ctx     = elem.getContext("2d");
-   this.ctx.textBaseline = 'top';
+/** Multiplier when zooming */
 
-   this.canvas  = $(elem);
+Canvas.prototype.scaleStep = 1.1;
 
-   this.canvas
-      .start_drag ($.proxy (on_start_drag, this))
-      .in_drag ($.proxy (on_in_drag, this))
-      .wheel ($.proxy (on_wheel, this));
-   $(window).resize ($.proxy (onResize, this));
+/** Whether to draw a box when a parent is unknown */
 
-   if (options.onDraw)
-      this.canvas.bind ("draw", $.proxy (options.onDraw, this));
-   if (options.onCtrlClick)
-      this.canvas.ctrl_click ($.proxy
-         (function(e) {ifnotDisabled.apply(this, [e, options.onCtrlClick])},
-          this));
-   if (options.onDblClick)
-      this.canvas.dblclick($.proxy(
-               function(e){ifnotDisabled.apply(this, [e, options.onDblClick])},
-               this));
+Canvas.prototype.showUnknown = false;
 
-   for (var a in options.actions) {
-      elem[a] = $.proxy(options.actions[a], this);
-   }
+/** Base font size, in pixels */
 
-   onResize.apply(this);
-}
+Canvas.prototype.baseFontSize = 16;
 
-Canvas.prototype.refresh = function (box) {
-   if (!box)
-      box = {x:0, y:0, w:this.canvas[0].width, h:this.canvas[0].height};
+/** No need to draw text below this size */
 
-   this._disableClicks = false; //  ??? or in canvas()
+Canvas.prototype.minFont = 5;
 
-   var ctx = this.ctx;
-   ctx.save ();
-     ctx.clearRect (box.x, box.y, box.w, box.h);
-     this.canvas.trigger ("draw", box);
-   ctx.restore ();
-}
+/** Default font */
 
-Canvas.prototype.toPixelLength = function (length) {
-   return length * this.scale;
-}
-Canvas.prototype.toPixelAbs = function (length) {
-   return length / this.scale;
-}
-Canvas.prototype.toPixelX = function (xabs) {
-   return (xabs - this.x) * this.scale;
-}
-Canvas.prototype.toPixelY = function (yabs) {
-   return (yabs - this.y) * this.scale;
-}
-Canvas.prototype.toAbsX = function (xpixel) {
-   return xpixel / this.scale + this.x;
-}
-Canvas.prototype.toAbsY = function (ypixel) {
-   return ypixel / this.scale + this.y;
-}
-Canvas.prototype.text = function (x, y, text, attr) {
-   var c = this.ctx;
-   if (attr && attr["font-weight"])
-      c.font = attr["font-weight"] + " " + c.font;
-   c.fillStyle = (attr && attr.color) || "black";
-   c.fillText (text, x, y);
-}
-Canvas.prototype.drawPath = function (attr) {
-   var c = this.ctx;
-   if (attr.shadow){
-      c.save();
-      c.fillStyle = 'transparent';
-      c.shadowOffsetX = 3;
-      c.shadowOffsetY = 3;
-      c.shadowBlur    = 10;
-      c.shadowColor   = 'rgba(00,00,00,0.4)';
-      c.fill();
-      c.restore();
-   }
-   if (attr.fill) {
-      c.fillStyle = attr.fill || 'white';
-      c.fill ();
-   }
-   if (attr.stroke) {
-      c.strokeStyle = attr.stroke;
-      c.stroke ();
-   }
-}
-Canvas.prototype.rect = function (x, y, width, height, attr) {
-   var c = this.ctx;
-   c.beginPath ();
-   c.rect (x, y, width, height);
-   c.closePath();
-   this.drawPath (attr);
-}
+Canvas.prototype.fontName = "sans";
 
-Canvas.prototype.roundedRect = function (x, y, width, height, attr, radius) {
-   radius = radius || 6;
-   var c = this.ctx;
-   c.beginPath ();
-   c.moveTo(x + radius, y);
-   c.lineTo(x + width - radius, y);
-   c.quadraticCurveTo(x + width, y, x + width, y + radius);
-   c.lineTo(x + width, y + height - radius);
-   c.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
-   c.lineTo(x + radius, y + height);
-   c.quadraticCurveTo(x, y + height, x, y + height - radius);
-   c.lineTo(x, y + radius);
-   c.quadraticCurveTo(x, y, x + radius, y);
-   c.closePath();
-   this.drawPath (attr);
-}
+/** Whether refresh() should set the transformation matrix automatically.
+ * This is the default, but might result in lower quality rendering because
+ * fonts should be resized appropriately. Also, you might want to disable
+ * this if you display more data when zooming in.
+ */
 
-function ifnotDisabled(evt, callback) {
-  // Calls 'callback' if the click events are not disabled for the canvas
-  if (!this._disableClicks) {
-     this._disableClicks = true;
-     if (!callback.apply(this, [evt]))
-        this._disableClicks = false;
-  }
-}
+Canvas.prototype.autoZoom = true;
 
-function onResize() {
-   //  Changing the attributes on the canvas also sets the coordinate space
-   //  We always want a 1 to 1 mapping between canvas coordinates and pixels,
-   //  so that text is drawn sharp.
-   var elem = this.canvas[0];
-   elem.width  = this.canvas.width();
-   elem.height = this.canvas.height();
-   this.refresh();
-}
+/**
+ * Called when the canvas needs redrawing (for instance after a resize
+ * or its contents was changed).
+ * Do not call this function directly, but use this.refresh() instead.
+ *
+ * When this.autoZoom is true, the transformation matrix has already been
+ * set.
+ *
+ * This function is always executed within a save()..restore() block.
+ *
+ * @protected
+ */
 
-function on_start_drag (e, dragdata) {
-   dragdata.offset = {left:0, top:0}; // in pixels
-   dragdata.canvas = {x:this.x, y:this.y} // private data
-   dragdata.weight = this.options.weight;  //  Only throwing when in background
-}
+Canvas.prototype.onDraw = function() {};
 
-function on_in_drag (e, dragdata) {
-   // Called when some item in the canvas is dragged.
-   // 'this' is the Canvas instance
-   this.x = dragdata.canvas.x - this.toPixelAbs(dragdata.offset.left);
-   this.y = dragdata.canvas.y - this.toPixelAbs(dragdata.offset.top);
-   this.refresh ();
-}
 
-function on_wheel (e) {
-   var oldz = this.scale,
-       c = this.canvas.offset(),
-       mx = e.pageX - c.left,
-       my = e.pageY - c.top;
+/**
+ * Called when the user is clicking on the canvas
+ * @protected
+ */
 
-   if (e.delta > 0) {
-      this.scale *= this.options.scaleStep;
-   } else {
-      this.scale /= this.options.scaleStep;
-   }
+Canvas.prototype.onClick = function() {};
 
-   // Keep the mouse position constant on the screen (ie do not move the
-   // pixel we are pointing to).
-   // if mx is screen coordinate of mouse, this must remain constant.
-   // So we want (in real-world coordinates, where "x*" are the coordinates of
-   // the left screen border:
-   //    mx / z0 + x0 = mx / z1 + x1
-   //    => x1 = mx / z0 + xo - mx / z1
+/**
+ * Called when the user is double-clicking on the canvas
+ * @protected
+ */
 
-   this.x += mx / oldz - mx / this.scale;
-   this.y += my / oldz - my / this.scale;
-   this.refresh ();
-   return false;  // prevent main window from scrolling
-}
+Canvas.prototype.onDblClick = function() {};
 
-$.fn.canvas = function (options) {
-  return this.each(function() {
-     var inst = $.data (this, "canvas");
-     if (!inst)
-        $(this).data ("canvas", new Canvas (options, this));
-  });
+/**
+ * Called when the user control-clicks in the canvas.
+ * @protected
+ */
+
+Canvas.prototype.onCtrlClick = function() {};
+
+/**
+ * Set the context's transformation matrix based on current scale and scroll.
+ */
+
+Canvas.prototype.setTransform = function() {
+    this.ctx.setTransform(
+        this.scale, 0, 0,
+        this.scale, -this.scale * this.left, -this.scale * this.top);
 };
 
-$.fn.canvas.refresh = function() {
-   return this.each(function() {
-      $.data(this, "canvas").refresh();
-   });
-}
+/**
+ * Clear the canvas area.
+ * @param {} box   The area to clear, defaults to whole canvas
+ */
 
-$.fn.canvas.defaults = {
-  scaleStep: 1.1,   // Multiplier when zooming
-  weight: 200,      // 'weight' when drag-and-throwing the background.
-                    // Higher value means the scrolling stops faster
-  onDraw: null,     // Called to redraw. THIS is the Canvas object
-                    // You need to convert the coordinates to pixels.
-                    //     function doDraw(event, box) {...}
-                    // where box is the area to refresh.
-                    // doDraw can use "this.ctx" to access drawing context.
-  onCtrlClick: null,// Called on control-click
-                    // If returns true, prevents further clicks in the canvas
-                    //     function callback(event) {...}
-  onDblClick: null, // Called on double-click
-                    //     function callback(event) {...}
-  actions: {},      // "name":function,  for methods to add to the object
-                    // When function is called, THIS is the instance of Canvas
-}
+Canvas.prototype.clear = function(box) {
+    if (!box) {
+        box = {x:0, y:0, w:this.canvas[0].width, h:this.canvas[0].height};
+    }
+    try {
+        this.ctx.save();
+        this.ctx.setTransform(
+            1, 0, 0,
+            1, 0, 0);
+        this.ctx.clearRect(box.x, box.y, box.w, box.h);
+    } finally {
+        this.ctx.restore();
+    }
+};
 
-return Canvas;
+/**
+ * Force a refresh of the canvas (clears it and sends the "draw" signal).
+ * @param {} box   The area to refresh, defaults to whole canvas.
+ */
 
-})(jQuery); // map "jQuery" to "$" in the function above
+Canvas.prototype.refresh = function (box) {
+    if (!box) {
+        box = {x:0, y:0, w:this.canvas[0].width, h:this.canvas[0].height};
+    }
+
+    this._disableClicks = false;
+
+    this.clear(box);
+
+    try {
+        this.ctx.save();
+
+        if (this.autoZoom) {
+            this.setTransform();
+            this.canvas.trigger("draw", box);
+        }
+    } finally {
+        this.ctx.restore();
+    }
+};
+
+/**
+ * The visible area, in absolute coordinates
+ * @return {Rect}
+ */
+
+Canvas.prototype.visibleAreaAbs = function() {
+    return new Rect(
+        this.left, this.top,
+        this.toAbsLength(this.canvas[0].width),
+        this.toAbsLength(this.canvas[0].height));
+};
+
+/**
+ * @param {number} length   The length to convert.
+ * @return {number}  The same length at zoom 1:1.
+ */
+
+Canvas.prototype.toPixelLength = function(length) {
+    return length * this.scale;
+};
+
+/**
+ * @param {number} length   The length at zoom 1:1
+ * @return {number}  The same length at current zoom level.
+ */
+
+Canvas.prototype.toAbsLength = function(length) {
+    return length / this.scale;
+};
+
+/**
+ * @param {number} xabs   X coordinate at zoom 1:1
+ * @return {number}  The same coordinate at current zoom level.
+ */
+
+Canvas.prototype.toPixelX = function(xabs) {
+    return (xabs - this.left) * this.scale;
+};
+
+/**
+ * @param {number} yabs   Y coordinate at zoom 1:1
+ * @return {number}  The same coordinate at current zoom level.
+ */
+
+Canvas.prototype.toPixelY = function(yabs) {
+    return (yabs - this.top) * this.scale;
+};
+
+/**
+ * @param {number} xpixel   X coordinate at current zoom level.
+ * @return {number}  The same coordinate at zoom 1:1.
+ */
+
+Canvas.prototype.toAbsX = function(xpixel) {
+    return xpixel / this.scale + this.left;
+};
+
+/**
+ * @param {number} ypixel   Y coordinate at current zoom level.
+ * @return {number}  The same coordinate at zoom 1:1.
+ */
+
+Canvas.prototype.toAbsY = function(ypixel) {
+    return ypixel / this.scale + this.top;
+};
+
+/**
+ * Called when the canvas has been resized.
+ * @protected
+ */
+
+Canvas.prototype.onResize = function() {
+    //  Changing the attributes on the canvas also sets the coordinate space We
+    //  always want a 1 to 1 mapping between canvas coordinates and pixels, so
+    //  that text is drawn sharp.
+    var elem = this.canvas[0];
+    elem.width  = this.canvas.width();
+    elem.height = this.canvas.height();
+    this.refresh();
+};
+
+/**
+ * Called when starting a drag operation on the canvas background (to scroll).
+ * @protected
+ */
+
+Canvas.prototype.onStartDrag = function(e, dragdata) {
+    dragdata.offset = {left: this.left, top: this.top};
+    dragdata.scale  = 1 / -this.scale;
+    dragdata.weight = 400;  //  Only throwing when in background
+};
+
+/**
+ * Called during a scroll operation
+ * @protected
+ */
+
+Canvas.prototype.onInDrag = function(e, dragdata) {
+    this.left = dragdata.offset.left;
+    this.top = dragdata.offset.top;
+    this.refresh ();
+};
+
+/**
+ * Display text at the given coordinates, using the given attributes.
+ *
+ * @param {} attr Can be used to specify the style: 'attr.fill',
+ *    'attr.font-weight' and 'attr.stroke', in particular.
+ */
+
+Canvas.prototype.text = function(x, y, text, attr, lineSpacing) {
+    if (attr && attr["font-weight"]) {
+        this.ctx.font = attr["font-weight"] + " " + this.fontName;
+    }
+
+    this.ctx.fillStyle = (attr && attr.color) || "black";
+
+    var txt = text.split('\n');
+    for (var t in txt) {
+        this.ctx.fillText(txt[t], x, y);
+        y += (lineSpacing || 12);
+    }
+};
+
+/** Stroke or fill the current path, with the given attributes.
+ *  In particular 'attr.fill', 'attr.stroke' and 'attr.shadow'. The
+ *  latter is a boolean that indicates if a shadow should be added.
+ */
+
+Canvas.prototype.drawPath = function(attr) {
+    var c = this.ctx;
+    if (attr.shadow){
+        c.save();
+        c.fillStyle = 'transparent';
+        c.shadowOffsetX = 3;
+        c.shadowOffsetY = 3;
+        c.shadowBlur    = 10;
+        c.shadowColor   = 'rgba(00,00,00,0.4)';
+        c.fill();
+        c.restore();
+    }
+    if (attr.fill) {
+        c.fillStyle = attr.fill || 'white';
+        c.fill ();
+    }
+    if (attr.stroke) {
+        c.strokeStyle = attr.stroke;
+        c.stroke ();
+    }
+};
+
+/** Draw a rectangle with the given attributes */
+
+Canvas.prototype.rect = function(x, y, width, height, attr) {
+    this.ctx.beginPath();
+    this.ctx.rect(x, y, width, height);
+    this.drawPath(attr);
+};
+
+/** Draw a rounded rectangle with the given attributes */
+
+Canvas.prototype.roundedRect = function(x, y, width, height, attr, radius) {
+    var c = this.ctx;
+    radius = radius || 6;
+    c.beginPath ();
+    c.moveTo(x + radius, y);
+    c.lineTo(x + width - radius, y);
+    c.quadraticCurveTo(x + width, y, x + width, y + radius);
+    c.lineTo(x + width, y + height - radius);
+    c.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    c.lineTo(x + radius, y + height);
+    c.quadraticCurveTo(x, y + height, x, y + height - radius);
+    c.lineTo(x, y + radius);
+    c.quadraticCurveTo(x, y, x + radius, y);
+    c.closePath();
+    this.drawPath (attr);
+};
+
+/**
+ * Update the scale of the canvas, keeping (xoffs, yoffs) in place.
+ */
+
+Canvas.prototype.updateZoom = function(newScale, xoffs, yoffs) {
+    var old_scale = this.scale;
+    var offset = this.canvas.offset();
+    var xabs = this.toAbsX(xoffs - offset.left);
+    var yabs = this.toAbsY(yoffs - offset.top);
+
+    this.scale = newScale;
+
+    // Keep the mouse position constant on the screen (ie do not move the
+    // pixel we are pointing to).
+    // if mx is screen coordinate of mouse, this must remain constant.
+    //   mx = (mxabs - oldx) * oldz
+    //      = (mxabs - this.left) * this.scale
+    //   => this.left = mxabs - (mxabs - oldx) * oldz / this.scale
+
+    this.left = xabs - (xabs - this.left) * old_scale / this.scale;
+    this.top = yabs - (yabs - this.top) * old_scale / this.scale;
+    this.refresh();
+};
+
+/**
+ * Called when the user uses the mouse wheel to zoom in or out
+ * @protected
+ */
+
+Canvas.prototype.onWheel = function(e) {
+    if (e.delta > 0) {
+        this.updateZoom(this.scale * this.scaleStep, e.clientX, e.clientY);
+    } else {
+        this.updateZoom(this.scale / this.scaleStep, e.clientX, e.clientY);
+    }
+    return false;  //  prevent main window from scrolling
+};
+
+/**
+ * Calls 'callback' if the click events are not disabled for the canvas
+ * @private
+ */
+
+Canvas.prototype.ifnotDisabled_ = function(evt, callback) {
+    if (!this._disableClicks) {
+        this._disableClicks = true;
+        if (!callback.call(this, evt))
+            this._disableClicks = false;
+    }
+};
+
+/**
+ * Draw a rectangular box for a person, at the given coordinates.
+ * The box allows for up to linesCount of text.
+ * (x,y) are specified in pixels, so zooming and scrolling must have been
+ * applied first.
+ */
+
+Canvas.prototype.drawPersonBox = function(
+    person, x, y, width, height, fontsize, linesCount)
+{
+    if (person) {
+        var attr = this.data.styles[person.y];
+        attr.shadow = (height > 2); // force shadow
+        this.roundedRect (x, y, width, height, attr);
+
+        if (fontsize >= this.minFont && linesCount >= 1) {
+            var font = this.fontsize + "px " + this.fontName;
+            var c = this.ctx;
+            c.textBaseline = 'top';
+            c.save ();
+            c.clip ();
+            c.translate(x, y);
+            c.font = font;
+            this.text(1, 0, person.surn + " " + person.givn, attr);
+
+            if (linesCount >= 2 && linesCount < 5) {
+                var birth = event_to_string (person.b),
+                death = event_to_string (person.d);
+                c.fillText(birth + " - " + death, 1, fontsize);
+
+            } else if (linesCount > 2) {
+                var birth = event_to_string(person.b);
+                var death = event_to_string(person.d);
+                var birthp = person.b ? person.b[1] || "" : "";
+                var deathp = person.d ? person.d[1] || "" : "";
+                if (linesCount >= 2) {
+                    c.fillText("b:", 1, fontsize);
+                }
+                if (linesCount >= 4) {
+                    c.fillText("d:", 1, 3 * fontsize);
+                }
+
+                c.font = "italic " + font;
+                if (linesCount >= 2 && birth)  {
+                    c.fillText(birth,  fontsize, fontsize);
+                }
+                if (linesCount >= 3 && birthp) {
+                    c.fillText(birthp, fontsize, 2 * fontsize);
+                }
+                if (linesCount >= 4 && death) {
+                    c.fillText(death,  fontsize, 3 * fontsize);
+                }
+                if (linesCount >= 5 && deathp) {
+                    c.fillText(deathp, fontsize, 4 * fontsize);
+                }
+            }
+            c.restore (); // unset clipping mask and font
+        }
+    } else if (this.showUnknown) {
+        this.roundedRect(
+            x, y, width, height, {fill:"white", stroke:"black"});
+    }
+};

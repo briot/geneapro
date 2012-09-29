@@ -9,17 +9,20 @@ function changeGenerations () {
    var gen = Number (getSelectedValue ($("select[name=generations]")[0]));
    window.location = "/pedigree/{{decujus}}?gens=" + gen;
 }
-data={{pedigree_data|safe}};
+var canvas;
+
 $(document).ready (function() {
-   drawSOSA();
+   var data_ = {{pedigree_data|safe}};
+   canvas = new PedigreeCanvas(
+      $("#pedigree")[0], data_, $("#sameSize")[0].checked);
+   canvas.onResize();
 });
 {% endblock script %}
 
 {% block endbody %}
-<script type="text/javascript" src="{{MEDIA_URL}}pedigree2.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.detectFontSize.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}pedigree2.js"></script>
 {% endblock endbody %}
 
 {% block leftside %}
@@ -34,12 +37,12 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
 </select>
 
 <br>
-Same size: <input type="checkbox" id="sameSize" onchange="setUp(this.checked);$('#pedigreeSVG').canvas('refresh')"/>
+Same size: <input type="checkbox" id="sameSize"
+                  onchange="canvas.setSameSize(this.checked)"/>
 
 {{legend|safe}}
 {% endblock leftside %}
 
 {% block contents %}
-<canvas class="graph" id="pedigreeSVG"></canvas>
+<canvas class="graph" id="pedigree"></canvas>
 {% endblock contents %}
-

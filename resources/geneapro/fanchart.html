@@ -12,17 +12,17 @@ function changeGenerations() {
    var gen = Number (getSelectedValue ($("select[name=generations]")[0]));
    window.location = "/fanchart/{{decujus}}?gens=" + gen;
 }
-data={{pedigree_data|safe}}
 $(document).ready(function() {
-   $('#pedigreeSVG').svg();
-   drawSOSA();
+   var data={{pedigree_data|safe}};
+   var g = new FanchartCanvas($("#fanchart")[0], data);
+   g.onResize();
 });
 {% endblock script %}
 
 {% block endbody %}
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.svg.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.svgfilter.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.svganim.pack.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.detectFontSize.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}fanchart.js"></script>
 {% endblock endbody %}
 
@@ -41,5 +41,5 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
 {% endblock leftside %}
 
 {% block contents %}
-<div id="pedigreeSVG"></div>
+<canvas class="graph" id="fanchart"></canvas>
 {% endblock contents %}

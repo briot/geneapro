@@ -15,7 +15,7 @@
 ** Look at H-Trees for efficient visualization
   http://www.tco.utah.edu/NEWSLETTER/2011June/featured-article.php
   http://rootstech.org/schedule/saturday/TD044
-  
+
 * Gedcom import
 ** Import all missing GEDCOM information (reported by ./manage.py import)
 ** TODO share NOTE, PLAC and SOUR in the database
@@ -49,6 +49,9 @@ http://www.beholdgenealogy.com/blog/?p=876
    Display action buttons ("make decujus", "view info",...) for the active box.
    Use a R-Tree for fast detection.
 
+** Dynamic "infinite" expansion
+See "Interactive Visualization of Genealogical Graphs"
+http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 * Highlight rules
 ** Store them in the database
 ** Create them graphically
