@@ -91,6 +91,6 @@ def fanchart_view(request, decujus=1):
         "generations": gens,
         "decujus": decujus,
         "decujusid": decujus,
-        "genrange": range(1, 13),
+        "genrange": range(1, 30),
         "pedigree_data":compute_data(gens, True, decujus)},
        context_instance=RequestContext(request))

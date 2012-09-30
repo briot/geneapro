@@ -28,6 +28,8 @@ function QuiltsCanvas(canvas, layers, families) {
 
     this.rtree_ = new RTree();
     this.selected_ = {};
+    this.selectIndex = 0;  //  number of current selections
+    this.selectColors = ["red", "violet", "green", "blue", "orange"];
 
     // Preprocess the data to gather information relative to each person in a
     // datastructure easier to manipulate
@@ -126,17 +128,17 @@ QuiltsCanvas.prototype.onClick = function(e) {
         this.toAbsX(e.pageX - off.left),
         this.toAbsY(e.pageY - off.top),
         1, 1);
+
     if (id.length) {
         id = id[0];
 
         // Find all related persons
-        this.selected_ = {};
 
-        function select_self_and_children(id) {
+        function select_self_and_children(id, index) {
             var info = canvas.personToLayer[id];
             var families = canvas.families[info.layer];
 
-            canvas.selected_[id]= true;
+            canvas.selected_[id]= index;
 
             if (!families) {
                 return;
@@ -147,7 +149,8 @@ QuiltsCanvas.prototype.onClick = function(e) {
                     var parent = families[fam][p];
                     if (parent == id) {
                         for (var c = 2; c < families[fam].length; c++) {
-                            select_self_and_children(families[fam][c]);
+                            select_self_and_children(
+                                families[fam][c], index);
                         }
                         break;  //  no need to look for other parent
                     }
@@ -155,11 +158,11 @@ QuiltsCanvas.prototype.onClick = function(e) {
             }
         }
 
-        function select_parents(id) {
+        function select_parents(id, index) {
             var info = canvas.personToLayer[id];
             var families = canvas.families[info.layer + 1];
 
-            canvas.selected_[id]= true;
+            canvas.selected_[id]= index;
 
             if (!families) {
                 return;
@@ -171,7 +174,7 @@ QuiltsCanvas.prototype.onClick = function(e) {
                     if (child == id) {
                         for (var c = 0; c < 2; c++) {
                             if (families[fam][c] && families[fam][c] != -1) {
-                                select_parents(families[fam][c]);
+                                select_parents(families[fam][c], index);
                             }
                         }
                         break;  //  No need to look at other children
@@ -180,10 +183,24 @@ QuiltsCanvas.prototype.onClick = function(e) {
             }
         }
 
-        select_parents(id);
-        select_self_and_children(id);
+        if (e.shiftKey) {
+            this.selectIndex ++;
+        } else {
+            this.selected_ = {};
+            this.selectIndex  = 0;
+        }
+
+        select_parents(id, this.selectIndex);
+        select_self_and_children(id, this.selectIndex);
         this.refresh();
     }
+};
+
+QuiltsCanvas.prototype.setFillStyle_ = function(person) {
+    var s = this.selected_[person];
+    this.ctx.fillStyle = (
+        s === undefined ?
+            "black" : this.selectColors[s % this.selectColors.length]);
 };
 
 /**
@@ -192,10 +209,10 @@ QuiltsCanvas.prototype.onClick = function(e) {
  */
 
 QuiltsCanvas.prototype.drawPersonSymbol_ = function(
-    sex, left, top, selected)
+    sex, left, top, person)
 {
     this.ctx.beginPath();
-    this.ctx.fillStyle = (selected ? "red" : "black");
+    this.setFillStyle_(person);
     if (sex == "F") {
         this.ctx.arc(left + LINE_SPACING / 2,
                 top + LINE_SPACING / 2,
@@ -223,9 +240,8 @@ QuiltsCanvas.prototype.displayLayer_ = function(layer) {
         var w = this.rights[layer] - this.lefts[layer];
 
         for (var p = 0; p < la.length; p++) {
-            ctx.fillStyle = (this.selected_[la[p][0]] ? "red" : "black");
+            this.setFillStyle_(la[p][0]);
             ctx.fillText(la[p].name, this.lefts[layer] + MARGIN, y);
-
             this.rtree_.insert(
                 this.lefts[layer],
                 y - LINE_SPACING + MARGIN,
@@ -271,9 +287,7 @@ QuiltsCanvas.prototype.displayMarriages_ = function(layer) {
                 var info = this.personToLayer[person];
                 var y = this.tops[info.layer] + info.index * LINE_SPACING;
                 minY = Math.min(minY, y);
-                this.drawPersonSymbol_(
-                    info.sex, m * LINE_SPACING, y,
-                    this.selected_[person]);
+                this.drawPersonSymbol_(info.sex, m * LINE_SPACING, y, person);
             }
         }
 
@@ -358,8 +372,7 @@ QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
             var info = this.personToLayer[child];
             var y = info.index * LINE_SPACING;
             maxY = Math.max(maxY, y);
-            this.drawPersonSymbol_(info.sex, m * LINE_SPACING, y,
-                                   this.selected_[child]);
+            this.drawPersonSymbol_(info.sex, m * LINE_SPACING, y, child);
         }
         maxYsoFar = maxs[m] = Math.max(maxYsoFar, maxY);
 
