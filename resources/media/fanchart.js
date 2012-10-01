@@ -113,8 +113,7 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
         this.decujusy - this.boxHeight / 2 /* y */,
         this.boxWidth /* width */,
         this.boxHeight /* height */,
-        12 /* fontsize */,
-        5 /* linesCount */);
+        this.baseFontSize /* fontsize */);
 
     if (d.children) {
         var y = (maxHeight - childrenHeight) / 2;
@@ -125,8 +124,7 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
                 y /* y */,
                 this.boxWidth /* width */,
                 this.boxHeight /* height */,
-                12 /* fontsize */,
-                5 /* linesCount */);
+                this.baseFontSize /* fontsize */);
             y += this.boxHeight + this.vertPadding;
         }
     }
@@ -171,10 +169,6 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
                 doPath_(minRadius, maxRadius, maxAngle, minAngle);
                 ctx.clip();
 
-                var txt = person.surn + " " + person.givn +
-                    "\n" + (event_to_string (person.b) || "?") +
-                    "-" + (event_to_string (person.d) || "?");
-
                 var a = minAngle + (maxAngle - minAngle) / 2;
                 var c = Math.cos(a);
                 var s = Math.sin(a);
@@ -195,8 +189,9 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
                         ctx.rotate(a);
                     }
 
-                    this.text(0, 0, txt, this.data.styles[person.y],
-                              fontSize /* lineSpacing */);
+                    this.drawPersonText(
+                        person, 0, 0,
+                        2 * fontSize /* height */, fontSize /* fontsize */);
 
                 } else {
                     //  ??? Upcoming HTML5 canvas will support text on path
@@ -210,8 +205,10 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
                         ctx.translate(r * c, r * s);
                         ctx.rotate((minAngle + maxAngle) / 2 - Math.PI / 2);
                     }
-                    this.text(-60, 0, txt, this.data.styles[person.y],
-                                fontSize /* lineSpacing */);
+
+                    this.drawPersonText(
+                        person, -60, 0,
+                        2 * fontSize/* height */, fontSize /* fontsize */);
 
 
                 }
