@@ -27,9 +27,9 @@ function QuiltsCanvas(canvas, layers, families) {
     this.families = families;
 
     this.rtree_ = new RTree();
-    this.selected_ = {};
     this.selectIndex = 0;  //  number of current selections
-    this.selectColors = ["red", "violet", "green", "blue", "orange"];
+    this.selected_ = {};   // id -> list of selection indexes
+    this.selectColors = ["red", "blue", "green", "yellow", "orange"];
 
     // Preprocess the data to gather information relative to each person in a
     // datastructure easier to manipulate
@@ -47,8 +47,11 @@ function QuiltsCanvas(canvas, layers, families) {
                 layer: layer,
                 index: person,  // index in layer
                 sex: sex /* sex */,
+                leftMostParentLayer: 0,
+                leftMostParentFamily: 0,  // index of family
+                leftMostParentIndex: 0,   // index of parent
                 rightMostMarriageLayer: layers.length,
-                rightMostMarriageIndex: 0};
+                rightMostMarriageIndex: 0}; // index of family
         }
     }
 
@@ -58,7 +61,11 @@ function QuiltsCanvas(canvas, layers, families) {
         var families_in_layer = families[layer];
         for (var family = 0; family < families_in_layer.length; family++) {
             var fam = families_in_layer[family];
-            for (var person = 0; person < fam.length; person++) {
+            var maxLayer = 0;
+            var maxIndex = 0;
+            var maxFamily = 0;
+
+            for (var person = 0; person < 2; person++) {
                 var p = fam[person];
                 if (p != -1) {
                     p = this.personToLayer[p];
@@ -66,7 +73,24 @@ function QuiltsCanvas(canvas, layers, families) {
                         p.rightMostMarriageLayer = layer;
                         p.rightMostMarriageIndex = family;
                     }
+
+                    if (p.layer > maxLayer) {
+                        maxLayer = p.layer;
+                        maxIndex = p.index;
+                        maxFamily = family;
+                    } else if (p.layer == maxLayer) {
+                        maxIndex = Math.max(maxIndex, p.index);
+                    }
                 }
+            }
+            for (var person = 2; person < fam.length; person++) {
+                var child = this.personToLayer[fam[person]];
+                child.leftMostParentLayer = Math.max(
+                    child.leftMostParentLayer, maxLayer);
+                child.leftMostParentIndex = Math.max(
+                    child.leftMostParentIndex, maxIndex);
+                child.leftMostParentFamily = Math.max(
+                    child.leftMostParentFamily, maxFamily);
             }
         }
     }
@@ -119,6 +143,9 @@ function QuiltsCanvas(canvas, layers, families) {
 };
 inherits(QuiltsCanvas, Canvas);
 
+/** Whether to display text in a different color for selected items */
+QuiltsCanvas.prototype.changeSelectedTextColor = false;
+
 /** @overrides */
 
 QuiltsCanvas.prototype.onClick = function(e) {
@@ -132,13 +159,26 @@ QuiltsCanvas.prototype.onClick = function(e) {
     if (id.length) {
         id = id[0];
 
+        function addToSelection(id, index) {
+            if (canvas.selected_[id]) {
+                for (var s = 0; s < canvas.selected_[id].length; s++) {
+                    if (canvas.selected_[id][s] == index) {
+                        return;
+                    }
+                }
+                canvas.selected_[id].push(index);
+            } else {
+                canvas.selected_[id]= [index];
+            }
+        }
+
         // Find all related persons
 
         function select_self_and_children(id, index) {
             var info = canvas.personToLayer[id];
             var families = canvas.families[info.layer];
 
-            canvas.selected_[id]= index;
+            addToSelection(id, index);
 
             if (!families) {
                 return;
@@ -162,7 +202,7 @@ QuiltsCanvas.prototype.onClick = function(e) {
             var info = canvas.personToLayer[id];
             var families = canvas.families[info.layer + 1];
 
-            canvas.selected_[id]= index;
+            addToSelection(id, index);
 
             if (!families) {
                 return;
@@ -196,11 +236,16 @@ QuiltsCanvas.prototype.onClick = function(e) {
     }
 };
 
-QuiltsCanvas.prototype.setFillStyle_ = function(person) {
+/**
+ * Compute the color to use for the text when displaying a person
+ */
+
+QuiltsCanvas.prototype.setTextStyle_ = function(person) {
     var s = this.selected_[person];
     this.ctx.fillStyle = (
         s === undefined ?
-            "black" : this.selectColors[s % this.selectColors.length]);
+            "black" :
+            this.selectColors[s[0] % this.selectColors.length]);
 };
 
 /**
@@ -212,7 +257,8 @@ QuiltsCanvas.prototype.drawPersonSymbol_ = function(
     sex, left, top, person)
 {
     this.ctx.beginPath();
-    this.setFillStyle_(person);
+
+    this.setTextStyle_(person);
     if (sex == "F") {
         this.ctx.arc(left + LINE_SPACING / 2,
                 top + LINE_SPACING / 2,
@@ -234,13 +280,17 @@ QuiltsCanvas.prototype.displayLayer_ = function(layer) {
     var ctx = this.ctx;
     var la = this.layers[layer];
 
+    ctx.fillStyle = "black";
+
     ctx.beginPath();
     if (la.length) {
         var y = this.tops[layer] + LINE_SPACING - MARGIN;
         var w = this.rights[layer] - this.lefts[layer];
 
         for (var p = 0; p < la.length; p++) {
-            this.setFillStyle_(la[p][0]);
+            if (this.changeSelectedTextColor) {
+                this.setTextStyle_(la[p][0]);
+            }
             ctx.fillText(la[p].name, this.lefts[layer] + MARGIN, y);
             this.rtree_.insert(
                 this.lefts[layer],
@@ -435,6 +485,41 @@ QuiltsCanvas.prototype.onDraw = function() {
                 ctx.restore();
 
                 this.displayChildren_(ctx, layer);
+            }
+        }
+    }
+
+    // Highight the selection rectangles
+
+    for (var p in this.selected_) {
+        var indexes = this.selected_[p];  //  list of selection indexes
+        var person = this.personToLayer[p];
+
+        if (person.leftMostParentLayer != 0) {
+            var x1 = this.rights[person.leftMostParentLayer] +
+                person.leftMostParentFamily * LINE_SPACING;
+        } else {
+            x1 = this.lefts[person.layer];
+        }
+
+        if (person.rightMostMarriageLayer < this.layers.length) {
+            var x2 = this.rights[person.rightMostMarriageLayer] +
+                (person.rightMostMarriageIndex + 1) * LINE_SPACING;
+        } else {
+            x2 = this.rights[person.layer];
+        }
+
+        var y1 = this.tops[person.layer] + person.index * LINE_SPACING;
+        var y2 = this.tops[person.leftMostParentLayer] +
+            person.leftMostParentIndex * LINE_SPACING;
+
+        for (var s = 0; s < indexes.length; s++) {
+            ctx.fillStyle = this.selectColors[indexes[s]];
+            this.setFillTransparent(0.2);
+            ctx.fillRect(x1, y1, x2 - x1, LINE_SPACING);
+
+            if (person.leftMostParentLayer != 0) {
+                ctx.fillRect(x1, y2, LINE_SPACING, y1 - y2);
             }
         }
     }

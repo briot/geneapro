@@ -16,6 +16,16 @@ function inherits(childCtor, parentCtor) {
 }
 
 /**
+ * Fast prefix-checker.
+ * @param {string} str The string to check.
+ * @param {string} prefix A string to look for at the start of {@code str}.
+ * @return {boolean} True if {@code str} begins with {@code prefix}.
+ */
+startsWith = function(str, prefix) {
+  return str.lastIndexOf(prefix, 0) == 0;
+};
+
+/**
  * Print all its arguments in the console.
  * @param {...}
  */

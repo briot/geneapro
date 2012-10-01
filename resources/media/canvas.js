@@ -329,6 +329,20 @@ Canvas.prototype.drawPath = function(attr) {
     }
 };
 
+/**  Make this.ctx.fillStyle partially transparent */
+
+Canvas.prototype.setFillTransparent = function(alpha) {
+    var c = this.ctx.fillStyle;
+
+    if (c[0] == '#') {
+        this.ctx.fillStyle = "rgba(" +
+            parseInt(c[1] + c[2], 16) + "," +
+            parseInt(c[3] + c[4], 16) + "," +
+            parseInt(c[5] + c[6], 16) + "," + alpha + ")";
+    } //  else c might start with "rgb()" or "rgba()"
+
+};
+
 /** Draw a rectangle with the given attributes */
 
 Canvas.prototype.rect = function(x, y, width, height, attr) {
