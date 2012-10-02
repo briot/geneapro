@@ -64,6 +64,11 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
                     index: index,  // index in layer
                     id: id,
                     sex: sex /* sex */,
+
+                    // minChildX, maxChildX: range for horizontal lines
+                    // minMarriageX, maxMarriageX: range for horizontal lines
+                    // y: y coordinates for the top of this person.
+
                     name: (sex == "F" ?
                            '\u2640' : sex == "M" ? '\u2642' : ' ') + p[1],
                     leftMostParentLayer: 0,
@@ -173,7 +178,98 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
         } else {
             layerY += height;
         }
-    }
+    });
+
+    // For each family, compute the y range for the corresponding line.
+
+    this.forEachNonEmptyLayer_(function(layer) {
+        var prevMinY = this.tops[layer];
+        var maxYsofar = this.tops[layer - 1];
+
+        this.forEachVisibleFamily_(
+            layer,
+            function(family, index) {
+                family.visibleIndex = index;
+                family.minY = this.tops[layer - 1];
+                family.maxY = maxYsofar;
+                family.x = this.rights[layer] + index * LINE_SPACING;
+
+                for (var p = 0; p < family.length; p++) {
+                    var person = family[p];
+                    var info = this.personToLayer[person];
+                    if (info) {
+                        var y = this.tops[info.layer] +
+                            info.index * LINE_SPACING;
+                        family.minY = Math.min(family.minY, y);
+                        family.maxY = Math.max(family.maxY, y + LINE_SPACING);
+                    }
+                }
+
+                var y2 = family.minY;
+                family.minY = Math.min(prevMinY, y2);
+                prevMinY = y2;
+                maxYsofar = family.maxY;
+            });
+
+        var fam = this.families[layer];
+        fam.lastMinY = prevMinY;
+
+        var prevMaxX = this.rights[layer];
+
+        // Compute the ranges for the horizontal lines in marriages and
+        // children.
+
+        this.forEachVisiblePerson_(
+            layer,
+            function(info, index) {
+                info.y = this.tops[info.layer] + info.index * LINE_SPACING;
+
+                //  Range for the marriage horizontal lines
+                var minX = this.rights[info.layer];
+                var y = info.y;
+                if (fam.lastMinY <= y) {
+                    var maxX = this.lefts[info.layer - 1];
+                } else {
+                    var maxX = minX;
+                    for (var m = fam.length - 1; m > 0; m--) {
+                        if (fam[m].visible && fam[m].minY <= y) {
+                            maxX = minX + fam[m].visibleIndex * LINE_SPACING;
+                            break;
+                        }
+                    }
+                }
+
+                if (info.rightMostMarriageLayer < this.layers.length) {
+                    maxX = Math.max(
+                        maxX,
+                        this.rights[info.rightMostMarriageLayer] +
+                        info.rightMostMarriageIndex * LINE_SPACING);
+                }
+
+                info.minMarriageX = minX;
+                info.maxMarriageX = Math.max(prevMaxX, maxX);
+                prevMaxX = maxX;
+
+                //  Range for the children horizontal lines
+                var prevFam = this.families[layer + 1];
+                if (prevFam) {
+                    maxX = this.lefts[info.layer];
+                    minX = maxX;
+
+                    for (var m = 0; m < prevFam.length - 1; m++) {
+                        if (prevFam[m].visible && prevFam[m].maxY >= y) {
+                            minX = this.rights[info.layer + 1] +
+                                prevFam[m].visibleIndex * LINE_SPACING;
+                            break;
+                        }
+                    }
+
+                    info.minChildX = minX;
+                    info.maxChildX = maxX;
+                }
+            });
+
+    });
 };
 
 /**
@@ -185,7 +281,7 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
 QuiltsCanvas.prototype.forEachNonEmptyLayer_ = function(callback) {
     for (var layer = this.layers.length - 1; layer >= 0; layer--) {
         if (this.layers[layer].length) {
-            callback(layer);
+            callback.call(this, layer);
         }
     }
 };
@@ -211,7 +307,6 @@ QuiltsCanvas.prototype.forEachVisiblePerson_ = function(layer, callback) {
 
 /**
  * Calls callback(family, index) for each visible family in the layer.
- * @return {number} index of last visible family.
  * @private
  */
 
@@ -223,7 +318,6 @@ QuiltsCanvas.prototype.forEachVisibleFamily_ = function(layer, callback) {
             famIndex ++;
         }
     }
-    return famIndex - 1;
 };
 
 /** @overrides */
@@ -372,10 +466,13 @@ QuiltsCanvas.prototype.displayLayer_ = function(layer) {
             this.setTextStyle_(info.id);
         }
         ctx.fillText(info.name, this.lefts[layer] + MARGIN, y);
+
+        // This call is slooowww when inserting too many data
         this.rtree_.insert(
             this.lefts[layer],
             y - LINE_SPACING + MARGIN,
             w, LINE_SPACING, info.id);
+
         y += LINE_SPACING;
     });
 
@@ -396,150 +493,51 @@ QuiltsCanvas.prototype.displayLayer_ = function(layer) {
 
 QuiltsCanvas.prototype.displayMarriages_ = function(layer) {
     var ctx = this.ctx;
-    var right = this.rights[layer + 1];
-    var top = this.tops[layer + 1];
-
-    ctx.save();
-    ctx.translate(right, 0);
-
-    var mins = [];   // for each vertical line, its minY
-    var prevMinY = this.tops[layer];
-
-    ctx.strokeStyle = "gray";
     ctx.fillStyle = "black";
 
-    var famIndex = this.forEachVisibleFamily_(
-        layer + 1,
-        function(family, index) {
-            var minY = this.tops[layer];
-            for (var p = 0; p < 2; p++) {
-                var person = family[p];
-                var info = this.personToLayer[person];
-                if (info) {
-                    var y = this.tops[info.layer] + info.index * LINE_SPACING;
-                    minY = Math.min(minY, y);
-                    this.drawPersonSymbol_(
-                        info.sex, index * LINE_SPACING, y, person);
-                }
-            }
-
-            mins[index] = Math.min(prevMinY, minY);
-            prevMinY = minY;
-
-            ctx.beginPath();
-            var x = index * LINE_SPACING;
-            ctx.moveTo(x, mins[index]);
-            ctx.lineTo(x, this.tops[layer]);
-            ctx.stroke();
-        });
-
-    if (famIndex > 0) {
-        ctx.beginPath();
-        var x = famIndex * LINE_SPACING;
-        mins[famIndex] = prevMinY;
-        ctx.moveTo(x, prevMinY);
-        ctx.lineTo(x, this.tops[layer]);
-        ctx.stroke();
-    }
-
-    var prevMaxX = right;
-
-    ctx.beginPath();
-
-    var lastIndex = this.forEachVisiblePerson_(
-        layer + 1,
-        function(info, index) {
-            var y = index * LINE_SPACING + top;
-            var maxX = right;
-
-            for (var m = mins.length - 1; m > 0; m--) {
-                if (mins[m] <= y) {
-                    maxX = right + m * LINE_SPACING;
-                    break;
-                }
-            }
-
-            if (info.rightMostMarriageLayer < this.layers.length) {
-                maxX = Math.max(
-                    maxX,
-                    info.rightMostMarriageIndex * LINE_SPACING
-                        + this.rights[info.rightMostMarriageLayer]);
-            }
-
-            if (maxX != right) {
-                ctx.moveTo(0, y);
-                ctx.lineTo(Math.max(maxX, prevMaxX) - right, y);
-            }
-
-            prevMaxX = maxX;
-        });
-
-    if (lastIndex > 0) {
-        var y = lastIndex * LINE_SPACING + top;
-        ctx.moveTo(0, y);
-        ctx.lineTo(prevMaxX - right, y);
-    }
-
-    ctx.stroke();
-    ctx.restore();
-};
-
-/**
- * Display the children matrix
- */
-
-QuiltsCanvas.prototype.displayChildren_ = function(ctx, layer) {
-    var right = this.rights[layer + 1];
-
-    ctx.save();
-    ctx.translate(right, this.tops[layer]);
-    ctx.fillStyle = "black";
-    ctx.strokeStyle = "gray";
-
-    var maxs = [];  //  for each vertical line, its maximum Y
-    var maxYsoFar = 0;
+    // Draw all symbols first
 
     this.forEachVisibleFamily_(
-        layer + 1,
-        function(fam, famIndex) {
-            var maxY = 0;
-            for (var c = 2; c < fam.length; c++) {
-                var child = fam[c];
-                var info = this.personToLayer[child];
+        layer,
+        function(family, index) {
+            for (var p = 0; p < family.length; p++) {
+                var id = family[p];
+                var info = this.personToLayer[id];
                 if (info) {
-                    var y = info.index * LINE_SPACING;
-                    maxY = Math.max(maxY, y);
-                    this.drawPersonSymbol_(
-                        info.sex, famIndex * LINE_SPACING, y, child);
+                    this.drawPersonSymbol_(info.sex, family.x, info.y, id);
                 }
             }
-            maxYsoFar = maxs[famIndex] = Math.max(maxYsoFar, maxY);
-
-            ctx.beginPath();
-            var x = famIndex * LINE_SPACING;
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, maxs[famIndex]);
-            ctx.stroke();
         });
 
+    // Draw vertical lines
+
+    var lastFam;
     ctx.beginPath();
+    ctx.strokeStyle = "gray";
+    this.forEachVisibleFamily_(
+        layer,
+        function(family, index) {
+            lastFam = family;
+            ctx.moveTo(family.x, family.minY);
+            ctx.lineTo(family.x, family.maxY);
+        });
+    if (lastFam) {
+        ctx.moveTo(lastFam.x + LINE_SPACING, this.families[layer].lastMinY);
+        ctx.lineTo(lastFam.x + LINE_SPACING, lastFam.maxY);
+    }
 
-    this.forEachVisiblePerson_(layer, function(info, index) {
-        var y = index * LINE_SPACING;
-        var minX = this.lefts[layer] - right;
-        for (var m = 0; m < maxs.length; m++) {
-            if (maxs[m] >= y - LINE_SPACING) {
-                minX = m * LINE_SPACING;
-                break;
-            }
-        }
+    // Horizontal lines
 
-        ctx.moveTo(minX, y);
-        ctx.lineTo(this.lefts[layer] - right, y);
-    });
+    this.forEachVisiblePerson_(
+        layer,
+        function(info, index) {
+            ctx.moveTo(info.minMarriageX, info.y);
+            ctx.lineTo(info.maxMarriageX, info.y);
 
+            ctx.moveTo(info.minChildX, info.y);
+            ctx.lineTo(info.maxChildX, info.y);
+        });
     ctx.stroke();
-    ctx.restore();
 };
 
 /** @overrides */
@@ -562,23 +560,22 @@ QuiltsCanvas.prototype.onDraw = function() {
         if (r.intersects(abs)) {
             this.displayLayer_(layer);
 
-            if (layer < this.layers.length - 1) {
-                this.displayMarriages_(layer);
+            // Display the row with "F" to separate couples and children
 
-                // Display the row with "F" to separate couples and children
-
-                ctx.save();
-                ctx.beginPath();
-                ctx.fillStyle = "#AAAAAA";
-                ctx.rect(
-                    this.rights[layer + 1] - 1, this.tops[layer] - F_HEIGHT,
-                    this.lefts[layer] - this.rights[layer + 1], F_HEIGHT);
-                ctx.fill();
-                ctx.restore();
-
-                this.displayChildren_(ctx, layer);
-            }
+            ctx.save();
+            ctx.beginPath();
+            ctx.fillStyle = "#AAAAAA";
+            ctx.rect(
+                this.rights[layer + 1] - 1, this.tops[layer] - F_HEIGHT,
+                this.lefts[layer] - this.rights[layer + 1], F_HEIGHT);
+            ctx.fill();
+            ctx.restore();
         }
+
+        // Always display those. This will be clipped by the canvas in any
+        // case, and is needed to properly display the lines that span multiple
+        // generations.
+        this.displayMarriages_(layer);
     });
 
     // Highight the selection rectangles
