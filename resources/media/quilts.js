@@ -363,7 +363,7 @@ QuiltsCanvas.prototype.onClick = function(e) {
         this.toAbsX(e.pageX - off.left),
         this.toAbsY(e.pageY - off.top));
 
-    if (id) {
+    if (id && !this.selected_[id]) {
         function addToSelection(id, index) {
             if (canvas.selected_[id]) {
                 for (var s = 0; s < canvas.selected_[id].length; s++) {

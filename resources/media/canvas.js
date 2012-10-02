@@ -416,7 +416,7 @@ Canvas.prototype.onWheel = function(e) {
 Canvas.prototype.ifnotDisabled_ = function(evt, callback) {
     if (!this._disableClicks) {
         try {
-            this.checked._disableClicks = true;
+            this._disableClicks = true;
             var ret = callback.call(this, evt);
         } finally {
             this._disableClicks = false;
