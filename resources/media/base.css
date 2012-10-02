@@ -187,7 +187,7 @@ div.scrollable canvas {
    height:90px; /* taller then logo, because the #roundedContents is
                    displayed on top to provided the rounded corner */
    background-image: -moz-linear-gradient(top, #39414A, #777);
-   background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #39414A),color-stop(1, #777));   
+   background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #39414A),color-stop(1, #777));
    background-image: linear-gradient(top, #39414A, #777);
    filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#39414A', EndColorStr='#777');
 }
@@ -221,7 +221,7 @@ div.scrollable canvas {
 
    background-image: -moz-linear-gradient(top, #777, white);
    background-image: linear-gradient(top, #777/*from #head*/, white);
-   background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #777),color-stop(1, white));   
+   background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #777),color-stop(1, white));
 }
 #collapseSidebar {
    background:transparent;
@@ -257,7 +257,8 @@ div.scrollable canvas {
    text-decoration:none;
    color:black; /* #sidebar h2'color */
    white-space:nowrap;
-   display:inline-block; width:100%}
+   display:inline-block; width:100%
+}
 #sidebarMenu h2 a:hover,
 #sidebarMenu li a:hover {color:white}
 #sidebarMenu ul {list-style:none; margin:8px 0 10px 20px; padding:0}
@@ -265,6 +266,11 @@ div.scrollable canvas {
 #sidebarMenu li a {text-decoration:none; color:black; white-space:nowrap;
    width:100%; display:inline-block}
 #sidebarMenu li a:before {content:"\00BB"; padding-right:5px}
+
+#sidebar button,
+#sidebar input {
+  padding: 5px;
+}
 
 /**********************************************
  * Rounded corners (see http://css3please.com/)

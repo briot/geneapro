@@ -5,11 +5,12 @@
 {% endblock css %}
 
 {% block script %}
+var canvas;
 $(document).ready(function() {
   var data_ = {{data|safe}};
   var families_ = {{families|safe}};
-  var q = new QuiltsCanvas($("#quilts")[0], data_, families_);
-  q.onResize();
+  canvas = new QuiltsCanvas($("#quilts")[0], data_, families_);
+  canvas.onResize();
 });
 {% endblock script %}
 
@@ -21,6 +22,9 @@ $(document).ready(function() {
 {% endblock endbody %}
 
 {% block leftside %}
+<h2>Quilts View</h2>
+<input type="checkbox" title="Show only selected persons"
+        onchange="canvas.filterSelected(this.checked)">Filter selected</input>
 {% endblock leftside %}
 
 {% block contents %}

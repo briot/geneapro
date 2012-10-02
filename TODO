@@ -59,8 +59,6 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 
 * Quilts
 ** Filtering to only show persons related to the current selection.
-** Draw translucide rectangle from a selection's marriages and children, in
-   addition to drawing the text in red.
 ** Easy navigation to parents and children (GeneaQuilts uses pie charts)
 ** Clicking on a person should show his/her details
 ** Geneaquilts has a timeline view

@@ -27,7 +27,7 @@ class Persona_node(object):
         Such a node represents a physical person, possibly constructed from
         several personas. The ids set should indicate one or more database
         ids for the personas. More can be added later.
-        
+
         The name is for debugging purposes only
         """
 
@@ -128,7 +128,7 @@ class GeneaGraph(Digraph):
             if p[0] not in self.__nodes:
                 same = sameas.get(p[0], set((p[0], )))  # a set of persona ids
                 pa = Persona_node(ids=same, name=p[1])
-                
+
                 for s in same:
                     self.__nodes[s] = pa
 
@@ -202,7 +202,7 @@ class GeneaGraph(Digraph):
         # Assign layers.
         # We override the iterators so that children have lower layers than
         # their parents (which is more natural in genealogy).
- 
+
         self.layers__ = self.rank_longest_path(
             roots=list(self.nodes_with_no_children()),
             outedgesiter=self.in_edges,  # include spouses
@@ -326,7 +326,7 @@ class GeneaGraph(Digraph):
         byLayer = dict()   # Contains list of families
         for index in range(0, len(layers)):
             # make sure each layer has at least an empty list
-            byLayer[index] = [] 
+            byLayer[index] = []
 
         for family in families:
             rightMostLayer = min(
@@ -344,16 +344,16 @@ class GeneaGraph(Digraph):
             # Sort the families within each layer. If one of the parents is in
             # another layer, we want that marriage to appear first.
             r.sort(
-                key=lambda family: 
+                key=lambda family:
                 (-max(self.layers__[family[0]] if family[0] else 0,
                      self.layers__[family[1]] if family[1] else 0),
                  min(indexInLayer.get(family[0], -1),
                      indexInLayer.get(family[1], -1))))
-            
+
             # Pass the ids of the family members, not the nodes
             result.append(
                 [map(lambda node: min(node.ids) if node else -1,
-                     family) 
+                     family)
                  for family in r])
 
         return result
@@ -430,11 +430,9 @@ def view(request):
     subset = g.people_in_tree(
         id=1, maxdepth=3, spouses_tree=True)
 
-    #subset = None
+    subset = None
 
     return render_to_response(
         'geneapro/quilts.html',
         g.json(subset),
         context_instance=RequestContext(request))
-
-

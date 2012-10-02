@@ -26,6 +26,7 @@ $(document).ready (function() {
 {% endblock endbody %}
 
 {% block leftside %}
+<h2>Pedigree View</h2>
 Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
    {% for g in genrange %}
       {% if g == generations %}
