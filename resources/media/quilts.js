@@ -26,7 +26,6 @@ function QuiltsCanvas(canvas, layers, families) {
     this.layers = layers;  // list of people in each layer
     this.families = families;
 
-    this.rtree_ = new RTree();
     this.selectIndex = 0;  //  number of current selections
     this.selected_ = {};   // id -> list of selection indexes
     this.selectColors = ["red", "blue", "green", "yellow", "orange"];
@@ -268,7 +267,6 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
                     info.maxChildX = maxX;
                 }
             });
-
     });
 };
 
@@ -320,19 +318,52 @@ QuiltsCanvas.prototype.forEachVisibleFamily_ = function(layer, callback) {
     }
 };
 
+/**
+ * Return the id of the person at the given absolute coordinates.
+ * A Quilts view might contain thousands of people. As a result, using a
+ * RTree (or at least our implementation of it) tends to be too slow), and
+ * since we are only dealing with square data it is easy to compute which
+ * person we have clicked on, if any.
+ */
+
+QuiltsCanvas.prototype.personAtCoordinates = function(absX, absY) {
+    var selectedLayer;
+    var selectedPerson;
+
+    this.forEachNonEmptyLayer_(function(layer) {
+        if (this.lefts[layer] <= absX &&
+            absX <= this.rights[layer] &&
+            this.tops[layer] <= absY &&
+            absY <= this.tops[layer] + this.heights[layer])
+        {
+            selectedLayer = layer;
+        }
+    });
+
+    if (selectedLayer) {
+        this.forEachVisiblePerson_(
+            selectedLayer,
+            function(info, index) {
+                if (info.y <= absY &&
+                    absY <= info.y + LINE_SPACING)
+                {
+                    selectedPerson = info.id;
+                }
+            });
+    }
+    return selectedPerson;
+};
+
 /** @overrides */
 
 QuiltsCanvas.prototype.onClick = function(e) {
     var canvas = this;
     var off = this.canvas.offset();
-    var id = this.rtree_.find(
+    var id = this.personAtCoordinates(
         this.toAbsX(e.pageX - off.left),
-        this.toAbsY(e.pageY - off.top),
-        1, 1);
+        this.toAbsY(e.pageY - off.top));
 
-    if (id.length) {
-        id = id[0];
-
+    if (id) {
         function addToSelection(id, index) {
             if (canvas.selected_[id]) {
                 for (var s = 0; s < canvas.selected_[id].length; s++) {
@@ -466,13 +497,6 @@ QuiltsCanvas.prototype.displayLayer_ = function(layer) {
             this.setTextStyle_(info.id);
         }
         ctx.fillText(info.name, this.lefts[layer] + MARGIN, y);
-
-        // This call is slooowww when inserting too many data
-        this.rtree_.insert(
-            this.lefts[layer],
-            y - LINE_SPACING + MARGIN,
-            w, LINE_SPACING, info.id);
-
         y += LINE_SPACING;
     });
 
@@ -546,7 +570,6 @@ QuiltsCanvas.prototype.onDraw = function() {
     var ctx = this.ctx;
     var abs = this.visibleAreaAbs();
 
-    this.rtree_.clear();
     ctx.fillStyle = "black";
 
     this.forEachNonEmptyLayer_(function(layer) {
@@ -564,7 +587,7 @@ QuiltsCanvas.prototype.onDraw = function() {
 
             ctx.save();
             ctx.beginPath();
-            ctx.fillStyle = "#AAAAAA";
+            ctx.fillStyle = "gray";
             ctx.rect(
                 this.rights[layer + 1] - 1, this.tops[layer] - F_HEIGHT,
                 this.lefts[layer] - this.rights[layer + 1], F_HEIGHT);
