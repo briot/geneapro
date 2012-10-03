@@ -419,18 +419,20 @@ class GeneaGraph(Digraph):
         return to_match
 
 
-def view(request):
+def quilts_view(request, decujus=None):
     g = GeneaGraph()
     g.from_db()
+
+    if decujus is not None:
+        subset = g.people_in_tree(
+            id=int(decujus), maxdepth=3, spouses_tree=True)
+    else:
+        subset = None
+
     #g.export(file("graph.pickle", "w"))
     #g.write_graphviz(file("graph.dot", "wb"))
     #g.write_graphviz(file("genea.dot", "w"),
     #                 edgeiter=g.out_children_edges)
-
-    subset = g.people_in_tree(
-        id=1, maxdepth=3, spouses_tree=True)
-
-    subset = None
 
     return render_to_response(
         'geneapro/quilts.html',

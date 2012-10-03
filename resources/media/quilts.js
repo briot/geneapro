@@ -50,7 +50,7 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
     // datastructure easier to manipulate
 
     this.personToLayer = {};   //  id of person -> [layer, index in layer]
-    this.forEachNonEmptyLayer_(function(layer) {
+    this.forEachNonEmptyLayer_(function(layer){
         var index = 0;
         for (var person = 0; person < this.layers[layer].length; person++) {
             var p = this.layers[layer][person];
@@ -64,9 +64,26 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
                     id: id,
                     sex: sex /* sex */,
 
-                    // minChildX, maxChildX: range for horizontal lines
-                    // minMarriageX, maxMarriageX: range for horizontal lines
-                    // y: y coordinates for the top of this person.
+                    // x-coordinate for the left-most child marker for this
+                    // person. This will always be greater or equal to
+                    // minChildLineX, which computes the range for the
+                    // horizontal line.
+                    minChildX: null,
+                    minChildLineX: null,
+
+                    // x-coordinate for the right-most marriage marker for this
+                    // person. This will always be lesser or equal to
+                    // maxMarriageLineX, which computes the range for the
+                    // horizontal line.
+
+                    maxMarriageX: 0,
+                    maxMarriageLineX: null,
+
+                    // upper-most parent
+
+                    minParentY: null,
+
+                     // y: y coordinates for the top of this person.
 
                     name: (sex == "F" ?
                            '\u2640' : sex == "M" ? '\u2642' : ' ') + p[1],
@@ -201,6 +218,24 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
                             info.index * LINE_SPACING;
                         family.minY = Math.min(family.minY, y);
                         family.maxY = Math.max(family.maxY, y + LINE_SPACING);
+
+                        if (p < 2) {
+                            info.maxMarriageX = Math.max(
+                                info.maxMarriageX,
+                                family.x,
+                                this.rights[info.layer]);
+                        } else if (!info.minChildX){
+                            info.minChildX = Math.min(
+                                this.lefts[info.layer], family.x);
+
+                            if (info.minParentY == null) {
+                                info.minParentY = family.minY;
+                            } else {
+                                info.minParentY = Math.min(
+                                    info.minParentY,
+                                    family.minY);
+                            }
+                        }
                     }
                 }
 
@@ -225,13 +260,12 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
 
                 //  Range for the marriage horizontal lines
                 var minX = this.rights[info.layer];
-                var y = info.y;
-                if (fam.lastMinY <= y) {
+                if (fam.lastMinY <= info.y) {
                     var maxX = this.lefts[info.layer - 1];
                 } else {
                     var maxX = minX;
-                    for (var m = fam.length - 1; m > 0; m--) {
-                        if (fam[m].visible && fam[m].minY <= y) {
+                    for (var m = fam.length - 1; m >= 0; m--) {
+                        if (fam[m].visible && fam[m].minY <= info.y) {
                             maxX = minX + fam[m].visibleIndex * LINE_SPACING;
                             break;
                         }
@@ -245,26 +279,23 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
                         info.rightMostMarriageIndex * LINE_SPACING);
                 }
 
-                info.minMarriageX = minX;
-                info.maxMarriageX = Math.max(prevMaxX, maxX);
+                info.maxMarriageLineX = Math.max(prevMaxX, maxX);
                 prevMaxX = maxX;
 
                 //  Range for the children horizontal lines
                 var prevFam = this.families[layer + 1];
                 if (prevFam) {
-                    maxX = this.lefts[info.layer];
-                    minX = maxX;
+                    minX = this.lefts[info.layer];
 
-                    for (var m = 0; m < prevFam.length - 1; m++) {
-                        if (prevFam[m].visible && prevFam[m].maxY >= y) {
+                    for (var m = 0; m < prevFam.length; m++) {
+                        if (prevFam[m].visible && prevFam[m].maxY >= info.y) {
                             minX = this.rights[info.layer + 1] +
                                 prevFam[m].visibleIndex * LINE_SPACING;
                             break;
                         }
                     }
 
-                    info.minChildX = minX;
-                    info.maxChildX = maxX;
+                    info.minChildLineX = minX;
                 }
             });
     });
@@ -365,6 +396,8 @@ QuiltsCanvas.prototype.onClick = function(e) {
 
     if (id && !this.selected_[id]) {
         function addToSelection(id, index) {
+            window.console.log("MANU select ",
+                               canvas.personToLayer[id].name);
             if (canvas.selected_[id]) {
                 for (var s = 0; s < canvas.selected_[id].length; s++) {
                     if (canvas.selected_[id][s] == index) {
@@ -388,6 +421,8 @@ QuiltsCanvas.prototype.onClick = function(e) {
             if (!families) {
                 return;
             }
+
+//...// What about families in other layers ?
 
             for (var fam = 0; fam < families.length; fam++) {
                 for (var p = 0; p < 2; p++) {
@@ -515,7 +550,7 @@ QuiltsCanvas.prototype.displayLayer_ = function(layer) {
  * display a diagonal matrix when possible.
  */
 
-QuiltsCanvas.prototype.displayMarriages_ = function(layer) {
+QuiltsCanvas.prototype.displayFamilies_ = function(layer) {
     var ctx = this.ctx;
     ctx.fillStyle = "black";
 
@@ -555,12 +590,15 @@ QuiltsCanvas.prototype.displayMarriages_ = function(layer) {
     this.forEachVisiblePerson_(
         layer,
         function(info, index) {
-            ctx.moveTo(info.minMarriageX, info.y);
-            ctx.lineTo(info.maxMarriageX, info.y);
+            ctx.moveTo(this.rights[info.layer], info.y);
+            ctx.lineTo(info.maxMarriageLineX, info.y);
 
-            ctx.moveTo(info.minChildX, info.y);
-            ctx.lineTo(info.maxChildX, info.y);
+            if (info.minChildLineX < this.lefts[info.layer]) {
+                ctx.moveTo(info.minChildLineX, info.y);
+                ctx.lineTo(this.lefts[info.layer], info.y);
+            }
         });
+
     ctx.stroke();
 };
 
@@ -598,40 +636,28 @@ QuiltsCanvas.prototype.onDraw = function() {
         // Always display those. This will be clipped by the canvas in any
         // case, and is needed to properly display the lines that span multiple
         // generations.
-        this.displayMarriages_(layer);
+        this.displayFamilies_(layer);
     });
 
     // Highight the selection rectangles
 
     for (var p in this.selected_) {
         var indexes = this.selected_[p];  //  list of selection indexes
-        var person = this.personToLayer[p];
+        var info = this.personToLayer[p];
 
-        if (person.leftMostParentLayer != 0) {
-            var x1 = this.rights[person.leftMostParentLayer] +
-                person.leftMostParentFamily * LINE_SPACING;
-        } else {
-            x1 = this.lefts[person.layer];
-        }
-
-        if (person.rightMostMarriageLayer < this.layers.length) {
-            var x2 = this.rights[person.rightMostMarriageLayer] +
-                (person.rightMostMarriageIndex + 1) * LINE_SPACING;
-        } else {
-            x2 = this.rights[person.layer];
-        }
-
-        var y1 = this.tops[person.layer] + person.index * LINE_SPACING;
-        var y2 = this.tops[person.leftMostParentLayer] +
-            person.leftMostParentIndex * LINE_SPACING;
+        var x = info.minChildX || this.lefts[info.layer];
+        var x2 = info.maxMarriageX || this.rights[info.layer];
+        var w = x2 - x;
 
         for (var s = 0; s < indexes.length; s++) {
             ctx.fillStyle = this.selectColors[indexes[s]];
             this.setFillTransparent(0.2);
-            ctx.fillRect(x1, y1, x2 - x1, LINE_SPACING);
+            ctx.fillRect(x, info.y, w, LINE_SPACING);
 
-            if (person.leftMostParentLayer != 0) {
-                ctx.fillRect(x1, y2, LINE_SPACING, y1 - y2);
+            // link to the parents
+            if (info.minParentY) {
+                ctx.fillRect(
+                    x, info.y, LINE_SPACING, info.minParentY - info.y);
             }
         }
     }

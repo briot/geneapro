@@ -58,7 +58,9 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 ** Use presets
 
 * Quilts
+** Selection seems to stop after a few generations
 ** Filtering to only show persons related to the current selection.
+   Should auto zoom to make the selection visible.
 ** Easy navigation to parents and children (GeneaQuilts uses pie charts)
 ** Clicking on a person should show his/her details
 ** Geneaquilts has a timeline view
