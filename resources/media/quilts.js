@@ -30,7 +30,7 @@ function QuiltsCanvas(canvas, layers, families) {
     this.selected_ = {};   // id -> list of selection indexes
     this.selectColors = ["red", "blue", "green", "yellow", "orange"];
 
-    this.analyzeData_();
+    this.computeLayout_();
 };
 inherits(QuiltsCanvas, Canvas);
 
@@ -45,7 +45,7 @@ QuiltsCanvas.prototype.filtered = false;
  * @private
  */
 
-QuiltsCanvas.prototype.analyzeData_ = function() {
+QuiltsCanvas.prototype.computeLayout_ = function() {
     // Preprocess the data to gather information relative to each person in a
     // datastructure easier to manipulate
 
@@ -79,6 +79,11 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
                     maxMarriageX: 0,
                     maxMarriageLineX: null,
 
+                    //  id of ancestors or descendants. Caching such lists
+                    //  makes the selection faster.
+                    children: [],
+                    parents: [],
+
                     // upper-most parent
 
                     minParentY: null,
@@ -106,13 +111,19 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
              family < families_in_layer.length; family++)
         {
             var fam = families_in_layer[family];
+
+            var tmpfam = []
+            for (var person = 0; person < fam.length; person++) {
+                tmpfam.push(this.personToLayer[fam[person]]);
+            }
+
             var maxLayer = 0;
             var maxIndex = 0;
             var maxFamily = 0;
             fam.visible = false;
 
             for (var person = 0; person < 2; person++) {
-                var p = this.personToLayer[fam[person]];
+                var p = tmpfam[person];
                 if (p) {
                     //  Family will be displayed if at least one of the parents
                     //  wasn't filtered out.
@@ -133,8 +144,8 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
                 }
             }
 
-            for (var person = 2; person < fam.length; person++) {
-                var child = this.personToLayer[fam[person]];
+            for (var person = 2; person < tmpfam.length; person++) {
+                var child = tmpfam[person];
                 if (child) {
                     child.leftMostParentLayer = Math.max(
                         child.leftMostParentLayer, maxLayer);
@@ -142,6 +153,16 @@ QuiltsCanvas.prototype.analyzeData_ = function() {
                         child.leftMostParentIndex, maxIndex);
                     child.leftMostParentFamily = Math.max(
                         child.leftMostParentFamily, maxFamily);
+
+                    // register the ancestors and descendants
+                    if (tmpfam[0]) {
+                        tmpfam[0].children.push(child.id);
+                        child.parents.push(tmpfam[0].id);
+                    }
+                    if (tmpfam[1]) {
+                        tmpfam[1].children.push(child.id);
+                        child.parents.push(tmpfam[1].id);
+                    }
                 }
             }
 
@@ -396,8 +417,6 @@ QuiltsCanvas.prototype.onClick = function(e) {
 
     if (id && !this.selected_[id]) {
         function addToSelection(id, index) {
-            window.console.log("MANU select ",
-                               canvas.personToLayer[id].name);
             if (canvas.selected_[id]) {
                 for (var s = 0; s < canvas.selected_[id].length; s++) {
                     if (canvas.selected_[id][s] == index) {
@@ -414,52 +433,18 @@ QuiltsCanvas.prototype.onClick = function(e) {
 
         function select_self_and_children(id, index) {
             var info = canvas.personToLayer[id];
-            var families = canvas.families[info.layer];
-
             addToSelection(id, index);
 
-            if (!families) {
-                return;
-            }
-
-//...// What about families in other layers ?
-
-            for (var fam = 0; fam < families.length; fam++) {
-                for (var p = 0; p < 2; p++) {
-                    var parent = families[fam][p];
-                    if (parent == id) {
-                        for (var c = 2; c < families[fam].length; c++) {
-                            select_self_and_children(
-                                families[fam][c], index);
-                        }
-                        break;  //  no need to look for other parent
-                    }
-                }
+            for (var child = 0; child < info.children.length; child++) {
+                select_self_and_children(info.children[child], index);
             }
         }
 
         function select_parents(id, index) {
             var info = canvas.personToLayer[id];
-            var families = canvas.families[info.layer + 1];
-
             addToSelection(id, index);
-
-            if (!families) {
-                return;
-            }
-
-            for (var fam = 0; fam < families.length; fam++) {
-                for (var p = 2; p < families[fam].length; p++) {
-                    var child = families[fam][p];
-                    if (child == id) {
-                        for (var c = 0; c < 2; c++) {
-                            if (families[fam][c] && families[fam][c] != -1) {
-                                select_parents(families[fam][c], index);
-                            }
-                        }
-                        break;  //  No need to look at other children
-                    }
-                }
+            for (var parent = 0; parent < info.parents.length; parent++) {
+                select_parents(info.parents[parent], index);
             }
         }
 
@@ -472,6 +457,12 @@ QuiltsCanvas.prototype.onClick = function(e) {
 
         select_parents(id, this.selectIndex);
         select_self_and_children(id, this.selectIndex);
+
+        if (this.filtered) {
+            //  There might be more people visible than before.
+            this.computeLayout_();
+        }
+
         this.refresh();
     }
 };
@@ -677,6 +668,6 @@ QuiltsCanvas.prototype.filterSelected = function(filter) {
     }
 
     this.filtered = filter;
-    this.analyzeData_();
+    this.computeLayout_();
     this.refresh();
 };
