@@ -12,10 +12,11 @@ function changeGenerations() {
    var gen = Number (getSelectedValue ($("select[name=generations]")[0]));
    window.location = "/fanchart/{{decujus}}?gens=" + gen;
 }
+var fanchart;
 $(document).ready(function() {
    var data={{pedigree_data|safe}};
-   var g = new FanchartCanvas($("#fanchart")[0], data);
-   g.onResize();
+   fanchart = new FanchartCanvas($("#fanchart")[0], data);
+   fanchart.onResize();
 });
 {% endblock script %}
 
@@ -36,6 +37,11 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
       <option>{{g}}</option>
       {% endif %}
    {% endfor %}
+</select>
+<br>
+Colors:&nbsp;<select name="colorScheme" onchange="fanchart.setColorScheme(this.value)">
+   <option value="0">Rules</option>
+   <option selected value="1">Pedigree</option>
 </select>
 
 {{legend|safe}}

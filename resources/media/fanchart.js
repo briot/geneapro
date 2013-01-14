@@ -18,6 +18,25 @@ function FanchartCanvas(canvas, data) {
 }
 inherits(FanchartCanvas, Canvas);
 
+/**
+ * @enum {number}
+ */
+
+FanchartCanvas.colorScheme = {
+   STYLE: 0,
+   //  color of a person's box is computed on the server, depending on the
+   //  highlighting rules defined by the user
+   
+   PEDIGREE: 1
+   //  The color of a person's box depends on its location in the pedigree
+};
+
+/** Color scheme to apply to boxes
+ * @type {FanchartCanvas.colorScheme}
+ */
+
+FanchartCanvas.prototype.colorScheme = FanchartCanvas.colorScheme.PEDIGREE;
+
 /** Height of a generation in the fanchart
  * @type {number}
  */
@@ -69,7 +88,7 @@ FanchartCanvas.prototype.vertPadding = 20;
 /* Animation delay (moving selected box to decujus' position */
 FanchartCanvas.prototype.delay = 200;
 
-/** @overrides */
+/** @inheritDoc */
 
 FanchartCanvas.prototype.onClick = function(e) {
 /*
@@ -132,6 +151,34 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
     this.drawFan_(centerx, centery);
 };
 
+/** @inheritDoc */
+
+FanchartCanvas.prototype.getStyle_ = function(person, gen, angle) {
+   if (this.colorScheme == FanchartCanvas.colorScheme.STYLE) {
+      var st = this.data.styles[person.y];
+      st.stroke = 'gray';
+
+   } else if (this.colorScheme == FanchartCanvas.colorScheme.PEDIGREE) {
+      //  Avoid overly saturated colors when displaying only few generations
+      //  (i.e. when boxes are big)
+      var maxGen = Math.max(12, this.data.generations - 1);
+      var rgb = this.hsvToRgb(angle * 180 / Math.PI, gen / maxGen, 1.0);
+      var c = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
+      var st = {'stroke': 'black', 'fill': c};
+   }
+   return st;
+};
+
+/**
+ * Change the color scheme for the fanchart
+ *   @type {FanchartCanvas.colorScheme}  scheme   The scheme to apply.
+ */
+
+FanchartCanvas.prototype.setColorScheme = function(scheme) {
+   this.colorScheme = scheme;
+   this.refresh();
+};
+
 /**
  * Draw the fanchart for the global variables sosa, based on the
  *configuration.
@@ -157,8 +204,7 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
     function createPath(p, minRadius, maxRadius, maxAngle, minAngle, gen) {
         doPath_(minRadius, maxRadius, maxAngle, minAngle);
         if (p) {
-            var st = this.data.styles[p.y];
-            st.stroke = 'gray';
+            var st = this.getStyle_(p, gen, (minAngle + maxAngle) / 2);
             this.drawPath(st);
 
             if (gen < this.textThreshold) {

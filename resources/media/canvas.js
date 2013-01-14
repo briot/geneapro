@@ -426,6 +426,16 @@ Canvas.prototype.ifnotDisabled_ = function(evt, callback) {
 };
 
 /**
+ * Return the style to use for a person, depending on the settings of the
+ * canvas.
+ * @private
+ */
+
+Canvas.prototype.getStyle_ = function(person, gen, angle) {
+   return this.data.styles[person.y];
+};
+
+/**
  * Draw the text to describe a person. The text must fix in a box of the given
  * size, although the box itself is not displayed.
  */
@@ -447,8 +457,7 @@ Canvas.prototype.drawPersonText = function(
         Math.min(this.toPixelLength(fontsize), this.maxFontSize));
     var absFontSize = this.toAbsLength(pixelsFontSize);
     var linesCount = Math.floor(height / absFontSize);
-
-    var attr = this.data.styles[person.y];
+    var attr = this.getStyle_(person, 0 /* gen */, 0 /* angle */);
 
     if (linesCount >= 1) {
         var font = absFontSize + "px " + this.fontName;
@@ -509,7 +518,7 @@ Canvas.prototype.drawPersonBox = function(
     person, x, y, width, height, fontsize)
 {
     if (person) {
-        var attr = this.data.styles[person.y];
+        var attr = this.getStyle_(person, 0 /* gen */, 0 /* angle */);
         attr.shadow = (height > 2); // force shadow
     } else {
         attr = {fill:"white", stroke:"black"};
@@ -520,4 +529,42 @@ Canvas.prototype.drawPersonBox = function(
     if (person) {
         this.drawPersonText(person, x, y, height, fontsize);
     }
+};
+
+/**
+ * HSV to RGB color conversion
+ *   @param{number}  h    Hue for the color (from 0 to 360 degrees).
+ *   @param{number}  s    Saturation (from 0 to 1.0).
+ *   @param{number}  v    Value (from 0 to 1.0).
+ *   @return{Array.<number>}  The red, green, blue components.
+ */
+
+Canvas.prototype.hsvToRgb = function(h, s, v) {
+   // Make sure our arguments stay in-range
+   h = (h + 360) % 360;
+   s = Math.max(0, Math.min(1, s));
+   v = Math.max(0, Math.min(1, v));
+
+   if (s == 0) {
+      // Achromatic (grey)
+      return [Math.round(v * 255), Math.round(v * 255), Math.round(v * 255)];
+   }
+
+   h /= 60; // sector 0 to 5
+   var i = Math.floor(h);
+   var f = h - i; // factorial part of h
+   var p = v * (1 - s);
+   var q = v * (1 - s * f);
+   var t = v * (1 - s * (1 - f));
+
+   switch (i) {
+      case 0: r = v; g = t; b = p; break;
+      case 1: r = q; g = v; b = p; break;
+      case 2: r = p; g = v; b = t; break;
+      case 3: r = p; g = q; b = v; break;
+      case 4: r = t; g = p; b = v; break;
+      default: r = v; g = p; b = q;
+   }
+
+   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 };

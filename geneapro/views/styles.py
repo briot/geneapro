@@ -145,7 +145,40 @@ def style_to_css(style):
     return ";".join(st)
 
 
-class Styles():
+class ColorScheme(object):
+    """A class that computes the color for a person, based on the angle and
+       distance from the decujus.
+    """
+
+    def __init__(self):
+        # All required styles (id -> (index, {styles}, CSS))
+        self._all_styles = {}
+
+    def start(self):
+        """Start processing a set of events"""
+        pass
+
+    def need_place_parts(self):
+        return False   # color is independent of places
+
+    def process(self, person, role, e):
+        pass   # color is independent of events
+
+    def compute(self, person, as_css=False):
+        if as_css:
+            person.styles = "color:black; background:white"
+        else:
+            person.styles = 0   # index into array returned by all_styles
+
+    def all_styles(self):
+        """The list of all styles needed to render the tree"""
+        result = []
+        for s in sorted(self._all_styles.itervalues()):
+            result.insert(s[0], s[1])
+        return result
+
+
+class Styles(ColorScheme):
    """
    This class is responsible for computing the styles (colors and text
    styles) to apply to personas. It tries to be as efficient as possible
@@ -155,6 +188,7 @@ class Styles():
    def __init__(self, rules, tree, decujus):
       """Rules specifies the rules to use for the highlighting.
       """
+      super(Styles, self).__init__()
 
       # Preprocess the rules for faster computation
 
@@ -164,7 +198,6 @@ class Styles():
       self.counts = [None] * len (rules)  # the "count" rules: (test, value)
       self._need_place_parts = False
 
-      self._all_styles = dict () # All required styles (id -> (index,{styles},CSS))
       self.styles_count = 0
 
       for index, r in enumerate(rules):
@@ -366,9 +399,3 @@ class Styles():
       else:
           person.styles = s[0]
 
-   def all_styles (self):
-      """The list of all styles needed to render the tree"""
-      result = []
-      for s in sorted (self._all_styles.itervalues ()):
-         result.insert (s[0], s[1])
-      return result

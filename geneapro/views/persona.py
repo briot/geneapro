@@ -311,4 +311,3 @@ def view_list(request):
          "name":[p.name.encode("utf-8") for p in all],
          "legend":getLegend()},
         context_instance=RequestContext(request))
-

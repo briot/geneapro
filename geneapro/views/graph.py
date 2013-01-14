@@ -89,12 +89,19 @@ class GeneaGraph(Digraph):
         # What is the generation for each person in the graph ?
         self.__layers = dict()
 
+        # Whether the database has been modified since the graph was created.
+        self.__needs_update = True
+
     def node_from_id(self, id):
         return self.__nodes[id]
 
-    def from_db(self):
+    def update_if_needed(self):
         """Create a graph from the data in the db"""
 
+        if not self.__needs_update:
+            return
+
+        self.__needs_update = False
         self.__nodes = dict()   # id -> Persona()
 
         sameas = dict()  # id -> [set of persona ids]
@@ -419,22 +426,31 @@ class GeneaGraph(Digraph):
         return to_match
 
 
+# Global graph, shared by all threads and views.
+# ??? This is obviously potentially dangerous, and relies on having views
+# that modify the database reset the graph. We also need to make sure that
+# a single thread at a time is using the graph at the same time.
+
+graph = GeneaGraph()
+
+
 def quilts_view(request, decujus=None):
-    g = GeneaGraph()
-    g.from_db()
+    # ??? Should lock the graph until the view has been generated
+
+    graph.update_if_needed()
 
     if decujus is not None:
-        subset = g.people_in_tree(
+        subset = graph.people_in_tree(
             id=int(decujus), maxdepth=3, spouses_tree=True)
     else:
         subset = None
 
-    #g.export(file("graph.pickle", "w"))
-    #g.write_graphviz(file("graph.dot", "wb"))
-    #g.write_graphviz(file("genea.dot", "w"),
+    #graph.export(file("graph.pickle", "w"))
+    #graph.write_graphviz(file("graph.dot", "wb"))
+    #graph.write_graphviz(file("genea.dot", "w"),
     #                 edgeiter=g.out_children_edges)
 
     return render_to_response(
         'geneapro/quilts.html',
-        g.json(subset),
+        graph.json(subset),
         context_instance=RequestContext(request))
