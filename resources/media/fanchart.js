@@ -38,6 +38,19 @@ FanchartCanvas.colorScheme = {
 
 FanchartCanvas.prototype.colorScheme_ = FanchartCanvas.colorScheme.PEDIGREE;
 
+/**
+ * Describes how the boxes are displayed.
+ * @enum {number}
+ */
+
+FanchartCanvas.appearance = {
+   FLAT: 0,
+   GRADIENT: 1
+};
+
+/** @private */
+FanchartCanvas.prototype.appearance_ = FanchartCanvas.appearance.GRADIENT;
+
 /** Height of a generation in the fanchart
  * @type {number}
  */
@@ -155,7 +168,9 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
 
 /** @inheritDoc */
 
-FanchartCanvas.prototype.getStyle_ = function(person, gen, angle) {
+FanchartCanvas.prototype.getStyle_ = function(
+      person, gen, angle, minRadius, maxRadius)
+{
    if (this.colorScheme_ == FanchartCanvas.colorScheme.STYLE) {
       var st = this.data.styles[person.y];
       st.stroke = 'gray';
@@ -166,9 +181,31 @@ FanchartCanvas.prototype.getStyle_ = function(person, gen, angle) {
       var maxGen = Math.max(12, this.data.generations - 1);
       var rgb = this.hsvToRgb(angle * 180 / Math.PI, gen / maxGen, 1.0);
       var c = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
-      var st = {'stroke': 'black', 'fill': c};
+
+      if (this.appearance_ == FanchartCanvas.appearance.GRADIENT) {
+         var gr = this.ctx.createRadialGradient(0, 0, minRadius,
+                                                0, 0, maxRadius);
+         gr.addColorStop(0, c);
+
+         rgb = this.hsvToRgb(angle * 180 / Math.PI, gen / maxGen, 0.8);
+         var c2 = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
+         gr.addColorStop(1, c2);
+         var st = {'stroke': 'black', 'fill': gr};
+      } else {
+         var st = {'stroke': 'black', 'fill': c};
+      }
    }
    return st;
+};
+
+/**
+ * Change the appearance of the fanchart
+ *   @type {FanchartCanvas.appearance} appearance   .
+ */
+
+FanchartCanvas.prototype.setAppearance = function(appearance) {
+   this.appearance_ = appearance;
+   this.refresh();
 };
 
 /**
@@ -215,7 +252,8 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
     function createPath(p, minRadius, maxRadius, maxAngle, minAngle, gen) {
         doPath_(minRadius, maxRadius, maxAngle, minAngle);
         if (p) {
-            var st = this.getStyle_(p, gen, (minAngle + maxAngle) / 2);
+            var st = this.getStyle_(
+                  p, gen, (minAngle + maxAngle) / 2, minRadius, maxRadius);
             this.drawPath(st);
 
             if (gen < this.textThreshold) {

@@ -428,10 +428,12 @@ Canvas.prototype.ifnotDisabled_ = function(evt, callback) {
 /**
  * Return the style to use for a person, depending on the settings of the
  * canvas.
+ * @param {Number} minRadius  Used for fancharts.
+ * @param {Number} maxRadius  Used for fancharts.
  * @private
  */
 
-Canvas.prototype.getStyle_ = function(person, gen, angle) {
+Canvas.prototype.getStyle_ = function(person, gen, angle, minRadius, maxRadius) {
    return this.data.styles[person.y];
 };
 
@@ -457,7 +459,8 @@ Canvas.prototype.drawPersonText = function(
         Math.min(this.toPixelLength(fontsize), this.maxFontSize));
     var absFontSize = this.toAbsLength(pixelsFontSize);
     var linesCount = Math.floor(height / absFontSize);
-    var attr = this.getStyle_(person, 0 /* gen */, 0 /* angle */);
+    var attr = this.getStyle_(person, 0 /* gen */, 0 /* angle */, 0 /* minRadius */,
+                              0 /* maxRadius */);
 
     if (linesCount >= 1) {
         var font = absFontSize + "px " + this.fontName;
@@ -518,7 +521,8 @@ Canvas.prototype.drawPersonBox = function(
     person, x, y, width, height, fontsize)
 {
     if (person) {
-        var attr = this.getStyle_(person, 0 /* gen */, 0 /* angle */);
+        var attr = this.getStyle_(person, 0 /* gen */, 0 /* angle */, 0 /* minRadius */,
+                                  0 /* maxRadius */);
         attr.shadow = (height > 2); // force shadow
     } else {
         attr = {fill:"white", stroke:"black"};

@@ -39,12 +39,17 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
    {% endfor %}
 </select>
 <br>
+Marriages&nbsp;<input type="checkbox" checked onchange="fanchart.setShowMarriage(this.checked)">
+<br>
 Colors:&nbsp;<select name="colorScheme" onchange="fanchart.setColorScheme(this.value)">
    <option value="0">Rules</option>
    <option selected value="1">Pedigree</option>
 </select>
 <br>
-Marriages&nbsp;<input type="checkbox" checked onchange="fanchart.setShowMarriage(this.checked)">
+Appearance&nbsp;<select onchange="fanchart.setAppearance(this.value)">
+   <option value="0">Flat</option>
+   <option selected value="1">Gradient</option>
+</select>
 
 {{legend|safe}}
 {% endblock leftside %}
