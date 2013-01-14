@@ -93,10 +93,8 @@ def fanchart_view(request, decujus=1):
    return render_to_response(
        'geneapro/fanchart.html',
        {"legend": getLegend(),
-        "generations": gens,
         "decujus": decujus,
         "decujusid": decujus,
-        "genrange": range(1, 13),
         "pedigree_data":compute_data(graph, gens, True, decujus)},
        context_instance=RequestContext(request))
 

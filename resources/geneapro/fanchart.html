@@ -5,7 +5,17 @@
 #fanchart {width:100%;height:600px;margin:10px 0 10px 0;border:0}
 #stats {margin:0; padding:0}
 #stats li {margin-bottom:20px; list-style-type:none}
+
+#settings .ui-slider-horizontal {height: 0.2em; margin: 5px 3px 0 10px}
+#settings .ui-slider .ui-slider-handle {height:0.6em}
+#settings .ui-slider span {font-size:0.6em; margin-top:7px}
+#settings .ui-slider span.right {float:right}
 {% endblock css %}
+
+{% block header %}
+<link rel="stylesheet" href="{{MEDIA_URL}}ui-lightness/jquery-ui-1.9.2.custom.min.css"/>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery-ui-1.9.2.custom.min.js"></script>
+{% endblock header %}
 
 {% block script %}
 $(document).ready(function() {
@@ -25,36 +35,20 @@ $(document).ready(function() {
 {% block leftside %}
 <h2>Fanchart View</h2>
 <div id="settings">
-Generations:&nbsp;<select name="gens">
-   {% for g in genrange %}
-      {% if g == generations %}
-      <option selected>{{g}}</option>
-      {% else %}
-      <option>{{g}}</option>
-      {% endif %}
-   {% endfor %}
-</select>
+Generations<div id="gens"><span>2</span><span class="right">13</span></div>
 <br>
-Marriages&nbsp;<input type="checkbox" name="marriages"/>
+Size:<div id="size"><span>90</span><span class="right">360</span></div>
+<br>
+Marriages:&nbsp;<input type="checkbox" name="marriages"/>
 <br>
 Colors:&nbsp;<select name="colors">
    <option value="0">Rules</option>
    <option value="1">Pedigree</option>
 </select>
 <br>
-Appearance&nbsp;<select name="appearance">
+Appearance:&nbsp;<select name="appearance">
    <option value="0">Flat</option>
    <option value="1">Gradient</option>
-</select>
-<br>
-Size&nbsp;<select name="size">
-   <option value="90">90</option>
-   <option value="120">120</option>
-   <option value="180">180</option>
-   <option value="210">210</option>
-   <option value="270">270</option>
-   <option value="340">340</option>
-   <option value="360">360</option>
 </select>
 </div>
 

@@ -5,6 +5,9 @@ var PI_TWO  = Math.PI * 2;
 /** Default number of generations to display */
 var DEFAULT_GENERATIONS = 5;
 
+/** Maximum number of generations that can be displayed */
+var MAXGENS = 13;
+
 /**
  * @param {Element} canvas  A DOM element that contains the canvas.
  * @param {} data           The data returned by the server.
@@ -19,7 +22,7 @@ function FanchartCanvas(canvas, data) {
     this.decujusy = 0;  // computes later
 
     this.setTotalAngle(340);
-    this.setShowMarriage(true);
+    this.setShowMarriage(false);
     this.showSettings();
 }
 inherits(FanchartCanvas, Canvas);
@@ -70,8 +73,7 @@ FanchartCanvas.prototype.genThreshold = 4;
 
 /* Extra blank spaces between layers rings. This is used to display
    marriage information (if 0, no marriage info is displayed) */
-DEFAULT_SEP_BETWEEN_GENS = 20;
-FanchartCanvas.prototype.sepBetweenGens = DEFAULT_SEP_BETWEEN_GENS;
+FanchartCanvas.prototype.sepBetweenGens = 0;
 
 /* row height for generations >= genThreshold */
 FanchartCanvas.prototype.rowHeightAfterThreshold = 100;
@@ -89,7 +91,7 @@ FanchartCanvas.prototype.maxAngle;
 /* Separator (in radians) between couples. Setting this to 0.5 or more will
    visually separate the couples at each generation, possibly making the
    fanchart more readable for some users */
-FanchartCanvas.prototype.separator = 0.0 * Math.PI / 180.0;
+FanchartCanvas.prototype.separator = 0.5 * Math.PI / 180.0;
 
 /* If true, the names on the lower half of the circle are displayed
    so as to be readable. Otherwise they are up-side down */
@@ -201,7 +203,11 @@ FanchartCanvas.prototype.getStyle_ = function(
       //  Avoid overly saturated colors when displaying only few generations
       //  (i.e. when boxes are big)
       var maxGen = Math.max(12, this.data.generations - 1);
-      var rgb = this.hsvToRgb(angle * 180 / Math.PI, gen / maxGen, 1.0);
+
+      //  For the angle, map the displayed size to the 0->360 range, so that
+      //  the full colormap is used.
+      var ang = ((angle - this.minAngle) / (this.maxAngle - this.minAngle) * 360);
+      var rgb = this.hsvToRgb(ang, gen / maxGen, 1.0);
       var c = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
 
       if (this.appearance_ == FanchartCanvas.appearance.GRADIENT) {
@@ -209,7 +215,7 @@ FanchartCanvas.prototype.getStyle_ = function(
                                                 0, 0, maxRadius);
          gr.addColorStop(0, c);
 
-         rgb = this.hsvToRgb(angle * 180 / Math.PI, gen / maxGen, 0.8);
+         rgb = this.hsvToRgb(ang, gen / maxGen, 0.8);
          var c2 = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
          gr.addColorStop(1, c2);
          var st = {'stroke': 'black', 'fill': gr};
@@ -246,7 +252,7 @@ FanchartCanvas.prototype.setColorScheme = function(scheme) {
  */
 
 FanchartCanvas.prototype.setShowMarriage = function(show) {
-   this.sepBetweenGens = (show ? DEFAULT_SEP_BETWEEN_GENS : 0);
+   this.sepBetweenGens = (show ? 20 : 0);
    return this;
 };
 
@@ -269,9 +275,11 @@ FanchartCanvas.prototype.setTotalAngle = function(angle) {
 
 FanchartCanvas.prototype.showSettings = function() {
    var f = this;  //  closure for callbacks
-   $("#settings select[name=gens]")
-      .change(function() { f.loadData(this.value) })
-      .val(this.data ? this.data.generations : DEFAULT_GENERATIONS);
+   $("#settings #gens")
+      .slider({"min": 2, "max": MAXGENS,
+               "value": this.data ? this.data.generations : DEFAULT_GENERATIONS,
+               "change": function() { f.loadData($(this).slider("value")); }})
+      .find("span.right").text(MAXGENS);
    $("#settings select[name=colors]")
       .val(this.colorScheme_)
       .change(function() { f.setColorScheme(this.value)});
@@ -281,9 +289,10 @@ FanchartCanvas.prototype.showSettings = function() {
    $("#settings select[name=appearance]")
       .change(function() { f.setAppearance(this.value)})
       .val(this.appearance_);
-   $("#settings select[name=size]")
-      .change(function() { f.setTotalAngle(this.value).refresh() })
-      .val(Math.round((this.maxAngle - this.minAngle) * 180 / Math.PI));
+   $("#settings #size")
+      .slider({"min": 90, "max": 360,
+               "value": Math.round((this.maxAngle - this.minAngle) * 180 / Math.PI),
+               "change": function() { f.setTotalAngle($(this).slider("value")).refresh() }});
 };
 
 /**
@@ -311,8 +320,7 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
     function createPath(p, minRadius, maxRadius, maxAngle, minAngle, gen) {
         doPath_(minRadius, maxRadius, maxAngle, minAngle);
         if (p) {
-            var st = this.getStyle_(
-                  p, gen, (minAngle + maxAngle) / 2, minRadius, maxRadius);
+            var st = this.getStyle_(p, gen, minAngle, minRadius, maxRadius);
             this.drawPath(st);
 
             if (gen < this.textThreshold) {
