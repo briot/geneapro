@@ -2,6 +2,9 @@
 var PI_HALF = Math.PI / 2;
 var PI_TWO  = Math.PI * 2;
 
+/** Default number of generations to display */
+var DEFAULT_GENERATIONS = 5;
+
 /**
  * @param {Element} canvas  A DOM element that contains the canvas.
  * @param {} data           The data returned by the server.
@@ -129,6 +132,22 @@ FanchartCanvas.prototype.onClick = function(e) {
 */
 };
 
+/**
+ * Load the data for the fanchart from the server.
+ *   @param {Number}  gen    The number of generations to load.
+ */
+
+FanchartCanvas.prototype.loadData = function(gen) {
+   var f = this;  //  closure for callbacks
+   var decujus = (this.data ? this.data.sosa[1].id : 1);
+   $.ajax(
+      {'url': '/pedigreeData/' + decujus + '/' + gen,
+       'success': function(data) {
+         f.data = data;
+         f.refresh();
+      }});
+};
+
 /** @overrides */
 
 FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
@@ -249,8 +268,10 @@ FanchartCanvas.prototype.setTotalAngle = function(angle) {
  */
 
 FanchartCanvas.prototype.showSettings = function() {
-   var f = this;
-   $("#settings select[name=generations]").val(this.data.generations);
+   var f = this;  //  closure for callbacks
+   $("#settings select[name=gens]")
+      .change(function() { f.loadData(this.value) })
+      .val(this.data ? this.data.generations : DEFAULT_GENERATIONS);
    $("#settings select[name=colors]")
       .val(this.colorScheme_)
       .change(function() { f.setColorScheme(this.value)});

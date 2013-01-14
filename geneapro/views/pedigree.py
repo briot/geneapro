@@ -99,3 +99,16 @@ def fanchart_view(request, decujus=1):
         "genrange": range(1, 13),
         "pedigree_data":compute_data(graph, gens, True, decujus)},
        context_instance=RequestContext(request))
+
+
+def pedigree_data(request, decujus=1, generations=5):
+    """Return the data for the Pedigree or Fanchart views. This is only
+       needed when the user changes the settings, since initially this data
+       is already part of the view.
+    """
+    decujus = int(decujus)
+    generations = int(generations)
+    graph.update_if_needed()   # ??? Should lock until the view has been generated
+    return HttpResponse(
+        compute_data(graph, generations, year_only=True, who=decujus),
+        content_type="application/json")
