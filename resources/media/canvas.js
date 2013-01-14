@@ -540,18 +540,17 @@ Canvas.prototype.drawPersonBox = function(
  *   @param{number}  h    Hue for the color (from 0 to 360 degrees).
  *   @param{number}  s    Saturation (from 0 to 1.0).
  *   @param{number}  v    Value (from 0 to 1.0).
- *   @return{Array.<number>}  The red, green, blue components.
+ *   @return{jquery.Color}  The red, green, blue components.
  */
 
 Canvas.prototype.hsvToRgb = function(h, s, v) {
    // Make sure our arguments stay in-range
    h = (h + 360) % 360;
    s = Math.max(0, Math.min(1, s));
-   v = Math.max(0, Math.min(1, v));
+   v = 255 * Math.max(0, Math.min(1, v));
 
    if (s == 0) {
-      // Achromatic (grey)
-      return [Math.round(v * 255), Math.round(v * 255), Math.round(v * 255)];
+      return $.Color(v, v, v);  //  grey
    }
 
    h /= 60; // sector 0 to 5
@@ -570,5 +569,5 @@ Canvas.prototype.hsvToRgb = function(h, s, v) {
       default: r = v; g = p; b = q;
    }
 
-   return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+   return $.Color(r, g, b);
 };

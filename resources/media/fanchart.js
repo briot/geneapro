@@ -202,8 +202,8 @@ FanchartCanvas.prototype.getStyle_ = function(
 
       if (st['fill']
           && typeof st['fill'] == 'string'
-          && this.appearance_ == FanchartCanvas.appearance.GRADIENT) {
-
+          && this.appearance_ == FanchartCanvas.appearance.GRADIENT)
+      {
          var gr = this.ctx.createRadialGradient(
                0, 0, minRadius, 0, 0, maxRadius);
          var c = $.Color(st['fill']);
@@ -226,17 +226,15 @@ FanchartCanvas.prototype.getStyle_ = function(
       //  For the angle, map the displayed size to the 0->360 range, so that
       //  the full colormap is used.
       var ang = ((angle - this.minAngle) / (this.maxAngle - this.minAngle) * 360);
-      var rgb = this.hsvToRgb(ang, gen / maxGen, 1.0);
-      var c = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
+      var c = this.hsvToRgb(ang, gen / maxGen, 1.0).toString();
 
       if (this.appearance_ == FanchartCanvas.appearance.GRADIENT) {
          var gr = this.ctx.createRadialGradient(
                0, 0, minRadius, 0, 0, maxRadius);
          gr.addColorStop(0, c);
 
-         rgb = this.hsvToRgb(ang, gen / maxGen, 0.8);
-         var c2 = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
-         gr.addColorStop(1, c2);
+         c = this.hsvToRgb(ang, gen / maxGen, 0.8).toString();
+         gr.addColorStop(1, c)
          var st = {'stroke': 'black', 'fill': gr};
       } else {
          var st = {'stroke': 'black', 'fill': c};
