@@ -158,11 +158,10 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
     var childrenHeight = d.children
         ? d.children.length * (this.boxHeight + this.vertPadding)
         : 0;
-    var dimensions = this.chartDimensions();
-    var maxHeight = Math.max(childrenHeight, dimensions.height);
-    var maxWidth = this.boxWidth + this.horizPadding + dimensions.width;
-    var centerx = this.decujusx + dimensions.centerX;
-    var centery = dimensions.centerY;
+    var maxHeight = Math.max(childrenHeight, this.size_.height);
+    var maxWidth = this.boxWidth + this.horizPadding + this.size_.width;
+    var centerx = this.decujusx + this.boxWidth * 2;
+    var centery = this.size_.height / 2; 
 
     this.decujusy = centery - 5;
 
@@ -526,13 +525,9 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
     ctx.restore();
 };
 
-/**
- * Compute the dimensions of the chart.
- * @return {{width:number, height:number,
- *           centerX: number, centerY: number}}  The dimensions.
- */
+/** @inheritDoc */
 
-FanchartCanvas.prototype.chartDimensions = function() {
+FanchartCanvas.prototype.computeSize = function() {
     var d = this.data;
     var rowHeight = this.rowHeight + this.sepBetweenGens;
     var rowHeightAfterThreshold = this.rowHeightAfterThreshold +
@@ -547,10 +542,7 @@ FanchartCanvas.prototype.chartDimensions = function() {
     }
 
     if (this.maxAngle - this.minAngle >= PI_TWO) { //  full circle
-        return {width: 2 * radius,
-                height:2 * radius,
-                centerX: 0,
-                centerY: 0};
+       this.size_ = {width: 2 * radius, height: 2 * radius};
     } else {
         var minA = (this.minAngle + PI_TWO) % PI_TWO;  // 0 to 360deg
         var maxA = minA + (this.maxAngle - this.minAngle); // minA to 719deg
@@ -569,7 +561,6 @@ FanchartCanvas.prototype.chartDimensions = function() {
             Math.min(Math.cos(minA), Math.cos(maxA)) : -1;
 
         var width = radius * (max - min);
-        var centerX = -min * radius;
 
         // same for height
         max = ((minA > Math.PI / 2 && maxA < 2.5 * Math.PI) ||
@@ -581,9 +572,6 @@ FanchartCanvas.prototype.chartDimensions = function() {
             Math.min(Math.sin(minA), Math.sin(maxA)) : -1;
 
         var height = radius * (max - min);
-        return {width: width,
-                height: height,
-                centerX: centerX,
-                centerY: height + min * radius};
+        this.size_ = {width: width, height: height};
     }
 };

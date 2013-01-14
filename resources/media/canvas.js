@@ -86,6 +86,13 @@ Canvas.prototype.fontName = "sans";
 Canvas.prototype.autoZoom = true;
 
 /**
+ * Size of the display (not the size of the canvas itself)
+ * @private
+ */ 
+
+Canvas.prototype.size_ = {width: 0, height: 0};
+
+/**
  * Called when the canvas needs redrawing (for instance after a resize
  * or its contents was changed).
  * Do not call this function directly, but use this.refresh() instead.
@@ -168,6 +175,7 @@ Canvas.prototype.refresh = function (box) {
 
     try {
         this.ctx.save();
+        this.computeSize();
 
         if (this.autoZoom) {
             this.setTransform();
@@ -176,6 +184,16 @@ Canvas.prototype.refresh = function (box) {
     } finally {
         this.ctx.restore();
     }
+};
+
+/**
+ * Compute the dimensions of the object to display.
+ * Sets this.size_.
+ * @return {{width:number, height:number}}  The dimensions.
+ */
+
+Canvas.prototype.computeSize = function() {
+   this.size_ = {width: 0, height: 0};
 };
 
 /**
