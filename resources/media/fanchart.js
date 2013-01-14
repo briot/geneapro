@@ -198,7 +198,25 @@ FanchartCanvas.prototype.getStyle_ = function(
 {
    if (this.colorScheme_ == FanchartCanvas.colorScheme.RULES) {
       var st = this.data.styles[person.y];
-      st.stroke = 'gray';
+      st['stroke'] = 'gray';
+
+      if (st['fill']
+          && typeof st['fill'] == 'string'
+          && this.appearance_ == FanchartCanvas.appearance.GRADIENT) {
+
+         var gr = this.ctx.createRadialGradient(
+               0, 0, minRadius, 0, 0, maxRadius);
+         var c = $.Color(st['fill']);
+         gr.addColorStop(0, st['fill']);
+         gr.addColorStop(1, c.transition("black", 0.2).toString());
+
+         var st2 = {}
+         for (var obj in st) {
+            st2[obj] = st[obj];
+         }
+         st = st2;
+         st['fill'] = gr;
+      }
 
    } else if (this.colorScheme_ == FanchartCanvas.colorScheme.PEDIGREE) {
       //  Avoid overly saturated colors when displaying only few generations
@@ -212,8 +230,8 @@ FanchartCanvas.prototype.getStyle_ = function(
       var c = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
 
       if (this.appearance_ == FanchartCanvas.appearance.GRADIENT) {
-         var gr = this.ctx.createRadialGradient(0, 0, minRadius,
-                                                0, 0, maxRadius);
+         var gr = this.ctx.createRadialGradient(
+               0, 0, minRadius, 0, 0, maxRadius);
          gr.addColorStop(0, c);
 
          rgb = this.hsvToRgb(ang, gen / maxGen, 0.8);
