@@ -6,9 +6,11 @@
 #stats {margin:0; padding:0}
 #stats li {margin-bottom:20px; list-style-type:none}
 
+#settings {font-size: 0.8em}
+
 #settings .ui-slider-horizontal {height: 0.2em; margin: 5px 3px 0 10px}
 #settings .ui-slider .ui-slider-handle {height:0.6em}
-#settings .ui-slider span {font-size:0.6em; margin-top:7px}
+#settings .ui-slider span {font-size:0.8em; margin-top:7px}
 #settings .ui-slider span.right {float:right}
 {% endblock css %}
 
@@ -38,6 +40,8 @@ $(document).ready(function() {
 Generations<div id="gens"><span>2</span><span class="right">13</span></div>
 <br>
 Size:<div id="size"><span>90</span><span class="right">360</span></div>
+<br>
+Separator between couples:<div id="separator"></div>
 <br>
 Marriages:&nbsp;<input type="checkbox" name="marriages"/>
 <br>

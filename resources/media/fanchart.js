@@ -23,6 +23,7 @@ function FanchartCanvas(canvas, data) {
 
     this.setTotalAngle(340);
     this.setShowMarriage(false);
+    this.setCoupleSeparator(0);
     this.showSettings();
 }
 inherits(FanchartCanvas, Canvas);
@@ -91,7 +92,7 @@ FanchartCanvas.prototype.maxAngle;
 /* Separator (in radians) between couples. Setting this to 0.5 or more will
    visually separate the couples at each generation, possibly making the
    fanchart more readable for some users */
-FanchartCanvas.prototype.separator = 0.5 * Math.PI / 180.0;
+FanchartCanvas.prototype.separator = 0;
 
 /* If true, the names on the lower half of the circle are displayed
    so as to be readable. Otherwise they are up-side down */
@@ -269,6 +270,17 @@ FanchartCanvas.prototype.setTotalAngle = function(angle) {
 };
 
 /**
+ * @param {Number} angle  Sets the extra angle (degrees) separator between
+ *   couples.
+ * Canvas needs to be refreshed afterwards
+ */
+
+FanchartCanvas.prototype.setCoupleSeparator = function(angle) {
+   this.separator = angle * Math.PI / 180.0;
+   return this;
+};
+
+/**
  * Update the settings box (from fanchart.html) to reflect current settings,
  * and so that changing the settings also updates the fanchart.
  */
@@ -280,6 +292,11 @@ FanchartCanvas.prototype.showSettings = function() {
                "value": this.data ? this.data.generations : DEFAULT_GENERATIONS,
                "change": function() { f.loadData($(this).slider("value")); }})
       .find("span.right").text(MAXGENS);
+   $("#settings #separator")
+      .slider({"min": 0, "max": 50,
+               "value": Math.round(this.separator * 180 / Math.PI) * 10,
+               "change": function() {
+                  f.setCoupleSeparator($(this).slider("value") / 10).refresh(); }});
    $("#settings select[name=colors]")
       .val(this.colorScheme_)
       .change(function() { f.setColorScheme(this.value)});
@@ -303,7 +320,6 @@ FanchartCanvas.prototype.showSettings = function() {
 
 FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
     var d = this.data;
-    var margin = this.separator;
     var ctx = this.ctx;
 
     function doPath_(minRadius, maxRadius, maxAngle, minAngle) {
@@ -390,7 +406,43 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
     var rowHeightAfterThreshold = this.rowHeightAfterThreshold +
        this.sepBetweenGens;
 
-    for (var gen = d.generations - 1; gen >= 1; gen--) {
+    // separators between each person. When drawing the first generation, the
+    // separator is always this.separator. But then for each generation the
+    // separator's value for the new couples is different, and is the same for
+    // couples from previous generations. So for generation 2 we have:
+    //     [sep(1), sep(2), sep(1), sep(2), sep(1)]
+    // whereas for generation 3 we have:
+    //     [sep(1), sep(3), sep(2), sep(3), sep(2), sep(3), sep(1), ...]
+    
+    if (this.separator != 0) {
+       var current = this.separator;
+       var allSeps = [[current]];
+       var allSizes = [(this.maxAngle - this.minAngle) / 2 - current / 2];
+
+       for (var gen = 2; gen <= d.generations - 1; gen++) {
+          var previous = allSeps[gen - 2];
+          current = current / 2;
+          var result = [current];
+          for (var p = 0; p < previous.length; p++) {
+             result.push(previous[p]);
+             result.push(current);
+          }
+          result.push(this.separator);
+          allSeps.push(result);
+
+          allSizes.push(allSizes[allSizes.length - 1] / 2 - current / 2);
+       }
+    }
+
+    for (var gen = 1; gen <= d.generations - 1; gen++) {
+        var minIndex = Math.pow(2, gen); /* first SOSA in that gen, and number
+                                            of persons in that gen */
+        var seps = (this.separator == 0 ? undefined : allSeps[gen - 1]);
+        var angleInc = (this.separator == 0 ?
+                            (this.maxAngle - this.minAngle) / minIndex
+                            : allSizes[gen - 1]);
+        var sep = 0;   //  current separator in seps array
+
         if (gen < this.genThreshold) {
             var minRadius = rowHeight * (gen - 1) || this.innerCircle;
             var maxRadius = minRadius + rowHeight;
@@ -405,21 +457,14 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
             minRadius += this.sepBetweenGens;
         }
 
-        var minIndex = Math.pow(2, gen); /* first SOSA in that gen, and number
-                                            of persons in that gen */
-        var angleInc = (this.maxAngle - this.minAngle) / minIndex;
+        var angle = this.minAngle + this.separator / 2;
         var medRadius = (minRadius + maxRadius) / 2;
 
         for (var id = 0; id < minIndex; id++) {
             var num = minIndex + id;
-            var person = d.sosa [num];
-            var minAngle = this.minAngle + id * angleInc;
-            var maxAngle = minAngle + angleInc;
-
-            if (id % 2 == 0)
-                maxAngle -= margin;
-            else
-                minAngle += margin;
+            var person = d.sosa[num];
+            var minAngle = angle;
+            var maxAngle = angle + angleInc;
 
             createPath.call(
                 this, person, minRadius, maxRadius, maxAngle, minAngle, gen);
@@ -456,6 +501,9 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
                     }
                 }
             }
+
+            var s = (this.separator == 0 ? 0 : seps[sep++]);
+            angle = maxAngle + s;
         }
     }
 
