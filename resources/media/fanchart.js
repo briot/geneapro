@@ -14,6 +14,10 @@ function FanchartCanvas(canvas, data) {
     this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
     this.decujusx = this.boxWidth + this.horizPadding;
     this.decujusy = 0;  // computes later
+
+    this.setTotalAngle(340);
+    this.setShowMarriage(true);
+    this.showSettings();
 }
 inherits(FanchartCanvas, Canvas);
 
@@ -22,7 +26,7 @@ inherits(FanchartCanvas, Canvas);
  */
 
 FanchartCanvas.colorScheme = {
-   STYLE: 0,
+   RULES: 0,
    //  color of a person's box is computed on the server, depending on the
    //  highlighting rules defined by the user
    
@@ -76,8 +80,8 @@ FanchartCanvas.prototype.innerCircle = 10;
 /* Start and End angles, in radians, for the pedigree view.
  * This is clockwise, starting from the usual 0 angle!
  */
-FanchartCanvas.prototype.minAngle = -170.0 * Math.PI / 180.0;
-FanchartCanvas.prototype.maxAngle = 170.0 * Math.PI / 180.0;
+FanchartCanvas.prototype.minAngle;
+FanchartCanvas.prototype.maxAngle;
 
 /* Separator (in radians) between couples. Setting this to 0.5 or more will
    visually separate the couples at each generation, possibly making the
@@ -170,7 +174,7 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
 FanchartCanvas.prototype.getStyle_ = function(
       person, gen, angle, minRadius, maxRadius)
 {
-   if (this.colorScheme_ == FanchartCanvas.colorScheme.STYLE) {
+   if (this.colorScheme_ == FanchartCanvas.colorScheme.RULES) {
       var st = this.data.styles[person.y];
       st.stroke = 'gray';
 
@@ -186,7 +190,7 @@ FanchartCanvas.prototype.getStyle_ = function(
                                                 0, 0, maxRadius);
          gr.addColorStop(0, c);
 
-         rgb = this.hsvToRgb(angle * 180 / Math.PI, gen / maxGen, 0.9);
+         rgb = this.hsvToRgb(angle * 180 / Math.PI, gen / maxGen, 0.8);
          var c2 = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
          gr.addColorStop(1, c2);
          var st = {'stroke': 'black', 'fill': gr};
@@ -218,12 +222,47 @@ FanchartCanvas.prototype.setColorScheme = function(scheme) {
 };
 
 /**
- * @type {Boolean} show  Whether to display marriage information.
+ * Canvas needs to be refreshed afterwards
+ * @param {Boolean} show  Whether to display marriage information.
  */
 
 FanchartCanvas.prototype.setShowMarriage = function(show) {
    this.sepBetweenGens = (show ? DEFAULT_SEP_BETWEEN_GENS : 0);
-   this.refresh();
+   return this;
+};
+
+/**
+ * Canvas needs to be refreshed afterwards
+ * @param {Number} angle  Sets the opening angle (90 to 360 degrees).
+ */
+
+FanchartCanvas.prototype.setTotalAngle = function(angle) {
+   var half = angle / 2 * Math.PI / 180.0;
+   this.minAngle = -half;
+   this.maxAngle = half;
+   return this;
+};
+
+/**
+ * Update the settings box (from fanchart.html) to reflect current settings,
+ * and so that changing the settings also updates the fanchart.
+ */
+
+FanchartCanvas.prototype.showSettings = function() {
+   var f = this;
+   $("#settings select[name=generations]").val(this.data.generations);
+   $("#settings select[name=colors]")
+      .val(this.colorScheme_)
+      .change(function() { f.setColorScheme(this.value)});
+   $("#settings input[name=marriages]")
+      .change(function() { f.setShowMarriage(this.checked).refresh() })
+      .attr('checked', this.sepBetweenGens != 0);
+   $("#settings select[name=appearance]")
+      .change(function() { f.setAppearance(this.value)})
+      .val(this.appearance_);
+   $("#settings select[name=size]")
+      .change(function() { f.setTotalAngle(this.value).refresh() })
+      .val(Math.round((this.maxAngle - this.minAngle) * 180 / Math.PI));
 };
 
 /**

@@ -12,11 +12,10 @@ function changeGenerations() {
    var gen = Number (getSelectedValue ($("select[name=generations]")[0]));
    window.location = "/fanchart/{{decujus}}?gens=" + gen;
 }
-var fanchart;
 $(document).ready(function() {
    var data={{pedigree_data|safe}};
-   fanchart = new FanchartCanvas($("#fanchart")[0], data);
-   fanchart.onResize();
+   var g = new FanchartCanvas($("#fanchart")[0], data);
+   g.onResize();
 });
 {% endblock script %}
 
@@ -29,6 +28,7 @@ $(document).ready(function() {
 
 {% block leftside %}
 <h2>Fanchart View</h2>
+<div id="settings">
 Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
    {% for g in genrange %}
       {% if g == generations %}
@@ -39,17 +39,30 @@ Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
    {% endfor %}
 </select>
 <br>
-Marriages&nbsp;<input type="checkbox" checked onchange="fanchart.setShowMarriage(this.checked)">
+Marriages&nbsp;<input type="checkbox" name="marriages"/>
 <br>
-Colors:&nbsp;<select name="colorScheme" onchange="fanchart.setColorScheme(this.value)">
+Colors:&nbsp;<select name="colors">
    <option value="0">Rules</option>
-   <option selected value="1">Pedigree</option>
+   <option value="1">Pedigree</option>
 </select>
 <br>
-Appearance&nbsp;<select onchange="fanchart.setAppearance(this.value)">
+Appearance&nbsp;<select name="appearance">
    <option value="0">Flat</option>
-   <option selected value="1">Gradient</option>
+   <option value="1">Gradient</option>
 </select>
+<br>
+Size&nbsp;<select name="size">
+   <option value="90">90</option>
+   <option value="120">120</option>
+   <option value="150">150</option>
+   <option value="180">180</option>
+   <option value="210">210</option>
+   <option value="240">240</option>
+   <option value="270">270</option>
+   <option value="340">340</option>
+   <option value="360">360</option>
+</select>
+</div>
 
 {{legend|safe}}
 {% endblock leftside %}
