@@ -12,7 +12,6 @@ function FanchartCanvas(canvas, data) {
 
     this.data = data;
     this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
-    this.rowHeight += this.sepBetweenGens;
     this.decujusx = this.boxWidth + this.horizPadding;
     this.decujusy = 0;  // computes later
 }
@@ -68,7 +67,7 @@ DEFAULT_SEP_BETWEEN_GENS = 20;
 FanchartCanvas.prototype.sepBetweenGens = DEFAULT_SEP_BETWEEN_GENS;
 
 /* row height for generations >= genThreshold */
-FanchartCanvas.prototype.rowHeightAfterThreshold = 120;
+FanchartCanvas.prototype.rowHeightAfterThreshold = 100;
 
 /* Height of the inner (white) circle. This height is substracted from
    rowHeight for the parent's row */
@@ -187,7 +186,7 @@ FanchartCanvas.prototype.getStyle_ = function(
                                                 0, 0, maxRadius);
          gr.addColorStop(0, c);
 
-         rgb = this.hsvToRgb(angle * 180 / Math.PI, gen / maxGen, 0.8);
+         rgb = this.hsvToRgb(angle * 180 / Math.PI, gen / maxGen, 0.9);
          var c2 = "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")";
          gr.addColorStop(1, c2);
          var st = {'stroke': 'black', 'fill': gr};
@@ -319,15 +318,19 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
     ctx.font = fontSize + "px Arial";
     ctx.translate(centerx, centery);
 
+    var rowHeight = this.rowHeight + this.sepBetweenGens;
+    var rowHeightAfterThreshold = this.rowHeightAfterThreshold +
+       this.sepBetweenGens;
+
     for (var gen = d.generations - 1; gen >= 1; gen--) {
         if (gen < this.genThreshold) {
-            var minRadius = this.rowHeight * (gen - 1) || this.innerCircle;
-            var maxRadius = minRadius + this.rowHeight;
+            var minRadius = rowHeight * (gen - 1) || this.innerCircle;
+            var maxRadius = minRadius + rowHeight;
             if (gen == 1) maxRadius -= this.innerCircle;
         } else {
-            var minRadius = this.rowHeight * (this.genThreshold - 1)
-                + (gen - this.genThreshold) * this.rowHeightAfterThreshold;;
-            var maxRadius = minRadius + this.rowHeightAfterThreshold;
+            var minRadius = rowHeight * (this.genThreshold - 1)
+                + (gen - this.genThreshold) * rowHeightAfterThreshold;;
+            var maxRadius = minRadius + rowHeightAfterThreshold;
         }
 
         if (gen <= 7) {
@@ -361,7 +364,7 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
                     var attr = {"stroke": "black"};
 
                     if (gen == 1) {
-                        this.text(-this.rowHeight, -10, mar, attr);
+                        this.text(-rowHeight, -10, mar, attr);
                     } else {
                         var a = minAngle + (maxAngle - minAngle) / 2;
                         var c = Math.cos(a);
@@ -399,13 +402,16 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
 
 FanchartCanvas.prototype.chartDimensions = function() {
     var d = this.data;
+    var rowHeight = this.rowHeight + this.sepBetweenGens;
+    var rowHeightAfterThreshold = this.rowHeightAfterThreshold +
+       this.sepBetweenGens;
 
     if (d.generations < this.genThreshold) {
-        var radius = d.generations * this.rowHeight;
+        var radius = d.generations * rowHeight;
     } else {
-        var radius = (this.genThreshold - 1) * this.rowHeight
+        var radius = (this.genThreshold - 1) * rowHeight
             + (d.generations - this.genThreshold)
-            * this.rowHeightAfterThreshold;
+            * rowHeightAfterThreshold;
     }
 
     if (this.maxAngle - this.minAngle >= PI_TWO) { //  full circle
