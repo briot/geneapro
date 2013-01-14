@@ -33,9 +33,10 @@ FanchartCanvas.colorScheme = {
 
 /** Color scheme to apply to boxes
  * @type {FanchartCanvas.colorScheme}
+ * @private
  */
 
-FanchartCanvas.prototype.colorScheme = FanchartCanvas.colorScheme.PEDIGREE;
+FanchartCanvas.prototype.colorScheme_ = FanchartCanvas.colorScheme.PEDIGREE;
 
 /** Height of a generation in the fanchart
  * @type {number}
@@ -50,7 +51,8 @@ FanchartCanvas.prototype.genThreshold = 4;
 
 /* Extra blank spaces between layers rings. This is used to display
    marriage information (if 0, no marriage info is displayed) */
-FanchartCanvas.prototype.sepBetweenGens = 20;
+DEFAULT_SEP_BETWEEN_GENS = 20;
+FanchartCanvas.prototype.sepBetweenGens = DEFAULT_SEP_BETWEEN_GENS;
 
 /* row height for generations >= genThreshold */
 FanchartCanvas.prototype.rowHeightAfterThreshold = 120;
@@ -154,11 +156,11 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
 /** @inheritDoc */
 
 FanchartCanvas.prototype.getStyle_ = function(person, gen, angle) {
-   if (this.colorScheme == FanchartCanvas.colorScheme.STYLE) {
+   if (this.colorScheme_ == FanchartCanvas.colorScheme.STYLE) {
       var st = this.data.styles[person.y];
       st.stroke = 'gray';
 
-   } else if (this.colorScheme == FanchartCanvas.colorScheme.PEDIGREE) {
+   } else if (this.colorScheme_ == FanchartCanvas.colorScheme.PEDIGREE) {
       //  Avoid overly saturated colors when displaying only few generations
       //  (i.e. when boxes are big)
       var maxGen = Math.max(12, this.data.generations - 1);
@@ -175,7 +177,16 @@ FanchartCanvas.prototype.getStyle_ = function(person, gen, angle) {
  */
 
 FanchartCanvas.prototype.setColorScheme = function(scheme) {
-   this.colorScheme = scheme;
+   this.colorScheme_ = scheme;
+   this.refresh();
+};
+
+/**
+ * @type {Boolean} show  Whether to display marriage information.
+ */
+
+FanchartCanvas.prototype.setShowMarriage = function(show) {
+   this.sepBetweenGens = (show ? DEFAULT_SEP_BETWEEN_GENS : 0);
    this.refresh();
 };
 
