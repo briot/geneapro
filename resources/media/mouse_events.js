@@ -91,8 +91,8 @@
      return this[(fn||d)?"bind":"trigger"]("ctrl-alt-shift-click",d,fn)};
   $.fn.no_modifier_click = function(d,fn) {
      return this[(fn||d)?"bind":"trigger"]("no-modifier-click",d,fn)};
-  $.fn.wheel = function(d,fn) {
-     return this[(fn||d)?"bind":"trigger"]("wheel",d,fn)};
+  $.fn.mousewheel = function(d,fn) {
+     return this[(fn||d)?"bind":"trigger"]("mousewheel",d,fn)};
   $.fn.click_and_hold = function(d,fn) {
      return this[(fn||d)?"bind":"trigger"]("click-and-hold",d,fn)};
   $.fn.set_weight = function(weight) {return this.data (_weight,weight)}
@@ -155,33 +155,68 @@
        _fired = 'fired.clickAH',
        _weight = 'weight.AH',
        hold_duration = 200,  //  milliseconds
-       _onIOS = (/iphone|ipad|ipod/i).test(navigator.userAgent),
-       _wheelEvents = !$.browser.mozilla ? "mousewheel" : // IE, opera, safari
-          "DOMMouseScroll" + ($.browser.version<"1.9" ? " mousemove":""); // ff
+       _onIOS = (/iphone|ipad|ipod/i).test(navigator.userAgent);
 
-  $.event.special.wheel = {
-     setup: function(data){
-       $(this).bind (_wheelEvents, data, $.event.special.wheel.handler)},
-     teardown: function(){
-       $(this).unbind (_wheelEvents, $.event.special.wheel.handler)},
-     handler : function (e) {
-       terminate_throw ($(this));
-       switch (e.type ){
-          case "mousemove": // FF2 has incorrect event positions
-             return $.extend (e.data, { // store the correct properties
-                clientX: e.clientX, clientY: e.clientY,
-                pageX: e.pageX, pageY: e.pageY});
-          case "DOMMouseScroll": // firefox
-             $.extend (e, e.data ); // fix event properties in FF2
-             e.delta = -e.detail/3; // normalize delta
-             break;
-          case "mousewheel": // IE, opera, safari
-             e.delta = e.wheelDelta/120; // normalize delta
-             if ( $.browser.opera ) e.delta *= -1; // normalize delta
-             break;
+  //  Code inspired from jquery.mousewheel.js
+  $.event.special.mousewheel = {
+     setup: function(data) {
+          // Called when the first handler is set on a particular element
+          if (this.addEventListener) {
+             var types = ['DOMMouseScroll', 'mousewheel'];
+             for (var i = types.length - 1; i >= 0; i--) {
+                this.addEventListener(types[i], $.event.special.mousewheel.handler, false);
+             }
+          } else {
+             this.onmousewheel = $.event.special.mousewheel.handler;
           }
-       e.type = "wheel"; // hijack the event
-       return $.event.handle.apply (this, arguments);
+     },
+     teardown: function() {
+          if (this.removeEventListener) {
+             var types = ['DOMMouseScroll', 'mousewheel'];
+             for (var i=types.length; i;) {
+                this.removeEventListener(types[--i], handler, false);
+             }
+          } else {
+            this.onmousewheel = null;
+          }
+     },
+     handler : function(event) {
+       terminate_throw($(this));
+
+       var orgEvent = event || window.event;
+       var args = [].slice.call( arguments, 1 );
+       var  delta = 0;
+       var returnValue = true;
+       var deltaX = 0;
+       var deltaY = 0;
+       event = $.event.fix(orgEvent);
+       event.type = "mousewheel";
+
+       // Old school scrollwheel delta
+       if (orgEvent.wheelDelta) { delta = orgEvent.wheelDelta/120; }
+       if (orgEvent.detail) { delta = -orgEvent.detail/3; }
+
+       // New school multidimensional scroll (touchpads) deltas
+       deltaY = delta;
+
+       // Gecko
+       if (orgEvent.axis !== undefined && orgEvent.axis === orgEvent.HORIZONTAL_AXIS) {
+          deltaY = 0;
+          deltaX = -1*delta;
+       }
+
+       // Webkit
+       if (orgEvent.wheelDeltaY !== undefined) { deltaY = orgEvent.wheelDeltaY/120; }
+       if (orgEvent.wheelDeltaX !== undefined) { deltaX = -1*orgEvent.wheelDeltaX/120; }
+
+        // Add event and delta to the front of the arguments
+        args.unshift(event, delta, deltaX, deltaY);
+
+        event.clientX = event.originalEvent.clientX;
+        event.clientY = event.originalEvent.clientY;
+        event.deltaX = deltaX;
+        event.deltaY = deltaY;
+        return ($.event.dispatch || $.event.handle).apply(this, args);
      }
   };
 

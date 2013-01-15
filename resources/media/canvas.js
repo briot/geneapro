@@ -18,7 +18,7 @@ function Canvas(elem) {
     this.canvas
         .start_drag($.proxy(this.onStartDrag, this))
         .in_drag($.proxy(this.onInDrag, this))
-        .wheel($.proxy(this.onWheel, this))
+        .mousewheel($.proxy(this.onWheel, this))
         .bind("draw", $.proxy(this.onDraw, this))
         .click($.proxy(this.onClick, this))
         .dblclick(
@@ -207,7 +207,7 @@ Canvas.prototype.refresh = function (box) {
 Canvas.prototype.showSettings = function() {
    var f = this;  //  closure for callbacks
    $("#settings input[name=autoScale]")
-      .change(function() { f.setAutoScale(this.checked)})
+      .change(function() { f.setAutoScale(this.checked); f.refresh()})
       .attr('checked', this.autoScale_);
 };
 
@@ -229,8 +229,10 @@ Canvas.prototype.computeBoundingBox = function() {
  */
 
 Canvas.prototype.setAutoScale = function(autoScale) {
-   this.autoScale_ = autoScale;
-   this.refresh();
+   if (autoScale != this.autoScale_) {
+      this.autoScale_ = autoScale;
+      $("#settings input[name=autoScale]").attr('checked', this.autoScale_);
+   }
 };
 
 /**
@@ -454,11 +456,13 @@ Canvas.prototype.updateZoom = function(newScale, xoffs, yoffs) {
  * @protected
  */
 
-Canvas.prototype.onWheel = function(e) {
-    if (e.delta > 0) {
-        this.updateZoom(this.scale * this.scaleStep, e.clientX, e.clientY);
-    } else {
-        this.updateZoom(this.scale / this.scaleStep, e.clientX, e.clientY);
+Canvas.prototype.onWheel = function(e, delta, deltaX, deltaY) {
+    if (deltaY > 0) {
+       this.setAutoScale(false);
+       this.updateZoom(this.scale * this.scaleStep, e.clientX, e.clientY);
+    } else if (deltaY < 0) {
+       this.setAutoScale(false);
+       this.updateZoom(this.scale / this.scaleStep, e.clientX, e.clientY);
     }
     return false;  //  prevent main window from scrolling
 };
