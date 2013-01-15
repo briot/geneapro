@@ -36,9 +36,8 @@ FanchartCanvas.prototype.sepBetweenGens = 0;
 /* row height for generations >= genThreshold */
 FanchartCanvas.prototype.rowHeightAfterThreshold = 100;
 
-/* Height of the inner (white) circle. This height is substracted from
-   rowHeight for the parent's row */
-FanchartCanvas.prototype.innerCircle = 10;
+/** Height of the inner (white) circle. */
+FanchartCanvas.prototype.innerCircle = 20;
 
 /* Start and End angles, in radians, for the pedigree view.
  * This is clockwise, starting from the usual 0 angle!
@@ -315,11 +314,10 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
         var sep = 0;   //  current separator in seps array
 
         if (gen < this.genThreshold) {
-            var minRadius = rowHeight * (gen - 1) || this.innerCircle;
+            var minRadius = this.innerCircle + this.rowHeight * (gen - 1);
             var maxRadius = minRadius + rowHeight;
-            if (gen == 1) maxRadius -= this.innerCircle;
         } else {
-            var minRadius = rowHeight * (this.genThreshold - 1)
+            var minRadius = this.innerCircle + rowHeight * (this.genThreshold - 1)
                 + (gen - this.genThreshold) * rowHeightAfterThreshold;;
             var maxRadius = minRadius + rowHeightAfterThreshold;
         }
