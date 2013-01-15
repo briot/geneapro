@@ -5,7 +5,7 @@
  */
 
 /** Maximum number of generations that can be displayed */
-var MAXGENS = 13;
+var MAXGENS = 20;
 
 /** Default number of generations to display */
 var DEFAULT_GENERATIONS = 5;
