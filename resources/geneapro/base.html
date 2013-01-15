@@ -64,6 +64,19 @@
  <script type="text/javascript">
   {% block script %}
   {% endblock script %}
+
+  // Need to compute ourselves the size of the canvas, since we haven't
+  // managed to get a proper CSS that would correctly use all available height
+  // except for the area used by the header.
+  $(window).resize(function() {
+      var h = $(window).height() - $("#head").height() - 25;
+      $("#body").height(h);
+      $("#bodyMain").height(h);
+      $("#collapseSidebar").height(h);
+  });
+  $(document).ready(function() {
+      $(window).resize();
+  });
  </script>
 
  {% block endbody %}

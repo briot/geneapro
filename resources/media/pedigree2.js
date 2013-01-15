@@ -364,7 +364,8 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
     // tree nicer by using the whole canvas height, at least (in particular
     // useful when displaying few generations.
 
-    var canvas_height = this.canvas[0].height, margin = 30;
+    var canvas_height = this.canvas[0].height;
+    var margin = 30;
     if ((totalBoxes - maxBoxes) * spacing < canvas_height - margin) {
         spacing = (canvas_height - margin) / (totalBoxes - maxBoxes);
     }
