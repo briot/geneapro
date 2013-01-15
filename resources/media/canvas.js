@@ -482,13 +482,19 @@ Canvas.prototype.ifnotDisabled_ = function(evt, callback) {
 
 /**
  * Return the style to use for a person, depending on the settings of the
- * canvas.
- * @param {Number} minRadius  Used for fancharts.
- * @param {Number} maxRadius  Used for fancharts.
+ * canvas. When a gradient is used, it assumes that the drawing context has
+ * been translated so that (0,0) is either the center of a radial gradient,
+ * or the top-left position of a linear gradient.
+ *
+ * @param {} person   The person to display, which must have a 'generation'
+ *    field set to its generation number.
+ * @param {Number} minRadius   For a fanchart, this is the interior radius;
+ *    for a standard box, this is the height of the box.
+ * @param {Number} maxRadius   If set to 0, a linear gradient is used.
  * @private
  */
 
-Canvas.prototype.getStyle_ = function(person, gen, angle, minRadius, maxRadius) {
+Canvas.prototype.getStyle_ = function(person, minRadius, maxRadius) {
    return this.data.styles[person.y];
 };
 
@@ -503,7 +509,6 @@ Canvas.prototype.drawPersonText = function(
     if (!person) {
         return;
     }
-
     // Compute the actual font size to use, and the number of lines to
     // display.
     // We do not want the canvas' zoom to effect the text (since zooming
@@ -514,7 +519,8 @@ Canvas.prototype.drawPersonText = function(
         Math.min(this.toPixelLength(fontsize), this.maxFontSize));
     var absFontSize = this.toAbsLength(pixelsFontSize);
     var linesCount = Math.floor(height / absFontSize);
-    var attr = this.getStyle_(person, 0 /* gen */, 0 /* angle */, 0 /* minRadius */,
+    var attr = this.getStyle_(person,
+                              height /* minRadius */,
                               0 /* maxRadius */);
 
     if (linesCount >= 1) {
@@ -576,18 +582,21 @@ Canvas.prototype.drawPersonBox = function(
     person, x, y, width, height, fontsize)
 {
     if (person) {
-        var attr = this.getStyle_(person, 0 /* gen */, 0 /* angle */, 0 /* minRadius */,
+        var attr = this.getStyle_(person,
+                                  height /* minRadius */,
                                   0 /* maxRadius */);
         attr.shadow = (height > 2); // force shadow
     } else {
         attr = {fill:"white", stroke:"black"};
     }
 
-    this.roundedRect(x, y, width, height, attr);
-
+    this.ctx.save();
+    this.ctx.translate(x, y);  //  to get proper gradient
+    this.roundedRect(0, 0, width, height, attr);
     if (person) {
-        this.drawPersonText(person, x, y, height, fontsize);
+        this.drawPersonText(person, 0, 0, height, fontsize);
     }
+    this.ctx.restore();
 };
 
 /**

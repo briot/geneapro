@@ -18,39 +18,6 @@ function FanchartCanvas(canvas, data) {
 }
 inherits(FanchartCanvas, AbstractPedigree);
 
-/**
- * @enum {number}
- */
-
-FanchartCanvas.colorScheme = {
-   RULES: 0,
-   //  color of a person's box is computed on the server, depending on the
-   //  highlighting rules defined by the user
-   
-   PEDIGREE: 1
-   //  The color of a person's box depends on its location in the pedigree
-};
-
-/** Color scheme to apply to boxes
- * @type {FanchartCanvas.colorScheme}
- * @private
- */
-
-FanchartCanvas.prototype.colorScheme_ = FanchartCanvas.colorScheme.PEDIGREE;
-
-/**
- * Describes how the boxes are displayed.
- * @enum {number}
- */
-
-FanchartCanvas.appearance = {
-   FLAT: 0,
-   GRADIENT: 1
-};
-
-/** @private */
-FanchartCanvas.prototype.appearance_ = FanchartCanvas.appearance.GRADIENT;
-
 /** Height of a generation in the fanchart
  * @type {number}
  */
@@ -162,78 +129,6 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
     this.drawFan_(centerx, centery);
 };
 
-/** @inheritDoc */
-
-FanchartCanvas.prototype.getStyle_ = function(
-      person, gen, angle, minRadius, maxRadius)
-{
-   if (this.colorScheme_ == FanchartCanvas.colorScheme.RULES) {
-      var st = this.data.styles[person.y];
-      st['stroke'] = 'gray';
-
-      if (st['fill']
-          && typeof st['fill'] == 'string'
-          && this.appearance_ == FanchartCanvas.appearance.GRADIENT)
-      {
-         var gr = this.ctx.createRadialGradient(
-               0, 0, minRadius, 0, 0, maxRadius);
-         var c = $.Color(st['fill']);
-         gr.addColorStop(0, st['fill']);
-         gr.addColorStop(1, c.transition("black", 0.2).toString());
-
-         var st2 = {}
-         for (var obj in st) {
-            st2[obj] = st[obj];
-         }
-         st = st2;
-         st['fill'] = gr;
-      }
-
-   } else if (this.colorScheme_ == FanchartCanvas.colorScheme.PEDIGREE) {
-      //  Avoid overly saturated colors when displaying only few generations
-      //  (i.e. when boxes are big)
-      var maxGen = Math.max(12, this.data.generations - 1);
-
-      //  For the angle, map the displayed size to the 0->360 range, so that
-      //  the full colormap is used.
-      var ang = ((angle - this.minAngle) / (this.maxAngle - this.minAngle) * 360);
-      var c = this.hsvToRgb(ang, gen / maxGen, 1.0).toString();
-
-      if (this.appearance_ == FanchartCanvas.appearance.GRADIENT) {
-         var gr = this.ctx.createRadialGradient(
-               0, 0, minRadius, 0, 0, maxRadius);
-         gr.addColorStop(0, c);
-
-         c = this.hsvToRgb(ang, gen / maxGen, 0.8).toString();
-         gr.addColorStop(1, c)
-         var st = {'stroke': 'black', 'fill': gr};
-      } else {
-         var st = {'stroke': 'black', 'fill': c};
-      }
-   }
-   return st;
-};
-
-/**
- * Change the appearance of the fanchart
- *   @type {FanchartCanvas.appearance} appearance   .
- */
-
-FanchartCanvas.prototype.setAppearance = function(appearance) {
-   this.appearance_ = appearance;
-   this.refresh();
-};
-
-/**
- * Change the color scheme for the fanchart
- *   @type {FanchartCanvas.colorScheme}  scheme   The scheme to apply.
- */
-
-FanchartCanvas.prototype.setColorScheme = function(scheme) {
-   this.colorScheme_ = scheme;
-   this.refresh();
-};
-
 /**
  * Canvas needs to be refreshed afterwards
  * @param {Boolean} show  Whether to display marriage information.
@@ -279,15 +174,9 @@ FanchartCanvas.prototype.showSettings = function() {
                "value": Math.round(this.separator * 180 / Math.PI) * 10,
                "change": function() {
                   f.setCoupleSeparator($(this).slider("value") / 10).refresh(); }});
-   $("#settings select[name=colors]")
-      .val(this.colorScheme_)
-      .change(function() { f.setColorScheme(this.value)});
    $("#settings input[name=marriages]")
       .change(function() { f.setShowMarriage(this.checked).refresh() })
       .attr('checked', this.sepBetweenGens != 0);
-   $("#settings select[name=appearance]")
-      .change(function() { f.setAppearance(this.value)})
-      .val(this.appearance_);
    $("#settings #size")
       .slider({"min": 90, "max": 360,
                "value": Math.round((this.maxAngle - this.minAngle) * 180 / Math.PI),
@@ -315,13 +204,13 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
     }
 
     /** Draws a slice of the fanchart, clockwise */
-    function createPath(p, minRadius, maxRadius, maxAngle, minAngle, gen) {
+    function createPath(p, minRadius, maxRadius, maxAngle, minAngle) {
         doPath_(minRadius, maxRadius, maxAngle, minAngle);
         if (p) {
-            var st = this.getStyle_(p, gen, minAngle, minRadius, maxRadius);
+            var st = this.getStyle_(p, minRadius, maxRadius);
             this.drawPath(st);
 
-            if (gen < this.textThreshold) {
+            if (p.generation < this.textThreshold) {
                 ctx.save();
 
                 // unfortunately we have to recreate the path, at least until the
@@ -337,7 +226,7 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
                 // generations, we rotate the text since there is not enough
                 // horizontal space anyway
 
-                if (gen >= this.genThreshold) {
+                if (p.generation >= this.genThreshold) {
                     if (this.readable_names && Math.abs(a) >= PI_HALF) {
                         var r = maxRadius - 4;
                         ctx.translate(r * c, r * s);
@@ -449,7 +338,7 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
             var maxAngle = angle + angleInc;
 
             createPath.call(
-                this, person, minRadius, maxRadius, maxAngle, minAngle, gen);
+                this, person, minRadius, maxRadius, maxAngle, minAngle);
 
             if (person) {
                 if (num % 2 == 0 && this.sepBetweenGens > 10

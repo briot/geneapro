@@ -90,7 +90,7 @@ PedigreeCanvas.prototype.getSelected = function(e) {
     var selected = null;
 
     this.forEachBox(
-        function(indiv, x, y, w, h, gen, sosa) {
+        function(indiv, x, y, w, h) {
             if (x <= mx && mx <= x + w && y <= my && my <= y + h) {
                 selected = indiv;
                 return true;
@@ -99,13 +99,12 @@ PedigreeCanvas.prototype.getSelected = function(e) {
     return selected;
 };
 
-/** for each box, calls 'callback' (indiv, x, y, w, h, gen, sosa).
+/** for each box, calls 'callback' (indiv, x, y, w, h).
  * 'this' is preserved when calling callback.
  *
  * 'box' can be specified and indicates the pixels coordinates of the
  * region we want to traverse (default is all canvas).
  * Traversing stops when 'callback' returns true.
- * 'sosa' parameter will be negative for children of the decujus.
  */
 
 PedigreeCanvas.prototype.forEachBox = function(callback, box) {
@@ -135,12 +134,10 @@ PedigreeCanvas.prototype.forEachBox = function(callback, box) {
                 var ti = tops[index] + baseY;
 
                 if (!box || (ti < box.y + box.h && ti + h > box.y)) { // clipping
-                    if (callback.call(
-                        this, d.sosa[sosa], x, ti, w, h, gen, sosa))
-                    {
-                        gen = 99999;
-                        break;
-                    }
+                   if (callback.call(this, d.sosa[sosa], x, ti, w, h)) {
+                      gen = 99999;
+                      break;
+                   }
                 }
                 index ++;
             }
@@ -160,7 +157,7 @@ PedigreeCanvas.prototype.forEachBox = function(callback, box) {
         for (var c = 0, len = d.children.length; c < len; c++) {
             if (callback.call(
                 this, d.children[c], x, y,
-                this.boxWidth * this.scale, 2 * halfHeight, gen, -c))
+                this.boxWidth * this.scale, 2 * halfHeight))
             {
                 break;
             }
@@ -214,8 +211,8 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
     ctx.strokeStyle = "black";
 
     this.forEachBox(
-        function(indiv, x, y, w, h, gen, sosa) {
-            if (sosa <= 0) { // a child
+        function(indiv, x, y, w, h) {
+            if (indiv.sosa <= 0) { // a child
                 ctx.moveTo (x + w, y + h / 2);
                 ctx.lineTo ((x + w + startX) / 2, y + h / 2);
                 ctx.lineTo ((x + w + startX) / 2, yForChild);
@@ -224,13 +221,13 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
                     seenChild = true;
                     ctx.lineTo (startX, yForChild);
                 }
-                gen = 0;
+                indiv.generation = 0;
             }
-            else if (gen < d.generations - 1) {
+            else if (indiv.generation < d.generations - 1) {
                 if (this.showUnknown ||
-                    d.sosa[2 * sosa] || d.sosa[2 * sosa + 1])
+                    d.sosa[2 * indiv.sosa] || d.sosa[2 * indiv.sosa + 1])
                 {
-                    var x2 = x + w + this.horizPadding * this.boxheights[gen][2];
+                    var x2 = x + w + this.horizPadding * this.boxheights[indiv.generation][2];
                     // x2=left edge of parent gen
                     var x3 = x + w;  // right edge for current gen
                     var y2 = y + h / 2; // middle of current box
@@ -240,31 +237,31 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
                     ctx.moveTo(x3, y2);
                     ctx.lineTo(x4, y2);
 
-                    if (this.showUnknown || d.sosa[2 * sosa]) {
-                        var y1 = baseY + tops[2 * sosa - 1]
-                            + this.boxheights[gen+1][0] / 2;
+                    if (this.showUnknown || d.sosa[2 * indiv.sosa]) {
+                        var y1 = baseY + tops[2 * indiv.sosa - 1]
+                            + this.boxheights[indiv.generation + 1][0] / 2;
                         ctx.lineTo(x4, y1);
                         ctx.lineTo(x2, y1);
                     }
 
-                    if (this.showUnknown || d.sosa[2 * sosa + 1]) {
-                        var y1 = baseY + tops[2 * sosa]
-                            + this.boxheights[gen+1][0] / 2;
+                    if (this.showUnknown || d.sosa[2 * indiv.sosa + 1]) {
+                        var y1 = baseY + tops[2 * indiv.sosa]
+                            + this.boxheights[indiv.generation+1][0] / 2;
                         ctx.moveTo(x4, y2);
                         ctx.lineTo(x4, y1);
                         ctx.lineTo(x2, y1);
                     }
 
-                    if (mariageHeight[gen] > this.minFontSize
-                        && gen < d.generations - 1
-                        && d.marriage[2 * sosa])
+                    if (mariageHeight[indiv.generation] > this.minFontSize
+                        && indiv.generation < d.generations - 1
+                        && d.marriage[2 * indiv.sosa])
                     {
-                        var mar = event_to_string(d.marriage[2 * sosa]);
-                        text.push([mariageHeight[gen], x2 + 3, y + h /2, mar]);
+                        var mar = event_to_string(d.marriage[2 * indiv.sosa]);
+                        text.push([mariageHeight[indiv.generation], x2 + 3, y + h /2, mar]);
                     }
                 }
             }
-            boxes.push([indiv, x, y, w, h, gen]);
+            boxes.push([indiv, x, y, w, h]);
         });
 
     ctx.stroke();
@@ -279,7 +276,7 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
                bo[2] /* y */,
                bo[3] /* width */,
                bo[4] /* height */,
-               this.lineHeights[bo[5]] /* fontsize */);
+               this.lineHeights[bo[0].generation] /* fontsize */);
         }
     }
 
