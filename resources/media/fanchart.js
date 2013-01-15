@@ -429,7 +429,29 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
         var height = radius * (max - min);
     }
 
-    var centerX = this.boxWidth * 1.5 + this.horizPadding + width / 2;
+    // The space there should be after the decujus box so that the fanchart
+    // does not hide it partially.
+    //      angle = from maxAngle to minAngle (blank slice)
+    //      tan(angle / 2) = (boxHeight / 2) / minDist
+    // so
+    //     minDist = (boxHeight / 2) / tan(angle / 2)
+
+    var angle = PI_TWO - (this.maxAngle - this.minAngle);
+    var minDist;
+    if (angle >= Math.PI) {
+       minDist = 0;
+    } else if (angle <= 0) {
+       minDist = width; // fullCircle
+    } else {
+       minDist = this.boxHeight / 2 / Math.tan(angle / 2) + this.horizPadding;
+    }
+    // Don't put the fanchart too far (when the blank slice is small)
+    minDist = Math.min(minDist, width / 2 + this.horizPadding);
+
+    // Leave a minimal amount of space so that the fanchart does not cover the
+    // decujus box
+    var centerX = this.boxWidth * 2 + this.horizPadding + minDist;
+
     width += this.boxWidth * 2 + this.horizPadding;
     this.box_ = {width: width, height: height, x: 0, y: 0, centerX: centerX};
 };
