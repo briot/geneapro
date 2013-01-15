@@ -9,15 +9,12 @@ var MAXGENS = 13;
  */
 
 function PedigreeCanvas(canvas, data) {
-    Canvas.call(this, canvas /* elem */);
-
-    this.data = data;
+    AbstractPedigree.call(this, canvas /* elem */, data /* data */);
     this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
     this.setSameSize(false, true /* norefresh */);
-
     this.showSettings();
 }
-inherits(PedigreeCanvas, Canvas);
+inherits(PedigreeCanvas, AbstractPedigree);
 
 /**
  * Whether all boxes have the same size. Else the size decreases with the
@@ -302,33 +299,12 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
     ctx.restore();
 };
 
-/**
- * Load the data for the pedigree from the server.
- *   @param {number}  gen   The number of generations to load.
- */
-
-PedigreeCanvas.prototype.loadData = function(gen) {
-   var f = this;  //  closure for callbacks
-   var decujus = (this.data ? this.data.sosa[1].id : 1);
-   $.ajax(
-      {'url': '/pedigreeData/' + decujus + '/' + gen,
-       'success': function(data) {
-         f.data = data;
-         f.refresh();
-      }});
-};
-
 /** @inheritDoc */
 
 PedigreeCanvas.prototype.showSettings = function() {
    var f = this;  //  closure for callbacks
-   Canvas.prototype.showSettings.call(this);
+   AbstractPedigree.prototype.showSettings.call(this);
 
-   $("#settings #gens")
-      .slider({"min": 2, "max": MAXGENS,
-               "value": this.data ? this.data.generations : DEFAULT_GENERATIONS,
-               "change": function() { f.loadData($(this).slider("value")); }})
-      .find("span.right").text(MAXGENS);
    $("#settings input[name=sameSize]")
       .change(function() { f.setSameSize(this.checked) })
       .attr('checked', this.sameSize);

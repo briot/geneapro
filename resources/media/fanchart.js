@@ -2,29 +2,21 @@
 var PI_HALF = Math.PI / 2;
 var PI_TWO  = Math.PI * 2;
 
-/** Default number of generations to display */
-var DEFAULT_GENERATIONS = 5;
-
-/** Maximum number of generations that can be displayed */
-var MAXGENS = 13;
-
 /**
  * @param {Element} canvas  A DOM element that contains the canvas.
  * @param {} data           The data returned by the server.
  */
 
 function FanchartCanvas(canvas, data) {
-    Canvas.call(this, canvas /* elem */);
+    AbstractPedigree.call(this, canvas /* elem */, data /* data */);
 
-    this.data = data;
     this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
-
     this.setTotalAngle(340);
     this.setShowMarriage(false);
     this.setCoupleSeparator(0);
     this.showSettings();
 }
-inherits(FanchartCanvas, Canvas);
+inherits(FanchartCanvas, AbstractPedigree);
 
 /**
  * @enum {number}
@@ -131,22 +123,6 @@ FanchartCanvas.prototype.onClick = function(e) {
                     config.delay);
     }
 */
-};
-
-/**
- * Load the data for the fanchart from the server.
- *   @param {Number}  gen    The number of generations to load.
- */
-
-FanchartCanvas.prototype.loadData = function(gen) {
-   var f = this;  //  closure for callbacks
-   var decujus = (this.data ? this.data.sosa[1].id : 1);
-   $.ajax(
-      {'url': '/pedigreeData/' + decujus + '/' + gen,
-       'success': function(data) {
-         f.data = data;
-         f.refresh();
-      }});
 };
 
 /** @overrides */
@@ -296,13 +272,8 @@ FanchartCanvas.prototype.setCoupleSeparator = function(angle) {
 FanchartCanvas.prototype.showSettings = function() {
    var f = this;  //  closure for callbacks
 
-   Canvas.prototype.showSettings.call(this);  //  inherited
+   AbstractPedigree.prototype.showSettings.call(this);  //  inherited
 
-   $("#settings #gens")
-      .slider({"min": 2, "max": MAXGENS,
-               "value": this.data ? this.data.generations : DEFAULT_GENERATIONS,
-               "change": function() { f.loadData($(this).slider("value")); }})
-      .find("span.right").text(MAXGENS);
    $("#settings #separator")
       .slider({"min": 0, "max": 50,
                "value": Math.round(this.separator * 180 / Math.PI) * 10,
