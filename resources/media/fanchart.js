@@ -18,8 +18,6 @@ function FanchartCanvas(canvas, data) {
 
     this.data = data;
     this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
-    this.decujusx = this.boxWidth + this.horizPadding;
-    this.decujusy = 0;  // computes later
 
     this.setTotalAngle(340);
     this.setShowMarriage(false);
@@ -158,27 +156,25 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
     var childrenHeight = d.children
         ? d.children.length * (this.boxHeight + this.vertPadding)
         : 0;
-    var maxHeight = Math.max(childrenHeight, this.size_.height);
-    var maxWidth = this.boxWidth + this.horizPadding + this.size_.width;
-    var centerx = this.decujusx + this.boxWidth * 2;
-    var centery = this.size_.height / 2; 
-
-    this.decujusy = centery - 5;
+    var maxHeight = Math.max(childrenHeight, this.box_.height);
+    var maxWidth = this.boxWidth + this.horizPadding + this.box_.width;
+    var centerx = this.box_.centerX;
+    var centery = this.box_.y + this.box_.height / 2; 
 
     this.drawPersonBox(
         d.sosa[1] /* person */,
-        this.decujusx /* x */,
-        this.decujusy - this.boxHeight / 2 /* y */,
+        this.box_.x + this.boxWidth + this.horizPadding /* x */,
+        centery - this.boxHeight / 2 /* y */,
         this.boxWidth /* width */,
         this.boxHeight /* height */,
         this.baseFontSize /* fontsize */);
 
     if (d.children) {
-        var y = (maxHeight - childrenHeight) / 2;
+        var y = this.box_.y + (maxHeight - childrenHeight) / 2;
         for (var c = 0; c < d.children.length; c++) {
             this.drawPersonBox(
                 d.children[c] /* person */,
-                1 /* x */,
+                this.box_.x /* x */,
                 y /* y */,
                 this.boxWidth /* width */,
                 this.boxHeight /* height */,
@@ -295,13 +291,13 @@ FanchartCanvas.prototype.setCoupleSeparator = function(angle) {
    return this;
 };
 
-/**
- * Update the settings box (from fanchart.html) to reflect current settings,
- * and so that changing the settings also updates the fanchart.
- */
+/** @inheritDoc */
 
 FanchartCanvas.prototype.showSettings = function() {
    var f = this;  //  closure for callbacks
+
+   Canvas.prototype.showSettings.call(this);  //  inherited
+
    $("#settings #gens")
       .slider({"min": 2, "max": MAXGENS,
                "value": this.data ? this.data.generations : DEFAULT_GENERATIONS,
@@ -527,11 +523,12 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
 
 /** @inheritDoc */
 
-FanchartCanvas.prototype.computeSize = function() {
+FanchartCanvas.prototype.computeBoundingBox = function() {
     var d = this.data;
     var rowHeight = this.rowHeight + this.sepBetweenGens;
     var rowHeightAfterThreshold = this.rowHeightAfterThreshold +
        this.sepBetweenGens;
+    var width, height;
 
     if (d.generations < this.genThreshold) {
         var radius = d.generations * rowHeight;
@@ -542,7 +539,7 @@ FanchartCanvas.prototype.computeSize = function() {
     }
 
     if (this.maxAngle - this.minAngle >= PI_TWO) { //  full circle
-       this.size_ = {width: 2 * radius, height: 2 * radius};
+       width = height = 2 * radius;
     } else {
         var minA = (this.minAngle + PI_TWO) % PI_TWO;  // 0 to 360deg
         var maxA = minA + (this.maxAngle - this.minAngle); // minA to 719deg
@@ -572,6 +569,9 @@ FanchartCanvas.prototype.computeSize = function() {
             Math.min(Math.sin(minA), Math.sin(maxA)) : -1;
 
         var height = radius * (max - min);
-        this.size_ = {width: width, height: height};
     }
+
+    var centerX = this.boxWidth * 1.5 + this.horizPadding + width / 2;
+    width += this.boxWidth * 2 + this.horizPadding;
+    this.box_ = {width: width, height: height, x: 0, y: 0, centerX: centerX};
 };

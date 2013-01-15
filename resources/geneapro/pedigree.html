@@ -2,6 +2,13 @@
 {% block title %}GeneaPro: pedigree {{decujus}}{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
+
+#settings {font-size: 0.8em}
+
+#settings .ui-slider-horizontal {height: 0.2em; margin: 5px 3px 0 10px}
+#settings .ui-slider .ui-slider-handle {height:0.6em}
+#settings .ui-slider span {font-size:0.8em; margin-top:7px}
+#settings .ui-slider span.right {float:right}
 {% endblock css %}
 
 {% block script %}
@@ -9,15 +16,17 @@ function changeGenerations () {
    var gen = Number (getSelectedValue ($("select[name=generations]")[0]));
    window.location = "/pedigree/{{decujus}}?gens=" + gen;
 }
-var canvas;
-
 $(document).ready (function() {
    var data_ = {{pedigree_data|safe}};
-   canvas = new PedigreeCanvas(
-      $("#pedigree")[0], data_, $("#sameSize")[0].checked);
+   var canvas = new PedigreeCanvas($("#pedigree")[0], data_);
    canvas.onResize();
 });
 {% endblock script %}
+
+{% block header %}
+<link rel="stylesheet" href="{{MEDIA_URL}}ui-lightness/jquery-ui-1.9.2.custom.min.css"/>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery-ui-1.9.2.custom.min.js"></script>
+{% endblock header %}
 
 {% block endbody %}
 <script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
@@ -27,19 +36,11 @@ $(document).ready (function() {
 
 {% block leftside %}
 <h2>Pedigree View</h2>
-Generations:&nbsp;<select name="generations" onchange="changeGenerations()">
-   {% for g in genrange %}
-      {% if g == generations %}
-      <option selected>{{g}}</option>
-      {% else %}
-      <option>{{g}}</option>
-      {% endif %}
-   {% endfor %}
-</select>
-
-<br>
-Same size: <input type="checkbox" id="sameSize"
-                  onchange="canvas.setSameSize(this.checked)"/>
+<div id="settings">
+Generations:<div id="gens"><span>2</span><span class="right">max</span></div>
+<br>Same size: <input type="checkbox" name="sameSize"/>
+<br>Show unknown: <input type="checkbox" name="showUnknown"/>
+</div>
 
 {{legend|safe}}
 {% endblock leftside %}

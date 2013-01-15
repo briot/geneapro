@@ -1,3 +1,6 @@
+/** Maximum number of generations that can be displayed */
+var MAXGENS = 13;
+
 /**
  * Decorates a <canvas> element to show a pedigree view
  * @param {Element} canvas   The DOM element to decorate.
@@ -5,12 +8,14 @@
  * @extends {Canvas}
  */
 
-function PedigreeCanvas(canvas, data, sameSize) {
+function PedigreeCanvas(canvas, data) {
     Canvas.call(this, canvas /* elem */);
 
     this.data = data;
     this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
-    this.setSameSize(sameSize, true /* norefresh */);
+    this.setSameSize(false, true /* norefresh */);
+
+    this.showSettings();
 }
 inherits(PedigreeCanvas, Canvas);
 
@@ -26,6 +31,11 @@ PedigreeCanvas.prototype.sameSize = true;
  */
 PedigreeCanvas.prototype.boxWidth;
 PedigreeCanvas.prototype.boxHeight;
+
+/**
+ * Whether to draw a box when a person is unknown
+ */
+PedigreeCanvas.prototype.showUnknown = false;
 
 /**
  * Padding on the side of each boxes.
@@ -186,8 +196,6 @@ PedigreeCanvas.prototype.onDblClick = function(e) {
 /** @overrides */
 
 PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
-    this.computeBoxPositions();
-
     var ctx = this.ctx;
     var tops = this.tops;
     var mariageHeight = this.mariageHeight;
@@ -267,13 +275,15 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
     ctx.textBaseline = 'top';
     for (var b=boxes.length - 1; b >= 0; b--) {
         var bo = boxes[b];
-        this.drawPersonBox(
-            bo[0] /* person */,
-            bo[1] /* x */,
-            bo[2] /* y */,
-            bo[3] /* width */,
-            bo[4] /* height */,
-            this.lineHeights[bo[5]] /* fontsize */);
+        if (this.showUnknown || bo[0]) {
+           this.drawPersonBox(
+               bo[0] /* person */,
+               bo[1] /* x */,
+               bo[2] /* y */,
+               bo[3] /* width */,
+               bo[4] /* height */,
+               this.lineHeights[bo[5]] /* fontsize */);
+        }
     }
 
     ctx.save();
@@ -292,7 +302,44 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
     ctx.restore();
 };
 
-/**  Compute display data for all boxes, given the number of generations
+/**
+ * Load the data for the pedigree from the server.
+ *   @param {number}  gen   The number of generations to load.
+ */
+
+PedigreeCanvas.prototype.loadData = function(gen) {
+   var f = this;  //  closure for callbacks
+   var decujus = (this.data ? this.data.sosa[1].id : 1);
+   $.ajax(
+      {'url': '/pedigreeData/' + decujus + '/' + gen,
+       'success': function(data) {
+         f.data = data;
+         f.refresh();
+      }});
+};
+
+/** @inheritDoc */
+
+PedigreeCanvas.prototype.showSettings = function() {
+   var f = this;  //  closure for callbacks
+   Canvas.prototype.showSettings.call(this);
+
+   $("#settings #gens")
+      .slider({"min": 2, "max": MAXGENS,
+               "value": this.data ? this.data.generations : DEFAULT_GENERATIONS,
+               "change": function() { f.loadData($(this).slider("value")); }})
+      .find("span.right").text(MAXGENS);
+   $("#settings input[name=sameSize]")
+      .change(function() { f.setSameSize(this.checked) })
+      .attr('checked', this.sameSize);
+   $("#settings input[name=showUnknown]")
+      .change(function() { f.showUnknown = this.checked; f.refresh()})
+      .attr('checked', this.showUnknown);
+};
+
+/** @inheritDoc
+ *
+ *  Compute display data for all boxes, given the number of generations
  * to display. This is only recomputed when the number of generations
  *  has changed.
  *  Sets 'canvas.boxheights', 'canvas.tops' and 'canvas.__gens'.
@@ -311,11 +358,11 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
  *  The padding between the boxes is only dependent on the generation.
  */
 
-PedigreeCanvas.prototype.computeBoxPositions = function() {
+PedigreeCanvas.prototype.computeBoundingBox = function() {
     var d = this.data;
 
     if (this.__gens == d.generations
-        && this.__scale == canvas.scale
+        && this.__scale == this.scale
         && this.__ratio == this.ratio)
     {
         return; // nothing to do
@@ -381,4 +428,11 @@ PedigreeCanvas.prototype.computeBoxPositions = function() {
                     - height) / 2;
         }
     }
+
+    // Autoscaling will not work, since the above computation already depends
+    // on the current scale anyway.
+    this.box_ = {width: 0,
+                 height: 0,
+                 x: 0,
+                 y: 0};
 };

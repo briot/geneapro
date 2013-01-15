@@ -56,9 +56,13 @@ Canvas.prototype.top = 0.0;
 
 Canvas.prototype.scaleStep = 1.1;
 
-/** Whether to draw a box when a parent is unknown */
+/** Whether to automatically scale to show the whole bounding box.
+ * Automatic scaling is automatically disabled if computeBoundingBox returns
+ * a 0 width.
+ * @private
+ */
 
-Canvas.prototype.showUnknown = false;
+Canvas.prototype.autoScale_ = true;
 
 /** Base font size, in pixels */
 
@@ -175,25 +179,58 @@ Canvas.prototype.refresh = function (box) {
 
     try {
         this.ctx.save();
-        this.computeSize();
+        this.computeBoundingBox();
+
+        if (this.autoScale_ && this.box_.width != 0) {
+           this.left = this.box_.x;
+           this.top = this.box_.y;
+           this.scale = Math.min(
+              this.canvas[0].width / this.box_.width,
+              this.canvas[0].height / this.box_.height);
+        }
 
         if (this.autoZoom) {
             this.setTransform();
-            this.canvas.trigger("draw", box);
         }
+
+        this.canvas.trigger("draw", box);
     } finally {
         this.ctx.restore();
     }
 };
 
 /**
- * Compute the dimensions of the object to display.
- * Sets this.size_.
- * @return {{width:number, height:number}}  The dimensions.
+ * Update the settings box to reflect the current settings, and so that
+ * changing the settings also updates the fanchart.
  */
 
-Canvas.prototype.computeSize = function() {
-   this.size_ = {width: 0, height: 0};
+Canvas.prototype.showSettings = function() {
+   var f = this;  //  closure for callbacks
+   $("#settings input[name=autoScale]")
+      .change(function() { f.setAutoScale(this.checked)})
+      .attr('checked', this.autoScale_);
+};
+
+/**
+ * Compute the dimensions of the object to display.
+ * Sets this.box_.
+ * @return {{width:number, height:number, x:number, y:number}}  The position
+ *   of the bounding box in absolute coordinates. The returned object might
+ *   contain extra fields cached by the specific canvas implementation.
+ */
+
+Canvas.prototype.computeBoundingBox = function() {
+   this.box_ = {width: 0, height: 0, x: 0, y: 0};
+};
+
+/**
+ * Whether the scaling factor should be computed automatically when the
+ * canvas is refreshed, to show the whole area.
+ */
+
+Canvas.prototype.setAutoScale = function(autoScale) {
+   this.autoScale_ = autoScale;
+   this.refresh();
 };
 
 /**
