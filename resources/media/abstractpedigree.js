@@ -40,8 +40,11 @@ AbstractPedigree.colorScheme = {
    //  color of a person's box is computed on the server, depending on the
    //  highlighting rules defined by the user
 
-   PEDIGREE: 1
+   PEDIGREE: 1,
    //  The color of a person's box depends on its location in the pedigree
+   
+   GENERATION: 2
+   //  The color depends on the generation
 };
 
 /** Color scheme to apply to boxes
@@ -167,6 +170,20 @@ AbstractPedigree.prototype.getStyle_ = function(person, minRadius, maxRadius) {
          return st2;
       }
       return st;
+
+   case AbstractPedigree.colorScheme.GENERATION:
+      var c = this.hsvToRgb(
+            180 + 360 * (person.generation - 1) / MAXGENS, 0.4, 1.0).toString();
+      if (this.appearance_ == AbstractPedigree.appearance.GRADIENT) {
+         var gr = doGradient();
+         gr.addColorStop(0, c);
+         c = this.hsvToRgb(
+            180 + 360 * (person.generation - 1) / MAXGENS, 0.4, 0.8).toString();
+         gr.addColorStop(1, c)
+         return {'stroke': 'black', 'fill': gr};
+      } else {
+         return {'stroke': 'black', 'fill': c};
+      }
 
    case AbstractPedigree.colorScheme.PEDIGREE:
       //  Avoid overly saturated colors when displaying only few generations
