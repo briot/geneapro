@@ -1,9 +1,5 @@
 # for Emacs: -*- mode: org; mode: flyspell; fill-column: 79 -*-
 
-* Bugs
-** fanchart when displaying 20 generations
-   there is a lot of wasted screen estate.
-
 * Database
 ** Create indexes in database:
    Assertion.subject1

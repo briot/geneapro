@@ -95,28 +95,22 @@ FanchartCanvas.prototype.onClick = function(e) {
 
 FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
     var d = this.data;
-    var childrenHeight = d.children
-        ? d.children.length * (this.boxHeight + this.vertPadding)
-        : 0;
-    var maxHeight = Math.max(childrenHeight, this.box_.height);
-    var maxWidth = this.boxWidth + this.horizPadding + this.box_.width;
-    var centerx = this.box_.centerX;
-    var centery = this.box_.y + this.box_.height / 2; 
-
     this.drawPersonBox(
         d.sosa[1] /* person */,
-        this.box_.x + this.boxWidth + this.horizPadding /* x */,
-        centery - this.boxHeight / 2 /* y */,
+        this.box_.childX + this.boxWidth + this.horizPadding /* x */,
+        this.box_.centerY - this.boxHeight / 2 /* y */,
         this.boxWidth /* width */,
         this.boxHeight /* height */,
         this.baseFontSize /* fontsize */);
 
     if (d.children) {
-        var y = this.box_.y + (maxHeight - childrenHeight) / 2;
+        var childrenHeight =
+            d.children.length * (this.boxHeight + this.vertPadding);
+        var y = this.box_.centerY - childrenHeight / 2;
         for (var c = 0; c < d.children.length; c++) {
             this.drawPersonBox(
                 d.children[c] /* person */,
-                this.box_.x /* x */,
+                this.box_.childX /* x */,
                 y /* y */,
                 this.boxWidth /* width */,
                 this.boxHeight /* height */,
@@ -125,7 +119,7 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
         }
     }
 
-    this.drawFan_(centerx, centery);
+    this.drawFan_();
 };
 
 /**
@@ -188,14 +182,13 @@ FanchartCanvas.prototype.showSettings = function() {
  * This does not draw the decujus or its children
  */
 
-FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
+FanchartCanvas.prototype.drawFan_ = function() {
     var d = this.data;
     var ctx = this.ctx;
 
     function doPath_(minRadius, maxRadius, maxAngle, minAngle) {
         ctx.beginPath();
         ctx.arc(0, 0, maxRadius, maxAngle, minAngle, true);
-
         if (minRadius != maxRadius) {
             ctx.arc(0, 0, minRadius, minAngle, maxAngle, false);
             ctx.closePath();
@@ -205,163 +198,104 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
     /** Draws a slice of the fanchart, clockwise */
     function createPath(p, minRadius, maxRadius, maxAngle, minAngle) {
         doPath_(minRadius, maxRadius, maxAngle, minAngle);
-        if (p) {
-            var st = this.getStyle_(p, minRadius, maxRadius);
-            this.drawPath(st);
+        var st = this.getStyle_(p, minRadius, maxRadius);
+        this.drawPath(st);
 
-            if (p.generation < this.textThreshold) {
-                ctx.save();
+        if (p.generation < this.textThreshold) {
+            ctx.save();
 
-                // unfortunately we have to recreate the path, at least until the
-                // Path object from the canvas API is implemented everywhere.
-                doPath_(minRadius, maxRadius, maxAngle, minAngle);
-                ctx.clip();
+            // unfortunately we have to recreate the path, at least until the
+            // Path object from the canvas API is implemented everywhere.
+            doPath_(minRadius, maxRadius, maxAngle, minAngle);
+            ctx.clip();
 
-                var a = minAngle + (maxAngle - minAngle) / 2;
-                var c = Math.cos(a);
-                var s = Math.sin(a);
+            var a = minAngle + (maxAngle - minAngle) / 2;
+            var c = Math.cos(a);
+            var s = Math.sin(a);
 
-                // Draw person name along the curve, and clipped. For late
-                // generations, we rotate the text since there is not enough
-                // horizontal space anyway
+            // Draw person name along the curve, and clipped. For late
+            // generations, we rotate the text since there is not enough
+            // horizontal space anyway
 
-                if (p.generation >= this.genThreshold) {
-                    if (this.readable_names && Math.abs(a) >= PI_HALF) {
-                        var r = maxRadius - 4;
-                        ctx.translate(r * c, r * s);
-                        ctx.rotate(a + Math.PI);
-
-                    } else {
-                        var r = minRadius + 4;
-                        ctx.translate(r * c, r * s);
-                        ctx.rotate(a);
-                    }
-
-                    this.drawPersonText(
-                        person, 0, 0,
-                        2 * fontSize /* height */, fontSize /* fontsize */);
+            if (p.generation >= this.genThreshold) {
+                if (this.readable_names && Math.abs(a) >= PI_HALF) {
+                    var r = maxRadius - 4;
+                    ctx.translate(r * c, r * s);
+                    ctx.rotate(a + Math.PI);
 
                 } else {
-                    //  ??? Upcoming HTML5 canvas will support text on path
-
-                    if (minAngle < 0 || !this.readable_names) {
-                        var r = (minRadius + maxRadius) / 2;
-                        ctx.translate(r * c, r * s);
-                        ctx.rotate((minAngle + maxAngle) / 2 + Math.PI / 2);
-                    } else {
-                        var r = minRadius + 2;
-                        ctx.translate(r * c, r * s);
-                        ctx.rotate((minAngle + maxAngle) / 2 - Math.PI / 2);
-                    }
-
-                    this.drawPersonText(
-                        person, -60, 0,
-                        2 * fontSize/* height */, fontSize /* fontsize */);
-
-
+                    var r = minRadius + 4;
+                    ctx.translate(r * c, r * s);
+                    ctx.rotate(a);
                 }
-                ctx.restore();
+
+                this.drawPersonText(
+                    person, 0, 0,
+                    2 * fontSize /* height */, fontSize /* fontsize */);
+
+            } else {
+                //  ??? Upcoming HTML5 canvas will support text on path
+
+                if (minAngle < 0 || !this.readable_names) {
+                    var r = (minRadius + maxRadius) / 2;
+                    ctx.translate(r * c, r * s);
+                    ctx.rotate((minAngle + maxAngle) / 2 + Math.PI / 2);
+                } else {
+                    var r = minRadius + 2;
+                    ctx.translate(r * c, r * s);
+                    ctx.rotate((minAngle + maxAngle) / 2 - Math.PI / 2);
+                }
+
+                this.drawPersonText(
+                    person, -60, 0,
+                    2 * fontSize/* height */, fontSize /* fontsize */);
             }
-        } else {
-            //ctx.stroke();
+            ctx.restore();
         }
     }
 
     ctx.save();
     var fontSize = 14;
     ctx.font = fontSize + "px Arial";
-    ctx.translate(centerx, centery);
+    ctx.translate(this.box_.centerX, this.box_.centerY);
 
-    var rowHeight = this.rowHeight + this.sepBetweenGens;
-    var rowHeightAfterThreshold = this.rowHeightAfterThreshold +
-       this.sepBetweenGens;
-
-    // separators between each person. When drawing the first generation, the
-    // separator is always this.separator. But then for each generation the
-    // separator's value for the new couples is different, and is the same for
-    // couples from previous generations. So for generation 2 we have:
-    //     [sep(1), sep(2), sep(1), sep(2), sep(1)]
-    // whereas for generation 3 we have:
-    //     [sep(1), sep(3), sep(2), sep(3), sep(2), sep(3), sep(1), ...]
-    
-    if (this.separator != 0) {
-       var current = this.separator;
-       var allSeps = [[current]];
-       var allSizes = [(this.maxAngle - this.minAngle) / 2 - current / 2];
-
-       for (var gen = 2; gen <= d.generations - 1; gen++) {
-          var previous = allSeps[gen - 2];
-          current = current / 2;
-          var result = [current];
-          for (var p = 0; p < previous.length; p++) {
-             result.push(previous[p]);
-             result.push(current);
-          }
-          result.push(this.separator);
-          allSeps.push(result);
-
-          allSizes.push(allSizes[allSizes.length - 1] / 2 - current / 2);
-       }
-    }
+    var radiuses = this.computeRadius_();
 
     for (var gen = 1; gen <= d.generations - 1; gen++) {
         var minIndex = Math.pow(2, gen); /* first SOSA in that gen, and number
                                             of persons in that gen */
-        var seps = (this.separator == 0 ? undefined : allSeps[gen - 1]);
-        var angleInc = (this.separator == 0 ?
-                            (this.maxAngle - this.minAngle) / minIndex
-                            : allSizes[gen - 1]);
-        var sep = 0;   //  current separator in seps array
-
-        if (gen < this.genThreshold) {
-            var minRadius = this.innerCircle + this.rowHeight * (gen - 1);
-            var maxRadius = minRadius + rowHeight;
-        } else {
-            var minRadius = this.innerCircle + rowHeight * (this.genThreshold - 1)
-                + (gen - this.genThreshold) * rowHeightAfterThreshold;;
-            var maxRadius = minRadius + rowHeightAfterThreshold;
-        }
-
-        if (gen <= 7) {
-            minRadius += this.sepBetweenGens;
-        }
-
+        var radius = radiuses[gen];
         var angle = this.minAngle + this.separator / 2;
-        var medRadius = (minRadius + maxRadius) / 2;
 
         for (var id = 0; id < minIndex; id++) {
-            var num = minIndex + id;
-            var person = d.sosa[num];
-            var minAngle = angle;
-            var maxAngle = angle + angleInc;
-
-            createPath.call(
-                this, person, minRadius, maxRadius, maxAngle, minAngle);
+            var person = d.sosa[minIndex + id];
+            var maxAngle = angle + radius.boxAngle;
 
             if (person) {
-                if (num % 2 == 0 && this.sepBetweenGens > 10
-                    && d.marriage[num] && gen <= 7)
+                createPath.call(
+                    this, person, radius.min, radius.max, maxAngle, angle);
+
+                if (person.sosa % 2 == 0 && this.sepBetweenGens > 10
+                    && d.marriage[person.sosa] && gen <= 7)
                 {
-                    var mar = event_to_string(d.marriage [num]);
+                    var mar = event_to_string(d.marriage [person.sosa]);
                     var attr = {"stroke": "black"};
 
                     if (gen == 1) {
-                        this.text(-rowHeight, -10, mar, attr);
+                        this.text(-(radius.max - radius.min), -10, mar, attr);
                     } else {
-                        var a = minAngle + (maxAngle - minAngle) / 2;
+                        var a = angle + radius.boxAngle / 2;
                         var c = Math.cos(a);
                         var s = Math.sin(a);
 
                         ctx.save();
+                        var r = radius.min - fontSize + 2;
+                        ctx.translate(r * c, r * s);
 
-                        if (minAngle < 0 || !this.readable_names) {
-                            var r = minRadius - 2; //this.sepBetweenGens;
-                            ctx.translate(r * c, r * s);
-                            ctx.rotate((minAngle + maxAngle) / 2 + Math.PI / 2);
+                        if (angle < 0 || !this.readable_names) {
+                            ctx.rotate((angle + maxAngle) / 2 + Math.PI / 2);
                         } else {
-                            var r = minRadius - fontSize - 2; //this.sepBetweenGens;
-                            ctx.translate(r * c, r * s);
-                            ctx.rotate((minAngle + maxAngle) / 2 - Math.PI / 2);
+                            ctx.rotate((angle + maxAngle) / 2 - Math.PI / 2);
                             ctx.translate(-30, 0);
                         }
 
@@ -370,64 +304,106 @@ FanchartCanvas.prototype.drawFan_ = function(centerx, centery) {
                     }
                 }
             }
-
-            var s = (this.separator == 0 ? 0 : seps[sep++]);
-            angle = maxAngle + s;
+            angle = maxAngle + (radius.seps[id] || 0);
         }
     }
 
     ctx.restore();
 };
 
+/** Compute the inner and outer radius for all generations, as well as
+ * the angle opening for a box.
+ * This function also computes, if necessary, the separators between persons.
+ * These separators vary from generation to generation, since otherwise there
+ * is proportionally too much span between persons at later generations.
+ *     sep(n+1) = sep(n) / 2;
+ * As a result, at generation 1 (parents of decujus) we have the following
+ * separator list (where p<sosa> is a person):
+ *     [p2, sep(1), p3]
+ * Then at generation 2 we have:
+ *     [p4, sep(2), p5, sep(1), p6, sep(2), p7]
+ * At generation 3 we have:
+ *     [p8, sep(3), p9, sep(2), p10, sep(3), p11, sep(1), ...]
+ *
+ * @typedef {{min:number,max:number,boxAngle:number,seps:Array.<number>}} data
+ * @return {Array.<data>}  the data.
+ *  @private
+ */
+
+FanchartCanvas.prototype.computeRadius_ = function() {
+   var d = this.data;
+
+   var prev = {min: 0,
+               max: this.innerCircle,
+               seps: [],
+               boxAngle: (this.maxAngle - this.minAngle) - this.separator};
+   var result = [prev];
+   var sep = this.separator;
+
+   for (var gen = 1; gen < d.generations; gen++) {
+      var minRadius = (gen == 1) ? prev.max : prev.max + this.sepBetweenGens;
+      var maxRadius = minRadius +
+         (gen < this.genThreshold ? this.rowHeight : this.rowHeightAfterThreshold);
+
+      var seps = [];
+      for (var p = 0; p < prev.seps.length; p++) {
+         seps.push(sep);
+         seps.push(prev.seps[p]);
+      }
+      seps.push(sep);
+      
+      sep *= 0.5;
+      prev = {min: minRadius,
+              max: maxRadius,
+              seps: seps,
+              boxAngle: prev.boxAngle / 2 - sep};
+      result.push(prev);
+   }
+
+   return result;
+};
+
 /** @inheritDoc */
 
 FanchartCanvas.prototype.computeBoundingBox = function() {
     var d = this.data;
-    var rowHeight = this.rowHeight + this.sepBetweenGens;
-    var rowHeightAfterThreshold = this.rowHeightAfterThreshold +
-       this.sepBetweenGens;
-    var width, height;
 
-    if (d.generations < this.genThreshold) {
-        var radius = d.generations * rowHeight;
-    } else {
-        var radius = (this.genThreshold - 1) * rowHeight
-            + (d.generations - this.genThreshold)
-            * rowHeightAfterThreshold;
+    // Compute the bounding box for the fan itself, as if it was
+    // centered on (0, 0).
+    var minX = 0;
+    var minY = 0;
+    var maxX = 0;
+    var maxY = 0;
+    var radiuses = this.computeRadius_();
+
+    for (var gen = d.generations - 1; gen > 0; gen--) {
+       var personsInGen = Math.pow(2, gen);  // Number of persons in that gen.
+       var radius = radiuses[gen];
+       var angle = this.minAngle + this.separator / 2;
+
+       for (var p = 0; p < personsInGen; p++) {
+          var person = d.sosa[personsInGen + p];
+          var maxAngle = angle + radius.boxAngle;
+
+          if (person) {
+             //  ??? We should also check at each of the North,West,South,East
+             //  points, since these can also intersect the bounding box. We
+             //  need to check whether any of these is within the arc though.
+             var x1 = radius.max * Math.cos(angle);
+             var y1 = radius.max * Math.sin(angle);
+             var x2 = radius.max * Math.cos(maxAngle);
+             var y2 = radius.max * Math.sin(maxAngle);
+             minX = Math.min(minX, x1, x2);
+             maxX = Math.max(maxX, x1, x2);
+             minY = Math.min(minY, y1, y2);
+             maxY = Math.max(maxY, y1, y2);
+          }
+          angle = maxAngle + radius.seps[p];
+       }
     }
 
-    if (this.maxAngle - this.minAngle >= PI_TWO) { //  full circle
-       width = height = 2 * radius;
-    } else {
-        var minA = (this.minAngle + PI_TWO) % PI_TWO;  // 0 to 360deg
-        var maxA = minA + (this.maxAngle - this.minAngle); // minA to 719deg
-
-        // If going from min to max includes 0, the max is 1, otherwise it is
-        // the max of the two cosine
-
-        var max = (maxA < PI_TWO ?
-                   Math.max(Math.cos(minA), Math.cos(maxA)) : 1);
-
-        // If going from min to max includes PI the min is -1, otherwise it is
-        // the min of the two cosine
-
-        var min = ((minA <= Math.PI && maxA >= Math.PI) ||
-                   (minA >= Math.PI && maxA < 3 * Math.PI)) ?
-            Math.min(Math.cos(minA), Math.cos(maxA)) : -1;
-
-        var width = radius * (max - min);
-
-        // same for height
-        max = ((minA > Math.PI / 2 && maxA < 2.5 * Math.PI) ||
-               (minA < PI_HALF && maxA < PI_HALF)) ?
-            Math.max(Math.sin(minA), Math.sin(maxA)) : 1;
-
-        min =  ((minA < 1.5 * Math.PI && maxA < 1.5 * Math.PI) ||
-                (minA > 1.5 * Math.PI && maxA < 3.5 * Math.PI)) ?
-            Math.min(Math.sin(minA), Math.sin(maxA)) : -1;
-
-        var height = radius * (max - min);
-    }
+    var width = maxX - minX;
+    var height = maxY - minY;
 
     // The space there should be after the decujus box so that the fanchart
     // does not hide it partially.
@@ -437,7 +413,7 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
     //     minDist = (boxHeight / 2) / tan(angle / 2)
 
     var angle = PI_TWO - (this.maxAngle - this.minAngle);
-    var minDist;
+    var minDist;  // distance between left side of decujus box and fan center
     if (angle >= Math.PI) {
        minDist = 0;
     } else if (angle <= 0) {
@@ -448,10 +424,14 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
     // Don't put the fanchart too far (when the blank slice is small)
     minDist = Math.min(minDist, width / 2 + this.horizPadding);
 
-    // Leave a minimal amount of space so that the fanchart does not cover the
-    // decujus box
-    var centerX = this.boxWidth * 2 + this.horizPadding + minDist;
-
-    width += this.boxWidth * 2 + this.horizPadding;
-    this.box_ = {width: width, height: height, x: 0, y: 0, centerX: centerX};
+    var centerXRel = //  position of fan center relative to left side
+       this.boxWidth * 2 + this.horizPadding + minDist;
+    var offsetX =  //  offset so that the fan fits in the box
+       Math.min(centerXRel + minX, 0);
+    this.box_ = {x: 0, y: 0,
+                 centerX: centerXRel - offsetX,
+                 centerY: -minY,
+                 childX: -offsetX,
+                 width: centerXRel + maxX - offsetX,
+                 height: height};
 };

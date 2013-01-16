@@ -333,6 +333,7 @@ Canvas.prototype.onStartDrag = function(e, dragdata) {
  */
 
 Canvas.prototype.onInDrag = function(e, dragdata) {
+    this.setAutoScale(false);
     this.left = dragdata.offset.left;
     this.top = dragdata.offset.top;
     this.refresh ();
