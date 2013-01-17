@@ -43,8 +43,11 @@ AbstractPedigree.colorScheme = {
    PEDIGREE: 1,
    //  The color of a person's box depends on its location in the pedigree
    
-   GENERATION: 2
+   GENERATION: 2,
    //  The color depends on the generation
+   
+   WHITE: 3
+   //  No border or background for boxes
 };
 
 /** Color scheme to apply to boxes
@@ -134,7 +137,19 @@ AbstractPedigree.prototype.loadData = function(gen) {
       }});
 };
 
-/** @inheritDoc */
+/**
+ * Return the style to use for a person, depending on the settings of the
+ * canvas. When a gradient is used, it assumes that the drawing context has
+ * been translated so that (0,0) is either the center of a radial gradient,
+ * or the top-left position of a linear gradient.
+ *
+ * @param {} person   The person to display, which must have a 'generation'
+ *    field set to its generation number.
+ * @param {Number} minRadius   For a fanchart, this is the interior radius;
+ *    for a standard box, this is the height of the box.
+ * @param {Number} maxRadius   If set to 0, a linear gradient is used.
+ * @private
+ */
 
 AbstractPedigree.prototype.getStyle_ = function(person, minRadius, maxRadius) {
    var ctx = this.ctx;
@@ -180,9 +195,9 @@ AbstractPedigree.prototype.getStyle_ = function(person, minRadius, maxRadius) {
          c = this.hsvToRgb(
             180 + 360 * (person.generation - 1) / MAXGENS, 0.4, 0.8).toString();
          gr.addColorStop(1, c)
-         return {'stroke': 'black', 'fill': gr};
+         return {'stroke': 'black', 'fill': gr, 'secondaryText': 'gray'};
       } else {
-         return {'stroke': 'black', 'fill': c};
+         return {'stroke': 'black', 'fill': c, 'secondaryText': 'gray'};
       }
 
    case AbstractPedigree.colorScheme.PEDIGREE:
@@ -198,10 +213,13 @@ AbstractPedigree.prototype.getStyle_ = function(person, minRadius, maxRadius) {
          c = this.hsvToRgb(
                person.angle * 360, person.generation / maxGen, 0.8).toString();
          gr.addColorStop(1, c)
-         return {'stroke': 'black', 'fill': gr};
+         return {'stroke': 'black', 'fill': gr, 'secondaryText': 'gray'};
       } else {
-         return {'stroke': 'black', 'fill': c};
+         return {'stroke': 'black', 'fill': c, 'secondaryText': 'gray'};
       }
+
+   case AbstractPedigree.colorScheme.WHITE:
+      return {'color': 'black', 'secondaryText': 'gray'};
    }
 };
 
@@ -222,4 +240,104 @@ AbstractPedigree.prototype.showSettings = function() {
    $("#settings select[name=colors]")
       .val(this.colorScheme_)
       .change(function() { f.setColorScheme(Number(this.value))});
+};
+
+/**
+ * Draw a rectangular box for a person, at the given coordinates.
+ * The box allows for up to linesCount of text.
+ * (x,y) are specified in pixels, so zooming and scrolling must have been
+ * applied first.
+ *
+ * @param {number} fontsize
+ *    Size of the font (in absolute size, not actual pixels).
+ */
+
+AbstractPedigree.prototype.drawPersonBox = function(
+    person, x, y, width, height, fontsize)
+{
+    if (person) {
+       var attr = this.getStyle_(person,
+                                 height /* minRadius */,
+                                 0 /* maxRadius */);
+       attr.shadow = (height > 2); // force shadow
+
+       this.ctx.save();
+       this.ctx.translate(x, y);  //  to get proper gradient
+       if (attr.stroke || attr.fill) {
+          this.roundedRect(0, 0, width, height, attr);
+       } else {
+          this.rect(0, 0, width, height, attr);
+       }
+       this.drawPersonText(person, 0, 0, height, fontsize);
+       this.ctx.restore();
+    }
+};
+
+/**
+ * Draw the text to describe a person. The text must fix in a box of the given
+ * size, although the box itself is not displayed.
+ */
+
+Canvas.prototype.drawPersonText = function(
+    person, x, y, height, fontsize)
+{
+    if (!person) {
+        return;
+    }
+    // Compute the actual font size to use, and the number of lines to
+    // display.
+    // We do not want the canvas' zoom to effect the text (since zooming
+    // in on the text should instead display more info).
+
+    var pixelsFontSize = Math.max(
+        this.minFontSize,
+        Math.min(this.toPixelLength(fontsize), this.maxFontSize));
+    var absFontSize = this.toAbsLength(pixelsFontSize);
+    var linesCount = Math.floor((height - fontsize) / absFontSize) + 1;
+    var attr = this.getStyle_(person,
+                              height /* minRadius */,
+                              0 /* maxRadius */);
+
+    if (linesCount >= 1) {
+        var c = this.ctx;
+        c.textBaseline = 'top';
+        c.save ();
+        c.clip ();
+        c.translate(x, y);
+        var y = fontsize;
+        c.font = y + "px " + this.fontName;
+        this.text(1, 0, person.surn + " " + person.givn, attr);
+
+        c.font = absFontSize + "px italic " + this.fontName;
+        c.fillStyle = attr['secondaryText'] || c.fillStyle;
+
+        if (linesCount >= 2 && linesCount < 5) {
+            var birth = event_to_string (person.b),
+            death = event_to_string (person.d);
+            c.fillText(birth + " - " + death, 1, y);
+
+        } else if (linesCount > 2) {
+            var birth = event_to_string(person.b);
+            var death = event_to_string(person.d);
+            var birthp = person.b ? person.b[1] || "" : "";
+            var deathp = person.d ? person.d[1] || "" : "";
+            if (linesCount >= 2 && birth)  {
+               c.fillText("b: " + birth, 1, y);
+               y += absFontSize;
+               if (linesCount >= 3 && birthp) {
+                  c.fillText("    " + birthp, 1, y);
+                  y += absFontSize;
+               }
+            }
+            if (linesCount >= 4 && death) {
+               c.fillText("d: " + death, 1, y);
+               y += absFontSize;
+               if (linesCount >= 5 && deathp) {
+                  c.fillText("    " + deathp, 1, y);
+                  y += absFontSize;
+               }
+            }
+        }
+        c.restore (); // unset clipping mask and font
+    }
 };

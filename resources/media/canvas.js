@@ -350,7 +350,7 @@ Canvas.prototype.text = function(x, y, text, attr, lineSpacing) {
     if (attr && attr["font-weight"]) {
         this.ctx.font = attr["font-weight"] + " " + this.fontName;
     }
-    this.ctx.fillStyle = (attr && attr.color) || "black";
+    this.ctx.fillStyle = (attr && attr['color']) || "black";
 
     var txt = text.split('\n');
     for (var t in txt) {
@@ -377,11 +377,11 @@ Canvas.prototype.drawPath = function(attr) {
         c.restore();
     }
     if (attr.fill) {
-        c.fillStyle = attr.fill || 'white';
+        c.fillStyle = attr['fill'] || 'white';
         c.fill ();
     }
     if (attr.stroke) {
-        c.strokeStyle = attr.stroke;
+        c.strokeStyle = attr['stroke'];
         c.stroke ();
     }
 };
@@ -527,125 +527,6 @@ Canvas.prototype.ifnotDisabled_ = function(evt, callback) {
         }
         return ret;
     }
-};
-
-/**
- * Return the style to use for a person, depending on the settings of the
- * canvas. When a gradient is used, it assumes that the drawing context has
- * been translated so that (0,0) is either the center of a radial gradient,
- * or the top-left position of a linear gradient.
- *
- * @param {} person   The person to display, which must have a 'generation'
- *    field set to its generation number.
- * @param {Number} minRadius   For a fanchart, this is the interior radius;
- *    for a standard box, this is the height of the box.
- * @param {Number} maxRadius   If set to 0, a linear gradient is used.
- * @private
- */
-
-Canvas.prototype.getStyle_ = function(person, minRadius, maxRadius) {
-   return this.data.styles[person.y];
-};
-
-/**
- * Draw the text to describe a person. The text must fix in a box of the given
- * size, although the box itself is not displayed.
- */
-
-Canvas.prototype.drawPersonText = function(
-    person, x, y, height, fontsize)
-{
-    if (!person) {
-        return;
-    }
-    // Compute the actual font size to use, and the number of lines to
-    // display.
-    // We do not want the canvas' zoom to effect the text (since zooming
-    // in on the text should instead display more info).
-
-    var pixelsFontSize = Math.max(
-        this.minFontSize,
-        Math.min(this.toPixelLength(fontsize), this.maxFontSize));
-    var absFontSize = this.toAbsLength(pixelsFontSize);
-    var linesCount = Math.floor(height / absFontSize);
-    var attr = this.getStyle_(person,
-                              height /* minRadius */,
-                              0 /* maxRadius */);
-
-    if (linesCount >= 1) {
-        var font = absFontSize + "px " + this.fontName;
-        var c = this.ctx;
-        c.textBaseline = 'top';
-        c.save ();
-        c.clip ();
-        c.translate(x, y);
-        c.font = font;
-        this.text(1, 0, person.surn + " " + person.givn, attr);
-
-        if (linesCount >= 2 && linesCount < 5) {
-            var birth = event_to_string (person.b),
-            death = event_to_string (person.d);
-            c.fillText(birth + " - " + death, 1, absFontSize);
-
-        } else if (linesCount > 2) {
-            var birth = event_to_string(person.b);
-            var death = event_to_string(person.d);
-            var birthp = person.b ? person.b[1] || "" : "";
-            var deathp = person.d ? person.d[1] || "" : "";
-            if (linesCount >= 2) {
-                c.fillText("b:", 1, fontsize);
-            }
-            if (linesCount >= 4) {
-                c.fillText("d:", 1, 3 * absFontSize);
-            }
-
-            c.font = "italic " + font;
-            if (linesCount >= 2 && birth)  {
-                c.fillText(birth,  fontsize, absFontSize);
-            }
-            if (linesCount >= 3 && birthp) {
-                c.fillText(birthp, fontsize, 2 * absFontSize);
-            }
-            if (linesCount >= 4 && death) {
-                c.fillText(death,  fontsize, 3 * absFontSize);
-            }
-            if (linesCount >= 5 && deathp) {
-                c.fillText(deathp, fontsize, 4 * absFontSize);
-            }
-        }
-        c.restore (); // unset clipping mask and font
-    }
-};
-
-/**
- * Draw a rectangular box for a person, at the given coordinates.
- * The box allows for up to linesCount of text.
- * (x,y) are specified in pixels, so zooming and scrolling must have been
- * applied first.
- *
- * @param {number} fontsize
- *    Size of the font (in absolute size, not actual pixels).
- */
-
-Canvas.prototype.drawPersonBox = function(
-    person, x, y, width, height, fontsize)
-{
-    if (person) {
-        var attr = this.getStyle_(person,
-                                  height /* minRadius */,
-                                  0 /* maxRadius */);
-        attr.shadow = (height > 2); // force shadow
-    } else {
-        attr = {fill:"white", stroke:"black"};
-    }
-
-    this.ctx.save();
-    this.ctx.translate(x, y);  //  to get proper gradient
-    this.roundedRect(0, 0, width, height, attr);
-    if (person) {
-        this.drawPersonText(person, 0, 0, height, fontsize);
-    }
-    this.ctx.restore();
 };
 
 /**

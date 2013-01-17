@@ -44,6 +44,8 @@ http://www.beholdgenealogy.com/blog/?p=876
 ** Highlight box when hover.
    Display action buttons ("make decujus", "view info",...) for the active box.
    Use a R-Tree for fast detection.
+** Compact layout should compute width of boxes in one generation by looking
+   at the maximum width to display the info.
 
 ** Dynamic "infinite" expansion
 See "Interactive Visualization of Genealogical Graphs"

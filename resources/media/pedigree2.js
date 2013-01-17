@@ -151,12 +151,26 @@ PedigreeCanvas.prototype.onDblClick = function(e) {
     }
 };
 
+/**
+ * Return the y position for a link to or form the person's box.
+ * @return {number}
+ * @private
+ */
+
+PedigreeCanvas.prototype.linkY_ = function(indiv) {
+   if (this.colorScheme_ == AbstractPedigree.colorScheme.WHITE) {
+      return indiv.box_.y + indiv.box_.fontSize;
+   } else {
+      return indiv.box_.y + indiv.box_.h / 2;
+   }
+};
+
 /** @overrides */
 
 PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
     var ctx = this.ctx;
     var d = this.data;
-    var yForChild = d.sosa[1].box_.y + d.sosa[1].box_.h / 2;
+    var yForChild = this.linkY_(d.sosa[1]);
 
     // First draw all lines, as a single path for more efficiency.
 
@@ -165,46 +179,60 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
     this.forEachBox(
         function(indiv) {
            var x = indiv.box_.x;
-           var y = indiv.box_.y;
            var w = indiv.box_.w;
-           var h = indiv.box_.h;
+           var linkY = this.linkY_(indiv);
 
-            if (indiv.sosa <= 0) { // a child
-                ctx.moveTo(x + w, y + h / 2);
-                ctx.lineTo((x + w + d.sosa[1].box_.x) / 2, y + h / 2);
-                ctx.lineTo((x + w + d.sosa[1].box_.x) / 2, yForChild);
+           if (indiv.sosa <= 0) { // a child
+               if (this.colorScheme_ == AbstractPedigree.colorScheme.WHITE) {
+                  var x6 = x;
+               } else {
+                  var x6 = x + w;  //  left end of the link (child side)
+               }
 
-                if (indiv.sosa == 0) {
-                    ctx.lineTo(d.sosa[1].box_.x, yForChild);
-                }
-            }
-            else if (indiv.generation < d.generations) {
-                var father = d.sosa[2 * indiv.sosa];
-                var mother = d.sosa[2 * indiv.sosa + 1];
-                if (father || mother) {
-                    var x2 = (father || mother).box_.x;
-                    // x2=left edge of parent gen
-                    var x3 = x + w;  // right edge for current gen
-                    var y2 = y + h / 2; // middle of current box
-                    var x4 = (x2 + x3) / 2; // half way between two boxes
+               ctx.moveTo(x6, linkY);
+               ctx.lineTo((x + w + d.sosa[1].box_.x) / 2, linkY);
+               ctx.lineTo((x + w + d.sosa[1].box_.x) / 2, yForChild);
 
-                    ctx.moveTo(x3, y2);
-                    ctx.lineTo(x4, y2);
+               if (indiv.sosa == 0) {
+                   ctx.lineTo(d.sosa[1].box_.x, yForChild);
+               }
+           }
+           else if (indiv.generation < d.generations) {
+               var father = d.sosa[2 * indiv.sosa];
+               var mother = d.sosa[2 * indiv.sosa + 1];
+               if (father || mother) {
+                  var x2 = (father || mother).box_.x; // left edge of parent
+                  var x3 = x + w;  // right edge for current gen
 
-                    if (father) {
-                        var y1 = father.box_.y + father.box_.h / 2;
-                        ctx.lineTo(x4, y1);
-                        ctx.lineTo(x2, y1);
-                    }
+                  // x5=right end of the link to the parent
+                  // x6=left end of the link (child-side)
+                  if (this.colorScheme_ == AbstractPedigree.colorScheme.WHITE) {
+                     var x5 = x2 + (father || mother).box_.w;
+                     var x6 = x;
+                  } else {
+                     var x5 = x2;
+                     var x6 = x3;
+                  }
 
-                    if (mother) {
-                        var y1 = mother.box_.y + mother.box_.h / 2;
-                        ctx.moveTo(x4, y2);
-                        ctx.lineTo(x4, y1);
-                        ctx.lineTo(x2, y1);
-                    }
-                }
-            }
+                  var x4 = (x2 + x3) / 2; // half way between two boxes
+
+                  ctx.moveTo(x6, linkY);
+                  ctx.lineTo(x4, linkY);
+
+                  if (father) {
+                     var y1 = this.linkY_(father);
+                     ctx.lineTo(x4, y1);
+                     ctx.lineTo(x5, y1);
+                  }
+
+                  if (mother) {
+                     var y1 = this.linkY_(mother);
+                     ctx.moveTo(x4, linkY);
+                     ctx.lineTo(x4, y1);
+                     ctx.lineTo(x5, y1);
+                  }
+               }
+           }
         });
 
     ctx.strokeStyle = "black";
@@ -231,7 +259,7 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
                ctx.fillText(
                   event_to_string(d.marriage[2 * indiv.sosa]),
                   indiv.box_.parentsMarriageX,
-                  indiv.box_.y + indiv.box_.h / 2);
+                  this.linkY_(indiv));
                ctx.restore();
            }
         });
@@ -272,7 +300,7 @@ PedigreeCanvas.prototype.showSettings = function() {
  *  For each person, adds an extra field box_ containing display information:
  *      {x:number, y:number,    // top-left coordinate for the box
  *       w:number, h:number,    // dimensions of the box
- *       fontsize:number,       // size of the font
+ *       fontSize:number,       // size of the font
  *       parentsMarriageX:number,
  *       parentsMarriageFontSize:number,
  *      }
@@ -283,6 +311,7 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
 
     if (this.__gens == d.generations
         && this.__layout == this.layoutScheme_
+        && this.__colors == this.colorScheme_
         && this.__ratio == this.ratio)
     {
         return; // nothing to do
@@ -290,15 +319,16 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
     this.__gens = d.generations;
     this.__ratio = this.ratio;
     this.__layout = this.layoutScheme_;
+    this.__colors = this.colorScheme_;
 
     // Store display info for a person
-    function setupIndivBox(indiv, y) {
+    function setupIndivBox(indiv, y, h) {
        if (indiv) {
           indiv.box_ = {
              x: left[indiv.generation],
              y: y,
              w: widths[indiv.generation],
-             h: heights[indiv.generation],
+             h: h || heights[indiv.generation],
              fontSize: fs[indiv.generation],
              parentsMarriageX: left[indiv.generation + 1],
              parentsMarriageFontSize: fs[indiv.generation + 1]};
@@ -394,17 +424,27 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
 
                 if (father && mother) {
                    // center the box on its parents
-                   var y = (father.box_.y + mother.box_.y + mother.box_.h
+                   var y = (father.box_.y + mother.box_.y + heights[gen + 1]
                        - heights[gen]) / 2;
+                   if (this.colorScheme_ == AbstractPedigree.colorScheme.WHITE) {
+                      var h = mother.box_.y + heights[gen + 1] - y;
+                   } else {
+                      h = undefined;
+                   }
                    groupMinY[sosa] = Math.min(y, groupMinY[father.sosa]);
-                   setupIndivBox(indiv, y);
+                   setupIndivBox(indiv, y, h);
 
                 } else if (father || mother) {
                    // center on the existing parent
                    var p = (father || mother);
-                   var y = (p.box_.y + p.box_.h - heights[gen]) / 2;
+                   var y = (p.box_.y + heights[gen + 1] - heights[gen]) / 2;
+                   if (this.colorScheme_ == AbstractPedigree.colorScheme.WHITE) {
+                      var h = p.box_.y + heights[gen + 1] - y;
+                   } else {
+                      h = undefined;
+                   }
                    groupMinY[sosa] = Math.min(y, groupMinY[p.sosa]);
-                   setupIndivBox(indiv, y);
+                   setupIndivBox(indiv, y, h);
 
                 } else {
                    // No parent, put this box close to the previous box at the
@@ -422,12 +462,12 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
 
                    // Move up all ancestors of remaining persons in this gen
                    for (var sosa2 = sosa - 1; sosa2 > threshold; sosa2--) {
-                      moveAncestors(sosa2, -this.vertPadding - indiv.box_.h); 
+                      moveAncestors(sosa2, -this.vertPadding - heights[gen]); 
                    }
 
                 }
              }
-             maxYCurrentGen = Math.max(maxYPrevGen, indiv.box_.y + indiv.box_.h);
+             maxYCurrentGen = Math.max(maxYPrevGen, indiv.box_.y + heights[gen]);
              prevSosa = sosa;
           }
        }
