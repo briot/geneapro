@@ -106,10 +106,13 @@ Canvas.prototype.size_ = {width: 0, height: 0};
  *
  * This function is always executed within a save()..restore() block.
  *
+ * @param {{x,y,w,h:number}} box
+ *    The area (absolute coordinates) to refresh.
+ *
  * @protected
  */
 
-Canvas.prototype.onDraw = function() {};
+Canvas.prototype.onDraw = function(e, box) {};
 
 
 /**
@@ -165,14 +168,11 @@ Canvas.prototype.clear = function(box) {
 
 /**
  * Force a refresh of the canvas (clears it and sends the "draw" signal).
- * @param {} box   The area to refresh, defaults to whole canvas.
+ * @param {} box   The area to refresh in absolute coordinates,
+ *    defaults to whole canvas.
  */
 
 Canvas.prototype.refresh = function (box) {
-    if (!box) {
-        box = {x:0, y:0, w:this.canvas[0].width, h:this.canvas[0].height};
-    }
-
     this._disableClicks = false;
 
     this.clear(box);
@@ -188,6 +188,13 @@ Canvas.prototype.refresh = function (box) {
               this.canvas[0].width / this.box_.width,
               this.canvas[0].height / this.box_.height);
         }
+
+       if (!box) {
+           box = {x: this.toAbsX(0),
+                  y: this.toAbsY(0),
+                  w: this.toAbsLength(this.canvas[0].width),
+                  h: this.toAbsLength(this.canvas[0].height)};
+       }
 
         if (this.autoZoom) {
             this.setTransform();

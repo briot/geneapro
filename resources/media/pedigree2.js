@@ -93,6 +93,7 @@ PedigreeCanvas.prototype.getSelected = function(e) {
     var selected = null;
 
     this.forEachBox(
+        undefined /* box */,
         function(indiv) {
            var x = indiv.box_.x;
            var y = indiv.box_.y;
@@ -106,21 +107,38 @@ PedigreeCanvas.prototype.getSelected = function(e) {
     return selected;
 };
 
-/** for each box, calls 'callback' (indiv).
- * 'this' is preserved when calling callback.
+/**
+ * @param {{x,y,w,h:number}=}  box
+ *    Area to refresh (all of them if undefined).
+ * @param {function(indiv)} callback
+ *    'this' is the same as the caller of forEachBox.
+ *    Called for each person within the box.
  */
 
-PedigreeCanvas.prototype.forEachBox = function(callback) {
+PedigreeCanvas.prototype.forEachBox = function(box, callback) {
+   function isVisible(indiv) {
+      return (!box ||
+              !(indiv.box_.x < box.x || 
+                indiv.box_.x + indiv.box_.w > box.x + box.w ||
+                indiv.box_.y < box.y ||
+                indiv.box_.y + indiv.box_.h > box.y + box.h));
+   }
+
     var d = this.data;
     for (var sosa = Math.pow(2, d.generations + 1) - 1; sosa >= 1; sosa--) {
-       if (d.sosa[sosa] && callback.call(this, d.sosa[sosa])) {
+       if (d.sosa[sosa] &&
+           isVisible(d.sosa[sosa]) &&
+           callback.call(this, d.sosa[sosa]))
+       {
            return;
        }
     }
 
     if (d.children) {
         for (var c = 0, len = d.children.length; c < len; c++) {
-            if (callback.call(this, d.children[c])) {
+            if (isVisible(d.children[c]) && 
+                callback.call(this, d.children[c]))
+            {
                 break;
             }
         }
@@ -174,6 +192,7 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
     ctx.beginPath();
 
     this.forEachBox(
+        screenBox,
         function(indiv) {
            var x = indiv.box_.x;
            var w = indiv.box_.w;
@@ -236,6 +255,7 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
     ctx.stroke();
 
     this.forEachBox(
+        screenBox /* box */,
         function(indiv) {
            this.drawPersonBox(
                indiv /* person */,
