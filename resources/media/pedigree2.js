@@ -34,7 +34,11 @@ PedigreeCanvas.prototype.boxHeight;
  * This is set automatically when calling setSameSize.
  */
 PedigreeCanvas.prototype.horizPadding;
-PedigreeCanvas.prototype.vertPadding;
+
+/**
+ * Minimal vertical space between two boxes
+ */
+PedigreeCanvas.prototype.vertPadding = 2;
 
 /**
  * Size ratio from generation n to n + 1
@@ -56,14 +60,12 @@ PedigreeCanvas.prototype.setSameSize = function(sameSize, norefresh) {
         this.wratio = 1.0;
         this.boxWidth = 200;
         this.boxHeight = 75;
-        this.vertPadding = 2;
         this.horizPadding = 20;
         this.maxFontSize = 15;
     } else {
         this.boxWidth = 300;
         this.horizPadding = 20;
         this.boxHeight = 40;
-        this.vertPadding = 2;
         this.ratio = 0.75;
         this.wratio = 0.75;
         this.maxFontSize = 20;
@@ -270,69 +272,56 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
     var d = this.data;
 
     if (this.__gens == d.generations
-        && this.__scale == this.scale
         && this.__ratio == this.ratio)
     {
         return; // nothing to do
     }
 
     this.__gens = d.generations;
-    this.__scale = this.scale;
     this.__ratio = this.ratio;
 
     var lastgen = d.generations - 1;
     var maxBoxes = Math.pow(2, d.generations-1);// max boxes at last generation
     var totalBoxes = Math.pow  (2, d.generations) - 1; // geometrical summation
     var genscale = Math.pow(this.ratio, lastgen);
-    var wscale   = Math.pow(this.wratio, lastgen) * this.scale;
-    var spacing  = (this.boxHeight + this.vertPadding) * genscale; // at scale 1.0
-
     var tops = new Array(totalBoxes); //  Pixel coordinates, indexed on sosa
-    var left = new Array(lastgen);    //  left coordinate for each generation
-
-    // Compute spacing between boxes at the last generation. We try to make the
-    // tree nicer by using the whole canvas height, at least (in particular
-    // useful when displaying few generations.
-
-    var canvas_height = this.canvas[0].height;
-    var margin = 30;
-    if ((totalBoxes - maxBoxes) * spacing < canvas_height - margin) {
-        spacing = (canvas_height - margin) / (totalBoxes - maxBoxes);
-    }
+    var left = new Array(lastgen + 1);    //  left coordinate for each generation
+    var maxY = 0;
+    var minY = 0;
 
     // Compute x coordinates for each generation
     left[0] = d.children ? this.boxWidth + this.horizPadding + 10 : 0;
-    for (var gen = 1; gen <= lastgen; gen++) {
+    for (var gen = 1; gen <= lastgen + 1; gen++) {
        left[gen] = left[gen - 1] +
-          (this.boxWidth + this.horizPadding) * Math.pow(this.wratio, gen - 1) * this.scale;
+          (this.boxWidth + this.horizPadding) * Math.pow(this.wratio, gen - 1);
     }
 
     // Start at last generation
 
     var y = 0;
-    spacing = spacing * this.scale;  //  at current scale, for last generation
-    for (var index = totalBoxes - maxBoxes + 1; index <= totalBoxes; index++) {
+    var h = this.boxHeight * genscale;
+    for (var index = totalBoxes; index >= totalBoxes - maxBoxes + 1; index--) {
        tops[index] = y;
        if (d.sosa[index]) {
            d.sosa[index].box_ = {x: left[lastgen],
                                  y: y,
-                                 w: this.boxWidth * wscale,
-                                 h: this.boxHeight * genscale * this.scale,
+                                 w: left[lastgen + 1] - left[lastgen],
+                                 h: h,
                                  fontSize: this.lineHeight * genscale,
                                  parentsMarriageX: undefined,
                                  parentsMarriageFontSize: undefined};
+           minY = Math.min(minY, y);
+           maxY = Math.max(maxY, y + h);
        }
-       y += spacing;
+       y += h + this.vertPadding;
     }
 
-    index = totalBoxes - maxBoxes;
-    var prevHeight = this.boxHeight * genscale * this.scale;
+    var prevHeight = this.boxHeight * genscale;
 
     for (var gen = lastgen - 1; gen >= 0; gen --) {
         var baseRatio = Math.pow(this.ratio, gen);
-        genscale  = baseRatio * this.scale;
-        wscale   = Math.pow(this.wratio, gen) * this.scale;
-        var height = this.boxHeight * genscale;
+        var w = this.boxWidth * Math.pow(this.wratio, gen);
+        var height = this.boxHeight * baseRatio;
 
         var firstSosa = Math.pow(2, gen);
         for (; index >= firstSosa; index--) {
@@ -342,28 +331,26 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
               d.sosa[index].box_ = {
                  x: left[gen],
                  y: tops[index],
-                 w: this.boxWidth * wscale,
+                 w: w,
                  h: height,
                  fontSize: this.lineHeight * baseRatio,
                  parentsMarriageX: left[gen + 1],
                  parentsMarriageFontSize: Math.round(Math.min(
-                          this.maxFontSize, height * genscale))};
+                          this.maxFontSize, height * baseRatio))};
           }
         }
         prevHeight = height;
     }
 
     // Position children boxes
-    var space = 20 * this.scale;
-    var childHeight = this.scale * (space + this.boxHeight);
-    var halfHeight = this.scale * this.boxHeight / 2;
-    var childrenHeight = d.children.length * childHeight - space;
-    y = d.sosa[1].box_.y + halfHeight - childrenHeight / 2;
+    var childHeight = (20 + this.boxHeight);
+    var childrenHeight = d.children.length * childHeight - 20;
+    y = d.sosa[1].box_.y + this.boxHeight / 2 - childrenHeight / 2;
     for (var c = 0, len = d.children.length; c < len; c++) {
        d.children[c].box_ = {x: 0,
                              y: y,
-                             w: this.boxWidth * this.scale,
-                             h: 2 * halfHeight,
+                             w: this.boxWidth,
+                             h: this.boxHeight,
                              fontSize: this.lineHeight,
                              parentsMarriageX: left[0],
                              parentsMarriageFontSize: undefined};
@@ -372,8 +359,8 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
  
     // Autoscaling will not work, since the above computation already depends
     // on the current scale anyway.
-    this.box_ = {width: 0,
-                 height: 0,
+    this.box_ = {width: left[lastgen + 1],
+                 height: maxY - minY,
                  x: 0,
-                 y: 0};
+                 y: minY};
 };
