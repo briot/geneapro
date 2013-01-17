@@ -40,10 +40,6 @@ http://www.beholdgenealogy.com/blog/?p=876
    might want to see other info (if "residence", there can be multiple of
    them) See also engagement instead of marriage
 ** Tooltip to display person info
-** Zoom and scroll with 10 generations, then go back to 3 generations.
-   The layout is not re-centered.
-** Improve layout. Current layout requires a lot of vertical space compared
-   to horizontal space, when displaying lots of generations.
 ** Display more information for each person, in particular when zooming
 ** Highlight box when hover.
    Display action buttons ("make decujus", "view info",...) for the active box.

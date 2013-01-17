@@ -249,6 +249,19 @@ PedigreeCanvas.prototype.showSettings = function() {
    $("#settings select[name=layout]")
       .change(function() {f.layoutScheme_ = Number(this.value); f.refresh()})
       .val(this.layoutScheme_);
+   $("#settings #hspace")
+      .slider({"min": 0, "max": 40,
+               "value": this.horizPadding,
+               "change": function() {f.horizPadding = $(this).slider("value");
+                                     f.__layout = undefined;
+                                     f.refresh()}});
+   $("#settings #vspace")
+      .slider({"min": 0, "max": 20,
+               "value": this.vertPadding,
+               "change": function() {f.vertPadding = $(this).slider("value");
+                                     f.__layout = undefined;
+                                     f.refresh()}});
+
 };
 
 /** @inheritDoc
