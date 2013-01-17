@@ -5,7 +5,7 @@
  */
 
 /** Maximum number of generations that can be displayed */
-var MAXGENS = 20;
+var MAXGENS = 25;
 
 /** Default number of generations to display */
 var DEFAULT_GENERATIONS = 5;
@@ -78,13 +78,13 @@ AbstractPedigree.prototype.setData = function(data) {
 
    var sosa = 1;
    for (var gen = 0; gen <= data.generations; gen++) {
-      var max = Math.pow(2, gen);
-      for (var p = max; p >= 1; p--) {
+      var count = Math.pow(2, gen + 1) - Math.pow(2, gen);
+      for (var p = 0; p < count; p++) {
          var person = data.sosa[sosa];
          if (person) {
             person.generation = gen;
             person.sosa = sosa;
-            person.angle = (max - p) / max;
+            person.angle = (count - p) / count;
          }
          sosa ++;
       }

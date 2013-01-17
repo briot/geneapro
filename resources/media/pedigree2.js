@@ -1,6 +1,3 @@
-/** Maximum number of generations that can be displayed */
-var MAXGENS = 13;
-
 /**
  * Decorates a <canvas> element to show a pedigree view
  * @param {Element} canvas   The DOM element to decorate.

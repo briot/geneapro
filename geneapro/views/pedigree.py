@@ -73,17 +73,14 @@ def pedigree_view(request, decujus=1):
    return render_to_response(
        'geneapro/pedigree.html',
        {"pedigree_data": compute_data(graph, gens, False, decujus),
-        "genrange": range(1, 13),
         "decujus": decujus,
         "decujusid": decujus,
-        "generations": gens,
         "legend": getLegend()},
        context_instance=RequestContext(request))
 
 
 def fanchart_view(request, decujus=1):
    """Display the pedigree of a person as a fanchart"""
-
    decujus = int(decujus)
    gens = int(request.GET.get("gens", 6))
 
