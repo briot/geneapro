@@ -47,6 +47,15 @@ PedigreeCanvas.prototype.ratio;
 PedigreeCanvas.prototype.wratio;
 
 /**
+ * @enum {number}
+ */
+PedigreeCanvas.layoutScheme = {
+   EXPANDED: 0,
+   COMPACT: 1
+};
+PedigreeCanvas.prototype.layoutScheme_ = PedigreeCanvas.layoutScheme.COMPACT;
+
+/**
  * Change the value of this.sameSize.
  * @param {boolean} sameSize   Whether all boxes have the same size.
  * @param {boolean=} norefresh If true, do not refresh the canvas.
@@ -82,8 +91,8 @@ PedigreeCanvas.prototype.setSameSize = function(sameSize, norefresh) {
 
 PedigreeCanvas.prototype.getSelected = function(e) {
     var off = this.canvas.offset();
-    var mx = e.pageX - off.left;
-    var my = e.pageY - off.top;
+    var mx = this.toAbsX(e.pageX - off.left);
+    var my = this.toAbsY(e.pageY - off.top);
     var selected = null;
 
     this.forEachBox(
@@ -106,7 +115,7 @@ PedigreeCanvas.prototype.getSelected = function(e) {
 
 PedigreeCanvas.prototype.forEachBox = function(callback) {
     var d = this.data;
-    for (var sosa = Math.pow(2, d.generations) - 1; sosa >= 1; sosa--) {
+    for (var sosa = Math.pow(2, d.generations + 1) - 1; sosa >= 1; sosa--) {
        if (d.sosa[sosa] && callback.call(this, d.sosa[sosa])) {
            return;
        }
@@ -169,7 +178,7 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
                     ctx.lineTo(d.sosa[1].box_.x, yForChild);
                 }
             }
-            else if (indiv.generation < d.generations - 1) {
+            else if (indiv.generation < d.generations) {
                 var father = d.sosa[2 * indiv.sosa];
                 var mother = d.sosa[2 * indiv.sosa + 1];
                 if (father || mother) {
@@ -237,6 +246,9 @@ PedigreeCanvas.prototype.showSettings = function() {
    $("#settings input[name=sameSize]")
       .change(function() { f.setSameSize(this.checked) })
       .attr('checked', this.sameSize);
+   $("#settings select[name=layout]")
+      .change(function() {f.layoutScheme_ = Number(this.value); f.refresh()})
+      .val(this.layoutScheme_);
 };
 
 /** @inheritDoc
@@ -251,116 +263,184 @@ PedigreeCanvas.prototype.showSettings = function() {
  *       parentsMarriageX:number,
  *       parentsMarriageFontSize:number,
  *      }
- *
- *  Sets 'canvas.__gens'.
- *
- *  Start with the last generation first: the height of boxes depends on the
- *  generation number. Depending on this height, we compute how much
- *  information should be displayed in the boxes. We display at most five
- *  lines of info (name, birth date and place, death date and place), so
- *  we round up as needed. And we want at least 1 pixel displayed.
- *  We then compute the scaling to display that many lines. For instance,
- *  if we wanted to display only one line (the minimum), say 10px, but only
- *  have 1px max, the scaling is 1/10. This scaling will also be applied to
- *  the width of the box. We do not compute the scaling based on the
- *  maximum number of lines (5), since otherwise the box would become too
- *  narrow, and the text unreadable even for early generations.
- *  The padding between the boxes is only dependent on the generation.
  */
 
 PedigreeCanvas.prototype.computeBoundingBox = function() {
     var d = this.data;
 
     if (this.__gens == d.generations
+        && this.__layout == this.layoutScheme_
         && this.__ratio == this.ratio)
     {
         return; // nothing to do
     }
-
     this.__gens = d.generations;
     this.__ratio = this.ratio;
+    this.__layout = this.layoutScheme_;
 
-    var lastgen = d.generations - 1;
-    var maxBoxes = Math.pow(2, d.generations-1);// max boxes at last generation
-    var totalBoxes = Math.pow  (2, d.generations) - 1; // geometrical summation
-    var genscale = Math.pow(this.ratio, lastgen);
-    var tops = new Array(totalBoxes); //  Pixel coordinates, indexed on sosa
-    var left = new Array(lastgen + 1);    //  left coordinate for each generation
-    var maxY = 0;
-    var minY = 0;
+    // Store display info for a person
+    function setupIndivBox(indiv, y) {
+       if (indiv) {
+          indiv.box_ = {
+             x: left[indiv.generation],
+             y: y,
+             w: widths[indiv.generation],
+             h: heights[indiv.generation],
+             fontSize: fs[indiv.generation],
+             parentsMarriageX: left[indiv.generation + 1],
+             parentsMarriageFontSize: fs[indiv.generation + 1]};
+       }
+    }
+
+    // Move a person's ancestors boxes up by a given offset
+    function moveAncestors(sosa, offset) {
+       var father = d.sosa[sosa * 2];
+       if (father) {
+          father.box_.y += offset;
+          moveAncestors(father.sosa, offset);
+       }
+       var mother = d.sosa[sosa * 2 + 1];
+       if (mother) {
+          mother.box_.y += offset;
+          moveAncestors(mother.sosa, offset);
+       }
+    }
+
+    var left = [];    //  left coordinate for each generation
+    var heights = []; //  box height for each generation
+    var widths = [];  //  box width for each generation
+    var fs = [];      //  fontSize for each generation
 
     // Compute x coordinates for each generation
+    left[-1] = 0;
     left[0] = d.children ? this.boxWidth + this.horizPadding + 10 : 0;
-    for (var gen = 1; gen <= lastgen + 1; gen++) {
+    heights[0] = heights[-1] = this.boxHeight;
+    fs[0] = fs[-1] = this.lineHeight * this.ratio;
+    widths[0] = widths[-1] = this.boxWidth;
+
+    for (var gen = 1; gen <= d.generations + 1; gen++) {
        left[gen] = left[gen - 1] +
           (this.boxWidth + this.horizPadding) * Math.pow(this.wratio, gen - 1);
+       heights[gen] = heights[gen - 1] * this.ratio;
+       widths[gen] = widths[gen - 1] * this.wratio;
+       fs[gen] = Math.round(Math.min(this.maxFontSize, fs[gen - 1] * this.ratio));
     }
 
-    // Start at last generation
+    switch(this.layoutScheme_) {
 
-    var y = 0;
-    var h = this.boxHeight * genscale;
-    for (var index = totalBoxes; index >= totalBoxes - maxBoxes + 1; index--) {
-       tops[index] = y;
-       if (d.sosa[index]) {
-           d.sosa[index].box_ = {x: left[lastgen],
-                                 y: y,
-                                 w: left[lastgen + 1] - left[lastgen],
-                                 h: h,
-                                 fontSize: this.lineHeight * genscale,
-                                 parentsMarriageX: undefined,
-                                 parentsMarriageFontSize: undefined};
-           minY = Math.min(minY, y);
-           maxY = Math.max(maxY, y + h);
-       }
-       y += h + this.vertPadding;
-    }
-
-    var prevHeight = this.boxHeight * genscale;
-
-    for (var gen = lastgen - 1; gen >= 0; gen --) {
-        var baseRatio = Math.pow(this.ratio, gen);
-        var w = this.boxWidth * Math.pow(this.wratio, gen);
-        var height = this.boxHeight * baseRatio;
-
-        var firstSosa = Math.pow(2, gen);
-        for (; index >= firstSosa; index--) {
-          tops[index] = (tops[2 * index] + tops[2 * index + 1]
-               + prevHeight - height) / 2;
-          if (d.sosa[index]) {
-              d.sosa[index].box_ = {
-                 x: left[gen],
-                 y: tops[index],
-                 w: w,
-                 h: height,
-                 fontSize: this.lineHeight * baseRatio,
-                 parentsMarriageX: left[gen + 1],
-                 parentsMarriageFontSize: Math.round(Math.min(
-                          this.maxFontSize, height * baseRatio))};
+    case PedigreeCanvas.layoutScheme.EXPANDED:
+       var tops = []; //  Pixel coordinates, indexed on sosa
+       var gen = d.generations;
+       var threshold = Math.pow(2, gen) - 1;
+       for (var sosa = Math.pow(2, gen + 1) - 1; sosa >= 1; sosa--) {
+          if (sosa == threshold) {
+             gen --;
+             threshold = Math.pow(2, gen) - 1;
           }
-        }
-        prevHeight = height;
+          if (gen == d.generations) {
+             tops[sosa] = (heights[gen] + this.vertPadding) * (sosa - threshold);
+          } else {
+             tops[sosa] = (tops[2 * sosa] + tops[2 * sosa + 1] +
+                  heights[gen + 1] - heights[gen]) / 2;
+          }
+          setupIndivBox(d.sosa[sosa], tops[sosa]);
+       }
+       break;
+
+    case PedigreeCanvas.layoutScheme.COMPACT:
+       // For the last generation, place each boxes as close as possible.
+       // Then when we add the previous generation, we might move some of
+       // the boxes from the previous generation downward to make space for
+       // persons with no ancestors.
+
+       var y = 0;
+       var gen = d.generations;
+       var threshold = Math.pow(2, gen) - 1;
+       var groupMinY = []  // min Y for a sosa and all its ancestors
+       var prevSosa = 0;   // sosa of last displayed indiv for current gen
+       var maxYPrevGen = 0;  // maximal value for Y at the previous gen.
+       var maxYCurrentGen = 0;  //  maximal Y at current gen
+
+       for (var sosa = Math.pow(2, gen + 1) - 1; sosa >= 1; sosa--) {
+          if (sosa == threshold) {
+             gen --;
+             threshold = Math.pow(2, gen) - 1;
+             prevSosa = 0;
+             maxYPrevGen = maxYCurrentGen;
+             maxYCurrentGen = 0;
+          }
+          var indiv = d.sosa[sosa];
+          if (indiv) {
+             if (gen == d.generations) {
+                setupIndivBox(indiv, y);
+                groupMinY[sosa] = y
+                y -= (heights[gen] + this.vertPadding);
+             } else {
+                var father = d.sosa[2 * sosa];
+                var mother = d.sosa[2 * sosa + 1];
+
+                if (father && mother) {
+                   // center the box on its parents
+                   var y = (father.box_.y + mother.box_.y + mother.box_.h
+                       - heights[gen]) / 2;
+                   groupMinY[sosa] = Math.min(y, groupMinY[father.sosa]);
+                   setupIndivBox(indiv, y);
+
+                } else if (father || mother) {
+                   // center on the existing parent
+                   var p = (father || mother);
+                   var y = (p.box_.y + p.box_.h - heights[gen]) / 2;
+                   groupMinY[sosa] = Math.min(y, groupMinY[p.sosa]);
+                   setupIndivBox(indiv, y);
+
+                } else {
+                   // No parent, put this box close to the previous box at the
+                   // same level, moving ancestors as needed.
+
+                   if (prevSosa == 0) {
+                      var y = maxYPrevGen;
+                   } else {
+                      var y = groupMinY[prevSosa] -
+                         this.vertPadding - heights[gen];
+                   }
+
+                   groupMinY[sosa] = y;   //  a new group
+                   setupIndivBox(indiv, y);
+
+                   // Move up all ancestors of remaining persons in this gen
+                   for (var sosa2 = sosa - 1; sosa2 > threshold; sosa2--) {
+                      moveAncestors(sosa2, -this.vertPadding - indiv.box_.h); 
+                   }
+
+                }
+             }
+             maxYCurrentGen = Math.max(maxYPrevGen, indiv.box_.y + indiv.box_.h);
+             prevSosa = sosa;
+          }
+       }
+       break;
     }
 
-    // Position children boxes
-    var childHeight = (20 + this.boxHeight);
-    var childrenHeight = d.children.length * childHeight - 20;
+    // Recompute the bounding box, since ancestors have been moved
+    var minY = d.sosa[1].box_.y;
+    var maxY = minY;
+    for (var sosa = Math.pow(2, d.generations + 1) - 1; sosa >= 1; sosa--) {
+       if (d.sosa[sosa]) {
+          minY = Math.min(minY, d.sosa[sosa].box_.y);
+          maxY = Math.max(maxY, d.sosa[sosa].box_.y + d.sosa[sosa].box_.h);
+       }
+    }
+
+    // Position children
+    var childHeight = (this.vertPadding + this.boxHeight);
+    var childrenHeight = d.children.length * childHeight - this.vertPadding;
     y = d.sosa[1].box_.y + this.boxHeight / 2 - childrenHeight / 2;
     for (var c = 0, len = d.children.length; c < len; c++) {
-       d.children[c].box_ = {x: 0,
-                             y: y,
-                             w: this.boxWidth,
-                             h: this.boxHeight,
-                             fontSize: this.lineHeight,
-                             parentsMarriageX: left[0],
-                             parentsMarriageFontSize: undefined};
+       setupIndivBox(d.children[c], y);
+       minY = Math.min(minY, y);
+       maxY = Math.max(maxY, y + d.children[c].box_.h);
        y += childHeight;
     }
  
-    // Autoscaling will not work, since the above computation already depends
-    // on the current scale anyway.
-    this.box_ = {width: left[lastgen + 1],
-                 height: maxY - minY,
-                 x: 0,
-                 y: minY};
+    this.box_ = {width: left[d.generations + 1], height: maxY - minY, x: 0, y: minY};
 };

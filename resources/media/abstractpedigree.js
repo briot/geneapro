@@ -74,7 +74,7 @@ AbstractPedigree.prototype.setData = function(data) {
    }
 
    var sosa = 1;
-   for (var gen = 0; gen < data.generations; gen++) {
+   for (var gen = 0; gen <= data.generations; gen++) {
       var max = Math.pow(2, gen);
       for (var p = max; p >= 1; p--) {
          var person = data.sosa[sosa];
@@ -91,7 +91,7 @@ AbstractPedigree.prototype.setData = function(data) {
       var len = data.children.length;
       for (var c = 0; c < len; c++) {
          var person = data.children[c];
-         person.generation = 0;
+         person.generation = -1;
          person.sosa = -c;
          person.angle = c / len;
       }

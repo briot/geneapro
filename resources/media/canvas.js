@@ -453,6 +453,11 @@ Canvas.prototype.rect = function(x, y, width, height, attr) {
 Canvas.prototype.roundedRect = function(x, y, width, height, attr, radius) {
     var c = this.ctx;
     radius = radius || 6;
+
+    //  Avoid graphical artifacts
+    if (height < radius * 2) {
+       radius = height / 2;
+    }
     c.beginPath ();
     c.moveTo(x + radius, y);
     c.lineTo(x + width - radius, y);
