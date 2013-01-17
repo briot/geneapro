@@ -30,11 +30,6 @@ PedigreeCanvas.prototype.boxWidth;
 PedigreeCanvas.prototype.boxHeight;
 
 /**
- * Whether to draw a box when a person is unknown
- */
-PedigreeCanvas.prototype.showUnknown = false;
-
-/**
  * Padding on the side of each boxes.
  * This is set automatically when calling setSameSize.
  */
@@ -90,7 +85,11 @@ PedigreeCanvas.prototype.getSelected = function(e) {
     var selected = null;
 
     this.forEachBox(
-        function(indiv, x, y, w, h) {
+        function(indiv) {
+           var x = indiv.box_.x;
+           var y = indiv.box_.y;
+           var w = indiv.box_.w;
+           var h = indiv.box_.h;
             if (x <= mx && mx <= x + w && y <= my && my <= y + h) {
                 selected = indiv;
                 return true;
@@ -99,69 +98,23 @@ PedigreeCanvas.prototype.getSelected = function(e) {
     return selected;
 };
 
-/** for each box, calls 'callback' (indiv, x, y, w, h).
+/** for each box, calls 'callback' (indiv).
  * 'this' is preserved when calling callback.
- *
- * 'box' can be specified and indicates the pixels coordinates of the
- * region we want to traverse (default is all canvas).
- * Traversing stops when 'callback' returns true.
  */
 
-PedigreeCanvas.prototype.forEachBox = function(callback, box) {
-    var tops = this.tops;
+PedigreeCanvas.prototype.forEachBox = function(callback) {
     var d = this.data;
-    var baseY = this.toPixelY(0);
-    var startX = this.toPixelX(
-        d.children ? this.boxWidth + this.horizPadding + 10 : 0);
-    var index = 0;
-    var x = startX;
-
-    if (!this.boxheights) {
-        return;
+    for (var sosa = Math.pow(2, d.generations) - 1; sosa >= 1; sosa--) {
+       if (d.sosa[sosa] && callback.call(this, d.sosa[sosa])) {
+           return;
+       }
     }
 
-    for (var gen = 0; gen < d.generations; gen++) {
-        var w = this.boxWidth * this.boxheights[gen][2];
-        var h = this.boxheights[gen][0];
-        var x2 = x + w + this.horizPadding * this.boxheights[gen][2];
-
-        if (box && (x > box.x + box.w || x + w < box.x)) { // clipping generation
-            index += Math.pow(2, gen);
-
-        } else {
-            for (var b = Math.pow(2, gen); b >= 1; b--) {
-                var sosa = index + 1;
-                var ti = tops[index] + baseY;
-
-                if (!box || (ti < box.y + box.h && ti + h > box.y)) { // clipping
-                   if (d.sosa[sosa] && callback.call(this, d.sosa[sosa], x, ti, w, h)) {
-                      gen = 99999;
-                      break;
-                   }
-                }
-                index ++;
-            }
-        }
-
-        x = x2;
-    }
-
-    if (gen != 99999 && d.children) {
-        var space = 20 * this.scale;
-        var childHeight = this.scale * (space + this.boxHeight);
-        var halfHeight = this.scale * this.boxHeight / 2;
-        var childrenHeight = d.children.length * childHeight - space;
-        var x = this.toPixelX(0);
-        var y = baseY + tops[0] + halfHeight - childrenHeight / 2;
-
+    if (d.children) {
         for (var c = 0, len = d.children.length; c < len; c++) {
-            if (callback.call(
-                this, d.children[c], x, y,
-                this.boxWidth * this.scale, 2 * halfHeight))
-            {
+            if (callback.call(this, d.children[c])) {
                 break;
             }
-            y += childHeight;
         }
     }
 };
@@ -191,109 +144,86 @@ PedigreeCanvas.prototype.onDblClick = function(e) {
 
 PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
     var ctx = this.ctx;
-    var tops = this.tops;
-    var mariageHeight = this.mariageHeight;
     var d = this.data;
-    var startX = this.toPixelX(
-        d.children ? this.boxWidth + this.horizPadding + 10 : 0);
-    var baseY = this.toPixelY(0);
-    var boxes = [];
-    var text = [];
-    var halfHeight = this.scale * this.boxHeight / 2;
-    var yForChild = baseY + tops[0] + halfHeight;
-    var seenChild = false;
+    var yForChild = d.sosa[1].box_.y + d.sosa[1].box_.h / 2;
 
     // First draw all lines, as a single path for more efficiency.
-    // Compute the list of boxes at the same time, so that we can display
-    // them afterward without recomputation
 
     ctx.beginPath();
-    ctx.strokeStyle = "black";
 
     this.forEachBox(
-        function(indiv, x, y, w, h) {
-            if (indiv.sosa <= 0) { // a child
-                ctx.moveTo (x + w, y + h / 2);
-                ctx.lineTo ((x + w + startX) / 2, y + h / 2);
-                ctx.lineTo ((x + w + startX) / 2, yForChild);
+        function(indiv) {
+           var x = indiv.box_.x;
+           var y = indiv.box_.y;
+           var w = indiv.box_.w;
+           var h = indiv.box_.h;
 
-                if (!seenChild) {
-                    seenChild = true;
-                    ctx.lineTo (startX, yForChild);
+            if (indiv.sosa <= 0) { // a child
+                ctx.moveTo(x + w, y + h / 2);
+                ctx.lineTo((x + w + d.sosa[1].box_.x) / 2, y + h / 2);
+                ctx.lineTo((x + w + d.sosa[1].box_.x) / 2, yForChild);
+
+                if (indiv.sosa == 0) {
+                    ctx.lineTo(d.sosa[1].box_.x, yForChild);
                 }
-                indiv.generation = 0;
             }
             else if (indiv.generation < d.generations - 1) {
-                if (this.showUnknown ||
-                    d.sosa[2 * indiv.sosa] || d.sosa[2 * indiv.sosa + 1])
-                {
-                    var x2 = x + w + this.horizPadding * this.boxheights[indiv.generation][2];
+                var father = d.sosa[2 * indiv.sosa];
+                var mother = d.sosa[2 * indiv.sosa + 1];
+                if (father || mother) {
+                    var x2 = (father || mother).box_.x;
                     // x2=left edge of parent gen
                     var x3 = x + w;  // right edge for current gen
                     var y2 = y + h / 2; // middle of current box
                     var x4 = (x2 + x3) / 2; // half way between two boxes
 
-                    // At least one of the parents ?
                     ctx.moveTo(x3, y2);
                     ctx.lineTo(x4, y2);
 
-                    if (this.showUnknown || d.sosa[2 * indiv.sosa]) {
-                        var y1 = baseY + tops[2 * indiv.sosa - 1]
-                            + this.boxheights[indiv.generation + 1][0] / 2;
+                    if (father) {
+                        var y1 = father.box_.y + father.box_.h / 2;
                         ctx.lineTo(x4, y1);
                         ctx.lineTo(x2, y1);
                     }
 
-                    if (this.showUnknown || d.sosa[2 * indiv.sosa + 1]) {
-                        var y1 = baseY + tops[2 * indiv.sosa]
-                            + this.boxheights[indiv.generation+1][0] / 2;
+                    if (mother) {
+                        var y1 = mother.box_.y + mother.box_.h / 2;
                         ctx.moveTo(x4, y2);
                         ctx.lineTo(x4, y1);
                         ctx.lineTo(x2, y1);
                     }
-
-                    if (mariageHeight[indiv.generation] > this.minFontSize
-                        && indiv.generation < d.generations - 1
-                        && d.marriage[2 * indiv.sosa])
-                    {
-                        var mar = event_to_string(d.marriage[2 * indiv.sosa]);
-                        text.push([mariageHeight[indiv.generation], x2 + 3, y + h /2, mar]);
-                    }
                 }
             }
-            boxes.push([indiv, x, y, w, h]);
         });
 
+    ctx.strokeStyle = "black";
     ctx.stroke();
 
-    ctx.textBaseline = 'top';
-    for (var b=boxes.length - 1; b >= 0; b--) {
-        var bo = boxes[b];
-        if (this.showUnknown || bo[0]) {
+    this.forEachBox(
+        function(indiv) {
            this.drawPersonBox(
-               bo[0] /* person */,
-               bo[1] /* x */,
-               bo[2] /* y */,
-               bo[3] /* width */,
-               bo[4] /* height */,
-               this.lineHeights[bo[0].generation] /* fontsize */);
-        }
-    }
+               indiv /* person */,
+               indiv.box_.x /* x */,
+               indiv.box_.y /* y */,
+               indiv.box_.w /* width */,
+               indiv.box_.h /* height */,
+               indiv.box_.fontSize /* fontsize */);
 
-    ctx.save();
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = "black";
-    var prev=0;
-    for (var t=text.length - 1; t >= 0; t--) {
-        var te = text[t];
-        if (te[0] != prev) {
-            prev = te[0];
-            ctx.font = Math.round(Math.min(this.maxFontSize, te[0]))
-                + "px " + this.fontName;
-        }
-        ctx.fillText(te[3], te[1], te[2]);
-    }
-    ctx.restore();
+           if (indiv.box_.parentsMarriageFontSize > this.minFontSize
+               && d.marriage[2 * indiv.sosa])
+           {
+               ctx.save();
+               ctx.textBaseline = 'middle';
+               ctx.fillStyle = "black";
+               ctx.font = indiv.box_.parentsMarriageFontSize +
+                  "px " + this.fontName;
+               ctx.fillText(
+                  event_to_string(d.marriage[2 * indiv.sosa]),
+                  indiv.box_.parentsMarriageX,
+                  indiv.box_.y + indiv.box_.h / 2);
+               ctx.restore();
+           }
+        });
 };
 
 /** @inheritDoc */
@@ -305,17 +235,22 @@ PedigreeCanvas.prototype.showSettings = function() {
    $("#settings input[name=sameSize]")
       .change(function() { f.setSameSize(this.checked) })
       .attr('checked', this.sameSize);
-   $("#settings input[name=showUnknown]")
-      .change(function() { f.showUnknown = this.checked; f.refresh()})
-      .attr('checked', this.showUnknown);
 };
 
 /** @inheritDoc
  *
  *  Compute display data for all boxes, given the number of generations
- * to display. This is only recomputed when the number of generations
+ *  to display. This is only recomputed when the number of generations
  *  has changed.
- *  Sets 'canvas.boxheights', 'canvas.tops' and 'canvas.__gens'.
+ *  For each person, adds an extra field box_ containing display information:
+ *      {x:number, y:number,    // top-left coordinate for the box
+ *       w:number, h:number,    // dimensions of the box
+ *       fontsize:number,       // size of the font
+ *       parentsMarriageX:number,
+ *       parentsMarriageFontSize:number,
+ *      }
+ *
+ *  Sets 'canvas.__gens'.
  *
  *  Start with the last generation first: the height of boxes depends on the
  *  generation number. Depending on this height, we compute how much
@@ -341,10 +276,6 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
         return; // nothing to do
     }
 
-    this.boxheights = new Array(d.generations); //[height, lines, wscale]
-    this.tops = new Array(totalBoxes); //  Pixel coordinates
-    this.mariageHeight = new Array(d.generations);
-    this.lineHeights = new Array(d.generations); // font size at each gen
     this.__gens = d.generations;
     this.__scale = this.scale;
     this.__ratio = this.ratio;
@@ -356,9 +287,8 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
     var wscale   = Math.pow(this.wratio, lastgen) * this.scale;
     var spacing  = (this.boxHeight + this.vertPadding) * genscale; // at scale 1.0
 
-    this.boxheights[lastgen] =
-        [this.boxHeight * genscale * this.scale, 1, wscale];
-    this.mariageHeight[lastgen] = 0;  // Can't display marriage for last
+    var tops = new Array(totalBoxes); //  Pixel coordinates, indexed on sosa
+    var left = new Array(lastgen);    //  left coordinate for each generation
 
     // Compute spacing between boxes at the last generation. We try to make the
     // tree nicer by using the whole canvas height, at least (in particular
@@ -370,18 +300,33 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
         spacing = (canvas_height - margin) / (totalBoxes - maxBoxes);
     }
 
+    // Compute x coordinates for each generation
+    left[0] = d.children ? this.boxWidth + this.horizPadding + 10 : 0;
+    for (var gen = 1; gen <= lastgen; gen++) {
+       left[gen] = left[gen - 1] +
+          (this.boxWidth + this.horizPadding) * Math.pow(this.wratio, gen - 1) * this.scale;
+    }
+
     // Start at last generation
 
     var y = 0;
     spacing = spacing * this.scale;  //  at current scale, for last generation
-    for (var index = totalBoxes - maxBoxes; index < totalBoxes; index++) {
-        this.tops[index] = y;
-        y += spacing;
+    for (var index = totalBoxes - maxBoxes + 1; index <= totalBoxes; index++) {
+       tops[index] = y;
+       if (d.sosa[index]) {
+           d.sosa[index].box_ = {x: left[lastgen],
+                                 y: y,
+                                 w: this.boxWidth * wscale,
+                                 h: this.boxHeight * genscale * this.scale,
+                                 fontSize: this.lineHeight * genscale,
+                                 parentsMarriageX: undefined,
+                                 parentsMarriageFontSize: undefined};
+       }
+       y += spacing;
     }
 
-    this.lineHeights[lastgen] = this.lineHeight * genscale;
-
-    index = totalBoxes - maxBoxes - 1;
+    index = totalBoxes - maxBoxes;
+    var prevHeight = this.boxHeight * genscale * this.scale;
 
     for (var gen = lastgen - 1; gen >= 0; gen --) {
         var baseRatio = Math.pow(this.ratio, gen);
@@ -389,20 +334,42 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
         wscale   = Math.pow(this.wratio, gen) * this.scale;
         var height = this.boxHeight * genscale;
 
-        this.boxheights[gen] = [height, 1, wscale];
-        this.mariageHeight[gen] = height * genscale;
-        this.lineHeights[gen] = this.lineHeight * baseRatio;
-
-        //  Compute positions for boxes in this generation
-        var lastIndex = index - Math.pow (2, gen);
-        for (; index > lastIndex; index--) {
-            this.tops[index] = (
-                this.tops [2*index+1]
-                    + this.tops[2*index + 2] + this.boxheights[gen+1][0]
-                    - height) / 2;
+        var firstSosa = Math.pow(2, gen);
+        for (; index >= firstSosa; index--) {
+          tops[index] = (tops[2 * index] + tops[2 * index + 1]
+               + prevHeight - height) / 2;
+          if (d.sosa[index]) {
+              d.sosa[index].box_ = {
+                 x: left[gen],
+                 y: tops[index],
+                 w: this.boxWidth * wscale,
+                 h: height,
+                 fontSize: this.lineHeight * baseRatio,
+                 parentsMarriageX: left[gen + 1],
+                 parentsMarriageFontSize: Math.round(Math.min(
+                          this.maxFontSize, height * genscale))};
+          }
         }
+        prevHeight = height;
     }
 
+    // Position children boxes
+    var space = 20 * this.scale;
+    var childHeight = this.scale * (space + this.boxHeight);
+    var halfHeight = this.scale * this.boxHeight / 2;
+    var childrenHeight = d.children.length * childHeight - space;
+    y = d.sosa[1].box_.y + halfHeight - childrenHeight / 2;
+    for (var c = 0, len = d.children.length; c < len; c++) {
+       d.children[c].box_ = {x: 0,
+                             y: y,
+                             w: this.boxWidth * this.scale,
+                             h: 2 * halfHeight,
+                             fontSize: this.lineHeight,
+                             parentsMarriageX: left[0],
+                             parentsMarriageFontSize: undefined};
+       y += childHeight;
+    }
+ 
     // Autoscaling will not work, since the above computation already depends
     // on the current scale anyway.
     this.box_ = {width: 0,
