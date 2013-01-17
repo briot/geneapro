@@ -350,7 +350,6 @@ Canvas.prototype.text = function(x, y, text, attr, lineSpacing) {
     if (attr && attr["font-weight"]) {
         this.ctx.font = attr["font-weight"] + " " + this.fontName;
     }
-
     this.ctx.fillStyle = (attr && attr.color) || "black";
 
     var txt = text.split('\n');
@@ -385,6 +384,46 @@ Canvas.prototype.drawPath = function(attr) {
         c.strokeStyle = attr.stroke;
         c.stroke ();
     }
+};
+
+/** Draw a text along a arc of circle.
+ * ??? This would be more efficient and nicer looking when using HTML5
+ * canvas capabilities, when they are supported by browsers.
+ * See http://www.html5canvastutorials.com/labs/html5-canvas-text-along-arc-path/
+ */
+
+Canvas.prototype.textAlongArc = function(str, radius, minAngle, maxAngle, attr) {
+   var centerX = 0;
+   var centerY = 0;
+
+   /* Code below does not work in fact, letters are way too spaced */
+/*
+   if (attr && attr["font-weight"]) {
+        this.ctx.font = attr["font-weight"] + " " + this.fontName;
+   }
+   this.ctx.fillStyle = (attr && attr.color) || "black";
+
+   var len = str.length;
+   this.ctx.save();
+   this.ctx.translate(centerX, centerY);
+   this.ctx.rotate(-1 * angle / 2);
+   this.ctx.rotate(-1 * (angle / len) / 2);
+   for (var n = 0; n < len; n++) {
+      this.ctx.rotate(angle / len);
+      this.ctx.save();
+      this.ctx.translate(0, -1 * radius);
+      this.ctx.fillText(str[n], 0, 0);
+      this.ctx.restore();
+   }
+   this.ctx.restore();
+   */
+
+   var a = minAngle + (maxAngle - minAngle) / 2;
+   this.ctx.save();
+   this.ctx.translate(radius * math.cos(a), radius * Math.sin(a));
+   this.ctx.rotate((minAngle + maxAngle) / 2 + Math.PI / 2);
+   this.drawPersonText(person, -60, 0, 2 * fontSize, fontSize);
+   this.ctx.restore();
 };
 
 /**  Make this.ctx.fillStyle partially transparent */

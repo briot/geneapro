@@ -134,7 +134,7 @@ PedigreeCanvas.prototype.forEachBox = function(callback, box) {
                 var ti = tops[index] + baseY;
 
                 if (!box || (ti < box.y + box.h && ti + h > box.y)) { // clipping
-                   if (callback.call(this, d.sosa[sosa], x, ti, w, h)) {
+                   if (d.sosa[sosa] && callback.call(this, d.sosa[sosa], x, ti, w, h)) {
                       gen = 99999;
                       break;
                    }
