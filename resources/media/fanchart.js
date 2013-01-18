@@ -163,7 +163,7 @@ FanchartCanvas.prototype.showSettings = function() {
    AbstractPedigree.prototype.showSettings.call(this);  //  inherited
 
    $("#settings #separator")
-      .slider({"min": 0, "max": 50,
+      .slider({"min": 0, "max": 100,
                "value": Math.round(this.separator * 180 / Math.PI) * 10,
                "change": function() {
                   f.setCoupleSeparator($(this).slider("value") / 10).refresh(); }});
@@ -195,178 +195,134 @@ FanchartCanvas.prototype.drawFan_ = function() {
         }
     }
 
-    /** Draws a slice of the fanchart, clockwise */
-    function createPath(p, minRadius, maxRadius, maxAngle, minAngle) {
-        doPath_(minRadius, maxRadius, maxAngle, minAngle);
-        var st = this.getStyle_(p, minRadius, maxRadius);
-        this.drawPath(st);
-
-        if (p.generation < this.textThreshold) {
-            ctx.save();
-
-            // unfortunately we have to recreate the path, at least until the
-            // Path object from the canvas API is implemented everywhere.
-            doPath_(minRadius, maxRadius, maxAngle, minAngle);
-            ctx.clip();
-
-            var a = minAngle + (maxAngle - minAngle) / 2;
-            var c = Math.cos(a);
-            var s = Math.sin(a);
-
-            // Draw person name along the curve, and clipped. For late
-            // generations, we rotate the text since there is not enough
-            // horizontal space anyway
-
-            if (p.generation >= this.genThreshold) {
-                if (this.readable_names && Math.abs(a) >= PI_HALF) {
-                    var r = maxRadius - 4;
-                    ctx.translate(r * c, r * s);
-                    ctx.rotate(a + Math.PI);
-
-                } else {
-                    var r = minRadius + 4;
-                    ctx.translate(r * c, r * s);
-                    ctx.rotate(a);
-                }
-
-                this.drawPersonText(
-                    person, 0, 0,
-                    2 * fontSize /* height */, fontSize /* fontsize */);
-
-            } else {
-                //  ??? Upcoming HTML5 canvas will support text on path
-
-                if (minAngle < 0 || !this.readable_names) {
-                    var r = (minRadius + maxRadius) / 2;
-                    ctx.translate(r * c, r * s);
-                    ctx.rotate((minAngle + maxAngle) / 2 + Math.PI / 2);
-                } else {
-                    var r = minRadius + 2;
-                    ctx.translate(r * c, r * s);
-                    ctx.rotate((minAngle + maxAngle) / 2 - Math.PI / 2);
-                }
-
-                this.drawPersonText(
-                    person, -60, 0,
-                    2 * fontSize/* height */, fontSize /* fontsize */);
-            }
-            ctx.restore();
-        }
-    }
-
     ctx.save();
     var fontSize = 14;
     ctx.font = fontSize + "px Arial";
     ctx.translate(this.box_.centerX, this.box_.centerY);
 
-    var radiuses = this.computeRadius_();
+    for (var sosa in d.sosa) {
+       var person = d.sosa[sosa];
+       if (sosa != 1 && person.generation <= this.gens) {
+            var minAngle = person.box_.minAngle;
+            var maxAngle = person.box_.maxAngle;
+            var minRadius = person.box_.minRadius;
+            var maxRadius = person.box_.maxRadius;
 
-    for (var gen = 1; gen <= this.gens; gen++) {
-        var minIndex = Math.pow(2, gen); /* first SOSA in that gen, and number
-                                            of persons in that gen */
-        var radius = radiuses[gen];
-        var angle = this.minAngle + this.separator / 2;
+            doPath_(minRadius, maxRadius, maxAngle, minAngle);
+            var st = this.getStyle_(person, minRadius, maxRadius);
+            this.drawPath(st);
 
-        for (var id = 0; id < minIndex; id++) {
-            var person = d.sosa[minIndex + id];
-            var maxAngle = angle + radius.boxAngle;
+            if (person.generation < this.textThreshold &&
+                fontSize * this.scale >= 2)
+            {
+                ctx.save();
 
-            if (person) {
-                createPath.call(
-                    this, person, radius.min, radius.max, maxAngle, angle);
+                // unfortunately we have to recreate the path, at least until the
+                // Path object from the canvas API is implemented everywhere.
+                doPath_(minRadius, maxRadius, maxAngle, minAngle);
+                ctx.clip();
 
-                if (person.sosa % 2 == 0 && this.sepBetweenGens > 10
-                    && d.marriage[person.sosa] && gen <= 7)
-                {
-                    var mar = event_to_string(d.marriage [person.sosa]);
-                    var attr = {"stroke": "black"};
+                var a = minAngle + (maxAngle - minAngle) / 2;
+                var c = Math.cos(a);
+                var s = Math.sin(a);
 
-                    if (gen == 1) {
-                        this.text(-(radius.max - radius.min), -10, mar, attr);
-                    } else {
-                        var a = angle + radius.boxAngle / 2;
-                        var c = Math.cos(a);
-                        var s = Math.sin(a);
+                // Draw person name along the curve, and clipped. For late
+                // generations, we rotate the text since there is not enough
+                // horizontal space anyway
 
-                        ctx.save();
-                        var r = radius.min - fontSize + 2;
+                if (person.generation >= this.genThreshold) {
+                    if (this.readable_names && Math.abs(a) >= PI_HALF) {
+                        var r = maxRadius - 4;
                         ctx.translate(r * c, r * s);
+                        ctx.rotate(a + Math.PI);
 
-                        if (angle < 0 || !this.readable_names) {
-                            ctx.rotate((angle + maxAngle) / 2 + Math.PI / 2);
-                        } else {
-                            ctx.rotate((angle + maxAngle) / 2 - Math.PI / 2);
-                            ctx.translate(-30, 0);
-                        }
-
-                        this.text(0, 0, mar, attr);
-                        ctx.restore();
+                    } else {
+                        var r = minRadius + 4;
+                        ctx.translate(r * c, r * s);
+                        ctx.rotate(a);
                     }
+
+                    this.drawPersonText(
+                        person, 0, 0,
+                        2 * fontSize /* height */, fontSize /* fontsize */);
+
+                } else {
+                    //  ??? Upcoming HTML5 canvas will support text on path
+
+                    if (minAngle < 0 || !this.readable_names) {
+                        var r = (minRadius + maxRadius) / 2;
+                        ctx.translate(r * c, r * s);
+                        ctx.rotate((minAngle + maxAngle) / 2 + Math.PI / 2);
+                    } else {
+                        var r = minRadius + 2;
+                        ctx.translate(r * c, r * s);
+                        ctx.rotate((minAngle + maxAngle) / 2 - Math.PI / 2);
+                    }
+
+                    this.drawPersonText(
+                        person, -60, 0,
+                        2 * fontSize/* height */, fontSize /* fontsize */);
+                }
+                ctx.restore();
+            }
+
+            if (person.sosa % 2 == 0 && this.sepBetweenGens > 10
+                && d.marriage[person.sosa] && gen <= 7
+                && fontSize * this.scale >= 2)
+            {
+                var mar = event_to_string(d.marriage [person.sosa]);
+                var attr = {"stroke": "black"};
+
+                if (gen == 1) {
+                    this.text(-(maxRadius - minRadius), -10, mar, attr);
+                } else {
+                    var a = (minAngle + maxAngle) / 2;
+                    var c = Math.cos(a);
+                    var s = Math.sin(a);
+
+                    ctx.save();
+                    var r = minRadius - fontSize + 2;
+                    ctx.translate(r * c, r * s);
+
+                    if (angle < 0 || !this.readable_names) {
+                        ctx.rotate((minAngle + maxAngle) / 2 + Math.PI / 2);
+                    } else {
+                        ctx.rotate((minAngle + maxAngle) / 2 - Math.PI / 2);
+                        ctx.translate(-30, 0);
+                    }
+
+                    this.text(0, 0, mar, attr);
+                    ctx.restore();
                 }
             }
-            angle = maxAngle + (radius.seps[id] || 0);
         }
     }
 
     ctx.restore();
 };
 
-/** Compute the inner and outer radius for all generations, as well as
- * the angle opening for a box.
- * This function also computes, if necessary, the separators between persons.
- * These separators vary from generation to generation, since otherwise there
- * is proportionally too much span between persons at later generations.
- *     sep(n+1) = sep(n) / 2;
- * As a result, at generation 1 (parents of decujus) we have the following
- * separator list (where p<sosa> is a person):
- *     [p2, sep(1), p3]
- * Then at generation 2 we have:
- *     [p4, sep(2), p5, sep(1), p6, sep(2), p7]
- * At generation 3 we have:
- *     [p8, sep(3), p9, sep(2), p10, sep(3), p11, sep(1), ...]
+/** @inheritDoc
  *
- * @typedef {{min:number,max:number,boxAngle:number,seps:Array.<number>}} data
- * @return {Array.<data>}  the data.
- *  @private
+ *  For each person, sets a box_ field containing display information:
+ *    {minAngle:number, maxAngle:number,   // angles for that person
+ *     minRadius, maxRadius:number,        // inner and outer radius
+ *    }
  */
-
-FanchartCanvas.prototype.computeRadius_ = function() {
-   var d = this.data;
-
-   var prev = {min: 0,
-               max: this.innerCircle,
-               seps: [],
-               boxAngle: (this.maxAngle - this.minAngle) - this.separator};
-   var result = [prev];
-   var sep = this.separator;
-
-   for (var gen = 1; gen <= this.gens; gen++) {
-      var minRadius = (gen == 1) ? prev.max : prev.max + this.sepBetweenGens;
-      var maxRadius = minRadius +
-         (gen < this.genThreshold ? this.rowHeight : this.rowHeightAfterThreshold);
-
-      var seps = [];
-      for (var p = 0; p < prev.seps.length; p++) {
-         seps.push(sep);
-         seps.push(prev.seps[p]);
-      }
-      seps.push(sep);
-      
-      sep *= 0.5;
-      prev = {min: minRadius,
-              max: maxRadius,
-              seps: seps,
-              boxAngle: prev.boxAngle / 2 - sep};
-      result.push(prev);
-   }
-
-   return result;
-};
-
-/** @inheritDoc */
 
 FanchartCanvas.prototype.computeBoundingBox = function() {
     var d = this.data;
+
+    // Compute the radius for each generation
+    var minRadius = [0];
+    var maxRadius = [this.innerCircle];
+
+    for (var gen = 1; gen <= this.gens; gen++) {
+       var m = maxRadius[gen - 1] + ((gen == 1) ? 0 : this.sepBetweenGens); 
+       minRadius.push(m);
+       maxRadius.push(
+          m + (gen < this.genThreshold ?
+            this.rowHeight : this.rowHeightAfterThreshold));
+    }
 
     // Compute the bounding box for the fan itself, as if it was
     // centered on (0, 0).
@@ -374,33 +330,42 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
     var minY = 0;
     var maxX = 0;
     var maxY = 0;
-    var radiuses = this.computeRadius_();
 
-    for (var gen = this.gens; gen > 0; gen--) {
-       var personsInGen = Math.pow(2, gen);  // Number of persons in that gen.
-       var radius = radiuses[gen];
-       var angle = this.minAngle + this.separator / 2;
+    var canvas = this;
+    function doLayout(indiv, minAngle, maxAngle, separator) {
+       //  ??? We should also check at each of the North,West,South,East
+       //  points, since these can also intersect the bounding box. We
+       //  need to check whether any of these is within the arc though.
 
-       for (var p = 0; p < personsInGen; p++) {
-          var person = d.sosa[personsInGen + p];
-          var maxAngle = angle + radius.boxAngle;
+       var maxR = maxRadius[indiv.generation];
+       var x1 = maxR * Math.cos(minAngle);
+       var y1 = maxR * Math.sin(minAngle);
+       var x2 = maxR * Math.cos(maxAngle);
+       var y2 = maxR * Math.sin(maxAngle);
+       minX = Math.min(minX, x1, x2);
+       maxX = Math.max(maxX, x1, x2);
+       minY = Math.min(minY, y1, y2);
+       maxY = Math.max(maxY, y1, y2);
+       indiv.box_ = {minAngle: minAngle,
+                     maxAngle: maxAngle,
+                     minRadius: minRadius[indiv.generation],
+                     maxRadius: maxR};
 
-          if (person) {
-             //  ??? We should also check at each of the North,West,South,East
-             //  points, since these can also intersect the bounding box. We
-             //  need to check whether any of these is within the arc though.
-             var x1 = radius.max * Math.cos(angle);
-             var y1 = radius.max * Math.sin(angle);
-             var x2 = radius.max * Math.cos(maxAngle);
-             var y2 = radius.max * Math.sin(maxAngle);
-             minX = Math.min(minX, x1, x2);
-             maxX = Math.max(maxX, x1, x2);
-             minY = Math.min(minY, y1, y2);
-             maxY = Math.max(maxY, y1, y2);
+       if (indiv.generation < canvas.gens) {
+          var half = (minAngle + maxAngle) / 2;
+          var father = d.sosa[indiv.sosa * 2];
+          if (father) {
+             doLayout(father, minAngle, half - separator / 2, separator / 2);
           }
-          angle = maxAngle + radius.seps[p];
+
+          var mother = d.sosa[indiv.sosa * 2 + 1];
+          if (mother) {
+             doLayout(mother, half + separator / 2, maxAngle, separator / 2);
+          }
        }
     }
+    doLayout(d.sosa[1], this.minAngle + this.separator / 2,
+             this.maxAngle - this.separator / 2, this.separator);
 
     var width = maxX - minX;
     var height = maxY - minY;

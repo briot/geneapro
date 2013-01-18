@@ -132,7 +132,10 @@ PedigreeCanvas.prototype.forEachBox = function(box, callback) {
 
     var d = this.data.sosa;
     for (var sosa in d) {
-       if (isVisible(d[sosa]) && callback.call(this, d[sosa])) {
+       if (d[sosa].generation <= this.gens &&
+           isVisible(d[sosa]) &&
+           callback.call(this, d[sosa]))
+       {
            return;
        }
     }
