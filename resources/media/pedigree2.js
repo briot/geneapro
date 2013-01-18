@@ -125,7 +125,7 @@ PedigreeCanvas.prototype.forEachBox = function(box, callback) {
    }
 
     var d = this.data;
-    for (var sosa = Math.pow(2, d.generations + 1) - 1; sosa >= 1; sosa--) {
+    for (var sosa = Math.pow(2, this.gens + 1) - 1; sosa >= 1; sosa--) {
        if (d.sosa[sosa] &&
            isVisible(d.sosa[sosa]) &&
            callback.call(this, d.sosa[sosa]))
@@ -151,7 +151,7 @@ PedigreeCanvas.prototype.onCtrlClick = function(e) {
     var selected = this.getSelected(e);
     if (selected) {
         window.location = "/pedigree/" + selected.id +
-            "?gens=" + this.data.generations;
+            "?gens=" + this.gens;
         return true;
     }
 };
@@ -213,7 +213,7 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
                    ctx.lineTo(d.sosa[1].box_.x, yForChild);
                }
            }
-           else if (indiv.generation < d.generations) {
+           else if (indiv.generation < this.gens) {
                var father = d.sosa[2 * indiv.sosa];
                var mother = d.sosa[2 * indiv.sosa + 1];
                if (father || mother) {
@@ -326,14 +326,14 @@ PedigreeCanvas.prototype.showSettings = function() {
 PedigreeCanvas.prototype.computeBoundingBox = function() {
     var d = this.data;
 
-    if (this.__gens == d.generations
+    if (this.__gens == this.gens
         && this.__layout == this.layoutScheme_
         && this.__colors == this.colorScheme_
         && this.__ratio == this.ratio)
     {
         return; // nothing to do
     }
-    this.__gens = d.generations;
+    this.__gens = this.gens;
     this.__ratio = this.ratio;
     this.__layout = this.layoutScheme_;
     this.__colors = this.colorScheme_;
@@ -378,7 +378,7 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
     fs[0] = fs[-1] = this.lineHeight * this.ratio;
     widths[0] = widths[-1] = this.boxWidth;
 
-    for (var gen = 1; gen <= d.generations + 1; gen++) {
+    for (var gen = 1; gen <= this.gens + 1; gen++) {
        left[gen] = left[gen - 1] +
           (this.boxWidth + this.horizPadding) * Math.pow(this.wratio, gen - 1);
        heights[gen] = heights[gen - 1] * this.ratio;
@@ -390,14 +390,14 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
 
     case PedigreeCanvas.layoutScheme.EXPANDED:
        var tops = []; //  Pixel coordinates, indexed on sosa
-       var gen = d.generations;
+       var gen = this.gens;
        var threshold = Math.pow(2, gen) - 1;
        for (var sosa = Math.pow(2, gen + 1) - 1; sosa >= 1; sosa--) {
           if (sosa == threshold) {
              gen --;
              threshold = Math.pow(2, gen) - 1;
           }
-          if (gen == d.generations) {
+          if (gen == this.gens) {
              tops[sosa] = (heights[gen] + this.vertPadding) * (sosa - threshold);
           } else {
              tops[sosa] = (tops[2 * sosa] + tops[2 * sosa + 1] +
@@ -414,7 +414,7 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
        // persons with no ancestors.
 
        var y = 0;
-       var gen = d.generations;
+       var gen = this.gens;
        var threshold = Math.pow(2, gen) - 1;
        var groupMinY = []  // min Y for a sosa and all its ancestors
        var prevSosa = 0;   // sosa of last displayed indiv for current gen
@@ -431,7 +431,7 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
           }
           var indiv = d.sosa[sosa];
           if (indiv) {
-             if (gen == d.generations) {
+             if (gen == this.gens) {
                 setupIndivBox(indiv, y);
                 groupMinY[sosa] = y
                 y -= (heights[gen] + this.vertPadding);
@@ -494,7 +494,7 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
     // Recompute the bounding box, since ancestors have been moved
     var minY = d.sosa[1].box_.y;
     var maxY = minY;
-    for (var sosa = Math.pow(2, d.generations + 1) - 1; sosa >= 1; sosa--) {
+    for (var sosa = Math.pow(2, this.gens + 1) - 1; sosa >= 1; sosa--) {
        if (d.sosa[sosa]) {
           minY = Math.min(minY, d.sosa[sosa].box_.y);
           maxY = Math.max(maxY, d.sosa[sosa].box_.y + d.sosa[sosa].box_.h);
@@ -512,5 +512,5 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
        y += childHeight;
     }
  
-    this.box_ = {width: left[d.generations + 1], height: maxY - minY, x: 0, y: minY};
+    this.box_ = {width: left[this.gens + 1], height: maxY - minY, x: 0, y: minY};
 };

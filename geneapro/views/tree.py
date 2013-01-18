@@ -218,9 +218,7 @@ class Tree(object):
       check = check.difference(self._processed) # only those we don't know
 
       while check:
-         logger.info("MANU getting events for %s" % check)
          events = self._get_events(check, (models.Event_Type_Role.principal,))
-         logger.info("MANU got events %d" % len(events))
          self._processed.update(check)
 
          tmpids = set()   # All persons that are a father or mother
@@ -276,31 +274,35 @@ class Tree(object):
       self._compute_ancestors(id)
       return self.parents.get(id, (None, None))[1]
 
-   def ancestors(self, id, generations=-1):
+   def ancestors(self, id, generations=-1, generations_ignored=-1):
       """The dict of ancestors for ID (value is the number of occurrences),
          up to GENERATIONS.
-         This does not include ID itself"""
+         This does not include ID itself
+         :param generations_ignored: the returned array does not include
+            any person from those first few generations, assuming the client
+            already known about them. -1 to retrieve all.
+      """
 
-      def internal(p, gens):
+      def internal(result, p, current_gen):
          father, mother = self.parents.get(p, (None, None))
-         if father:
-            result[father] = result.get(father, 0) + 1
-            if gens != 0:
-                internal(father, gens - 1)
-         if mother:
-            result[mother] = result.get(mother, 0) + 1
-            if gens != 0:
-                internal(mother, gens - 1)
+         if father and (generations == -1 or current_gen < generations):
+             if current_gen >= generations_ignored:
+                 result[father] = result.get(father, 0) + 1
+             internal(result, father, current_gen + 1)
+
+         if mother and (generations == -1 or current_gen < generations):
+             if current_gen >= generations_ignored:
+                 result[mother] = result.get(mother, 0) + 1
+             internal(result, mother, current_gen + 1)
 
       if id is None:
          return dict()
 
-      result = dict()
       id = self._same.main(id)
-      logger.info("ancestors(%s)" % (id,))
       self._compute_ancestors(id) # all ancestors
-      logger.info("done computing ancestors")
-      internal(id, generations)
+
+      result = dict()
+      internal(result, id, 0)
       return result
 
    def generations(self, id):
@@ -389,7 +391,7 @@ class Tree(object):
 
       return list(children)
 
-   def sosa_tree(self, decujus, persons, generations):
+   def sosa_tree(self, decujus, persons, generations, generations_ignored=-1):
       """Build a sosa tree: this is a dict indexed on the sosa number of the
          person relative to the decujus. The latter is therefore at index 1.
          PERSONS is a dict indexed on person ids, and can contain anything.
@@ -397,26 +399,30 @@ class Tree(object):
              (tree, marriages)
          where tree is a described above, and marriages is a tree indexed on
          the husband's sosa, and contains marriage event
+
+         :param generations_ignored: the returned array does not include
+            any person from those first few generations, assuming the client
+            already known about them. -1 to retrieve all gens.
       """
 
-      def internal(sosa, person, gens):
-         result[sosa] = person
+      def internal(sosa, id, current_gen):
+          if current_gen > generations_ignored:
+              person = persons[id]
+              result[sosa] = person
 
-         if person and gens > 0:
-            father, mother = self.parents.get(person.id, (None, None))
+              # If we have a father, register the marriage date as well
+              if sosa % 2 == 0 and person.marriage:
+                  marriage[sosa] = person.marriage
 
-            if father is not None: father = persons[father]
-            if mother is not None: mother = persons[mother]
-
-            internal (sosa * 2, father, gens - 1)
-            internal (sosa * 2 + 1, mother, gens - 1)
-
-            if father is not None and mother is not None:
-               if father.marriage:
-                  marriage[sosa * 2] = father.marriage
+          if current_gen < generations:
+              father_id, mother_id = self.parents.get(id, (None, None))
+              if father_id is not None:
+                  internal(sosa * 2, father_id, current_gen + 1)
+              if mother_id is not None:
+                  internal(sosa * 2 + 1, mother_id, current_gen + 1)
 
       result = dict()
       marriage = dict()
-      internal(1, persons[self._same.main(decujus)], generations)
+      internal(1, self._same.main(decujus), 0)
       return (result, marriage)
 

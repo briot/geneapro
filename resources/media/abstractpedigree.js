@@ -14,9 +14,17 @@ var DEFAULT_GENERATIONS = 5;
  */
 function AbstractPedigree(canvas, data) {
    Canvas.call(this, canvas /* elem */);
+   this.gens = data.generations;   //  display all of them by default
    this.setData(data);
 }
 inherits(AbstractPedigree, Canvas);
+
+/**
+ * The number of generations to display. This might be different from the
+ * number of generations available in data (although never greater), in case
+ * we already had information for extra persons.
+ */
+AbstractPedigree.prototype.gens;
 
 /**
  * Describes how the boxes are displayed.
@@ -67,26 +75,51 @@ AbstractPedigree.prototype.colorScheme_ = AbstractPedigree.colorScheme.PEDIGREE;
  *    * 'sosa': the SOSA number (1 for decujus, 0 .. -n for children)
  *    * 'angle': position of the person in the generation, from 0.0 to 1.0.
  * The canvas needs to be refreshed explicitly.
+ *
+ * @param {boolean} merge
+ *     If true, the new data is added to the existing data, instead of
+ *     replacing it.
  */
 
-AbstractPedigree.prototype.setData = function(data) {
+AbstractPedigree.prototype.setData = function(data, merge) {
+   var old_gens = (this.data ? this.data.generations : -1);
 
-   // ??? Must preserve the details of the persons, when they are known, so
-   // that we do not have to download them again.
+   if (merge && this.data) {
+      this.data.generations = Math.max(data.generations, this.data.generations);
+      for (var d in data.sosa) {
+         this.data.sosa[d] = data.sosa[d];
+      }
+      for (var d in data.marriage) {
+         this.data.marriage[d] = data.marriage[d];
+      }
+      for (var d in data.styles) {
+         this.data.styles[d] = data.styles[d];
+      }
+      //  No merging children, to preserve the details we might have
 
+   } else {
+      this.data = data;
+      if (!data) {
+         return;
+      }
 
-   this.data = data;
-
-   if (!data) {
-      return;
+      if (data.children) {
+         var len = data.children.length;
+         for (var c = 0; c < len; c++) {
+            var person = data.children[c];
+            person.generation = -1;
+            person.sosa = -c;
+            person.angle = c / len;
+         }
+      }
    }
 
    // ??? Traverse the list of all known persons directly, not by iterating
    // generations and then persons, since in fact a tree is often sparse
    // and traversing would be slower.
 
-   var sosa = 1;
-   for (var gen = 0; gen <= data.generations; gen++) {
+   var sosa = Math.pow(2, old_gens + 1);
+   for (var gen = old_gens + 1; gen <= data.generations; gen++) {
       var count = Math.pow(2, gen + 1) - Math.pow(2, gen);
       for (var p = 0; p < count; p++) {
          var person = data.sosa[sosa];
@@ -96,16 +129,6 @@ AbstractPedigree.prototype.setData = function(data) {
             person.angle = (count - p) / count;
          }
          sosa ++;
-      }
-   }
-
-   if (data.children) {
-      var len = data.children.length;
-      for (var c = 0; c < len; c++) {
-         var person = data.children[c];
-         person.generation = -1;
-         person.sosa = -c;
-         person.angle = c / len;
       }
    }
 };
@@ -155,14 +178,24 @@ AbstractPedigree.prototype.setColorScheme = function(scheme) {
  */
 
 AbstractPedigree.prototype.loadData = function(gen) {
-   // ??? No need to download anything if we are displaying fewer generations.
+   this.gens = gen;
+
+   // If we intend to display fewer generations than are already known, no
+   // need to download anything.
+
+   if (this.data && gen <= this.data.generations) {
+      this.refresh();
+      return;
+   }
 
    var f = this;  //  closure for callbacks
    var decujus = (this.data ? this.data.sosa[1].id : 1);
+   var known = (this.data ? this.data.generations : -1);
    $.ajax(
-      {'url': '/pedigreeData/' + decujus + '/' + gen,
-       'success': function(data) {
-         f.setData(data);
+      {url: '/pedigreeData/' + decujus,
+       data: {'gens': gen, 'gens_known': known},
+       success: function(data) {
+         f.setData(data, true /* merge */);
          f.refresh();
       }});
 };
@@ -233,7 +266,7 @@ AbstractPedigree.prototype.getStyle_ = function(person, minRadius, maxRadius) {
    case AbstractPedigree.colorScheme.PEDIGREE:
       //  Avoid overly saturated colors when displaying only few generations
       //  (i.e. when boxes are big)
-      var maxGen = Math.max(12, this.data.generations - 1);
+      var maxGen = Math.max(12, this.gens);
       var c = this.hsvToRgb(
             person.angle * 360, person.generation / maxGen, 1.0).toString();
 
@@ -261,7 +294,7 @@ AbstractPedigree.prototype.showSettings = function() {
 
    $("#settings #gens")
       .slider({"min": 2, "max": MAXGENS,
-               "value": this.data ? this.data.generations : DEFAULT_GENERATIONS,
+               "value": this.data ? this.gens : DEFAULT_GENERATIONS,
                "change": function() { f.loadData($(this).slider("value")); }})
       .find("span.right").text(MAXGENS);
    $("#settings select[name=appearance]")

@@ -27,7 +27,8 @@ urlpatterns = patterns('',
 
     (r'^pedigree/(\d+)$', geneapro.views.pedigree.pedigree_view),
     (r'^fanchart/(\d+)$', geneapro.views.pedigree.fanchart_view),
-    (r'^pedigreeData/(\d+)/(\d+)$', geneapro.views.pedigree.pedigree_data),
+
+    (r'^pedigreeData/(\d+)$', geneapro.views.pedigree.pedigree_data),
 
     (r'^stats$',        geneapro.views.stats.view),
     (r'^stats/(\d+)$',  geneapro.views.stats.view),

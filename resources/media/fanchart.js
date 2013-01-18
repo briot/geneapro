@@ -261,7 +261,7 @@ FanchartCanvas.prototype.drawFan_ = function() {
 
     var radiuses = this.computeRadius_();
 
-    for (var gen = 1; gen <= d.generations - 1; gen++) {
+    for (var gen = 1; gen <= this.gens; gen++) {
         var minIndex = Math.pow(2, gen); /* first SOSA in that gen, and number
                                             of persons in that gen */
         var radius = radiuses[gen];
@@ -340,7 +340,7 @@ FanchartCanvas.prototype.computeRadius_ = function() {
    var result = [prev];
    var sep = this.separator;
 
-   for (var gen = 1; gen < d.generations; gen++) {
+   for (var gen = 1; gen <= this.gens; gen++) {
       var minRadius = (gen == 1) ? prev.max : prev.max + this.sepBetweenGens;
       var maxRadius = minRadius +
          (gen < this.genThreshold ? this.rowHeight : this.rowHeightAfterThreshold);
@@ -376,7 +376,7 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
     var maxY = 0;
     var radiuses = this.computeRadius_();
 
-    for (var gen = d.generations - 1; gen > 0; gen--) {
+    for (var gen = this.gens; gen > 0; gen--) {
        var personsInGen = Math.pow(2, gen);  // Number of persons in that gen.
        var radius = radiuses[gen];
        var angle = this.minAngle + this.separator / 2;
