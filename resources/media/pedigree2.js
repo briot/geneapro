@@ -118,10 +118,10 @@ PedigreeCanvas.prototype.getSelected = function(e) {
 PedigreeCanvas.prototype.forEachBox = function(box, callback) {
    function isVisible(indiv) {
       return (!box ||
-              !(indiv.box_.x < box.x || 
-                indiv.box_.x + indiv.box_.w > box.x + box.w ||
-                indiv.box_.y < box.y ||
-                indiv.box_.y + indiv.box_.h > box.y + box.h));
+              !(indiv.box_.x + indiv.box_.w < box.x || 
+                indiv.box_.x > box.x + box.w ||
+                indiv.box_.y + indiv.box_.h < box.y ||
+                indiv.box_.y > box.y + box.h));
    }
 
     var d = this.data;

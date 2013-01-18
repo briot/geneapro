@@ -9,6 +9,7 @@ from django.utils import simplejson
 from django.http import HttpResponse
 from geneapro import models
 from geneapro.utils.date import DateRange
+from geneapro.views.json import to_json
 from geneapro.views.custom_highlight import style_rules
 from geneapro.views.styles import Styles
 from geneapro.views.rules import getLegend
@@ -311,3 +312,27 @@ def view_list(request):
          "name":[p.name.encode("utf-8") for p in all],
          "legend":getLegend()},
         context_instance=RequestContext(request))
+
+
+def personaEvents(request, id):
+    """All events for the person"""
+    id = int(id)
+
+    data = {id: ["Event1: some information",
+                "Event2: some more info",
+                "Event3: even more info",
+                "Event4: even more info",
+                "Event5: even more info",
+                "Event6: even more info",
+                "Event7: even more info",
+                "Event8: even more info",
+                "Event9: even more info",
+                "Event10: even more info",
+                "Event11: even more info",
+                "Event12: even more info",
+                "Event13: even more info",
+               ]}
+    return HttpResponse(
+        to_json(data, year_only=False),
+        content_type="application/json")
+

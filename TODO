@@ -46,6 +46,7 @@ http://www.beholdgenealogy.com/blog/?p=876
    Use a R-Tree for fast detection.
 ** Compact layout should compute width of boxes in one generation by looking
    at the maximum width to display the info.
+** control-click does not work on Firefox/OSX
 
 ** Dynamic "infinite" expansion
 See "Interactive Visualization of Genealogical Graphs"

@@ -70,11 +70,20 @@ AbstractPedigree.prototype.colorScheme_ = AbstractPedigree.colorScheme.PEDIGREE;
  */
 
 AbstractPedigree.prototype.setData = function(data) {
+
+   // ??? Must preserve the details of the persons, when they are known, so
+   // that we do not have to download them again.
+
+
    this.data = data;
 
    if (!data) {
       return;
    }
+
+   // ??? Traverse the list of all known persons directly, not by iterating
+   // generations and then persons, since in fact a tree is often sparse
+   // and traversing would be slower.
 
    var sosa = 1;
    for (var gen = 0; gen <= data.generations; gen++) {
@@ -99,6 +108,25 @@ AbstractPedigree.prototype.setData = function(data) {
          person.angle = c / len;
       }
    }
+};
+
+/**
+ * Retrieve details for a person, from the server, unless the details
+ * are already known.
+ */
+
+AbstractPedigree.prototype.getPersonDetails = function(person) {
+   if (person.details !== undefined) {
+      return;
+   }
+   var f = this;
+   person.details = [];  //  prevent a second parallel request for same person
+   $.ajax(
+       {'url': '/personaEvents/' + person.id,
+        'success': function(data) {
+           person.details = data[person.id] || [];
+           f.refresh();
+       }});
 };
 
 /**
@@ -127,6 +155,8 @@ AbstractPedigree.prototype.setColorScheme = function(scheme) {
  */
 
 AbstractPedigree.prototype.loadData = function(gen) {
+   // ??? No need to download anything if we are displaying fewer generations.
+
    var f = this;  //  closure for callbacks
    var decujus = (this.data ? this.data.sosa[1].id : 1);
    $.ajax(
@@ -314,27 +344,41 @@ Canvas.prototype.drawPersonText = function(
         if (linesCount >= 2 && linesCount < 5) {
             var birth = event_to_string (person.b),
             death = event_to_string (person.d);
-            c.fillText(birth + " - " + death, 1, y);
+            c.fillText(birth + " - " + death, 5, y);
 
-        } else if (linesCount > 2) {
+        } else if (y + absFontSize <= height) {
             var birth = event_to_string(person.b);
             var death = event_to_string(person.d);
             var birthp = person.b ? person.b[1] || "" : "";
             var deathp = person.d ? person.d[1] || "" : "";
-            if (linesCount >= 2 && birth)  {
-               c.fillText("b: " + birth, 1, y);
+            if (y + absFontSize <= height && birth) {
+               c.fillText("b: " + birth, 5, y);
                y += absFontSize;
-               if (linesCount >= 3 && birthp) {
-                  c.fillText("    " + birthp, 1, y);
+               if (y + absFontSize <= height && birthp) {
+                  c.fillText("    " + birthp, 5, y);
                   y += absFontSize;
                }
             }
-            if (linesCount >= 4 && death) {
-               c.fillText("d: " + death, 1, y);
+            if (y + absFontSize <= height && death) {
+               c.fillText("d: " + death, 5, y);
                y += absFontSize;
-               if (linesCount >= 5 && deathp) {
-                  c.fillText("    " + deathp, 1, y);
+               if (y + absFontSize <= height && deathp) {
+                  c.fillText("    " + deathp, 5, y);
                   y += absFontSize;
+               }
+            }
+            if (y + absFontSize <= height) {
+               // Will fetch and display more information
+               this.getPersonDetails(person);
+               if (person.details) {
+                  var d = 0;
+                  while (y + absFontSize <= height &&
+                        d < person.details.length) 
+                  {
+                     c.fillText(person.details[d], 5, y);
+                     y += absFontSize;
+                     d ++;
+                  }
                }
             }
         }
