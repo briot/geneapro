@@ -7,7 +7,6 @@
 
 function PedigreeCanvas(canvas, data) {
     AbstractPedigree.call(this, canvas /* elem */, data /* data */);
-    this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
     this.setSameSize(false, true /* norefresh */);
     this.showSettings();
 }

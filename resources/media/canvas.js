@@ -30,6 +30,8 @@ function Canvas(elem) {
                 function(e) {this.ifnotDisabled_(e, this.onCtrlClick)},
                 this));
 
+    this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
+
     $(window).resize($.proxy(this.onResize, this));
 }
 
@@ -60,6 +62,10 @@ Canvas.prototype.autoScale_ = true;
 /** Base font size, in pixels */
 
 Canvas.prototype.baseFontSize = 16;
+
+/** Actual height of a line written in baseFontSize */
+
+Canvas.prototype.lineHeight;
 
 /** No need to draw text below this size (in pixels) */
 

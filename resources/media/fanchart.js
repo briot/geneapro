@@ -196,8 +196,7 @@ FanchartCanvas.prototype.drawFan_ = function() {
     }
 
     ctx.save();
-    var fontSize = 14;
-    ctx.font = fontSize + "px Arial";
+    ctx.textBaseline = 'middle';
     ctx.translate(this.box_.centerX, this.box_.centerY);
 
     for (var sosa in d.sosa) {
@@ -211,6 +210,9 @@ FanchartCanvas.prototype.drawFan_ = function() {
             doPath_(minRadius, maxRadius, maxAngle, minAngle);
             var st = this.getStyle_(person, minRadius, maxRadius);
             this.drawPath(st);
+
+            var fontSize = person.box_.fontSize;
+            ctx.font = fontSize + "px Arial";
 
             if (person.generation < this.textThreshold &&
                 fontSize * this.scale >= 2)
@@ -306,6 +308,7 @@ FanchartCanvas.prototype.drawFan_ = function() {
  *  For each person, sets a box_ field containing display information:
  *    {minAngle:number, maxAngle:number,   // angles for that person
  *     minRadius, maxRadius:number,        // inner and outer radius
+ *     fontSize:number
  *    }
  */
 
@@ -315,9 +318,11 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
     // Compute the radius for each generation
     var minRadius = [0];
     var maxRadius = [this.innerCircle];
+    var fs = [this.lineHeight];
 
     for (var gen = 1; gen <= this.gens; gen++) {
        var m = maxRadius[gen - 1] + ((gen == 1) ? 0 : this.sepBetweenGens); 
+       fs.push(fs[gen - 1] * 0.9);
        minRadius.push(m);
        maxRadius.push(
           m + (gen < this.genThreshold ?
@@ -349,7 +354,8 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
        indiv.box_ = {minAngle: minAngle,
                      maxAngle: maxAngle,
                      minRadius: minRadius[indiv.generation],
-                     maxRadius: maxR};
+                     maxRadius: maxR,
+                     fontSize: fs[indiv.generation]};
 
        if (indiv.generation < canvas.gens) {
           var half = (minAngle + maxAngle) / 2;
