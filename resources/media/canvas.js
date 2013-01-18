@@ -31,13 +31,6 @@ function Canvas(elem) {
                 this));
 
     $(window).resize($.proxy(this.onResize, this));
-
-    /*       this.actions = {};  // "name":function,  for methods to add to the object
-    // When function is called, THIS is the instance of Canvas
-    for (var a in options.actions) {
-    elem[a] = $.proxy(options.actions[a], this);
-    }
-    */
 }
 
 /** Current scale factor of the canvas
@@ -189,12 +182,12 @@ Canvas.prototype.refresh = function (box) {
               this.canvas[0].height / this.box_.height);
         }
 
-       if (!box) {
-           box = {x: this.toAbsX(0),
-                  y: this.toAbsY(0),
-                  w: this.toAbsLength(this.canvas[0].width),
-                  h: this.toAbsLength(this.canvas[0].height)};
-       }
+        if (!box) {
+            box = {x: this.toAbsX(0),
+                   y: this.toAbsY(0),
+                   w: this.toAbsLength(this.canvas[0].width),
+                   h: this.toAbsLength(this.canvas[0].height)};
+        }
 
         if (this.autoZoom) {
             this.setTransform();

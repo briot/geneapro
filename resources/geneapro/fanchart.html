@@ -23,7 +23,6 @@
 $(document).ready(function() {
    var data={{pedigree_data|safe}};
    var g = new FanchartCanvas($("#fanchart")[0], data);
-   g.onResize();
 });
 {% endblock script %}
 

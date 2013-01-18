@@ -19,7 +19,6 @@ function changeGenerations () {
 $(document).ready (function() {
    var data_ = {{pedigree_data|safe}};
    var canvas = new PedigreeCanvas($("#pedigree")[0], data_);
-   canvas.onResize();
 });
 {% endblock script %}
 

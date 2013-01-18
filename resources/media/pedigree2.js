@@ -118,6 +118,7 @@ PedigreeCanvas.prototype.getSelected = function(e) {
  * @param {function(indiv)} callback
  *    'this' is the same as the caller of forEachBox.
  *    Called for each person within the box.
+ *    Boxes are returned in no particular order.
  */
 
 PedigreeCanvas.prototype.forEachBox = function(box, callback) {
@@ -129,20 +130,18 @@ PedigreeCanvas.prototype.forEachBox = function(box, callback) {
                 indiv.box_.y > box.y + box.h));
    }
 
-    var d = this.data;
-    for (var sosa = Math.pow(2, this.gens + 1) - 1; sosa >= 1; sosa--) {
-       if (d.sosa[sosa] &&
-           isVisible(d.sosa[sosa]) &&
-           callback.call(this, d.sosa[sosa]))
-       {
+    var d = this.data.sosa;
+    for (var sosa in d) {
+       if (isVisible(d[sosa]) && callback.call(this, d[sosa])) {
            return;
        }
     }
 
-    if (d.children) {
-        for (var c = 0, len = d.children.length; c < len; c++) {
-            if (isVisible(d.children[c]) && 
-                callback.call(this, d.children[c]))
+    d = this.data.children;
+    if (d) {
+        for (var c = 0, len = d.length; c < len; c++) {
+            if (isVisible(d[c]) && 
+                callback.call(this, d[c]))
             {
                 break;
             }
@@ -291,13 +290,19 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
 
 PedigreeCanvas.prototype.showSettings = function() {
    var f = this;  //  closure for callbacks
-   AbstractPedigree.prototype.showSettings.call(this);
+   AbstractPedigree.prototype.showSettings.call(
+         this,
+         this.layoutScheme_ == PedigreeCanvas.layoutScheme.EXPANDED ?
+             10 : MAXGENS /* maxGens */
+         );
 
    $("#settings input[name=sameSize]")
       .change(function() { f.setSameSize(this.checked) })
       .attr('checked', this.sameSize);
    $("#settings select[name=layout]")
-      .change(function() {f.layoutScheme_ = Number(this.value); f.refresh()})
+      .change(function() {f.layoutScheme_ = Number(this.value);
+                          f.showSettings();
+                          f.refresh()})
       .val(this.layoutScheme_);
    $("#settings #hspace")
       .slider({"min": 0, "max": 40,
@@ -401,25 +406,27 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
        }
     }
 
+    var maxY = 0;
+    var canvas = this;
+
     switch(this.layoutScheme_) {
 
     case PedigreeCanvas.layoutScheme.EXPANDED:
-       var tops = []; //  Pixel coordinates, indexed on sosa
-       var gen = this.gens;
-       var threshold = Math.pow(2, gen) - 1;
-       for (var sosa = Math.pow(2, gen + 1) - 1; sosa >= 1; sosa--) {
-          if (sosa == threshold) {
-             gen --;
-             threshold = Math.pow(2, gen) - 1;
-          }
-          if (gen == this.gens) {
-             tops[sosa] = (heights[gen] + this.vertPadding) * (sosa - threshold);
+       function doLayout(gen, sosa) {
+          if (gen < canvas.gens) {
+             var fy = doLayout(gen + 1, 2 * sosa);
+             var my = doLayout(gen + 1, 2 * sosa + 1);
+             var y = (fy + my + heights[gen + 1] - heights[gen]) / 2;
           } else {
-             tops[sosa] = (tops[2 * sosa] + tops[2 * sosa + 1] +
-                  heights[gen + 1] - heights[gen]) / 2;
+             y = maxY + canvas.vertPadding;
           }
-          setupIndivBox(d.sosa[sosa], tops[sosa]);
+          maxY = Math.max(maxY, y + heights[gen]);
+          if (d.sosa[sosa]) {
+             setupIndivBox(d.sosa[sosa], y);
+          }
+          return y;
        }
+       doLayout(0, 1);
        break;
 
     case PedigreeCanvas.layoutScheme.COMPACT:
@@ -427,98 +434,48 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
        // Then when we add the previous generation, we might move some of
        // the boxes from the previous generation downward to make space for
        // persons with no ancestors.
-
-       var y = 0;
-       var gen = this.gens;
-       var threshold = Math.pow(2, gen) - 1;
-       var groupMinY = []  // min Y for a sosa and all its ancestors
-       var prevSosa = 0;   // sosa of last displayed indiv for current gen
-       var maxYPrevGen = 0;  // maximal value for Y at the previous gen.
-       var maxYCurrentGen = 0;  //  maximal Y at current gen
-
-       for (var sosa = Math.pow(2, gen + 1) - 1; sosa >= 1; sosa--) {
-          if (sosa == threshold) {
-             gen --;
-             threshold = Math.pow(2, gen) - 1;
-             prevSosa = 0;
-             maxYPrevGen = maxYCurrentGen;
-             maxYCurrentGen = 0;
+       
+       function doLayout(indiv) {
+          var gen = indiv.generation;
+          if (gen < canvas.gens) {
+             var father = d.sosa[2 * indiv.sosa];
+             var mother = d.sosa[2 * indiv.sosa + 1];
+          } else {
+             father = mother = undefined;
           }
-          var indiv = d.sosa[sosa];
-          if (indiv) {
-             if (gen == this.gens) {
-                setupIndivBox(indiv, y);
-                groupMinY[sosa] = y
-                y -= (heights[gen] + this.vertPadding);
-             } else {
-                var father = d.sosa[2 * sosa];
-                var mother = d.sosa[2 * sosa + 1];
+          if (father && mother) {
+             doLayout(father);
+             doLayout(mother);
+             // center the box on its parents
+             var y = (father.box_.y + mother.box_.y + heights[gen + 1]
+                  - heights[gen]) / 2;
+             var h = (canvas.colorScheme_ == AbstractPedigree.colorScheme.WHITE) ?
+                mother.box_.y + heights[gen + 1] - y : undefined;
+             setupIndivBox(indiv, y, h);
 
-                if (father && mother) {
-                   // center the box on its parents
-                   var y = (father.box_.y + mother.box_.y + heights[gen + 1]
-                       - heights[gen]) / 2;
-                   if (this.colorScheme_ == AbstractPedigree.colorScheme.WHITE) {
-                      var h = mother.box_.y + heights[gen + 1] - y;
-                   } else {
-                      h = undefined;
-                   }
-                   groupMinY[sosa] = Math.min(y, groupMinY[father.sosa]);
-                   setupIndivBox(indiv, y, h);
+          } else if (father || mother) {
+             // center on the existing parent
+             var p = (father || mother);
+             doLayout(p);
+             var y = (p.box_.y + heights[gen + 1] - heights[gen]) / 2;
+             var h = (canvas.colorScheme_ == AbstractPedigree.colorScheme.WHITE) ?
+                 p.box_.y + heights[gen + 1] - y : undefined;
+             setupIndivBox(indiv, y, h);
 
-                } else if (father || mother) {
-                   // center on the existing parent
-                   var p = (father || mother);
-                   var y = (p.box_.y + heights[gen + 1] - heights[gen]) / 2;
-                   if (this.colorScheme_ == AbstractPedigree.colorScheme.WHITE) {
-                      var h = p.box_.y + heights[gen + 1] - y;
-                   } else {
-                      h = undefined;
-                   }
-                   groupMinY[sosa] = Math.min(y, groupMinY[p.sosa]);
-                   setupIndivBox(indiv, y, h);
-
-                } else {
-                   // No parent, put this box close to the previous box at the
-                   // same level, moving ancestors as needed.
-
-                   if (prevSosa == 0) {
-                      var y = maxYPrevGen;
-                   } else {
-                      var y = groupMinY[prevSosa] -
-                         this.vertPadding - heights[gen];
-                   }
-
-                   groupMinY[sosa] = y;   //  a new group
-                   setupIndivBox(indiv, y);
-
-                   // Move up all ancestors of remaining persons in this gen
-                   for (var sosa2 = sosa - 1; sosa2 > threshold; sosa2--) {
-                      moveAncestors(sosa2, -this.vertPadding - heights[gen]); 
-                   }
-
-                }
-             }
-             maxYCurrentGen = Math.max(maxYPrevGen, indiv.box_.y + heights[gen]);
-             prevSosa = sosa;
+          } else {
+             var y = maxY + canvas.vertPadding;
+             setupIndivBox(indiv, y, heights[gen]);
           }
+          maxY = Math.max(maxY, y + indiv.box_.h);
        }
+       doLayout(d.sosa[1]);
        break;
-    }
-
-    // Recompute the bounding box, since ancestors have been moved
-    var minY = d.sosa[1].box_.y;
-    var maxY = minY;
-    for (var sosa = Math.pow(2, this.gens + 1) - 1; sosa >= 1; sosa--) {
-       if (d.sosa[sosa]) {
-          minY = Math.min(minY, d.sosa[sosa].box_.y);
-          maxY = Math.max(maxY, d.sosa[sosa].box_.y + d.sosa[sosa].box_.h);
-       }
     }
 
     // Position children
     var childHeight = (this.vertPadding + this.boxHeight);
     var childrenHeight = d.children.length * childHeight - this.vertPadding;
+    var minY = 0;
     y = d.sosa[1].box_.y + this.boxHeight / 2 - childrenHeight / 2;
     for (var c = 0, len = d.children.length; c < len; c++) {
        setupIndivBox(d.children[c], y);

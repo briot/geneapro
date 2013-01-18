@@ -5,7 +5,7 @@
  */
 
 /** Maximum number of generations that can be displayed */
-var MAXGENS = 25;
+var MAXGENS = 50;
 
 /** Default number of generations to display */
 var DEFAULT_GENERATIONS = 5;
@@ -106,30 +106,26 @@ AbstractPedigree.prototype.setData = function(data, merge) {
       if (data.children) {
          var len = data.children.length;
          for (var c = 0; c < len; c++) {
-            var person = data.children[c];
-            person.generation = -1;
-            person.sosa = -c;
-            person.angle = c / len;
+            var p = data.children[c];
+            p.generation = -1;
+            p.sosa = -c;
+            p.angle = c / len;
          }
       }
    }
 
-   // ??? Traverse the list of all known persons directly, not by iterating
-   // generations and then persons, since in fact a tree is often sparse
-   // and traversing would be slower.
-
-   var sosa = Math.pow(2, old_gens + 1);
+   // Traverse the list of all known persons directly, not by iterating
+   // generations and then persons, since in fact a tree is often sparse.
+   var count = [];
    for (var gen = old_gens + 1; gen <= data.generations; gen++) {
-      var count = Math.pow(2, gen + 1) - Math.pow(2, gen);
-      for (var p = 0; p < count; p++) {
-         var person = data.sosa[sosa];
-         if (person) {
-            person.generation = gen;
-            person.sosa = sosa;
-            person.angle = (count - p) / count;
-         }
-         sosa ++;
-      }
+      count[gen] = Math.pow(2, gen);
+   }
+   var d = data.sosa;
+   for (var sosa in d) {
+      var p = d[sosa];
+      p.generation = Math.floor(Math.log(sosa)/Math.LN2);
+      p.sosa = sosa;
+      p.angle = sosa / count[p.generation] - 1;
    }
 };
 
@@ -286,17 +282,21 @@ AbstractPedigree.prototype.getStyle_ = function(person, minRadius, maxRadius) {
    }
 };
 
-/** @inheritDoc */
+/** @inheritDoc
+ *  @param {number=} maxGens
+ *     If specified, indicates the maximum numnber of generations
+ * */
 
-AbstractPedigree.prototype.showSettings = function() {
+AbstractPedigree.prototype.showSettings = function(maxGens) {
    var f = this;  //  closure for callbacks
+   maxGens = maxGens || MAXGENS;
    Canvas.prototype.showSettings.call(this);
 
    $("#settings #gens")
-      .slider({"min": 2, "max": MAXGENS,
+      .slider({"min": 2, "max": maxGens,
                "value": this.data ? this.gens : DEFAULT_GENERATIONS,
                "change": function() { f.loadData($(this).slider("value")); }})
-      .find("span.right").text(MAXGENS);
+      .find("span.right").text(maxGens);
    $("#settings select[name=appearance]")
       .change(function() { f.setAppearance(Number(this.value))})
       .val(this.appearance_);
