@@ -38,10 +38,11 @@ PedigreeCanvas.prototype.horizPadding;
 PedigreeCanvas.prototype.vertPadding = 2;
 
 /**
- * Size ratio from generation n to n + 1
+ * Size ratio from generation n to n + 1, until generation maxGenForRatio
  */
 PedigreeCanvas.prototype.ratio;
 PedigreeCanvas.prototype.wratio;
+PedigreeCanvas.prototype.maxGenForRatio = 12;
 
 /**
  * @enum {number}
@@ -68,6 +69,7 @@ PedigreeCanvas.prototype.setSameSize = function(sameSize, norefresh) {
         this.boxHeight = 75;
         this.horizPadding = 20;
         this.maxFontSize = 15;
+        this.maxGenForRatio = 0;
     } else {
         this.boxWidth = 300;
         this.horizPadding = 20;
@@ -75,6 +77,9 @@ PedigreeCanvas.prototype.setSameSize = function(sameSize, norefresh) {
         this.ratio = 0.75;
         this.wratio = 0.75;
         this.maxFontSize = 20;
+
+        // Keep reducing size until we reach 10% of the original size
+        this.maxGenForRatio = Math.log(0.1) / Math.log(this.ratio);
     }
 
     if (!norefresh) {
@@ -378,12 +383,22 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
     fs[0] = fs[-1] = this.lineHeight * this.ratio;
     widths[0] = widths[-1] = this.boxWidth;
 
+    var padding = this.horizPadding;
     for (var gen = 1; gen <= this.gens + 1; gen++) {
-       left[gen] = left[gen - 1] +
-          (this.boxWidth + this.horizPadding) * Math.pow(this.wratio, gen - 1);
-       heights[gen] = heights[gen - 1] * this.ratio;
-       widths[gen] = widths[gen - 1] * this.wratio;
-       fs[gen] = Math.round(Math.min(this.maxFontSize, fs[gen - 1] * this.ratio));
+       if (gen <= this.maxGenForRatio) {
+          left[gen] = left[gen - 1] + widths[gen - 1] + padding;
+          heights[gen] = heights[gen - 1] * this.ratio;
+          widths[gen] = widths[gen - 1] * this.wratio;
+          fs[gen] = Math.round(Math.min(this.maxFontSize, fs[gen - 1] * this.ratio));
+          if (gen < this.maxGenForRatio) {
+             padding = padding * this.wratio;
+          }
+       } else {
+          heights[gen] = heights[gen - 1];
+          widths[gen] = widths[gen - 1];
+          fs[gen] = fs[gen - 1];
+          left[gen] = left[gen - 1] + widths[gen - 1] + padding;
+       }
     }
 
     switch(this.layoutScheme_) {
