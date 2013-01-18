@@ -315,6 +315,11 @@ FanchartCanvas.prototype.drawFan_ = function() {
 FanchartCanvas.prototype.computeBoundingBox = function() {
     var d = this.data;
 
+    if (this.__gens == this.gens) {
+       return; // nothing to do
+    }
+    this.__gens = this.gens;
+
     // Compute the radius for each generation
     var minRadius = [0];
     var maxRadius = [this.innerCircle];
@@ -335,13 +340,14 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
     var minY = 0;
     var maxX = 0;
     var maxY = 0;
-
     var canvas = this;
-    function doLayout(indiv, minAngle, maxAngle, separator) {
-       //  ??? We should also check at each of the North,West,South,East
-       //  points, since these can also intersect the bounding box. We
-       //  need to check whether any of these is within the arc though.
 
+    /** Register the layout information for a given individual
+     *  ??? We should also check at each of the North,West,South,East
+     *  points, since these can also intersect the bounding box. We
+     *  need to check whether any of these is within the arc though.
+     */
+    function setupIndivBox(indiv, minAngle, maxAngle) {
        var maxR = maxRadius[indiv.generation];
        var x1 = maxR * Math.cos(minAngle);
        var y1 = maxR * Math.sin(minAngle);
@@ -356,20 +362,52 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
                      minRadius: minRadius[indiv.generation],
                      maxRadius: maxR,
                      fontSize: fs[indiv.generation]};
+    }
 
-       if (indiv.generation < canvas.gens) {
-          var half = (minAngle + maxAngle) / 2;
-          var father = d.sosa[indiv.sosa * 2];
-          if (father) {
-             doLayout(father, minAngle, half - separator / 2, separator / 2);
-          }
+    switch (this.layoutScheme_) {
+    case AbstractPedigree.layoutScheme.EXPANDED:
+       function doLayout(indiv, minAngle, maxAngle, separator) {
+          setupIndivBox(indiv, minAngle, maxAngle);
 
-          var mother = d.sosa[indiv.sosa * 2 + 1];
-          if (mother) {
-             doLayout(mother, half + separator / 2, maxAngle, separator / 2);
+          if (indiv.generation < canvas.gens) {
+             var half = (minAngle + maxAngle) / 2;
+             var father = d.sosa[indiv.sosa * 2];
+             var mother = d.sosa[indiv.sosa * 2 + 1];
+
+             if (father) {
+                doLayout(father, minAngle, half - separator / 2, separator / 2);
+             } 
+             if (mother) {
+                doLayout(mother, half + separator / 2, maxAngle, separator / 2);
+             }
           }
        }
+       break;
+
+    case AbstractPedigree.layoutScheme.COMPACT:
+       function doLayout(indiv, minAngle, maxAngle, separator) {
+          setupIndivBox(indiv, minAngle, maxAngle);
+
+          if (indiv.generation < canvas.gens) {
+             var father = d.sosa[indiv.sosa * 2];
+             var mother = d.sosa[indiv.sosa * 2 + 1];
+
+             if (father && mother) {
+                var half = (minAngle + maxAngle) / 2;
+                doLayout(father, minAngle, half - separator / 2, separator / 2);
+                doLayout(mother, half + separator / 2, maxAngle, separator / 2);
+             } else if (father) {
+                var tenth = minAngle + maxAngle * 0.9;
+                doLayout(father, minAngle, tenth - separator / 2, separator / 2);
+             } else if (mother) {
+                var tenth = minAngle + maxAngle * 0.1;
+                doLayout(mother, tenth + separator / 2, maxAngle, separator / 2);
+             }
+          }
+       }
+       break;
     }
+
     doLayout(d.sosa[1], this.minAngle + this.separator / 2,
              this.maxAngle - this.separator / 2, this.separator);
 

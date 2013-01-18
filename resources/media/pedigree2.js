@@ -44,15 +44,6 @@ PedigreeCanvas.prototype.wratio;
 PedigreeCanvas.prototype.maxGenForRatio = 12;
 
 /**
- * @enum {number}
- */
-PedigreeCanvas.layoutScheme = {
-   EXPANDED: 0,
-   COMPACT: 1
-};
-PedigreeCanvas.prototype.layoutScheme_ = PedigreeCanvas.layoutScheme.COMPACT;
-
-/**
  * Change the value of this.sameSize.
  * @param {boolean} sameSize   Whether all boxes have the same size.
  * @param {boolean=} norefresh If true, do not refresh the canvas.
@@ -294,18 +285,13 @@ PedigreeCanvas.prototype.showSettings = function() {
    var f = this;  //  closure for callbacks
    AbstractPedigree.prototype.showSettings.call(
          this,
-         this.layoutScheme_ == PedigreeCanvas.layoutScheme.EXPANDED ?
+         this.layoutScheme_ == AbstractPedigree.layoutScheme.EXPANDED ?
              10 : MAXGENS /* maxGens */
          );
 
    $("#settings input[name=sameSize]")
       .change(function() { f.setSameSize(this.checked) })
       .attr('checked', this.sameSize);
-   $("#settings select[name=layout]")
-      .change(function() {f.layoutScheme_ = Number(this.value);
-                          f.showSettings();
-                          f.refresh()})
-      .val(this.layoutScheme_);
    $("#settings #hspace")
       .slider({"min": 0, "max": 40,
                "value": this.horizPadding,
@@ -413,7 +399,7 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
 
     switch(this.layoutScheme_) {
 
-    case PedigreeCanvas.layoutScheme.EXPANDED:
+    case AbstractPedigree.layoutScheme.EXPANDED:
        function doLayout(gen, sosa) {
           if (gen < canvas.gens) {
              var fy = doLayout(gen + 1, 2 * sosa);
@@ -431,7 +417,7 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
        doLayout(0, 1);
        break;
 
-    case PedigreeCanvas.layoutScheme.COMPACT:
+    case AbstractPedigree.layoutScheme.COMPACT:
        // For the last generation, place each boxes as close as possible.
        // Then when we add the previous generation, we might move some of
        // the boxes from the previous generation downward to make space for

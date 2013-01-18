@@ -42,6 +42,15 @@ AbstractPedigree.prototype.appearance_ = AbstractPedigree.appearance.GRADIENT;
 /**
  * @enum {number}
  */
+AbstractPedigree.layoutScheme = {
+   EXPANDED: 0,
+   COMPACT: 1
+};
+AbstractPedigree.prototype.layoutScheme_ = AbstractPedigree.layoutScheme.COMPACT;
+
+/**
+ * @enum {number}
+ */
 
 AbstractPedigree.colorScheme = {
    RULES: 0,
@@ -303,6 +312,11 @@ AbstractPedigree.prototype.showSettings = function(maxGens) {
    $("#settings select[name=colors]")
       .val(this.colorScheme_)
       .change(function() { f.setColorScheme(Number(this.value))});
+   $("#settings select[name=layout]")
+      .change(function() {f.layoutScheme_ = Number(this.value);
+                          f.showSettings();
+                          f.refresh()})
+      .val(this.layoutScheme_);
 };
 
 /**
