@@ -318,20 +318,27 @@ def personaEvents(request, id):
     """All events for the person"""
     id = int(id)
 
-    data = {id: ["Event1: some information",
-                "Event2: some more info",
-                "Event3: even more info",
-                "Event4: even more info",
-                "Event5: even more info",
-                "Event6: even more info",
-                "Event7: even more info",
-                "Event8: even more info",
-                "Event9: even more info",
-                "Event10: even more info",
-                "Event11: even more info",
-                "Event12: even more info",
-                "Event13: even more info",
-               ]}
+    same = SameAs()
+    tree = Tree(same=same)
+    schemes = set() # The surety schemes that are needed
+    styles = None
+    p = extended_personas(ids=[id], styles=styles, as_css=True, same=same,
+                          schemes=schemes)
+
+    data = ["%s: %s (%s)%s" % (e.event.name, e.event.date, e.event.place,
+                               u"\u2713" if e.event.sources  else u"\u2717")
+            for i, e in p[id].all_events.items()
+            if e.role == 'principal'
+               and not e.assertion.disproved]
+    data.extend("%s: %s%s%s" % (
+                c.char.name, 
+                " ".join("%s:%s" % (p.name, p.value) for p in c.parts),
+                "(%s)" % c.char.date if c.char.date else "",
+                u"\u2713" if c.char.sources else u"\u2717")
+             for k, c in p[id].all_chars.items()
+             if not c.assertion.disproved
+                and c.char.name not in ("_UID", ))
+
     return HttpResponse(
         to_json(data, year_only=False),
         content_type="application/json")

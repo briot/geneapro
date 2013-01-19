@@ -152,7 +152,7 @@ AbstractPedigree.prototype.getPersonDetails = function(person) {
    $.ajax(
        {'url': '/personaEvents/' + person.id,
         'success': function(data) {
-           person.details = data[person.id] || [];
+           person.details = data || [];
            f.refresh();
        }});
 };

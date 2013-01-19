@@ -38,7 +38,6 @@ http://www.beholdgenealogy.com/blog/?p=876
    might want to see other info (if "residence", there can be multiple of
    them) See also engagement instead of marriage
 ** Tooltip to display person info
-** Display more information for each person, in particular when zooming
 ** Highlight box when hover.
    Display action buttons ("make decujus", "view info",...) for the active box.
    Use a R-Tree for fast detection.
