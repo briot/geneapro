@@ -11,9 +11,9 @@ from geneapro import models
 from geneapro.utils.date import DateRange
 from geneapro.views.json import to_json
 from geneapro.views.custom_highlight import style_rules
+from geneapro.views.graph import graph
 from geneapro.views.styles import Styles
 from geneapro.views.rules import getLegend
-from geneapro.views.tree import Tree, SameAs
 from geneapro.views.queries import sql_in
 import collections
 
@@ -62,13 +62,15 @@ def __add_default_person_attributes (person):
    person.base_surname = person.surname
 
 
-def __get_events(ids, styles, same, types=None, schemes=None,
+def __get_events(ids, styles, graph, types=None, schemes=None,
                  query_groups=True):
     """Compute the events for the various persons in IDS (all all persons in
        the database if None)
-       SAME must be an instance of SameAs, that could have already been
-       partially populated.
-       Returns a list of persons:
+       
+       :param graph: an instance of Graph, which is used to compute whether
+          two ids represent the same person.
+       
+       :return: a list of persons:
           * persons is a dictionary of Persona instances, indexed on persona_id
 
        SCHEMES is the list of ids of Surety_Scheme that are used. You
@@ -82,8 +84,6 @@ def __get_events(ids, styles, same, types=None, schemes=None,
     """
 
     compute_parts = styles and styles.need_place_parts()
-
-    same.compute(ids)
 
     roles = dict()  # role_id  -> name
     places = dict() # place_id -> place
@@ -103,7 +103,8 @@ def __get_events(ids, styles, same, types=None, schemes=None,
 
     persons = dict() # id -> person
     for p in sql_in(models.Persona.objects, "id", ids):
-        mid = same.main(p.id)
+        p_node = graph.node_from_id(p.id)
+        mid = p_node.main_id()
         if mid not in persons:
             persons[mid] = p
             __add_default_person_attributes(p)
@@ -117,11 +118,17 @@ def __get_events(ids, styles, same, types=None, schemes=None,
     if types:
         events = events.filter(event__type__in=types)
 
-    main_ids = ids and same.main_ids(ids)  # None if ids is None
+    main_ids = None
+    if ids:
+        main_ids = set()
+        for p in ids:
+            p_node = graph.node_from_id(p)
+            main_ids.update(p_node.ids)
 
     for p in sql_in(events, "person", main_ids):
         e = p.event
-        person = persons[same.main(p.person_id)]
+        p_node = graph.node_from_id(p.person_id)
+        person = persons[p_node.main_id()]
         person.all_events[e.id] = EventInfo(
             event=e, role=roles[p.role_id], assertion=p)
 
@@ -160,7 +167,8 @@ def __get_events(ids, styles, same, types=None, schemes=None,
     if query_groups:
         groups = models.P2G.objects.select_related('group')
         for gr in sql_in(groups, "person", main_ids):
-            person = persons[same.main(gr.person_id)]
+            p_node = graph.node_from_id(gr.person_id)
+            person = persons[p_node.main_id()]
             person.all_groups[gr.group_id] = GroupInfo(
                 group=gr.group, assertion=gr)
             if gr.source_id:
@@ -182,7 +190,8 @@ def __get_events(ids, styles, same, types=None, schemes=None,
 
     for p in sql_in(all_p2c, "person", main_ids):
         c = p.characteristic
-        person = persons[same.main(p.person_id)]
+        p_node = graph.node_from_id(p.person_id)
+        person = persons[p_node.main_id()]
         p2c[c.id] = person
 
         c.sources = getattr(c, "sources", set())
@@ -240,23 +249,21 @@ def __get_events(ids, styles, same, types=None, schemes=None,
     return persons
 
 
-def extended_personas(ids, styles, event_types=None, as_css=False, same=None,
+def extended_personas(ids, styles, event_types=None, as_css=False, graph=graph,
                       schemes=None, query_groups=True):
     """Return a dict indexed on id containing extended instances of Persona,
        with additional fields for the birth, the death,...
        IDS can be None to get all persons from the database.
        AS_CSS should be True to get the styles as a CSS string rather than a
        python dict.
-       If specified, SAME must be an instance of SameAs.
 
        See __get_events for a definition of SCHEMES
     """
     if styles:
         styles.start ()
 
-    same = same or SameAs()
     persons = __get_events(
-        ids=ids, styles=styles, same=same, types=event_types, schemes=schemes,
+        ids=ids, styles=styles, graph=graph, types=event_types, schemes=schemes,
         query_groups=query_groups)
 
     if styles:
@@ -270,26 +277,34 @@ def view(request, id):
    """Display all details known about persona ID"""
 
    id = int(id)
-   same = SameAs()
-   tree = Tree(same=same)
+
+   graph.update_if_needed()
    schemes = set() # The surety schemes that are needed
    styles = None
-   p = extended_personas(ids=[id], styles=styles, as_css=True, same=same,
+   p = extended_personas(ids=[id], styles=styles, as_css=True, graph=graph,
                          schemes=schemes)
 
    surety_schemes = dict()
    for s in schemes:
        surety_schemes[s] = models.Surety_Scheme.objects.get(id=s).parts.all()
 
+   query = models.P2P.objects.filter(
+       type=models.P2P.sameAs)
+
+   node = graph.node_from_id(id)
+   assertions = list(models.P2P.objects.filter(
+       type=models.P2P.sameAs,
+       person1__in=node.ids.union(node.different)))
+
    return render_to_response(
        'geneapro/persona.html',
        {"decujus":p[id],
-        "decujusid":same.main(id),
+        "decujusid":id,
         "chars": p[id].all_chars,
         "events": p[id].all_events,
         "groups": p[id].all_groups,
         "schemes": surety_schemes,
-        "p2p": same.main_and_reason(id),
+        "p2p": [(0, a) for a in assertions],
        },
        context_instance=RequestContext(request))
 
@@ -297,11 +312,11 @@ def view(request, id):
 def view_list(request):
     """View the list of all personas"""
 
-    tree = Tree()
-    styles = Styles(style_rules, tree, decujus=1) # ??? Why "1"
+    graph.update_if_needed()
+    styles = Styles(style_rules, graph=graph, decujus=1) # ??? Why "1"
     all = extended_personas(
         ids=None, styles=styles, event_types=event_types_for_pedigree,
-        as_css=True)
+        graph=graph, as_css=True)
 
     all = [p for p in all.itervalues()]
     all.sort(key=lambda x: x.surname)
@@ -318,11 +333,11 @@ def personaEvents(request, id):
     """All events for the person"""
     id = int(id)
 
-    same = SameAs()
-    tree = Tree(same=same)
+    graph.update_if_needed()
+
     schemes = set() # The surety schemes that are needed
     styles = None
-    p = extended_personas(ids=[id], styles=styles, as_css=True, same=same,
+    p = extended_personas(ids=[id], styles=styles, as_css=True, graph=graph,
                           schemes=schemes)
 
     data = ["%s: %s (%s)%s" % (e.event.name, e.event.date, e.event.place,

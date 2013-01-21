@@ -258,10 +258,16 @@ class Digraph(object):
                     seen.add(e)
                     yield e
 
-    def breadth_first_search(self, roots, edgeiter=None,
-                             maxdepth=-1):
+    def breadth_first_search(self, roots, edgeiter=None, maxdepth=-1,
+                             distance=None):
+        """
+        Traverse the tree breadth first, and returns the immediate
+        children of a node before their own children.
+        :param distance: if specified, it must be a dict, which will be
+          augmented to associate a node with its distance from the roots.
+        """
 
-        def bfs(seen, u, maxdepth):
+        def bfs(seen, u, dist):
             """Return all children of u, then their own children.
                Does not return u itself.
             """
@@ -271,25 +277,29 @@ class Digraph(object):
             for edge in edgeiter(u):
                 e = edge[1] if edge[0] == u else edge[0]
                 if e not in seen:
+                    if distance is not None:
+                        distance[e] = min(distance.get(e, 10000), dist)
                     yield e
                     ends.append(e)
                     seen.add(e)
 
-            if maxdepth != 0:
+            if maxdepth == -1 or dist < maxdepth:
                 for e in ends:
-                    for d in bfs(seen, e, maxdepth - 1):
+                    for d in bfs(seen, e, dist=dist + 1):
                         yield d
 
         if edgeiter is None:
             edgeiter = self.out_edges
 
         seen = set()
-
-        for node in roots:
-            if node not in seen:
-                yield node
-                for d in bfs(seen, node, maxdepth):
-                    yield d
+        if maxdepth != 0:
+           for node in roots:
+               if node not in seen:
+                   if distance is not None:
+                       distance[node] = 0
+                   yield node
+                   for d in bfs(seen, node, dist=1):
+                       yield d
 
     def depth_first_search(self, roots=None, outedgesiter=None):
         """

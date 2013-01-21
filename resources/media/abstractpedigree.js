@@ -125,8 +125,10 @@ AbstractPedigree.prototype.setData = function(data, merge) {
 
    // Traverse the list of all known persons directly, not by iterating
    // generations and then persons, since in fact a tree is often sparse.
+   // We iterate from generation 0, in case the server sent too much
+   // information
    var count = [];
-   for (var gen = old_gens + 1; gen <= data.generations; gen++) {
+   for (var gen = 0; gen <= data.generations; gen++) {
       count[gen] = Math.pow(2, gen);
    }
    var d = data.sosa;

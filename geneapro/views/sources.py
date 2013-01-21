@@ -7,7 +7,7 @@ from django.template import RequestContext
 from geneapro import models
 from geneapro.views.queries import sql_in
 from geneapro.utils.date import DateRange
-from geneapro.views.tree import SameAs
+from geneapro.views.graph import graph
 
 
 class Fact(object):
@@ -40,7 +40,7 @@ def extended_sources(ids):
 
     sources = dict() # id -> Source
 
-    same = SameAs()
+    graph.update_if_needed()
 
     for s in sql_in(models.Source.objects.select_related(
                          "medium", "repositories", "researcher"),
@@ -58,8 +58,8 @@ def extended_sources(ids):
 
     p2e = models.P2E.objects.select_related()
     for c in sql_in(p2e, "source", ids):
-        same.compute([c.person_id])
-        pid = same.main(c.person_id)  # ??? Useless, main should always be min
+        # ??? Useless, main should always be min
+        pid = graph.node_from_id(c.person_id).main_id()
 
         f = Fact(
             surety=c.surety.name,
@@ -75,8 +75,7 @@ def extended_sources(ids):
 
     p2c = models.P2C.objects.select_related()
     for c in sql_in(p2c, "source", ids):
-        same.compute([c.person_id])
-        pid = same.main(c.person_id)
+        pid = graph.node_from_id(c.person_id).main_id()
 
         parts = []
         for p in models.Characteristic_Part.objects.filter(

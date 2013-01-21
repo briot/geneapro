@@ -11,9 +11,7 @@ from geneapro import models
 from geneapro.views import json
 from geneapro.views.custom_highlight import style_rules
 from geneapro.views.styles import Styles
-from geneapro.views.tree import Tree, SameAs
 from geneapro.views.queries import sql_in
-from geneapro.views.persona import extended_personas
 import datetime
 from geneapro.utils.graphs import Digraph
 
@@ -21,7 +19,7 @@ from geneapro.utils.graphs import Digraph
 class Persona_node(object):
     """A persona from the genealogy"""
 
-    def __init__(self, ids, name):
+    def __init__(self, ids, name, different):
         """
         Creates a new node to be stored in a graph.
         Such a node represents a physical person, possibly constructed from
@@ -29,20 +27,31 @@ class Persona_node(object):
         ids for the personas. More can be added later.
 
         The name is for debugging purposes only
+
+        :param different:
+            The set of ids that have been proven not to represent the same
+            physical person.
         """
 
         assert isinstance(ids, set)
 
         self.ids = ids
         self.name = name
-
+        self.different = different
         self.sex = '?'   # or 'M' or 'F'
 
+    def main_id(self):
+        """
+        Return one of the ids representing the person. It can be used at any
+        time to retrieve the person.
+        """
+        return min(self.ids);
+
     def __repr__(self):
-        return self.name.encode("utf-8")
+        return "%s-%s" % (self.main_id(), self.name.encode("utf-8"))
 
     def _graphlabel(self):
-        return "%s-%s" % (",".join("%s" % p for p in self.ids), self.name)
+        return "%s-%s" % (",".join("%s" % p for p in sorted(self.ids)), self.name)
 
 
 class P2P_Link(object):
@@ -51,7 +60,6 @@ class P2P_Link(object):
     KIND_FATHER = 0   # from is FATHER of to
     KIND_MOTHER = 1   # from is MOTHER of to
     KIND_SPOUSE = 2   # from and to are spouses (married or not)
-    KIND_SAME_AS = 3  # from and to are the same physical person
 
     def __init__(self, fromP, toP, kind):
         self.fromP = fromP
@@ -105,36 +113,40 @@ class GeneaGraph(Digraph):
         self.__nodes = dict()   # id -> Persona()
 
         sameas = dict()  # id -> [set of persona ids]
+        different = dict() # id -> [set of persona ids, disproved]
 
         #####
         # Group same-as personas into a single node.
 
-        query = models.P2P.objects.filter(
-            type=models.P2P.sameAs, disproved=False)
-        for p in query.values_list('person1', 'person2'):
-            p0 = sameas.get(p[0], None)
-            p1 = sameas.get(p[1], None)
+        def add_to_dict(d, id0, id1):
+            p0 = d.get(id0, None)
+            p1 = d.get(id1, None)
             if p0 is None:
                 if p1 is None:
-                    sameas[p[0]] = sameas[p[1]] = set((p[0], p[1]))
+                    d[id0] = d[id1] = set((id0, id1))
                 else:
-                    sameas[p[0]] = p1
-                    p1.add(p[0])
+                    d[id0] = p1
+                    p1.add(id0)
             else:
                 if p1 is None:
-                    sameas[p[1]] = p0
-                    p0.add(p[1])
+                    d[id1] = p0
+                    p0.add(id1)
                 else:
                     p0.update(p1)  # merge both groups
-                    sameas[p[1]] = p0
+                    d[id1] = p0
 
+        query = models.P2P.objects.filter(type=models.P2P.sameAs)
+        for p in query.values_list('person1', 'person2', 'disproved'):
+            add_to_dict(different if p[2] else sameas, p[0], p[1])
+                
         ######
         # Create nodes for all the persona from the database
 
         for p in models.Persona.objects.values_list('id', 'name'):
             if p[0] not in self.__nodes:
                 same = sameas.get(p[0], set((p[0], )))  # a set of persona ids
-                pa = Persona_node(ids=same, name=p[1])
+                diff = different.get(p[0], set())
+                pa = Persona_node(ids=same, name=p[1], different=diff)
 
                 for s in same:
                     self.__nodes[s] = pa
@@ -206,6 +218,7 @@ class GeneaGraph(Digraph):
         for c in models.Characteristic_Part.objects.raw(query):
             self.node_from_id(c.person).sex = c.name
 
+    def assign_layers(self):
         # Assign layers.
         # We override the iterators so that children have lower layers than
         # their parents (which is more natural in genealogy).
@@ -286,6 +299,32 @@ class GeneaGraph(Digraph):
         for e in self.in_edges(node):
             if e.kind == P2P_Link.KIND_SPOUSE:
                 yield e[0]
+
+    def mothers(self, node_or_id):
+        """
+        return the nodes representing the possible mothers of node.
+        There could be multiple results.
+        """
+        if isinstance(node_or_id, models.Persona):
+            node_or_id = self.node_from_id(node_or_id.id)
+        elif not isinstance(node_or_id, Persona_node):
+            node_or_id = self.node_from_id(node_or_id)
+        return [e[0] 
+               for e in self.in_edges(node_or_id)
+               if e.kind == P2P_Link.KIND_MOTHER]
+
+    def fathers(self, node_or_id):
+        """
+        return the nodes representing the possible father of node.
+        There could be multiple results.
+        """
+        if isinstance(node_or_id, models.Persona):
+            node_or_id = self.node_from_id(node_or_id.id)
+        elif not isinstance(node_or_id, Persona_node):
+            node_or_id = self.node_from_id(node_or_id)
+        return [e[0] 
+               for e in self.in_edges(node_or_id)
+               if e.kind == P2P_Link.KIND_FATHER]
 
     def preferred_length(self, edge):
         return 0 if edge.kind == P2P_Link.KIND_SPOUSE else 1
@@ -393,19 +432,27 @@ class GeneaGraph(Digraph):
         return {"data": json.to_json(result, year_only=True),
                 "families": families}
 
-    def people_in_tree(self, id, maxdepth=-1, spouses_tree=False):
+    def people_in_tree(self, id, maxdepthAncestors=-1,
+                       maxdepthDescendants=-1, spouses_tree=False,
+                       distance=None):
         """
         Return a set of nodes for id and all persons in his tree (ancestors
-        or descendants, up to maxdepth layers in each direction).
+        or descendants, up to maxdepth* layers in each direction).
 
         :param id: either the id of a person, or a list of such ids. Their
           ancestors and descendants are returned.
         :param spouses_tree: If True, also include the ancestors and
           descendants of the spouses of id.
+        :param distance: if specified, it must be a dict(), which will
+          associate the ancestor or descendant node with its distance (in
+          generations) from id.
+        :return: a set of nodes
 
         """
 
-        if isinstance(id, int):
+        if isinstance(id, Persona_node):
+            ids = set([id])
+        elif isinstance(id, int):
             ids = set([self.node_from_id(id)])
         else:
             ids = set(self.node_from_id(n) for n in id)
@@ -417,11 +464,13 @@ class GeneaGraph(Digraph):
 
         to_match = set(self.breadth_first_search(
                 roots=ids,
-                maxdepth=maxdepth,
+                maxdepth=maxdepthAncestors,
+                distance=distance,
                 edgeiter=self.in_parent_edges))
         to_match.update(self.breadth_first_search(
                 roots=ids,
-                maxdepth=maxdepth,
+                maxdepth=maxdepthDescendants,
+                distance=distance,
                 edgeiter=self.out_children_edges))
         return to_match
 
@@ -438,10 +487,12 @@ def quilts_view(request, decujus=None):
     # ??? Should lock the graph until the view has been generated
 
     graph.update_if_needed()
+    graph.assign_layers()
 
     if decujus is not None:
         subset = graph.people_in_tree(
-            id=int(decujus), maxdepth=3, spouses_tree=True)
+            id=int(decujus), maxdepthAncestors=3, maxdepthDescendants=3,
+            spouses_tree=True)
     else:
         subset = None
 

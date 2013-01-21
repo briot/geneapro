@@ -185,14 +185,14 @@ class Styles(ColorScheme):
    by caching data when appropriate.
    """
 
-   def __init__(self, rules, tree, decujus):
+   def __init__(self, rules, graph, decujus):
       """Rules specifies the rules to use for the highlighting.
       """
       super(Styles, self).__init__()
 
       # Preprocess the rules for faster computation
 
-      self.tree  = tree
+      self.graph  = graph
       self.rules = []
       self.today = DateRange.today()
       self.counts = [None] * len (rules)  # the "count" rules: (test, value)
@@ -211,14 +211,32 @@ class Styles(ColorScheme):
                   self.counts [index] = (rules_func [t[1]], t[2])
                   continue
                elif t[0] == "ancestor" and rule_type == RULE_ATTR:
-                  tests.append ((t[0], tree.ancestors (t[2])))
+                  ancestors = graph.people_in_tree(
+                      id=t[2], maxdepthAncestors=-1, maxdepthDescendants=0)
+                  tests.append((t[0], [a.main_id() for a in ancestors]))
                   continue
                elif t[0] == "descendant" and rule_type == RULE_ATTR:
-                  tests.append ((t[0], tree.descendants (t[2])))
+                  descendants = graph.people_in_tree(
+                      id=t[2], maxdepthAncestors=0, maxdepthDescendants=-1)
+                  tests.append ((t[0], [a.main_id() for a in descendants]))
                   continue
                elif t[0] == "IMPLEX" and rule_type == RULE_ATTR:
-                  tests.append ((t[0], rules_func [t[1]], t[2],
-                                 tree.ancestors (decujus)))
+                  # ??? We used to preprocess the tree to know how many times
+                  # an id occurred in the tree, but the graph no longer
+                  # provides that info
+                  print "Handling of IMPLEX is temporarily broken"
+
+                  def build_implex(counts, id):
+                      counts[id] = counts.get(id, 0) + 1
+                      fathers = graph.fathers(id)
+                      if fathers:
+                          build_implex(counts, fathers[0].main_id())
+                      mothers = graph.mothers(id)
+                      if mothers:
+                          build_implex(counts, mothers[0].main_id())
+                  counts = dict()
+                  build_implex(counts, graph.node_from_id(decujus).main_id())
+                  tests.append ((t[0], rules_func [t[1]], t[2], counts))
                   continue
                elif t[0].startswith ("place.") and t[0] != "place.name":
                   self._need_place_parts = True
@@ -328,21 +346,19 @@ class Styles(ColorScheme):
                   else:
                      value = "N"
                elif t[0] == "UNKNOWN_FATHER":
-                  f, m = self.tree.parents.get (person.id, (None, None))
-                  if f is None:
-                     value = "Y"
-                  else:
+                  if self.graph.fathers(person):
                      value = "N"
+                  else:
+                     value = "Y"
                elif t[0] == "UNKNOWN_MOTHER":
-                  f, m = self.tree.parents.get (person.id, (None, None))
-                  if m is None:
-                     value = "Y"
-                  else:
+                  if self.graph.mothers(person):
                      value = "N"
+                  else:
+                     value = "Y"
                elif t[0] == "SEX":
                   value = person.sex
                elif t[0] == "IMPLEX":
-                  value = t[3].get (person.id, 0)
+                  value = t[3].get(person.id, 0)
                elif t[0] == "age":
                   if person.birth:
                      value = self.today.years_since (person.birth.Date)

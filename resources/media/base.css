@@ -133,7 +133,7 @@ td.persona:before {
 
 .sourcepart h3 {margin:10px 0; padding-left:10px; }
 .sourcepartData {border-bottom:1px dotted #999}
-.sourcepartData tr.disproved {text-decoration:line-through}
+tr.disproved {text-decoration:line-through}
 
 .actions {color:#CAD4DE; float:right; padding:2px 10px 5px 10px;
           line-height:1.22em}
