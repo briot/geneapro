@@ -32,12 +32,11 @@ def get_sosa_tree(graph, id, max_levels, style_rules, last_gen_known=-1):
    ancestors = graph.people_in_tree(
        id=id, maxdepthAncestors=max_levels - 1, maxdepthDescendants=0,
        distance=distance)
-   ancestors = [a.main_id() for a in ancestors
-                if distance[a] >= last_gen_known]
+   ancestors = [a for a in ancestors if distance[a] >= last_gen_known]
 
    descendants = graph.people_in_tree(
        id=id, maxdepthAncestors=0, maxdepthDescendants=1, distance=distance)
-   descendants = [a.main_id() for a in descendants if distance[a] != 0]
+   descendants = [a for a in descendants if distance[a] != 0]
 
    # ??? Should cache extended_persons in the cache
    persons = extended_personas(
@@ -51,19 +50,19 @@ def get_sosa_tree(graph, id, max_levels, style_rules, last_gen_known=-1):
                marriage[sosa] = persons[id].marriage
        fathers = graph.fathers(id)
        if fathers:
-           build_sosa_tree(sosa_tree, marriage, sosa * 2, fathers[0].main_id())
+           build_sosa_tree(sosa_tree, marriage, sosa * 2, fathers[0].main_id)
        mothers = graph.mothers(id)
        if mothers:
            build_sosa_tree(
-               sosa_tree, marriage, sosa * 2 + 1, mothers[0].main_id())
+               sosa_tree, marriage, sosa * 2 + 1, mothers[0].main_id)
 
    sosa_tree = dict()
    marriage = dict()
-   build_sosa_tree(sosa_tree, marriage, 1, graph.node_from_id(id).main_id())
+   build_sosa_tree(sosa_tree, marriage, 1, graph.node_from_id(id).main_id)
 
    return {'generations': max_levels,
            'sosa':        sosa_tree,
-           'children':    [persons[c] for c in descendants],
+           'children':    [persons[c.main_id] for c in descendants],
            'marriage':    marriage,
            'styles':      styles.all_styles()}
 

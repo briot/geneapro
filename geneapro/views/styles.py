@@ -213,12 +213,12 @@ class Styles(ColorScheme):
                elif t[0] == "ancestor" and rule_type == RULE_ATTR:
                   ancestors = graph.people_in_tree(
                       id=t[2], maxdepthAncestors=-1, maxdepthDescendants=0)
-                  tests.append((t[0], [a.main_id() for a in ancestors]))
+                  tests.append((t[0], [a.main_id for a in ancestors]))
                   continue
                elif t[0] == "descendant" and rule_type == RULE_ATTR:
                   descendants = graph.people_in_tree(
                       id=t[2], maxdepthAncestors=0, maxdepthDescendants=-1)
-                  tests.append ((t[0], [a.main_id() for a in descendants]))
+                  tests.append ((t[0], [a.main_id for a in descendants]))
                   continue
                elif t[0] == "IMPLEX" and rule_type == RULE_ATTR:
                   # ??? We used to preprocess the tree to know how many times
@@ -230,12 +230,12 @@ class Styles(ColorScheme):
                       counts[id] = counts.get(id, 0) + 1
                       fathers = graph.fathers(id)
                       if fathers:
-                          build_implex(counts, fathers[0].main_id())
+                          build_implex(counts, fathers[0].main_id)
                       mothers = graph.mothers(id)
                       if mothers:
-                          build_implex(counts, mothers[0].main_id())
+                          build_implex(counts, mothers[0].main_id)
                   counts = dict()
-                  build_implex(counts, graph.node_from_id(decujus).main_id())
+                  build_implex(counts, graph.node_from_id(decujus).main_id)
                   tests.append ((t[0], rules_func [t[1]], t[2], counts))
                   continue
                elif t[0].startswith ("place.") and t[0] != "place.name":

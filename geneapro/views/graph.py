@@ -39,16 +39,18 @@ class Persona_node(object):
         self.name = name
         self.different = different
         self.sex = '?'   # or 'M' or 'F'
+        self.__main_id = min(self.ids)
 
+    @property
     def main_id(self):
         """
         Return one of the ids representing the person. It can be used at any
         time to retrieve the person.
         """
-        return min(self.ids);
+        return self.__main_id
 
     def __repr__(self):
-        return "%s-%s" % (self.main_id(), self.name.encode("utf-8"))
+        return "%s-%s" % (self.main_id, self.name.encode("utf-8"))
 
     def _graphlabel(self):
         return "%s-%s" % (",".join("%s" % p for p in sorted(self.ids)), self.name)

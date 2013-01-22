@@ -59,7 +59,7 @@ def extended_sources(ids):
     p2e = models.P2E.objects.select_related()
     for c in sql_in(p2e, "source", ids):
         # ??? Useless, main should always be min
-        pid = graph.node_from_id(c.person_id).main_id()
+        pid = graph.node_from_id(c.person_id).main_id
 
         f = Fact(
             surety=c.surety.name,
@@ -75,7 +75,7 @@ def extended_sources(ids):
 
     p2c = models.P2C.objects.select_related()
     for c in sql_in(p2c, "source", ids):
-        pid = graph.node_from_id(c.person_id).main_id()
+        pid = graph.node_from_id(c.person_id).main_id
 
         parts = []
         for p in models.Characteristic_Part.objects.filter(

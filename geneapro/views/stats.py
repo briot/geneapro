@@ -29,9 +29,9 @@ def view (request, decujus=1):
    distance = dict()
    ancestors = graph.people_in_tree(
        id=decujus, maxdepthDescendants=0, distance=distance)
-   ids = [a.main_id() for a in ancestors]
    persons = extended_personas(
-       ids, styles=None, event_types=event_types_for_pedigree, graph=graph)
+       nodes=ancestors, styles=None, event_types=event_types_for_pedigree,
+       graph=graph)
    
    f = graph.fathers(decujus)
    fathers = graph.people_in_tree(id=f[0], maxdepthDescendants=0) if f else []
@@ -54,7 +54,7 @@ def view (request, decujus=1):
       deaths = None
       gen_range = [index + 1, "?", "?", ""] # gen, min, max, legend
       for p in generations[index]:
-         p = persons[p.main_id()]
+         p = persons[p.main_id]
          if p.birth and p.birth.Date:
             if births is None or p.birth.Date < births:
                births = p.birth.Date
@@ -106,7 +106,7 @@ def view (request, decujus=1):
 
    return render_to_response (
        'geneapro/stats.html',
-      {"total_ancestors": len(ids),
+      {"total_ancestors": len(ancestors),
        "total_father":    len(fathers),
        "total_mother":    len(mothers),
        "ranges":          ranges,

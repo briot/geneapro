@@ -62,14 +62,16 @@ def __add_default_person_attributes (person):
    person.base_surname = person.surname
 
 
-def __get_events(ids, styles, graph, types=None, schemes=None,
+def __get_events(nodes, styles, graph, types=None, schemes=None,
                  query_groups=True):
     """Compute the events for the various persons in IDS (all all persons in
        the database if None)
        
+       :param nodes:
+           A set of graph.Persona_node, or None to get all persons from the
+           database.
        :param graph: an instance of Graph, which is used to compute whether
           two ids represent the same person.
-       
        :return: a list of persons:
           * persons is a dictionary of Persona instances, indexed on persona_id
 
@@ -78,10 +80,12 @@ def __get_events(ids, styles, graph, types=None, schemes=None,
           just discarded.
 
        This sets persons[*].chars to a list of the characteristics.
-       IDS is the list of IDS for the persons. If it is None, we query info for
-       all personas in the database.
        Only the events of type in TYPES are returned
     """
+    if nodes:
+        ids = [a.main_id for a in nodes]
+    else:
+        ids = None
 
     compute_parts = styles and styles.need_place_parts()
 
@@ -96,18 +100,21 @@ def __get_events(ids, styles, graph, types=None, schemes=None,
         roles[role.id] = role.name
 
     ##############
-    # Create the personas that will be returned. Doing this after resolving
-    # the links above means that we are potentially storing fewer instances
-    # of personas, thus reducing memory usage
+    # Create the personas that will be returned.
     ##############
 
     persons = dict() # id -> person
-    for p in sql_in(models.Persona.objects, "id", ids):
-        p_node = graph.node_from_id(p.id)
-        mid = p_node.main_id()
-        if mid not in persons:
-            persons[mid] = p
+    if ids:
+        for p in sql_in(models.Persona.objects, "id", ids):
+            # p.id is always the main_id, since that's how ids was built
+            persons[p.id] = p
             __add_default_person_attributes(p)
+    else:
+        for p in models.Persona.objects:
+            mid = graph.node_from_id(p.id).main_id
+            if mid not in persons:
+                persons[mid] = p
+                __add_default_person_attributes(p)
 
     ################
     # Check all events that the persons were involved in.
@@ -118,17 +125,16 @@ def __get_events(ids, styles, graph, types=None, schemes=None,
     if types:
         events = events.filter(event__type__in=types)
 
-    main_ids = None
-    if ids:
-        main_ids = set()
-        for p in ids:
-            p_node = graph.node_from_id(p)
-            main_ids.update(p_node.ids)
+    all_ids = None
+    if nodes:
+        all_ids = set()
+        for p in nodes:
+            all_ids.update(p.ids)
 
-    for p in sql_in(events, "person", main_ids):
+    for p in sql_in(events, "person", all_ids):
         e = p.event
         p_node = graph.node_from_id(p.person_id)
-        person = persons[p_node.main_id()]
+        person = persons[p_node.main_id]
         person.all_events[e.id] = EventInfo(
             event=e, role=roles[p.role_id], assertion=p)
 
@@ -166,9 +172,9 @@ def __get_events(ids, styles, graph, types=None, schemes=None,
 
     if query_groups:
         groups = models.P2G.objects.select_related('group')
-        for gr in sql_in(groups, "person", main_ids):
+        for gr in sql_in(groups, "person", all_ids):
             p_node = graph.node_from_id(gr.person_id)
-            person = persons[p_node.main_id()]
+            person = persons[p_node.main_id]
             person.all_groups[gr.group_id] = GroupInfo(
                 group=gr.group, assertion=gr)
             if gr.source_id:
@@ -188,10 +194,10 @@ def __get_events(ids, styles, graph, types=None, schemes=None,
     all_p2c = models.P2C.objects.select_related(
         'characteristic', 'characteristic__place')
 
-    for p in sql_in(all_p2c, "person", main_ids):
+    for p in sql_in(all_p2c, "person", all_ids):
         c = p.characteristic
         p_node = graph.node_from_id(p.person_id)
-        person = persons[p_node.main_id()]
+        person = persons[p_node.main_id]
         p2c[c.id] = person
 
         c.sources = getattr(c, "sources", set())
@@ -212,7 +218,7 @@ def __get_events(ids, styles, graph, types=None, schemes=None,
     chars = models.Characteristic_Part.objects.select_related(
         'type', 'characteristic', 'characteristic__place')
 
-    for part in sql_in(chars, "characteristic", ids and p2c.keys()):
+    for part in sql_in(chars, "characteristic", nodes and p2c.keys()):
         person = p2c[part.characteristic_id]
         ch = person.all_chars[part.characteristic_id]
         ch.parts.append(CharPartInfo(name=part.type.name, value=part.name))
@@ -249,21 +255,24 @@ def __get_events(ids, styles, graph, types=None, schemes=None,
     return persons
 
 
-def extended_personas(ids, styles, event_types=None, as_css=False, graph=graph,
+def extended_personas(nodes, styles, event_types=None, as_css=False, graph=graph,
                       schemes=None, query_groups=True):
     """Return a dict indexed on id containing extended instances of Persona,
        with additional fields for the birth, the death,...
-       IDS can be None to get all persons from the database.
-       AS_CSS should be True to get the styles as a CSS string rather than a
-       python dict.
 
-       See __get_events for a definition of SCHEMES
+       :param nodes:
+           A set of graph.Persona_node, or None to get all persons from the
+           database.
+       :param as_css:
+           True to get the styles as a CSS string rather than a python dict
+       :param schemes:
+           See __get_events for a definition of SCHEMES
     """
     if styles:
         styles.start ()
 
     persons = __get_events(
-        ids=ids, styles=styles, graph=graph, types=event_types, schemes=schemes,
+        nodes=nodes, styles=styles, graph=graph, types=event_types, schemes=schemes,
         query_groups=query_groups)
 
     if styles:
@@ -281,8 +290,9 @@ def view(request, id):
    graph.update_if_needed()
    schemes = set() # The surety schemes that are needed
    styles = None
-   p = extended_personas(ids=[id], styles=styles, as_css=True, graph=graph,
-                         schemes=schemes)
+   p = extended_personas(
+       nodes=set([graph.node_from_id(id)]),
+       styles=styles, as_css=True, graph=graph, schemes=schemes)
 
    surety_schemes = dict()
    for s in schemes:
@@ -315,7 +325,7 @@ def view_list(request):
     graph.update_if_needed()
     styles = Styles(style_rules, graph=graph, decujus=1) # ??? Why "1"
     all = extended_personas(
-        ids=None, styles=styles, event_types=event_types_for_pedigree,
+        nodes=None, styles=styles, event_types=event_types_for_pedigree,
         graph=graph, as_css=True)
 
     all = [p for p in all.itervalues()]
@@ -337,8 +347,9 @@ def personaEvents(request, id):
 
     schemes = set() # The surety schemes that are needed
     styles = None
-    p = extended_personas(ids=[id], styles=styles, as_css=True, graph=graph,
-                          schemes=schemes)
+    p = extended_personas(
+        nodes=set([graph.node_from_id(id)]),
+        styles=styles, as_css=True, graph=graph, schemes=schemes)
 
     data = ["%s: %s (%s)%s" % (e.event.name, e.event.date, e.event.place,
                                u"\u2713" if e.event.sources  else u"\u2717")
