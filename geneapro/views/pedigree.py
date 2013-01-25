@@ -76,13 +76,16 @@ def get_sosa_tree(graph, id, max_levels, style_rules,
        def build_children_tree(children, id, gen):
            if id in persons:
                children[id] = []
-           for node in graph.children(id):
-               if node.main_id in persons:
-                   persons[node.main_id].generation = -distance[node]
+           sorted = [(persons[node.main_id] if node.main_id in persons else None, node)
+                     for node in graph.children(id)]
+           sorted.sort(key=lambda p: p[0].birth.Date if p[0] else None)
+           for p in sorted:
+               if p[0]:
+                   p[0].generation = -distance[p[1]]
                    if id in persons:
-                       children[id].append(node.main_id)
+                       children[id].append(p[0].id)
                if gen < maxdepthDescendants:
-                   build_children_tree(children, id=node.main_id, gen=gen + 1)
+                   build_children_tree(children, id=p[0].id, gen=gen + 1)
 
        build_sosa_tree(sosa_tree, marriage, 1, decujus.main_id)
        build_children_tree(children, id=decujus.main_id, gen=1)

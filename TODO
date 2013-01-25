@@ -45,7 +45,8 @@ http://www.beholdgenealogy.com/blog/?p=876
    at the maximum width to display the info.
 ** control-click does not work on Firefox/OSX
 ** Test infinite loops with invalid pedigree: A parent of B parent of C parent of A
-** descendants: should show a node for the wife(s)
+** descendants: should show a node for the wife(s), and link children to that.
+** Display timeline (ie range of date at the top of each column of boxes)
 
 ** Dynamic "infinite" expansion
 See "Interactive Visualization of Genealogical Graphs"
@@ -77,6 +78,7 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    Not necessarily related to the current root
 ** Display last name on a separate line to make it more readable
 ** Tooltip to display person info
+** Display fanchart for descendants
 ** Rotation fan chart
    See https://plus.google.com/u/0/115195430424417504730/posts/QrXM4z9JxrG
 ** Half and Quarter circle view
