@@ -19,60 +19,76 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def get_sosa_tree(graph, id, max_levels, style_rules, last_gen_known=-1):
+def get_sosa_tree(graph, id, max_levels, style_rules,
+                  last_descendant_known=-1,
+                  maxdepthDescendants=1, last_gen_known=-1):
    """
        :param last_gen_known: is the number of the last generation for which the
            client already has data, and thus do not need to be sent again. -1
            to retrieve all.
+       :param maxdepthDescendants:
+           The number of generations for which we compute the children.
    """
 
-   decujus = graph.node_from_id(id).main_id
+   decujus = graph.node_from_id(id)
 
-   styles = Styles(style_rules, graph, decujus=decujus)
+   styles = Styles(style_rules, graph, decujus=decujus.main_id)
 
    distance = dict()
    ancestors = graph.people_in_tree(
-       id=decujus, maxdepthAncestors=max_levels - 1, maxdepthDescendants=0,
-       distance=distance)
+       id=decujus.main_id, maxdepthAncestors=max_levels - 1,
+       maxdepthDescendants=0, distance=distance)
    ancestors = [a for a in ancestors if distance[a] >= last_gen_known]
 
    descendants = graph.people_in_tree(
-       id=decujus, maxdepthAncestors=0, maxdepthDescendants=1, distance=distance)
-   descendants = [a for a in descendants if distance[a] != 0]
-
-   persons = extended_personas(
-       set(ancestors).union(descendants), styles,
-       event_types=event_types_for_pedigree, graph=graph)
-
-   def build_sosa_tree(sosa_tree, marriage, sosa, id):
-       # A person might not be in 'persons', and yet its parent be there,
-       # in case we have filtered out earlier generations.
-       if id in persons:
-           sosa_tree[sosa] = id
-           if persons[id].marriage:
-               marriage[sosa] = persons[id].marriage
-       fathers = graph.fathers(id)
-       if fathers:
-           build_sosa_tree(sosa_tree, marriage, sosa * 2, fathers[0].main_id)
-       mothers = graph.mothers(id)
-       if mothers:
-           build_sosa_tree(
-               sosa_tree, marriage, sosa * 2 + 1, mothers[0].main_id)
+       id=decujus.main_id, maxdepthAncestors=0,
+       distance=distance, maxdepthDescendants=maxdepthDescendants)
+   descendants.remove(decujus)
+   descendants = [a for a in descendants if distance[a] >= last_descendant_known]
 
    sosa_tree = dict()
    marriage = dict()
-   build_sosa_tree(sosa_tree, marriage, 1, decujus)
-
-   def build_children_tree(children, id):
-       children[id] = []
-       for node in graph.children(id):
-           if node.main_id in persons:
-               build_children_tree(children, node.main_id)
-               children[id].append(node.main_id)
    children = {}
-   build_children_tree(children, decujus)
+   persons = {}
+
+   all_person_nodes = set(ancestors).union(descendants)
+   if all_person_nodes:
+       persons = extended_personas(
+           all_person_nodes, styles,
+           event_types=event_types_for_pedigree, graph=graph)
+
+       def build_sosa_tree(sosa_tree, marriage, sosa, id):
+           # A person might not be in 'persons', and yet its parent be there,
+           # in case we have filtered out earlier generations.
+           if id in persons:
+               sosa_tree[sosa] = id
+               persons[id].generation = distance[graph.node_from_id(id)]
+               if persons[id].marriage:
+                   marriage[sosa] = persons[id].marriage
+           fathers = graph.fathers(id)
+           if fathers:
+               build_sosa_tree(sosa_tree, marriage, sosa * 2, fathers[0].main_id)
+           mothers = graph.mothers(id)
+           if mothers:
+               build_sosa_tree(
+                   sosa_tree, marriage, sosa * 2 + 1, mothers[0].main_id)
+
+       def build_children_tree(children, id, gen):
+           if id in persons:
+               children[id] = []
+           for node in graph.children(id):
+               if node.main_id in persons:
+                   persons[node.main_id].generation = -distance[node]
+                   if id in persons:
+                       children[id].append(node.main_id)
+               if gen < maxdepthDescendants:
+                   build_children_tree(children, id=node.main_id, gen=gen + 1)
+
+       build_sosa_tree(sosa_tree, marriage, 1, decujus.main_id)
+       build_children_tree(children, id=decujus.main_id, gen=1)
 
    return {'generations': max_levels,
+           'descendants': maxdepthDescendants,
            'persons':     persons,    # All persons indexed by id
            'sosa':        sosa_tree,  # sosa_number -> person_id
            'children':    children,   # personId -> [children_id*]
@@ -80,7 +96,8 @@ def get_sosa_tree(graph, id, max_levels, style_rules, last_gen_known=-1):
            'styles':      styles.all_styles()}
 
 
-def compute_data(graph, generations, year_only, who, last_gen_known=-1):
+def compute_data(graph, generations, year_only, who, maxdepthDescendants=1,
+                 last_descendant_known=-1, last_gen_known=-1):
     """Compute, and send back to the user, information about the pedigree of a
        specific person. This includes ancestors and children.
 
@@ -89,6 +106,8 @@ def compute_data(graph, generations, year_only, who, last_gen_known=-1):
            to retrieve all.
     """
     result = get_sosa_tree(graph, who, max_levels=generations, style_rules=style_rules,
+                           maxdepthDescendants=maxdepthDescendants,
+                           last_descendant_known=last_descendant_known,
                            last_gen_known=last_gen_known)
     return to_json(result, year_only=year_only)
 
@@ -134,9 +153,13 @@ def pedigree_data(request, decujus):
     """
     decujus = int(decujus)
     generations = int(request.GET.get("gens", 5))
+    descendant_gens = int(request.GET.get("descendant_gens", 1))
+    desc_known = int(request.GET.get("desc_known", -1))
     generations_known = int(request.GET.get("gens_known", -1))
     graph.update_if_needed()   # ??? Should lock until the view has been generated
     return HttpResponse(
         compute_data(graph, generations, year_only=True, who=decujus,
+                     maxdepthDescendants=descendant_gens,
+                     last_descendant_known=desc_known,
                      last_gen_known=generations_known),
         content_type="application/json")

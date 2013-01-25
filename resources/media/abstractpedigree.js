@@ -13,18 +13,21 @@ var DEFAULT_GENERATIONS = 5;
 /** Construct a new canvas
  */
 function AbstractPedigree(canvas, data) {
-   Canvas.call(this, canvas /* elem */);
    this.gens = data.generations;   //  display all of them by default
+   this.descendant_gens = data.descendants;
+   Canvas.call(this, canvas /* elem */);
    this.setData(data);
 }
 inherits(AbstractPedigree, Canvas);
 
-/**
- * The number of generations to display. This might be different from the
- * number of generations available in data (although never greater), in case
- * we already had information for extra persons.
+/** The number of ancestor generations to display. This might be different from
+ * the number of generations available in data (although never greater), in
+ * case we already had information for extra persons.
  */
 AbstractPedigree.prototype.gens;
+
+/** The number of descendant generations to display. */
+AbstractPedigree.prototype.descendants_gens;
 
 /**
  * Describes how the boxes are displayed.
@@ -83,6 +86,7 @@ AbstractPedigree.prototype.colorScheme_ = AbstractPedigree.colorScheme.PEDIGREE;
  *    * 'generation': the generation number (1 for decujus and 0 for children)
  *    * 'sosa': the SOSA number (1 for decujus, 0 .. -n for children)
  *    * 'angle': position of the person in the generation, from 0.0 to 1.0.
+ *    * 'parent_': pointer to parent person (for descendants of decujus)
  * The canvas needs to be refreshed explicitly.
  *
  * @param {{persons:Array.<object>, generations:number,
@@ -91,6 +95,9 @@ AbstractPedigree.prototype.colorScheme_ = AbstractPedigree.colorScheme.PEDIGREE;
  *     Data for the pedigree. Children is, for each person id, the list of its
  *     children. Sosa is a map from sosa number to person id, which is used to
  *     find the parents of a person.
+ *     Each item in persons must have the following fields:
+ *         * 'generation': the generation number (1 for decujus, negative
+ *           for children)
  *
  * @param {boolean} merge
  *     If true, the new data is added to the existing data, instead of
@@ -98,10 +105,12 @@ AbstractPedigree.prototype.colorScheme_ = AbstractPedigree.colorScheme.PEDIGREE;
  */
 
 AbstractPedigree.prototype.setData = function(data, merge) {
+   var canvas = this;
    var old_gens = (this.data ? this.data.generations : -1);
 
    if (merge && this.data) {
       this.data.generations = Math.max(data.generations, this.data.generations);
+      this.data.descendants = Math.max(data.descendants, this.data.descendants);
       for (var d in data.marriage) {
          this.data.marriage[d] = data.marriage[d];
       }
@@ -109,7 +118,9 @@ AbstractPedigree.prototype.setData = function(data, merge) {
          this.data.styles[d] = data.styles[d];
       }
       for (var d in data.persons) {
-         this.data.persons[d] = data.persons[d];
+         if (this.data.persons[d] === undefined) {
+            this.data.persons[d] = data.persons[d];
+         }
       }
       //  No merging children, to preserve the details we might have
 
@@ -132,26 +143,38 @@ AbstractPedigree.prototype.setData = function(data, merge) {
    var d = data.sosa;
    for (var sosa in d) {
       var p = data.persons[d[sosa]];
-      p.generation = Math.floor(Math.log(sosa)/Math.LN2);
       p.sosa = sosa;
       p.angle = sosa / count[p.generation] - 1;
       this.data.sosa[sosa] = p;
    }
 
-   // All persons that have children will have a 'children' field
-
    for (var p in data.children) {
-      var children = this.data.persons[p].children = [];
-      var children_ids = data.children[p];
-      var len = children_ids.length;
+      var parent = this.data.persons[p];
+      var children = parent.children = [];
+      var len = data.children[p].length;
       for (var c = 0; c < len; c++) {
-         var pc = this.data.persons[children_ids[c]];
-         pc.generation = -1;
+         var pc = this.data.persons[data.children[p][c]];
          pc.sosa = -1;
-         pc.angle = c / len;
+         // pc.angle is computed later
+         pc.parent_ = parent;
          children.push(pc);
       }
    }
+
+   function _doAngles(indiv, from, to) {
+      indiv.angle = from / 360;
+      if (indiv.children) {
+         var step = (to - from) / indiv.children.length;
+         for (var c = 0; c < indiv.children.length; c++) {
+            if (indiv.children[c]) {
+               _doAngles(indiv.children[c],
+                         from + c * step,
+                         from + (c + 1) * step);
+            }
+         }
+      }
+   }
+   _doAngles(this.data.sosa[1], 0, 360);
 
    //  No longer need this
    delete data.children;
@@ -201,23 +224,29 @@ AbstractPedigree.prototype.setColorScheme = function(scheme) {
  *   @param {number}  gen   The number of generations to load.
  */
 
-AbstractPedigree.prototype.loadData = function(gen) {
-   this.gens = gen;
+AbstractPedigree.prototype.loadData = function(gen, descendants) {
+   this.gens = gen === undefined ? this.gens : gen;
+   this.descendant_gens = descendants === undefined ? this.descendant_gens : descendants;
 
    // If we intend to display fewer generations than are already known, no
    // need to download anything.
 
-   if (this.data && gen <= this.data.generations) {
+   if (this.data &&
+       this.gens <= this.data.generations &&
+       this.descendant_gens <= this.data.descendants)
+   {
       this.refresh();
       return;
    }
 
    var f = this;  //  closure for callbacks
    var decujus = (this.data ? this.data.sosa[1].id : 1);
-   var known = (this.data ? this.data.generations : -1);
    $.ajax(
       {url: '/pedigreeData/' + decujus,
-       data: {'gens': gen, 'gens_known': known},
+       data: {'gens': this.gens,
+              'gens_known': this.data ? this.data.generations : -1,
+              'desc_known': this.data ? this.data.descendants : -1,
+              'descendant_gens': this.descendant_gens},
        success: function(data) {
          f.setData(data, true /* merge */);
          f.refresh();
@@ -274,13 +303,15 @@ AbstractPedigree.prototype.getStyle_ = function(person, minRadius, maxRadius) {
       return st;
 
    case AbstractPedigree.colorScheme.GENERATION:
+      var gen = Math.abs(person.generation);
+      var maxgen = Math.min(12, MAXGENS);
       var c = this.hsvToRgb(
-            180 + 360 * (person.generation - 1) / MAXGENS, 0.4, 1.0).toString();
+            180 + 360 * (gen - 1) / maxgen, 0.4, 1.0).toString();
       if (this.appearance_ == AbstractPedigree.appearance.GRADIENT) {
          var gr = doGradient();
          gr.addColorStop(0, c);
          c = this.hsvToRgb(
-            180 + 360 * (person.generation - 1) / MAXGENS, 0.4, 0.8).toString();
+            180 + 360 * (gen - 1) / maxgen, 0.4, 0.8).toString();
          gr.addColorStop(1, c)
          return {'stroke': 'black', 'fill': gr, 'secondaryText': 'gray'};
       } else {
@@ -291,14 +322,13 @@ AbstractPedigree.prototype.getStyle_ = function(person, minRadius, maxRadius) {
       //  Avoid overly saturated colors when displaying only few generations
       //  (i.e. when boxes are big)
       var maxGen = Math.max(12, this.gens);
-      var c = this.hsvToRgb(
-            person.angle * 360, person.generation / maxGen, 1.0).toString();
+      var gen = Math.abs(person.generation);
+      var c = this.hsvToRgb(person.angle * 360, gen / maxGen, 1.0).toString();
 
       if (this.appearance_ == AbstractPedigree.appearance.GRADIENT) {
          var gr = doGradient();
          gr.addColorStop(0, c);
-         c = this.hsvToRgb(
-               person.angle * 360, person.generation / maxGen, 0.8).toString();
+         c = this.hsvToRgb(person.angle * 360, gen / maxGen, 0.8).toString();
          gr.addColorStop(1, c)
          return {'stroke': 'black', 'fill': gr, 'secondaryText': 'gray'};
       } else {
@@ -321,9 +351,14 @@ AbstractPedigree.prototype.showSettings = function(maxGens) {
    Canvas.prototype.showSettings.call(this);
 
    $("#settings #gens")
-      .slider({"min": 2, "max": maxGens,
+      .slider({"min": 0, "max": maxGens,
                "value": this.data ? this.gens : DEFAULT_GENERATIONS,
                "change": function() { f.loadData($(this).slider("value")); }})
+      .find("span.right").text(maxGens);
+   $("#settings #Dgens")
+      .slider({"min": 0, "max": maxGens,
+               "value": this.data ? this.descendant_gens : 1,
+               "change": function() { f.loadData(undefined, $(this).slider("value")); }})
       .find("span.right").text(maxGens);
    $("#settings select[name=appearance]")
       .change(function() { f.setAppearance(Number(this.value))})

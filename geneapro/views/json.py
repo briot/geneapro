@@ -47,6 +47,7 @@ def to_json (obj, year_only):
 
             return {"id":obj.id, "givn":obj.given_name,
                     'surn':obj.surname, 'sex':obj.sex,
+                    'generation': obj.generation,
                     'y':obj.styles, 'b':b, 'd':d}
 
          elif isinstance (obj, DateRange):

@@ -112,33 +112,22 @@ PedigreeCanvas.prototype.getSelected = function(e) {
  */
 
 PedigreeCanvas.prototype.forEachBox = function(box, callback) {
+   var canvas = this;
    function isVisible(indiv) {
-      return (!box ||
-              !(indiv.box_.x + indiv.box_.w < box.x || 
-                indiv.box_.x > box.x + box.w ||
-                indiv.box_.y + indiv.box_.h < box.y ||
-                indiv.box_.y > box.y + box.h));
+      return (indiv.generation <= canvas.gens &&
+              indiv.generation >= -canvas.descendant_gens && 
+              (!box ||
+               !(indiv.box_.x + indiv.box_.w < box.x || 
+                 indiv.box_.x > box.x + box.w ||
+                 indiv.box_.y + indiv.box_.h < box.y ||
+                 indiv.box_.y > box.y + box.h)));
    }
 
-    var d = this.data.sosa;
-    for (var sosa in d) {
-       if (d[sosa].generation <= this.gens &&
-           isVisible(d[sosa]) &&
-           callback.call(this, d[sosa]))
-       {
+   var pe = this.data.persons;
+   for (var p in pe) {
+       if (isVisible(pe[p]) && callback.call(this, pe[p])) {
            return;
        }
-    }
-
-    var p = this.data.sosa[1];
-    if (p.children) {
-        for (var c = 0, len = p.children.length; c < len; c++) {
-            if (isVisible(p.children[c]) && 
-                callback.call(this, p.children[c]))
-            {
-                break;
-            }
-        }
     }
 };
 
@@ -182,7 +171,6 @@ PedigreeCanvas.prototype.linkY_ = function(indiv) {
 PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
     var ctx = this.ctx;
     var d = this.data;
-    var yForChild = this.linkY_(d.sosa[1]);
 
     // First draw all lines, as a single path for more efficiency.
 
@@ -195,20 +183,18 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
            var w = indiv.box_.w;
            var linkY = this.linkY_(indiv);
 
-           if (indiv.sosa <= 0) { // a child
+           if (indiv.sosa <= 0) { // a descendant of decujus
                if (this.colorScheme_ == AbstractPedigree.colorScheme.WHITE) {
                   var x6 = x;
                } else {
                   var x6 = x + w;  //  left end of the link (child side)
                }
 
+               var yForChild = this.linkY_(indiv.parent_);
                ctx.moveTo(x6, linkY);
-               ctx.lineTo((x + w + d.sosa[1].box_.x) / 2, linkY);
-               ctx.lineTo((x + w + d.sosa[1].box_.x) / 2, yForChild);
-
-               if (indiv.sosa == 0) {
-                   ctx.lineTo(d.sosa[1].box_.x, yForChild);
-               }
+               ctx.lineTo((x + w + indiv.parent_.box_.x) / 2, linkY);
+               ctx.lineTo((x + w + indiv.parent_.box_.x) / 2, yForChild);
+               ctx.lineTo(indiv.parent_.box_.x, yForChild);
            }
            else if (indiv.generation < this.gens) {
                var father = d.sosa[2 * indiv.sosa];
@@ -324,29 +310,27 @@ PedigreeCanvas.prototype.showSettings = function() {
 PedigreeCanvas.prototype.computeBoundingBox = function() {
     var d = this.data;
 
-    if (this.__gens == this.gens
-        && this.__layout == this.layoutScheme_
-        && this.__colors == this.colorScheme_
-        && this.__ratio == this.ratio)
-    {
-        return; // nothing to do
+    // All the data that influence the layout
+    var checksum = [this.gens, this.descendant_gens,
+                    this.layoutScheme_, this.colorScheme_, this.ratio];
+    if (checksum == this.__checksum) {
+       return;
     }
-    this.__gens = this.gens;
-    this.__ratio = this.ratio;
-    this.__layout = this.layoutScheme_;
-    this.__colors = this.colorScheme_;
+    this.__checksum = checksum;
 
     // Store display info for a person
     function setupIndivBox(indiv, y, h) {
        if (indiv) {
+          var g = Math.abs(indiv.generation);
+          h = h || heights[g];
           indiv.box_ = {
              x: left[indiv.generation],
              y: y,
-             w: widths[indiv.generation],
-             h: h || heights[indiv.generation],
-             fontSize: fs[indiv.generation],
+             w: widths[g],
+             h: h,
+             fontSize: fs[g],
              parentsMarriageX: left[indiv.generation + 1],
-             parentsMarriageFontSize: fs[indiv.generation + 1]};
+             parentsMarriageFontSize: fs[g + 1]};
        }
     }
 
@@ -370,16 +354,14 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
     var fs = [];      //  fontSize for each generation
 
     // Compute x coordinates for each generation
-    left[-1] = 0;
-    left[0] = d.sosa[1].children ? this.boxWidth + this.horizPadding + 10 : 0;
     heights[0] = heights[-1] = this.boxHeight;
     fs[0] = fs[-1] = this.lineHeight * this.ratio;
     widths[0] = widths[-1] = this.boxWidth;
 
     var padding = this.horizPadding;
-    for (var gen = 1; gen <= this.gens + 1; gen++) {
+    var maxgen = Math.max(this.gens, this.descendant_gens);
+    for (var gen = 1; gen <= maxgen + 1; gen++) {
        if (gen <= this.maxGenForRatio) {
-          left[gen] = left[gen - 1] + widths[gen - 1] + padding;
           heights[gen] = heights[gen - 1] * this.ratio;
           widths[gen] = widths[gen - 1] * this.wratio;
           fs[gen] = Math.round(Math.min(this.maxFontSize, fs[gen - 1] * this.ratio));
@@ -390,10 +372,18 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
           heights[gen] = heights[gen - 1];
           widths[gen] = widths[gen - 1];
           fs[gen] = fs[gen - 1];
-          left[gen] = left[gen - 1] + widths[gen - 1] + padding;
        }
     }
 
+    // X coordinates are computed once we know the sizes. Left-most coordinate
+    // is always 0
+    left[-this.descendant_gens] = 0;
+    for (var gen = -this.descendant_gens + 1; gen <= this.gens + 1; gen++) {
+       left[gen] = left[gen - 1] + widths[Math.abs(gen - 1)] + this.horizPadding;
+    }
+
+    var minX = left[0];
+    var minY = 0;
     var maxY = 0;
     var canvas = this;
 
@@ -445,7 +435,7 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
              // center on the existing parent
              var p = (father || mother);
              doLayout(p);
-             var y = (p.box_.y + heights[gen + 1] - heights[gen]) / 2;
+             var y = p.box_.y + (heights[gen + 1] - heights[gen]) / 2;
              var h = (canvas.colorScheme_ == AbstractPedigree.colorScheme.WHITE) ?
                  p.box_.y + heights[gen + 1] - y : undefined;
              setupIndivBox(indiv, y, h);
@@ -460,20 +450,72 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
        break;
     }
 
-    // Position children
-    var childHeight = (this.vertPadding + this.boxHeight);
-    var children = d.sosa[1].children;
-    if (children) {
-       var childrenHeight = children.length * childHeight - this.vertPadding;
-       var minY = 0;
-       y = d.sosa[1].box_.y + this.boxHeight / 2 - childrenHeight / 2;
-       for (var c = 0, len = children.length; c < len; c++) {
-          setupIndivBox(children[c], y);
-          minY = Math.min(minY, y);
-          maxY = Math.max(maxY, y + children[c].box_.h);
-          y += childHeight;
+    // For children, the COMPACT and EXPANDED modes are the same since we can't
+    // know the theoritical number of children.
+
+    function doLayoutChildren(indiv) {
+       var gen = Math.abs(indiv.generation);
+
+       if (gen < canvas.descendant_gens) {
+          var nextGen = indiv.children || [];
+       } else {
+          nextGen = [];
+       }
+
+       if (nextGen.length == 0) {
+          var y = maxChildY + canvas.vertPadding;
+          setupIndivBox(indiv, y, heights[gen]);
+       } else {
+          var first = undefined;
+          var last = undefined;
+          for (var n = 0 ; n < nextGen.length; n++) {
+             if (nextGen[n]) {
+                doLayoutChildren(nextGen[n]);
+                if (first === undefined) {
+                   first = n;
+                }
+                last = n;
+             }
+          }
+          // Center the box on the next gen's boxes
+          var y = (nextGen[first].box_.y +
+                   nextGen[last].box_.y + nextGen[last].box_.h -
+                   heights[gen]) / 2;
+
+          // In some modes, we leave as much height as possible to the box
+          var h = (canvas.colorScheme_ == AbstractPedigree.colorScheme.WHITE) ?
+             nextGen[last].box_.y + nextGen[last].box_.h - y : undefined;
+          setupIndivBox(indiv, y, h);
+       }
+       maxChildY = Math.max(maxChildY, y + indiv.box_.h);
+       minX = Math.min(minX, indiv.box_.x);
+    }
+
+    // We'll need to adjust the offsets so that the coordinates of decujus
+    // computed after parent and children layouts match
+    var yAfterParent = d.sosa[1].box_.y;
+    var maxChildY = 0;
+    doLayoutChildren(d.sosa[1]);
+
+    // Apply the offset (to the children, since in general we will have more
+    // ancestors displayed). At this point, we know the parents extend from
+    // minY..maxY, so we adjust minY and maxY as needed
+    var offset = yAfterParent - d.sosa[1].box_.y;
+    function doOffsetChildren(indiv) {
+       indiv.box_.y += offset;
+       minY = Math.min(minY, indiv.box_.y);
+       maxY = Math.max(maxY, indiv.box_.y + indiv.box_.h);
+       if (Math.abs(indiv.generation) < canvas.descendant_gens) {
+          var children = indiv.children || [];
+          for (var n = 0; n < children.length; n++) {
+             if (children[n]) {
+                doOffsetChildren(children[n]);
+             }
+          }
        }
     }
- 
-    this.box_ = {width: left[this.gens + 1], height: maxY - minY, x: 0, y: minY};
+    doOffsetChildren(d.sosa[1]);
+
+    this.box_ = {width: left[this.gens + 1] - minX, height: maxY - minY,
+                 x: minX, y: minY};
 };

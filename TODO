@@ -44,6 +44,8 @@ http://www.beholdgenealogy.com/blog/?p=876
 ** Compact layout should compute width of boxes in one generation by looking
    at the maximum width to display the info.
 ** control-click does not work on Firefox/OSX
+** Test infinite loops with invalid pedigree: A parent of B parent of C parent of A
+** descendants: should show a node for the wife(s)
 
 ** Dynamic "infinite" expansion
 See "Interactive Visualization of Genealogical Graphs"

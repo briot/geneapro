@@ -110,7 +110,7 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
             persons[p.id] = p
             __add_default_person_attributes(p)
     else:
-        for p in models.Persona.objects:
+        for p in models.Persona.objects.all():
             mid = graph.node_from_id(p.id).main_id
             if mid not in persons:
                 persons[mid] = p
