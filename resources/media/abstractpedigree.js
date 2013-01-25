@@ -17,6 +17,22 @@ function AbstractPedigree(canvas, data) {
    this.descendant_gens = data.descendants;
    Canvas.call(this, canvas /* elem */);
    this.setData(data);
+
+   var f = this;  //  closure for callbacks
+   $("#settings #gens")
+      .slider({"min": 0,
+               "change": function() { f.loadData($(this).slider("value")); }});
+   $("#settings #Dgens")
+      .slider({"min": 0, 
+               "change": function() { f.loadData(undefined, $(this).slider("value")); }});
+   $("#settings select[name=appearance]")
+      .change(function() { f.setAppearance(Number(this.value))});
+   $("#settings select[name=colors]")
+      .change(function() { f.setColorScheme(Number(this.value))});
+   $("#settings select[name=layout]")
+      .change(function() {f.layoutScheme_ = Number(this.value);
+                          f.showSettings();
+                          f.refresh()});
 }
 inherits(AbstractPedigree, Canvas);
 
@@ -107,6 +123,8 @@ AbstractPedigree.prototype.colorScheme_ = AbstractPedigree.colorScheme.PEDIGREE;
 AbstractPedigree.prototype.setData = function(data, merge) {
    var canvas = this;
    var old_gens = (this.data ? this.data.generations : -1);
+
+   this.setNeedLayout();
 
    if (merge && this.data) {
       this.data.generations = Math.max(data.generations, this.data.generations);
@@ -206,6 +224,7 @@ AbstractPedigree.prototype.getPersonDetails = function(person) {
 
 AbstractPedigree.prototype.setAppearance = function(appearance) {
    this.appearance_ = appearance;
+   this.setNeedLayout();
    this.refresh();
 };
 
@@ -216,6 +235,7 @@ AbstractPedigree.prototype.setAppearance = function(appearance) {
 
 AbstractPedigree.prototype.setColorScheme = function(scheme) {
    this.colorScheme_ = scheme;
+   this.setNeedLayout();
    this.refresh();
 };
                 
@@ -235,6 +255,7 @@ AbstractPedigree.prototype.loadData = function(gen, descendants) {
        this.gens <= this.data.generations &&
        this.descendant_gens <= this.data.descendants)
    {
+      this.setNeedLayout();
       this.refresh();
       return;
    }
@@ -346,31 +367,20 @@ AbstractPedigree.prototype.getStyle_ = function(person, minRadius, maxRadius) {
  * */
 
 AbstractPedigree.prototype.showSettings = function(maxGens) {
-   var f = this;  //  closure for callbacks
    maxGens = maxGens || MAXGENS;
    Canvas.prototype.showSettings.call(this);
 
    $("#settings #gens")
-      .slider({"min": 0, "max": maxGens,
-               "value": this.data ? this.gens : DEFAULT_GENERATIONS,
-               "change": function() { f.loadData($(this).slider("value")); }})
+      .slider({"max": maxGens,
+               "value": this.data ? this.gens : DEFAULT_GENERATIONS})
       .find("span.right").text(maxGens);
    $("#settings #Dgens")
-      .slider({"min": 0, "max": maxGens,
-               "value": this.data ? this.descendant_gens : 1,
-               "change": function() { f.loadData(undefined, $(this).slider("value")); }})
+      .slider({"max": maxGens,
+               "value": this.data ? this.descendant_gens : 1})
       .find("span.right").text(maxGens);
-   $("#settings select[name=appearance]")
-      .change(function() { f.setAppearance(Number(this.value))})
-      .val(this.appearance_);
-   $("#settings select[name=colors]")
-      .val(this.colorScheme_)
-      .change(function() { f.setColorScheme(Number(this.value))});
-   $("#settings select[name=layout]")
-      .change(function() {f.layoutScheme_ = Number(this.value);
-                          f.showSettings();
-                          f.refresh()})
-      .val(this.layoutScheme_);
+   $("#settings select[name=appearance]").val(this.appearance_);
+   $("#settings select[name=colors]").val(this.colorScheme_);
+   $("#settings select[name=layout]").val(this.layoutScheme_);
 };
 
 /**

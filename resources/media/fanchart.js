@@ -14,6 +14,17 @@ function FanchartCanvas(canvas, data) {
     this.setTotalAngle(340);
     this.setShowMarriage(false);
     this.setCoupleSeparator(0);
+
+    var f = this;  //  closure for callbacks
+    $("#settings #separator")
+      .slider({"min": 0, "max": 100,
+               "change": function() {
+                  f.setCoupleSeparator($(this).slider("value") / 10).refresh(); }});
+    $("#settings input[name=marriages]")
+       .change(function() { f.setShowMarriage(this.checked).refresh() });
+    $("#settings #size")
+       .slider({"min": 90, "max": 360,
+                "change": function() { f.setTotalAngle($(this).slider("value")).refresh() }});
     this.showSettings();
 }
 inherits(FanchartCanvas, AbstractPedigree);
@@ -129,6 +140,7 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
 
 FanchartCanvas.prototype.setShowMarriage = function(show) {
    this.sepBetweenGens = (show ? 20 : 0);
+   this.setNeedLayout();
    return this;
 };
 
@@ -141,6 +153,7 @@ FanchartCanvas.prototype.setTotalAngle = function(angle) {
    var half = angle / 2 * Math.PI / 180.0;
    this.minAngle = -half;
    this.maxAngle = half;
+   this.setNeedLayout();
    return this;
 };
 
@@ -152,28 +165,21 @@ FanchartCanvas.prototype.setTotalAngle = function(angle) {
 
 FanchartCanvas.prototype.setCoupleSeparator = function(angle) {
    this.separator = angle * Math.PI / 180.0;
+   this.setNeedLayout();
    return this;
 };
 
 /** @inheritDoc */
 
 FanchartCanvas.prototype.showSettings = function() {
-   var f = this;  //  closure for callbacks
-
    AbstractPedigree.prototype.showSettings.call(this);  //  inherited
 
    $("#settings #separator")
-      .slider({"min": 0, "max": 100,
-               "value": Math.round(this.separator * 180 / Math.PI) * 10,
-               "change": function() {
-                  f.setCoupleSeparator($(this).slider("value") / 10).refresh(); }});
+      .slider({"value": Math.round(this.separator * 180 / Math.PI) * 10});
    $("#settings input[name=marriages]")
-      .change(function() { f.setShowMarriage(this.checked).refresh() })
       .attr('checked', this.sepBetweenGens != 0);
    $("#settings #size")
-      .slider({"min": 90, "max": 360,
-               "value": Math.round((this.maxAngle - this.minAngle) * 180 / Math.PI),
-               "change": function() { f.setTotalAngle($(this).slider("value")).refresh() }});
+      .slider({"value": Math.round((this.maxAngle - this.minAngle) * 180 / Math.PI)});
 };
 
 /**
@@ -314,11 +320,6 @@ FanchartCanvas.prototype.drawFan_ = function() {
 
 FanchartCanvas.prototype.computeBoundingBox = function() {
     var d = this.data;
-
-    if (this.__gens == this.gens) {
-       return; // nothing to do
-    }
-    this.__gens = this.gens;
 
     // Compute the radius for each generation
     var minRadius = [0];

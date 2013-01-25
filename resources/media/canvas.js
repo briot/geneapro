@@ -31,6 +31,10 @@ function Canvas(elem) {
                 this));
 
     this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
+ 
+   var f = this;
+   $("#settings input[name=autoScale]")
+      .change(function() { f.setAutoScale(this.checked); f.refresh()});
 
     $(window).resize($.proxy(this.onResize, this));
 }
@@ -94,6 +98,20 @@ Canvas.prototype.autoZoom = true;
  */ 
 
 Canvas.prototype.size_ = {width: 0, height: 0};
+
+/** Whether we need to recompute the layout
+ * @private
+ */
+Canvas.prototype.needLayout_ = true;
+
+/**
+ * Register that the layout of the canvas needs to be recomputed, because some
+ * data that impacts it has changed.
+ */
+
+Canvas.prototype.setNeedLayout = function() {
+   this.needLayout_ = true;
+};
 
 /**
  * Called when the canvas needs redrawing (for instance after a resize
@@ -178,7 +196,11 @@ Canvas.prototype.refresh = function (box) {
 
     try {
         this.ctx.save();
-        this.computeBoundingBox();
+
+        if (this.needLayout_) {
+           this.needLayout_ = false;
+           this.computeBoundingBox();
+        }
 
         if (this.autoScale_ && this.box_.width != 0) {
            this.left = this.box_.x;
@@ -206,15 +228,11 @@ Canvas.prototype.refresh = function (box) {
 };
 
 /**
- * Update the settings box to reflect the current settings, and so that
- * changing the settings also updates the fanchart.
+ * Update the settings box to reflect the current settings.
  */
 
 Canvas.prototype.showSettings = function() {
-   var f = this;  //  closure for callbacks
-   $("#settings input[name=autoScale]")
-      .change(function() { f.setAutoScale(this.checked); f.refresh()})
-      .attr('checked', this.autoScale_);
+   $("#settings input[name=autoScale]").attr('checked', this.autoScale_);
 };
 
 /**

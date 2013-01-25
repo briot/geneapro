@@ -8,6 +8,20 @@
 function PedigreeCanvas(canvas, data) {
     AbstractPedigree.call(this, canvas /* elem */, data /* data */);
     this.setSameSize(false, true /* norefresh */);
+
+    var f = this;  //  closure for callbacks
+    $("#settings input[name=sameSize]")
+       .change(function() { f.setSameSize(this.checked)});
+    $("#settings #hspace")
+       .slider({"min": 0, "max": 40,
+                "change": function() {f.horizPadding = $(this).slider("value");
+                                      f.setNeedLayout();
+                                      f.refresh()}});
+    $("#settings #vspace")
+       .slider({"min": 0, "max": 20,
+                "change": function() {f.vertPadding = $(this).slider("value");
+                                      f.setNeedLayout();
+                                      f.refresh()}});
     this.showSettings();
 }
 inherits(PedigreeCanvas, AbstractPedigree);
@@ -71,6 +85,8 @@ PedigreeCanvas.prototype.setSameSize = function(sameSize, norefresh) {
         // Keep reducing size until we reach 10% of the original size
         this.maxGenForRatio = Math.log(0.1) / Math.log(this.ratio);
     }
+
+    this.setNeedLayout();
 
     if (!norefresh) {
         this.refresh();
@@ -268,29 +284,18 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
 /** @inheritDoc */
 
 PedigreeCanvas.prototype.showSettings = function() {
-   var f = this;  //  closure for callbacks
+   // ??? Changing the maximum number of generations results in a double
+   // recomputation of the layout, because the slider also receives a
+   // changed event.
    AbstractPedigree.prototype.showSettings.call(
          this,
          this.layoutScheme_ == AbstractPedigree.layoutScheme.EXPANDED ?
              10 : MAXGENS /* maxGens */
          );
 
-   $("#settings input[name=sameSize]")
-      .change(function() { f.setSameSize(this.checked) })
-      .attr('checked', this.sameSize);
-   $("#settings #hspace")
-      .slider({"min": 0, "max": 40,
-               "value": this.horizPadding,
-               "change": function() {f.horizPadding = $(this).slider("value");
-                                     f.__layout = undefined;
-                                     f.refresh()}});
-   $("#settings #vspace")
-      .slider({"min": 0, "max": 20,
-               "value": this.vertPadding,
-               "change": function() {f.vertPadding = $(this).slider("value");
-                                     f.__layout = undefined;
-                                     f.refresh()}});
-
+   $("#settings input[name=sameSize]").attr('checked', this.sameSize);
+   $("#settings #hspace").slider({"value": this.horizPadding});
+   $("#settings #vspace").slider({"value": this.vertPadding});
 };
 
 /** @inheritDoc
@@ -309,14 +314,6 @@ PedigreeCanvas.prototype.showSettings = function() {
 
 PedigreeCanvas.prototype.computeBoundingBox = function() {
     var d = this.data;
-
-    // All the data that influence the layout
-    var checksum = [this.gens, this.descendant_gens,
-                    this.layoutScheme_, this.colorScheme_, this.ratio];
-    if (checksum == this.__checksum) {
-       return;
-    }
-    this.__checksum = checksum;
 
     // Store display info for a person
     function setupIndivBox(indiv, y, h) {
@@ -353,12 +350,14 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
     var widths = [];  //  box width for each generation
     var fs = [];      //  fontSize for each generation
 
-    // Compute x coordinates for each generation
+    // Compute sizes for each generation
     heights[0] = heights[-1] = this.boxHeight;
     fs[0] = fs[-1] = this.lineHeight * this.ratio;
     widths[0] = widths[-1] = this.boxWidth;
 
     var padding = this.horizPadding;
+    var paddings = [];
+    paddings[0] = padding;
     var maxgen = Math.max(this.gens, this.descendant_gens);
     for (var gen = 1; gen <= maxgen + 1; gen++) {
        if (gen <= this.maxGenForRatio) {
@@ -368,10 +367,12 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
           if (gen < this.maxGenForRatio) {
              padding = padding * this.wratio;
           }
+          paddings[gen] = padding;
        } else {
           heights[gen] = heights[gen - 1];
           widths[gen] = widths[gen - 1];
           fs[gen] = fs[gen - 1];
+          paddings[gen] = paddings[gen - 1];
        }
     }
 
@@ -379,7 +380,7 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
     // is always 0
     left[-this.descendant_gens] = 0;
     for (var gen = -this.descendant_gens + 1; gen <= this.gens + 1; gen++) {
-       left[gen] = left[gen - 1] + widths[Math.abs(gen - 1)] + this.horizPadding;
+       left[gen] = left[gen - 1] + widths[Math.abs(gen - 1)] + paddings[Math.abs(gen)];
     }
 
     var minX = left[0];
