@@ -26,26 +26,29 @@ def get_sosa_tree(graph, id, max_levels, style_rules, last_gen_known=-1):
            to retrieve all.
    """
 
-   styles = Styles(style_rules, graph, decujus=id)
+   decujus = graph.node_from_id(id).main_id
+
+   styles = Styles(style_rules, graph, decujus=decujus)
 
    distance = dict()
    ancestors = graph.people_in_tree(
-       id=id, maxdepthAncestors=max_levels - 1, maxdepthDescendants=0,
+       id=decujus, maxdepthAncestors=max_levels - 1, maxdepthDescendants=0,
        distance=distance)
    ancestors = [a for a in ancestors if distance[a] >= last_gen_known]
 
    descendants = graph.people_in_tree(
-       id=id, maxdepthAncestors=0, maxdepthDescendants=1, distance=distance)
+       id=decujus, maxdepthAncestors=0, maxdepthDescendants=1, distance=distance)
    descendants = [a for a in descendants if distance[a] != 0]
 
-   # ??? Should cache extended_persons in the cache
    persons = extended_personas(
        set(ancestors).union(descendants), styles,
        event_types=event_types_for_pedigree, graph=graph)
 
    def build_sosa_tree(sosa_tree, marriage, sosa, id):
+       # A person might not be in 'persons', and yet its parent be there,
+       # in case we have filtered out earlier generations.
        if id in persons:
-           sosa_tree[sosa] = persons[id]
+           sosa_tree[sosa] = id
            if persons[id].marriage:
                marriage[sosa] = persons[id].marriage
        fathers = graph.fathers(id)
@@ -58,12 +61,22 @@ def get_sosa_tree(graph, id, max_levels, style_rules, last_gen_known=-1):
 
    sosa_tree = dict()
    marriage = dict()
-   build_sosa_tree(sosa_tree, marriage, 1, graph.node_from_id(id).main_id)
+   build_sosa_tree(sosa_tree, marriage, 1, decujus)
+
+   def build_children_tree(children, id):
+       children[id] = []
+       for node in graph.children(id):
+           if node.main_id in persons:
+               build_children_tree(children, node.main_id)
+               children[id].append(node.main_id)
+   children = {}
+   build_children_tree(children, decujus)
 
    return {'generations': max_levels,
-           'sosa':        sosa_tree,
-           'children':    [persons[c.main_id] for c in descendants],
-           'marriage':    marriage,
+           'persons':     persons,    # All persons indexed by id
+           'sosa':        sosa_tree,  # sosa_number -> person_id
+           'children':    children,   # personId -> [children_id*]
+           'marriage':    marriage,   # sosa_number -> marriage info
            'styles':      styles.all_styles()}
 
 

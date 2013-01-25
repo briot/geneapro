@@ -302,6 +302,19 @@ class GeneaGraph(Digraph):
             if e.kind == P2P_Link.KIND_SPOUSE:
                 yield e[0]
 
+    def children(self, node_or_id):
+        """
+        Return the list of children for this node.
+        """
+        if isinstance(node_or_id, models.Persona):
+            node_or_id = self.node_from_id(node_or_id.id)
+        elif not isinstance(node_or_id, Persona_node):
+            node_or_id = self.node_from_id(node_or_id)
+        return [e[1]
+                for e in self.out_edges(node_or_id)
+                if e.kind in (P2P_Link.KIND_MOTHER,
+                              P2P_Link.KIND_FATHER)]
+
     def mothers(self, node_or_id):
         """
         return the nodes representing the possible mothers of node.

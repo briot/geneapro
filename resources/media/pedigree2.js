@@ -130,11 +130,11 @@ PedigreeCanvas.prototype.forEachBox = function(box, callback) {
        }
     }
 
-    d = this.data.children;
-    if (d) {
-        for (var c = 0, len = d.length; c < len; c++) {
-            if (isVisible(d[c]) && 
-                callback.call(this, d[c]))
+    var p = this.data.sosa[1];
+    if (p.children) {
+        for (var c = 0, len = p.children.length; c < len; c++) {
+            if (isVisible(p.children[c]) && 
+                callback.call(this, p.children[c]))
             {
                 break;
             }
@@ -371,7 +371,7 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
 
     // Compute x coordinates for each generation
     left[-1] = 0;
-    left[0] = d.children ? this.boxWidth + this.horizPadding + 10 : 0;
+    left[0] = d.sosa[1].children ? this.boxWidth + this.horizPadding + 10 : 0;
     heights[0] = heights[-1] = this.boxHeight;
     fs[0] = fs[-1] = this.lineHeight * this.ratio;
     widths[0] = widths[-1] = this.boxWidth;
@@ -462,14 +462,17 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
 
     // Position children
     var childHeight = (this.vertPadding + this.boxHeight);
-    var childrenHeight = d.children.length * childHeight - this.vertPadding;
-    var minY = 0;
-    y = d.sosa[1].box_.y + this.boxHeight / 2 - childrenHeight / 2;
-    for (var c = 0, len = d.children.length; c < len; c++) {
-       setupIndivBox(d.children[c], y);
-       minY = Math.min(minY, y);
-       maxY = Math.max(maxY, y + d.children[c].box_.h);
-       y += childHeight;
+    var children = d.sosa[1].children;
+    if (children) {
+       var childrenHeight = children.length * childHeight - this.vertPadding;
+       var minY = 0;
+       y = d.sosa[1].box_.y + this.boxHeight / 2 - childrenHeight / 2;
+       for (var c = 0, len = children.length; c < len; c++) {
+          setupIndivBox(children[c], y);
+          minY = Math.min(minY, y);
+          maxY = Math.max(maxY, y + children[c].box_.h);
+          y += childHeight;
+       }
     }
  
     this.box_ = {width: left[this.gens + 1], height: maxY - minY, x: 0, y: minY};

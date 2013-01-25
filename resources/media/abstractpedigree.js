@@ -85,6 +85,13 @@ AbstractPedigree.prototype.colorScheme_ = AbstractPedigree.colorScheme.PEDIGREE;
  *    * 'angle': position of the person in the generation, from 0.0 to 1.0.
  * The canvas needs to be refreshed explicitly.
  *
+ * @param {{persons:Array.<object>, generations:number,
+ *          sosa: Object.<number>,
+ *          children:Object.<Array.<number>>}} data
+ *     Data for the pedigree. Children is, for each person id, the list of its
+ *     children. Sosa is a map from sosa number to person id, which is used to
+ *     find the parents of a person.
+ *
  * @param {boolean} merge
  *     If true, the new data is added to the existing data, instead of
  *     replacing it.
@@ -95,14 +102,14 @@ AbstractPedigree.prototype.setData = function(data, merge) {
 
    if (merge && this.data) {
       this.data.generations = Math.max(data.generations, this.data.generations);
-      for (var d in data.sosa) {
-         this.data.sosa[d] = data.sosa[d];
-      }
       for (var d in data.marriage) {
          this.data.marriage[d] = data.marriage[d];
       }
       for (var d in data.styles) {
          this.data.styles[d] = data.styles[d];
+      }
+      for (var d in data.persons) {
+         this.data.persons[d] = data.persons[d];
       }
       //  No merging children, to preserve the details we might have
 
@@ -111,33 +118,43 @@ AbstractPedigree.prototype.setData = function(data, merge) {
       if (!data) {
          return;
       }
-
-      if (data.children) {
-         var len = data.children.length;
-         for (var c = 0; c < len; c++) {
-            var p = data.children[c];
-            p.generation = -1;
-            p.sosa = -c;
-            p.angle = c / len;
-         }
-      }
    }
 
    // Traverse the list of all known persons directly, not by iterating
    // generations and then persons, since in fact a tree is often sparse.
    // We iterate from generation 0, in case the server sent too much
    // information
+
    var count = [];
    for (var gen = 0; gen <= data.generations; gen++) {
       count[gen] = Math.pow(2, gen);
    }
    var d = data.sosa;
    for (var sosa in d) {
-      var p = d[sosa];
+      var p = data.persons[d[sosa]];
       p.generation = Math.floor(Math.log(sosa)/Math.LN2);
       p.sosa = sosa;
       p.angle = sosa / count[p.generation] - 1;
+      this.data.sosa[sosa] = p;
    }
+
+   // All persons that have children will have a 'children' field
+
+   for (var p in data.children) {
+      var children = this.data.persons[p].children = [];
+      var children_ids = data.children[p];
+      var len = children_ids.length;
+      for (var c = 0; c < len; c++) {
+         var pc = this.data.persons[children_ids[c]];
+         pc.generation = -1;
+         pc.sosa = -1;
+         pc.angle = c / len;
+         children.push(pc);
+      }
+   }
+
+   //  No longer need this
+   delete data.children;
 };
 
 /**
