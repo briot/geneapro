@@ -15,6 +15,7 @@ Q. How do I setup the application ?
 
    You need to edit the file settings.py to point to the database
    you wish to use
+      geneapro/mysites/settings.py
 
 Q. How do I import my GEDCOM data ?
 
