@@ -24,10 +24,6 @@ function Canvas(elem) {
         .dblclick(
             $.proxy(
                 function(e) {this.ifnotDisabled_(e, this.onDblClick)},
-                this))
-        .ctrl_click(
-            $.proxy(
-                function(e) {this.ifnotDisabled_(e, this.onCtrlClick)},
                 this));
 
     this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
@@ -211,10 +207,7 @@ Canvas.prototype.refresh = function (box) {
         }
 
         if (!box) {
-            box = {x: this.toAbsX(0),
-                   y: this.toAbsY(0),
-                   w: this.toAbsLength(this.canvas[0].width),
-                   h: this.toAbsLength(this.canvas[0].height)};
+           box = this.visibleRegion();
         }
 
         if (this.autoZoom) {
@@ -225,6 +218,54 @@ Canvas.prototype.refresh = function (box) {
     } finally {
         this.ctx.restore();
     }
+};
+
+/**
+ * @return {{x,y,w,h:number}}  The absolute coordinates of the region
+ *    currently displayed on screen.
+ */
+
+Canvas.prototype.visibleRegion = function() {
+   return {x: this.toAbsX(0),
+           y: this.toAbsY(0),
+           w: this.toAbsLength(this.canvas[0].width),
+           h: this.toAbsLength(this.canvas[0].height)};
+};
+
+/**
+ * The visible area, in absolute coordinates
+ * @return {Rect}
+ */
+
+Canvas.prototype.visibleAreaAbs = function() {
+    return new Rect(
+        this.left, this.top,
+        this.toAbsLength(this.canvas[0].width),
+        this.toAbsLength(this.canvas[0].height));
+};
+
+/** @param {{x,y,w,h:number}} box   The box to test.
+ * @param {number} x                Absolute coordinates.
+ * @param {number} y                Absolute coordinates.
+ * @return {boolean} Whether (x,y) is within the box.
+ */
+
+Canvas.prototype.pointInBox = function(box, x, y) {
+   return (box.x <= x && x <= box.x + box.w &&
+           box.y <= y && y <= box.y + box.h);
+};
+
+/** @param {{x,y,w,h:number}} box1   The first box.
+ *  @param {{x,y,w,h:number}} box2   The second box.
+ *  @return {boolean}  Whether the two boxes intersect.
+ */
+
+Canvas.prototype.boxIntersect = function(box1, box2) {
+   return !(box1.x + box1.w < box2.x ||
+            box1.x > box2.x + box2.w ||
+            box1.y + box1.h < box2.y ||
+            box1.y > box2.y + box2.h);
+
 };
 
 /**
@@ -257,18 +298,6 @@ Canvas.prototype.setAutoScale = function(autoScale) {
       this.autoScale_ = autoScale;
       $("#settings input[name=autoScale]").attr('checked', this.autoScale_);
    }
-};
-
-/**
- * The visible area, in absolute coordinates
- * @return {Rect}
- */
-
-Canvas.prototype.visibleAreaAbs = function() {
-    return new Rect(
-        this.left, this.top,
-        this.toAbsLength(this.canvas[0].width),
-        this.toAbsLength(this.canvas[0].height));
 };
 
 /**

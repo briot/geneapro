@@ -93,24 +93,14 @@ PedigreeCanvas.prototype.setSameSize = function(sameSize, norefresh) {
     }
 };
 
-/**
- * Return the id of the selected persona
- */
+/** @inheritDoc */
 
-PedigreeCanvas.prototype.getSelected = function(e) {
-    var off = this.canvas.offset();
-    var mx = this.toAbsX(e.pageX - off.left);
-    var my = this.toAbsY(e.pageY - off.top);
+PedigreeCanvas.prototype.personAtCoordinates = function(mx, my) {
     var selected = null;
 
-    this.forEachBox(
-        undefined /* box */,
+    this.forEachVisiblePerson(
         function(indiv) {
-           var x = indiv.box_.x;
-           var y = indiv.box_.y;
-           var w = indiv.box_.w;
-           var h = indiv.box_.h;
-            if (x <= mx && mx <= x + w && y <= my && my <= y + h) {
+           if (this.pointInBox(indiv.box_, mx, my)) {
                 selected = indiv;
                 return true;
             }
@@ -118,54 +108,19 @@ PedigreeCanvas.prototype.getSelected = function(e) {
     return selected;
 };
 
-/**
- * @param {{x,y,w,h:number}=}  box
- *    Area to refresh (all of them if undefined).
- * @param {function(indiv)} callback
- *    'this' is the same as the caller of forEachBox.
- *    Called for each person within the box.
- *    Boxes are returned in no particular order.
+/** @param {{x,y,w,h:number}} box   The box to test.
+ * @param {number} x                Absolute coordinates.
+ * @param {number} y                Absolute coordinates.
+ * @return {boolean} Whether (x,y) is within the box.
  */
 
-PedigreeCanvas.prototype.forEachBox = function(box, callback) {
-   var canvas = this;
-   function isVisible(indiv) {
-      return (indiv.generation <= canvas.gens &&
-              indiv.generation >= -canvas.descendant_gens && 
-              (!box ||
-               !(indiv.box_.x + indiv.box_.w < box.x || 
-                 indiv.box_.x > box.x + box.w ||
-                 indiv.box_.y + indiv.box_.h < box.y ||
-                 indiv.box_.y > box.y + box.h)));
-   }
+Pedi
 
-   var pe = this.data.persons;
-   for (var p in pe) {
-       if (isVisible(pe[p]) && callback.call(this, pe[p])) {
-           return;
-       }
-    }
-};
+/** @inheritDoc */
 
-/** @overrides */
-
-PedigreeCanvas.prototype.onCtrlClick = function(e) {
-    var selected = this.getSelected(e);
-    if (selected) {
-        window.location = "/pedigree/" + selected.id +
-            "?gens=" + this.gens;
-        return true;
-    }
-};
-
-/** @overrides */
-
-PedigreeCanvas.prototype.onDblClick = function(e) {
-    var selected = this.getSelected(e);
-    if (selected) {
-        window.location = "/persona/" + selected.id;
-        return true;
-    }
+PedigreeCanvas.prototype.isVisible = function(person, box) {
+   return AbstractPedigree.prototype.isVisible.call(this, person, box) && 
+      this.boxIntersect(person.box_, box);
 };
 
 /**
@@ -192,8 +147,7 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
 
     ctx.beginPath();
 
-    this.forEachBox(
-        screenBox,
+    this.forEachVisiblePerson(
         function(indiv) {
            var x = indiv.box_.x;
            var w = indiv.box_.w;
@@ -253,8 +207,7 @@ PedigreeCanvas.prototype.onDraw = function(e, screenBox) {
     ctx.strokeStyle = "black";
     ctx.stroke();
 
-    this.forEachBox(
-        screenBox /* box */,
+    this.forEachVisiblePerson(
         function(indiv) {
            this.drawPersonBox(
                indiv /* person */,

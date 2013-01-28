@@ -43,7 +43,12 @@ inherits(AbstractPedigree, Canvas);
 AbstractPedigree.prototype.gens;
 
 /** The number of descendant generations to display. */
-AbstractPedigree.prototype.descendants_gens;
+AbstractPedigree.prototype.descendant_gens;
+
+/** Id of the selected person
+ * @private
+ */
+AbstractPedigree.prototype.selected__;
 
 /**
  * Describes how the boxes are displayed.
@@ -238,15 +243,119 @@ AbstractPedigree.prototype.setColorScheme = function(scheme) {
    this.setNeedLayout();
    this.refresh();
 };
-                
+
+/**
+ * @param {Person} person    The person to test.
+ * @return {boolean}  Whether the person is selected.
+ */
+
+AbstractPedigree.prototype.isSelected = function(person) {
+   return this.selected__ == person.id;
+};
+
+/**
+ * @param {Person} id
+ *   The person to select. This function automatically refreshes
+ *   the canvas to show the new status of the selection.
+ */
+
+AbstractPedigree.prototype.select = function(id) {
+   this.selected__ = id ? id.id : undefined;
+   this.refresh();
+};
+
+/**
+ * @param {Event} e   The click event.
+ * @return {Person}  The person that was clicked on.
+ */
+
+AbstractPedigree.prototype.getClicked = function(e) {
+   var off = this.canvas.offset();
+   var mx = this.toAbsX(e.pageX - off.left);
+   var my = this.toAbsY(e.pageY - off.top);
+   return this.personAtCoordinates(mx, my);
+};
+
+/**
+ * @param {number}  x   Absolute coordinates.
+ * @param {number}  y   Absolute coordinates.
+ * @return {Person} The person at the given absolute coordinates.
+ */
+
+AbstractPedigree.prototype.personAtCoordinates = function(x, y) {};
+
+/** @inheritDoc */
+
+AbstractPedigree.prototype.onClick = function(e) {
+   var person = this.getClicked(e);
+   if (person) {
+      this.select(person);
+   }
+};
+
+/** @inheritDoc */
+
+AbstractPedigree.prototype.onDblClick = function(e) {
+   var person = this.getClicked(e);
+   if (person) {
+      //  window.location = "/persona/" + selected.id 
+      this.loadData(undefined /* gen */,
+                    undefined /* descendants */,
+                    person.id /* decujus */);
+   } else {
+      this.select(undefined);
+   }
+};
+
+/**
+ * @param {Person}  person   The person to check.
+ * @param {!{x,y,w,h:number}} box   The visible area of the screen,
+ *    absolute coordinates.
+ * @return {boolean}  Whether the person is currently visible on the screen.
+ */
+
+AbstractPedigree.prototype.isVisible = function(person, box) {
+   return (person.generation <= this.gens &&
+           person.generation >= -this.descendant_gens);
+};
+
+/**
+ * Calls callback for each visible person on screen.
+ * @param {function(Person)} callback
+ *    'this' is the same as the caller of forEachBox.
+ *    Persons are returned in no particular order.
+ *    Iteration stops when this callback returns True.
+ */
+
+AbstractPedigree.prototype.forEachVisiblePerson = function(callback) {
+   var box = this.visibleRegion();
+   if (this.data) {
+      var pe = this.data.persons;
+      for (var p in pe) {
+         if (this.isVisible(pe[p], box) && callback.call(this, pe[p])) {
+            return;
+         }
+      }
+   }
+};
+
 /**
  * Load the data for the pedigree from the server.
  *   @param {number}  gen   The number of generations to load.
+ *   @param {number=} decujus  The id of the decujus person (or undefined
+ *      to keep the same one).
  */
 
-AbstractPedigree.prototype.loadData = function(gen, descendants) {
+AbstractPedigree.prototype.loadData = function(gen, descendants, decujus) {
    this.gens = gen === undefined ? this.gens : gen;
    this.descendant_gens = descendants === undefined ? this.descendant_gens : descendants;
+
+   var current_decujus = (this.data ? this.data.sosa[1].id : 1);
+
+   if (decujus !== undefined && decujus !== current_decujus) {
+      this.data = undefined;
+      current_decujus = decujus;
+   }
 
    // If we intend to display fewer generations than are already known, no
    // need to download anything.
@@ -261,9 +370,8 @@ AbstractPedigree.prototype.loadData = function(gen, descendants) {
    }
 
    var f = this;  //  closure for callbacks
-   var decujus = (this.data ? this.data.sosa[1].id : 1);
    $.ajax(
-      {url: '/pedigreeData/' + decujus,
+      {url: '/pedigreeData/' + current_decujus,
        data: {'gens': this.gens,
               'gens_known': this.data ? this.data.generations : -1,
               'desc_known': this.data ? this.data.descendants : -1,
@@ -404,6 +512,11 @@ AbstractPedigree.prototype.drawPersonBox = function(
 
        this.ctx.save();
        this.ctx.translate(x, y);  //  to get proper gradient
+
+       if (this.isSelected(person)) {
+          this.ctx.lineWidth = 3;
+       }
+
        if (attr.stroke || attr.fill) {
           this.roundedRect(0, 0, width, height, attr);
        } else {

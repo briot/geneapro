@@ -76,120 +76,51 @@ FanchartCanvas.prototype.boxHeight = 60;
 FanchartCanvas.prototype.horizPadding = 30;
 FanchartCanvas.prototype.vertPadding = 20;
 
-/* Animation delay (moving selected box to decujus' position */
-FanchartCanvas.prototype.delay = 200;
-
 /** @inheritDoc */
 
-FanchartCanvas.prototype.onClick = function(e) {
-/*
-    var box = evt.target;
-    var d = this.data;
-    if (box.getAttribute("sosa") != 1) {
-        var num = box.getAttribute("sosa");
-        var id = (num < 0) ? d.children[-1 - num].id : d.sosa[num].id;
-        var targetX = this.decujusx + this.canvas.offset().left;
-        var targetY = this.decujusy + this.canvas.offset().top;
-        var transform = "translate(";
-        transform += (targetX - evt.pageX) + ",";
-        transform += (targetY - evt.pageY) + ")";
-        $(box).animate({'svg-transform':transform}, config.delay);
-        $(box).animate({'svg-opacity':0}, config.delay);
-        setTimeout (function() {
-            window.location = "/fanchart/" + id + "?gens=" + data.generations},
-                    config.delay);
-    }
-*/
+FanchartCanvas.prototype.personAtCoordinates = function(x, y) {
+   var radius = Math.sqrt(
+         (x - this.box_.centerX) * (x - this.box_.centerX) +
+         (y - this.box_.centerY) * (y - this.box_.centerY));
+   var angle = Math.atan2(y - this.box_.centerY, x - this.box_.centerX);
+
+   var selected = null;
+   this.forEachVisiblePerson(
+         function(person) {
+            if (person.box_.minRadius <= radius &&
+                radius <= person.box_.maxRadius &&
+                person.box_.minAngle <= angle &&
+                angle <= person.box_.maxAngle)
+            {
+               selected = person;  // an ancestor
+               return true;
+
+            } else if (!person.box_.minRadius &&
+               this.pointInBox(person.box_, x, y)) 
+            {
+               selected = person;  //  a child
+               return true;
+            }
+         });
+   return selected;
 };
 
-/** @overrides */
+/** @inheritDoc */
 
 FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
     var d = this.data;
-    this.drawPersonBox(
-        d.sosa[1] /* person */,
-        this.box_.childX + this.boxWidth + this.horizPadding /* x */,
-        this.box_.centerY - this.boxHeight / 2 /* y */,
-        this.boxWidth /* width */,
-        this.boxHeight /* height */,
-        this.baseFontSize /* fontsize */);
+    var b = d.sosa[1].box_;
 
-    if (d.children) {
-        var childrenHeight =
-            d.children.length * (this.boxHeight + this.vertPadding);
-        var y = this.box_.centerY - childrenHeight / 2;
-        for (var c = 0; c < d.children.length; c++) {
-            this.drawPersonBox(
-                d.children[c] /* person */,
-                this.box_.childX /* x */,
-                y /* y */,
-                this.boxWidth /* width */,
-                this.boxHeight /* height */,
-                this.baseFontSize /* fontsize */);
-            y += this.boxHeight + this.vertPadding;
+    this.drawPersonBox(d.sosa[1], b.x, b.y, b.w, b.h, b.fs);
+
+    var children = d.sosa[1].children;
+    if (children) {
+        for (var c = 0; c < children.length; c++) {
+           var b = children[c].box_;
+           this.drawPersonBox(children[c], b.x, b.y, b.w, b.h, b.fs);
         }
     }
 
-    this.drawFan_();
-};
-
-/**
- * Canvas needs to be refreshed afterwards
- * @param {Boolean} show  Whether to display marriage information.
- */
-
-FanchartCanvas.prototype.setShowMarriage = function(show) {
-   this.sepBetweenGens = (show ? 20 : 0);
-   this.setNeedLayout();
-   return this;
-};
-
-/**
- * Canvas needs to be refreshed afterwards
- * @param {Number} angle  Sets the opening angle (90 to 360 degrees).
- */
-
-FanchartCanvas.prototype.setTotalAngle = function(angle) {
-   var half = angle / 2 * Math.PI / 180.0;
-   this.minAngle = -half;
-   this.maxAngle = half;
-   this.setNeedLayout();
-   return this;
-};
-
-/**
- * @param {Number} angle  Sets the extra angle (degrees) separator between
- *   couples.
- * Canvas needs to be refreshed afterwards
- */
-
-FanchartCanvas.prototype.setCoupleSeparator = function(angle) {
-   this.separator = angle * Math.PI / 180.0;
-   this.setNeedLayout();
-   return this;
-};
-
-/** @inheritDoc */
-
-FanchartCanvas.prototype.showSettings = function() {
-   AbstractPedigree.prototype.showSettings.call(this);  //  inherited
-
-   $("#settings #separator")
-      .slider({"value": Math.round(this.separator * 180 / Math.PI) * 10});
-   $("#settings input[name=marriages]")
-      .attr('checked', this.sepBetweenGens != 0);
-   $("#settings #size")
-      .slider({"value": Math.round((this.maxAngle - this.minAngle) * 180 / Math.PI)});
-};
-
-/**
- * Draw the fanchart for the global variables sosa, based on the
- *configuration.
- * This does not draw the decujus or its children
- */
-
-FanchartCanvas.prototype.drawFan_ = function() {
-    var d = this.data;
     var ctx = this.ctx;
 
     function doPath_(minRadius, maxRadius, maxAngle, minAngle) {
@@ -215,7 +146,13 @@ FanchartCanvas.prototype.drawFan_ = function() {
 
             doPath_(minRadius, maxRadius, maxAngle, minAngle);
             var st = this.getStyle_(person, minRadius, maxRadius);
+
+            ctx.save();
+            if (this.isSelected(person)) {
+               ctx.lineWidth = 3;
+            }
             this.drawPath(st);
+            ctx.restore();
 
             var fontSize = person.box_.fontSize;
             ctx.font = fontSize + "px Arial";
@@ -309,8 +246,56 @@ FanchartCanvas.prototype.drawFan_ = function() {
     ctx.restore();
 };
 
+/**
+ * Canvas needs to be refreshed afterwards
+ * @param {Boolean} show  Whether to display marriage information.
+ */
+
+FanchartCanvas.prototype.setShowMarriage = function(show) {
+   this.sepBetweenGens = (show ? 20 : 0);
+   this.setNeedLayout();
+   return this;
+};
+
+/**
+ * Canvas needs to be refreshed afterwards
+ * @param {Number} angle  Sets the opening angle (90 to 360 degrees).
+ */
+
+FanchartCanvas.prototype.setTotalAngle = function(angle) {
+   var half = angle / 2 * Math.PI / 180.0;
+   this.minAngle = -half;
+   this.maxAngle = half;
+   this.setNeedLayout();
+   return this;
+};
+
+/**
+ * @param {Number} angle  Sets the extra angle (degrees) separator between
+ *   couples.
+ * Canvas needs to be refreshed afterwards
+ */
+
+FanchartCanvas.prototype.setCoupleSeparator = function(angle) {
+   this.separator = angle * Math.PI / 180.0;
+   this.setNeedLayout();
+   return this;
+};
+
+/** @inheritDoc */
+
+FanchartCanvas.prototype.showSettings = function() {
+   AbstractPedigree.prototype.showSettings.call(this);  //  inherited
+
+   $("#settings #separator")
+      .slider({"value": Math.round(this.separator * 180 / Math.PI) * 10});
+   $("#settings input[name=marriages]")
+      .attr('checked', this.sepBetweenGens != 0);
+   $("#settings #size")
+      .slider({"value": Math.round((this.maxAngle - this.minAngle) * 180 / Math.PI)});
+};
+
 /** @inheritDoc
- *
  *  For each person, sets a box_ field containing display information:
  *    {minAngle:number, maxAngle:number,   // angles for that person
  *     minRadius, maxRadius:number,        // inner and outer radius
@@ -444,4 +429,30 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
                  childX: -offsetX,
                  width: centerXRel + maxX - offsetX,
                  height: height};
+
+    // Compute the position for the children and decujus
+
+    d.sosa[1].box_ = {
+       x: this.box_.childX + this.boxWidth + this.horizPadding,
+       y: this.box_.centerY - this.boxHeight / 2,
+       w: this.boxWidth,
+       h: this.boxHeight,
+       fs: this.baseFontSize};
+
+    var children = d.sosa[1].children;
+    if (children) {
+       var childrenHeight = children.length * (this.boxHeight + this.vertPadding);
+       var y = this.box_.centerY - childrenHeight / 2;
+       this.box_.y = Math.min(this.box_.y, y);
+       for (var c = 0; c < children.length; c++) {
+          children[c].box_ = {
+             x: this.box_.childX,
+             y: y,
+             w: this.boxWidth,
+             h: this.boxHeight,
+             fs: this.baseFontSize};
+          y += this.boxHeight + this.vertPadding;
+       }
+       this.box_.height = Math.max(this.box_.height, y - this.box_.y);
+    }
 };

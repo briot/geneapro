@@ -950,11 +950,11 @@ class DateRange(object):
 
     def __lt__(self, date):
         """Compare two DateRange"""
-        return self.ends[0].date < date.ends[0].date
+        return date is not None and self.ends[0].date < date.ends[0].date
 
     def __gt__(self, date):
         """Compare two DateRange"""
-        return self.ends[0].date > date.ends[0].date
+        return date is not None and self.ends[0].date > date.ends[0].date
 
     def __str__(self):
         """Convert to a string"""

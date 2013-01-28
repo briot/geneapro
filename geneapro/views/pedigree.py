@@ -78,7 +78,7 @@ def get_sosa_tree(graph, id, max_levels, style_rules,
                children[id] = []
            sorted = [(persons[node.main_id] if node.main_id in persons else None, node)
                      for node in graph.children(id)]
-           sorted.sort(key=lambda p: p[0].birth.Date if p[0] else None)
+           sorted.sort(key=lambda p: p[0].birth.Date if p[0] and p[0].birth else None)
            for p in sorted:
                if p[0]:
                    p[0].generation = -distance[p[1]]
