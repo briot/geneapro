@@ -109,18 +109,6 @@ FanchartCanvas.prototype.personAtCoordinates = function(x, y) {
 
 FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
     var d = this.data;
-    var b = d.sosa[1].box_;
-
-    this.drawPersonBox(d.sosa[1], b.x, b.y, b.w, b.h, b.fs);
-
-    var children = d.sosa[1].children;
-    if (children) {
-        for (var c = 0; c < children.length; c++) {
-           var b = children[c].box_;
-           this.drawPersonBox(children[c], b.x, b.y, b.w, b.h, b.fs);
-        }
-    }
-
     var ctx = this.ctx;
 
     function doPath_(minRadius, maxRadius, maxAngle, minAngle) {
@@ -132,13 +120,17 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
         }
     }
 
-    ctx.save();
-    ctx.textBaseline = 'middle';
-    ctx.translate(this.box_.centerX, this.box_.centerY);
+    this.forEachVisiblePerson(
+        function(person) {
+           if (person.generation <= 0) {
+              var b = person.box_;
+              this.drawPersonBox(person, b.x, b.y, b.w, b.h, b.fs);
+              return false;
+            }
 
-    for (var sosa in d.sosa) {
-       var person = d.sosa[sosa];
-       if (sosa != 1 && person.generation <= this.gens) {
+            ctx.save();
+            ctx.translate(this.box_.centerX, this.box_.centerY);
+
             var minAngle = person.box_.minAngle;
             var maxAngle = person.box_.maxAngle;
             var minRadius = person.box_.minRadius;
@@ -147,12 +139,10 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
             doPath_(minRadius, maxRadius, maxAngle, minAngle);
             var st = this.getStyle_(person, minRadius, maxRadius);
 
-            ctx.save();
             if (this.isSelected(person)) {
                ctx.lineWidth = 3;
             }
             this.drawPath(st);
-            ctx.restore();
 
             var fontSize = person.box_.fontSize;
             ctx.font = fontSize + "px Arial";
@@ -240,8 +230,8 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
                     ctx.restore();
                 }
             }
-        }
-    }
+            ctx.restore();
+        });
 
     ctx.restore();
 };
