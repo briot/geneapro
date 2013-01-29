@@ -37,7 +37,30 @@ function log() {
    }
 }
 
+/************************************************
+ * Open a dialog to import an existing GEDCOM file
+ ************************************************/
 
+function on_import() {
+   $("#progressbar").show().progressbar({
+      value: false
+   });
+   $("#importDialog").dialog({
+      autoOpen: false,
+      height: 200,
+      width: 400,
+      modal: true,
+      buttons: {
+       "Import": function() {
+          $(this).find("form")[0].submit();
+          $(this).dialog("close");
+       },
+       "Cancel": function() {
+          $(this).dialog("close");
+       }
+      }
+   }).dialog("open");
+}
 
 /************************************************
  * Open up an extra row of information in a table.

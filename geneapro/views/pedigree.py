@@ -123,6 +123,11 @@ def pedigree_view(request, decujus=1):
    # ??? Should lock the graph until the view has been generated
    graph.update_if_needed()
 
+   if len(graph) == 0:
+       return render_to_response(
+           'geneapro/firsttime.html',
+            context_instance=RequestContext(request))
+
    return render_to_response(
        'geneapro/pedigree.html',
        {"pedigree_data": compute_data(graph, gens, False, decujus),

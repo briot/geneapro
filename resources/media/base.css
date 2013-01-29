@@ -272,6 +272,12 @@ div.scrollable canvas {
   padding: 5px;
 }
 
+#sidebar .bottom {
+   position: absolute;
+   bottom: 10px;
+   width:  140px;  /* #sidebar'width  - #sidebar .bottom input'margin * 2 */
+}
+
 /**********************************************
  * Rounded corners (see http://css3please.com/)
  **********************************************/

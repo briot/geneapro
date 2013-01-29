@@ -39,6 +39,10 @@
         <li><a href="/stats/{{decujusid|default:1}}">Statistics</a></li>
       </ul>
       <h2>Search</h2>
+
+      <div class="bottom">
+         <h2 id="importButton"><a href="#" id="importButton">Import...</a></h2>
+      </div>
    </div>
 
    <div style="margin-top:40px">
@@ -76,8 +80,19 @@
   });
   $(document).ready(function() {
       $(window).resize();
+      $("#importButton").click(on_import);
   });
  </script>
+
+ <div id="importDialog" title="Import GEDCOM" style="display:none">
+    <form method="POST" action="/import" enctype="multipart/form-data">
+       {% csrf_token %}
+       <fieldset>
+          <label for="file">File</label>
+          <input type="file" name="file" class="text ui-widget-content ui-corner-all" />
+       </fieldset>
+    </form>
+ </div>
 
  {% block endbody %}
  {% endblock endbody %}

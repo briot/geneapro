@@ -9,6 +9,7 @@ import geneapro.views.sources
 import geneapro.views.events
 import geneapro.views.merge
 import geneapro.views.graph
+import geneapro.views.importers
 
 urlpatterns = patterns('',
     (r'^$', geneapro.views.pedigree.pedigree_view),
@@ -33,6 +34,9 @@ urlpatterns = patterns('',
     (r'^stats$',        geneapro.views.stats.view),
     (r'^stats/(\d+)$',  geneapro.views.stats.view),
     (r'^quilts/(\d+)?$',        geneapro.views.graph.quilts_view),
+
+    # Importing a GEDCOM file
+    (r'^import$',   geneapro.views.importers.import_gedcom),
 
     # Experimental, does not work yet
     (r'^merge$',        geneapro.views.merge.view),

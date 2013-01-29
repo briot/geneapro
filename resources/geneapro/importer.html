@@ -1,0 +1,53 @@
+{% extends "geneapro/base.html" %}
+{% block title %}GeneaPro: First time use{% endblock %}
+{% block css %}
+p {margin-top: 10px; margin-left: 20px}
+#importReport {
+   margin-top: 40px; border:1px solid black; margin-left: 50px}
+.error {background-color:rgba(200,0,0,0.2) }
+#progressbar .ui-progressbar-value { background-color: #ccc; }
+{% endblock css %}
+
+{% block header %}
+<link rel="stylesheet" href="{{MEDIA_URL}}ui-lightness/jquery-ui-1.9.2.custom.min.css"/>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery-ui-1.9.2.custom.min.js"></script>
+{% endblock header %}
+
+{% block endbody %}
+{% endblock endbody %}
+
+{% block leftside %}
+{% endblock leftside %}
+
+{% block script %}
+$("input[value=import]").click(on_import);
+{% endblock script %}
+
+{% block contents %}
+<h2>Welcome to Geneapro</h2>
+
+<div>
+
+{% if not success %}
+<div id="importReport" class="error">
+   Geneapro could not import your file:
+   <br>
+   <pre>{{ error }}</pre>
+</div>
+
+{% else %}
+  {% if error %}
+<div id="importReport">
+   Your file was successfully imported, although some data might be missing.
+Check the output of the importer below:
+   <br>
+   <pre>{{ error }}</pre>
+</div>
+  {% else %}
+<div id="importReport">
+   Your data was successfull imported.
+</div>
+  {% endif %}
+{% endif %}
+
+{% endblock contents %}

@@ -16,18 +16,6 @@ Q. How do I setup the application ?
    You need to edit the file mysites/settings.py to point to the database
    you wish to use.
 
-Q. How do I import my GEDCOM data ?
-
-   Currently, GeneaPro is a read-only view. You should therefore
-   have a GEDCOM file created by another genealogy software.
-   Once you have this file, you should type the following command:
-      make reset
-      ./manage.py import gedcom.ged
-   where the last argument is the path to your gedcom file.
-
-   The first command is optional, and will reset the database. The
-   second command will always add to the existing database
-
 Q. How do I start the server ?
 
    Type
@@ -38,6 +26,14 @@ Q. How do I start the server ?
       http://127.0.0.1:8000/
 
    Tested web browers include Safari, Firefox and Chrome.
+
+Q. How do I import my GEDCOM data ?
+
+   Currently, GeneaPro is a read-only view. You should therefore
+   have a GEDCOM file created by another genealogy software.
+
+   Once you have this file, you can click on "Import" in your web
+   browser to import it into Geneapro.
 
 Q. Why did you implement this as a web server ?
 

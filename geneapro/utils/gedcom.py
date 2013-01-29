@@ -400,6 +400,7 @@ _GRAMMAR = dict (
              ("NOTE", 0, 1, None)),       # Gedcom content description
 
     NAME =  (("NPFX", 0, 1,         None),  # Name piece prefix
+             ("TYPE", 0, 1,         None),
              ("GIVN", 0, 1,         None),  # Name piece given
              ("NICK", 0, 1,         None),  # Name piece nickname
              ("SPFX", 0, 1,         None),  # Name piece surname prefix
@@ -979,10 +980,17 @@ class Gedcom(object):
         parsers = dict()
         self.parser = _GedcomParser("file", _GRAMMAR["file"], parsers)
 
-    def parse (self,filename):
+    def parse (self, filename):
         """Parse the specified GEDCOM file, check its syntax, and return a
            GedcomFile instance.
-          Raise Invalid_Gedcom in case of error."""
-        result = self.parser.parse(_Lexical(file(filename, "U")))
+           Raise Invalid_Gedcom in case of error.
+           :param filename:
+               Either the name of a file, or an instance of a class
+               compatible with file.
+        """
+        if isinstance(filename, str):
+            filename = file(filename, "U")
+
+        result = self.parser.parse(_Lexical(filename))
         result.filename = filename
         return result

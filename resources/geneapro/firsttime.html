@@ -1,0 +1,52 @@
+{% extends "geneapro/base.html" %}
+{% block title %}GeneaPro: First time use{% endblock %}
+{% block css %}
+p {margin-top: 10px; margin-left: 20px}
+#importReport {
+   margin-top: 40px; border:1px solid black; margin-left: 50px}
+.error {background-color:rgba(200,0,0,0.2) }
+#progressbar .ui-progressbar-value { background-color: #ccc; }
+{% endblock css %}
+
+{% block header %}
+<link rel="stylesheet" href="{{MEDIA_URL}}ui-lightness/jquery-ui-1.9.2.custom.min.css"/>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery-ui-1.9.2.custom.min.js"></script>
+{% endblock header %}
+
+{% block endbody %}
+{% endblock endbody %}
+
+{% block leftside %}
+{% endblock leftside %}
+
+{% block script %}
+$("input[value=import]").click(on_import);
+{% endblock script %}
+
+{% block contents %}
+<h2>Welcome to Geneapro</h2>
+
+<div style="width:500px">
+<p>
+Your database does not contain any person yet !
+</p>
+
+<p>
+At this stage, Geneapro is mostly read-only. As such, we recommend importing
+data from an other genealogy software. In particular, the authors have tested
+imported from Gramps or Roots Magic.
+</p>
+
+<p>
+Most genealogy software are capable of exporting your data as a <b>GEDCOM</b>
+file, which Geneapro can then import to get you started.
+</p>
+
+<p>
+Click the <input type="button" value="import"/> import button to start importing
+</p>
+</div>
+
+<div id="progressbar" style="display:none"/>
+
+{% endblock contents %}

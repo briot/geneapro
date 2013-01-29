@@ -12,10 +12,6 @@
 {% endblock css %}
 
 {% block script %}
-function changeGenerations () {
-   var gen = Number (getSelectedValue ($("select[name=generations]")[0]));
-   window.location = "/pedigree/{{decujus}}?gens=" + gen;
-}
 $(document).ready (function() {
    var data_ = {{pedigree_data|safe}};
    var canvas = new PedigreeCanvas($("#pedigree")[0], data_);
