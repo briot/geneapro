@@ -3,10 +3,6 @@ test:
 test_verbose:
 	./manage.py test --verbosity=2 --settings=testsettings
 
-reset:
-	./manage.py reset --noinput geneapro
-	./manage.py loaddata geneapro/initial_data.json
-
 syncdb:
 	./manage.py syncdb
 
