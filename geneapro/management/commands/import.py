@@ -25,9 +25,9 @@ class Command(LabelCommand):
       """
       sys.stdout.write(STYLE('Importing %s' % filename) + '\n')
       start = time.time()
-      result = GedcomFileImporter().parse(filename)
-      if result:
-          print result
+      success, errors = GedcomFileImporter().parse(filename)
+      if errors:
+          print errors
 
       end = time.time()
       sys.stdout.write(

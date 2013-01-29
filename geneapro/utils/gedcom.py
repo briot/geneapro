@@ -293,6 +293,10 @@ _GRAMMAR = dict (
                  ("NOTE", 0, unlimited, None),
                  ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
              ("_CHV", 0, 1, None), # ??? Geneatique 2010
+             ("_DEG", 0, unlimited,   # ??? gramps extensions for diplomas
+               (("TYPE", 1, 1, None),
+                ("DATE", 0, 1, None))
+             ),
              ("_MILT", 0, unlimited,  # ??? gramps extension for military
                 (("TYPE", 1, 1,         None),
                  ("DATE", 1, 1,         None),

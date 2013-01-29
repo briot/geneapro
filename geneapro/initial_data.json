@@ -700,10 +700,26 @@
     {
         "fields": {
             "gedcom": "_MIL", 
-            "name": "military service"
+            "name": "Military service"
         }, 
         "model": "geneapro.event_type", 
         "pk": 34
+    }, 
+    {
+        "fields": {
+            "gedcom": "EDUC", 
+            "name": "Education"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 47
+    }, 
+    {
+        "fields": {
+            "gedcom": "_DEG", 
+            "name": "Diploma"
+        }, 
+        "model": "geneapro.event_type", 
+        "pk": 46
     }, 
     {
         "fields": {
