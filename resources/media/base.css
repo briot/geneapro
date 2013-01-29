@@ -362,6 +362,26 @@ div.scrollable canvas {
    height:100%;
 }
 
+/* Area for the action buttons in a graph */
+#canvasActions {
+   background-color: rgba(150,150,150,0.1);
+   position: absolute;
+   top: -20px;  /* #roundedContents'top */
+   right: 0px;
+   height:100%;
+   width: 30px;
+   border: 1px solid gray;
+}
+#canvasActions img {
+   margin: 0;
+   width: 30px;
+   height: 30px;
+   margin-bottom:20px;
+}
+#canvasActions.inactive {
+   width: 0px;
+}
+
 /***********************************************
  * Legend
  ***********************************************/

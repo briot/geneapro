@@ -108,14 +108,6 @@ PedigreeCanvas.prototype.personAtCoordinates = function(mx, my) {
     return selected;
 };
 
-/** @param {{x,y,w,h:number}} box   The box to test.
- * @param {number} x                Absolute coordinates.
- * @param {number} y                Absolute coordinates.
- * @return {boolean} Whether (x,y) is within the box.
- */
-
-Pedi
-
 /** @inheritDoc */
 
 PedigreeCanvas.prototype.isVisible = function(person, box) {

@@ -18,6 +18,8 @@ function AbstractPedigree(canvas, data) {
    Canvas.call(this, canvas /* elem */);
    this.setData(data);
 
+   this.disableActionButtons();
+
    var f = this;  //  closure for callbacks
    $("#settings #gens")
       .slider({"min": 0,
@@ -250,7 +252,7 @@ AbstractPedigree.prototype.setColorScheme = function(scheme) {
  */
 
 AbstractPedigree.prototype.isSelected = function(person) {
-   return this.selected__ == person.id;
+   return this.selected__ == person && person !== undefined;
 };
 
 /**
@@ -260,9 +262,25 @@ AbstractPedigree.prototype.isSelected = function(person) {
  */
 
 AbstractPedigree.prototype.select = function(id) {
-   this.selected__ = id ? id.id : undefined;
+   if (this.selected__) {
+      this.onUnselect(this.selected_);
+   }
+
+   this.disableActionButtons();
+
+   this.selected__ = id ? id : undefined;
+   if (id) {
+      this.enableActionButtons(id);
+      this.onSelect(id);
+   }
    this.refresh();
 };
+
+/** Called when an object is selected */
+AbstractPedigree.prototype.onSelect = function(person) {};
+
+/** Called when an object is unselected */
+AbstractPedigree.prototype.onUnselect = function(person) {};
 
 /**
  * @param {Event} e   The click event.
@@ -525,6 +543,25 @@ AbstractPedigree.prototype.drawPersonBox = function(
        this.drawPersonText(person, 0, 0, height, fontsize);
        this.ctx.restore();
     }
+};
+
+/**
+ * Display the action buttons along a specific line.
+ * @param {Person} person
+ */
+
+AbstractPedigree.prototype.enableActionButtons = function(person) {
+   var a = $("#canvasActions");
+   a.removeClass("inactive");
+   a.find("a.persona").attr("href", "/persona/" + person.id);
+};
+
+/**
+ * Disable the action buttons
+ */
+
+AbstractPedigree.prototype.disableActionButtons = function() {
+   $("#canvasActions").addClass("inactive");
 };
 
 /**

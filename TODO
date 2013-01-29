@@ -38,15 +38,15 @@ http://www.beholdgenealogy.com/blog/?p=876
    might want to see other info (if "residence", there can be multiple of
    them) See also engagement instead of marriage
 ** Tooltip to display person info
-** Highlight box when hover.
-   Display action buttons ("make decujus", "view info",...) for the active box.
-   Use a R-Tree for fast detection.
 ** Compact layout should compute width of boxes in one generation by looking
    at the maximum width to display the info.
-** control-click does not work on Firefox/OSX
 ** Test infinite loops with invalid pedigree: A parent of B parent of C parent of A
 ** descendants: should show a node for the wife(s), and link children to that.
 ** Display timeline (ie range of date at the top of each column of boxes)
+** Save configuration of pedigree and fanchart in local storage, and restore it the
+   next time it is displayed. This configuration can also be used to detect whether
+   we need to recompute the layout. This will also allow reloading the whole page
+   when selecting a new decujus, which will preserve Back and Forward arrows.
 
 ** Dynamic "infinite" expansion
 See "Interactive Visualization of Genealogical Graphs"
@@ -78,7 +78,6 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    Not necessarily related to the current root
 ** Display last name on a separate line to make it more readable
 ** Tooltip to display person info
-** Display fanchart for descendants
 ** Rotation fan chart
    See https://plus.google.com/u/0/115195430424417504730/posts/QrXM4z9JxrG
 ** Half and Quarter circle view
