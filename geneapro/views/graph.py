@@ -105,6 +105,9 @@ class GeneaGraph(Digraph):
     def node_from_id(self, id):
         return self.__nodes[id]
 
+    def mark_as_invalid(self):
+        self.__needs_update = True
+
     def update_if_needed(self):
         """Create a graph from the data in the db"""
 
