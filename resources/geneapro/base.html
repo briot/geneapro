@@ -28,15 +28,19 @@
   <div id="sidebar" class="noselect">
      <div id="collapseSidebar"></div>
    <div id="sidebarMenu">
-      <h2><a href="/personas">People</a></h2>
+      <h2>People</h2>
+      <ul>
+         <li><a id="personaLink">Individual</a></li>
+         <li><a href="/personas">Persons</a></li>
+      </ul>
       <h2><a href="/places">Places</a></h2>
       <h2><a href="/sources">Sources</a></h2>
       <h2>Reports</h2>
       <ul>
-        <li><a href="/pedigree/{{decujusid|default:1}}">Pedigree</a></li>
-        <li><a href="/fanchart/{{decujusid|default:1}}">Fan Chart</a></li>
-        <li><a href="/quilts/{{decujusid|default:''}}">Quilts</a></li>
-        <li><a href="/stats/{{decujusid|default:1}}">Statistics</a></li>
+        <li><a id="pedigreeLink">Pedigree</a></li>
+        <li><a id="fanchartLink">Fan Chart</a></li>
+        <li><a id="quiltsLink">Quilts</a></li>
+        <li><a id="statsLink">Statistics</a></li>
       </ul>
       <h2>Search</h2>
 
@@ -69,6 +73,8 @@
   {% block script %}
   {% endblock script %}
 
+  var defaultDeCujus = {{decujusid|default:1}};
+
   // Need to compute ourselves the size of the canvas, since we haven't
   // managed to get a proper CSS that would correctly use all available height
   // except for the area used by the header.
@@ -81,6 +87,7 @@
   $(document).ready(function() {
       $(window).resize();
       $("#importButton").click(on_import);
+      markPersonAsSelected();
   });
  </script>
 

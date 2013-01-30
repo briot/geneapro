@@ -224,7 +224,6 @@ class Styles(ColorScheme):
                   # ??? We used to preprocess the tree to know how many times
                   # an id occurred in the tree, but the graph no longer
                   # provides that info
-                  print "Handling of IMPLEX is temporarily broken"
 
                   def build_implex(counts, id):
                       counts[id] = counts.get(id, 0) + 1

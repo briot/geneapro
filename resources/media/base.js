@@ -175,3 +175,22 @@ function event_to_string (e) {
    } else
       return "";
 }
+
+/********************************************************
+ * Mark a person as selected and update the menu items
+ * @param {Person=} person    The new selection.
+ ********************************************************/
+
+function markPersonAsSelected(person) {
+   if (person) {
+      var id = person.id;
+   } else {
+      id = defaultDeCujus;
+   }
+
+   $("#personaLink").attr("href", "/persona/" + id);
+   $("#pedigreeLink").attr("href", "/pedigree/" + id);
+   $("#fanchartLink").attr("href", "/fanchart/" + id);
+   $("#quiltsLink").attr("href", "/quilts/" + id);
+   $("#statsLink").attr("href", "/stats/" + id);
+}
