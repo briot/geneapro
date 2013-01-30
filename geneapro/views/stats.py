@@ -21,6 +21,10 @@ def view (request, decujus=1):
    decujus = int(decujus)
 
    graph.update_if_needed()
+   if len(graph) == 0:
+       return render_to_response(
+           'geneapro/firsttime.html',
+           context_instance=RequestContext(request))
 
    # ??? The stats includes persons "Unknown" that were created during a
    # gedcom import for the purpose of preserving families. Will be fixed

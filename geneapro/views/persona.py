@@ -283,46 +283,56 @@ def extended_personas(nodes, styles, event_types=None, as_css=False, graph=graph
 
 
 def view(request, id):
-   """Display all details known about persona ID"""
+    """Display all details known about persona ID"""
 
-   id = int(id)
+    id = int(id)
 
-   graph.update_if_needed()
-   schemes = set() # The surety schemes that are needed
-   styles = None
-   p = extended_personas(
-       nodes=set([graph.node_from_id(id)]),
-       styles=styles, as_css=True, graph=graph, schemes=schemes)
+    graph.update_if_needed()
+    if len(graph) == 0:
+        return render_to_response(
+            'geneapro/firsttime.html',
+            context_instance=RequestContext(request))
 
-   surety_schemes = dict()
-   for s in schemes:
-       surety_schemes[s] = models.Surety_Scheme.objects.get(id=s).parts.all()
+    schemes = set() # The surety schemes that are needed
+    styles = None
+    p = extended_personas(
+        nodes=set([graph.node_from_id(id)]),
+        styles=styles, as_css=True, graph=graph, schemes=schemes)
 
-   query = models.P2P.objects.filter(
-       type=models.P2P.sameAs)
+    surety_schemes = dict()
+    for s in schemes:
+        surety_schemes[s] = models.Surety_Scheme.objects.get(id=s).parts.all()
 
-   node = graph.node_from_id(id)
-   assertions = list(models.P2P.objects.filter(
-       type=models.P2P.sameAs,
-       person1__in=node.ids.union(node.different)))
+    query = models.P2P.objects.filter(
+        type=models.P2P.sameAs)
 
-   return render_to_response(
-       'geneapro/persona.html',
-       {"decujus":p[id],
-        "decujusid":id,
-        "chars": p[id].all_chars,
-        "events": p[id].all_events,
-        "groups": p[id].all_groups,
-        "schemes": surety_schemes,
-        "p2p": [(0, a) for a in assertions],
-       },
-       context_instance=RequestContext(request))
+    node = graph.node_from_id(id)
+    assertions = list(models.P2P.objects.filter(
+        type=models.P2P.sameAs,
+        person1__in=node.ids.union(node.different)))
+
+    return render_to_response(
+        'geneapro/persona.html',
+        {"decujus":p[id],
+         "decujusid":id,
+         "chars": p[id].all_chars,
+         "events": p[id].all_events,
+         "groups": p[id].all_groups,
+         "schemes": surety_schemes,
+         "p2p": [(0, a) for a in assertions],
+        },
+        context_instance=RequestContext(request))
 
 
 def view_list(request):
     """View the list of all personas"""
 
     graph.update_if_needed()
+    if len(graph) == 0:
+        return render_to_response(
+            'geneapro/firsttime.html',
+            context_instance=RequestContext(request))
+
     styles = Styles(style_rules, graph=graph, decujus=1) # ??? Why "1"
     all = extended_personas(
         nodes=None, styles=styles, event_types=event_types_for_pedigree,
@@ -341,6 +351,7 @@ def view_list(request):
 
 def personaEvents(request, id):
     """All events for the person"""
+
     id = int(id)
 
     graph.update_if_needed()

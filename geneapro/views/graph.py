@@ -505,6 +505,11 @@ def quilts_view(request, decujus=None):
     # ??? Should lock the graph until the view has been generated
 
     graph.update_if_needed()
+    if len(graph) == 0:
+        return render_to_response(
+            'geneapro/firsttime.html',
+            context_instance=RequestContext(request))
+
     graph.assign_layers()
 
     if decujus is not None:

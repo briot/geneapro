@@ -40,8 +40,6 @@ def extended_sources(ids):
 
     sources = dict() # id -> Source
 
-    graph.update_if_needed()
-
     for s in sql_in(models.Source.objects.select_related(
                          "medium", "repositories", "researcher"),
                     "id", ids):
@@ -103,6 +101,12 @@ def view(request, id):
 
     id = int(id)
 
+    graph.update_if_needed()
+    if len(graph) == 0:
+        return render_to_response(
+            'geneapro/firsttime.html',
+            context_instance=RequestContext(request))
+
     s = extended_sources([id])
 
     return render_to_response (
@@ -112,8 +116,6 @@ def view(request, id):
          "source_mediums":   models.Source_Medium.objects.all(),
         },
         context_instance=RequestContext(request))
-
-    return None
 
 
 def source_list(request):
