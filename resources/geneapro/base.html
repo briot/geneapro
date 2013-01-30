@@ -19,71 +19,47 @@
  {% endblock header %}
 </head>
 <body>
- <div id="head" class="noselect">
-   <a href="/geneapro">G&eacute;n&eacute;apro</a>
-   <div class="tagline">Evidence your genealogy</div>
- </div>
+   <div id="sidebar" class="noselect">
+      <div id="head">
+        <a href="/">G&eacute;n&eacute;apro</a>
+        <div class="tagline">Evidence your genealogy</div>
+      </div>
 
- <div id="body">
-  <div id="sidebar" class="noselect">
-     <div id="collapseSidebar"></div>
-   <div id="sidebarMenu">
-      <h2>People</h2>
-      <ul>
-         <li><a id="personaLink">Individual</a></li>
-         <li><a href="/personas">Persons</a></li>
-      </ul>
-      <h2><a href="/places">Places</a></h2>
-      <h2><a >Sources</a></h2>
-      <h2>Reports</h2>
-      <ul>
-        <li><a id="pedigreeLink">Pedigree</a></li>
-        <li><a id="fanchartLink">Fan Chart</a></li>
-        <li><a id="quiltsLink">Quilts</a></li>
-        <li><a id="statsLink">Statistics</a></li>
-      </ul>
-      <h2>Search</h2>
+      <h2>Lists</h2>
+      <a href="/personas" title="Show all persons"><img src="{{MEDIA_URL}}persons30.png"/></a>
+      <a href="/places" title="Show all places"><img src="{{MEDIA_URL}}home30.png"/></a>
+      <a href="/sources" title="Show all sources"><img src="{{MEDIA_URL}}sources30.gif"/></a>
+
+      <h2>Person</h2>
+      <span id="decujusName"></span>
+      <a id="personaLink" title="Show person details"><img src="{{MEDIA_URL}}user40.png"/></a>
+      <a id="pedigreeLink" title="Show person pedigree"><img src="{{MEDIA_URL}}pedigree30.png"/></a>
+      <a id="fanchartLink" title="Show person fanchart"><img src="{{MEDIA_URL}}fan30.png"/></a>
+      <a id="quiltsLink" title="Show person quilts view"><img src="{{MEDIA_URL}}quilts30.png"/></a>
+      <a id="statsLink" title="Show person's statistics"><img src="{{MEDIA_URL}}stats30.gif"/></a>
+
+      {% block leftside %}
+      {% endblock leftside %}
+
+      <!--  Missing:   search -->
 
       <div class="bottom">
-         <h2 id="importButton"><a href="#" id="importButton">Import...</a></h2>
+         <input type="button" value="Import..." id="importButton"/>
       </div>
-   </div>
+   </div>  <!-- sidebar -->
 
-   <div style="margin-top:40px">
-   {% block leftside %}
-   {% endblock leftside %}
-   </div>
-  </div> {# sidebar #}
-
-  <div id="bodyMain">
-    <div id="roundedContents" class="noselect">
-    </div>
-
-    <div id="contents">
+   <div id="contents">
      {% block contents %}
      {% endblock contents %}
-    </div>
-  </div> {# bodyMain #}
-
-  <div style="clear:both">
-  </div>
- </div> {# body #}
+   </div> <!--  contents -->
 
  <script type="text/javascript">
   {% block script %}
   {% endblock script %}
 
-  var defaultDeCujus = {{decujusid|default:1}};
+  var defaultDeCujus = {{decujus|default:1}};
+  var defaultDeCujusName = "{{decujus_name|default:""}}";
 
-  // Need to compute ourselves the size of the canvas, since we haven't
-  // managed to get a proper CSS that would correctly use all available height
-  // except for the area used by the header.
-  $(window).resize(function() {
-      var h = $(window).height() - $("#head").height() - 25;
-      $("#body").height(h);
-      $("#bodyMain").height(h);
-      $("#collapseSidebar").height(h);
-  });
   $(document).ready(function() {
       $(window).resize();
       $("#importButton").click(on_import);

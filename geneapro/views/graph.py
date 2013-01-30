@@ -444,10 +444,10 @@ class GeneaGraph(Digraph):
         result = []
         for lay in layers:
             result.append(
-                [(min(n.ids), n.name.encode("utf-8"), n.sex)
+                [(n.main_id, n.name.encode("utf-8"), n.sex)
                  for n in lay])
 
-        return {"data": json.to_json(result, year_only=True),
+        return {"persons": json.to_json(result, year_only=True),
                 "families": families}
 
     def people_in_tree(self, id, maxdepthAncestors=-1,
@@ -513,10 +513,12 @@ def quilts_view(request, decujus=None):
     graph.assign_layers()
 
     if decujus is not None:
+        decujus = int(decujus)
         subset = graph.people_in_tree(
-            id=int(decujus), maxdepthAncestors=3, maxdepthDescendants=3,
+            id=decujus, maxdepthAncestors=3, maxdepthDescendants=3,
             spouses_tree=True)
     else:
+        decujus = 1
         subset = None
 
     #graph.export(file("graph.pickle", "w"))
@@ -524,7 +526,12 @@ def quilts_view(request, decujus=None):
     #graph.write_graphviz(file("genea.dot", "w"),
     #                 edgeiter=g.out_children_edges)
 
+    data = graph.json(subset)
+
     return render_to_response(
         'geneapro/quilts.html',
-        graph.json(subset),
+        {"persons": data["persons"],
+         "families": data["families"],
+         "decujus_name": "",
+         "decujus": decujus},
         context_instance=RequestContext(request))

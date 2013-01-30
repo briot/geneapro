@@ -99,22 +99,6 @@ def get_sosa_tree(graph, id, max_levels, style_rules,
            'styles':      styles.all_styles()}
 
 
-def compute_data(graph, generations, year_only, who, maxdepthDescendants=1,
-                 last_descendant_known=-1, last_gen_known=-1):
-    """Compute, and send back to the user, information about the pedigree of a
-       specific person. This includes ancestors and children.
-
-       :param last_gen_known: is the number of the last generation for which the
-           client already has data, and thus do not need to be sent again. -1
-           to retrieve all.
-    """
-    result = get_sosa_tree(graph, who, max_levels=generations, style_rules=style_rules,
-                           maxdepthDescendants=maxdepthDescendants,
-                           last_descendant_known=last_descendant_known,
-                           last_gen_known=last_gen_known)
-    return to_json(result, year_only=year_only)
-
-
 def pedigree_view(request, decujus=1):
    """Display the pedigree of a person as a tree"""
    decujus = int(decujus)
@@ -127,11 +111,15 @@ def pedigree_view(request, decujus=1):
            'geneapro/firsttime.html',
             context_instance=RequestContext(request))
 
+   data = get_sosa_tree(
+       graph, id=decujus, max_levels=gens, style_rules=style_rules)
+   dec = data['persons'][decujus]
+
    return render_to_response(
        'geneapro/pedigree.html',
-       {"pedigree_data": compute_data(graph, gens, False, decujus),
+       {"pedigree_data": to_json(data),
         "decujus": decujus,
-        "decujusid": decujus,
+        "decujus_name": "%s %s" % (dec.given_name, dec.surname),
         "legend": getLegend()},
        context_instance=RequestContext(request))
 
@@ -148,12 +136,15 @@ def fanchart_view(request, decujus=1):
            'geneapro/firsttime.html',
             context_instance=RequestContext(request))
 
+   data = get_sosa_tree(
+       graph, id=decujus, max_levels=gens, style_rules=style_rules)
+   dec = data['persons'][decujus]
    return render_to_response(
        'geneapro/fanchart.html',
        {"legend": getLegend(),
         "decujus": decujus,
-        "decujusid": decujus,
-        "pedigree_data":compute_data(graph, gens, True, decujus)},
+        "decujus_name": "%s %s" % (dec.given_name, dec.surname),
+        "pedigree_data":to_json(data)},
        context_instance=RequestContext(request))
 
 
@@ -168,9 +159,12 @@ def pedigree_data(request, decujus):
     desc_known = int(request.GET.get("desc_known", -1))
     generations_known = int(request.GET.get("gens_known", -1))
     graph.update_if_needed()   # ??? Should lock until the view has been generated
+
+    data = get_sosa_tree(
+        graph, id=decujus, max_levels=generations, style_rules=style_rules,
+                           maxdepthDescendants=descendant_gens,
+                           last_descendant_known=desc_known,
+                           last_gen_known=generations_known)
     return HttpResponse(
-        compute_data(graph, generations, year_only=True, who=decujus,
-                     maxdepthDescendants=descendant_gens,
-                     last_descendant_known=desc_known,
-                     last_gen_known=generations_known),
+        to_json(data),
         content_type="application/json")

@@ -1,16 +1,6 @@
 {% extends "geneapro/base.html" %}
 {% block title %}GeneaPro: fanchart {{decujus}}{% endblock %}
 {% block css %}
-.pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
-#stats {margin:0; padding:0}
-#stats li {margin-bottom:20px; list-style-type:none}
-
-#settings {font-size: 0.8em}
-
-#settings .ui-slider-horizontal {height: 0.2em; margin: 5px 3px 0 10px}
-#settings .ui-slider .ui-slider-handle {height:0.6em}
-#settings .ui-slider span {font-size:0.8em; margin-top:7px}
-#settings .ui-slider span.right {float:right}
 {% endblock css %}
 
 {% block header %}
@@ -37,31 +27,40 @@ $(document).ready(function() {
 {% block leftside %}
 <h2>Fanchart View</h2>
 <div id="settings">
-Generations<div id="gens"><span>2</span><span class="right">max</span></div>
-<br>
-Size:<div id="size"><span>90</span><span class="right">360</span></div>
-<br>
-Separator between couples:<div id="separator"></div>
-<br>
-Marriages:&nbsp;<input type="checkbox" name="marriages"/>
-<br>
-Layout:&nbsp;<select name="layout">
-   <option value="0">Expanded</option>
-   <option value="1">Compact</option>
- </select>
-<br>
-Colors:&nbsp;<select name="colors">
-   <option value="0">Rules</option>
-   <option value="1">Pedigree</option>
-   <option value="2">Generation</option>
-</select>
-<br>
-Appearance:&nbsp;<select name="appearance">
-   <option value="0">Flat</option>
-   <option value="1">Gradient</option>
-</select>
-<br>
-Auto Scale:&nbsp;<input type="checkbox" name="autoScale"/>
+   <div class="config"><span>Generations</span>
+      <div id="gens"><span>2</span><span class="right">max</span></div>
+   </div>
+   <div class="config"><span>Size</span>
+      <div id="size"><span>90</span><span class="right">360</span></div>
+   </div>
+   <div class="config"><span>Space between couples</span>
+      <div id="separator"></div>
+   </div>
+   <div class="config"><span>Marriages</span>
+      <input type="checkbox" name="marriages"/>
+   </div>
+   <div class="config"><span>Layout</span>
+      <select name="layout">
+        <option value="0">Expanded</option>
+        <option value="1">Compact</option>
+      </select>
+   </div>
+   <div class="config"><span>Colors</span>
+      <select name="colors">
+         <option value="0">Rules</option>
+         <option value="1">Pedigree</option>
+         <option value="2">Generation</option>
+      </select>
+   </div>
+   <div class="config"><span>Appearance</span>
+      <select name="appearance">
+          <option value="0">Flat</option>
+           <option value="1">Gradient</option>
+      </select>
+   </div>
+   <div class="config"><span>Auto Scale</span>
+      <input type="checkbox" name="autoScale"/>
+   </div>
 </div>
 
 {{legend|safe}}

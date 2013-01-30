@@ -1,14 +1,6 @@
 {% extends "geneapro/base.html" %}
 {% block title %}GeneaPro: pedigree {{decujus}}{% endblock %}
 {% block css %}
-.pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
-
-#settings {font-size: 0.8em}
-
-#settings .ui-slider-horizontal {height: 0.2em; margin: 5px 3px 0 10px}
-#settings .ui-slider .ui-slider-handle {height:0.6em}
-#settings .ui-slider span {font-size:0.8em; margin-top:7px}
-#settings .ui-slider span.right {float:right}
 {% endblock css %}
 
 {% block script %}
@@ -31,29 +23,46 @@ $(document).ready (function() {
 {% endblock endbody %}
 
 {% block leftside %}
-<h2>Pedigree View</h2>
+<h2 class="settings">Settings</h2>
 <div id="settings">
-Ancestors:<div id="gens"><span>0</span><span class="right">max</span></div>
-<br>
-Descendants:<div id="Dgens"><span>0</span><span class="right">max</span></div>
-<br>Same size: <input type="checkbox" name="sameSize"/>
-<br>Colors:&nbsp;<select name="colors">
-    <option value="0">Rules</option>
-    <option value="1">Pedigree</option>
-    <option value="2">Generation</option>
-    <option value="3">No box</option>
-  </select>
-<br>Appearance:&nbsp;<select name="appearance">
-    <option value="0">Flat</option>
-    <option value="1">Gradient</option>
-  </select>
-<br>Layout:&nbsp;<select name="layout">
-    <option value="0">Expanded</option>
-    <option value="1">Compact</option>
-  </select>
-<br>Auto scale:&nbsp;<input type="checkbox" name="autoScale"/>
-<br>Horizontal spacing:<div id="hspace"><span>0</span><span class="right">max</span></div>
-<br>Vertical spacing:<div id="vspace"><span>0</span><span class="right">max</span></div>
+   <div class="config"><span>Ancestors</span>
+      <div id="gens"><span>0</span><span class="right">max</span></div>
+   </div>
+   <div class="config"><span>Descendants</span>
+      <div id="Dgens"><span>0</span><span class="right">max</span></div>
+   </div>
+   <div class="config"><span>Same size</span>
+      <input type="checkbox" name="sameSize"/>
+   </div>
+   <div class="config"><span>Colors</span>
+      <select name="colors">
+        <option value="0">Rules</option>
+        <option value="1">Pedigree</option>
+        <option value="2">Generation</option>
+        <option value="3">No box</option>
+      </select>
+   </div>
+   <div class="config"><span>Appearance</span>
+      <select name="appearance">
+         <option value="0">Flat</option>
+         <option value="1">Gradient</option>
+      </select>
+   </div>
+   <div class="config"><span>Layout</span>
+      <select name="layout">
+         <option value="0">Expanded</option>
+         <option value="1">Compact</option>
+      </select>
+   </div>
+   <div class="config"><span>Auto scale</span>
+      <input type="checkbox" name="autoScale"/>
+   </div>
+   <div class="config"><span>Horizontal spacing</span>
+      <div id="hspace"></div>
+   </div>
+   <div class="config"><span>Vertical spacing</span>
+      <div id="vspace"></div>
+   </div>
 </div>
 
 {{legend|safe}}

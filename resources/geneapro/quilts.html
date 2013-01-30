@@ -1,5 +1,5 @@
 {% extends "geneapro/base.html" %}
-{% block title %}GeneaPro: Quilts{% endblock %}
+{% block title %}GeneaPro: Quilts {{decujus}} {% endblock %}
 
 {% block css %}
 {% endblock css %}
@@ -7,7 +7,7 @@
 {% block script %}
 var canvas;
 $(document).ready(function() {
-  var data_ = {{data|safe}};
+  var data_ = {{persons|safe}};
   var families_ = {{families|safe}};
   canvas = new QuiltsCanvas($("#quilts")[0], data_, families_);
   canvas.onResize();

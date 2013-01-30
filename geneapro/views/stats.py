@@ -114,5 +114,8 @@ def view (request, decujus=1):
        "total_mother":    len(mothers),
        "ranges":          ranges,
        "ages":            ages,
+       "decujus":         decujus,
+       "decujus_name":  "%s %s" % (persons[decujus].given_name,
+                                   persons[decujus].surname)
       },
        context_instance=RequestContext(request))

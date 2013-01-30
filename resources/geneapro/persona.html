@@ -1,5 +1,5 @@
 {% extends "geneapro/base.html" %}
-{% block title %}GeneaPro: person {{decujus.id}}{% endblock %}
+{% block title %}GeneaPro: person {{decujus}}{% endblock %}
 {% block css %}
 .pedigree td.indiv {background:url({{MEDIA_URL}}horiz.png) left center no-repeat}
 {% endblock css %}
@@ -77,10 +77,10 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
 {% block contents %}
 
 <h3 id="title">
-   <span class="id">{{decujus.id}}</span>
-   <span class="givenName">{{decujus.base_given_name}}</span>
-   <span class="surName">{{decujus.base_surname}}</span>
-   <span class="details">({{decujus.birth.date}} - {{decujus.death.date}})</span>
+   <span class="id">{{id}}</span>
+   <span class="givenName">{{person.base_given_name}}</span>
+   <span class="surName">{{person.base_surname}}</span>
+   <span class="details">({{person.birth.date}} - {{person.death.date}})</span>
 </h3>
 
 <div id="containers">

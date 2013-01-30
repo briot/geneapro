@@ -1,6 +1,7 @@
 from django.conf.urls import patterns, include, url
 from django.conf import settings
 from django.views import static
+import django.views.defaults
 import geneapro.urls
 
 # Uncomment the next two lines to enable the admin:

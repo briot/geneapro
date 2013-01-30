@@ -311,13 +311,16 @@ def view(request, id):
         type=models.P2P.sameAs,
         person1__in=node.ids.union(node.different)))
 
+    decujus = p[id]
+
     return render_to_response(
         'geneapro/persona.html',
-        {"decujus":p[id],
-         "decujusid":id,
-         "chars": p[id].all_chars,
-         "events": p[id].all_events,
-         "groups": p[id].all_groups,
+        {"decujus": id,
+         "person": decujus,
+         "decujus_name": "%s %s" % (decujus.given_name, decujus.surname),
+         "chars": decujus.all_chars,
+         "events": decujus.all_events,
+         "groups": decujus.all_groups,
          "schemes": surety_schemes,
          "p2p": [(0, a) for a in assertions],
         },

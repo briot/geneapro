@@ -184,10 +184,13 @@ function event_to_string (e) {
 function markPersonAsSelected(person) {
    if (person) {
       var id = person.id;
+      var n = person.givn + " " + person.surn;
    } else {
       id = defaultDeCujus;
+      n = defaultDeCujusName;
    }
 
+   $("#decujusName").text(n + " (" + id + ")");
    $("#personaLink").attr("href", "/persona/" + id);
    $("#pedigreeLink").attr("href", "/pedigree/" + id);
    $("#fanchartLink").attr("href", "/fanchart/" + id);

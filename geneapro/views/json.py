@@ -5,7 +5,7 @@ from geneapro import models
 from geneapro.utils.date import DateRange
 from geneapro.views.styles import get_place
 
-def to_json (obj, year_only):
+def to_json (obj, year_only=True):
    """Converts a type to json data, properly converting database instances.
       If year_only is true, then the dates will only include the year"""
 

@@ -148,8 +148,6 @@ a {color:#16B; text-decoration:none; cursor:pointer}
 .sourceNotes ul, .sourceActions ul {margin-left:30px}
 .sourceNotes li, .sourceActions li {margin-bottom:20px}
 
-.design {position:absolute;right:0; width:300px; background-color:#555; color:white}
-
 .tooltip {padding: 2px; font-size: small; z-index: 100000;
           border-left: 1px solid black;
           border-top: 1px solid black;
@@ -182,100 +180,106 @@ div.scrollable canvas {
  **********************************************/
 
 #head {
-   background-color:#39414A;
-   padding:0 0 0 30px; margin:0;
-   height:90px; /* taller then logo, because the #roundedContents is
-                   displayed on top to provided the rounded corner */
-   background-image: -moz-linear-gradient(top, #39414A, #777);
-   background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #39414A),color-stop(1, #777));
-   background-image: linear-gradient(top, #39414A, #777);
-   filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#39414A', EndColorStr='#777');
+   padding:0 0 0 5px; margin:0;
 }
 
 #head > a {
    text-decoration:none;
    display:block;
-   font-size:52px;
+   font-size:25px;
    color: #ec8d05;
    font-style:italic;
    text-shadow: black 3px 3px 7px;
 }
-#head .tagline{font-size:14px; color:white; font-style:italic;
-               margin:-12px 0 0 63px; text-shadow: black 1px 1px 2px}
+#head .tagline{font-size:9px; color:white; font-style:italic;
+               margin:-8px 0 8px 23px; text-shadow: black 1px 1px 2px}
 
 /**********************************************
  * Leftside box
  **********************************************/
 
-#body {
-   margin:0;
-   padding:0;
-   height:900px;  /* page height, for some reason 100% does not work */
-   width:100%;
-}
-
 #sidebar {
-   width:160px;
-   height:100%;
-   float:left;
+   width:140px;
+   position: absolute;
+   top: 10px;
+   left: 10px;
 
    background-image: -moz-linear-gradient(top, #777, white);
-   background-image: linear-gradient(top, #777/*from #head*/, white);
+   background-image: linear-gradient(top, #777, white);
    background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #777),color-stop(1, white));
-}
-#collapseSidebar {
-   background:transparent;
-   position:absolute;
-   left:150px;  /* #sidebar'width - #collapseSidebar'width */
-   width:10px;
-   height:100%;
-}
-#collapseSidebar:hover {
-   /* If we want a collapsible sidebar, we should show this when mouse is
-    * hover, and have a callback */
-   /*background:red;*/
-}
-#sidebarMenu h2 {
-   margin:5px 5px 0 5px;
-   padding:3px 3px 3px 8px;
-   color:black;
-   background:#ec8d05;
-   font-weight:normal;
-   font-size:16px;
-   border:1px solid #39414A;
 
    -moz-box-shadow: 2px 2px 2px black; /* FF3.5+ */
    -webkit-box-shadow: 2px 2px 2px black; /* Saf3.0+, Chrome */
    box-shadow: 2px 2px 2px black; /* Opera 10.5, IE9 */
 
-   -moz-border-radius: 12px; /* FF1+ */
-   -webkit-border-radius: 12px; /* Saf3-4 */
-   border-radius: 12px; /* Opera 10.5, IE9, Saf5, Chrome */
+   -moz-border-radius: 4px; /* FF1+ */
+   -webkit-border-radius: 4px; /* Saf3-4 */
+   border-radius: 4px; /* Opera 10.5, IE9, Saf5, Chrome */
 }
-#sidebarMenu h2.selected {background:#39414A}
-#sidebarMenu h2 a {
-   text-decoration:none;
-   color:black; /* #sidebar h2'color */
-   white-space:nowrap;
-   display:inline-block; width:100%
+#sidebar h2 {
+   color:black;
+   font-weight:normal;
+   font-size:16px;
+   padding: 0 5px;
+   clear:both;
+   margin: 0;
 }
-#sidebarMenu h2 a:hover,
-#sidebarMenu li a:hover {color:white}
-#sidebarMenu ul {list-style:none; margin:8px 0 10px 20px; padding:0}
-#sidebarMenu li {width:100%}
-#sidebarMenu li a {text-decoration:none; color:black; white-space:nowrap;
-   width:100%; display:inline-block}
-#sidebarMenu li a:before {content:"\00BB"; padding-right:5px}
-
+#sidebar a {
+    text-decoration:none;
+    white-space:nowrap;
+}
+#sidebar img {
+   width: 30px;
+   height: 30px;
+   margin: 5px;
+   float:left;
+}
 #sidebar button,
 #sidebar input {
   padding: 5px;
 }
 
+#sidebar h2.settings {
+   margin-top: 20px;
+   font-size: 12px;
+}
+
 #sidebar .bottom {
-   position: absolute;
-   bottom: 10px;
-   width:  140px;  /* #sidebar'width  - #sidebar .bottom input'margin * 2 */
+   clear: both;
+   margin-top: 20px;
+}
+
+#settings {font-size: 0.8em}
+#settings .ui-slider-horizontal {height: 0.2em; margin: 5px 3px 0 10px}
+#settings .ui-slider .ui-slider-handle {height:0.6em}
+#settings .ui-slider span {font-size:0.8em; margin-top:7px; float: left; position:relative; top:-2px}
+#settings .ui-slider span.right {float:right}
+#settings .config {
+   padding-top: 2px;
+   white-space: nowrap;
+   clear: both;
+}
+#settings .config:hover > span:first-child{
+   color: #ec8d05;
+}
+#settings .config > span:first-child {  /* Labels */
+   float: left;
+}
+#settings .config > div.ui-slider {   /* Sliders */
+   clear:both;
+   top: 5px;
+   margin-bottom: 8px;
+}
+#settings .config input,
+#settings .config select {
+   float: right;
+}
+
+#decujusName {
+   font-style: italic;
+   display: block;
+   text-align: center;
+   font-size: 0.9em;
 }
 
 /**********************************************
@@ -316,51 +320,14 @@ div.scrollable canvas {
  * Contents
  **********************************************/
 
-#roundedContents {
-   border-top-left-radius: 25px;
-   -moz-border-radius-topleft: 25px; /* FF1+ */
-
-   height:10px;
-   background:white; /* color background for the whole page */
-   position:relative;
-   top:-20px; /* for some reason: = -(#roundedContents'height + 10) */
-   padding: 5px 30px;
-}
-#bodyMain {
-   height:100%;
-
-   /* Using absolute positioning here requires knowing various dimensions
-    * for proper placement. This creates an issue if we made #sidebar
-    * resizable. It would be nicer to use "float:left", but then we do not
-    * use the full remaining with of the page, up to the right margin.
-    * Setting "width:100%" puts #bodyMain below #sidebar */
-
-   /*float:left;  /* on the right of #sidebar */
-
-   /* Another approach is not to use floating or absolute positioning,
-    * just a margin the right size. This fails because the contents of the
-    * tabs have a "clear" and thus go below the #sidebar (we should have
-    * another layout context) */
-
-   /*margin-left:160px; /* #sidebar'width + #sidebar'border-right */
-
-   /* Absolute positioning works, but requires knowing the various sizes
-    * for proper layout. Thus collapsing the sidebar requires changing the
-    * sizes here too */
-
-   position:absolute; /* on the right of #sidebar */
-   left:160px;        /* #sidebar'width + #sidebar'border-right */
-   right:0;
-   bottom:0;
-   top:90px;  /* #head'height */
-}
 #contents {
-   position:relative;
-   top:-20px;  /* #roundedContents'top */
+   position:absolute;
+   right:10px;
+   left: 160px;  /* #sidebar'width */
+   top: 10px;  /* #sidebar'top */
+   bottom:10px;
    padding:0;
-   margin:0;
-   width:100%;
-   height:100%;
+
 }
 #contents canvas.graph {
    z-index:100;
@@ -415,16 +382,4 @@ div.scrollable canvas {
    margin-right:20px;
    font-size:0.8em;
    font-style:italic;
-}
-
-/***************************************************
- * Tabs and canvas
- * Do not hide the invisible tabs, otherwise size computation is wrong and
- * the canvas will be distorted. Instead, put them some other place.
- * See http://jqueryui.com/demos/tabs/#...my_slider.2C_Google_Map.2C_sIFR_etc._not_work_when_placed_in_a_hidden_.28inactive.29_tab.3F
- ***************************************************/
-
-.ui-tabs .ui-tabs-hide {
-  position: absolute;
-  left: -10000px;
 }
