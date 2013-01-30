@@ -202,13 +202,13 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
             }
 
             if (person.sosa % 2 == 0 && this.sepBetweenGens > 10
-                && d.marriage[person.sosa] && gen <= 7
+                && d.marriage[person.sosa] && person.generation <= 7
                 && fontSize * this.scale >= 2)
             {
                 var mar = event_to_string(d.marriage [person.sosa]);
                 var attr = {"stroke": "black"};
 
-                if (gen == 1) {
+                if (person.generation == 1) {
                     this.text(-(maxRadius - minRadius), -10, mar, attr);
                 } else {
                     var a = (minAngle + maxAngle) / 2;
@@ -219,7 +219,7 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
                     var r = minRadius - fontSize + 2;
                     ctx.translate(r * c, r * s);
 
-                    if (angle < 0 || !this.readable_names) {
+                    if (a < 0 || !this.readable_names) {
                         ctx.rotate((minAngle + maxAngle) / 2 + Math.PI / 2);
                     } else {
                         ctx.rotate((minAngle + maxAngle) / 2 - Math.PI / 2);
