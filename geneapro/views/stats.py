@@ -31,8 +31,7 @@ def view (request, decujus=1):
    # when we store children differently (for instance in a group)
 
    distance = dict()
-   ancestors = graph.people_in_tree(
-       id=decujus, maxdepthDescendants=0, distance=distance)
+   ancestors = graph.people_in_tree(id=decujus, distance=distance)
    persons = extended_personas(
        nodes=ancestors, styles=None, event_types=event_types_for_pedigree,
        graph=graph)
