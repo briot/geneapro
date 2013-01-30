@@ -30,7 +30,13 @@ $("input[value=import]").click(on_import);
 
 {% if not success %}
 <div id="importReport" class="error">
-   Geneapro could not import your file:
+   Geneapro could not import your file. This is either because your file does
+   not contain correct GEDCOM data, or more likely because of limitations in
+   Geneapro. Please
+   <a href="http://github.com/briot/geneapro/issues/new">Report</a>
+   this issue to the Geneapro developers. If your GEDCOM data contains
+   information you wish to keep private, you can use the script
+   <pre>gedcom_anon.py</pre> to anonymize the data before you send it to us.
    <br>
    <pre>{{ error }}</pre>
 </div>
