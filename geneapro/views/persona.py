@@ -311,7 +311,7 @@ def view(request, id):
         type=models.P2P.sameAs,
         person1__in=node.ids.union(node.different)))
 
-    decujus = p[id]
+    decujus = p[node.main_id]
 
     return render_to_response(
         'geneapro/persona.html',
