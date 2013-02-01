@@ -29,7 +29,6 @@ Examples of use:
                          |   d
                           \ /
                            h
-
 """
 
 import pickle
@@ -62,6 +61,9 @@ class Digraph(object):
         Return the number of nodes in the graph.
         """
         return len(self.outedges)
+
+    def __repr__(self):
+        return "<graph %s>" % (" ".join(sorted("%s" % (e, ) for e in self.edges())))
 
     def isleaf(self, node):
         """
@@ -608,30 +610,17 @@ class Digraph(object):
             outedgesiter = self.out_edges
 
         layers = dict()
-        for n in self:
-            layers[n] = 0
 
-        leaves = set()  # leaves node are dealt with in a separate pass
-
-        for n in self.topological_sort(roots=roots, outedgesiter=outedgesiter):
-            is_leaf = True
-            for e in outedgesiter(n):
-                is_leaf = False
-                break
-            if is_leaf:
-                leaves.add(n)
-            else:
-                for e in inedgesiter(n):
-                    end = e[0] if e[1] == n else e[1]
-                    layers[n] = max(layers[n], layers[end] + preferred_length(e))
-
-        for n in leaves:
-            for m in inedgesiter(n):
-                if m[1] == n:
-                    layers[n] = max(layers[n], layers[m[0]] + preferred_length(m))
-                else:
-                    layers[n] = max(layers[n], layers[m[1]] - preferred_length(m))
-
+        # reversed topological sort
+        s = list(self.depth_first_search(
+                roots=roots, outedgesiter=outedgesiter))
+        for n in s:
+            if self.isleaf(n):
+                layers[n] = 0
+            elif n not in layers:
+                candidates = [
+                    layers[e[1]] + preferred_length(e) for e in outedgesiter(n)]
+                layers[n] = max(candidates) if candidates else 1
         return layers
 
     def rank_minimize_dummy_vertices(self, roots=None,
@@ -651,70 +640,218 @@ class Digraph(object):
         if not outedgesiter:
             outedgesiter = self.out_edges
 
-        ranks = self.rank_longest_path(
-            roots=roots, outedgesiter=outedgesiter, inedgesiter=inedgesiter,
-            preferred_length=preferred_length)
-
-        def feasible_tree():
+        def __get_slack(ranks, edge):
+            """Compute the slack for an edge. The slack is 0 if the edge is
+               tight (i.e. can't be made shorter), and greater than 0
+               otherwise. A negative slack is a construction error.
             """
-            Computes an initial feasible spanning tree. This is a spanning tree
-            build while ignoring the direction of edges, and such that the
-            length of each edge is greater or equal to its minimum length.
+            return ranks[edge[0]] - ranks[edge[1]] - preferred_length(edge)
+
+        def DEBUG_assert_ranking(ranks):
+            """Check whether current ranking is valid"""
+            slack = 0
+            for e in self.edges():
+                s = __get_slack(ranks, e)
+                if s < 0:
+                    raise Exception("Invalid edge: %s, ranks=%d %d" % (e, ranks[e[0]], ranks[e[1]]))
+                elif s > 0:
+                    print "Edge %s has slack: %s" % (e, s)
+                slack += s
+            print "Total slack: %d" % slack
+
+        def ranking_from_tree(tree):
+            """
+            Computes an initial feasible spanning tree.
+            This is a tree constructed by starting at any random node, and
+            assigning it a rank. Then assign a rank to each adjacent node
+            based on the minimal edge length until all nodes are searched.
+            By construction, this tree has all tight edges (ie they all
+            have the minimal length).
+            """
+            ranks = {}
+
+            def __add(n, prefix=""):
+                for t in tree.children(n):
+                    if t not in ranks:
+                        ranks[t] = ranks[n] - 1
+                        __add(t, prefix + "   ")
+                for t in tree.parents(n):
+                    if t not in ranks:
+                        ranks[t] = ranks[n] + 1
+                        __add(t, prefix + "   ")
+
+            for n in tree:
+                if n not in ranks:
+                    ranks[n] = 10
+                    __add(n)
+            return ranks
+
+        def build_feasible_tight_tree(roots, ranks):
+            """
+            Starting from node, builds a spanning tree using only tight
+            edges.
+            :param roots: a list of root nodes, one per independent
+               component in the graph.
+            :return: a Diagraph, the spanning tree
             """
 
             tree = set()             # nodes in the tree
-            not_in_tree = set(self)  # nodes in graph but not in tree
-            edges_from_tree = []     # possible edges from the tree nodes
+            tree_edges = Digraph()   # The spanning tree
+
+            def register_edge(node, edge):
+                if node not in tree:
+                    if __get_slack(ranks, edge) == 0:
+                        tree_edges.add_edge(edge)
+                        add_node(node)
 
             def add_node(n):
-                try:
-                    not_in_tree.remove(n)
-                except:
-                    pass
-
                 tree.add(n)
                 for e in outedgesiter(n):
-                    if e[1] not in tree:
-                        heapq.heappush(
-                            edges_from_tree,
-                            (ranks[e[1]] - ranks[e[0]] - preferred_length(e),
-                             e))
+                    register_edge(e[1], e)
                 for e in inedgesiter(n):
-                    if e[0] not in tree:
-                        heapq.heappush(
-                            edges_from_tree,
-                            (ranks[e[1]] - ranks[e[0]] - preferred_length(e),
-                             e))
+                    register_edge(e[0], e)
 
-            # Start with a random node
+            for root in roots:
+                if root not in tree:  # protect against user error
+                    tree_edges.add_node(root)
+                    add_node(root)
+            return tree_edges
+
+        def build_feasible_tree():
+            # An initial possible ranking
+            ranks = self.rank_longest_path(
+                roots=roots, outedgesiter=outedgesiter, inedgesiter=inedgesiter,
+                preferred_length=preferred_length)
+
+            # Chose a random node from which we'll start building the tree
             for n in self:
-                add_node(n)
+                treeroots = [n]
                 break
 
-            while not_in_tree:
-                while not edges_from_tree:
-                    if not not_in_tree:
-                        return
+            while True:
+                # Compute a spanning tree using only tight edges
+                tree = build_feasible_tight_tree(treeroots, ranks)
+
+                not_in_tree = set(self).difference(tree)
+
+                if len(tree) == len(self):
+                    break
+
+                min_slack = None
+                e_for_min = None
+
+                # Find an node adjacent to the tree, with a minimal amount of
+                # slack
+                for n in not_in_tree:
+                    for e in outedgesiter(n):
+                        if e[1] in tree:
+                            slack = __get_slack(ranks, e)
+                            if min_slack is None or slack < min_slack:
+                                min_slack = slack
+                                e_for_min = e
+                    for e in inedgesiter(n):
+                        if e[0] in tree:
+                            slack = __get_slack(ranks, e)
+                            if min_slack is None or slack < min_slack:
+                                min_slack = slack
+                                e_for_min = e
+
+                if e_for_min is None:
+                    # Do we have two or more separate trees ? We did not find
+                    # any node adjacent to the tree. Add a dummy edge so that
+                    # we really have a single tree in the end.
+
+                    # ??? We should optimize by using other links from the
+                    # graph like spouses for instance.
                     n = not_in_tree.pop()
-                    add_node(n)
+                    treeroots.append(n)
 
-                # Find the best possible edge.
-                slack, e = heapq.heappop(edges_from_tree)
-
-                if e[0] in tree:
-                    end = e[1]
                 else:
-                    slack = -slack
-                    end = e[0]
+                    # Add the edge to the tree
+                    if e_for_min[0] in tree:
+                        min_slack = -min_slack
+                    for n in tree:
+                        ranks[n] += min_slack
 
-                for v in tree:
-                    ranks[v] += slack
-                add_node(end)
+            return tree, ranks
 
-        feasible_tree()
+        def compute_cut_values(tree, ranks):
+            """Compute the cut values for each node of the tree.
+               For each tree edge, this is the sum of all edges from the HEAD
+               component to the TAIL component (these components result from
+               spliting the tree by removing the edge).
+               Edges with a negative cut value are replaced by appropriate
+               non-tree edges, until all tree edges have non-negative cut
+               values.  The resulting spanning tree corresponds to an optimal
+               ranking.
 
-        # ??? Real algorithm from graphviz also computes cutpoints
-        return ranks
+               :param tree: a Digraph representing the spanning tree.
+               :param ranks: a dict giving the layer for each node.
+               :return: a dict giving the cut value for each node
+            """
+
+            def __add_to_component(component, node, removed_edge):
+                """Add node and all its adjacent nodes in the tree to the
+                   given list (component).
+                """
+                #??? Could compute directly the cut values here.
+                component.add(node)
+                for e in tree.out_edges(node):
+                    if e != removed_edge and e[1] not in component:
+                        __add_to_component(component, e[1], removed_edge)
+                for e in tree.in_edges(node):
+                    if e != removed_edge and e[0] not in component:
+                        __add_to_component(component, e[0], removed_edge)
+
+            cut_values = []
+            for e in tree.edges():
+                head_comp = set()
+                tail_comp = set()
+                __add_to_component(head_comp, e[0], removed_edge=e)
+                __add_to_component(tail_comp, e[1], removed_edge=e)
+   
+                # the edge that will replace e if it has a negative cut value
+                min_slack = (len(self), None)
+                cut = 0
+
+                # ??? Could optimize by looking at the smallest of HEAD and TAIL
+                for h in head_comp:
+                    for tmp in outedgesiter(h):
+                        if tmp[1] in tail_comp:
+                            cut += 1    # All edges have weight 1
+
+                            if tmp != e:
+                                s = __get_slack(ranks, tmp)
+                                if s < min_slack[0]:
+                                    min_slack = (s, tmp)
+                    for tmp in inedgesiter(h):
+                        if tmp[0] in tail_comp:
+                            cut -= 1    # All edges have weight 1
+                            if tmp != e:
+                                s = __get_slack(ranks, tmp)
+                                if s < min_slack[0]:
+                                    min_slack = (s, tmp)
+
+                if cut < 0:
+                    heapq.heappush(cut_values, (cut, e, min_slack[1]))
+
+            return cut_values
+
+        tree, ranks = build_feasible_tree()
+
+        # ??? Should we do a maximal number of iterations ?
+        while True:
+            cut = compute_cut_values(tree, ranks)
+            if len(cut) == 0:
+                # Optimal solution found
+                return ranks
+
+            # Replace edges
+            c = cut[0]
+            tree.remove_edge(c[1])
+            tree.add_edge(c[2])
+
+            ranks = ranking_from_tree(tree)
 
     def add_dummy_nodes(self, layers):
         r = set()
@@ -737,9 +874,11 @@ class Digraph(object):
 
         :param subset: can be a set or list of nodes we want to classify. If
            unspecified, all the nodes of the graph are taken into account.
-        :return: a list of list of nodes
+        :return: a list of list of nodes. In each sublist, all the nodes are
+           on the same layer, whose number is not necessary the index within
+           the top list (although layers are sorted from min to max, i.e.
+           children to parents)
         """
-        # self.add_dummy_nodes(layers)
 
         # Create a temporary structure, so that we can skip empty layers
         tmp = dict()

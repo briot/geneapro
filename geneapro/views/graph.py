@@ -50,7 +50,8 @@ class Persona_node(object):
         return self.__main_id
 
     def __repr__(self):
-        return "%s-%s" % (self.main_id, self.name.encode("utf-8"))
+        #return "%s-%s" % (self.main_id, self.name.encode("utf-8"))
+        return "%s" % (self.main_id, )
 
     def _graphlabel(self):
         return "%s-%s" % (",".join("%s" % p for p in sorted(self.ids)), self.name)
@@ -75,6 +76,9 @@ class P2P_Link(object):
             return self.toP
         else:
             raise TypeError
+
+    def __repr__(self):
+        return "%s-%s->%s" % (self.fromP, self.kind, self.toP)
 
     def _graphlabel(self):
         return ""
@@ -223,30 +227,6 @@ class GeneaGraph(Digraph):
         for c in models.Characteristic_Part.objects.raw(query):
             self.node_from_id(c.person).sex = c.name
 
-    def assign_layers(self):
-        # Assign layers.
-        # We override the iterators so that children have lower layers than
-        # their parents (which is more natural in genealogy).
-
-        self.layers__ = self.rank_longest_path(
-            roots=list(self.nodes_with_no_children()),
-            outedgesiter=self.in_edges,  # include spouses
-            inedgesiter=self.out_edges,  # include spouses
-            preferred_length=self.preferred_length)
-        self.check_ranking()
-
-    def check_ranking(self):
-        print "SLOW: checking whether the ranking is valid"
-        for e in self.edges():
-            if (self.layers__[e[0]] <
-                self.layers__[e[1]] + self.preferred_length(e)):
-                print "Invalid edge %s [%d] --[%s]--> %s [%d]" % (
-                    e[0].name.encode("utf-8"),
-                    self.layers__[e[0]],
-                    e.kind,
-                    e[1].name.encode("utf-8"),
-                    self.layers__[e[1]])
-
     def in_parent_edges(self, node):
         """
         Iterate all "ancestor" edges for a node, ie return the genealogical
@@ -385,17 +365,22 @@ class GeneaGraph(Digraph):
         sorted in the order in which they should be displayed in the matrix --
         so for instance the first family should involve the first person of the
         layer to limit crossings of links.
+
+        :param layers:
+            A list of list of persons, indicating the persons at each layer.
+            For instance:   [[person_at_gen0], [person_at_gen1, ...], ...]
         """
 
         byLayer = dict()   # Contains list of families
-        for index in range(0, len(layers)):
-            # make sure each layer has at least an empty list
-            byLayer[index] = []
+
+        # ??? Issue #12: layers (the result of get_layers) has eliminated
+        # empty layers. As such the layer that a person is in and its layer
+        # number stored in self.__layers might be different.
 
         for family in families:
             rightMostLayer = min(
-                self.layers__[p] for p in family if p is not None)
-            byLayer[rightMostLayer + 1].append(family)
+                self.__layers[p] for p in family if p is not None)
+            byLayer.setdefault(rightMostLayer + 1, []).append(family)
 
         # ??? Should be computed independently
         indexInLayer = dict()
@@ -409,8 +394,8 @@ class GeneaGraph(Digraph):
             # another layer, we want that marriage to appear first.
             r.sort(
                 key=lambda family:
-                (-max(self.layers__[family[0]] if family[0] else 0,
-                     self.layers__[family[1]] if family[1] else 0),
+                (-max(self.__layers[family[0]] if family[0] else 0,
+                     self.__layers[family[1]] if family[1] else 0),
                  min(indexInLayer.get(family[0], -1),
                      indexInLayer.get(family[1], -1))))
 
@@ -420,6 +405,8 @@ class GeneaGraph(Digraph):
                      family)
                  for family in r])
 
+        #for index, l in enumerate(result):
+        #    print "MANU families[%d] = %s" % (index, l)
         return result
 
     def json(self, subset=None):
@@ -434,8 +421,14 @@ class GeneaGraph(Digraph):
             This is ignored if id is unspecified.
         """
 
+        self.__layers = self.rank_minimize_dummy_vertices(
+            roots=list(self.nodes_with_no_ancestors()),
+            outedgesiter=self.out_children_edges,
+            inedgesiter=self.in_parent_edges,
+            preferred_length=self.preferred_length)
+
         families = self.compute_families(subset=subset)
-        layers = self.get_layers(layers=self.layers__, subset=subset)
+        layers = self.get_layers(layers=self.__layers, subset=subset)
         self.sort_nodes_within_layers(
             layers,
             outedgesiter=self.out_children_edges)
@@ -447,6 +440,8 @@ class GeneaGraph(Digraph):
                 [(n.main_id, n.name.encode("utf-8"), n.sex)
                  for n in lay])
 
+        #for index, l in enumerate(result):
+        #    print "MANU layer[%d] = %s" % (index, sorted([p[0] for p in l]))
         return {"persons": json.to_json(result, year_only=True),
                 "families": families}
 
@@ -502,6 +497,15 @@ graph = GeneaGraph()
 
 
 def quilts_view(request, decujus=None):
+    """
+    :request_param decujus_tree:
+        If True, only the persons in the decujus' tree are displayed,
+        otherwise the whole contents of the datatabase is displayed.
+    """
+
+    decujus = int(decujus) if decujus is not None else 1
+    decujus_tree = request.GET.get("decujus_tree", "true").lower() == "true"
+
     # ??? Should lock the graph until the view has been generated
 
     graph.update_if_needed()
@@ -510,16 +514,12 @@ def quilts_view(request, decujus=None):
             'geneapro/firsttime.html',
             context_instance=RequestContext(request))
 
-    graph.assign_layers()
+    subset = None
 
-    if decujus is not None:
-        decujus = int(decujus)
+    if decujus_tree:
         subset = graph.people_in_tree(
-            id=decujus, maxdepthAncestors=3, maxdepthDescendants=3,
+            id=decujus, maxdepthAncestors=-1, maxdepthDescendants=-1,
             spouses_tree=True)
-    else:
-        decujus = 1
-        subset = None
 
     #graph.export(file("graph.pickle", "w"))
     #graph.write_graphviz(file("graph.dot", "wb"))
@@ -532,6 +532,7 @@ def quilts_view(request, decujus=None):
         'geneapro/quilts.html',
         {"persons": data["persons"],
          "families": data["families"],
+         "decujus_tree": decujus_tree,
          "decujus_name": "",
          "decujus": decujus},
         context_instance=RequestContext(request))

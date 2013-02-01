@@ -10,6 +10,7 @@ var F_HEIGHT = 10;       // height of the row with "F" (families)
  *
  * @param {Element} element   The DOM element to decorate.
  * @param {} layers   The data sent by the server.
+ *    layer 0 are the children, layer 1 their parents, ...
  * @param {Array.<*>} families
  *    The data from the server. It has the following format:
  *        families ::= [ families_in_layer+ ]
@@ -29,6 +30,11 @@ function QuiltsCanvas(canvas, layers, families) {
     this.selectIndex = 0;  //  number of current selections
     this.selected_ = {};   // id -> list of selection indexes
     this.selectColors = ["red", "blue", "green", "yellow", "orange"];
+
+    $("#settings input[name=wholeDatabase]")
+       .change(function() {
+          window.location = "/quilts/" + defaultDeCujus + "?decujus_tree=" + (!this.checked);
+       });
 
     this.computeLayout_();
 };
@@ -207,29 +213,33 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
         this.rights[layer] = layerX + width;
         this.heights[layer] = height;
 
-        layerX = this.rights[layer] +
-            this.families[layer].maxIndex * LINE_SPACING;
-
-        if (this.families[layer].maxIndex) {
-            layerY += height + F_HEIGHT;
+        if (layer > 0) {
+           layerX = this.rights[layer] +
+               this.families[layer - 1].maxIndex * LINE_SPACING;
+           if (this.families[layer - 1].maxIndex) {
+               layerY += height + F_HEIGHT;
+           } else {
+               layerY += height;
+           }
         } else {
-            layerY += height;
+           layerX = this.rights[layer];
+           layerY += height;
         }
     });
 
     // For each family, compute the y range for the corresponding line.
 
     this.forEachNonEmptyLayer_(function(layer) {
-        var prevMinY = this.tops[layer];
-        var maxYsofar = this.tops[layer - 1];
+        var prevMinY = this.tops[layer - 1];
+        var maxYsofar = this.tops[layer];
 
         this.forEachVisibleFamily_(
             layer,
             function(family, index) {
                 family.visibleIndex = index;
-                family.minY = this.tops[layer - 1];
+                family.minY = this.tops[layer];
                 family.maxY = maxYsofar;
-                family.x = this.rights[layer] + index * LINE_SPACING;
+                family.x = this.rights[layer + 1] + index * LINE_SPACING;
 
                 for (var p = 0; p < family.length; p++) {
                     var person = family[p];
@@ -267,7 +277,9 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
             });
 
         var fam = this.families[layer];
-        fam.lastMinY = prevMinY;
+        if (fam) {
+           fam.lastMinY = prevMinY;
+        }
 
         var prevMaxX = this.rights[layer];
 
@@ -281,8 +293,8 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
 
                 //  Range for the marriage horizontal lines
                 var minX = this.rights[info.layer];
-                if (fam.lastMinY <= info.y) {
-                    var maxX = this.lefts[info.layer - 1];
+                if (!fam || fam.lastMinY <= info.y) {
+                    var maxX = this.lefts[info.layer];
                 } else {
                     var maxX = minX;
                     for (var m = fam.length - 1; m >= 0; m--) {
@@ -296,7 +308,7 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
                 if (info.rightMostMarriageLayer < this.layers.length) {
                     maxX = Math.max(
                         maxX,
-                        this.rights[info.rightMostMarriageLayer] +
+                        this.rights[info.rightMostMarriageLayer + 1] +
                         info.rightMostMarriageIndex * LINE_SPACING);
                 }
 
@@ -304,7 +316,7 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
                 prevMaxX = maxX;
 
                 //  Range for the children horizontal lines
-                var prevFam = this.families[layer + 1];
+                var prevFam = this.families[layer];
                 if (prevFam) {
                     minX = this.lefts[info.layer];
 
@@ -362,11 +374,13 @@ QuiltsCanvas.prototype.forEachVisiblePerson_ = function(layer, callback) {
 
 QuiltsCanvas.prototype.forEachVisibleFamily_ = function(layer, callback) {
     var fa = this.families[layer];
-    for (var m = 0, famIndex = 0; m < fa.length; m++) {
-        if (fa[m].visible) {
-            callback.call(this, fa[m], famIndex);
-            famIndex ++;
-        }
+    if (fa) {
+       for (var m = 0, famIndex = 0; m < fa.length; m++) {
+           if (fa[m].visible) {
+               callback.call(this, fa[m], famIndex);
+               famIndex ++;
+           }
+       }
     }
 };
 
@@ -392,7 +406,7 @@ QuiltsCanvas.prototype.personAtCoordinates = function(absX, absY) {
         }
     });
 
-    if (selectedLayer) {
+    if (selectedLayer !== undefined) {
         this.forEachVisiblePerson_(
             selectedLayer,
             function(info, index) {
@@ -581,13 +595,17 @@ QuiltsCanvas.prototype.displayFamilies_ = function(layer) {
     this.forEachVisiblePerson_(
         layer,
         function(info, index) {
-            ctx.moveTo(this.rights[info.layer], info.y);
-            ctx.lineTo(info.maxMarriageLineX, info.y);
+           if (this.rights[info.layer] < info.maxMarriageLineX) {
+              ctx.moveTo(this.rights[info.layer], info.y);
+              ctx.lineTo(info.maxMarriageLineX, info.y);
+           }
 
-            if (info.minChildLineX < this.lefts[info.layer]) {
-                ctx.moveTo(info.minChildLineX, info.y);
-                ctx.lineTo(this.lefts[info.layer], info.y);
-            }
+           if (info.minChildLineX !== null
+              && info.minChildLineX < this.lefts[info.layer])
+           {
+               ctx.moveTo(info.minChildLineX, info.y);
+               ctx.lineTo(this.lefts[info.layer], info.y);
+           }
         });
 
     ctx.stroke();

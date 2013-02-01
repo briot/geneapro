@@ -22,9 +22,21 @@ $(document).ready(function() {
 {% endblock endbody %}
 
 {% block leftside %}
-<h2>Quilts View</h2>
-<input type="checkbox" title="Show only selected persons"
-        onchange="canvas.filterSelected(this.checked)">Filter selected</input>
+<h2 class="settings">Settings</h2>
+<div id="settings">
+   <div class="config"><span>Collapsed</span>
+      <input type="checkbox" title="Show selected persons only"
+      onchange="canvas.filterSelected(this.checked)"/>
+   </div>
+   <div class="config"><span>Whole database</span>
+      <input type="checkbox" name="wholeDatabase"
+         {% if not decujus_tree %}
+            checked
+         {% endif %}
+      >
+   </div>
+</div>
+
 {% endblock leftside %}
 
 {% block contents %}
