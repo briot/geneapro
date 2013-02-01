@@ -331,7 +331,7 @@ class Digraph(object):
 
             for edge in reversed(list(outedgesiter(u))):
                 v = edge[1] if edge[0] == u else edge[0]
-                c = color[v]
+                c = color.get(v, 0)  # WHITE by default
                 if c == 0:   # WHITE
                     # predecessor[v] = u
                     for d in dfs(v, color):
@@ -360,13 +360,60 @@ class Digraph(object):
         color = {}    # WHITE/unvisited(0), GRAY/being processed(1) or BLACK(2)
         # predecessor = {}
 
-        for node in self:
-            color[node] = 0   # WHITE
-
         for node in roots:
-            if color[node] == 0:   # WHITE
+            if color.get(node, 0) == 0:   # WHITE
                 for d in dfs(node, color):
                     yield d
+
+    def post_order(self, roots=None, outedgesiter=None):
+        """
+        Similar to depth_first_search, but also computes three additional
+        pieces of information.
+            :return: a dict providing the following tuple for each node:
+                (low, lim, parent)
+                where:
+                    lim is the order in which the node was traversed.
+                    low is the lowest 'lim' of all its descendants.
+                    parent is a pointer to the parent node (when traversing).
+        This function is not an iterator, as opposed to depth_first_search
+        """
+
+        data = {}
+        color = {}    # WHITE/unvisited(0), GRAY/being processed(1) or BLACK(2)
+
+        def dfs(u, color, parent, index):
+            """process a Node"""
+            color[u] = 1  # GRAY
+            low = index
+
+            for edge in reversed(list(outedgesiter(u))):
+                v = edge[1] if edge[0] == u else edge[0]
+                c = color.get(v, 0)  # WHITE by default
+                if c == 0:   # WHITE
+                    index = dfs(v, color, parent=u, index=index)
+                elif c == 1:  # GRAY
+                    self.__cyclic = True
+
+            color[u] = 2  # BLACK
+            data[u] = (low, index, parent)
+            return index + 1
+
+        if roots is None:
+            # An iterator
+            roots = list(self.roots())
+        else:
+            # Here as well we want to preserve the user's sort, and topological
+            # is going to reverse the final list.
+            roots = reversed(list(roots))
+
+        if outedgesiter is None:
+            outedgesiter = self.out_edges
+
+        index = 1
+        for node in roots:
+            if color.get(node, 0) == 0:   # WHITE
+                index = dfs(node, color, parent=None, index=index)
+        return data
 
     def topological_sort(self, roots=None, outedgesiter=None):
         """
@@ -775,6 +822,8 @@ class Digraph(object):
 
             return tree, ranks
 
+        removed_edges = set()   # make sure we don't put them back
+
         def compute_cut_values(tree, ranks):
             """Compute the cut values for each node of the tree.
                For each tree edge, this is the sum of all edges from the HEAD
@@ -790,47 +839,51 @@ class Digraph(object):
                :return: a dict giving the cut value for each node
             """
 
-            def __add_to_component(component, node, removed_edge):
-                """Add node and all its adjacent nodes in the tree to the
-                   given list (component).
-                """
-                #??? Could compute directly the cut values here.
-                component.add(node)
-                for e in tree.out_edges(node):
-                    if e != removed_edge and e[1] not in component:
-                        __add_to_component(component, e[1], removed_edge)
-                for e in tree.in_edges(node):
-                    if e != removed_edge and e[0] not in component:
-                        __add_to_component(component, e[0], removed_edge)
+            # The graphviz paper explains that we do not need to compute
+            # the HEAD and TAIL components explicitly if we do a postorder
+            # traversal of the tree and keep information on the order of
+            # things.
+
+            def unordered_edges(n):
+                for c in tree.out_edges(n):
+                    yield c
+                for c in tree.in_edges(n):
+                    yield c
+            data = tree.post_order(roots=roots, outedgesiter=unordered_edges)
+
+            def is_HEAD(cutedge_data, node):
+                """Whether node belongs to the HEAD component of cutedge"""
+                return cutedge_data[0] <= data[node][1] <= cutedge_data[1]
 
             cut_values = []
             for e in tree.edges():
-                head_comp = set()
-                tail_comp = set()
-                __add_to_component(head_comp, e[0], removed_edge=e)
-                __add_to_component(tail_comp, e[1], removed_edge=e)
-   
+                if data[e[0]][1] < data[e[1]][1]:   # lim(HEAD) < lim(TAIL)
+                    cutedge_data = data[e[0]]   # low,lim,parent for the HEAD
+                    edges_weight = 1
+                else:
+                    cutedge_data = data[e[1]]   # low,lim,parent for the HEAD
+                    edges_weight = -1
+
                 # the edge that will replace e if it has a negative cut value
                 min_slack = (len(self), None)
                 cut = 0
 
-                # ??? Could optimize by looking at the smallest of HEAD and TAIL
-                for h in head_comp:
-                    for tmp in outedgesiter(h):
-                        if tmp[1] in tail_comp:
-                            cut += 1    # All edges have weight 1
-
-                            if tmp != e:
-                                s = __get_slack(ranks, tmp)
-                                if s < min_slack[0]:
-                                    min_slack = (s, tmp)
-                    for tmp in inedgesiter(h):
-                        if tmp[0] in tail_comp:
-                            cut -= 1    # All edges have weight 1
-                            if tmp != e:
-                                s = __get_slack(ranks, tmp)
-                                if s < min_slack[0]:
-                                    min_slack = (s, tmp)
+                for h in tree:
+                    if is_HEAD(cutedge_data, h):
+                        for tmp in outedgesiter(h):
+                            if not is_HEAD(cutedge_data, tmp[1]):
+                                cut += edges_weight
+                                if tmp != e and tmp not in removed_edges:
+                                    s = __get_slack(ranks, tmp)
+                                    if s < min_slack[0]:
+                                        min_slack = (s, tmp)
+                        for tmp in inedgesiter(h):
+                            if not is_HEAD(cutedge_data, tmp[0]):
+                                cut -= edges_weight
+                                if tmp != e and tmp not in removed_edges:
+                                    s = __get_slack(ranks, tmp)
+                                    if s < min_slack[0]:
+                                        min_slack = (s, tmp)
 
                 if cut < 0:
                     heapq.heappush(cut_values, (cut, e, min_slack[1]))
@@ -838,20 +891,35 @@ class Digraph(object):
             return cut_values
 
         tree, ranks = build_feasible_tree()
+        print "MANU done feasible tree"
+
+        #self = Digraph()
+        #self.add_edges([(0,1), (1,2), (2,3), (3,7), (4,6), (5,6), (6,7),
+        #                (0,4), (0,5)])
+        #tree = Digraph()
+        #tree.add_edges([(0,1), (1,2), (2,3), (3,7), (4,6), (5,6), (6,7)])
+        #ranks = {7:0, 6:1, 3:1, 4:2, 5:2, 2:2, 1:3, 0:4}
+        #outedgesiter = self.out_edges
+        #inedgesiter = self.in_edges
 
         # ??? Should we do a maximal number of iterations ?
         while True:
             cut = compute_cut_values(tree, ranks)
+            print "MANU done cut values len=%d" % (len(cut), )
             if len(cut) == 0:
                 # Optimal solution found
                 return ranks
 
             # Replace edges
             c = cut[0]
+            print "MANU cut point is %s" % (c, )
             tree.remove_edge(c[1])
+            removed_edges.add(c[1])
             tree.add_edge(c[2])
 
             ranks = ranking_from_tree(tree)
+            print "MANU done ranking"
+            DEBUG_assert_ranking(ranks)
 
     def add_dummy_nodes(self, layers):
         r = set()
