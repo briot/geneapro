@@ -213,18 +213,18 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
         this.rights[layer] = layerX + width;
         this.heights[layer] = height;
 
-        if (layer > 0) {
+        if (layer > 0 && this.families[layer -1]) {
            layerX = this.rights[layer] +
                this.families[layer - 1].maxIndex * LINE_SPACING;
-           if (this.families[layer - 1].maxIndex) {
-               layerY += height + F_HEIGHT;
-           } else {
-               layerY += height;
-           }
+           layerY += height + F_HEIGHT;
         } else {
            layerX = this.rights[layer];
            layerY += height;
         }
+        /*console.log("MANU layer ", layer, " left=", this.lefts[layer],
+              " right=", this.rights[layer], " top=", this.tops[layer],
+              " bottom=", this.tops[layer] + this.heights[layer]);
+              */
     });
 
     // For each family, compute the y range for the corresponding line.
@@ -240,6 +240,9 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
                 family.minY = this.tops[layer];
                 family.maxY = maxYsofar;
                 family.x = this.rights[layer + 1] + index * LINE_SPACING;
+                /*console.log("MANU family layer=", layer, " family=", family,
+                     " x=", family.x);
+                     */
 
                 for (var p = 0; p < family.length; p++) {
                     var person = family[p];

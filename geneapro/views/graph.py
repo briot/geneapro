@@ -100,9 +100,6 @@ class GeneaGraph(Digraph):
         # represent the same physical person.
         self.__nodes = dict()
 
-        # What is the generation for each person in the graph ?
-        self.__layers = dict()
-
         # Whether the database has been modified since the graph was created.
         self.__needs_update = True
 
@@ -324,91 +321,6 @@ class GeneaGraph(Digraph):
                for e in self.in_edges(node_or_id)
                if e.kind == P2P_Link.KIND_FATHER]
 
-    def preferred_length(self, edge):
-        return 0 if edge.kind == P2P_Link.KIND_SPOUSE else 1
-
-    def compute_families(self, subset=None):
-        """
-        Compute the list of families that include nodes from the subset (or
-        all the families in the database if subset is None).
-        Returns a tuple of two data structures:
-           * the list of families (tuples of nodes)
-        """
-
-        tmp = dict()  # families: (father,mother,child1,child2,...)
-                      # indexed on (father, mother)
-
-        for n in (subset or self):
-            father = mother = None
-
-            for e in self.in_edges(n):
-                if e.kind == P2P_Link.KIND_FATHER:
-                    if subset is None or e[0] in subset:
-                        father = e[0]
-                elif e.kind == P2P_Link.KIND_MOTHER:
-                    if subset is None or e[0] in subset:
-                        mother = e[0]
-
-            if father is not None or mother is not None:
-                d = tmp.get((father, mother), None)
-                if d is None:
-                    d = tmp[(father, mother)] = [mother, father]
-                d.append(n)
-
-        return tmp.values()
-
-    def sort_families(self, layers, families):
-        """
-        Sort the families, so that they are organized by layer. A family is
-        associated with its right-most layer (in general to the left of the
-        layer that contains the children). Within each layer, the families are
-        sorted in the order in which they should be displayed in the matrix --
-        so for instance the first family should involve the first person of the
-        layer to limit crossings of links.
-
-        :param layers:
-            A list of list of persons, indicating the persons at each layer.
-            For instance:   [[person_at_gen0], [person_at_gen1, ...], ...]
-        """
-
-        byLayer = dict()   # Contains list of families
-
-        # ??? Issue #12: layers (the result of get_layers) has eliminated
-        # empty layers. As such the layer that a person is in and its layer
-        # number stored in self.__layers might be different.
-
-        for family in families:
-            rightMostLayer = min(
-                self.__layers[p] for p in family if p is not None)
-            byLayer.setdefault(rightMostLayer + 1, []).append(family)
-
-        # ??? Should be computed independently
-        indexInLayer = dict()
-        for layer in layers:
-            for index, node in enumerate(layer):
-                indexInLayer[node] = index
-
-        result = []
-        for r in byLayer.itervalues():
-            # Sort the families within each layer. If one of the parents is in
-            # another layer, we want that marriage to appear first.
-            r.sort(
-                key=lambda family:
-                (-max(self.__layers[family[0]] if family[0] else 0,
-                     self.__layers[family[1]] if family[1] else 0),
-                 min(indexInLayer.get(family[0], -1),
-                     indexInLayer.get(family[1], -1))))
-
-            # Pass the ids of the family members, not the nodes
-            result.append(
-                [map(lambda node: min(node.ids) if node else -1,
-                     family)
-                 for family in r])
-
-        #for index, l in enumerate(result):
-        #    print "MANU families[%d] = %s" % (index, l)
-        return result
-
     def json(self, subset=None):
         """
         Return a json structure that can be sent to the GUI.
@@ -421,24 +333,115 @@ class GeneaGraph(Digraph):
             This is ignored if id is unspecified.
         """
 
-        self.__layers = self.rank_minimize_dummy_vertices(
-            roots=list(self.nodes_with_no_ancestors()),
-            outedgesiter=self.out_children_edges,
-            inedgesiter=self.in_parent_edges,
-            preferred_length=self.preferred_length)
+        def __compute_families(graph, layers, layers_by_id):
+            """
+            Compute the list of families that include nodes from tmp.
 
-        families = self.compute_families(subset=subset)
-        layers = self.get_layers(layers=self.__layers, subset=subset)
-        self.sort_nodes_within_layers(
-            layers,
-            outedgesiter=self.out_children_edges)
-        families = self.sort_families(layers, families)
+            Sort the families, so that they are organized by layer. A family is
+            associated with its right-most layer (in general to the left of the
+            layer that contains the children). Within each layer, the families are
+            sorted in the order in which they should be displayed in the matrix --
+            so for instance the first family should involve the first person of the
+            layer to limit crossings of links.
+
+            :param graph:
+                a subset of the original graph, which only includes the nodes
+                we are interested in, and only the parent/child relations.
+            :param layers:
+                A list of list of persons, indicating the persons at each layer.
+                For instance:   [[person_at_gen0], [person_at_gen1, ...], ...]
+            :param layers_by_id:
+                for each person, its layer.
+            :return: a list of list of tuples (father,mother,child1,child2,...)
+            """
+
+            tmp = dict()  # families: (father,mother,child1,child2,...)
+                          # indexed on (father, mother)
+
+            for n in graph:
+                father = mother = None
+
+                for e in graph.in_edges(n):
+                    if e.kind == P2P_Link.KIND_FATHER:
+                        father = e[0]
+                    else:
+                        mother = e[0]
+
+                if father is not None or mother is not None:
+                    tmp.setdefault((father, mother), [mother, father]).append(n)
+
+            byLayer = dict()   # Contains list of families for each layer
+    
+            for family in tmp.itervalues():
+                rightMostLayer = min(
+                    layers_by_id[p] for p in family if p is not None)
+                byLayer.setdefault(rightMostLayer + 1, []).append(family)
+    
+            # ??? Should be computed independently
+            indexInLayer = dict()
+            for layer in layers:
+                for index, node in enumerate(layer):
+                    indexInLayer[node] = index
+    
+            # Sort the families within each layer. If one of the parents is in
+            # another layer, we want that marriage to appear first.
+
+            mi = min(byLayer.iterkeys())
+            ma = max(byLayer.iterkeys())
+
+            result = []
+            for lay in range(mi, ma + 1):
+                r = byLayer.get(lay, [])
+                r.sort(
+                    key=lambda family:
+                    (-max(layers_by_id[family[0]] if family[0] else 0,
+                          layers_by_id[family[1]] if family[1] else 0),
+                     min(indexInLayer.get(family[0], -1),
+                         indexInLayer.get(family[1], -1))))
+    
+                # Pass the ids of the family members, not the nodes
+                result.append(
+                    [map(lambda node: min(node.ids) if node else -1,
+                         family)
+                     for family in r])
+    
+            return result
+
+        # Prepare a temporary graph: it is used to subset the list of nodes
+        # to those specified in argument, and the list of edges to the
+        # parent/child relationships
+
+        tmp = Digraph()
+        for e in self.edges():
+            if e.kind in (P2P_Link.KIND_MOTHER, P2P_Link.KIND_FATHER) and \
+               e[0] in (subset or self) and \
+               e[1] in (subset or self):
+
+                tmp.add_edge(e)
+
+        # Then organize nodes into layers
+
+        #layers_by_id = tmp.rank_longest_path()
+        layers_by_id = tmp.rank_minimize_dummy_vertices()
+
+        layers = tmp.get_layers(layers_by_id=layers_by_id)
+        print "MANU layers=%s" % (layers, )
+
+        # Organize the nodes within layers
+        tmp.sort_nodes_within_layers(layers)
+        print "MANU sorted layers=%s" % (layers, )
+
+        # Compute the families
+        families = __compute_families(tmp, layers, layers_by_id)
+        print "MANU sorted families=%s" % (families, )
+
+        print "MANU graph=%s" % tmp
 
         result = []
-        for lay in layers:
+        for lay in range(0, len(layers)):
             result.append(
                 [(n.main_id, n.name.encode("utf-8"), n.sex)
-                 for n in lay])
+                 for n in layers[lay]])
 
         #for index, l in enumerate(result):
         #    print "MANU layer[%d] = %s" % (index, sorted([p[0] for p in l]))

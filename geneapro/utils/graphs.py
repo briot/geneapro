@@ -400,7 +400,7 @@ class Digraph(object):
 
         if roots is None:
             # An iterator
-            roots = list(self.roots())
+            roots = self
         else:
             # Here as well we want to preserve the user's sort, and topological
             # is going to reverse the final list.
@@ -413,6 +413,7 @@ class Digraph(object):
         for node in roots:
             if color.get(node, 0) == 0:   # WHITE
                 index = dfs(node, color, parent=None, index=index)
+        assert len(data) == len(self)
         return data
 
     def topological_sort(self, roots=None, outedgesiter=None):
@@ -614,9 +615,7 @@ class Digraph(object):
     # Layout #
     ##########
 
-    def rank_longest_path(self, roots=None,
-                          inedgesiter=None, outedgesiter=None,
-                          preferred_length=lambda e: 1):
+    def rank_longest_path(self, preferred_length=lambda e: 1):
         """
         Split the nodes into layers, so that: the head of edges are in strictly
         higher layers than the tail.
@@ -651,28 +650,20 @@ class Digraph(object):
            optimal.
         """
 
-        if inedgesiter is None:
-            inedgesiter = self.in_edges
-        if outedgesiter is None:
-            outedgesiter = self.out_edges
-
         layers = dict()
 
         # reversed topological sort
-        s = list(self.depth_first_search(
-                roots=roots, outedgesiter=outedgesiter))
+        s = list(self.depth_first_search())
         for n in s:
             if self.isleaf(n):
                 layers[n] = 0
             elif n not in layers:
                 candidates = [
-                    layers[e[1]] + preferred_length(e) for e in outedgesiter(n)]
+                    layers[e[1]] + preferred_length(e) for e in self.out_edges(n)]
                 layers[n] = max(candidates) if candidates else 1
         return layers
 
-    def rank_minimize_dummy_vertices(self, roots=None,
-                                     outedgesiter=None, inedgesiter=None,
-                                     preferred_length=lambda e: 1):
+    def rank_minimize_dummy_vertices(self, preferred_length=lambda e: 1):
         """
         Split the nodes into layers, similar to rank_with_longest_path.
         However, this algorithm also attempts to minimize the number of
@@ -682,10 +673,7 @@ class Digraph(object):
             "A technique for Drawing Directed Graphs" (graphviz)
         """
 
-        if not inedgesiter:
-            inedgesiter = self.in_edges
-        if not outedgesiter:
-            outedgesiter = self.out_edges
+        all_personas = set(self)
 
         def __get_slack(ranks, edge):
             """Compute the slack for an edge. The slack is 0 if the edge is
@@ -700,7 +688,10 @@ class Digraph(object):
             for e in self.edges():
                 s = __get_slack(ranks, e)
                 if s < 0:
-                    raise Exception("Invalid edge: %s, ranks=%d %d" % (e, ranks[e[0]], ranks[e[1]]))
+                    print "Invalid edge: %s, ranks=%d %d slack=%d" % (
+                        e, ranks[e[0]], ranks[e[1]], s)
+                    raise Exception("Invalid edge: %s, ranks=%d %d" % (
+                        e, ranks[e[0]], ranks[e[1]]))
                 elif s > 0:
                     print "Edge %s has slack: %s" % (e, s)
                 slack += s
@@ -735,8 +726,9 @@ class Digraph(object):
 
         def build_feasible_tight_tree(roots, ranks):
             """
-            Starting from node, builds a spanning tree using only tight
-            edges.
+            Starting from node, grow a spanning tree using only tight
+            edges. The resulting tree might not cover all nodes in
+            self.
             :param roots: a list of root nodes, one per independent
                component in the graph.
             :return: a Diagraph, the spanning tree
@@ -753,22 +745,20 @@ class Digraph(object):
 
             def add_node(n):
                 tree.add(n)
-                for e in outedgesiter(n):
+                for e in self.out_edges(n):
                     register_edge(e[1], e)
-                for e in inedgesiter(n):
+                for e in self.in_edges(n):
                     register_edge(e[0], e)
 
-            for root in roots:
-                if root not in tree:  # protect against user error
-                    tree_edges.add_node(root)
-                    add_node(root)
+            for root in self:
+                tree_edges.add_node(root)
+                add_node(root)
+                break
             return tree_edges
 
         def build_feasible_tree():
             # An initial possible ranking
-            ranks = self.rank_longest_path(
-                roots=roots, outedgesiter=outedgesiter, inedgesiter=inedgesiter,
-                preferred_length=preferred_length)
+            ranks = self.rank_longest_path(preferred_length=preferred_length)
 
             # Chose a random node from which we'll start building the tree
             for n in self:
@@ -779,24 +769,24 @@ class Digraph(object):
                 # Compute a spanning tree using only tight edges
                 tree = build_feasible_tight_tree(treeroots, ranks)
 
-                not_in_tree = set(self).difference(tree)
+                not_in_tree = all_personas.difference(tree)
 
-                if len(tree) == len(self):
+                if len(tree) == len(all_personas):
                     break
 
                 min_slack = None
                 e_for_min = None
 
-                # Find an node adjacent to the tree, with a minimal amount of
+                # Find a node adjacent to the tree, with a minimal amount of
                 # slack
                 for n in not_in_tree:
-                    for e in outedgesiter(n):
+                    for e in self.out_edges(n):
                         if e[1] in tree:
                             slack = __get_slack(ranks, e)
                             if min_slack is None or slack < min_slack:
                                 min_slack = slack
                                 e_for_min = e
-                    for e in inedgesiter(n):
+                    for e in self.in_edges(n):
                         if e[0] in tree:
                             slack = __get_slack(ranks, e)
                             if min_slack is None or slack < min_slack:
@@ -849,49 +839,66 @@ class Digraph(object):
                     yield c
                 for c in tree.in_edges(n):
                     yield c
-            data = tree.post_order(roots=roots, outedgesiter=unordered_edges)
 
-            def is_HEAD(cutedge_data, node):
-                """Whether node belongs to the HEAD component of cutedge"""
-                return cutedge_data[0] <= data[node][1] <= cutedge_data[1]
+            #DEBUG_assert_ranking(ranks)
+            data = tree.post_order(outedgesiter=unordered_edges)
 
-            cut_values = []
+            min_cut_value = None   # edge with lowest cut_value
+            leave_edge  = None
+            leave_HEAD = None
+
             for e in tree.edges():
+                # Compute which edges are in the HEAD component
+                HEAD = set()
                 if data[e[0]][1] < data[e[1]][1]:   # lim(HEAD) < lim(TAIL)
-                    cutedge_data = data[e[0]]   # low,lim,parent for the HEAD
-                    edges_weight = 1
+                    lowHEAD, limHEAD, _ = data[e[0]]
+                    for n in tree:
+                        if lowHEAD <= data[n][1] <= limHEAD:
+                            HEAD.add(n)
                 else:
-                    cutedge_data = data[e[1]]   # low,lim,parent for the HEAD
-                    edges_weight = -1
+                    lowHEAD, limHEAD, _ = data[e[1]]
+                    for n in tree:
+                        if not (lowHEAD <= data[n][1] <= limHEAD):
+                            HEAD.add(n)
 
-                # the edge that will replace e if it has a negative cut value
-                min_slack = (len(self), None)
                 cut = 0
+                for h in HEAD:
+                    for tmp in self.out_edges(h):
+                        if tmp[1] not in HEAD:
+                            cut += 1
+                    for tmp in self.in_edges(h):
+                        if tmp[0] not in HEAD:
+                            cut -= 1
 
-                for h in tree:
-                    if is_HEAD(cutedge_data, h):
-                        for tmp in outedgesiter(h):
-                            if not is_HEAD(cutedge_data, tmp[1]):
-                                cut += edges_weight
-                                if tmp != e and tmp not in removed_edges:
-                                    s = __get_slack(ranks, tmp)
-                                    if s < min_slack[0]:
-                                        min_slack = (s, tmp)
-                        for tmp in inedgesiter(h):
-                            if not is_HEAD(cutedge_data, tmp[0]):
-                                cut -= edges_weight
-                                if tmp != e and tmp not in removed_edges:
-                                    s = __get_slack(ranks, tmp)
-                                    if s < min_slack[0]:
-                                        min_slack = (s, tmp)
+                if cut < 0 and (min_cut_value is None or cut < min_cut_value):
+                    min_cut_value = cut
+                    leave_edge = e
+                    leave_HEAD = HEAD
 
-                if cut < 0:
-                    heapq.heappush(cut_values, (cut, e, min_slack[1]))
+            enter_edge = None
 
-            return cut_values
+            # Do a separate pass to compute the enter_edge for the leave_edge.
+            if leave_edge is not None:
+                removed_edges.add(leave_edge)
+                min_slack_value = len(self)
+                for h in leave_HEAD:
+                    for tmp in self.out_edges(h):
+                        if tmp not in removed_edges and tmp[1] not in leave_HEAD:
+
+                            s = __get_slack(ranks, tmp)
+                            if s < min_slack_value:
+                                min_slack_value = s
+                                enter_edge = tmp
+                    for tmp in self.in_edges(h):
+                        if tmp not in removed_edges and tmp[0] not in leave_HEAD:
+                            s = __get_slack(ranks, tmp)
+                            if s < min_slack_value:
+                                min_slack_value = s
+                                enter_edge = tmp
+
+            return (leave_edge, enter_edge)
 
         tree, ranks = build_feasible_tree()
-        print "MANU done feasible tree"
 
         #self = Digraph()
         #self.add_edges([(0,1), (1,2), (2,3), (3,7), (4,6), (5,6), (6,7),
@@ -902,24 +909,22 @@ class Digraph(object):
         #outedgesiter = self.out_edges
         #inedgesiter = self.in_edges
 
+        removed_edges.update(tree.edges()) # Can't enter edges already in tree
+
         # ??? Should we do a maximal number of iterations ?
         while True:
-            cut = compute_cut_values(tree, ranks)
-            print "MANU done cut values len=%d" % (len(cut), )
-            if len(cut) == 0:
-                # Optimal solution found
+            leave_edge, enter_edge = compute_cut_values(tree, ranks)
+            if leave_edge is None:
                 return ranks
 
-            # Replace edges
-            c = cut[0]
-            print "MANU cut point is %s" % (c, )
-            tree.remove_edge(c[1])
-            removed_edges.add(c[1])
-            tree.add_edge(c[2])
+            print "MANU cut point is leave=%s enter=%s" % (leave_edge, enter_edge)
+            tree.remove_edge(leave_edge)
+            tree.add_edge(enter_edge)
+            removed_edges.add(enter_edge)
 
             ranks = ranking_from_tree(tree)
-            print "MANU done ranking"
-            DEBUG_assert_ranking(ranks)
+
+        return ranks
 
     def add_dummy_nodes(self, layers):
         r = set()
@@ -934,14 +939,14 @@ class Digraph(object):
         for e in r:
             self.remove_edge(e)
 
-    def get_layers(self, layers, subset=None):
+    def get_layers(self, layers_by_id):
         """
         Returns a list of layers, as sorted by rank_* above. Each element of
-        the list is itself is a list of nodes that belong to that layer, in no
+        the list is itself a list of nodes that belong to that layer, in no
         particular order.
 
-        :param subset: can be a set or list of nodes we want to classify. If
-           unspecified, all the nodes of the graph are taken into account.
+        :param layers_by_id:
+            maps a person id to its layer.
         :return: a list of list of nodes. In each sublist, all the nodes are
            on the same layer, whose number is not necessary the index within
            the top list (although layers are sorted from min to max, i.e.
@@ -950,15 +955,15 @@ class Digraph(object):
 
         # Create a temporary structure, so that we can skip empty layers
         tmp = dict()
-        for n in subset or self:
-            tmp.setdefault(layers[n], []).append(n)
+        for n in layers_by_id.keys():
+            tmp.setdefault(layers_by_id[n], []).append(n)
 
         result = []
         for lay in sorted(tmp.keys()):
             result.append(tmp[lay])
         return result
 
-    def sort_nodes_within_layers(self, layers, outedgesiter=None):
+    def sort_nodes_within_layers(self, layers):
         """
         Sort nodes within each layer so as to minimize crossing of edges.
         Layers should be a list as returned by get_layers.
@@ -988,15 +993,12 @@ class Digraph(object):
                total = 0
                count = 1
                for index2, n2 in enumerate(layer2):
-                   if self.has_edge(n, n2, outedgesiter=outedgesiter):
+                   if self.has_edge(n, n2, outedgesiter=self.out_edges):
                        total += index2 + 1
                        count += 1
                weights[n] = float(total) / float(count)
 
             layer1.sort(key=lambda x: weights[x])
-
-        if outedgesiter is None:
-            outedgesiter = self.out_edges
 
         for index, layer in enumerate(layers):
             if index > 0:
