@@ -51,7 +51,6 @@ $("#list").dataTable(
       null,
       null,
       null,
-      null,
    ],
   }
 );
@@ -63,7 +62,6 @@ $("#list th").click(function() {
 //$("#list td.open").html("<span>&#x25BC;</span>");
 $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
   .click(toggleExtra).next().click(toggleExtra).css("cursor", "pointer");
-
 });
 
 {% endblock script %}
@@ -95,7 +93,6 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
          <th>Place</th>
          <th>Comment</th>
          <th>Persona</th>
-         <th>Sources</th>
          <th>Surety</th>
       </tr>
    </thead>
@@ -104,7 +101,13 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
    {% for k, c in chars.items %}
    <tr>
       <td class="closed"></td>
-      <td class="type">{{c.char.name}}</td>
+      <td class="type">{{c.char.name}}
+         {% for s in c.char.sources %}
+            {% if s %}
+         <a class="source" href="/sources/{{s}}">{{s}}</a>
+            {% endif %}
+         {% endfor %}
+      </td>
 
       {% if c.parts|length == 1 %}
       <td>{{c.parts.0.value}}</td>
@@ -117,20 +120,13 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
       {% endif %}
 
       <td class="date">{{c.char.date|default:""}}</td>
-      <td>{{c.char.date_sort|date:"c"}}</td>
+      <td>{{c.char.date_sort|default:""}}</td>
       <td class="place">{{c.char.place|default:""}}</td>
       <td class="assert">
          {{c.assertion.value|linebreaks}}
          {{c.assertion.rationale|default:""|linebreaks}}
       </td>
       <td class="persona">{{c.assertion.person_id}}</td>
-      <td>
-         {% for s in c.char.sources %}
-            {% if s %}
-         <a href="/sources/{{s}}">{{s}}</a>
-            {% endif %}
-         {% endfor %}
-      </td>
       <td class="surety" id="csurety{{k}}"
           _scheme="{{c.assertion.surety.scheme_id}}"
           _order="{{c.assertion.surety.sequence_number}}"/>
@@ -144,27 +140,28 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
       <tr>
       {% endif %}
          <td _url="/event/{{e.event.id}}"></td>
+
          {% if e.role == "principal" %}
-         <td class="type">{{e.event.type.name}}</td>
+         <td class="type">{{e.event.type.name}}
          {% else %}
-         <td class="type">{{e.event.type.name}} ({{e.role|default:""}})</td>
+         <td class="type">{{e.event.type.name}} <span class="role">({{e.role|default:""}})<span>
          {% endif %}
+            {% for s in e.event.sources %}
+               {% if s %}
+             <a class="source" href="/sources/{{s}}">{{s}}</a>
+               {% endif %}
+            {% endfor %}
+         </td>
+
          <td>{{e.event.name}}</td>
          <td class="date">{{e.event.date|default:""}}</td>
-         <td>{{e.event.date_sort|date:"c"}}</td>
+         <td>{{e.event.date_sort|default:""}}</td>
          <td class="place">{{e.event.place|default:""|linebreaks}}</td>
          <td class="assert">
             {{e.assertion.value|linebreaks}}
             {{e.assertion.rationale|default:""|linebreaks}}
          </td>
          <td class="persona">{{e.assertion.person_id}}</td>
-         <td>
-            {% for s in e.event.sources %}
-               {% if s %}
-             <a href="/sources/{{s}}">{{s}}</a>
-               {% endif %}
-            {% endfor %}
-         </td>
          <td class="surety" id="esurety{{i}}"
              _scheme="{{e.assertion.surety.scheme_id}}"
              _order="{{e.assertion.surety.sequence_number}}"/>
@@ -174,23 +171,22 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
    {% for i, g in groups.items %}
       <tr>
          <td class="closed"></td>
-         <td class="type">Group</td>
+         <td class="type">Group
+            {% for s in g.group.sources %}
+               {% if s %}
+            <a class="source" href="/sources/{{s}}">{{s}}</a>
+               {% endif %}
+            {% endfor %}
+         </td>
          <td>{{g.group.name}} ({{g.group.role|default:""}})</td>
          <td class="date">{{g.group.date|default:""}}</td>
-         <td>{{g.group.date_sort|date:"c"}}</td>
+         <td>{{g.group.date_sort|default:""}}</td>
          <td class="place">{{g.group.place|default:""}}</td>
          <td class="assert">
             {{g.assertion.value|linebreaks}}
             {{g.assertion.rationale|default:""|linebreaks}}
          </td>
          <td class="persona">{{g.assertion.person_id}}</td>
-         <td>
-            {% for s in g.group.sources %}
-               {% if s %}
-            <a href="/sources/{{s}}">{{s}}</a>
-               {% endif %}
-            {% endfor %}
-         </td>
          <td class="surety" id="gsurety{{i}}"
              _scheme="{{g.assertion.surety.scheme_id}}"
              _order="{{g.assertion.surety.sequence_number}}"/>

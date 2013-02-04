@@ -95,9 +95,19 @@ td.persona:before {
    content:"\25B6";
 }*/
 #containers table.persona td.type {
-   text-transform:capitalize;
+   /*text-transform:capitalize;*/
+   white-space:nowrap;
    font-weight:bold;
    color:#AAA;
+}
+#containers table.persona span.role {
+   font-size: smaller;
+   font-weight:normal;
+}
+
+#containers table.persona .source {
+   font-size:smaller;
+   vertical-align: super;
 }
 
 #containers td.extra {

@@ -1,26 +1,3 @@
-<!--
-<table>
-   <tr>
-      <td>Name:</td>
-      <td>{{e.name}}</td>
-      <td>Type:</td>
-      <td>{{e.type.name}}</td>
-   </tr>
-   <tr>
-   </tr>
-   <tr>
-      <td>Place:</td>
-      <td>{{e.place|default:""}}</td>
-      <td>Date:</td>
-      <td>{{e.date|default:""}}</td>
-   </tr>
-   <tr>
-      <td>Id:</td>
-      <td>{{e.id}}</td>
-   </tr>
-</table>
--->
-
 <table>
    <tr>
       <th>Person</th>
@@ -36,7 +13,7 @@
    {% else %}
    <tr>
    {% endif %}
-      <td style="white-space:nowrap"><a href="/persona/{{p.person_id}}">{{p.person.name}}</a></td>
+   <td style="white-space:nowrap"><a href="/persona/{{p.person_id}}">{{p.person.name}} ({{p.person_id}})</a></td>
       <td>{{p.role.name}}</td>
       <td>{{p.value|default:""}}</td>
       <td>{{p.rationale|default:""}}</td>
