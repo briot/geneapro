@@ -14,6 +14,11 @@ $(document).ready(function() {
 });
 {% endblock script %}
 
+{% block header %}
+<link rel="stylesheet" href="{{MEDIA_URL}}ui-lightness/jquery-ui-1.9.2.custom.min.css"/>
+<script type="text/javascript" src="{{MEDIA_URL}}jquery-ui-1.9.2.custom.min.js"></script>
+{% endblock header %}
+
 {% block endbody %}
 <script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>

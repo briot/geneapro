@@ -42,9 +42,6 @@ function log() {
  ************************************************/
 
 function on_import() {
-   $("#progressbar").show().progressbar({
-      value: false
-   });
    $("#importDialog").dialog({
       autoOpen: false,
       height: 200,
