@@ -112,6 +112,7 @@ def view (request, decujus=1):
       {"total_ancestors": len(ancestors),
        "total_father":    len(fathers),
        "total_mother":    len(mothers),
+       "total_persons":   len(graph),
        "ranges":          ranges,
        "ages":            ages,
        "decujus":         decujus,
