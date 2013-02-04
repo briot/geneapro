@@ -1,8 +1,6 @@
 .dataTables_wrapper {
    position: relative;
-   min-height: 302px;
    clear: both;
-   _height: 302px;
    zoom: 1; /* Feeling sorry for IE */
 }
  
@@ -22,11 +20,6 @@
    background-color: white;
 }
 
-.top {
-   height:30px;
-   vertical-align:middle;
-}
- 
 .dataTables_length {
    width: 40%;
    float: left;
@@ -79,42 +72,70 @@
    background-image: url('/media/dt/forward_enabled.jpg');
 }
  
-#containers {
-   margin: 20px 0;
+.containers {
+   margin: 0 0;
    max-width: 900px;
 }
-#containers table {
+.containers .dataTables_wrapper {
+   margin-bottom: 20px;
+   margin-left: 30px;
+}
+.containers .dataTables_wrapper >table {
+   border-right: 1px solid white;
+   border-left: 1px solid white;
+   background-color: white;
+}
+.containers table {
    width:100%;
    border-spacing:0;
    /*border-bottom: 2px solid black;*/
    clear:both;
 }
-#containers table table {
+.containers table table {
    border-bottom: 0
 }
-#containers thead th {
+.containers thead th {
     padding: 5px 18px 5px 10px;
     font-weight: bold;
     cursor: pointer;
     white-space: nowrap;
-    * cursor: hand;
     background-color:white;
     border-right:1px solid #444;
     border-bottom: 2px solid black;
+    background-color: white;  /* .bottom'background-color */
 }
-#containers td {
+.containers .top {
+   border-top: 3px solid #8E6633;
+   background-color: white;
+   height: 1.5em;
+   vertical-align:middle;
+}
+#attrs_wrapper .top {
+   border-top: 3px solid #8E6633;
+}
+#events_wrapper .top {
+   border-top: 3px solid #9CAA78;
+}
+#p2p_assert_wrapper .top {
+   border-top: 3px solid #E0491D;
+}
+
+.containers td {
     /*border-right:1px solid #AAA;*/
-    padding: 0 5px}
-#containers td.place {
-   min-width:150px;
-}
-#containers td.date {
+    padding: 0 5px;
+
+   max-width: 200px;
+   overflow:hidden;
    white-space:nowrap;
 }
-#containers td.assert {
+.containers td.place {
+}
+.containers td.date {
+}
+.containers td.assert {
    min-width:150px;
 }
-#containers td.assert p + f {
+.containers td.assert p + f {
    margin-top:10px;
 }
 
@@ -141,10 +162,10 @@
 /*tr.odd { background-color: #dfd }
   tr.even { background-color: #efe }
 */
-#containers table.persona tr:hover {background-color: #FFFDAB}
+.containers table.persona tr:hover {background-color: #FFFDAB}
 
-#containers tr td {border-bottom:1px solid #DDD}
-#containers td table td {border-bottom:0}
+.containers tr td {border-bottom:1px solid #DDD}
+.containers td table td {border-bottom:0}
 
 .paging_full_numbers {
    width: 400px;

@@ -5,6 +5,8 @@ select {min-width:1.5em}  /* http://leftjustified.net/journal/2004/10/19/global-
 html {height:100.01%}  /* avoid various browser errors */
 body {font-size:14px; font-family:Arial,Helvetica;,clean,sans-serif; }
 
+body { background-color: #EEE}
+
 .dateselect {border:1px solid #999}
 .dateselect td.label {text-align:right; font-weight:bold}
 .dateselect td {text-align:left}
@@ -71,53 +73,67 @@ td.persona {
    font-style:italic;
    font-size:0.9em;
    color:#AAA;
+   cursor: pointer;
 }
 td.persona:before {
    content:"id ";
 }
 
-#containers table.persona > thead > tr > th:first-child {
-   border-bottom:0;
+.containers table.persona td[_url] {
+   padding-left: 20px;
 }
-#containers table.persona > tbody > tr > td:first-child {
-   width:10px;
-   font-size:0.7em;
-   text-align:center;
-   color:#16B;
-   background-color:white;
-   border:0;
-   border-right:1px solid #AAA;
+.containers table.persona tr:hover td[_url] {
+   position:relative;
+   left:-15px;
 }
-/*#containers table.persona tr:hover td[_url].open span:before {
+.containers table.persona tr:hover td[_url].open:before {
    content:"\25BC";
+   font-size:10px;
+   position:relative;
+   float:left;
+   left:-15px;
 }
-#containers table.persona tr:hover td[_url].closed span:before {
+.containers table.persona tr:hover td[_url].closed:before {
    content:"\25B6";
-}*/
-#containers table.persona td.type {
+   font-size:10px;
+   float:left;
+   position:relative;
+   left:-15px;
+}
+.containers table.persona td.type {
    /*text-transform:capitalize;*/
    white-space:nowrap;
    font-weight:bold;
    color:#AAA;
 }
-#containers table.persona span.role {
+.containers table.persona span.role {
    font-size: smaller;
    font-weight:normal;
 }
 
-#containers table.persona .source {
+.containers table.persona .source {
    font-size:smaller;
    vertical-align: super;
 }
+.dataTables_filter input {
+   -moz-border-radius: 6px; /* FF1+ */
+   -webkit-border-radius: 6px; /* Saf3-4 */
+   border-radius: 6px; /* Opera 10.5, IE9, Saf5, Chrome */
+   margin-top:2px;
+   margin-right: 2px;
+}
+.containers [_persona].highlighted {
+   background-color: #DDD;
+}
 
-#containers td.extra {
+.containers td.extra {
    /*background-image: -moz-linear-gradient(top, #39414A, #777);*/
    /*background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #39414A),color-stop(1, #777));   */
    /*background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #777),color-stop(1, #EEE));   */
    /*background-image: linear-gradient(top, #39414A, #777);*/
    background-color:white;
 }
-#containers td.extra > div {
+.containers td.extra > div {
    color:black;
    margin:0 10px 10px 10px;
    border-right:1px solid #AAA;
@@ -125,16 +141,16 @@ td.persona:before {
    border-bottom:1px solid #AAA;
    background-color:#EEE;
 }
-#containers td.extra > div td {
+.containers td.extra > div td {
    text-align:center;
 }
 
-#containers td.closed span,
-#containers td.open span {
+.containers td.closed span,
+.containers td.open span {
    visibility:hidden;
 }
-#containers tr:hover td.closed span,
-#containers tr:hover td.open span {
+.containers tr:hover td.closed span,
+.containers tr:hover td.open span {
    visibility:visible;
 }
 
@@ -379,7 +395,7 @@ div.scrollable canvas {
    font-size:1.8em;
    margin:15px 0 30px 30px;
    padding: 0 0 4px 0;
-   width:900px; /* #containers'width */
+   width:900px; /* .containers'width */
 }
 
 #title span.details {

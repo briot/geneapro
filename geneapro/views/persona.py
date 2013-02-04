@@ -4,6 +4,7 @@ Various views related to displaying the pedgree of a person graphically
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
+from django.db.models import Q
 from django.utils.translation import ugettext as _
 from django.utils import simplejson
 from django.http import HttpResponse
@@ -131,8 +132,14 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
         for p in nodes:
             all_ids.update(p.ids)
 
+    all_events = dict()
+
+    # All query the 'principal' for each events, so that we can provide
+    # that information graphically.
     for p in sql_in(events, "person", all_ids):
+        #or_q=Q(role=models.Event_Type_Role.principal)):
         e = p.event
+
         p_node = graph.node_from_id(p.person_id)
         person = persons[p_node.main_id]
         person.all_events[e.id] = EventInfo(

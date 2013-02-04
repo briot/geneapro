@@ -37,16 +37,28 @@ $(".surety").each(function() {
      })
   });
 
-$("#list").dataTable(
+$("#attrs,#events").dataTable(
   {"bPaginate": false,
-   "sDom": '<"top"fi>rt',
-   "aaSorting": [[ 3, "asc" ]], // initial sort on dates
+  "sDom": '<"top"f>rt',
+  "oLanguage": {
+     "sSearch": ""  {# No search label #}
+   },
+   "aaSorting": [[ 2, "asc" ]], // initial sort on dates
    "aoColumns": [
-      { "bSortable":false },
       null,
       null,
-      { "iDataSort":4},    //  3: date
-      { "bVisible":false}, //  4: sortDate
+      { "iDataSort":3},    //  2: date
+      { "bVisible":false}, //  3: sortDate
+      null,
+      null,
+   ],
+  }
+);
+
+$("#p2p_assert").dataTable(
+  {"bPaginate": false,
+  "sDom": '<"top">rt',
+   "aoColumns": [
       null,
       null,
       null,
@@ -55,13 +67,25 @@ $("#list").dataTable(
   }
 );
 
-$("#list th").click(function() {
-    $("#list td.open").removeClass("open").addClass("closed");
+
+$("#attrs_filter, #events_filter").find("input").attr("placeholder", "filter");
+
+{# Hide extra information blocks when folding or unfolding lines #}
+$("#events th, #attrs th").click(function() {
+    $("#events td.open, #attrs td.optn").removeClass("open").addClass("closed");
 });
 
-//$("#list td.open").html("<span>&#x25BC;</span>");
-$("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
+$("#events td[_url]").addClass("closed")
   .click(toggleExtra).next().click(toggleExtra).css("cursor", "pointer");
+});
+
+{# Highlight events for a given person when clicking on it #}
+$("#p2p_assert .persona").click(function() {
+   var is_selected = $(this).hasClass("highlighted");
+   $("[_persona]").removeClass("highlighted");
+   if (!is_selected) {
+      $("[_persona=" + $(this).text() + "]").addClass("highlighted");
+   }
 });
 
 {% endblock script %}
@@ -81,26 +105,22 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
    <span class="details">({{person.birth.date}} - {{person.death.date}})</span>
 </h3>
 
-<div id="containers">
- <table id="list" class="persona">
+<div class="containers">
+ <table id="attrs" class="persona">
    <thead>
       <tr>
-         <th></th>
-         <th>Type (Role)</th>
-         <th>Name</th>
+         <th>Type</th>
+         <th>Value</th>
          <th>Date</th>
          <th>sortDate</th>
          <th>Place</th>
-         <th>Comment</th>
-         <th>Persona</th>
          <th>Surety</th>
       </tr>
    </thead>
    <tbody>
 
    {% for k, c in chars.items %}
-   <tr>
-      <td class="closed"></td>
+   <tr _persona="{{c.assertion.person_id}}">
       <td class="type">{{c.char.name}}
          {% for s in c.char.sources %}
             {% if s %}
@@ -122,29 +142,39 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
       <td class="date">{{c.char.date|default:""}}</td>
       <td>{{c.char.date_sort|default:""}}</td>
       <td class="place">{{c.char.place|default:""}}</td>
-      <td class="assert">
-         {{c.assertion.value|linebreaks}}
-         {{c.assertion.rationale|default:""|linebreaks}}
-      </td>
-      <td class="persona">{{c.assertion.person_id}}</td>
       <td class="surety" id="csurety{{k}}"
           _scheme="{{c.assertion.surety.scheme_id}}"
           _order="{{c.assertion.surety.sequence_number}}"/>
    </tr>
    {% endfor %}
+ </table>
+
+ <table id="events" class="persona">
+   <thead>
+      <tr>
+         <th>Type</th>
+         <th>Name</th>
+         <th>Date</th>
+         <th>sortDate</th>
+         <th>Place</th>
+         <th>Surety</th>
+      </tr>
+   </thead>
+   <tbody>
 
    {% for i, e in events.items %}
       {% if e.assertion.disproved %}
-      <tr class="disproved">
+      <tr class="disproved"
       {% else %}
-      <tr>
+      <tr
       {% endif %}
-         <td _url="/event/{{e.event.id}}"></td>
-
+          _persona="{{e.assertion.person_id}}"
+      >
+         <td class="type" _url="/event/{{e.event.id}}">
          {% if e.role == "principal" %}
-         <td class="type">{{e.event.type.name}}
+         {{e.event.type.name}}
          {% else %}
-         <td class="type">{{e.event.type.name}} <span class="role">({{e.role|default:""}})<span>
+         {{e.event.type.name}} <span class="role">({{e.role|default:""}})<span>
          {% endif %}
             {% for s in e.event.sources %}
                {% if s %}
@@ -152,16 +182,14 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
                {% endif %}
             {% endfor %}
          </td>
-
-         <td>{{e.event.name}}</td>
+         <td>
+            {% if e.role != "principal" %}
+               {{e.event.name}}
+            {% endif %}
+         </td>
          <td class="date">{{e.event.date|default:""}}</td>
          <td>{{e.event.date_sort|default:""}}</td>
          <td class="place">{{e.event.place|default:""|linebreaks}}</td>
-         <td class="assert">
-            {{e.assertion.value|linebreaks}}
-            {{e.assertion.rationale|default:""|linebreaks}}
-         </td>
-         <td class="persona">{{e.assertion.person_id}}</td>
          <td class="surety" id="esurety{{i}}"
              _scheme="{{e.assertion.surety.scheme_id}}"
              _order="{{e.assertion.surety.sequence_number}}"/>
@@ -169,8 +197,7 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
    {% endfor %}
 
    {% for i, g in groups.items %}
-      <tr>
-         <td class="closed"></td>
+      <tr _persona="{{g.assertion.person_id}}">
          <td class="type">Group
             {% for s in g.group.sources %}
                {% if s %}
@@ -182,11 +209,6 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
          <td class="date">{{g.group.date|default:""}}</td>
          <td>{{g.group.date_sort|default:""}}</td>
          <td class="place">{{g.group.place|default:""}}</td>
-         <td class="assert">
-            {{g.assertion.value|linebreaks}}
-            {{g.assertion.rationale|default:""|linebreaks}}
-         </td>
-         <td class="persona">{{g.assertion.person_id}}</td>
          <td class="surety" id="gsurety{{i}}"
              _scheme="{{g.assertion.surety.scheme_id}}"
              _order="{{g.assertion.surety.sequence_number}}"/>
@@ -196,20 +218,21 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
  </table>
 
  {% if p2p|length %}
- <p class="onUse" style="margin-top:10px; margin-left:20px;">
+ <p class="onUse" style="margin-top:10px; margin-left:30px;">
  This person is made up of several persona in the database. Each of
  these persona was constructed from one or more sources, and then they
  were all linked together with the following assertions. Disproving any
  of these will change the information displayed above.
+
+ Click on a persona id to see events and attributes related to that persona.
  </p>
 
- <table style="margin-left:20px">
+ <table id="p2p_assert">
    <thead>
       <tr>
          <th>Persona1</th>
          <th>Persona2</th>
          <th>These are the same because</th>
-         <th>Comments</th>
          <th>Surety</th>
       </tr>
    </thead>
@@ -222,10 +245,9 @@ $("#list td[_url]").addClass("closed").html("<span>&#x25B6;</span>")
       <tr>
           {% endif %}
         {# ??? Should we show sources and researcher #}
-        <td class="persona">{{p.1.person1_id}}</td>
-        <td class="persona">{{p.1.person2_id}}</td>
+        <td class="persona" _persona="{{p.1.person1_id}}">{{p.1.person1_id}}</td>
+        <td class="persona" _persona="{{p.1.person2_id}}">{{p.1.person2_id}}</td>
         <td>{{p.1.rationale|default:""}}</td>
-        <td>{{p.1.value|default:""}}</td>
         <td class="surety" id="asurety{{forloop.counter}}"
                   _scheme="{{p.1.surety.scheme_id}}"
                   _order="{{p.1.surety.sequence_number}}"/>
