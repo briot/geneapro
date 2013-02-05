@@ -6,16 +6,10 @@
 <script type="text/javascript" src="{{MEDIA_URL}}/jquery.flot.stack.min.js"></script>
 {% endblock header %}
 
-{% block css %}
-#genLegend table {width:100% }
-#genLegend td {text-align:left}
-.legendLabel i {float:right; margin-right:3px}
-.legendLabel span {font-size:smaller}
-{% endblock css %}
-
 {% block contents %}
-<div>
- <h2>Statistics</h2>
+<div id="stats">
+ <h3 id="title">Statistics</h3>
+
  Total number of persons in the database: {{total_persons}}<br>
  Number of persons in the tree (ancestors and descendants): {{total_ancestors}}<br>
  Number of persons in father's tree: {{total_father}}<br>

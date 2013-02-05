@@ -35,8 +35,12 @@ def sql_in(objects, field_in, ids, or_q=None):
     """
 
     if ids is None:
-        for obj in objects.filter(or_q).all():
-            yield obj
+        if or_q is not None:
+            for obj in objects.filter(or_q).all():
+                yield obj
+        else:
+            for obj in objects.all():
+                yield obj
     else:
         field_in += "__in"   # Django syntax for SQL's IN operator
         for subids in sql_split(ids):

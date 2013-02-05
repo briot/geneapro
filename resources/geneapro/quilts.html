@@ -1,9 +1,6 @@
 {% extends "geneapro/base.html" %}
 {% block title %}GeneaPro: Quilts {{decujus}} {% endblock %}
 
-{% block css %}
-{% endblock css %}
-
 {% block script %}
 var canvas;
 $(document).ready(function() {
@@ -45,5 +42,5 @@ $(document).ready(function() {
 {% endblock leftside %}
 
 {% block contents %}
-<canvas id="quilts" style="width:100%;height:100%"></canvas>
+<canvas id="quilts" class="graph" style="width:100%;height:100%"></canvas>
 {% endblock contents %}

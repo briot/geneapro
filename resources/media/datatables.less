@@ -1,0 +1,185 @@
+@import-once "base.less";
+
+@table-highlight-color: contrast(@background, darken(@background,5%), lighten(@background,5%));
+@table-border-color: contrast(@background, darken(@background,10%), lighten(@background,10%));
+@table-gray: contrast(@background, darken(@background,20%), lighten(@background,20%));
+@highlight-color:    #FFFDAB;
+
+.dataTables_wrapper {
+   background-color: @block-background;
+   margin: 0 0 @vmargin 0;
+   table {
+      width: 100%;
+      border-spacing:0;
+
+      table {
+         border-bottom: 0;
+         td { border-bottom: 0}
+      }
+
+      thead th {
+         padding: 5px 18px 5px 10px;
+         font-weight: bold;
+         cursor: pointer;
+         white-space: nowrap;
+         border-right:1px solid @table-border-color;
+         border-bottom: 2px solid @table-border-color;
+     }
+
+     td {
+        padding: 0 5px;
+        max-width: 200px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+        border-bottom: 1px solid @table-border-color;
+
+        p {
+           overflow:hidden;
+           text-overflow:ellipsis;
+        }
+
+        &.type {
+           font-weight: bold;
+           color: @table-gray;
+
+           span.role {
+              font-size: smaller;
+              font-weight: normal;
+           }
+           .source {
+              font-size: smaller;
+              vertical-align: super;
+           }
+        }
+        &.persona {
+          font-style: italic;
+          font-size: 0.9em;
+          color: @table-gray;
+          cursor: pointer;
+          &:before {
+             content: "id ";
+          }
+        }
+
+
+        &.extra {   //  Extra information for the previous row
+           background-color: @block-background; // cancel current line highlight
+           > div {
+              margin: 0 10px 10px 10px;
+              border-right:  1px solid @table-border-color;
+              border-left:   1px solid @table-border-color;
+              border-bottom: 1px solid @table-border-color;
+              background-color: @table-highlight-color;
+
+              td { text-align: center}
+           }
+        }
+     }
+
+     td[_url] {
+        padding-left: 20px;
+     }
+
+     [_persona].highlighted {
+        background-color: @table-highlight-color;
+     }
+
+     tr:hover td[_url] {
+        position:relative; left: -15px;
+        &:before {
+           font-size:10px;
+           float:left;
+           position:relative;
+           left:-15px;
+        }
+        &.open:before   { content:"\25BC" }
+        &.closed:before { content:"\25B6" }
+     }
+
+     &.highlightCurrent tr:hover {
+        background-color: @highlight-color;
+     }
+   }
+
+   .dataTables_length {
+      float: left;
+      width: 40%;
+      color: @table-gray;
+   }
+   .dataTables_info {
+      float: right;
+      text-align: right;
+      vertical-align: middle;
+      color: @table-gray;
+   }
+
+   .sorting_desc {
+      background: url('/media/dt/sort_asc.png') no-repeat center right;
+   }
+   .sorting_asc {
+      background: url('/media/dt/sort_desc.png') no-repeat center right;
+   }
+   .sorting {
+      background: url('/media/dt/sort_both.png') no-repeat center right;
+   }
+   .sorting_desc_disabled {
+      background: url('/media/dt/sort_asc_disabled.png') no-repeat center right;
+   }
+   .sorting_asc_disabled {
+      background: url('/media/dt/sort_desc_disabled.png') no-repeat center right;
+   }
+
+   &#attrs_wrapper .top      { border-top: 3px solid @attr-color }
+   &#events_wrapper .top     { border-top: 3px solid @events-color }
+   &#persona_wrapper .top    { border-top: 3px solid @persona-color }
+   &#place_wrapper .top      { border-top: 3px solid @place-color }
+   &#p2p_assert_wrapper .top { border-top: 3px solid @p2p-color }
+
+   .dataTables_paginate {
+      padding: 3px 0;
+
+      .paginate_disabled_previous, .paginate_enabled_previous,
+      .paginate_disabled_next, .paginate_enabled_next {
+         height: 19px;
+         width: 19px;
+         margin-left: 3px;
+         float: left;
+      }
+      .paginate_disabled_previous {
+         background-image: url('/media/dt/back_disabled.jpg');
+      }
+      .paginate_enabled_previous {
+         background-image: url('/media/dt/back_enabled.jpg');
+      }
+      .paginate_disabled_next {
+         background-image: url('/media/dt/forward_disabled.jpg');
+      }
+      .paginate_enabled_next {
+         background-image: url('/media/dt/forward_enabled.jpg');
+      }
+      .paging_full_numbers {
+         width: 400px;
+         height: 22px;
+         line-height: 22px;
+      }
+      span.paginate_button, span.paginate_active {
+         .border-radius(2px);
+         padding: 2px 5px;
+         margin: 0 1px;
+         cursor: pointer;
+      }
+      span.paginate_button       { background-color: #ddd; }
+      span.paginate_button:hover { background-color: #ccc; }
+      span.paginate_active       { background-color: #99B3FF; }
+    }
+
+    .dataTables_filter { // The filter button for the tables
+       text-align: right;
+       input {
+          .border-radius(6px);
+          margin-top:2px;
+          margin-right: 2px;
+       }
+    }
+}

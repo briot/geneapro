@@ -301,7 +301,6 @@ function onTitleChange() {
   parentS = getSelectValue ($("select[name=parentSource]")[0]);
   page    = $("input[name=page]").attr ("value");
   txt = $.sprintf ("%(parent)s, %(page)s", {parent:parentS, page:page});
-  $("#titleAbbrev").text(txt);
 }
 
 $(document).ready(function(){
