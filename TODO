@@ -57,15 +57,23 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 ** Use presets
 
 * Quilts
-** Selection seems to stop after a few generations
-** Filtering to only show persons related to the current selection.
-   Should auto zoom to make the selection visible.
 ** Easy navigation to parents and children (GeneaQuilts uses pie charts)
+** Add a way to unselect
+   Currently, clicking on a selected person does nothing, and the only way
+   to undo a selection is to select something else.
+** Autoscale
+** Link to the highlight_rules.py colors
 ** Clicking on a person should show his/her details
 ** Geneaquilts has a timeline view
 ** Geneaquilts automatically zooms in or out when navigating from the
    overview canvas, to show the whole generation. Not sure whether this is
    convenient.
+** Implement other layout optimizations from the graphviz paper
+   Use local information to compute cut values, and refresh tree traversal
+   info locally rather than recompute it from scratch every time. Also only
+   recompute cut values for a subset of the nodes, as explained in the paper.
+** Trellis Charts
+  http://progenygenealogy.com/products/family-tree-charts/trellis.aspx
 
 * Print
 ** Should hide unwanted parts of the page when printing
@@ -87,9 +95,7 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    by browsers yet)
 
 * Person View
-** DONE For each event, add an "downarrow" to show event details
-   CLOSED: [2011-03-21 Mon 15:27]
-   In particular, all personas that took part in the event.
+** Add a rounded box showing the color from highlight_rules.py
 
 * Person list view
 ** Slow to display with big databases
@@ -109,6 +115,14 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 * Ideas for names
 ** Geneatica, Forebears, Testimony, Testimology
 ** GeneaProve
+
+* Packaging
+** Use py2exe and py2app to provide standalone executables
+** Compile with Closure compiler for efficiency
+** Compile CSS for efficiency
+** Add a way to precompute (into a .js file) all the tree data for
+   a given person, so that we can have a demo of the program running
+   on github
 
 * Design
 ** Should we be using groups to store families ?
@@ -145,11 +159,3 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 * web
 ** timeline
   http://www.chronozoomproject.org/
-** Trellis Charts
-  http://progenygenealogy.com/products/family-tree-charts/trellis.aspx
-    - how to partition the people into generational groups:
-      * If possible, two married persons should be in the same group.
-        This doesn't work for mythology for instance where a God could also
-        have children with his kids. So likely a person should be in the
-        same group as his/her oldest spouse.
-      * Children are in the next group
