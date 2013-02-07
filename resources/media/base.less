@@ -39,13 +39,14 @@
             filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='@from', EndColorStr='@to');
 }
 
-.noselect {  //  Prevent user selection highlighting
+.noselect () {  //  Prevent user selection highlighting
    -webkit-user-select: none;
    -khtml-user-select: none;
    -moz-user-select: none;
    -o-user-select: none;
    user-select: none;
 }
+.noselect { .noselect() }
 
 //----------------------------------------------------------------
 // Page framework
@@ -125,18 +126,6 @@ body {
    }
    #settings {
       font-size: 0.8em;
-      .ui-slider-horizontal {
-          height: 0.2em;
-          margin: 5px 3px 0 10px
-       }
-      .ui-slider .ui-slider-handle {height:0.6em}
-      .ui-slider span {
-          font-size:0.8em;
-          margin-top:7px;
-          float: left;
-          position:relative;
-          top:-2px}
-      .ui-slider span.right {float:right}
       .config {
          padding-top: 2px;
          white-space: nowrap;
@@ -148,16 +137,48 @@ body {
          > span:first-child {  // Labels
             float: left;
          }
-         > div.ui-slider {   // Sliders
-            clear:both;
-            top: 5px;
-            margin-bottom: 8px;
-         }
          input, select {
             float: right;
          }
       }
    }
+}
+
+.ui-slider {
+   clear:both;
+   top: 5px;
+   margin-bottom: 8px;
+   position: relative;
+   z-index: 10000;
+   &.ui-slider-horizontal {
+      margin: 20px auto 15px auto;
+      border-bottom: 1px solid #B3B3B3;
+      max-width: 400px;
+      height: 1px;
+      .ui-slider-handle {
+         outline:none;
+         background-color: transparent;
+         background-image: url("sliders.png");
+         background-position: 0 -23px;
+         background-repeat: no-repeat;
+         height: 23px;
+         width: 23px;
+         border: 0;
+         position: absolute;
+         z-index: 10001;
+         top: -12px;
+         &:hover {
+            background-position: 0 0;
+         }
+      }
+   }
+   span {
+      font-size:0.8em;
+      margin-top:7px;
+      float: left;
+      position:relative;
+      top:-2px}
+   span.right {float:right}
 }
 
 #contents {
@@ -276,43 +297,99 @@ body {
       border: 1px solid @sidebar-topcolor;
       padding: 10px 10px 0px 10px;
       margin-bottom: @vmargin;
-      font-weight: bold;
-      font-size: larger;
 
       span.id {
          font-weight: normal;
          font-size: smaller;
          color: @table-gray;
       }
+      span.name {
+         font-weight: bold;
+         font-size: larger;
+      }
       .moreInfo {
-         text-align: center;
-         font-size: smaller;
-         cursor: pointer;
-         &:before {
-            content:"\25BC";
-         }
+         .arrow {
+            text-align: center;
+            cursor: pointer;
+            &:before {
+               content:"\25BC";
+            }
+            &.open:before {
+               content:"\25B2";
+            }
+          }
          .details {
-            display: block; 
+            text-align: left;
+            display: none; 
+            clear: both;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            fieldset {
+                border: 0px;
+                padding-bottom: 5px;
+            }
+            legend {
+                font-size: smaller;
+                color: @table-gray;
+            }
+            @field-label-width: 200px;
+            @field-input-width: 250px;
+            @field-padding: 8px;
+            .fieldGroup {
+               width: @field-label-width + @field-input-width + @field-padding * 2;
+               float: left;
+               position: relative;
+            }
+            .field {
+               font-weight: normal;
+               float: left;
+               text-align: left;
+               white-space: nowrap;
+               label { width: @field-label-width;
+                       float:left;
+                       text-align: right;
+                       padding-right: @field-padding; 
+               }
+               select, textarea, input {
+                  float: right;
+                  width: @field-input-width
+               }
+               select, input {line-height: 1.5em}
+
+               &.sourceMediaType {
+                  margin-bottom:10px;
+               }
+               &.disabled {
+                  color: @table-gray;
+               }
+            }
+            .repositoryInfo {
+               margin-bottom: 10px;
+            }
+            .actions {
+               position: relative;
+            }
          }
       }
+    }
+}
+
+//----------------------------------------------------------------
+// Gallery
+//----------------------------------------------------------------
+
+.gallery {
+   >div  {
+     //border: 1px solid black;
+     //-webkit-box-shadow: 10px     3px 10px 10px black;
+     box-shadow: 0px 10px 40px -10px black;
+     img {  //  resize images when the div itself is resized
+       border: 0px;
+       width:100%;
+       height:100%;
+     }
    }
-   #commonDetails {
-      background-color: @block-background;
-      border: 1px solid @sidebar-topcolor;
-      padding: 10px 10px 10px 10px;
-      margin-bottom: @vmargin;
-   }
-   .field {
-      float: left;
-   }
-   .details {
-      select, textarea, input { width: 250px}
-      th {
-         text-align: right;
-         padding-right: 10px;
-      }
-   }
- }
+}
 
 //----------------------------------------------------------------
 //--  Below might be useless or obsolete
@@ -351,13 +428,6 @@ select {min-width:1.5em}  // http://leftjustified.net/journal/2004/10/19/global-
 
 h1 {margin:20px 0 20px 0; font-size:x-large}
 .buttons span {font-style:italic; margin-left:10px; color:#BBB}
-
-.repositoryInfo {float:right; background-color:#F5F5F5; margin-right:10px;
-          padding:10px; border:1px solid #ddd}
-.repositoryInfo h3 {margin:0 0 10px 0}
-.repositoryInfo select,
-.repositoryInfo textarea,
-.repositoryInfo input {width:250px}
 
 .char {
   font-style:italic;

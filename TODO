@@ -102,7 +102,20 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    If we paginate based on first letter of last name and only query those,
    it might be made much faster, and also easier to navigate.
 
-* Styles
+* Sources
+** Use Bibtex as a reference for which fields are needed for the various
+   formats of sources.
+** Each format provides a template for the full, secondary and short citations,
+   for instance "${author},${italic-title}". This template is parsed to find
+   out which fields should be displayed in the form.
+   We want to cache the full citations as part of the source table for quick
+   lookup, but in practice the master are the various fields, since depending
+   on the citation style the fields can be used differently to come up with the
+   citation (see the various styles for bibtex, at
+   http://www.tex.ac.uk/tex-archive/biblio/bibtex)
+** See
+   http://www.gramps-project.org/wiki/index.php?title=GEPS_018:_Evidence_style_sources
+   http://jytangledweb.org/genealogy/evidencestyle/
 
 * Groups
 ** For: neighbor, friend, clergy, care-taker, and more
