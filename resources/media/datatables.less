@@ -2,7 +2,6 @@
 
 @table-highlight-color: contrast(@background, darken(@background,5%), lighten(@background,5%));
 @table-border-color: contrast(@background, darken(@background,10%), lighten(@background,10%));
-@table-gray: contrast(@background, darken(@background,20%), lighten(@background,20%));
 @highlight-color:    #FFFDAB;
 
 .dataTables_wrapper {
@@ -18,7 +17,6 @@
       }
 
       thead th {
-         padding: 5px 18px 5px 10px;
          font-weight: bold;
          cursor: pointer;
          white-space: nowrap;
@@ -130,11 +128,14 @@
       background: url('/media/dt/sort_desc_disabled.png') no-repeat center right;
    }
 
-   &#attrs_wrapper .top      { border-top: 3px solid @attr-color }
-   &#events_wrapper .top     { border-top: 3px solid @events-color }
-   &#persona_wrapper .top    { border-top: 3px solid @persona-color }
-   &#place_wrapper .top      { border-top: 3px solid @place-color }
-   &#p2p_assert_wrapper .top { border-top: 3px solid @p2p-color }
+   &#attrs_wrapper .top      { border-top: 5px solid @attr-color }
+   &#place_wrapper .top      { border-top: 5px solid @place-color }
+   &#events_wrapper .top     { border-top: 5px solid @events-color }
+   &#persona_wrapper .top    { border-top: 5px solid @persona-color }
+   &#p2p_assert_wrapper .top { border-top: 5px solid @p2p-color }
+   //#attrs th      { background-color: @attr-color }
+   //#events th     { background-color: @events-color }
+   //#p2p_assert th { background-color: @p2p-color }
 
    .dataTables_paginate {
       padding: 3px 0;

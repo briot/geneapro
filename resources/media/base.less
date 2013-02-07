@@ -9,6 +9,7 @@
 @logo-color:       #EC8D05;
 @sidebar-topcolor: #777;
 @header-color:     #ECF2F9;
+@table-gray:       contrast(@background, darken(@background,20%), lighten(@background,20%));
 
 @max-width:        1100px; // in some contexts
 @sidebar-width:    140px;
@@ -186,7 +187,7 @@ body {
 
    span.details {
       margin-left: 10px;
-      font-size: 80%;
+      font-size: smaller;
       font-weight: normal;
    }
 }
@@ -255,6 +256,63 @@ body {
    max-width: @max-width;
 }
 
+//----------------------------------------------------------------
+// source details page
+//----------------------------------------------------------------
+
+#sourceDetails {
+   max-width: @max-width;
+
+   .place { background: url('/media/place.png') no-repeat left center }
+   .person { background: url('/media/user.png') no-repeat left center }
+   .ui-tabs-nav a,
+   .ui-tabs-nav a span {
+       background: url('/media/tab.png') no-repeat
+   }
+
+   #sourceInfo {
+      .box-shadow();
+      background-color: @block-background;
+      border: 1px solid @sidebar-topcolor;
+      padding: 10px 10px 0px 10px;
+      margin-bottom: @vmargin;
+      font-weight: bold;
+      font-size: larger;
+
+      span.id {
+         font-weight: normal;
+         font-size: smaller;
+         color: @table-gray;
+      }
+      .moreInfo {
+         text-align: center;
+         font-size: smaller;
+         cursor: pointer;
+         &:before {
+            content:"\25BC";
+         }
+         .details {
+            display: block; 
+         }
+      }
+   }
+   #commonDetails {
+      background-color: @block-background;
+      border: 1px solid @sidebar-topcolor;
+      padding: 10px 10px 10px 10px;
+      margin-bottom: @vmargin;
+   }
+   .field {
+      float: left;
+   }
+   .details {
+      select, textarea, input { width: 250px}
+      th {
+         text-align: right;
+         padding-right: 10px;
+      }
+   }
+ }
 
 //----------------------------------------------------------------
 //--  Below might be useless or obsolete
@@ -300,14 +358,6 @@ h1 {margin:20px 0 20px 0; font-size:x-large}
 .repositoryInfo select,
 .repositoryInfo textarea,
 .repositoryInfo input {width:250px}
-
-.sourceDetails select,
-.sourceDetails textarea,
-.sourceDetails input {width:250px}
-.sourceDetails th {
-   text-align:right;
-   padding-right:10px;
-}
 
 .char {
   font-style:italic;

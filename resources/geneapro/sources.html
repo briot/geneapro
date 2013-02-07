@@ -2,33 +2,99 @@
 {% block title %}GeneaPro: source {{s.id}} {% endblock %}
 {% block css %}
 {# Defined in line to get variable replacement #}
-.person {background:url("{{MEDIA_URL}}user.png") no-repeat left center}
-{#.date   {background:url("{{MEDIA_URL}}calendar.png") no-repeat left center}#}
-.place  {background:url("{{MEDIA_URL}}place.png") no-repeat left center}
-.ui-tabs-nav a, .ui-tabs-nav a span {background: url({{MEDIA_URL}}tab.png) no-repeat}
+{#
 .jcarousel-skin-tango .jcarousel-next-horizontal {background: transparent url({{MEDIA_URL}}next-horizontal.png) no-repeat 0 0}
 .jcarousel-skin-tango .jcarousel-prev-horizontal {background: transparent url({{MEDIA_URL}}prev-horizontal.png) no-repeat 0 0}
-
 .sourceGallery ul.carousel li {background:url({{MEDIA_URL}}entry.gif) 0 0 no-repeat}
-
+#}
 {% endblock css %}
+
+{% block less %}
+<link rel="stylesheet/less" href="{{MEDIA_URL}}datatables.less"/>
+{% endblock less %}
+
 {% block header %}
 <link rel="stylesheet" href="{{MEDIA_URL}}jcarousel.css"/>
 <link rel="stylesheet" href="{{MEDIA_URL}}ui.tabs.css"/>
-<link rel="stylesheet" href="{{MEDIA_URL}}datatables.css"/>
 <script type="text/javascript" src="{{MEDIA_URL}}jquery-ui-1.9.2.custom.min.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.dragpane.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.jcarousel.0.2.7.min.js"></script>
-<!--
-<script type="text/javascript" src="{{MEDIA_URL}}adacore.tooltips.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.watermark.pack.js"></script>
--->
 <script type="text/javascript" src="{{MEDIA_URL}}jquery.sprintf.js"></script>
 {% endblock header %}
 
-{% block leftside %}
+{% block contents %}
+<div id="sourceDetails">
+   <div id="sourceInfo">
+      <span class="id">Source {{s.id}}</span>
+      {% if s.title %}
+         {{s.title}}
+      {% else %}
+        {% if s.abbrev %}
+         {{s.abbrev}}
+        {% else %}
+         {# Should try to build the citation properly #}
+         {{s.comments}}
+        {% endif %}
+      {% endif %}
+      <div class="moreInfo">
+         <div class="details">
+            <span class="field">
+               <label for="_sourceMediaType">Source type</label>
+               <select name="sourceMediaType" id="_sourceMediaType">
+                   <option selected>{{c.medium.name}}</option>
+                   {% for t in source_mediums %}
+                   <option>{{t.name}}</option>
+                   {% endfor %}
+               </select>
+            </span>
+            <div style="clear:both"/>
+
+
+            <table>
+             <tr><th>Source type</th>
+                 <td><select name="sourceMediaType">
+                    <option selected>{{c.medium.name}}</option>
+                    {% for t in source_mediums %}
+                    <option>{{t.name}}</option>
+                    {% endfor %}
+                    </select></td>
+             </tr>
+             {% for c in s.citations %}
+             <tr><th>{{c.type.name}}</th>
+                <td><input type="text" value="{{c.value}}"/></td></tr>
+             {% endfor %}
+
+             {# Below are field that would be displayed depending on source type #}
+             {# and what is needed to make up the citation #}
+             <tr><th>Publication date</th><td><input type="text" value=""/></td></tr>
+             <tr><th>Volume</th><td><input type="text" value=""/></td></tr>
+             <tr><th>Page</th><td><input type="text" value=""/></td></tr>
+
+            </table>
+         </div>{# details #}
+      </div> {# moreInfo #}
+   </div> {# sourceDetails #}
+
+   {# The details common to all sources, needed by the GenTech data model #}
+   <div id="commonDetails" class="details">
+      <table>
+         <tr><th>Subject Date</td>
+            <td><input type="text" class="date" title="The date the source is about" value="{{s.subject_date|default:""}}"/></td></tr>
+
+         <tr><th>Subject Place</td>
+            <td><input type="text" class="place" title="The place the source is about" value="{{s.subject_place|default:""}}"/></td></tr>
+
+         <tr><th>Jurisdiction Place</td>
+            <td><input type="text" class="place" title="Where the source was found" value="{{s.jurisdiction_place|default:""}}"/></td></tr>
+
+         <tr><th>Comments</th>
+            <td><textarea>{{s.comments}}</textarea></td></tr>
+
+         <tr><th>Researched by</th>
+            <td><input type="text" value="{{s.researcher.name}}"/></td></tr>
+      </table>
+   </div>
+
    <div class="sourceGallery">
     {% if s.representations.all %}
     <div id="sourceGalleryCarousel">
@@ -47,9 +113,6 @@
     {% endif %}
    </div> <!-- sourceGallery -->
 
-{% endblock leftside %}
-
-{% block contents %}
 <div id="tabs" style="margin-top:10px">
   <ul>
     <li><a href="#info"><span>Information</span></a></li>
@@ -58,56 +121,7 @@
 
 <div id="info">
 
-<h3 id="title">
-   <span class="id">Source {{s.id}}</span>
-   <span class="name">
-      {% if s.title %}
-         {{s.title}}
-      {% else %}
-        {% if s.abbrev %}
-         {{s.abbrev}}
-        {% else %}
-         {# Should try to build the citation properly #}
-         {{s.comments}}
-        {% endif %}
-      {% endif %}
-   </span>
-</h3>
-
  <div class="sourceInfo">
-    <div class="sourceDetails">
-     <table>
-      <tr><th>Source type</th>
-          <td><select name="sourceMediaType">
-             <option selected>{{c.medium.name}}</option>
-             {% for t in source_mediums %}
-             <option>{{t.name}}</option>
-             {% endfor %}
-             </select></td>
-      </tr>
-
-      <tr><th>Subject Date</td>
-         <td><input type="text" class="date" title="The date the source is about" value="{{s.subject_date|default:""}}"/></td></tr>
-
-      <tr><th>Subject Place</td>
-         <td><input type="text" class="place" title="The place the source is about" value="{{s.subject_place|default:""}}"/></td></tr>
-
-      <tr><th>Jurisdiction Place</td>
-         <td><input type="text" class="place" title="Where the source was found" value="{{s.jurisdiction_place|default:""}}"/></td></tr>
-
-      {% for c in s.citations %}
-      <tr><th>{{c.type.name}}</th>
-         <td><input type="text" value="{{c.value}}"/></td></tr>
-      {% endfor %}
-
-      <tr><th>Comments</th>
-         <td><textarea>{{s.comments}}</textarea></td></tr>
-
-      <tr><th>Researched by</th>
-         <td><input type="text" value="{{s.researcher.name}}"/></td></tr>
-
-     </table>
-    </div>{# sourceDetails #}
    </div>{# sourceInfo #}
 
    {# Repositories #}
@@ -270,7 +284,7 @@
    </div> <!-- sourcepartDetails -->
   </div> <!-- #evidences -->
 </div> {# #tabs #}
-
+</div>
 {% endblock contents %}
 {% block script %}
 
@@ -306,7 +320,7 @@ function onTitleChange() {
 $(document).ready(function(){
   $("#tabs").tabs ({selected:0});
   $("div.scrollable img").dragPane();
-  $("#carousel").jcarousel({vertical:true, visible:3, scroll:2});
+  $("#carousel").jcarousel({vertical:false, visible:3, scroll:2});
   $("#carousel img").click(function() {
      var src = this.src.split("/");
      src[src.length - 2] = "full";

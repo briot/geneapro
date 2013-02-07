@@ -39,7 +39,7 @@ $(".surety").each(function() {
 
 $("#attrs,#events").dataTable(
   {"bPaginate": false,
-  "sDom": '<"top"f>rt',
+  "sDom": '<"top">rt',  {# missing "f" (filter) in "top" #}
   "oLanguage": {
      "sSearch": ""  {# No search label #}
    },
@@ -50,7 +50,7 @@ $("#attrs,#events").dataTable(
       { "iDataSort":3},    //  2: date
       { "bVisible":false}, //  3: sortDate
       null,
-      null,
+      { "sWidth": "70px"}
    ],
   }
 );
@@ -62,7 +62,7 @@ $("#p2p_assert").dataTable(
       null,
       null,
       null,
-      null,
+      { "sWidth": "70px"}
    ],
   }
 );
