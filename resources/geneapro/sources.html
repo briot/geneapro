@@ -16,10 +16,8 @@
 
 {% block header %}
 <link rel="stylesheet" href="{{MEDIA_URL}}ui.tabs.css"/>
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.dragpane.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
 <script type="text/javascript" src="{{MEDIA_URL}}gallery.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.sprintf.js"></script>
 {% endblock header %}
 
 {% block contents %}
@@ -326,24 +324,6 @@ $("#facts").dataTable(
   }
 );
 
-function hideOrShow(button,selector) {
-  $(selector).toggle("fast");
-  var b = $(button);
-  if (b.text() == "show") b.text ("hide"); else b.text ("show");
-}
-
-function getSelectValue (select) {
-  return (select.selectedIndex >= 0)
-     ? select.options [select.selectedIndex].text
-     : select.value;
-}
-
-function onTitleChange() {
-  parentS = getSelectValue ($("select[name=parentSource]")[0]);
-  page    = $("input[name=page]").attr ("value");
-  txt = $.sprintf ("%(parent)s, %(page)s", {parent:parentS, page:page});
-}
-
 $(document).ready(function(){
   $("#sourceInfo .arrow").click(function() {
      var b = $(this);
@@ -355,13 +335,5 @@ $(document).ready(function(){
   });
 
   new Gallery($("#sourceGallery"), 400);
-
-  //$("div.scrollable img").dragPane();
-  //$("#carousel").jcarousel({vertical:false, visible:1, scroll:1, easing:"swing"});
-  //$("#carousel img").click(function() {
-  //   var src = this.src.split("/");
-  //   src[src.length - 2] = "full";
-  //   $("div.scrollable canvas").dragPane("setsrc", src.join("/"));
-  //});
 });
 {% endblock script %}

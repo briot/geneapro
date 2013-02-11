@@ -79,15 +79,24 @@ Gallery.prototype.setUp_ = function() {
                'slide': function(e, ui) {
                   gallery.onSetCurrent_(ui.value, true)}});
 
-   $(this.buttons).mousewheel(function(e) {
-      if (e.deltaY < 0) {
-         gallery.setCurrent(gallery.current - 1, true);
-      } else {
-         gallery.setCurrent(gallery.current + 1, true);
-      }
-      e.stopPropagation();
-      return false;
-   });
+   buttons.mousewheel($.proxy(this.onMouseWheel_, this));
+   this.root.mousewheel($.proxy(this.onMouseWheel_, this));
+};
+
+/** Mousewheel events handler
+ * @param {Event} e  The mouse wheel event.
+ * @private
+ */
+
+Gallery.prototype.onMouseWheel_ = function(e) {
+   if (e.deltaY < 0) {
+      this.setCurrent(this.current - 1, true);
+   } else {
+      this.setCurrent(this.current + 1, true);
+   }
+   e.stopPropagation();
+   e.preventDefault();
+   return false;
 };
 
 /** Change the current element
