@@ -1,0 +1,67 @@
+{% extends "geneaprove/base.html" %}
+{% block title %}GeneaProve: fanchart {{decujus}}{% endblock %}
+
+{% block header %}
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.color.js"></script>
+{% endblock header %}
+
+{% block script %}
+$(document).ready(function() {
+   var data={{pedigree_data|safe}};
+   var g = new FanchartCanvas($("#fanchart")[0], data);
+});
+{% endblock script %}
+
+{% block endbody %}
+<script type="text/javascript" src="{{MEDIA_URL}}jquery.detectFontSize.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}abstractpedigree.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}fanchart.js"></script>
+{% endblock endbody %}
+
+{% block leftside %}
+<h2>Fanchart View</h2>
+<div id="settings">
+   <div class="config"><span>Generations</span>
+      <div id="gens"><span>2</span><span class="right">max</span></div>
+   </div>
+   <div class="config"><span>Size</span>
+      <div id="size"><span>90</span><span class="right">360</span></div>
+   </div>
+   <div class="config"><span>Space between couples</span>
+      <div id="separator"></div>
+   </div>
+   <div class="config"><span>Marriages</span>
+      <input type="checkbox" name="marriages"/>
+   </div>
+   <div class="config"><span>Layout</span>
+      <select name="layout">
+        <option value="0">Expanded</option>
+        <option value="1">Compact</option>
+      </select>
+   </div>
+   <div class="config"><span>Colors</span>
+      <select name="colors">
+         <option value="0">Rules</option>
+         <option value="1">Pedigree</option>
+         <option value="2">Generation</option>
+      </select>
+   </div>
+   <div class="config"><span>Appearance</span>
+      <select name="appearance">
+          <option value="0">Flat</option>
+           <option value="1">Gradient</option>
+      </select>
+   </div>
+   <div class="config"><span>Auto Scale</span>
+      <input type="checkbox" name="autoScale"/>
+   </div>
+</div>
+
+{{legend|safe}}
+{% endblock leftside %}
+
+{% block contents %}
+<canvas class="graph" id="fanchart"></canvas>
+{% endblock contents %}

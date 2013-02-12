@@ -153,7 +153,7 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
   We could instead create a group "Family" in which personas are added as
   "child" or "father" or "mother".
   Main drawback is in the GUI, since we don't want users to have to create
-  such a family every time. Perhaps when entering a birth event Geneapro could
+  such a family every time. Perhaps when entering a birth event GeneaProve could
   transparently create the group. Likewise, have dummy persona-to-persona
   relationships like "sibling", which are saved in the group rather than as
   assertions in P2P.
@@ -167,7 +167,7 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 
 * Gedcom replacements
   Several models are proposed to replace Gedcom. Most of them share a number of
-  characteristics with the GenTech datamodel that geneapro uses, but with
+  characteristics with the GenTech datamodel that GeneaProve uses, but with
   slight differences. It would be useful to be able to export to one of those,
   and perhaps to even change the internal datamodel if a clear contender
   emerges.

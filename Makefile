@@ -9,14 +9,14 @@ syncdb:
 full_reset: syncdb reset
 
 dump:
-	./manage.py dumpdata --format=xml geneapro > dump.xml
-	./manage.py dumpdata --format=json geneapro | python -mjson.tool > dump.json
+	./manage.py dumpdata --format=xml geneaprove > dump.xml
+	./manage.py dumpdata --format=json geneaprove | python -mjson.tool > dump.json
 
 ## The following require the django extensions and graphviz
 ## See the list of installed apps in settings.py
 
 graph:
-	./manage.py graph_models auth geneapro |dot -Tpng -o test.png
+	./manage.py graph_models auth geneaprove |dot -Tpng -o test.png
 shell:
 	./manage.py shell_plus
 run:

@@ -1,0 +1,21 @@
+{% extends "geneaprove/base.html" %}
+{% block title %}GeneaProve: index{% endblock %}
+{% block contents %}
+{% load i18n %}
+{% trans "This is from a template" %}
+
+{{ hello }}
+
+<p>
+We have defined {{placesCount}} places
+</p>
+<p>
+ <ul>
+ {% for place in places %}
+     <li>{{ place }}</li>
+ {% endfor %}
+ </ul>
+</p>
+
+{% endblock contents %}
+

@@ -1,0 +1,60 @@
+{% extends "geneaprove/base.html" %}
+{% block title %}GeneaProve: pedigree{% endblock %}
+{% block less %}
+<link rel="stylesheet/less" href="{{MEDIA_URL}}datatables.less"/>
+{% endblock less %}
+
+{% block script %}
+$(document).ready(function() {
+$("#persona").dataTable(
+  {"sPaginationType": "full_numbers",
+   "aLengthMenu": [[10, 20, 30, 40, 50, 60, 70, 80, 100, -1],
+                   [10, 20, 30, 40, 50, 60, 70, 80, 100, "All"]],
+   "iDisplayLength":30,
+   "oLanguage": {
+      "sSearch": ""  {# No search label #}
+   },
+   "sDom": '<"top"lf>rtip',
+  }
+);
+$("#persona_filter input").attr("placeholder", "filter");
+});
+{% endblock script %}
+
+{% block leftside %}
+{{legend|safe}}
+{% endblock leftside %}
+
+{% block contents %}
+<div id="personaList">
+   <table cellspacing="0" cellpadding="0" border="0" id="persona">
+    <thead>
+      <tr>
+         <th>Surname</th>
+         <th>Given name</th>
+         <th>Name</th>
+         <th>Description</th>
+         <th>Birth</th>
+         <th>Death</th>
+         <th>Marriage</th>
+         <!--<th>Last changed</th>-->
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in persons %}
+      <tr>
+         <td><a href="/persona/{{p.id}}">{{p.surname}}</a></td>
+         <td><a href="/persona/{{p.id}}">{{p.given_name}}</a></td>
+         <td style='{{p.styles}}'>{{p.name}}</td>
+         <td>{{p.description|default:""}}</td>
+         <td>{{p.birth.date|default:"-"}}</td>
+         <td>{{p.death.date|default:"-"}}</td>
+         <td>{{p.marriage.date|default:"-"}}</td>
+         <!--<td>{{p.last_change}}</td>-->
+      </tr>
+      {% endfor %}
+    </tbody>
+   </table>
+</div>
+{% endblock contents %}
+

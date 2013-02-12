@@ -5,7 +5,7 @@ Inspired by http://www.geditcom.com/DateCalculator/index.html#about
 """
 
 import sys
-sys.path.insert(0, "geneapro/utils")
+sys.path.insert(0, "geneaprove/utils")
 from date import DateRange, TimeDelta
 import gtk
 

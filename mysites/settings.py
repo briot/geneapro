@@ -1,4 +1,4 @@
-# Django settings for geneapro project.
+# Django settings for GeneaProve project.
 import os
 
 DEBUG = True
@@ -13,7 +13,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'geneapro.db',
+        'NAME': 'geneaprove.db',
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -122,7 +122,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'geneapro',
+    'geneaprove',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
@@ -165,7 +165,7 @@ LOGGING = {
         }
     },
     'loggers': {
-        'geneapro': {
+        'geneaprove': {
             'propagate': True,
             'handlers': ['console'],
             'level': 'DEBUG'

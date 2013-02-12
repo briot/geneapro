@@ -1,4 +1,4 @@
-This is Geneapro, a web-based genealogical software.
+This is GeneaProve, a web-based genealogical software.
 This README is organized as a FAQ, hopefully this will make it more readable.
 
 Q. What do I need to install first ?
@@ -20,7 +20,7 @@ Q. How do I setup the application ?
 Q. How do I start the server ?
 
    Type
-       ./geneapro.py
+       ./geneaprove.py
    to create an empty database (if none exists yet) and start the server.
 
    Then open a web browser and connect to
@@ -30,11 +30,11 @@ Q. How do I start the server ?
 
 Q. How do I import my GEDCOM data ?
 
-   Currently, GeneaPro is a read-only view. You should therefore
+   Currently, GeneaProve is a read-only view. You should therefore
    have a GEDCOM file created by another genealogy software.
 
    Once you have this file, you can click on "Import" in your web
-   browser to import it into Geneapro.
+   browser to import it into GeneaProve.
 
 Q. Why did you implement this as a web server ?
 
@@ -43,7 +43,7 @@ Q. Why did you implement this as a web server ?
    web technologies are far more portable. In particular, since the server
    is written using a standard python framework (django), you could
    install it at your ISP, and then access your genealogy from anywhere
-   using a mobile device. Since Geneapro is implemented using standard
+   using a mobile device. Since GeneaProve is implemented using standard
    web technologies (as opposed to Flash), this also increases its
    portability.
 
@@ -61,4 +61,4 @@ Q. What is the license ?
    This is GPL version 2 software, copyright Emmanuel Briot.
 
    (we kept version 2 for compatibility with Gramps, so that code from
-   geneapro could eventually be of interest there)
+   GeneaProve could eventually be of interest there)

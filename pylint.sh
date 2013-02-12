@@ -1,6 +1,6 @@
 #!/bin/sh
 
-files=geneapro
+files=geneaprove
 
 pylint --variable-rgx="[a-z_][a-z0-9_]{0,30}$" \
        --init-hook='sys.path = sys.path + ["'`pwd`'/.."]' \

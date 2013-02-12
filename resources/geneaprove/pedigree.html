@@ -1,0 +1,66 @@
+{% extends "geneaprove/base.html" %}
+{% block title %}GeneaProve: pedigree {{decujus}}{% endblock %}
+
+{% block script %}
+$(document).ready (function() {
+   var data_ = {{pedigree_data|safe}};
+   var canvas = new PedigreeCanvas($("#pedigree")[0], data_);
+});
+{% endblock script %}
+
+{% block endbody %}
+<script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}abstractpedigree.js"></script>
+<script type="text/javascript" src="{{MEDIA_URL}}pedigree2.js"></script>
+{% endblock endbody %}
+
+{% block leftside %}
+<h2 class="settings">Settings</h2>
+<div id="settings">
+   <div class="config"><span>Ancestors</span>
+      <div id="gens"><span>0</span><span class="right">max</span></div>
+   </div>
+   <div class="config"><span>Descendants</span>
+      <div id="Dgens"><span>0</span><span class="right">max</span></div>
+   </div>
+   <div class="config"><span>Same size</span>
+      <input type="checkbox" name="sameSize"/>
+   </div>
+   <div class="config"><span>Colors</span>
+      <select name="colors">
+        <option value="0">Rules</option>
+        <option value="1">Pedigree</option>
+        <option value="2">Generation</option>
+        <option value="3">No box</option>
+      </select>
+   </div>
+   <div class="config"><span>Appearance</span>
+      <select name="appearance">
+         <option value="0">Flat</option>
+         <option value="1">Gradient</option>
+      </select>
+   </div>
+   <div class="config"><span>Layout</span>
+      <select name="layout">
+         <option value="0">Expanded</option>
+         <option value="1">Compact</option>
+      </select>
+   </div>
+   <div class="config"><span>Auto scale</span>
+      <input type="checkbox" name="autoScale"/>
+   </div>
+   <div class="config"><span>Horizontal spacing</span>
+      <div id="hspace"></div>
+   </div>
+   <div class="config"><span>Vertical spacing</span>
+      <div id="vspace"></div>
+   </div>
+</div>
+
+{{legend|safe}}
+{% endblock leftside %}
+
+{% block contents %}
+<canvas class="graph" id="pedigree"></canvas>
+{% endblock contents %}
