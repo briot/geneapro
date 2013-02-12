@@ -1,7 +1,5 @@
 @import-once "base.less";
 
-@table-highlight-color: contrast(@background, darken(@background,5%), lighten(@background,5%));
-@table-border-color: contrast(@background, darken(@background,10%), lighten(@background,10%));
 @highlight-color:    #FFFDAB;
 
 .dataTables_wrapper {
@@ -128,11 +126,11 @@
       background: url('/media/dt/sort_desc_disabled.png') no-repeat center right;
    }
 
-   &#attrs_wrapper .top      { border-top: 5px solid @attr-color }
-   &#place_wrapper .top      { border-top: 5px solid @place-color }
-   &#events_wrapper .top     { border-top: 5px solid @events-color }
-   &#persona_wrapper .top    { border-top: 5px solid @persona-color }
-   &#p2p_assert_wrapper .top { border-top: 5px solid @p2p-color }
+   &#attrs_wrapper .top      { border-top: @category-border-width solid @attr-color }
+   &#place_wrapper .top      { border-top: @category-border-width solid @place-color }
+   &#events_wrapper .top     { border-top: @category-border-width solid @events-color }
+   &#persona_wrapper .top    { border-top: @category-border-width solid @persona-color }
+   &#p2p_assert_wrapper .top { border-top: @category-border-width solid @p2p-color }
    //#attrs th      { background-color: @attr-color }
    //#events th     { background-color: @events-color }
    //#p2p_assert th { background-color: @p2p-color }

@@ -546,33 +546,31 @@ class Event_Type_Role(GeneaproModel):
    birth__father = 6
    birth__mother = 7
 
-class Event (models.Model):
-   """
-   An event is any type of happening
-   A Event is associated with a Persona or a Group through an
-   assertion.
-   """
 
-   type = models.ForeignKey (Event_Type)
-   place = models.ForeignKey (Place, null=True)
-   name  = models.CharField (max_length=100)
-   date  = PartialDateField (
-       help_text="The date of the event, as found in the original source."
-               + " This date is internally parsed into date_sort"
-               + " which is used for sorting purposes")
+class Event(models.Model):
+    """
+    An event is any type of happening
+    A Event is associated with a Persona or a Group through an
+    assertion.
+    """
 
-   class Meta:
-      """Meta data for the model"""
-      db_table = "event"
+    type = models.ForeignKey(Event_Type)
+    place = models.ForeignKey(Place, null=True)
+    name  = models.CharField(max_length=100)
+    date  = PartialDateField(
+        help_text="The date of the event, as found in the original source."
+                + " This date is internally parsed into date_sort"
+                + " which is used for sorting purposes")
 
-   def __unicode__ (self):
-      d = self.date
-      if d:
-         date = " (on " + d + ")"
-      else:
-         date = ""
+    class Meta:
+        """Meta data for the model"""
+        db_table = "event"
 
-      return self.name + date
+    def __unicode__(self):
+        d = self.date
+        date = " (on " + d + ")" if d else ""
+        return self.name + date
+
 
 class Characteristic_Part_Type (Part_Type):
    class Meta:

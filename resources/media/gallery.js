@@ -2,6 +2,9 @@
  * Transforms root into a gallery. Each of its direct <div> children
  * will be animated, so that they are laid out side by side and only a
  * few of them are visible at a time.
+ * If one or more of the children have a "actions" class, they will not
+ * be displayed as part of the gallery, but next to the scroll bar.
+ *
  *  @param {jQuery} root      The root container.
  *  @param {number} childSize   The maximal size (height or width) of children.
  *  @constructor
@@ -49,16 +52,18 @@ Gallery.prototype.setUp_ = function() {
    this.children = [];
 
    this.root.find('>div').each(function() {
-      $(this).css({'overflow': 'hidden',
-                   'display': 'none',
-                   'position': 'absolute',
-                   'bottom': '50px'})
-        .click(function() { gallery.setCurrent(this)});
-      gallery.children.push(this);
+      if (!$(this).is('.actions')) {
+         $(this).css({'overflow': 'hidden',
+                      'display': 'none',
+                      'position': 'absolute',
+                      'bottom': '50px'})
+           .click(function() { gallery.setCurrent(this)});
+         gallery.children.push(this);
+      }
    });
 
-   this.root.height(this.childSize);
-
+   this.root.height(this.childSize)
+      .mousewheel($.proxy(this.onMouseWheel_, this));
    var wrapper = this.root.wrap('<div class="gallery-wrapper"></div>')
       .css({'overflow': 'hidden',
            'white-space': 'nowrap',
@@ -68,23 +73,25 @@ Gallery.prototype.setUp_ = function() {
             'height': '1.2em',
             'font-size': 'smaller',
             'text-align': 'center'});
-   var buttons = $('<div class="gallery-buttons"></div>').insertAfter(this.title)
+   $('>.actions', this.root).insertBefore(this.title)
+      .css({'float': 'right'});
+   var buttons = $('<div class="gallery-buttons"></div>')
+      .insertAfter(this.title)
       .css({'width': '100%',
             'height': '30px',
-            'text-align': 'center'});
+            'text-align': 'center'})
+      .mousewheel($.proxy(this.onMouseWheel_, this));
    this.sliders = $('<div></div>').appendTo(buttons)
       .slider({'min': 0, 'max': this.children.length - 1, 'value': 0,
                'change': function() {
                   gallery.onSetCurrent_($(this).slider('value'), true)},
                'slide': function(e, ui) {
                   gallery.onSetCurrent_(ui.value, true)}});
-
-   buttons.mousewheel($.proxy(this.onMouseWheel_, this));
-   this.root.mousewheel($.proxy(this.onMouseWheel_, this));
 };
 
 /** Mousewheel events handler
  * @param {Event} e  The mouse wheel event.
+ * @return {boolean}  Whether to continue processing this event.
  * @private
  */
 
@@ -106,15 +113,35 @@ Gallery.prototype.onMouseWheel_ = function(e) {
 
 Gallery.prototype.setCurrent = function(index) {
    if (typeof(index) == 'number') {
-      this.sliders.slider({"value": index});
+      this.sliders.slider({'value': index});
    } else {
       for (var idx = 0; idx < this.children.length; idx++) {
          if (this.children[idx] == index) {
-            this.sliders.slider({"value": idx});
+            this.sliders.slider({'value': idx});
             break;
          }
       }
    }
+};
+
+/**
+ * @return {Element}  The current child.
+ */
+
+Gallery.prototype.getCurrent = function() {
+   return this.children[this.current];
+};
+
+/** Select the previous element, if any */
+
+Gallery.prototype.previous = function() {
+   this.setCurrent(this.current - 1);
+};
+
+/** Select the next element, if any */
+
+Gallery.prototype.next = function() {
+   this.setCurrent(this.current + 1);
 };
 
 /** React to changes in the slider.
@@ -142,8 +169,8 @@ Gallery.prototype.onSetCurrent_ = function(index, animate) {
       if (old === undefined || Math.abs(s - this.current) > this.threshold) {
          var left = s < this.current ? 0 : totalWidth;
           $(this.children[s])
-             .css({"width": minSize,
-                   "left": left}).hide();
+             .css({'width': minSize,
+                   'left': left}).hide();
       }
    }
 
@@ -151,14 +178,10 @@ Gallery.prototype.onSetCurrent_ = function(index, animate) {
    var ratio = 1;
    var leftX = totalWidth / 2 - this.childSize / 2;
 
-   var title = $(center).attr("title") || "";
-   if (title) {
-      title += " -- ";
-   }
-
+   var title = $(center).attr('title') || '';
    this.title.text(
-         title +
-         (this.current + 1) + " out of " + this.children.length);
+      title + ' (' +
+      (this.current + 1) + ' out of ' + this.children.length + ')');
 
    $(center)
       .animate({'z-index': 20,

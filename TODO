@@ -27,6 +27,11 @@
    gedcoms.
 ** See invalid tags list
 http://www.beholdgenealogy.com/blog/?p=876
+** In GenTech, occupation is a characteristic, not an event (since it doesn't
+   involve other persons or roles).
+** Testing
+   http://timforsythe.com/blog/gedcom-import-testing-introduction/
+   http://heiner-eichmann.de/gedcom/gedcom.htm
 
 * Pedigree View
 ** Dnd on Pedigree icon should display the pedigree for that person
@@ -116,6 +121,8 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 ** See
    http://www.gramps-project.org/wiki/index.php?title=GEPS_018:_Evidence_style_sources
    http://jytangledweb.org/genealogy/evidencestyle/
+** Citations
+*** http://www.progenealogists.com/citationguide.htm
 
 * Groups
 ** For: neighbor, friend, clergy, care-taker, and more
@@ -172,3 +179,9 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 * web
 ** timeline
   http://www.chronozoomproject.org/
+** What are conclusions ?
+   http://michaelhait.wordpress.com/2012/02/26/simple-and-complex/
+** Evidence-based genealogy
+   http://timforsythe.com/blog/evidence-based-genealogy-vs-conclusion-based-genealogy/
+   http://www.geneamusings.com/2012/02/more-on-conclusion-based-and-evidence.html
+   

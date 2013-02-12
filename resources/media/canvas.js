@@ -1,20 +1,19 @@
 /* @requires: mouse_events.js */
 /* @requires: rtree.js */
 
-/**
- * A canvas class that provides various higher-level services.
+/** A canvas class that provides various higher-level services.
  * It can be zoomed and scrolled with the mouse.
  *
- * @param {Element} elem   The DOM element to decorate.
+ * @param {Element|jQuery} elem   The DOM element to decorate.
  */
 
 function Canvas(elem) {
     this._disableClicks = false; // If true, disable click events
 
-    this.ctx = elem.getContext("2d");
+    this.canvas = $(elem);
+    this.ctx = this.canvas[0].getContext("2d");
     this.ctx.textBaseline = 'top';
 
-    this.canvas = $(elem);
     this.canvas
         .start_drag($.proxy(this.onStartDrag, this))
         .in_drag($.proxy(this.onInDrag, this))
@@ -198,7 +197,7 @@ Canvas.prototype.refresh = function (box) {
            this.computeBoundingBox();
         }
 
-        if (this.autoScale_ && this.box_.width != 0) {
+        if (this.autoScale_ && this.box_ && this.box_.width != 0) {
            this.left = this.box_.x;
            this.top = this.box_.y;
            this.scale = Math.min(
@@ -375,6 +374,7 @@ Canvas.prototype.onResize = function() {
  */
 
 Canvas.prototype.onStartDrag = function(e, dragdata) {
+    this.setAutoScale(false);
     dragdata.offset = {left: this.left, top: this.top};
     dragdata.scale  = 1 / -this.scale;
     dragdata.weight = 400;  //  Only throwing when in background
@@ -386,10 +386,9 @@ Canvas.prototype.onStartDrag = function(e, dragdata) {
  */
 
 Canvas.prototype.onInDrag = function(e, dragdata) {
-    this.setAutoScale(false);
     this.left = dragdata.offset.left;
     this.top = dragdata.offset.top;
-    this.refresh ();
+    this.refresh();
 };
 
 /**
