@@ -2,21 +2,10 @@
 {% block title %}GeneaProve: Quilts {{decujus}} {% endblock %}
 
 {% block script %}
-var canvas;
 $(document).ready(function() {
-  var data_ = {{persons|safe}};
-  var families_ = {{families|safe}};
-  canvas = new QuiltsCanvas($("#quilts")[0], data_, families_);
-  canvas.onResize();
+  initQuilts({{persons|safe}}, {{families|safe}});
 });
 {% endblock script %}
-
-{% block endbody %}
-<script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}rtree.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}quilts.js"></script>
-{% endblock endbody %}
 
 {% block leftside %}
 <h2 class="settings">Settings</h2>
@@ -33,7 +22,6 @@ $(document).ready(function() {
       >
    </div>
 </div>
-
 {% endblock leftside %}
 
 {% block contents %}

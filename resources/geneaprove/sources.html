@@ -3,11 +3,6 @@
 
 {% block header %}
 <link rel="stylesheet" href="{{MEDIA_URL}}ui.tabs.css"/>
-<script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}gallery.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}dragpane.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.raty.min.js"></script>
 {% endblock header %}
 
 {% block contents %}
@@ -15,14 +10,15 @@
    <div id="pane1">
       <div class="scrollable">
          <div class="buttons">
+            <input type="button" id="showAllRepr" value="Back"/>
+            <input type="button" id="previousRepr" value="&#x25C0;"/>
+            <input type="button" id="nextRepr" value="&#x25B6;"/>
+            <span style="border-left: 1px solid black; margin: 0 5px"></span>
+
             <input type="button" id="grayscaleButton" value="Grayscale"/>
             <input type="button" id="edgesButton" value="Edges"/>
             <input type="button" id="invertButton" value="Invert"/>
             <input type="button" id="noiseButton" value="Remove noise"/>
-            <span style="border-left: 1px solid black; margin: 0 5px"></span>
-            <input type="button" id="showAllRepr" value="Show All Representations"/>
-            <input type="button" id="previousRepr" value="Previous"/>
-            <input type="button" id="nextRepr" value="Next"/>
          </div>
          <img alt="Document not found" src=""/>
       </div>

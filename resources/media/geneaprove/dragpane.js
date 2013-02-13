@@ -2,8 +2,8 @@
  * Makes an <img> scrollable by clicking and dragging the mouse.
  * Also makes it scrollable with the mousewheel */
 
-// @requires "mouse_events.js"
-// @requires "canvas.js"
+// requires "mouse_events.js"
+// requires "canvas.js"
 
 /**
  * Decorate an image element (replace it with a canvas) so that various
@@ -45,10 +45,7 @@ DragPane.prototype.onDraw = function(event, box) {
 
 DragPane.prototype.computeBoundingBox = function() {
    if (this.img) {
-      this.box_ = {width: this.img.width,
-                   height: this.img.height,
-                   x: 0,
-                   y: 0};
+      return new Box(0, 0, this.img.width, this.img.height);
    }
 };
 
@@ -65,7 +62,7 @@ DragPane.prototype.setsrc = function(src) {
  * and pass its data to callback. Callback can then modify the image
  * data. On exit, the data is automatically copied back onto 'this'.
  *
- * @param {Function(number,number,data, origData}  callback
+ * @param {function(number,number,ImageData,ImageData=)}  callback
  *    The action to perform on the image data. First parameter is
  *    width, second parameter is height, third is the imageData.
  * @param {boolean=} needCopy

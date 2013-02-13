@@ -7,18 +7,9 @@
 
 {% block script %}
 $(document).ready(function() {
-   var data={{pedigree_data|safe}};
-   var g = new FanchartCanvas($("#fanchart")[0], data);
+   initFanchart({{pedigree_data|safe}});
 });
 {% endblock script %}
-
-{% block endbody %}
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.detectFontSize.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}abstractpedigree.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}fanchart.js"></script>
-{% endblock endbody %}
 
 {% block leftside %}
 <h2>Fanchart View</h2>

@@ -9,7 +9,7 @@ style_rules = [
     ("Persons that are alive",
      RULE_ATTR,
      [("ALIVE", RULE_IS, "Y")],
-     {"font-weight":"bold"}),
+     {"fontweight":"bold"}),
 
     ("Born or dead in La Baussaine before 1862",
      RULE_EVENT,

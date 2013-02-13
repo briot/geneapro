@@ -3,17 +3,9 @@
 
 {% block script %}
 $(document).ready (function() {
-   var data_ = {{pedigree_data|safe}};
-   var canvas = new PedigreeCanvas($("#pedigree")[0], data_);
+   initPedigree({{pedigree_data|safe}});
 });
 {% endblock script %}
-
-{% block endbody %}
-<script type="text/javascript" src="{{MEDIA_URL}}mouse_events.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}canvas.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}abstractpedigree.js"></script>
-<script type="text/javascript" src="{{MEDIA_URL}}pedigree2.js"></script>
-{% endblock endbody %}
 
 {% block leftside %}
 <h2 class="settings">Settings</h2>

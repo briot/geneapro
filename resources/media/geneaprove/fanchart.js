@@ -1,30 +1,57 @@
-
 var PI_HALF = Math.PI / 2;
-var PI_TWO  = Math.PI * 2;
+var PI_TWO = Math.PI * 2;
+
+/** Fanchart pedigree layout info
+ * @param {number}  minAngle    start angle.
+ * @param {number}  maxAngle    end angle.
+ * @param {number}  minRadius   inner radius.
+ * @param {number}  maxRadius   outer radius.
+ * @param {number}  fontSize    text size.
+ * @extends {LayoutInfo}
+ * @constructor
+ */
+
+function FanchartLayoutInfo(
+      minAngle, maxAngle, minRadius, maxRadius, fontSize)
+{
+   this.minAngle = minAngle;
+   this.maxAngle = maxAngle;
+   this.minRadius = minRadius;
+   this.maxRadius = maxRadius;
+   this.fontSize = fontSize;
+};
+inherits(FanchartLayoutInfo, LayoutInfo);
 
 /**
- * @param {Element} canvas  A DOM element that contains the canvas.
- * @param {} data           The data returned by the server.
+ * @param {Element} canvas   A DOM element that contains the canvas.
+ * @param {ServerData} data  The data returned by the server.
+ * @extends {AbstractPedigree}
+ * @constructor
  */
 
 function FanchartCanvas(canvas, data) {
     AbstractPedigree.call(this, canvas /* elem */, data /* data */);
 
-    this.lineHeight = $.detectFontSize(this.baseFontSize, this.fontName);
+    this.lineHeight = detectFontSize(this.baseFontSize, this.fontName);
     this.setTotalAngle(340);
     this.setShowMarriage(false);
     this.setCoupleSeparator(0);
 
     var f = this;  //  closure for callbacks
-    $("#settings #separator")
-      .slider({"min": 0, "max": 100,
-               "change": function() {
-                  f.setCoupleSeparator($(this).slider("value") / 10).refresh(); }});
-    $("#settings input[name=marriages]")
+    $('#settings #separator')
+      .slider({'min': 0, 'max': 100,
+               'change': function() {
+                  f.setCoupleSeparator(
+                     /** @type {number} */($(this).slider('value'))
+                     / 10).refresh() }});
+    $('#settings input[name=marriages]')
        .change(function() { f.setShowMarriage(this.checked).refresh() });
-    $("#settings #size")
-       .slider({"min": 90, "max": 360,
-                "change": function() { f.setTotalAngle($(this).slider("value")).refresh() }});
+    $('#settings #size')
+       .slider({'min': 90, 'max': 360,
+                'change': function() {
+                   f.setTotalAngle(
+                      /** @type {number} */($(this).slider('value')))
+                   .refresh() }});
     this.showSettings();
 }
 inherits(FanchartCanvas, AbstractPedigree);
@@ -40,64 +67,71 @@ FanchartCanvas.prototype.rowHeight = 60;
  */
 FanchartCanvas.prototype.genThreshold = 4;
 
-/* Extra blank spaces between layers rings. This is used to display
+/** Extra blank spaces between layers rings. This is used to display
    marriage information (if 0, no marriage info is displayed) */
 FanchartCanvas.prototype.sepBetweenGens = 0;
 
-/* row height for generations >= genThreshold */
+/** row height for generations >= genThreshold */
 FanchartCanvas.prototype.rowHeightAfterThreshold = 100;
 
 /** Height of the inner (white) circle. */
 FanchartCanvas.prototype.innerCircle = 20;
 
-/* Start and End angles, in radians, for the pedigree view.
+/** Start and End angles, in radians, for the pedigree view.
  * This is clockwise, starting from the usual 0 angle!
+ * @type {number}
  */
 FanchartCanvas.prototype.minAngle;
+
+/** End angle
+ * @type {number}
+  */
 FanchartCanvas.prototype.maxAngle;
 
-/* Separator (in radians) between couples. Setting this to 0.5 or more will
+/** Separator (in radians) between couples. Setting this to 0.5 or more will
    visually separate the couples at each generation, possibly making the
    fanchart more readable for some users */
 FanchartCanvas.prototype.separator = 0;
 
-/* If true, the names on the lower half of the circle are displayed
+/** If true, the names on the lower half of the circle are displayed
    so as to be readable. Otherwise they are up-side down */
 FanchartCanvas.prototype.readable_names = true;
 
-/* Generation at which we stop displaying names */
+/** Generation at which we stop displaying names */
 FanchartCanvas.prototype.textThreshold = 10;
 
-/* Width of boxes for children */
+/** Width of boxes for children */
 FanchartCanvas.prototype.boxWidth = 200;
+
+/** Height of children boxes */
 FanchartCanvas.prototype.boxHeight = 60;
 
-/* Horizontal padding between the children and the decujus */
+/** Horizontal padding between the children and the decujus */
 FanchartCanvas.prototype.horizPadding = 30;
+
+/** Vertical padding between children boxes */
 FanchartCanvas.prototype.vertPadding = 20;
 
 /** @inheritDoc */
 
 FanchartCanvas.prototype.personAtCoordinates = function(x, y) {
    var radius = Math.sqrt(
-         (x - this.box_.centerX) * (x - this.box_.centerX) +
-         (y - this.box_.centerY) * (y - this.box_.centerY));
-   var angle = Math.atan2(y - this.box_.centerY, x - this.box_.centerX);
+         (x - this.box.centerX) * (x - this.box.centerX) +
+         (y - this.box.centerY) * (y - this.box.centerY));
+   var angle = Math.atan2(y - this.box.centerY, x - this.box.centerX);
 
    var selected = null;
    this.forEachVisiblePerson(
          function(person) {
-            if (person.box_.minRadius <= radius &&
-                radius <= person.box_.maxRadius &&
-                person.box_.minAngle <= angle &&
-                angle <= person.box_.maxAngle)
+            if (person.box.minRadius <= radius &&
+                radius <= person.box.maxRadius &&
+                person.box.minAngle <= angle &&
+                angle <= person.box.maxAngle)
             {
                selected = person;  // an ancestor
                return true;
 
-            } else if (!person.box_.minRadius &&
-               this.pointInBox(person.box_, x, y)) 
-            {
+            } else if (!person.box.minRadius && person.box.contains(x, y)) {
                selected = person;  //  a child
                return true;
             }
@@ -108,7 +142,6 @@ FanchartCanvas.prototype.personAtCoordinates = function(x, y) {
 /** @inheritDoc */
 
 FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
-    var d = this.data;
     var ctx = this.ctx;
 
     function doPath_(minRadius, maxRadius, maxAngle, minAngle) {
@@ -123,18 +156,18 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
     this.forEachVisiblePerson(
         function(person) {
            if (person.generation <= 0) {
-              var b = person.box_;
-              this.drawPersonBox(person, b.x, b.y, b.w, b.h, b.fs);
+              var b = /** @type {FanchartLayoutInfo} */(person.box);
+              this.drawPersonBox(person, b, b.fontSize);
               return false;
             }
 
             ctx.save();
-            ctx.translate(this.box_.centerX, this.box_.centerY);
+            ctx.translate(this.box.centerX, this.box.centerY);
 
-            var minAngle = person.box_.minAngle;
-            var maxAngle = person.box_.maxAngle;
-            var minRadius = person.box_.minRadius;
-            var maxRadius = person.box_.maxRadius;
+            var minAngle = person.box.minAngle;
+            var maxAngle = person.box.maxAngle;
+            var minRadius = person.box.minRadius;
+            var maxRadius = person.box.maxRadius;
 
             doPath_(minRadius, maxRadius, maxAngle, minAngle);
             var st = this.getStyle_(person, minRadius, maxRadius);
@@ -144,18 +177,18 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
             }
             this.drawPath(st);
 
-            var fontSize = person.box_.fontSize;
-            ctx.font = fontSize + "px Arial";
+            var fontSize = person.box.fontSize;
+            ctx.font = fontSize + 'px Arial';
 
             if (person.generation < this.textThreshold &&
-                fontSize * this.scale >= 2)
+                fontSize * this.scale_ >= 2)
             {
                 ctx.save();
 
-                // unfortunately we have to recreate the path, at least until the
-                // Path object from the canvas API is implemented everywhere.
-                doPath_(minRadius, maxRadius, maxAngle, minAngle);
-                ctx.clip();
+                // unfortunately we have to recreate the path, at least until
+                // the Path object from the canvas API is implemented
+                // everywhere.
+                doPath_(minRadius, maxRadius, maxAngle, minAngle); ctx.clip();
 
                 var a = minAngle + (maxAngle - minAngle) / 2;
                 var c = Math.cos(a);
@@ -201,12 +234,12 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
                 ctx.restore();
             }
 
-            if (person.sosa % 2 == 0 && this.sepBetweenGens > 10
-                && d.marriage[person.sosa] && person.generation <= 7
-                && fontSize * this.scale >= 2)
+            if (person.sosa % 2 == 0 && this.sepBetweenGens > 10 &&
+                this.marriage[person.sosa] && person.generation <= 7 &&
+                fontSize * this.scale_ >= 2)
             {
-                var mar = event_to_string(d.marriage [person.sosa]);
-                var attr = {"stroke": "black"};
+                var mar = event_to_string(this.marriage[person.sosa]);
+                var attr = {'stroke': 'black'};
 
                 if (person.generation == 1) {
                     this.text(-(maxRadius - minRadius), -10, mar, attr);
@@ -238,7 +271,8 @@ FanchartCanvas.prototype.onDraw = function(evt, screenBox) {
 
 /**
  * Canvas needs to be refreshed afterwards
- * @param {Boolean} show  Whether to display marriage information.
+ * @param {boolean} show  Whether to display marriage information.
+ * @return {FanchartCanvas} the canvas itself, for chaining.
  */
 
 FanchartCanvas.prototype.setShowMarriage = function(show) {
@@ -249,7 +283,8 @@ FanchartCanvas.prototype.setShowMarriage = function(show) {
 
 /**
  * Canvas needs to be refreshed afterwards
- * @param {Number} angle  Sets the opening angle (90 to 360 degrees).
+ * @param {number} angle  Sets the opening angle (90 to 360 degrees).
+ * @return {FanchartCanvas} the canvas itself, for chaining.
  */
 
 FanchartCanvas.prototype.setTotalAngle = function(angle) {
@@ -261,9 +296,10 @@ FanchartCanvas.prototype.setTotalAngle = function(angle) {
 };
 
 /**
- * @param {Number} angle  Sets the extra angle (degrees) separator between
+ * Canvas needs to be refreshed afterwards.
+ * @param {number} angle  Sets the extra angle (degrees) separator between
  *   couples.
- * Canvas needs to be refreshed afterwards
+ * @return {FanchartCanvas} the canvas itself, for chaining.
  */
 
 FanchartCanvas.prototype.setCoupleSeparator = function(angle) {
@@ -277,16 +313,17 @@ FanchartCanvas.prototype.setCoupleSeparator = function(angle) {
 FanchartCanvas.prototype.showSettings = function() {
    AbstractPedigree.prototype.showSettings.call(this);  //  inherited
 
-   $("#settings #separator")
-      .slider({"value": Math.round(this.separator * 180 / Math.PI) * 10});
-   $("#settings input[name=marriages]")
-      .attr('checked', this.sepBetweenGens != 0);
-   $("#settings #size")
-      .slider({"value": Math.round((this.maxAngle - this.minAngle) * 180 / Math.PI)});
+   $('#settings #separator')
+      .slider({'value': Math.round(this.separator * 180 / Math.PI) * 10});
+   $('#settings input[name=marriages]')
+      .prop('checked', this.sepBetweenGens != 0);
+   $('#settings #size')
+      .slider({'value': Math.round(
+               (this.maxAngle - this.minAngle) * 180 / Math.PI)});
 };
 
 /** @inheritDoc
- *  For each person, sets a box_ field containing display information:
+ *  For each person, sets a box field containing display information:
  *    {minAngle:number, maxAngle:number,   // angles for that person
  *     minRadius, maxRadius:number,        // inner and outer radius
  *     fontSize:number
@@ -294,15 +331,13 @@ FanchartCanvas.prototype.showSettings = function() {
  */
 
 FanchartCanvas.prototype.computeBoundingBox = function() {
-    var d = this.data;
-
     // Compute the radius for each generation
     var minRadius = [0];
     var maxRadius = [this.innerCircle];
     var fs = [this.lineHeight];
 
     for (var gen = 1; gen <= this.gens; gen++) {
-       var m = maxRadius[gen - 1] + ((gen == 1) ? 0 : this.sepBetweenGens); 
+       var m = maxRadius[gen - 1] + ((gen == 1) ? 0 : this.sepBetweenGens);
        fs.push(fs[gen - 1] * 0.9);
        minRadius.push(m);
        maxRadius.push(
@@ -322,6 +357,9 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
      *  ??? We should also check at each of the North,West,South,East
      *  points, since these can also intersect the bounding box. We
      *  need to check whether any of these is within the arc though.
+     *  @param {Person} indiv   The person.
+     *  @param {number} minAngle   start angle.
+     *  @param {number} maxAngle   end angle.
      */
     function setupIndivBox(indiv, minAngle, maxAngle) {
        var maxR = maxRadius[indiv.generation];
@@ -333,58 +371,67 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
        maxX = Math.max(maxX, x1, x2);
        minY = Math.min(minY, y1, y2);
        maxY = Math.max(maxY, y1, y2);
-       indiv.box_ = {minAngle: minAngle,
-                     maxAngle: maxAngle,
-                     minRadius: minRadius[indiv.generation],
-                     maxRadius: maxR,
-                     fontSize: fs[indiv.generation]};
+       indiv.box = new FanchartLayoutInfo(
+             minAngle /* minAngle */,
+             maxAngle /* maxAngle */,
+             minRadius[indiv.generation] /* minRadius */,
+             maxR /* maxRadius */,
+             fs[indiv.generation] /* fontSize */);
     }
 
-    switch (this.layoutScheme_) {
+    switch (this.layoutScheme) {
     case AbstractPedigree.layoutScheme.EXPANDED:
-       function doLayout(indiv, minAngle, maxAngle, separator) {
+       function doLayoutExpand(indiv, minAngle, maxAngle, separator) {
           setupIndivBox(indiv, minAngle, maxAngle);
 
           if (indiv.generation < canvas.gens) {
              var half = (minAngle + maxAngle) / 2;
-             var father = d.sosa[indiv.sosa * 2];
-             var mother = d.sosa[indiv.sosa * 2 + 1];
+             var father = canvas.sosa[indiv.sosa * 2];
+             var mother = canvas.sosa[indiv.sosa * 2 + 1];
 
              if (father) {
-                doLayout(father, minAngle, half - separator / 2, separator / 2);
-             } 
+                doLayoutExpand(
+                   father, minAngle, half - separator / 2, separator / 2);
+             }
              if (mother) {
-                doLayout(mother, half + separator / 2, maxAngle, separator / 2);
+                doLayoutExpand(
+                   mother, half + separator / 2, maxAngle, separator / 2);
              }
           }
        }
+       var doLayout = doLayoutExpand;
        break;
 
     case AbstractPedigree.layoutScheme.COMPACT:
-       function doLayout(indiv, minAngle, maxAngle, separator) {
+       function doLayoutCompact(indiv, minAngle, maxAngle, separator) {
           setupIndivBox(indiv, minAngle, maxAngle);
 
           if (indiv.generation < canvas.gens) {
-             var father = d.sosa[indiv.sosa * 2];
-             var mother = d.sosa[indiv.sosa * 2 + 1];
+             var father = canvas.sosa[indiv.sosa * 2];
+             var mother = canvas.sosa[indiv.sosa * 2 + 1];
 
              if (father && mother) {
                 var half = (minAngle + maxAngle) / 2;
-                doLayout(father, minAngle, half - separator / 2, separator / 2);
-                doLayout(mother, half + separator / 2, maxAngle, separator / 2);
+                doLayoutCompact(
+                   father, minAngle, half - separator / 2, separator / 2);
+                doLayoutCompact(
+                   mother, half + separator / 2, maxAngle, separator / 2);
              } else if (father) {
                 var tenth = minAngle + maxAngle * 0.9;
-                doLayout(father, minAngle, tenth - separator / 2, separator / 2);
+                doLayoutCompact(
+                      father, minAngle, tenth - separator / 2, separator / 2);
              } else if (mother) {
                 var tenth = minAngle + maxAngle * 0.1;
-                doLayout(mother, tenth + separator / 2, maxAngle, separator / 2);
+                doLayoutCompact(
+                      mother, tenth + separator / 2, maxAngle, separator / 2);
              }
           }
        }
+       var doLayout = doLayoutCompact;
        break;
     }
 
-    doLayout(d.sosa[1], this.minAngle + this.separator / 2,
+    doLayout(this.sosa[1], this.minAngle + this.separator / 2,
              this.maxAngle - this.separator / 2, this.separator);
 
     var width = maxX - minX;
@@ -413,36 +460,47 @@ FanchartCanvas.prototype.computeBoundingBox = function() {
        this.boxWidth * 2 + this.horizPadding + minDist;
     var offsetX =  //  offset so that the fan fits in the box
        Math.min(centerXRel + minX, 0);
-    this.box_ = {x: 0, y: 0,
-                 centerX: centerXRel - offsetX,
-                 centerY: -minY,
-                 childX: -offsetX,
-                 width: centerXRel + maxX - offsetX,
-                 height: height};
+
+    var box = new Box(0, 0, centerXRel + maxX - offsetX /* width */,
+                      height /* height */);
+    box.centerX = centerXRel - offsetX;
+    box.centerY = -minY;
+    box.childX = -offsetX;
 
     // Compute the position for the children and decujus
 
-    d.sosa[1].box_ = {
-       x: this.box_.childX + this.boxWidth + this.horizPadding,
-       y: this.box_.centerY - this.boxHeight / 2,
-       w: this.boxWidth,
-       h: this.boxHeight,
-       fs: this.baseFontSize};
+    this.sosa[1].box = new PedigreeLayoutInfo( 
+       box.childX + this.boxWidth + this.horizPadding /* x */,
+       box.centerY - this.boxHeight / 2 /* y */,
+       this.boxWidth /* w */,
+       this.boxHeight /* h */,
+       this.baseFontSize /* fontSize */);
 
-    var children = d.sosa[1].children;
+    var children = this.sosa[1].children;
     if (children) {
-       var childrenHeight = children.length * (this.boxHeight + this.vertPadding);
-       var y = this.box_.centerY - childrenHeight / 2;
-       this.box_.y = Math.min(this.box_.y, y);
+       var childrenHeight =
+          children.length * (this.boxHeight + this.vertPadding);
+       var y = box.centerY - childrenHeight / 2;
+       box.y = Math.min(box.y, y);
        for (var c = 0; c < children.length; c++) {
-          children[c].box_ = {
-             x: this.box_.childX,
-             y: y,
-             w: this.boxWidth,
-             h: this.boxHeight,
-             fs: this.baseFontSize};
+          children[c].box = new PedigreeLayoutInfo(
+             box.childX /* x */,
+             y /* y */,
+             this.boxWidth /* w */,
+             this.boxHeight /* h */,
+             this.baseFontSize /* fontSize */);
           y += this.boxHeight + this.vertPadding;
        }
-       this.box_.height = Math.max(this.box_.height, y - this.box_.y);
+       box.h= Math.max(box.h, y - box.y);
     }
+
+    return box;
 };
+
+/** Initialize the fanchart view
+ * @param {ServerData}   data  The data sent by the server.
+ */
+function initFanchart(data) {
+   new FanchartCanvas($("#fanchart")[0], data);
+};
+window['initFanchart'] = initFanchart;

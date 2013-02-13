@@ -49,6 +49,8 @@ Gallery.prototype.setUp_ = function() {
    var gallery = this;
 
    var all_images = this.root.find('>div');
+
+   /** @type {Array.<Element>} */
    this.children = [];
 
    this.root.find('>div').each(function() {
@@ -84,7 +86,8 @@ Gallery.prototype.setUp_ = function() {
    this.sliders = $('<div></div>').appendTo(buttons)
       .slider({'min': 0, 'max': this.children.length - 1, 'value': 0,
                'change': function() {
-                  gallery.onSetCurrent_($(this).slider('value'), true)},
+                  gallery.onSetCurrent_(
+                     /** @type{number} */($(this).slider('value')), true)},
                'slide': function(e, ui) {
                   gallery.onSetCurrent_(ui.value, true)}});
 };
@@ -97,9 +100,9 @@ Gallery.prototype.setUp_ = function() {
 
 Gallery.prototype.onMouseWheel_ = function(e) {
    if (e.deltaY < 0) {
-      this.setCurrent(this.current - 1, true);
+      this.setCurrent(this.current - 1);
    } else {
-      this.setCurrent(this.current + 1, true);
+      this.setCurrent(this.current + 1);
    }
    e.stopPropagation();
    e.preventDefault();
@@ -186,7 +189,7 @@ Gallery.prototype.onSetCurrent_ = function(index, animate) {
    $(center)
       .animate({'z-index': 20,
                 'width': this.childSize,
-                'height': center.height_,
+                'height': NaN,
                 'left': leftX}, duration)
       .show(duration);
 

@@ -1,6 +1,3 @@
-/* @requires: canvas.js */
-/* @requires: mouse_events.js */
-
 var LINE_SPACING = 10;
 var MARGIN = 2;
 var F_HEIGHT = 10;       // height of the row with "F" (families)
@@ -8,19 +5,17 @@ var F_HEIGHT = 10;       // height of the row with "F" (families)
 /**
  * Decorates a <canvas> element to show a quilts layout.
  *
- * @param {Element} element   The DOM element to decorate.
- * @param {} layers   The data sent by the server.
- *    layer 0 are the children, layer 1 their parents, ...
- * @param {Array.<*>} families
- *    The data from the server. It has the following format:
- *        families ::= [ families_in_layer+ ]
- *        families_in_layer ::= [ family+ ]
- *        family ::= [father || -1, mother || -1, child1, child2,...]
+ * @param {Element} canvas   The DOM element to decorate.
+ * @param {QuiltsCanvas.LayerData} layers  The data sent by the server.
+ * @param {QuiltsCanvas.FamilyData} families  Information about families.
  * @extends {Canvas}
+ * @constructor
  */
 
 function QuiltsCanvas(canvas, layers, families) {
     Canvas.call(this, canvas /* elem */);
+
+    this.setAutoScale(false);
 
     this.ctx.font = this.fontName;
 
@@ -29,16 +24,34 @@ function QuiltsCanvas(canvas, layers, families) {
 
     this.selectIndex = 0;  //  number of current selections
     this.selected_ = {};   // id -> list of selection indexes
-    this.selectColors = ["red", "blue", "green", "yellow", "orange"];
+    this.selectColors = ['red', 'blue', 'green', 'yellow', 'orange'];
 
-    $("#settings input[name=wholeDatabase]")
+    $('#settings input[name=wholeDatabase]')
        .change(function() {
-          window.location = "/quilts/" + defaultDeCujus + "?decujus_tree=" + (!this.checked);
+          window.location =
+             '/quilts/' + Person.selected.id +
+             '?decujus_tree=' + (!this.checked);
        });
 
     this.computeLayout_();
-};
+    this.onResize();
+}
 inherits(QuiltsCanvas, Canvas);
+
+/** Data sent by the server.
+ *    layer 0 are the children, layer 1 their parents, ...
+ * @typedef {Array.<Array.<number>>}
+ */
+QuiltsCanvas.LayerData;
+
+/** Data sent by the server.
+ *    The data from the server. It has the following format:
+ *        families ::= [ families_in_layer+ ]
+ *        families_in_layer ::= [ family+ ]
+ *        family ::= [father || -1, mother || -1, child1, child2,...].
+ * @typedef {Array.<Array.<Array.<number>>>}
+ */
+QuiltsCanvas.FamilyData;
 
 /** Whether to display text in a different color for selected items */
 QuiltsCanvas.prototype.changeSelectedTextColor = false;
@@ -56,7 +69,7 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
     // datastructure easier to manipulate
 
     this.personToLayer = {};   //  id of person -> [layer, index in layer]
-    this.forEachNonEmptyLayer_(function(layer){
+    this.forEachNonEmptyLayer_(function(layer) {
         var index = 0;
         for (var person = 0; person < this.layers[layer].length; person++) {
             var p = this.layers[layer][person];
@@ -96,8 +109,8 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
 
                      // y: y coordinates for the top of this person.
 
-                    name: (sex == "F" ?
-                           '\u2640' : sex == "M" ? '\u2642' : ' ') + p[1],
+                    name: (sex == 'F' ?
+                           '\u2640' : sex == 'M' ? '\u2642' : ' ') + p[1],
                     leftMostParentLayer: 0,
                     leftMostParentFamily: 0,  // index of family
                     leftMostParentIndex: 0,   // index of parent
@@ -118,7 +131,7 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
         {
             var fam = families_in_layer[family];
 
-            var tmpfam = []
+            var tmpfam = [];
             for (var person = 0; person < fam.length; person++) {
                 tmpfam.push(this.personToLayer[fam[person]]);
             }
@@ -213,7 +226,7 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
         this.rights[layer] = layerX + width;
         this.heights[layer] = height;
 
-        if (layer > 0 && this.families[layer -1]) {
+        if (layer > 0 && this.families[layer - 1]) {
            layerX = this.rights[layer] +
                this.families[layer - 1].maxIndex * LINE_SPACING;
            layerY += height + F_HEIGHT;
@@ -221,10 +234,6 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
            layerX = this.rights[layer];
            layerY += height;
         }
-        /*console.log("MANU layer ", layer, " left=", this.lefts[layer],
-              " right=", this.rights[layer], " top=", this.tops[layer],
-              " bottom=", this.tops[layer] + this.heights[layer]);
-              */
     });
 
     // For each family, compute the y range for the corresponding line.
@@ -240,9 +249,6 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
                 family.minY = this.tops[layer];
                 family.maxY = maxYsofar;
                 family.x = this.rights[layer + 1] + index * LINE_SPACING;
-                /*console.log("MANU family layer=", layer, " family=", family,
-                     " x=", family.x);
-                     */
 
                 for (var p = 0; p < family.length; p++) {
                     var person = family[p];
@@ -258,7 +264,7 @@ QuiltsCanvas.prototype.computeLayout_ = function() {
                                 info.maxMarriageX,
                                 family.x,
                                 this.rights[info.layer]);
-                        } else if (!info.minChildX){
+                        } else if (!info.minChildX) {
                             info.minChildX = Math.min(
                                 this.lefts[info.layer], family.x);
 
@@ -364,7 +370,7 @@ QuiltsCanvas.prototype.forEachVisiblePerson_ = function(layer, callback) {
         var info = this.personToLayer[id];
         if (info) {
             callback.call(this, info, pindex);
-            pindex ++;
+            pindex++;
         }
     }
     return pindex - 1;
@@ -381,7 +387,7 @@ QuiltsCanvas.prototype.forEachVisibleFamily_ = function(layer, callback) {
        for (var m = 0, famIndex = 0; m < fa.length; m++) {
            if (fa[m].visible) {
                callback.call(this, fa[m], famIndex);
-               famIndex ++;
+               famIndex++;
            }
        }
     }
@@ -423,7 +429,7 @@ QuiltsCanvas.prototype.personAtCoordinates = function(absX, absY) {
     return selectedPerson;
 };
 
-/** @overrides */
+/** @inheritDoc */
 
 QuiltsCanvas.prototype.onClick = function(e) {
     var canvas = this;
@@ -442,7 +448,7 @@ QuiltsCanvas.prototype.onClick = function(e) {
                 }
                 canvas.selected_[id].push(index);
             } else {
-                canvas.selected_[id]= [index];
+                canvas.selected_[id] = [index];
             }
         }
 
@@ -466,10 +472,10 @@ QuiltsCanvas.prototype.onClick = function(e) {
         }
 
         if (e.shiftKey) {
-            this.selectIndex ++;
+            this.selectIndex++;
         } else {
             this.selected_ = {};
-            this.selectIndex  = 0;
+            this.selectIndex = 0;
         }
 
         select_parents(id, this.selectIndex);
@@ -492,7 +498,7 @@ QuiltsCanvas.prototype.setTextStyle_ = function(person) {
     var s = this.selected_[person];
     this.ctx.fillStyle = (
         s === undefined ?
-            "black" :
+            'black' :
             this.selectColors[s[0] % this.selectColors.length]);
 };
 
@@ -507,11 +513,11 @@ QuiltsCanvas.prototype.drawPersonSymbol_ = function(
     this.ctx.beginPath();
 
     this.setTextStyle_(person);
-    if (sex == "F") {
+    if (sex == 'F') {
         this.ctx.arc(left + LINE_SPACING / 2,
                 top + LINE_SPACING / 2,
                 LINE_SPACING / 2, 0, 2 * Math.PI);
-    } else if (sex == "M") {
+    } else if (sex == 'M') {
         this.ctx.fillRect(left, top, LINE_SPACING, LINE_SPACING);
     } else {
         this.ctx.fillRect(
@@ -530,7 +536,7 @@ QuiltsCanvas.prototype.displayLayer_ = function(layer) {
     var w = this.rights[layer] - this.lefts[layer];
     var hasPeople = false;
 
-    ctx.fillStyle = "black";
+    ctx.fillStyle = 'black';
     ctx.beginPath();
 
     this.forEachVisiblePerson_(layer, function(info, index) {
@@ -560,7 +566,7 @@ QuiltsCanvas.prototype.displayLayer_ = function(layer) {
 
 QuiltsCanvas.prototype.displayFamilies_ = function(layer) {
     var ctx = this.ctx;
-    ctx.fillStyle = "black";
+    ctx.fillStyle = 'black';
 
     // Draw all symbols first
 
@@ -580,7 +586,7 @@ QuiltsCanvas.prototype.displayFamilies_ = function(layer) {
 
     var lastFam;
     ctx.beginPath();
-    ctx.strokeStyle = "gray";
+    ctx.strokeStyle = 'gray';
     this.forEachVisibleFamily_(
         layer,
         function(family, index) {
@@ -614,22 +620,21 @@ QuiltsCanvas.prototype.displayFamilies_ = function(layer) {
     ctx.stroke();
 };
 
-/** @overrides */
+/** @inheritDoc */
 
 QuiltsCanvas.prototype.onDraw = function() {
     var ctx = this.ctx;
-    var abs = this.visibleAreaAbs();
+    var abs = this.visibleRegion();
 
-    ctx.fillStyle = "black";
+    ctx.fillStyle = 'black';
 
     this.forEachNonEmptyLayer_(function(layer) {
         // only display visible layers (also if their parents should be
         // displayed)
         var x = this.rights[layer + 1] || this.lefts[layer];
-        r  = new Rect(x,
-                      this.tops[layer],
-                      this.rights[layer] - x,
-                      this.heights[layer]);
+        var r = new Box(x, this.tops[layer],
+                        this.rights[layer] - x,
+                        this.heights[layer]);
         if (r.intersects(abs)) {
             this.displayLayer_(layer);
 
@@ -637,7 +642,7 @@ QuiltsCanvas.prototype.onDraw = function() {
 
             ctx.save();
             ctx.beginPath();
-            ctx.fillStyle = "gray";
+            ctx.fillStyle = 'gray';
             ctx.rect(
                 this.rights[layer + 1] - 1, this.tops[layer] - F_HEIGHT,
                 this.lefts[layer] - this.rights[layer + 1], F_HEIGHT);
@@ -692,3 +697,14 @@ QuiltsCanvas.prototype.filterSelected = function(filter) {
     this.computeLayout_();
     this.refresh();
 };
+
+/**
+ * Initialize the quilts view
+ * @param {QuiltsCanvas.LayerData} data   Information sent by the server.
+ * @param {QuiltsCanvas.FamilyData} families  Information about families.
+ */
+
+function initQuilts(data, families) {
+   new QuiltsCanvas($('#quilts')[0], data, families);
+}
+window['initQuilts'] = initQuilts;

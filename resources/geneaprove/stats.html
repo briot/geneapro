@@ -53,10 +53,10 @@ function labelFormatter (label,series) {
    label = "<b>" + s[0] + "</b><span>" + s[1] + "</span>" + s[2] + "<i>" + s[3] + "</i>";
   return label;
 }
-$(document).ready (function() {
-  $.plot ('#lifespan', [males,females,unknowns],
+$(document).ready(function() {
+  $.plot('#lifespan', [males,females,unknowns],
       {series:{stack:true,bars:{show:true, barWidth:5}}});
-  $.plot ('#generations', ranges,
+  $.plot('#generations', ranges,
       {legend:{show:true,container:"#genLegend",
                noColumns:3, labelFormatter:labelFormatter},
        series:{lines:{show:true,lineWidth:9}}});

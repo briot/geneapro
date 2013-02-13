@@ -6,43 +6,6 @@
  *    http://www-db.deis.unibo.it/courses/SI-LS/papers/Gut84.pdf.
  */
 
-function Rect(x, y, width, height) {
-    this.left = x;
-    this.top = y;
-    this.width = width;
-    this.height = height;
-}
-
-
-/**
- * Returns whether two rectangles intersect. Two rectangles intersect if they
- * touch at all, for example, two zero width and height rectangles would
- * intersect if they had the same top and left.
- * @param {goog.math.Rect} a A Rectangle.
- * @param {goog.math.Rect} b A Rectangle.
- * @return {boolean} Whether a and b intersect.
- */
-Rect.prototype.intersects = function(b) {
-  return (this.left <= b.left + b.width && b.left <= this.left + this.width &&
-      this.top <= b.top + b.height && b.top <= this.top + this.height);
-};
-
-/**
- * Expand this rectangle to also include the area of the given rectangle.
- * @param {goog.math.Rect} rect The other rectangle.
- */
-Rect.prototype.boundingRect = function(rect) {
-  // We compute right and bottom before we change left and top below.
-  var right = Math.max(this.left + this.width, rect.left + rect.width);
-  var bottom = Math.max(this.top + this.height, rect.top + rect.height);
-
-  this.left = Math.min(this.left, rect.left);
-  this.top = Math.min(this.top, rect.top);
-
-  this.width = right - this.left;
-  this.height = bottom - this.top;
-};
-
 /**
  * @define {number} maximum number of children in a cell before a split.
  */
@@ -63,13 +26,13 @@ var RTREE_MIN_CHILDREN = 3;
  * @constructor
  */
 
-RTree = function() {
+function RTree() {
     /**
-     * @type {Box}
+     * @type {RBox}
      * @private
      */
-    this.root_ = new Box(0, 0, 0, 0);
-};
+    this.root_ = new RBox(0, 0, 0, 0);
+}
 
 /**
  * Find all the objects that intersect the given rectangle.
@@ -82,7 +45,7 @@ RTree = function() {
  */
 
 RTree.prototype.find = function(x, y, w, h) {
-    var rect = new Rect(x, y, w, h);
+    var rect = new RBox(x, y, w, h);
     var stack = [this.root_];  //  Elements to analyze
     var results = [];
 
@@ -119,7 +82,7 @@ RTree.prototype.find = function(x, y, w, h) {
  */
 
 RTree.prototype.insert = function(x, y, w, h, obj) {
-    var child = new Box(x, y, w, h, obj);
+    var child = new RBox(x, y, w, h, obj);
 
     // Initial insertion in empty tree. Resize the tree.
 
@@ -166,7 +129,7 @@ RTree.prototype.insert = function(x, y, w, h, obj) {
             parent.nodes_ = [seeds[0]];
             parent.setBox(seeds[0]);
 
-            var new_parent = new Box(
+            var new_parent = new RBox(
                 seeds[1].left, seeds[1].top, seeds[1].width, seeds[1].height);
             new_parent.addChild_(seeds[1]);
 
@@ -182,7 +145,7 @@ RTree.prototype.insert = function(x, y, w, h, obj) {
             // If we are splitting the root node, we need to create a new root
 
             if (parent == this.root_) {
-                var new_root = new Box(
+                var new_root = new RBox(
                     this.root_.left, this.root_.top,
                     this.root_.width, this.root_.height);
                 new_root.addChild_(this.root_);
@@ -204,7 +167,7 @@ RTree.prototype.insert = function(x, y, w, h, obj) {
  */
 
 RTree.prototype.clear = function() {
-    this.root_ = new Box(0, 0, 0, 0);
+    this.root_ = new RBox(0, 0, 0, 0);
 };
 
 /**
@@ -219,7 +182,7 @@ RTree.prototype.clear = function() {
  */
 
 RTree.prototype.remove = function(x, y, w, h, obj) {
-    var rect = new Rect(x, y, w, h);
+    var rect = new RBox(x, y, w, h);
     var stacks = this.findLeafs_(rect, obj);
     var eliminated = [];
 
@@ -230,7 +193,7 @@ RTree.prototype.remove = function(x, y, w, h, obj) {
          * @param {number} lastInStack  index in the stack pointing to the
          *    parent element of node. This removes node from that element
          *    and propagates the change.
-         * @param {Box} node  The node to remove.
+         * @param {RBox} node  The node to remove.
          */
 
         function internal(lastInStack, node) {
@@ -276,9 +239,9 @@ RTree.prototype.remove = function(x, y, w, h, obj) {
  * is [..., parent_of_parent, parent, leaf].
  * If obj is specified, only nodes containing obj will be returned.
  *
- * @param {goog.math.Rect} rect  The rectangle we are inserting.
+ * @param {Box} rect  The rectangle we are inserting.
  * @param {*=} obj The object we are inserting.
- * @return {Array.<Array.<!Box>>} The matching leaves.
+ * @return {Array.<Array.<!RBox>>} The matching leaves.
  * @private
  */
 
@@ -293,7 +256,7 @@ RTree.prototype.findLeafs_ = function(rect, obj) {
 
             if (node.intersects(rect)) {
                 if (node.object_) {
-                    if (!goog.isDef(obj) || node.object_ == obj) {
+                    if (obj === undefined || node.object_ == obj) {
                         results.push(stack.concat(node));
                     }
                 } else {
@@ -309,11 +272,14 @@ RTree.prototype.findLeafs_ = function(rect, obj) {
 
 /**
  * Returns a bounding box that encloses all elements in the tree
- * @return {goog.math.Rect}  The minimal bounding box for the whole tree.
+ * @return {Box}  The minimal bounding box for the whole tree.
  */
 
 RTree.prototype.boundingBox = function() {
-    return this.root_.clone();
+    return new Box(this.root_.x,
+                   this.root_.y,
+                   this.root_.w,
+                   this.root_.h);
 };
 
 /**
@@ -324,7 +290,7 @@ RTree.prototype.boundingBox = function() {
  * @param {number} w  The total width of the parent box.
  * @param {number} h  The total height of the parent box.
  * @param {Array.<Box>} nodes   All children of the parent box.
- * @return {!Array.<!Box>} seeds The two nodes that should be put
+ * @return {!Array.<!RBox>} seeds The two nodes that should be put
  *    in two different children.
  * @private
  */
@@ -383,7 +349,7 @@ RTree.prototype.linearPickSeeds_ = function(w, h, nodes) {
  */
 
 RTree.prototype.dumpDebug = function() {
-    /** @param {Box} box   The current child to dump.
+    /** @param {RBox} box   The current child to dump.
      * @param {string} prefix   A string for each beginning of line.
      * @return {string}  A description of that child.
      */
@@ -407,8 +373,8 @@ RTree.prototype.dumpDebug = function() {
  * It never returns a leaf node, only a node that accepts children.
  * It also returns all of its parents:
  *     [parent_of_parent, parent, leaf]
- * @param {goog.math.Rect} rect   The rectangle to insert.
- * @return {!Array.<!Box>}  Best parent node for this rect.
+ * @param {Box} rect   The rectangle to insert.
+ * @return {!Array.<!RBox>}  Best parent node for this rect.
  * @private
  */
 
@@ -433,9 +399,9 @@ RTree.prototype.chooseLeafNode_ = function(rect) {
  * Returns the node from nodes that would require the least enlargment to
  * contain rect.
  * Nodes must not be null, and then the returned value will not be null either.
- * @param {!Array.<Box>} nodes   All nodes from the parent.
- * @param {goog.math.Rect} rect   The rectangle to insert.
- * @return {!Box}  The node that requires least enlargement.
+ * @param {!Array.<RBox>} nodes   All nodes from the parent.
+ * @param {Box} rect   The rectangle to insert.
+ * @return {!RBox}  The node that requires least enlargement.
  * @private
  */
 
@@ -459,7 +425,7 @@ RTree.prototype.leastEnlargement_ = function(nodes, rect) {
             best_choice = ltree;
         }
     }
-    return /** @type {!Box} */ (best_choice);
+    return /** @type {!RBox} */ (best_choice);
 };
 
 /**
@@ -471,59 +437,59 @@ RTree.prototype.leastEnlargement_ = function(nodes, rect) {
  * @param {number} h   Height of bounding box.
  * @param {*=} obj     Object contained in the box.
  * @constructor
- * @extends {goog.math.Rect}
+ * @extends {Box}
  */
 
-Box = function(x, y, w, h, obj) {
-    Rect.apply(this, [x, y, w, h]);
+function RBox(x, y, w, h, obj) {
+    Box.apply(this, [x, y, w, h]);
 
     if (obj !== undefined) {
         this.object_ = obj;
     }
-};
-inherits(Box, Rect);
+}
+inherits(RBox, Box);
 
 /**
  * Override the bounding box
  * @param {Box} box  Size and location of the box.
  */
 
-Box.prototype.setBox = function(box) {
-    this.left = box.left;
-    this.top = box.top;
-    this.width = box.width;
-    this.height = box.height;
+RBox.prototype.setBox = function(box) {
+    this.left = box.x;
+    this.top = box.y;
+    this.width = box.w;
+    this.height = box.h;
 };
 
 /**
  * Children of the box. Unset for leaf nodes
- * @type {Array.<!Box>}
+ * @type {Array.<!RBox>}
  * @private
  */
-Box.prototype.nodes_ = null;
+RBox.prototype.nodes_ = null;
 
 /**
  * Data for leaf nodes, unset for other nodes
  * @type {*}
  * @private
  */
-Box.prototype.object_ = null;
+RBox.prototype.object_ = null;
 
 /**
  * The container box, if any
- * @type {Box?}
+ * @type {RBox?}
  * @private
  */
-Box.prototype.parent_ = null;
+RBox.prototype.parent_ = null;
 
 /**
  * Add a new child. This doesn't update the bounding boxes or ensures that the
  * number of children is kept below the threshold.
- * @param {!Box} child  The child to add.
+ * @param {!RBox} child  The child to add.
  * @private
  */
 
-Box.prototype.addChild_ = function(child) {
+RBox.prototype.addChild_ = function(child) {
     if (this.nodes_ == null) {
         this.nodes_ = [child];
     } else {
@@ -537,7 +503,7 @@ Box.prototype.addChild_ = function(child) {
  * @private
  */
 
-Box.prototype.recomputeBoundingBox_ = function() {
+RBox.prototype.recomputeBoundingBox_ = function() {
     if (!this.nodes_) {
         this.left = 0;
         this.top = 0;
