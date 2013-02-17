@@ -613,8 +613,7 @@ class GedcomImporter(object):
                     researcher=self._researcher,
                     person=ind,
                     source=s,
-                    characteristic=c,
-                    value='')
+                    characteristic=c)
 
             # The main characteristic part is the value found on the same
             # GEDCOM line as the characteristic itself. For simple
@@ -797,7 +796,7 @@ class GedcomImporter(object):
                         source=s,
                         role=role,
                         last_change=last_change,
-                        value=n)
+                        rationale=n)
 
         for k, v in data.for_all_fields():
             # ADDR and PLAC are handled in create_place

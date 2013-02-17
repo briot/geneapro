@@ -671,7 +671,8 @@ class Group (models.Model):
       """Meta data for the model"""
       db_table = "group"
 
-class Assertion (GeneaProveModel):
+
+class Assertion(GeneaProveModel):
    """
    Links two entities together, describing various facts we have learned
    about in a source.
@@ -696,22 +697,22 @@ class Assertion (GeneaProveModel):
    personas (Persona,Persona).
    """
 
-   surety     = models.ForeignKey (Surety_Scheme_Part)
-   researcher = models.ForeignKey (Researcher)
-   source     = models.ForeignKey (Source, null=True,
+   surety     = models.ForeignKey(Surety_Scheme_Part)
+   researcher = models.ForeignKey(Researcher)
+   source     = models.ForeignKey(Source, null=True,
        help_text="An assertion comes from no more than one source. It can"
                + " also come from one or more other assertions through the"
                + " assertion_assertion table, in which case source_id is"
                + " null")
-   value      = models.TextField (
-       help_text="Describes the value for an assertion, which could either"
-               + " point into a table, or be described as text, depending"
-               + " on the type of assertion")
-   rationale  = models.TextField (null=True)
-   disproved  = models.BooleanField (default=False)
+   rationale  = models.TextField(null=True,
+        help_text="Explains why the assertion (deduction, comments,...)")
+   disproved  = models.BooleanField(default=False)
    last_change = models.DateTimeField(
        default=django.utils.timezone.now,
        help_text="When was the assertion last modified")
+
+   # "value" is replaced by a dedicated field in the various child classes,
+   # for instance P2E.role.
 
    class Meta:
       """Meta data for the model"""
@@ -758,8 +759,7 @@ class P2E(Assertion):
             role = " (as " + self.role.name + ")"
         else:
             role = ""
-        return unicode(self.person) + " " + self.value + " " \
-            + unicode(self.event) + role
+        return unicode(self.person) + " " + unicode(self.event) + role
 
     class Meta:
        """Meta data for the model"""
@@ -827,7 +827,6 @@ all_fields = {
    'p2e.role':       sql_field_name(P2E, "role"),
    'char_part.type': sql_field_name(Characteristic_Part, "type"),
    'persona.id'    : sql_field_name(Persona, "pk"),
-   'assert.value'  : sql_field_name(Assertion, "value"),
    'event.date'    : sql_field_name(Event, "date"),
    'event':          sql_table_name(Event),
    'event.id':       sql_field_name(Event, "pk"),

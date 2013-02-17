@@ -13,7 +13,7 @@ from geneaprove.views.graph import graph
 class Fact(object):
     """Describes a fact extracted from an assertion"""
 
-    __slots__ = ("surety", "value", "rationale", "disproved", "date",
+    __slots__ = ("surety", "rationale", "disproved", "date",
                  "subject1_url", "subject2_url",
                  "subject1", "subject2",
                  "subject2_type",
@@ -22,7 +22,7 @@ class Fact(object):
     TYPE_EVENT = 1
     TYPE_CHARACTERISTIC = 2
 
-    def __init__(self, surety, value, rationale, disproved, date, place,
+    def __init__(self, surety, rationale, disproved, date, place,
                  subject1, subject2):
         """
         :param subject1:
@@ -37,7 +37,6 @@ class Fact(object):
         """
 
         self.surety    = surety
-        self.value     = value
         self.rationale = rationale
         self.date      = date
         self.place     = place
@@ -76,7 +75,6 @@ def extended_sources(ids, schemes):
     for c in sql_in(p2e, "source", ids):
         f = Fact(
             surety=c.surety,
-            value=c.value,
             rationale=c.rationale,
             date=c.event.date and DateRange(c.event.date),
             place=c.event.place and c.event.place.name,
@@ -99,7 +97,6 @@ def extended_sources(ids, schemes):
 
         f = Fact(
             surety=c.surety,
-            value=c.value,
             rationale=c.rationale,
             date=c.characteristic.date and DateRange(c.characteristic.date),
             place=c.characteristic.place and c.characteristic.place.name,

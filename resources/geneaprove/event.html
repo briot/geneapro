@@ -2,7 +2,6 @@
    <tr>
       <th>Person</th>
       <th>Role</th>
-      <th>Comment</th>
       <th>Rationale</th>
       <th>Surety</th>
       <th>Sources</th>
@@ -15,7 +14,6 @@
    {% endif %}
    <td style="white-space:nowrap"><a href="/persona/{{p.person_id}}">{{p.person.name}} ({{p.person_id}})</a></td>
       <td>{{p.role.name}}</td>
-      <td>{{p.value|default:""}}</td>
       <td>{{p.rationale|default:""}}</td>
       <td class="surety" id="psurety{{forloop.counter}}"
          _scheme="{{p.surety.scheme_id}}"
