@@ -351,11 +351,7 @@ class GedcomImporter(object):
             'JPG': 'image/jpg', # rootsMagic
             '': 'application/octet-stream'}
 
-        mime = form_to_mime.get(data.FORM)
-        if mime is None:
-            self.report_error(
-                'Unknown mime type for object: %s' % data.FORM)
-            return
+        mime = form_to_mime.get(data.FORM, 'application/octet-stream')
 
         obj = self._objects.get(data.FILE, None)
         if not obj or obj.comments != data.TITL:

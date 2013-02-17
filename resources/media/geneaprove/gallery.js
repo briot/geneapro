@@ -53,12 +53,14 @@ Gallery.prototype.setUp_ = function() {
    /** @type {Array.<Element>} */
    this.children = [];
 
+   this.bottom = 50;
+
    this.root.find('>div').each(function() {
       if (!$(this).is('.actions')) {
          $(this).css({'overflow': 'hidden',
                       'display': 'none',
                       'position': 'absolute',
-                      'bottom': '50px'})
+                      'bottom': this.bottom + 'px'})
            .click(function() { gallery.setCurrent(this)});
          gallery.children.push(this);
       }
@@ -90,6 +92,9 @@ Gallery.prototype.setUp_ = function() {
                      /** @type{number} */($(this).slider('value')), true)},
                'slide': function(e, ui) {
                   gallery.onSetCurrent_(ui.value, true)}});
+   if (this.children.length <= 1) {
+      this.sliders.hide();
+   }
 };
 
 /** Mousewheel events handler
@@ -188,7 +193,7 @@ Gallery.prototype.onSetCurrent_ = function(index, animate) {
 
    $(center)
       .animate({'z-index': 20,
-                'width': this.childSize,
+                'width': (this.childSize - this.bottom) + 'px',
                 'height': NaN,
                 'left': leftX}, duration)
       .show(duration);
@@ -206,7 +211,7 @@ Gallery.prototype.onSetCurrent_ = function(index, animate) {
          var incLeft = childS + currentMargin;
          $(child)
             .animate({'z-index': 20 - offset,
-                      'width': childS,
+                      'width': (childS - this.bottom) + 'px',
                       'left': offsetLeft - incLeft}, duration)
             .show();
          offsetLeft -= incLeft;
@@ -217,7 +222,7 @@ Gallery.prototype.onSetCurrent_ = function(index, animate) {
          var incRight = childS + currentMargin;
          $(child)
             .animate({'z-index': 20 - offset,
-                      'width': childS,
+                      'width': (childS - this.bottom) + 'px',
                       'left': offsetRight}, duration)
             .show();
          offsetRight += incRight;
