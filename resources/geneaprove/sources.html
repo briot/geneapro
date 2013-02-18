@@ -36,120 +36,122 @@
          {% endif %}
           </span>
          <div class="moreCitation">
-            <div class="arrow" title="Edit source citation"></div>
-            <div class="details">
-               <fieldset>
-                  <legend>Citation (parent citation grayed out)</legend>
-                  <input type="button"
-                         value="Set higher source"
-                         title="Select the source in which this one was found, for instance a specific will inside a will book"/>
+            <form id="citationForm">
+               <div class="arrow" title="Edit source citation"></div>
+               <div class="details">
+                  <fieldset>
+                     <legend>Citation (parent citation grayed out)</legend>
+                     <input type="button"
+                            value="Set higher source"
+                            title="Select the source in which this one was found, for instance a specific will inside a will book"/>
 
-                  <span class="field sourceMediaType">
-                     <label for="_sourceMediaType">Source type</label>
-                     <select name="sourceMediaType" id="_sourceMediaType"
-                             title="Select the type of source. This will change the details below to collect those needed for proper citation">
-                         <option selected>{{c.medium.name|default:"unknown"}}</option>
-                         {% for t in source_mediums %}
-                         <option>{{t.name}}</option>
-                         {% endfor %}
-                     </select>
-                  </span>
-
-                  {#??? Should select whether this is a primary source,... (or original/derivative #}
-                  {# although this distinction#}
-                  {# is sometimes better left for each evidence/pieces of info found in this source. #}
-                  {# See QuickLesson 2 from Elizabeth Shown Mill's website #}
-                  {# Evidence is our interpretation of the pieces of information #}
-
-                  <div style="clear:both"></div>
-                  <div style="margin-left: 0px;">
-                     {% for c in s.citations %}
-                     <span class="field disabled">
-                        <label for="_{{c.type.name}}">{{c.type.name}}</label>
-                        <input disabled type="text" id="_{{c.type.name}}" value="{{c.value}}"/>
+                     <span class="field sourceMediaType">
+                        <label for="_sourceMediaType">Source type</label>
+                        <select name="sourceMediaType" id="_sourceMediaType"
+                                title="Select the type of source. This will change the details below to collect those needed for proper citation">
+                            <option selected>{{c.medium.name|default:"unknown"}}</option>
+                            {% for type, id in source_types %}
+                            <option id={{id}}>{{type}}</option>
+                            {% endfor %}
+                        </select>
                      </span>
-                     {% endfor %}
 
-                     {# Below are field that would be displayed depending on source type #}
-                     {# and what is needed to make up the citation #}
-                     <span class="field">
-                        <label for="_publication">Publication date</label>
-                        <input type="text" id="_publication" name="publication" value=""/>
-                     </span>
-                     <span class="field">
-                        <label for="_volume">Volume</label>
-                        <input type="text" id="_volume" name="volume" value=""/>
-                     </span>
-                     <span class="field">
-                        <label for="_page">Page</label>
-                        <input type="text" id="_page" name="page" value=""/>
-                     </span>
-                  </div>
-               </fieldset>
+                     {#??? Should select whether this is a primary source,... (or original/derivative #}
+                     {# although this distinction#}
+                     {# is sometimes better left for each evidence/pieces of info found in this source. #}
+                     {# See QuickLesson 2 from Elizabeth Shown Mill's website #}
+                     {# Evidence is our interpretation of the pieces of information #}
 
-               {# The details common to all sources, needed by the GenTech data model #}
-               <fieldset>
-                  <legend>Research details</legend>
-                  <span class="field">
-                     <label for="_subjectDate">Subject date</label>
-                     <input type="text" id="_subjectDate" class="date"
-                            title="The date the source is about. This isn't the date of the source itself."
-                            value="{{s.subject_date|default:""}}"/>
-                  </span>
-                  <span class="field">
-                     <label for="_subjectPlace">Subject place</label>
-                     <input type="text" id="_subjectPlace"
-                            title="The place the source is about"
-                            value="{{s.subject_place|default:""}}"/>
-                  </span>
-                  <span class="field">
-                     <label for="_jurisdictionPlace">Jurisdiction place</label>
-                     <input type="text" id="_jurisdictionPlace"
-                            title="Where the source was found"
-                            value="{{s.jurisdiction_place|default:""}}"/>
-                  </span>
-                  <span class="field">
-                     <label for="_researcher">Researched by</label>
-                     <input type="text" id="_researcher" value="{{s.researcher.name}}"/>
-                  </span>
-                  <span class="field">
-                     <label for="_notes">Notes</label>
-                     <textarea id="_notes" name="notes">{{s.comments}}</textarea>
-                  </span>
-               </fieldset>
+                     <div style="clear:both"></div>
+                     <div style="margin-left: 0px;">
+                        {% for c in s.citations %}
+                        <span class="field disabled">
+                           <label for="_{{c.type.name}}">{{c.type.name}}</label>
+                           <input disabled type="text" id="_{{c.type.name}}" value="{{c.value}}"/>
+                        </span>
+                        {% endfor %}
 
-               {# The repositories #}
-               <fieldset>
-                  <legend>Repositories</legend>
-                  <div class="actions"> 
-                     <input type="button" value="+"/>
-                     <input type="button" value="-"/>
-                  </div>
-                  {% for r in s.repositories.all %}
-                  <div class="repositoryInfo">
-                     <div class="fieldGroup">
+                        {# Below are field that would be displayed depending on source type #}
+                        {# and what is needed to make up the citation #}
                         <span class="field">
-                           <label for="_repoName1">Name</label>
-                           <input type="text" id="_repoName1" value="{{r.name}}"
-                                  title="A repository is a physical (or Internet) location where the source was found. It will in general give access to several sources">
+                           <label for="_publication">Publication date</label>
+                           <input type="text" id="_publication" name="publication" value=""/>
                         </span>
                         <span class="field">
-                           <label for="_repoType1">Type</label>
-                           <select name="repositoryType">
-                               {% for t in repository_types %}
-                               <option>{{t.name}}</option>
-                               {% endfor %}
-                           </select>
+                           <label for="_volume">Volume</label>
+                           <input type="text" id="_volume" name="volume" value=""/>
+                        </span>
+                        <span class="field">
+                           <label for="_page">Page</label>
+                           <input type="text" id="_page" name="page" value=""/>
                         </span>
                      </div>
+                  </fieldset>
+
+                  {# The details common to all sources, needed by the GenTech data model #}
+                  <fieldset>
+                     <legend>Research details</legend>
                      <span class="field">
-                        <label for="_repoAddr1">Address/URL</label>
-                        <textarea lines="3">{{s.repo.url}}</textarea>
+                        <label for="_subjectDate">Subject date</label>
+                        <input type="text" id="_subjectDate" class="date"
+                               title="The date the source is about. This isn't the date of the source itself."
+                               value="{{s.subject_date|default:""}}"/>
                      </span>
-                  </div> <!-- repositoryInfo -->
-                  {% endfor %}
-               </fieldset>
-            </div>{# details #}
+                     <span class="field">
+                        <label for="_subjectPlace">Subject place</label>
+                        <input type="text" id="_subjectPlace"
+                               title="The place the source is about"
+                               value="{{s.subject_place|default:""}}"/>
+                     </span>
+                     <span class="field">
+                        <label for="_jurisdictionPlace">Jurisdiction place</label>
+                        <input type="text" id="_jurisdictionPlace"
+                               title="Where the source was found"
+                               value="{{s.jurisdiction_place|default:""}}"/>
+                     </span>
+                     <span class="field">
+                        <label for="_researcher">Researched by</label>
+                        <input type="text" id="_researcher" value="{{s.researcher.name}}"/>
+                     </span>
+                     <span class="field">
+                        <label for="_notes">Notes</label>
+                        <textarea id="_notes" name="notes">{{s.comments}}</textarea>
+                     </span>
+                  </fieldset>
+
+                  {# The repositories #}
+                  <fieldset>
+                     <legend>Repositories</legend>
+                     <div class="actions"> 
+                        <input type="button" value="+"/>
+                        <input type="button" value="-"/>
+                     </div>
+                     {% for r in s.repositories.all %}
+                     <div class="repositoryInfo">
+                        <div class="fieldGroup">
+                           <span class="field">
+                              <label for="_repoName1">Name</label>
+                              <input type="text" id="_repoName1" value="{{r.name}}"
+                                     title="A repository is a physical (or Internet) location where the source was found. It will in general give access to several sources">
+                           </span>
+                           <span class="field">
+                              <label for="_repoType1">Type</label>
+                              <select name="repositoryType">
+                                  {% for t in repository_types %}
+                                  <option>{{t.name}}</option>
+                                  {% endfor %}
+                              </select>
+                           </span>
+                        </div>
+                        <span class="field">
+                           <label for="_repoAddr1">Address/URL</label>
+                           <textarea lines="3">{{s.repo.url}}</textarea>
+                        </span>
+                     </div> <!-- repositoryInfo -->
+                     {% endfor %}
+                  </fieldset>
+               </div>{# details #}
+           </form> {# citationForm #}
          </div> {# moreInfo #}
       </div> {# sourceInfo #}
 
@@ -344,9 +346,6 @@
 {% endblock contents %}
 {% block script %}
 $(document).ready(function(){
-   var gallery = new Gallery($("#sourceGallery"), 400);
-   var dp = new DragPane($('div.scrollable img')[0]);
-
    var schemes = {
    {% for i, s in schemes.items %}
      {{i}}: [
@@ -356,51 +355,6 @@ $(document).ready(function(){
      ],
    {% endfor %}
    };
-
-   $("#sourceCitation .arrow").click(function() {
-      var b = $(this);
-      if (b.hasClass("open")) {
-         b.removeClass("open").siblings(".details").slideUp();
-      } else {
-         b.addClass("open").siblings(".details").slideDown();
-      }
-   });
-
-   function toggleZoomed() {
-      var w = $('#pane1').width();
-      var h = $('#pane1').height();
-      $('.scrollable').width(w).height(h);
-      update();
-      $('#pane1 > *').toggle();
-   }
-
-   function update() {
-      var id = $(gallery.getCurrent()).attr("_id");
-      dp.setAutoScale(true);
-      dp.setsrc('/repr/full/' + id);
-   }
-
-   $("#sourceGallery").dblclick(toggleZoomed);
-   $("#viewRepr").click(toggleZoomed);
-   $("#grayscaleButton").click(function() { dp.grayscale() });
-   $("#edgesButton").click(function() { dp.edgeDetect() });
-   $("#invertButton").click(function() { dp.invert() });
-   $("#noiseButton").click(function() { dp.removeNoise() });
-   $("#showAllRepr").click(function() { toggleZoomed() });
-   $("#previousRepr").click(function() { gallery.previous(); update() });
-   $("#nextRepr").click(function() { gallery.next(); update() });
-
-   $(".surety").each(function() {
-      var $t=$(this), val=$t.attr("_order"), s=$t.attr("_scheme");
-      $t.empty().raty({
-         path:'{{MEDIA_URL}}raty_img/',
-         number:schemes[s].length,
-         hintList: schemes[s],
-         start:val,
-         cancel:true,
-         cancelHint:'Unknown surety',
-         readOnly:true,
-      })
-   });
+   initSource(schemes);
 });
 {% endblock script %}

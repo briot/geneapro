@@ -2112,7 +2112,7 @@ jQuery.prototype.text = function(arg1) {};
 jQuery.prototype.toArray = function() {};
 
 /**
- * @deprecated
+ * MANU: not deprecated when changing visibility
  * @param {(function(!jQuery.event=)|string|number|function()|boolean)=} arg1
  * @param {(function(!jQuery.event=)|function()|string)=} arg2
  * @param {(function(!jQuery.event=)|function())=} arg3
