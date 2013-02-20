@@ -59,10 +59,10 @@ def to_json (obj, year_only=True):
          elif isinstance(obj, set):
              return list(obj)
 
-         elif isinstance (obj, models.geneaproveModel):
+         elif hasattr(obj, 'to_json'):
             return obj.to_json()
 
-         return super (ModelEncoder, self).default (obj)
+         return super (ModelEncoder, self).default(obj)
 
    return simplejson.dumps (obj, cls=ModelEncoder, separators=(',',':'))
 

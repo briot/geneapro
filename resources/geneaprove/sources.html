@@ -24,19 +24,11 @@
       </div>
       <div id="sourceCitation">
          <span class="id">Source {{s.id}}</span>
-         <span class="name">
-         {% if s.title %}
-            {{s.title}}
-         {% else %}
-            {% if s.abbrev %}
-            {{s.abbrev}}
-            {% else %}
-            {{s.comments}}
-            {% endif %}
-         {% endif %}
-          </span>
+         <span class="name"></span>
          <div class="moreCitation">
             <form id="citationForm">
+               {% csrf_token %}
+               <input type="hidden" name="sourceId" value="{{s.id}}"/>
                <div class="arrow" title="Edit source citation"></div>
                <div class="details">
                   <fieldset>
@@ -45,13 +37,17 @@
                             value="Set higher source"
                             title="Select the source in which this one was found, for instance a specific will inside a will book"/>
 
-                     <span class="field sourceMediaType">
+                     <span class="sourceMediaType">
                         <label for="_sourceMediaType">Source type</label>
                         <select name="sourceMediaType" id="_sourceMediaType"
                                 title="Select the type of source. This will change the details below to collect those needed for proper citation">
-                            <option selected>{{c.medium.name|default:"unknown"}}</option>
+                            <option selected value="">unknown</option>
                             {% for type, id in source_types %}
-                            <option id={{id}}>{{type}}</option>
+                            <option value="{{id}}"
+                               {% if id == c.medium.name %}
+                               selected
+                               {% endif %}
+                            >{{type}}</option>
                             {% endfor %}
                         </select>
                      </span>
@@ -63,28 +59,15 @@
                      {# Evidence is our interpretation of the pieces of information #}
 
                      <div style="clear:both"></div>
-                     <div style="margin-left: 0px;">
-                        {% for c in s.citations %}
-                        <span class="field disabled">
+                     <div style="margin-left: 0px;" class="citationFields">
+                        <!--{% for c in s.citations %}
+                        <span class="field">   {# class='disabled' when coming from parent #}
                            <label for="_{{c.type.name}}">{{c.type.name}}</label>
-                           <input disabled type="text" id="_{{c.type.name}}" value="{{c.value}}"/>
+                           <input type="text" id="_{{c.type.name}}" value="{{c.value}}"
+                                  name="{{c.type.name}}"/>  {# disabled #}
                         </span>
                         {% endfor %}
-
-                        {# Below are field that would be displayed depending on source type #}
-                        {# and what is needed to make up the citation #}
-                        <span class="field">
-                           <label for="_publication">Publication date</label>
-                           <input type="text" id="_publication" name="publication" value=""/>
-                        </span>
-                        <span class="field">
-                           <label for="_volume">Volume</label>
-                           <input type="text" id="_volume" name="volume" value=""/>
-                        </span>
-                        <span class="field">
-                           <label for="_page">Page</label>
-                           <input type="text" id="_page" name="page" value=""/>
-                        </span>
+                        -->
                      </div>
                   </fieldset>
 
@@ -93,29 +76,34 @@
                      <legend>Research details</legend>
                      <span class="field">
                         <label for="_subjectDate">Subject date</label>
-                        <input type="text" id="_subjectDate" class="date"
-                               title="The date the source is about. This isn't the date of the source itself."
-                               value="{{s.subject_date|default:""}}"/>
+                        <input type="text" id="_subjectDate" class="date" name="_subjectDate"
+                               title="The date the source is about. This isn't the date of the source itself."/>
                      </span>
                      <span class="field">
                         <label for="_subjectPlace">Subject place</label>
-                        <input type="text" id="_subjectPlace"
-                               title="The place the source is about"
-                               value="{{s.subject_place|default:""}}"/>
+                        <input type="text" id="_subjectPlace" name='_subjectPlace'
+                               title="The place the source is about" />
                      </span>
                      <span class="field">
                         <label for="_jurisdictionPlace">Jurisdiction place</label>
-                        <input type="text" id="_jurisdictionPlace"
-                               title="Where the source was found"
-                               value="{{s.jurisdiction_place|default:""}}"/>
+                        <input type="text" id="_jurisdictionPlace" name='_jurisdictionPlace'
+                               title="Where the source was found"/>
                      </span>
                      <span class="field">
-                        <label for="_researcher">Researched by</label>
-                        <input type="text" id="_researcher" value="{{s.researcher.name}}"/>
+                        <label for="_title">Title</label>
+                        <input id="_title" name="_title"/>
+                     </span>
+                     <span class="field">
+                        <label for="_abbrev">Abbrev.</label>
+                        <input id="_abbrev" name="_abbrev"/>
                      </span>
                      <span class="field">
                         <label for="_notes">Notes</label>
-                        <textarea id="_notes" name="notes">{{s.comments}}</textarea>
+                        <textarea id="_notes" name="_notes"></textarea>
+                     </span>
+                     <span class="field">
+                        <label for="_researcher">Researched by</label>
+                        {{s.researcher.name}} {# not editable #}
                      </span>
                   </fieldset>
 
@@ -132,11 +120,12 @@
                            <span class="field">
                               <label for="_repoName1">Name</label>
                               <input type="text" id="_repoName1" value="{{r.name}}"
+                                     name='_repoName'
                                      title="A repository is a physical (or Internet) location where the source was found. It will in general give access to several sources">
                            </span>
                            <span class="field">
                               <label for="_repoType1">Type</label>
-                              <select name="repositoryType">
+                              <select name="_repoType">
                                   {% for t in repository_types %}
                                   <option>{{t.name}}</option>
                                   {% endfor %}
@@ -145,7 +134,7 @@
                         </div>
                         <span class="field">
                            <label for="_repoAddr1">Address/URL</label>
-                           <textarea lines="3">{{s.repo.url}}</textarea>
+                           <textarea lines="3" name='_repoAddr'>{{s.repo.url}}</textarea>
                         </span>
                      </div> <!-- repositoryInfo -->
                      {% endfor %}
@@ -355,6 +344,7 @@ $(document).ready(function(){
      ],
    {% endfor %}
    };
-   initSource(schemes);
+   var parts = {{parts|safe}};
+   initSource(schemes, parts);
 });
 {% endblock script %}

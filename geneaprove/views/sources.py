@@ -3,11 +3,14 @@ Source-related views
 """
 
 from django.shortcuts import render_to_response
+from django.http import HttpResponse
 from django.template import RequestContext
+from geneaprove.views.json import to_json
 from geneaprove import models
 from geneaprove.views.queries import sql_in
 from geneaprove.utils.date import DateRange
 from geneaprove.views.graph import graph
+from geneaprove.utils.citations import Citations
 
 
 class Fact(object):
@@ -58,7 +61,7 @@ def extended_sources(ids, schemes):
     sources = dict() # id -> Source
 
     for s in sql_in(models.Source.objects.select_related(
-                         "medium", "repositories", "researcher"),
+                         "repositories", "researcher"),
                     "id", ids):
         sources[s.id] = s
         s.citations = []
@@ -113,6 +116,36 @@ def extended_sources(ids, schemes):
     return sources
 
 
+def list_of_citations(src):
+    """
+    :param src: an instance of models.Source
+    :return: a list of all the parts of the source citation. This
+       includes the parts that are set explicitly in the database, as well as
+       the parts that are necessary for a complete citation of the full (as
+       driven by the style templates).
+       This also returns various attribtes of the source itself, starting with
+       '_'.
+    """
+
+    result = dict()
+
+    for part in Citations.get_citation(src.medium).required_parts():
+        result[part] = ''
+
+    result['_title'] = src.title
+    result['_abbrev'] = src.abbrev
+    result['_medium'] = src.medium
+    result['_notes'] = src.comments
+    result['_subjectDate'] = src.subject_date
+    # result['_subjectPlace'] = src.subject_place.name
+    # result['_jurisdictionPlace'] = src.jurisdiction_place.name
+
+    for part in src.parts.select_related('type__name').all():
+        result[part.type.name] = part.value
+
+    return sorted((k, v) for k, v in result.iteritems())
+
+
 def view(request, id):
     """View a specific source"""
 
@@ -134,11 +167,79 @@ def view(request, id):
     return render_to_response (
         'geneaprove/sources.html',
         {"s": sources[id],
+         "parts": to_json(list_of_citations(sources[id])),
          "repository_types": models.Repository_Type.objects.all(),
-         "source_mediums":   models.Source_Medium.objects.all(),
+         "source_types":   Citations.source_types(),
          "schemes": surety_schemes,
         },
         context_instance=RequestContext(request))
+
+
+def editCitation(request, source_id):
+    """
+    Perform some changes in the citation parts for a source, and returns a
+    JSON with the list of parts and their values.
+    """
+    src = models.Source.objects.get(id=source_id)
+
+    if request.method == 'POST':
+        new_type = request.POST.get('sourceMediaType')
+
+        src.parts.all().delete()
+
+        if src.medium != new_type:
+            # Changing the medium: we should not preserve citation parts that
+            # are no longer used for the new type. The GUI has temporary saved
+            # them and can restore them if the user immediately choses to go
+            # back to the previous value.
+            parts = Citations.get_citation(new_type).required_parts()
+        else:
+            parts = None
+
+        for key, value in request.POST.iteritems():
+            if key in ('csrfmiddlewaretoken', 'sourceId'):
+                continue
+            elif key == 'sourceMediaType':
+                src.medium = value
+            elif key == '_notes':
+                src.comments = value
+            elif key == '_abbrev':
+                src.abbrev = value
+            elif key == '_title':
+                src.title = value
+            elif key == '_subjectDate':
+                src.subject_date = value
+            elif key == '_subjectPlace':
+                pass
+                # src.subject_place = value
+            elif key == '_jurisdictionPlace':
+                pass
+                #src.jurisdiction_place = value
+            elif key in ('_repoName', '_repoType', '_repoAddr'):
+                # ??? Not handled yet
+                pass
+            elif key[0] == '_':
+                raise Exception('Field not processed: %s' % key)
+            elif value and (parts is None or key in parts):
+                # A citation part
+                try:
+                    type = models.Citation_Part_Type.objects.get(name=key)
+                except models.Citation_Part_Type.DoesNotExist:
+                    type = models.Citation_Part_Type.objects.create(name=key)
+                    type.save()
+
+                p = models.Citation_Part(type=type, value=value)
+                src.parts.add(p)
+
+        if src.medium and src.medium != 'unknown':
+            c = Citations.get_citation(src.medium).cite(src)
+            src.title = c.full
+            src.abbrev = c.short
+
+        src.save()
+
+    return HttpResponse(
+        to_json(list_of_citations(src)), content_type="application/json")
 
 
 def source_list(request):

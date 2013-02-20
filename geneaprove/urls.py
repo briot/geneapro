@@ -35,6 +35,8 @@ urlpatterns = patterns('',
     (r'^stats/(\d+)$',  geneaprove.views.stats.view),
     (r'^quilts/(\d+)?$',        geneaprove.views.graph.quilts_view),
 
+    (r'^editCitation/(?P<source_id>\w+)$', geneaprove.views.sources.editCitation),
+
     # Importing a GEDCOM file
     (r'^import$',   geneaprove.views.importers.import_gedcom),
 

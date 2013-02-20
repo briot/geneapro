@@ -14,7 +14,8 @@ import django.utils.timezone
 import datetime
 from geneaprove.utils import date
 
-class GeneaProveModel (models.Model):
+
+class GeneaProveModel(models.Model):
    def to_json (self):
       """Returns a version of self suitable for use in json. By default,
          this returns the dictionary of the class without the attributes
@@ -28,6 +29,7 @@ class GeneaProveModel (models.Model):
    class Meta:
       """Meta data for the model"""
       abstract = True
+
 
 class PartialDateField(models.CharField):
    """
@@ -214,22 +216,6 @@ class Activity (GeneaProveModel):
       ordering = ("scheduled_date", "completed_date")
       db_table = "activity"
 
-class Source_Medium (GeneaProveModel):
-   """
-   This table lists the different types of medium for sources
-   """
-
-   name        = models.CharField (max_length=50)
-   description = models.TextField (blank=True)
-
-   def __unicode__ (self):
-      return self.name
-
-   class Meta:
-      """Meta data for the model"""
-      ordering = ("name",)
-      db_table = "source_medium"
-
 
 class Place(GeneaProveModel):
    """
@@ -366,34 +352,47 @@ class Source(GeneaProveModel):
    points to the book. This provides better sharing of common information.
    """
 
-   repositories = models.ManyToManyField (Repository,
+   repositories = models.ManyToManyField(Repository,
        related_name="sources",
        through="Repository_Source")
-   higher_source = models.ForeignKey ("self", related_name="lower_sources",
+   higher_source = models.ForeignKey("self", related_name="lower_sources",
                                       null=True)
-   subject_place = models.ForeignKey (Place, null=True, related_name="sources",
+   subject_place = models.ForeignKey(Place, null=True, related_name="sources",
        help_text="Where the event described in the source takes place")
-   jurisdiction_place = models.ForeignKey (Place, null=True,
+   jurisdiction_place = models.ForeignKey(Place, null=True,
        related_name="jurisdiction_for",
        help_text="Example: a record in North Carolina describes a person"
                + " and their activities in Georgia. Georgia is the subject"
                + " place, whereas NC is the jurisdiction place")
-   researcher    = models.ForeignKey (Researcher)
-   subject_date  = PartialDateField (
+   researcher    = models.ForeignKey(Researcher)
+   subject_date  = PartialDateField(
        help_text="the date of the subject. Note that the dates might be"
                + " different for the various levels of source (a range of"
                + " dates for a book, and a specific date for an extract for"
                + " instance). This field contains the date as found in the"
                + " original document. subject_date_sort stores the actual"
                + " computed from subject_date, for sorting purposes")
-   medium        = models.ForeignKey (Source_Medium)
-   comments      = models.TextField (null=True)
+
+   medium        = models.TextField(
+       null=True,
+       help_text="""The type of the source, used to construct the citation.
+The value for this field is the key into the citations.py dictionary that
+documents the citation styles.""")
+   title = models.TextField(
+       null=True,
+       help_text="The (possibly computed) full citation for this source")
+   abbrev = models.TextField(
+       null=True,
+       help_text="An (possibly computed) abbreviated citation")
+
+   comments      = models.TextField(null=True)
 
    last_change   = models.DateTimeField(default=django.utils.timezone.now)
 
    class Meta:
       """Meta data for the model"""
       db_table = "source"
+
 
 class Repository_Source (GeneaProveModel):
    """
@@ -460,7 +459,7 @@ class Representation(GeneaProveModel):
       db_table = "representation"
 
 
-class Citation_Part_Type (Part_Type):
+class Citation_Part_Type(Part_Type):
    """
    The type of elements associated with a citation
    """
@@ -469,14 +468,15 @@ class Citation_Part_Type (Part_Type):
       """Meta data for the model"""
       db_table = "citation_part_type"
 
-class Citation_Part (GeneaProveModel):
+
+class Citation_Part(GeneaProveModel):
    """
    Stores the citation for a source, such as author, title,...
    """
 
-   source = models.ForeignKey (Source)
-   type   = models.ForeignKey (Citation_Part_Type)
-   value  = models.TextField ()
+   source = models.ForeignKey(Source, related_name='parts')
+   type   = models.ForeignKey(Citation_Part_Type)
+   value  = models.TextField()
 
    class Meta:
       """Meta data for the model"""

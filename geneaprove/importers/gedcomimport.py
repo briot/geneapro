@@ -99,9 +99,6 @@ class GedcomImporter(object):
                # case, sourceId is set to NO_SOURCE for those events and
                # characteristics with no source.
 
-            self._source_medium = dict()
-            self._read_source_medium()
-
             self._sources = dict()
             for r in data.REPO:
                 self._create_repo(r)
@@ -169,10 +166,6 @@ class GedcomImporter(object):
 
         for p in models.Citation_Part_Type.objects.exclude(gedcom__isnull=True):
             self._citation_part_types[p.gedcom] = p
-
-    def _read_source_medium(self):
-        for m in models.Source_Medium.objects.all():
-            self._source_medium[m.name] = m.id
 
     def _create_CHAN(self, data):
         """data should be a form of CHAN"""
@@ -244,7 +237,7 @@ class GedcomImporter(object):
         return r
 
     def _create_source(self, sour, subject_place=None):
-        medium_id = 0
+        medium = ""
         rep = None
 
         if sour.__dict__.has_key('REPO') and sour.REPO:
@@ -260,11 +253,6 @@ class GedcomImporter(object):
             caln = repo.CALN  # call number
             if caln:
                 medium = (caln[0].MEDI or '').lower()
-                medium_id = self._source_medium.get(medium)
-                if not medium_id:
-                    self.report_error(
-                        "Unknown medium type for source '%s'" % medium)
-                    medium_id = 0
 
             for k, v in repo.for_all_fields():
                 if k not in ("CALN", ):
@@ -287,7 +275,7 @@ class GedcomImporter(object):
             jurisdiction_place_id=None,
             researcher=self._researcher,
             subject_date=None,
-            medium_id=medium_id,
+            medium=medium,
             last_change=self._create_CHAN(chan),
             comments=comment)
         if rep:
@@ -299,15 +287,9 @@ class GedcomImporter(object):
                 description=None)
 
         if getattr(sour, "ABBR", None):
-            cit = models.Citation_Part.objects.create(
-                source=src,
-                type=self._citation_part_types["ABBR"],
-                value=sour.ABBR)
+            src.abbrev = sour.ABBR
         if getattr(sour, "TITL", None):
-            cit = models.Citation_Part.objects.create(
-                source=src,
-                type=self._citation_part_types["TITL"],
-                value=sour.TITL)
+            src.title = sour.TITL
 
         obje = sour.OBJE
         if obje:
