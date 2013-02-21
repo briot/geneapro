@@ -43,6 +43,8 @@ class Citation_Style(object):
             subst[part] = 'unknown %s' % part
 
         if isinstance(source, models.Source):
+            subst['_title'] = source.title
+            subst['_abbrev'] = source.abbrev
             for part in source.parts.select_related('type__name').all():
                 subst[part.type.name] = part.value
         elif isinstance(source, dict):
@@ -52,16 +54,15 @@ class Citation_Style(object):
         else:
             raise Exception("Invalid parameter to cite()")
 
-        print subst
-
         def __repl(repl):
             return subst[repl.group(1)]
 
-        # An unknown type ? Include all citation parts
+        # An unknown type ? use the explicit title from the user
 
         if self.biblio == "":
-            s = "".join({"%s:%s" % (key, val) for key, val in subst.iteritems()})
-            return Source_Citation(s, s, s)
+            full = subst.get('_title', '')
+            abbrev = subst.get('_abbrev', '')
+            return Source_Citation(full, full, abbrev)
 
         # Otherwise, only take those parts that are necessary
         else:

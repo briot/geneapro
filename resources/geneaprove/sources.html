@@ -97,13 +97,13 @@
                      </span>
                   </fieldset>
 
-                  {# The repositories #}
+                  {% if s.repositories.all %}
                   <fieldset>
                      <legend>Repositories</legend>
-                     <div class="actions"> 
+                     <!--<div class="actions"> 
                         <input type="button" value="+"/>
                         <input type="button" value="-"/>
-                     </div>
+                     </div>-->
                      {% for r in s.repositories.all %}
                      <div class="repositoryInfo">
                         <div class="fieldGroup">
@@ -129,6 +129,8 @@
                      </div> <!-- repositoryInfo -->
                      {% endfor %}
                   </fieldset>
+                  {% endif %}
+
                   <div class="buttons">
                      <input type="button" value="Save" name="save"/>
                      <input type="button" value="Cancel" name="cancel"/>

@@ -27,9 +27,7 @@ function SourceCitation(div, parts) {
     */
    this.saved_ = parts;
 
-   this.fieldsDiv.change($.proxy(this.onFieldChange_, this));
-   $('select[name=sourceMediaType]', this.form)
-      .change($.proxy(this.onMediumChange_, this));
+   $(div).change($.proxy(this.onFieldChange_, this));
 
    this.restoreFields_(parts);
 
@@ -78,7 +76,6 @@ SourceCitation.prototype.restoreFields_ = function(parts) {
    var _this = this;
 
    this.fieldsDiv.stop(true, true);  // terminate animations
-
    var fields = "";
    for (var p = 0; p < parts.length; p++) {
       var k = parts[p][0];
@@ -106,48 +103,44 @@ SourceCitation.prototype.restoreFields_ = function(parts) {
    this.fieldsDiv.empty().append(fields).slideDown("fast");
 };
 
-/** Called when a new medium type is selected
- * @private
- */
-
-SourceCitation.prototype.onMediumChange_ = function() {
-   var _this = this;
-   $(".details", this.div).addClass("edited");
-   this.saveFields_();
-   this.fieldsDiv.slideUp("fast", function() {$(this).empty()});
-
-   var medium =
-      $('select[name=sourceMediaType] option:selected', this.div)[0].value;
-   if (medium != '') {
-      $.get('/citationParts/' + medium,
-            function(data) {
-                _this.restoreFields_(data);
-                _this.onFieldChange_();  //  Recompute full citation
-            });
-   } else {
-      this.restoreFields_([ ['_medium', '']]);
-   }
-};
-
 /**
  * Called when the value of a field is changed. When we submit a change for
  * the medium type, though, we still have the fields values from the previous
  * medium. So we pass all saved values to the server, which will take care of
  * filtering out the irrelevant parts.
+ * @param {Event} e   The event.
  * @private
  */
 
-SourceCitation.prototype.onFieldChange_ = function() {
+SourceCitation.prototype.onFieldChange_ = function(e) {
    var _this = this;
+   $(".details", this.div).addClass("edited");
 
-   $('.details', this.div).addClass('edited');
-   $.post('/fullCitation',
-         this.form.serialize(),
-         function(data) {
-            $('span.name', this.div).html(data['full']);
-            $('textarea[name=_title]', this.div).html(data['full']);
-            $('textarea[name=_abbrev]', this.div).html(data['short']);
-         });
+   if (e && e.target.name == 'sourceMediaType') {
+      this.saveFields_();
+      this.fieldsDiv.slideUp("fast", function() {$(this).empty()});
+   
+      var medium =
+         $('select[name=sourceMediaType] option:selected', this.div)[0].value;
+      if (medium != '') {
+         $.get('/citationParts/' + medium,
+               function(data) {
+                  data.push(['_medium', medium]);  // reset title field to r/o
+                  _this.restoreFields_(data);
+                  _this.onFieldChange_();  //  Recompute full citation
+               });
+      } else {
+         this.restoreFields_([ ['_medium', '']]);
+      }
+   } else {
+      $.post('/fullCitation',
+            this.form.serialize(),
+            function(data) {
+               $('span.name', this.div).html(data['full']);
+               $('textarea[name=_title]', this.div).val(data['full']);
+               $('textarea[name=_abbrev]', this.div).val(data['short']);
+            });
+   }
 };
 
 /** Initialize the source details page
