@@ -58,50 +58,40 @@
                      {# See QuickLesson 2 from Elizabeth Shown Mill's website #}
                      {# Evidence is our interpretation of the pieces of information #}
 
-                     <div style="clear:both"></div>
-                     <div style="margin-left: 0px;" class="citationFields">
-                        <!--{% for c in s.citations %}
-                        <span class="field">   {# class='disabled' when coming from parent #}
-                           <label for="_{{c.type.name}}">{{c.type.name}}</label>
-                           <input type="text" id="_{{c.type.name}}" value="{{c.value}}"
-                                  name="{{c.type.name}}"/>  {# disabled #}
-                        </span>
-                        {% endfor %}
-                        -->
-                     </div>
+                     <div style="margin-left: 0px; clear:both" class="citationFields"></div>
                   </fieldset>
 
                   {# The details common to all sources, needed by the GenTech data model #}
                   <fieldset>
                      <legend>Research details</legend>
-                     <span class="field">
+                     <span>
                         <label for="_subjectDate">Subject date</label>
                         <input type="text" id="_subjectDate" class="date" name="_subjectDate"
                                title="The date the source is about. This isn't the date of the source itself."/>
                      </span>
-                     <span class="field">
+                     <span>
                         <label for="_subjectPlace">Subject place</label>
                         <input type="text" id="_subjectPlace" name='_subjectPlace'
                                title="The place the source is about" />
                      </span>
-                     <span class="field">
+                     <span>
                         <label for="_jurisdictionPlace">Jurisdiction place</label>
                         <input type="text" id="_jurisdictionPlace" name='_jurisdictionPlace'
                                title="Where the source was found"/>
                      </span>
-                     <span class="field">
+                     <span>
                         <label for="_title">Title</label>
-                        <input id="_title" name="_title"/>
+                        <textarea id="_title" class="double" name="_title"></textarea>
                      </span>
-                     <span class="field">
+                     <span>
                         <label for="_abbrev">Abbrev.</label>
-                        <input id="_abbrev" name="_abbrev"/>
+                        <textarea id="_abbrev" class="double" name="_abbrev"></textarea>
                      </span>
-                     <span class="field">
+                     <span>
                         <label for="_notes">Notes</label>
-                        <textarea id="_notes" name="_notes"></textarea>
+                        <textarea class="double" id="_notes" name="_notes"></textarea>
                      </span>
-                     <span class="field">
+                     <span>
                         <label for="_researcher">Researched by</label>
                         {{s.researcher.name}} {# not editable #}
                      </span>
@@ -139,6 +129,10 @@
                      </div> <!-- repositoryInfo -->
                      {% endfor %}
                   </fieldset>
+                  <div class="buttons">
+                     <input type="button" value="Save" name="save"/>
+                     <input type="button" value="Cancel" name="cancel"/>
+                  </div>
                </div>{# details #}
            </form> {# citationForm #}
          </div> {# moreInfo #}

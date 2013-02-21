@@ -116,9 +116,10 @@ def extended_sources(ids, schemes):
     return sources
 
 
-def list_of_citations(src):
+def list_of_citations(medium, src=None):
     """
-    :param src: an instance of models.Source
+    :param medium: the id of the mediaType
+    :param src: an instance of models.Source, or None
     :return: a list of all the parts of the source citation. This
        includes the parts that are set explicitly in the database, as well as
        the parts that are necessary for a complete citation of the full (as
@@ -129,21 +130,49 @@ def list_of_citations(src):
 
     result = dict()
 
-    for part in Citations.get_citation(src.medium).required_parts():
+    for part in Citations.get_citation(medium).required_parts():
         result[part] = ''
 
-    result['_title'] = src.title
-    result['_abbrev'] = src.abbrev
-    result['_medium'] = src.medium
-    result['_notes'] = src.comments
-    result['_subjectDate'] = src.subject_date
-    # result['_subjectPlace'] = src.subject_place.name
-    # result['_jurisdictionPlace'] = src.jurisdiction_place.name
+    if src is not None:
+        result['_title'] = src.title
+        result['_abbrev'] = src.abbrev
+        result['_medium'] = src.medium
+        result['_notes'] = src.comments
+        result['_subjectDate'] = src.subject_date
+        # result['_subjectPlace'] = src.subject_place.name
+        # result['_jurisdictionPlace'] = src.jurisdiction_place.name
 
-    for part in src.parts.select_related('type__name').all():
-        result[part.type.name] = part.value
+        for part in src.parts.select_related('type__name').all():
+            result[part.type.name] = part.value
 
     return sorted((k, v) for k, v in result.iteritems())
+
+
+def citationParts(request, medium):
+    """
+    Return the list of citation parts needed for this medium.
+    :param medium: either the id of the mediaType, or the id of a source.
+    """
+    if medium.isdigit():
+        src = models.Source.objects.get(id=medium)
+        result = list_of_citations(src.medium, src)
+    else:
+        result = list_of_citations(medium)
+    return HttpResponse(to_json(result), content_type="application/json")
+
+
+def fullCitation(request):
+    """
+    Compute the full citation, given the parts. This does not edit the
+    database.
+    :return: a dictionary of 'full', 'short' and 'biblio'.
+    """
+    result = {}
+
+    if request.method == 'POST':
+        medium = request.POST.get('sourceMediaType')
+        result = Citations.get_citation(medium).cite(request.POST)
+    return HttpResponse(to_json(result), content_type="application/json")
 
 
 def view(request, id):
@@ -167,7 +196,7 @@ def view(request, id):
     return render_to_response (
         'geneaprove/sources.html',
         {"s": sources[id],
-         "parts": to_json(list_of_citations(sources[id])),
+         "parts": to_json(list_of_citations(sources[id].medium, sources[id])),
          "repository_types": models.Repository_Type.objects.all(),
          "source_types":   Citations.source_types(),
          "schemes": surety_schemes,
@@ -239,7 +268,8 @@ def editCitation(request, source_id):
         src.save()
 
     return HttpResponse(
-        to_json(list_of_citations(src)), content_type="application/json")
+        to_json(list_of_citations(src.medium, src)),
+        content_type="application/json")
 
 
 def source_list(request):

@@ -1,7 +1,6 @@
 /** Description sent by the server for all the parts of a citation
  * Each element in the array is a (key,value) pair.
- * @typedef {Array.<Array.<string,string>>}
- * @dict
+ * @typedef {Array.<Array.<string>>}
  */
 window.CitationParts;
 
@@ -10,6 +9,7 @@ window.CitationParts;
  * of the title.
  * @param {Element} div   The part of the document to instrument.
  * @param {window.CitationParts} parts   The list of all parts.
+ * @constructor
  */
 
 function SourceCitation(div, parts) {
@@ -28,12 +28,27 @@ function SourceCitation(div, parts) {
    this.saved_ = parts;
 
    this.fieldsDiv.change($.proxy(this.onFieldChange_, this));
-
-   // Add the required fields which might not have values in the database.
    $('select[name=sourceMediaType]', this.form)
-      .change($.proxy(this.onFieldChange_, this));
+      .change($.proxy(this.onMediumChange_, this));
 
    this.restoreFields_(parts);
+
+   $('input[name=save]', div).click(function() {
+      $.post('/editCitation/' + _this.sourceId,
+             _this.form.serialize(),
+             function(data) {
+                 $('.details', _this.div).removeClass('edited');
+                 _this.restoreFields_(data);
+             });
+   });
+   $('input[name=cancel]', div).click(function() {
+      $('.details', _this.div).removeClass('edited');
+      _this.saved_ = {};
+      $.get('/citationParts/' + _this.sourceId,
+            function(data) {
+                _this.restoreFields_(data);
+            });
+   });
 }
 
 /**
@@ -62,29 +77,56 @@ SourceCitation.prototype.saveFields_ = function() {
 SourceCitation.prototype.restoreFields_ = function(parts) {
    var _this = this;
 
+   this.fieldsDiv.stop(true, true);  // terminate animations
+
    var fields = "";
    for (var p = 0; p < parts.length; p++) {
       var k = parts[p][0];
-      var v = parts[p][1] || this.saved_[p] || "";
+      var v = parts[p][1] || this.saved_[k] || "";
       if (k == '_medium') {
-         $('select[name=sourceMediaType] option[id="' + v + '"]', this.div)
+         $('select[name=sourceMediaType] option[value="' + v + '"]', this.div)
             .prop('selected', true);
+         $('textarea[name=_title]', this.div).prop("disabled", v != '');
+         $('textarea[name=_abbrev]', this.div).prop("disabled", v != '');
       } else if (k == '_title') {
-         $('span.name', this.div).text(v);
-         $('input[name=_title]', this.div).val(v);
+         $('span.name', this.div).html(v);
+         $('textarea[name=_title]', this.div).html(v);
       } else if (k == '_abbrev') {
-         $('input[name=_abbrev]', this.div).val(v);
+         $('textarea[name=_abbrev]', this.div).html(v);
       } else if (k == '_notes') {
-         $('input[name=_notes]', this.div).val(v);
+         $('textarea[name=_notes]', this.div).html(v);
       } else if (k == '_subjectDate') {
          $('input[name=_subjectDate]', this.div).val(v);
       } else if (k[0] != '_') {
-          fields += '<span class="field"><label for="' + k + '">' + k +
+          fields += '<span><label for="' + k + '">' + k +
              '</label><input type="text" id="' + k + '" name="' + k +
              '" value="' + v + '"/></span>';
       }
    }
-   this.fieldsDiv.empty().append(fields);
+   this.fieldsDiv.empty().append(fields).slideDown("fast");
+};
+
+/** Called when a new medium type is selected
+ * @private
+ */
+
+SourceCitation.prototype.onMediumChange_ = function() {
+   var _this = this;
+   $(".details", this.div).addClass("edited");
+   this.saveFields_();
+   this.fieldsDiv.slideUp("fast", function() {$(this).empty()});
+
+   var medium =
+      $('select[name=sourceMediaType] option:selected', this.div)[0].value;
+   if (medium != '') {
+      $.get('/citationParts/' + medium,
+            function(data) {
+                _this.restoreFields_(data);
+                _this.onFieldChange_();  //  Recompute full citation
+            });
+   } else {
+      this.restoreFields_([ ['_medium', '']]);
+   }
 };
 
 /**
@@ -92,31 +134,20 @@ SourceCitation.prototype.restoreFields_ = function(parts) {
  * the medium type, though, we still have the fields values from the previous
  * medium. So we pass all saved values to the server, which will take care of
  * filtering out the irrelevant parts.
- * @param {Event} e   The event.
  * @private
  */
 
-SourceCitation.prototype.onFieldChange_ = function(e) {
+SourceCitation.prototype.onFieldChange_ = function() {
    var _this = this;
 
-   if (e && e.target.name == 'sourceMediaType') {
-      _this.fieldsDiv.slideUp("fast");
-      _this.saveFields_();
-   }
-
-   $.post('/editCitation/' + this.sourceId,
-          this.form.serialize(),   //  a string
-          function(data) {
-             _this.restoreFields_(data);
-
-             if (e && e.target.name == 'sourceMediaType') {
-                // Report a change in the fields (since we have restored some
-                // of them from the cache).
-                _this.onFieldChange_();
-
-                _this.fieldsDiv.slideDown("fast");
-             }
-          });
+   $('.details', this.div).addClass('edited');
+   $.post('/fullCitation',
+         this.form.serialize(),
+         function(data) {
+            $('span.name', this.div).html(data['full']);
+            $('textarea[name=_title]', this.div).html(data['full']);
+            $('textarea[name=_abbrev]', this.div).html(data['short']);
+         });
 };
 
 /** Initialize the source details page

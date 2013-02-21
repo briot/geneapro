@@ -110,14 +110,7 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 * Sources
 ** Use Bibtex as a reference for which fields are needed for the various
    formats of sources.
-** Each format provides a template for the full, secondary and short citations,
-   for instance "${author},${italic-title}". This template is parsed to find
-   out which fields should be displayed in the form.
-   We want to cache the full citations as part of the source table for quick
-   lookup, but in practice the master are the various fields, since depending
-   on the citation style the fields can be used differently to come up with the
-   citation (see the various styles for bibtex, at
-   http://www.tex.ac.uk/tex-archive/biblio/bibtex)
+   http://www.tex.ac.uk/tex-archive/biblio/bibtex
 ** See
    http://www.gramps-project.org/wiki/index.php?title=GEPS_018:_Evidence_style_sources
    http://jytangledweb.org/genealogy/evidencestyle/
@@ -125,6 +118,14 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    http://www.youtube.com/watch?v=l6PRflCvBCo
 ** Citations
 *** http://www.progenealogists.com/citationguide.htm
+** Repositories
+   In the Evidence Explained style, the repository information is already part
+   of some of the styles, would we end up with duplicates. In fact, the
+   repository information is part of the citation itself, including call number.
+   If the user goes to another repository to look at the same source, it will be
+   a different copy, so should likely be a different entry in the list of sources
+   (for instance a lower-level source). Perhaps we should not try to handle
+   repositories separately at all.
 
 * Groups
 ** For: neighbor, friend, clergy, care-taker, and more

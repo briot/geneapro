@@ -33,17 +33,26 @@ class Citation_Style(object):
         computed name from the database, but recompute its from the citation
         parts.
     
-        :param source: a models.Source
+        :param source: a models.Source or a dictionary of (key,value) for the
+           citation parts.
         :return: a Source_Citation.
         """
-        assert isinstance(source, models.Source)
 
         subst = {}
         for part in self.required_parts():
             subst[part] = 'unknown %s' % part
 
-        for part in source.parts.select_related('type__name').all():
-            subst[part.type.name] = part.value
+        if isinstance(source, models.Source):
+            for part in source.parts.select_related('type__name').all():
+                subst[part.type.name] = part.value
+        elif isinstance(source, dict):
+            for k, v in source.iteritems():
+                if v != '':
+                    subst[k] = v
+        else:
+            raise Exception("Invalid parameter to cite()")
+
+        print subst
 
         def __repl(repl):
             return subst[repl.group(1)]

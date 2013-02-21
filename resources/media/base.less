@@ -329,6 +329,7 @@ body {
             clear: both;
             margin-bottom: 5px;
             padding-bottom: 5px;
+            border: 1px solid transparent;
             fieldset {
                 border: 0px;
                 padding-bottom: 5px;
@@ -336,6 +337,21 @@ body {
             legend {
                 font-size: smaller;
                 color: @table-gray;
+            }
+            &.edited {
+                border: 1px solid @logo-color;
+                .buttons { display: block }
+            }
+            .buttons {
+                display: none;
+                text-align: right;
+                input[name=save] {
+                   background-color: @logo-color;
+                }
+                input {
+                   min-width: 100px;
+                   height: 2.0em;
+                }
             }
             @field-label-width: 200px;
             @field-input-width: 250px;
@@ -357,7 +373,10 @@ body {
                }
                select, textarea, input {
                   float: right;
-                  width: @field-input-width
+                  width: @field-input-width;
+                  &.double {
+                     width: 2 * @field-input-width + @field-label-width + @field-padding;
+                  }
                }
                select, input {line-height: 1.5em}
 
