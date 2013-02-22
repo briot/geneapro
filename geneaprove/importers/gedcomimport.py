@@ -260,11 +260,6 @@ class GedcomImporter(object):
                         "%s Unhandled REPO.%s" % (location(v), k))
 
         try:
-            comment = sour.TITL or sour.ABBR
-        except:
-            comment = ''
-
-        try:
             chan = sour.CHAN
         except:
             chan = None
@@ -276,8 +271,10 @@ class GedcomImporter(object):
             researcher=self._researcher,
             subject_date=None,
             medium=medium,
+            title=sour.TITL,
+            abbrev=sour.ABBR,
             last_change=self._create_CHAN(chan),
-            comments=comment)
+            comments='')
         if rep:
             models.Repository_Source.objects.create(
                 repository=rep,
