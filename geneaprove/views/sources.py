@@ -138,7 +138,7 @@ def list_of_citations(medium, src=None):
         result['_abbrev'] = src.abbrev
         result['_medium'] = src.medium
         result['_notes'] = src.comments
-        result['_subjectDate'] = src.subject_date
+        # result['_lastAccess'] = src.last_change
         # result['_subjectPlace'] = src.subject_place.name
         # result['_jurisdictionPlace'] = src.jurisdiction_place.name
 
