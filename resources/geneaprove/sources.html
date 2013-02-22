@@ -33,9 +33,14 @@
                <div class="details">
                   <fieldset>
                      <legend>Citation (parent citation grayed out)</legend>
+
+                     {% if s.higher_source_id %}
+                     <a href='/sources/{{s.higher_source_id}}'>Higher source</a>
+                     {% else %}
                      <input type="button"
                             value="Set higher source"
                             title="Select the source in which this one was found, for instance a specific will inside a will book"/>
+                     {% endif %}
 
                      <span class="sourceMediaType">
                         <label for="_sourceMediaType">Source type</label>

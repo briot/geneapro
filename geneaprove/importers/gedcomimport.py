@@ -802,6 +802,40 @@ class GedcomImporter(object):
                 else:
                     sour = (s.value, self._sources[s.value])
 
+                # If we have parts, we need to create a nested source instead
+                parts = []
+                for k, v in s.for_all_fields():
+                    parts.append((k, v))
+
+                parts_string = u"".join(u" %s=%s" % p for p in parts)
+
+                if parts:
+                    sour2 = models.Source.objects.create(
+                        higher_source=sour[1],
+                        researcher=self._researcher,
+                        title=(sour[1].title or u'') + parts_string,
+                        abbrev=(sour[1].abbrev or u'') + parts_string,
+                        comments="".join(getattr(s, "NOTE", [])),
+                        last_change=sour[1].last_change)
+                    sour = (sour[0], sour2)
+
+                    for k, v in parts:
+                        if k == "NOTE":
+                            continue  # already handled
+                        elif k == "OBJE":
+                            self.report_error(
+                                "%s Unhandled SOUR.%s" % (location(v), k))
+                        else:
+                            try:
+                                type = models.Citation_Part_Type.objects.get(
+                                    name=k)
+                            except:
+                                type = models.Citation_Part_Type.objects.create(
+                                    name=k)
+                            p = models.Citation_Part(type=type, value=v)
+                            sour2.parts.add(p)
+                    sour2.save()
+
                 all_sources.append(sour)
 
             return all_sources
