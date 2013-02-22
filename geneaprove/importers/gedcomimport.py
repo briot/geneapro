@@ -205,28 +205,31 @@ class GedcomImporter(object):
         if data.value and self._repo.get(data.value, None):
             return self._repo[data.value]
 
-        info = ""
+        info = []
         if getattr(data, "WWW", None):
-            info += "\nURL=".join(data.WWW)
+            info.append("\nURL=".join(data.WWW))
         if getattr(data, "PHON", None):
-            info += "\nPhone=".join(data.PHON)
+            info.append("\nPhone=".join(data.PHON))
         if getattr(data, "RIN", None):
-            info += "\nRIN=" + data.RIN
+            info.append("\nRIN=" + data.RIN)
         if getattr(data, "NOTE", None):
-            info += "\nNote=".join(data.NOTE)
+            info.append("\nNote=".join(data.NOTE))
 
+        info = "".join(info)
         r = None
+        addr = getattr(data, "ADDR", None)
+        name = getattr(data, "NAME", "")
 
-        if info or getattr(data, "ADDR", None):
+        if info or addr or name:
             r = models.Repository.objects.create(
                 place=None,
-                addr=getattr(data, "ADDR", None),
-                name=getattr(data, "NAME", info),
-                # type=None,
+                addr=addr,
+                name=name or info,
+                type=None,
                 info=info)
 
-            if data.value:
-                self._repo[data.value] = r
+            if data.id:
+                self._repo[data.id] = r
 
         for k, v in data.for_all_fields():
             # CALN is handled directly in the source itself
@@ -271,22 +274,17 @@ class GedcomImporter(object):
             researcher=self._researcher,
             subject_date=None,
             medium=medium,
-            title=sour.TITL,
-            abbrev=sour.ABBR,
+            title=getattr(sour, "TITL", ""),
+            abbrev=getattr(sour, "ABBR", ""),
             last_change=self._create_CHAN(chan),
             comments='')
-        if rep:
+        if rep is not None:
             models.Repository_Source.objects.create(
                 repository=rep,
                 source=src,
                 #activity=None,
                 call_number=None,
                 description=None)
-
-        if getattr(sour, "ABBR", None):
-            src.abbrev = sour.ABBR
-        if getattr(sour, "TITL", None):
-            src.title = sour.TITL
 
         obje = sour.OBJE
         if obje:

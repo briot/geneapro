@@ -120,8 +120,13 @@
                            <span class="field">
                               <label for="_repoType1">Type</label>
                               <select name="_repoType">
+                                  <option>unknown</option>
                                   {% for t in repository_types %}
-                                  <option>{{t.name}}</option>
+                                  <option
+                                     {% if t.name == r.type.name %}
+                                     selected
+                                     {% endif %}
+                                  >{{t.name}}</option>
                                   {% endfor %}
                               </select>
                            </span>
