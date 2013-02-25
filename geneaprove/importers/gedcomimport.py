@@ -828,10 +828,10 @@ class GedcomImporter(object):
                         else:
                             try:
                                 type = models.Citation_Part_Type.objects.get(
-                                    name=k)
+                                    gedcom=k)
                             except:
                                 type = models.Citation_Part_Type.objects.create(
-                                    name=k)
+                                    name=k.title(), gedcom=k)
                             p = models.Citation_Part(type=type, value=v)
                             sour2.parts.add(p)
                     sour2.save()

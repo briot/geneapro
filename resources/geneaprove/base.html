@@ -91,12 +91,12 @@
    </div> <!--  contents -->
 
  <script type="text/javascript">
-  {% block script %}
-  {% endblock script %}
   setMediaURL("{{MEDIA_URL}}");
   $(document).ready(function() {
      initBase({{decujus|default:1}}, "{{decujus_name|default:""}}");
   });
+  {% block script %}
+  {% endblock script %}
  </script>
 
  <div id="importDialog" title="Import GEDCOM" style="display:none">

@@ -64,13 +64,7 @@ def extended_sources(ids, schemes):
                          "repositories", "researcher"),
                     "id", ids):
         sources[s.id] = s
-        s.citations = []
         s.asserts = []
-
-    # ??? Should include parent source's citations
-    for c in sql_in(models.Citation_Part.objects.select_related("type"),
-                    "source", ids):
-        sources[c.source_id].citations.append(c)
 
     # Assertions deducted from this source
 
@@ -134,6 +128,7 @@ def list_of_citations(medium, src=None):
         result[part] = ''
 
     if src is not None:
+        result['_biblio'] = src.biblio
         result['_title'] = src.title
         result['_abbrev'] = src.abbrev
         result['_medium'] = src.medium
@@ -234,6 +229,8 @@ def editCitation(request, source_id):
                 src.comments = value
             elif key == '_abbrev':
                 src.abbrev = value
+            elif key == '_biblio':
+                src.biblio = value
             elif key == '_title':
                 src.title = value
             elif key == '_subjectDate':
@@ -261,7 +258,8 @@ def editCitation(request, source_id):
                 src.parts.add(p)
 
         if src.medium and src.medium != 'unknown':
-            c = Citations.get_citation(src.medium).cite(src)
+            c = Citations.get_citation(src.medium).cite(src, unknown_as_text=False)
+            src.biblio = c.biblio
             src.title = c.full
             src.abbrev = c.short
 

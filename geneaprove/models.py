@@ -384,6 +384,9 @@ documents the citation styles.""")
    abbrev = models.TextField(
        null=True,
        help_text="An (possibly computed) abbreviated citation")
+   biblio = models.TextField(
+       null=True,
+       help_text="Full citation for a bibliography")
 
    comments      = models.TextField(null=True)
 

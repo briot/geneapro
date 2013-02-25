@@ -508,7 +508,7 @@ evidence_style = {
    'ESM314': Citation_Style(
        category='Church Records',
        type='Image Copies: Digitized Online, Church & series as lead elements in Source List',
-       biblio='${Church (Author)} (${Location}). ${Record Series}. ${Item Type Or Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
+       biblio='${Church (Author)} (${Location}). ${Record Series}. ${Item Type Or Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Access Date}.',
        full='${Church (Author)} (${Location}), ${Record Book Id (Generic Label)}, ${Page(S)}, ${Item Of Interest & Date For Unpaginated Entry}; ${Item Type Or Format}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Access Date}).',
        short='${Church (Author)} (${Location (Short)}), ${Record Book Id (Generic Label)}, ${Page(S)}, ${Item (Short)}.'),
 

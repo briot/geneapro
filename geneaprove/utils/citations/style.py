@@ -27,7 +27,7 @@ class Citation_Style(object):
         self.full = full
         self.short = short
 
-    def cite(self, source):
+    def cite(self, source, unknown_as_text=True):
         """
         Compute the citation for a source. This function does not use the
         computed name from the database, but recompute its from the citation
@@ -40,11 +40,12 @@ class Citation_Style(object):
 
         subst = {}
         for part in self.required_parts():
-            subst[part] = 'unknown %s' % part
+            subst[part] = 'unknown %s' % part if unknown_as_text else ''
 
         if isinstance(source, models.Source):
             subst['_title'] = source.title
             subst['_abbrev'] = source.abbrev
+            subst['_biblio'] = source.biblio
             for part in source.parts.select_related('type__name').all():
                 subst[part.type.name] = part.value
         elif isinstance(source, dict):

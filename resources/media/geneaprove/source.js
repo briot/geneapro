@@ -84,10 +84,13 @@ SourceCitation.prototype.restoreFields_ = function(parts) {
          $('select[name=sourceMediaType] option[value="' + v + '"]', this.div)
             .prop('selected', true);
          $('textarea[name=_title]', this.div).prop("disabled", v != '');
+         $('textarea[name=_biblio]', this.div).prop("disabled", v != '');
          $('textarea[name=_abbrev]', this.div).prop("disabled", v != '');
       } else if (k == '_title') {
          $('span.name', this.div).html(v);
          $('textarea[name=_title]', this.div).html(v);
+      } else if (k == '_biblio') {
+         $('textarea[name=_biblio]', this.div).html(v);
       } else if (k == '_abbrev') {
          $('textarea[name=_abbrev]', this.div).html(v);
       } else if (k == '_notes') {
@@ -139,6 +142,7 @@ SourceCitation.prototype.onFieldChange_ = function(e) {
                $('span.name', this.div).html(data['full']);
                $('textarea[name=_title]', this.div).val(data['full']);
                $('textarea[name=_abbrev]', this.div).val(data['short']);
+               $('textarea[name=_biblio]', this.div).val(data['biblio']);
             });
    }
 };
@@ -194,15 +198,17 @@ function initSource(schemes, parts) {
       var $t = $(this);
       var val = $t.attr('_order');
       var s = Number($t.attr('_scheme'));
-      $t.empty().raty({
-         path: mediaURL + 'raty_img/',
-         number: schemes[s].length,
-         hintList: schemes[s],
-         start: val,
-         cancel: true,
-         cancelHint: 'Unknown surety',
-         readOnly: true
-      });
+      if (schemes[s]) {
+         $t.empty().raty({
+            path: mediaURL + 'raty_img/',
+            number: schemes[s].length,
+            hintList: schemes[s],
+            start: val,
+            cancel: true,
+            cancelHint: 'Unknown surety',
+            readOnly: true
+         });
+      }
    });
 }
 window['initSource'] = initSource;
