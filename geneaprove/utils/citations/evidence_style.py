@@ -11,8 +11,8 @@ evidence_style = {
    'ESM94': Citation_Style(
        category='Archives & Artifacts',
        type='Archived Material: Digital Archives, Collection (database) as lead element in Source List',
-       biblio='"${Collection}." ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='"${Collection}," ${Website Creator/Owner}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Item Type Or Format (Short)}, "${Document Title}," ${Page(S)}; ${Credit Line (Source Of This Source)}.',
+       biblio='"${Collection}." ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='"${Collection}," ${Website Creator/Owner}, <I>${Website Title}</I> (${URL} : ${Date}), ${Item Type Or Format (Short)}, "${Document Title}," ${Page(S)}; ${Credit Line (Source Of This Source)}.',
        short='"${Collection}," <I>${Website Title}</I>, "${Document Title (Short)}," ${Page(S) (Short)}.'),
 
    'ESM95': Citation_Style(
@@ -193,15 +193,15 @@ evidence_style = {
    'ESM165': Citation_Style(
        category='Business & Institutional Records',
        type='Corporate Records: Online Database, Database as lead element in Source List',
-       biblio='"${Database Title}." ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='"${Database Title}." ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Digital Path (When Necessary)}, ${Item Of Interest}.',
+       biblio='"${Database Title}." ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='"${Database Title}." ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${URL} : ${Date}), ${Digital Path (When Necessary)}, ${Item Of Interest}.',
        short='"${Database Title}," <I>${Website Title}</I>, ${Item Of Interest}.'),
 
    'ESM166': Citation_Style(
        category='Business & Institutional Records',
        type='Corporate Records: Online Images, Collection as lead element in Source List',
-       biblio='"${Collection}." ${Item Type Or Format}. <I>${Website Title}</I> ${Url (Digital Location)} : ${Year(S)}. ${Credit Line (Source Of This Source)}.',
-       full='"${Collection}," ${Item Type Or Format}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}; Citing "${Full Credit Line (Source Of The Source)}."',
+       biblio='"${Collection}." ${Item Type Or Format}. <I>${Website Title}</I> ${URL} : ${Year(S)}. ${Credit Line (Source Of This Source)}.',
+       full='"${Collection}," ${Item Type Or Format}, <I>${Website Title}</I> (${URL} : ${Date}), ${Item Of Interest}; Citing "${Full Credit Line (Source Of The Source)}."',
        short='"${Collection}," <I>${Website Title}</I>, ${Item Of Interest (Short)}.'),
 
    'ESM167': Citation_Style(
@@ -214,8 +214,8 @@ evidence_style = {
    'ESM168': Citation_Style(
        category='Business & Institutional Records',
        type='Lineage-Society Records, Online Database, Organizations as lead element in Source List',
-       biblio='${Organization1}. <I>${Website Title}</I>. ${Item Type Or Format}. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Organization2}, <I>${Website Title}</I>, ${Item Type Or Format} (${Url (Digital Location)} : ${Date}), ${Item Of Interest}.',
+       biblio='${Organization1}. <I>${Website Title}</I>. ${Item Type Or Format}. ${URL} : ${Year(S)}.',
+       full='${Organization2}, <I>${Website Title}</I>, ${Item Type Or Format} (${URL} : ${Date}), ${Item Of Interest}.',
        short='${Organization (Short Title)}, <I>${Website Title}</I>, ${Item Of Interest}.'),
 
    'ESM169': Citation_Style(
@@ -249,8 +249,8 @@ evidence_style = {
    'ESM173': Citation_Style(
        category='Business & Institutional Records',
        type='Professional Reports: Historical Research: Online, Corporate author as lead element in Source List',
-       biblio='${Corporate Author (Researchers Not Identified)} (${Corporate Location}). "${Report Title (Quoted Exactly)}." ${Report Date (Short)}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Access Year}.',
-       full='${Corporate Author (Researchers Not Identified)} (${Corporate Location}), "${Report Title (Quoted Exactly)}," ${Report Date}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Page Or Specific Part}.',
+       biblio='${Corporate Author (Researchers Not Identified)} (${Corporate Location}). "${Report Title (Quoted Exactly)}." ${Report Date (Short)}. <I>${Website Title}</I>. ${URL} : ${Access Year}.',
+       full='${Corporate Author (Researchers Not Identified)} (${Corporate Location}), "${Report Title (Quoted Exactly)}," ${Report Date}, <I>${Website Title}</I> (${URL} : ${Date}), ${Page Or Specific Part}.',
        short='${Author}, "${Report Title (Short)}," ${Specific Part}.'),
 
    'ESM174': Citation_Style(
@@ -284,8 +284,8 @@ evidence_style = {
    'ESM211': Citation_Style(
        category='Cemetery Records',
        type='Cemetery Office Records: Online Images, Compiler as lead element in Source List',
-       biblio='${Creator}. <I>${Website Title}</I>. ${Item Type & Format L}. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Creator}, <I>${Website Title}</I>, ${Item Type & Format F} (${Url (Digital Location)} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
+       biblio='${Creator}. <I>${Website Title}</I>. ${Item Type & Format L}. ${URL} : ${Year(S)}.',
+       full='${Creator}, <I>${Website Title}</I>, ${Item Type & Format F} (${URL} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
        short='<I>${Website Title}</I>, ${Item Type & Format S}, ${Item Of Interest (Short)}.'),
 
    'ESM212': Citation_Style(
@@ -312,8 +312,8 @@ evidence_style = {
    'ESM215': Citation_Style(
        category='Cemetery Records',
        type='Grave Markers: Images Online, Creator as lead element in Source List',
-       biblio='${Creator}. <I>${Website Title}</I>. ${Item Type Or Format}. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Creator}, <I>${Website Title}</I>, ${Item Type Or Format} (${Url (Digital Location)} : ${Date}), ${Item Of Interest}.',
+       biblio='${Creator}. <I>${Website Title}</I>. ${Item Type Or Format}. ${URL} : ${Year(S)}.',
+       full='${Creator}, <I>${Website Title}</I>, ${Item Type Or Format} (${URL} : ${Date}), ${Item Of Interest}.',
        short='${Creator}, <I>${Website Title}</I>, ${Item Of Interest (Short)}.'),
 
    'ESM216': Citation_Style(
@@ -340,8 +340,8 @@ evidence_style = {
    'ESM219': Citation_Style(
        category='Cemetery Records',
        type='Derivatives: Database Online, Compiler as lead element in Source List',
-       biblio='${Creator (Last)}, ${Creator (First)}. "${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Creator (First)} ${Creator (Last)}, "${Database Title}," ${Item Type Or Format}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}.',
+       biblio='${Creator (Last)}, ${Creator (First)}. "${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Creator (First)} ${Creator (Last)}, "${Database Title}," ${Item Type Or Format}, <I>${Website Title}</I> (${URL} : ${Date}), ${Item Of Interest}.',
        short='${Creator (Short)}, "${Database Title}," ${Item Of Interest}.'),
 
    'ESM237': Citation_Style(
@@ -368,22 +368,22 @@ evidence_style = {
    'ESM240': Citation_Style(
        category='Census Records',
        type='Digital Images: Online Commercial Site, Place & year as lead elements in Source List',
-       biblio='${Jurisdiction (State. County)}. ${Census Id (Generic)}, ${Schedule}. ${Item Type Or Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Census Id}, ${Jurisdiction (County, State)}, ${Schedule}, ${Civil Division(S)}, ${Page Id}, ${Household Id}, ${Person(S) Of Interest}; ${Item Type Or Format}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}); ${Credit Line (Source Of This Source)}.',
+       biblio='${Jurisdiction (State. County)}. ${Census Id (Generic)}, ${Schedule}. ${Item Type Or Format}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Census Id}, ${Jurisdiction (County, State)}, ${Schedule}, ${Civil Division(S)}, ${Page Id}, ${Household Id}, ${Person(S) Of Interest}; ${Item Type Or Format}, <I>${Website Title}</I> (${URL} : ${Date}); ${Credit Line (Source Of This Source)}.',
        short='${Census Id}, ${Jurisdiction (Short)}, ${Schedule (Short)}, ${Page Id}, ${Household Id (Short)}, ${Person(S) Of Interest}.'),
 
    'ESM241': Citation_Style(
        category='Census Records',
        type='Digital Images: Online Archives (France), Place & year as lead elements in Source List',
-       biblio='${Jurisdiction}. ${Census Id (Generic)}. ${Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Census Id}, ${Jurisdiction (Long)}, ${Page(S)}, ${Household Id}, ${Person Of Interest}; ${Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}); ${Credit Line (Source Of This Source)}.',
+       biblio='${Jurisdiction}. ${Census Id (Generic)}. ${Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Census Id}, ${Jurisdiction (Long)}, ${Page(S)}, ${Household Id}, ${Person Of Interest}; ${Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${URL} : ${Date}); ${Credit Line (Source Of This Source)}.',
        short='${Census Id}, ${Jurisdiction (Short)}, ${Page(S)}, ${Household Id (Short)}, ${Person Of Interest}.'),
 
    'ESM242': Citation_Style(
        category='Census Records',
        type='Digital Images: Online Archives (U.K., Wales), Place & year as lead elements in Source List',
-       biblio='${Jurisdiction}, ${Census Id (Generic)}. ${Item Type Or Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Census Id}, ${Jurisdiction (Short)}, ${Civil Division(S)}, ${Page Id}, ${Person Of Interest}; ${Item Type Or Format}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}); ${Credit Line (Source Of This Source)}.',
+       biblio='${Jurisdiction}, ${Census Id (Generic)}. ${Item Type Or Format}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Census Id}, ${Jurisdiction (Short)}, ${Civil Division(S)}, ${Page Id}, ${Person Of Interest}; ${Item Type Or Format}, <I>${Website Title}</I> (${URL} : ${Date}); ${Credit Line (Source Of This Source)}.',
        short='${Census Id}, ${Jurisdiction (Short)}, ${Civil Division(S)}, ${Page Id}, ${Person Of Interest}.'),
 
    'ESM243': Citation_Style(
@@ -466,8 +466,8 @@ evidence_style = {
    'ESM254': Citation_Style(
        category='Census Records',
        type='Derivatives: Database Online, Compiler as lead element in Source List',
-       biblio='${Compiler}. "${Database Title}." ${Item Type Or Format}. ${Website Creator/Owner (Short)}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Compiler}, "${Database Title}," ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
+       biblio='${Compiler}. "${Database Title}." ${Item Type Or Format}. ${Website Creator/Owner (Short)}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Compiler}, "${Database Title}," ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${URL} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
        short='${Compiler}, "${Database Title}," ${Item Of Interest (Short)}.'),
 
    'ESM255': Citation_Style(
@@ -480,8 +480,8 @@ evidence_style = {
    'ESM256': Citation_Style(
        category='Census Records',
        type='Derivatives: Statistical Database, Online: User-Defined Reports, Compiler as lead elements in Source List',
-       biblio='${Compiler}. "${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Compiler}, "${Database Title}," ${Item Type Or Format}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}.',
+       biblio='${Compiler}. "${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Compiler}, "${Database Title}," ${Item Type Or Format}, <I>${Website Title}</I> (${URL} : ${Date}), ${Item Of Interest}.',
        short='${Compiler (Short)}, "${Database Title}," ${Item Of Interest}.'),
 
    'ESM311': Citation_Style(
@@ -508,8 +508,8 @@ evidence_style = {
    'ESM314': Citation_Style(
        category='Church Records',
        type='Image Copies: Digitized Online, Church & series as lead elements in Source List',
-       biblio='${Church (Author)} (${Location}). ${Record Series}. ${Item Type Or Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Access Date}.',
-       full='${Church (Author)} (${Location}), ${Record Book Id (Generic Label)}, ${Page(S)}, ${Item Of Interest & Date For Unpaginated Entry}; ${Item Type Or Format}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Access Date}).',
+       biblio='${Church (Author)} (${Location}). ${Record Series}. ${Item Type Or Format}. <I>${Website Title}</I>. ${URL} : ${Access Date}.',
+       full='${Church (Author)} (${Location}), ${Record Book Id (Generic Label)}, ${Page(S)}, ${Item Of Interest & Date For Unpaginated Entry}; ${Item Type Or Format}, <I>${Website Title}</I> (${URL} : ${Access Date}).',
        short='${Church (Author)} (${Location (Short)}), ${Record Book Id (Generic Label)}, ${Page(S)}, ${Item (Short)}.'),
 
    'ESM315': Citation_Style(
@@ -550,8 +550,8 @@ evidence_style = {
    'ESM320': Citation_Style(
        category='Church Records',
        type='Derivatives: Church Records Database, Online, Compiler as lead element in Source List',
-       biblio='${Compiler (Last)}, ${Compiler (First)} "${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Compiler (First)} ${Compiler (Last)}, "${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I> (${Url (Digital Location)}: ${Date}), ${Item Of Interest 1}; ${Credit Line (Source Of This Source)}.',
+       biblio='${Compiler (Last)}, ${Compiler (First)} "${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Compiler (First)} ${Compiler (Last)}, "${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I> (${URL}: ${Date}), ${Item Of Interest 1}; ${Credit Line (Source Of This Source)}.',
        short='${Compiler (Short)}, "${Database Title}," ${Item Of Interest 2}.'),
 
    'ESM373': Citation_Style(
@@ -613,15 +613,15 @@ evidence_style = {
    'ESM381': Citation_Style(
        category='Local & State Records: Courts & Governance',
        type='Image Copies: Online, Jurisdiction & series as lead elements in Source List',
-       biblio='${Jurisdiction (State. City)}. ${Series}. ${Repository}, ${Repository Location}. ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Jurisdiction (City, State)}, ${Series} ${Case File No.}, ${Case Label}, ${Court Term}, "${Item Of Interest}," ${Record Date(S)}; ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}).',
+       biblio='${Jurisdiction (State. City)}. ${Series}. ${Repository}, ${Repository Location}. ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Jurisdiction (City, State)}, ${Series} ${Case File No.}, ${Case Label}, ${Court Term}, "${Item Of Interest}," ${Record Date(S)}; ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${URL} : ${Date}).',
        short='${Jurisdiction (Short)}, ${Series (Short)} ${Case File No.}, ${Case Label (Short)}, ${Court Term (Short)}, "${Item Of Interest (Short)}."'),
 
    'ESM382': Citation_Style(
        category='Local & State Records: Courts & Governance',
        type='Derivatives: Databases, Online, Database as lead element in Source List',
-       biblio='"${Database Title}." ${Item Type Or Format}. <I>${Website Title (Same As Creator)}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='"${Database Title}," ${Item Type Or Format}, <I>${Website Title (Same As Creator)}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
+       biblio='"${Database Title}." ${Item Type Or Format}. <I>${Website Title (Same As Creator)}</I>. ${URL} : ${Year(S)}.',
+       full='"${Database Title}," ${Item Type Or Format}, <I>${Website Title (Same As Creator)}</I> (${URL} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
        short='"${Database Title}," ${Item Type Or Format} ${Item Of Interest (Short)}.'),
 
    'ESM421': Citation_Style(
@@ -760,22 +760,22 @@ evidence_style = {
    'ESM494': Citation_Style(
        category='Local & State Records: Property & Probates',
        type='Image Copies: Online, (Jurisdiction & series as lead elements in Source List)',
-       biblio='${Jurisdiction (State. County)}, ${Series}. ${Repository}, ${Repository Location}. ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Jurisdiction (County, State)}, ${Specific Volume(S)}: ${Page(S)}, "${Item Of Interest}," ${Record Date(S)}; ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}).',
+       biblio='${Jurisdiction (State. County)}, ${Series}. ${Repository}, ${Repository Location}. ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Jurisdiction (County, State)}, ${Specific Volume(S)}: ${Page(S)}, "${Item Of Interest}," ${Record Date(S)}; ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${URL} : ${Date}).',
        short='${Jurisdiction (Short)}, ${Specific Volume(S)}: ${Page(S)}, "${Item Of Interest (Short)}," ${Record Date(S)}.'),
 
    'ESM495': Citation_Style(
        category='Local & State Records: Property & Probates',
        type='Derivatives: Abstracts, Online, (Compiler & article title as lead elements in Source List)',
-       biblio='${Creator Of Database (Last)}, ${Creator Of Database (First)}. "${Article Title}."< ${Item Type},> <${Site Owner Or Creator}, ><I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Creator Of Database (First)} ${Creator Of Database (Last)}, "${Article Title}," <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}, ${Record Date(S)}; ${Credit Line (Source Of This Source)}.',
+       biblio='${Creator Of Database (Last)}, ${Creator Of Database (First)}. "${Article Title}."< ${Item Type},> <${Site Owner Or Creator}, ><I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Creator Of Database (First)} ${Creator Of Database (Last)}, "${Article Title}," <I>${Website Title}</I> (${URL} : ${Date}), ${Item Of Interest}, ${Record Date(S)}; ${Credit Line (Source Of This Source)}.',
        short='${Creator (Short)}, "${Article Title}," <I>${Website Title}</I>, ${Item Of Interest (Short)}.'),
 
    'ESM496': Citation_Style(
        category='Local & State Records: Property & Probates',
        type='Derivatives: Database, Online, (Database as lead element in Source List)',
-       biblio='"${Database Title}."< ${Item Type (If Necessary)},> <I>${Website Title (Same As Creator)}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='"${Database Title}," <I>${Website Title (Same As Creator)}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
+       biblio='"${Database Title}."< ${Item Type (If Necessary)},> <I>${Website Title (Same As Creator)}</I>. ${URL} : ${Year(S)}.',
+       full='"${Database Title}," <I>${Website Title (Same As Creator)}</I> (${URL} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
        short='"${Database Title}," <I>${Website Title (Same As Creator)}</I>, ${Item Of Interest}.'),
 
    'ESM539': Citation_Style(
@@ -844,29 +844,29 @@ evidence_style = {
    'ESM548': Citation_Style(
        category='National Government Records',
        type='Databases Online: National Archives (Australia), Source List arranged geographically by country, then database as lead element',
-       biblio='${Country}. "${Database Title}." ${Item Type Or Format}. <I>${Website Title (Same As Creator-Owner)}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='"${Database Title}," ${Item Type Or Format}, <I>${Website Title (Same As Creator-Owner)}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
+       biblio='${Country}. "${Database Title}." ${Item Type Or Format}. <I>${Website Title (Same As Creator-Owner)}</I>. ${URL} : ${Year(S)}.',
+       full='"${Database Title}," ${Item Type Or Format}, <I>${Website Title (Same As Creator-Owner)}</I> (${URL} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
        short='"${Database Title}," ${Item Type Or Format}, <I>${Website Title (Same As Creator-Owner)}</I>, ${Item Of Interest}.'),
 
    'ESM549': Citation_Style(
        category='National Government Records',
        type='Databases Online: National Archives (Canada), Source List arranged geographically by country, then creator as lead element',
-       biblio='${Country}. ${Creator Of Database}. "${Database Title}." ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Creator Of Database}, "${Database Title}," ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
+       biblio='${Country}. ${Creator Of Database}. "${Database Title}." ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Creator Of Database}, "${Database Title}," ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${URL} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
        short='${Creator Of Database}, "${Database Title}," ${Item Type Or Format}, <I>${Website Title}</I>, ${Item Of Interest (Short)}.'),
 
    'ESM550': Citation_Style(
        category='National Government Records',
        type='Databases Online: National Archives (U.K.), Source List arranged geographically by country, then creator as lead element',
-       biblio='${Country}. ${Creator-Owner Of Database & Website (Short)}. "${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Creator-Owner Of Database & Website}, "${Database Title}," ${Item Type Or Format}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
+       biblio='${Country}. ${Creator-Owner Of Database & Website (Short)}. "${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Creator-Owner Of Database & Website}, "${Database Title}," ${Item Type Or Format}, <I>${Website Title}</I> (${URL} : ${Date}), ${Item Of Interest}; ${Credit Line (Source Of This Source)}.',
        short='"${Database Title}," ${Item Type Or Format}, <I>${Website Title}</I>, ${Item Of Interest}.'),
 
    'ESM551': Citation_Style(
        category='National Government Records',
        type='Databases Online: National Archives (U.S.), Database as lead element in Source List',
-       biblio='"${Database Title}." ${Item Type Or Format}. <I>${Website Title (Same As Creator-Owner)}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='"${Database Title}," ${Item Type Or Format}, <I>${Website Title (Same As Creator-Owner)}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}, ${Digital Id No.}; ${Credit Line (Source Of This Source)}.',
+       biblio='"${Database Title}." ${Item Type Or Format}. <I>${Website Title (Same As Creator-Owner)}</I>. ${URL} : ${Year(S)}.',
+       full='"${Database Title}," ${Item Type Or Format}, <I>${Website Title (Same As Creator-Owner)}</I> (${URL} : ${Date}), ${Item Of Interest}, ${Digital Id No.}; ${Credit Line (Source Of This Source)}.',
        short='"${Database Title}," ${Item Type Or Format (Short)}, <I>${Website Title (Same As Creator-Owner)}</I>, ${Item Of Interest (Short)}.'),
 
    'ESM552': Citation_Style(
@@ -886,22 +886,22 @@ evidence_style = {
    'ESM554': Citation_Style(
        category='National Government Records',
        type='Images Online: Library of Congress, Creator of database/website as lead element in Source List',
-       biblio='${Creator/Owner Of Database & Website}. "${Title Of Database}." ${Item Type Or Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Creator/Owner Of Database & Website}, "${Title Of Database}," ${Item Type Or Format2}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}, ${Digital Id No.}; ${Credit Line (Source Of This Source)}.',
+       biblio='${Creator/Owner Of Database & Website}. "${Title Of Database}." ${Item Type Or Format}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Creator/Owner Of Database & Website}, "${Title Of Database}," ${Item Type Or Format2}, <I>${Website Title}</I> (${URL} : ${Date}), ${Item Of Interest}, ${Digital Id No.}; ${Credit Line (Source Of This Source)}.',
        short='${Creator/Owner Of Database & Website}, "${Title Of Database (Short)}," <I>${Website Title}</I>, ${Item Of Interest (Short)}.'),
 
    'ESM555': Citation_Style(
        category='National Government Records',
        type='Images Online: National Archives (U.S.), Citing as a published item, with database title as lead element in Source List',
-       biblio='"${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='"${Database Title}," ${Item Type Or Format2}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), ${Item Of Interest}, ${Digital Id No.}; ${Credit Line (Source Of This Source)}.',
+       biblio='"${Database Title}." ${Item Type Or Format}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='"${Database Title}," ${Item Type Or Format2}, <I>${Website Title}</I> (${URL} : ${Date}), ${Item Of Interest}, ${Digital Id No.}; ${Credit Line (Source Of This Source)}.',
        short='"${Database Title}," ${Digital File Type}, <I>${Website Title}</I>, ${Item Of Interest (Short)}.'),
 
    'ESM556': Citation_Style(
        category='National Government Records',
        type='Images Online: Patent & Trademark Office (U.S.), Citing as a published item, with database title as lead element in Source List',
-       biblio='"${Database Title}." <${Item Type Or Format}. ><I>${Website Title (Same As Creator-Owner)}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='"${Database Title}," ${Item Type Or Format 2}, <I>${Website Title (Same As Creator-Owner)}</I> (${Url (Digital Location)} : ${Date}), ${Specific Item Of Interest}; ${Credit Line (Source Of This Source)}.',
+       biblio='"${Database Title}." <${Item Type Or Format}. ><I>${Website Title (Same As Creator-Owner)}</I>. ${URL} : ${Year(S)}.',
+       full='"${Database Title}," ${Item Type Or Format 2}, <I>${Website Title (Same As Creator-Owner)}</I> (${URL} : ${Date}), ${Specific Item Of Interest}; ${Credit Line (Source Of This Source)}.',
        short='"${Database Title}," ${Specific Item Of Interest (Short)}.'),
 
    'ESM646': Citation_Style(
@@ -984,8 +984,8 @@ evidence_style = {
    'ESM657': Citation_Style(
        category='Publications: Books, CDs, Maps, Leaflets, & Videos',
        type='Electronic Publications: Website As "Book", (Website devoted to one single item)',
-       biblio='${Author (Last)}, ${Author (First)}. <I>${Title Of Website}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Author (First)} ${Author (Last)}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}), "${Item Of Interest}."',
+       biblio='${Author (Last)}, ${Author (First)}. <I>${Title Of Website}</I>. ${URL} : ${Year(S)}.',
+       full='${Author (First)} ${Author (Last)}, <I>${Website Title}</I> (${URL} : ${Date}), "${Item Of Interest}."',
        short='${Author (Last)}, <I>${Website Title}</I>, "${Item Of Interest}."'),
 
    'ESM658': Citation_Style(
@@ -1012,8 +1012,8 @@ evidence_style = {
    'ESM661': Citation_Style(
        category='Publications: Books, CDs, Maps, Leaflets, & Videos',
        type='Image Copies: Online Publication',
-       biblio='${Author (Last)}, ${Author (First)}. <I>${Title}</I>. ${Original Publication Year}. ${New Format}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Author (First)} ${Author (Last)}, <I>${Title}</I> (${Original Publication Year}), ${Page(S)}; ${New Format}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}).',
+       biblio='${Author (Last)}, ${Author (First)}. <I>${Title}</I>. ${Original Publication Year}. ${New Format}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='${Author (First)} ${Author (Last)}, <I>${Title}</I> (${Original Publication Year}), ${Page(S)}; ${New Format}, <I>${Website Title}</I> (${URL} : ${Date}).',
        short='${Author (Last)}, <I>${Title (Short)}</I>, ${Page(S)}.'),
 
    'ESM727': Citation_Style(
@@ -1040,15 +1040,15 @@ evidence_style = {
    'ESM730': Citation_Style(
        category='Publications: Legal Works & Government Documents',
        type='Codes & Statutes, Online: State Database',
-       biblio='"${Database Title}." ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='"${Database Title}," ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date Published, Updated Or Accessed}), ${Page(S)}, ${Part}, Act: "${Title Of Act}."',
+       biblio='"${Database Title}." ${Item Type Or Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${URL} : ${Year(S)}.',
+       full='"${Database Title}," ${Item Type Or Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${URL} : ${Date Published, Updated Or Accessed}), ${Page(S)}, ${Part}, Act: "${Title Of Act}."',
        short='"${Database Title (Short)}," ${Page(S)}, "${Title Of Act}."'),
 
    'ESM731': Citation_Style(
        category='Publications: Legal Works & Government Documents',
        type='Codes & Statutes, Online: U.S. Code',
-       biblio='${Author}. <I>${Name Of Code}</I>. ${Edition}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Edition Year}.',
-       full='"${Name Of Act}," ${Title No.}, <I>${Name Of Code}</I>, ${Part/Chapter/Section}; ${Edition}, ${Website Creator/Owner}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}).',
+       biblio='${Author}. <I>${Name Of Code}</I>. ${Edition}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${URL} : ${Edition Year}.',
+       full='"${Name Of Act}," ${Title No.}, <I>${Name Of Code}</I>, ${Part/Chapter/Section}; ${Edition}, ${Website Creator/Owner}, <I>${Website Title}</I> (${URL} : ${Date}).',
        short='"${Name Of Act}," ${Citation (Legal Style) (Short)}.'),
 
    'ESM732': Citation_Style(
@@ -1089,15 +1089,15 @@ evidence_style = {
    'ESM737': Citation_Style(
        category='Publications: Legal Works & Government Documents',
        type='Congressional Records: Online Images',
-       biblio='${Author}. <I>${Series Title}</I>. ${Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Year(S)1}.',
-       full='${Author (Short)}, <I>${Series Title}</I>, ${Congress & Session} (${Year(S)2}), ${Pages}, "${Item}"; ${Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Date}).',
+       biblio='${Author}. <I>${Series Title}</I>. ${Format}. ${Website Creator/Owner}. <I>${Website Title}</I>. ${URL} : ${Year(S)1}.',
+       full='${Author (Short)}, <I>${Series Title}</I>, ${Congress & Session} (${Year(S)2}), ${Pages}, "${Item}"; ${Format}, ${Website Creator/Owner}, <I>${Website Title}</I> (${URL} : ${Date}).',
        short='${Author (Short2)}, <I>${Series Title}</I>, ${Congress & Session}, ${Pages}.'),
 
    'ESM738': Citation_Style(
        category='Publications: Legal Works & Government Documents',
        type='National Archives (U.S.) Guides: Descriptive Pamphlet, Online',
-       biblio='${Author}. <I>${Title Of Pamphlet}</I>. ${Series Id}. ${Edition}. <I>${Website Title (Same As Creator-Owner)}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Author (Short)}, <I>${Title Of Pamphlet}</I>, ${Series Id}, ${Edition}, <I>${Website Title (Same As Creator-Owner)}</I> (${Url (Digital Location)} : ${Date}), ${Page(S)}.',
+       biblio='${Author}. <I>${Title Of Pamphlet}</I>. ${Series Id}. ${Edition}. <I>${Website Title (Same As Creator-Owner)}</I>. ${URL} : ${Year(S)}.',
+       full='${Author (Short)}, <I>${Title Of Pamphlet}</I>, ${Series Id}, ${Edition}, <I>${Website Title (Same As Creator-Owner)}</I> (${URL} : ${Date}), ${Page(S)}.',
        short='${Author (Short2)}, <I>${Title Of Pamphlet}</I>, ${Series Id (Short)}, ${Page(S)}.'),
 
    'ESM739': Citation_Style(
@@ -1117,15 +1117,15 @@ evidence_style = {
    'ESM780': Citation_Style(
        category='Publications: Periodicals, Broadcasts & Web Miscellanea',
        type='Journal Articles: Online Archives of Print Journals',
-       biblio='${Author (Last)}, ${Author (First)} "${Article Title}: ${Article Subtitle}." <I>${Journal Title}</I> ${Volume} (${Issue Date}). ${Edition}. <I>${Website Title}</I>. ${Url (Digital Location)} : ${Access Year}.',
-       full='${Author (First)} ${Author (Last)}, "${Article Title}: ${Article Subtitle}." <I>${Journal Title}</I> ${Volume} (${Issue Date}); ${Edition}, <I>${Website Title}</I> (${Url (Digital Location)} : ${Access Date}), ${Specific Content}.',
+       biblio='${Author (Last)}, ${Author (First)} "${Article Title}: ${Article Subtitle}." <I>${Journal Title}</I> ${Volume} (${Issue Date}). ${Edition}. <I>${Website Title}</I>. ${URL} : ${Access Year}.',
+       full='${Author (First)} ${Author (Last)}, "${Article Title}: ${Article Subtitle}." <I>${Journal Title}</I> ${Volume} (${Issue Date}); ${Edition}, <I>${Website Title}</I> (${URL} : ${Access Date}), ${Specific Content}.',
        short='${Author (Last)}, "${Title (Short)}," ${Specific Content}.'),
 
    'ESM781': Citation_Style(
        category='Publications: Periodicals, Broadcasts & Web Miscellanea',
        type='Journal Articles: Online Journals',
-       biblio='${Author (Last)}, ${Author (First)}. "${Article Title}: ${Article Subtitle}." <I>${Journal Title}</I> ${Volume} (${Issue Date}). ${Type Or Format}. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Author (First)} ${Author (Last)}, "${Article Title}: ${Article Subtitle}," <I>${Journal Title}</I> ${Volume} (${Issue Date}), ${Type Or Format} (${Url (Digital Location)} : ${Date}), ${Specific Content1}.',
+       biblio='${Author (Last)}, ${Author (First)}. "${Article Title}: ${Article Subtitle}." <I>${Journal Title}</I> ${Volume} (${Issue Date}). ${Type Or Format}. ${URL} : ${Year(S)}.',
+       full='${Author (First)} ${Author (Last)}, "${Article Title}: ${Article Subtitle}," <I>${Journal Title}</I> ${Volume} (${Issue Date}), ${Type Or Format} (${URL} : ${Date}), ${Specific Content1}.',
        short='${Author (Last)}, "${Title (Short)}," ${Specific Content2}.'),
 
    'ESM782': Citation_Style(
@@ -1138,8 +1138,8 @@ evidence_style = {
    'ESM783': Citation_Style(
        category='Publications: Periodicals, Broadcasts & Web Miscellanea',
        type='Magazine Articles: Online Reprints, Random Items',
-       biblio='${Author (Last)}, ${Author (First)}. "${Article Title}." ${Original Publication Date}. ${Item Type}, ${Website Creator/Owner}, <I>${Website}</I>. ${Url (Digital Location)} : ${Year(S)}.',
-       full='${Author (First)} ${Author (Last)}, "${Article Title}," ${Website Creator/Owner}, <I>${Website}</I> (${Url (Digital Location)} : ${Access Date}), ${Specific Content1}; ${Credit Line (Source Of This Source)}.',
+       biblio='${Author (Last)}, ${Author (First)}. "${Article Title}." ${Original Publication Date}. ${Item Type}, ${Website Creator/Owner}, <I>${Website}</I>. ${URL} : ${Year(S)}.',
+       full='${Author (First)} ${Author (Last)}, "${Article Title}," ${Website Creator/Owner}, <I>${Website}</I> (${URL} : ${Access Date}), ${Specific Content1}; ${Credit Line (Source Of This Source)}.',
        short='${Author (Last)}, "${Article Title}," ${Specific Content2}.'),
 
    'ESM784': Citation_Style(
@@ -1159,35 +1159,35 @@ evidence_style = {
    'ESM786': Citation_Style(
        category='Publications: Periodicals, Broadcasts & Web Miscellanea',
        type='Newspaper Articles: Online Archives',
-       biblio='${Author (Last)}, ${Author (First)}. "${Article Title}." <I>${Newspaper}</I> ${Issue Date}. ${Edition}. ${Url (Digital Location) (Short)} : ${Access Year}.',
-       full='${Author (First)} ${Author (Last)}, "${Article Title}," <I>${Newspaper}</I>, ${Issue Date}, ${Edition} (${Url (Digital Location)} : ${Access Date}), ${Specific Content}; ${Credit Line (Source Of This Source)}.',
+       biblio='${Author (Last)}, ${Author (First)}. "${Article Title}." <I>${Newspaper}</I> ${Issue Date}. ${Edition}. ${URL (Short)} : ${Access Year}.',
+       full='${Author (First)} ${Author (Last)}, "${Article Title}," <I>${Newspaper}</I>, ${Issue Date}, ${Edition} (${URL} : ${Access Date}), ${Specific Content}; ${Credit Line (Source Of This Source)}.',
        short='${Author (Last)}, "${Article Title}," ${Specific Content}.'),
 
    'ESM787': Citation_Style(
        category='Publications: Periodicals, Broadcasts & Web Miscellanea',
        type='Broadcasts & Web Miscellanea: Blogs',
-       biblio='${Author (Last)}, ${Author (First)}. "${Article Title}." ${Creator Of Blog}. <I>${Blog Name}</I> ${Posting Date}. ${Url (Digital Location)} : ${Access Year}.',
-       full='${Author (First)} ${Author (Last)}, "${Article Title}," ${Creator Of Blog}, <I>${Blog Name}</I>, ${Posting Date} (${Url (Digital Location)} : ${Access Date}), ${Specific Content (Short)}.',
+       biblio='${Author (Last)}, ${Author (First)}. "${Article Title}." ${Creator Of Blog}. <I>${Blog Name}</I> ${Posting Date}. ${URL} : ${Access Year}.',
+       full='${Author (First)} ${Author (Last)}, "${Article Title}," ${Creator Of Blog}, <I>${Blog Name}</I>, ${Posting Date} (${URL} : ${Access Date}), ${Specific Content (Short)}.',
        short='${Author (Last)}, "${Article Title}," ${Specific Content}.'),
 
    'ESM788': Citation_Style(
        category='Publications: Periodicals, Broadcasts & Web Miscellanea',
        type='Broadcasts & Web Miscellanea: Discussion Forums & Lists, (Source List Entry constructed to cover a number of postings)',
-       biblio='<I>${Name Of Forum}</I>, ${Type Of Forum}, ${Date-Span Read}. ${Url (Digital Location)}.',
-       full='${Author (First)} ${Author (Last)}, "${Message Title}," <I>${Name Of Forum}</I> ${Type Of Forum}, ${Posting Date} (${Url (Digital Location)} : ${Access Date}).',
+       biblio='<I>${Name Of Forum}</I>, ${Type Of Forum}, ${Date-Span Read}. ${URL}.',
+       full='${Author (First)} ${Author (Last)}, "${Message Title}," <I>${Name Of Forum}</I> ${Type Of Forum}, ${Posting Date} (${URL} : ${Access Date}).',
        short='${Author (Last)}, "${Message Title}," <I>${Name Of Forum}</I>, ${Posting Date}.'),
 
    'ESM789': Citation_Style(
        category='Publications: Periodicals, Broadcasts & Web Miscellanea',
        type='Broadcasts & Web Miscellanea: Podcasts, (Source List Entry constructed to cover a single broadcast)',
-       biblio='${Presenter Or Guest (Last)}, ${Presenter Or Guest (First)}. "${Subject/Title}." ${Item Type} By ${Podcast Host}. <I>${Podcast Title}</I>, ${Broadcast Date}. ${Format}. <I>${Website (Where Archived)}</I>. ${Url (Digital Location)} : ${Access Year}.',
-       full='${Presenter Or Guest (First)} ${Presenter Or Guest (Last)}, "${Subject/Title}," ${Item Type} By ${Podcast Host}, <I>${Podcast Title}</I>, ${Broadcast Date}, ${Format}, <I>${Website (Where Archived)}</I> (${Url (Digital Location)} : ${Access Date}), ${Specific Content}.',
+       biblio='${Presenter Or Guest (Last)}, ${Presenter Or Guest (First)}. "${Subject/Title}." ${Item Type} By ${Podcast Host}. <I>${Podcast Title}</I>, ${Broadcast Date}. ${Format}. <I>${Website (Where Archived)}</I>. ${URL} : ${Access Year}.',
+       full='${Presenter Or Guest (First)} ${Presenter Or Guest (Last)}, "${Subject/Title}," ${Item Type} By ${Podcast Host}, <I>${Podcast Title}</I>, ${Broadcast Date}, ${Format}, <I>${Website (Where Archived)}</I> (${URL} : ${Access Date}), ${Specific Content}.',
        short='${Presenter (Last)}, "${Subject/Title}," ${Specific Content (Short)}.'),
 
    'ESM790': Citation_Style(
        category='Publications: Periodicals, Broadcasts & Web Miscellanea',
        type='Broadcasts & Web Miscellanea: Radio & Television Clips',
-       biblio='${Presenters (Last)}, ${Presenters (First)}. "${Clip Id}." <I>${Title Of Show}: ${Segment}</I>, ${Broadcast Date}. ${Format}. ${Network Or Producer}. <I>${Website}</I>. ${Url (Digital Location)} : ${Access Year}.',
-       full='${Presenters (First)} ${Presenters (Last)}, "${Clip Id}," <I>${Title Of Show}: ${Segment}</I>, ${Broadcast Date}, ${Format}, ${Network Or Producer}, <I>${Website}</I> (${Url (Digital Location)} : ${Date}).',
+       biblio='${Presenters (Last)}, ${Presenters (First)}. "${Clip Id}." <I>${Title Of Show}: ${Segment}</I>, ${Broadcast Date}. ${Format}. ${Network Or Producer}. <I>${Website}</I>. ${URL} : ${Access Year}.',
+       full='${Presenters (First)} ${Presenters (Last)}, "${Clip Id}," <I>${Title Of Show}: ${Segment}</I>, ${Broadcast Date}, ${Format}, ${Network Or Producer}, <I>${Website}</I> (${URL} : ${Date}).',
        short='${Presenters (Last)}, "${Clip Id}."'),
 }

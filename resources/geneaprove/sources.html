@@ -36,6 +36,7 @@
 
                      {% if s.higher_source_id %}
                      <a href='/sources/{{s.higher_source_id}}'>Higher source</a>
+                     <input type="hidden" name="_higherSource" value="{{s.higher_source_id}}"/>
                      {% else %}
                      <input type="button"
                             value="Set higher source"
@@ -174,10 +175,72 @@
       {% endif %}
   </div> {# pane1 #}
 
-  {# ----- Information ---- #}
+  {# ----- Generated ------ #}
 
   <h3>Information / Claims</h3>
   <div class="onUse">The persons cited in this section are the ones referenced in the source document. They are not related to existing persons in the database. Such links are created in the Conclusions section below.</div>
+  <div class="containers">
+     {% for a in s.asserts %}
+
+     <div class="info
+        {% if a.subject2.0 == 0 %}  {# Persona #}
+      p2p
+        {% elif a.subject2.0 == 1 %}  {# Event #}
+      event
+        {% elif a.subject2.0 == 2 %}  {# Characteristic #}
+      attr
+        {% endif %}
+
+        {% if a.disproved %}
+      disproved
+        {% endif %}
+     "/>
+
+        {% if a.subject2.0 == 0 %}  {# Persona #}
+        <input value="{{a.subject1.1.name}} ({{a.subject1.1.id}})"/> (above)
+        is the same as <input value="{{a.subject2.name}} ({{a.subject1.id}})"/>
+
+        {% elif a.subject2.0 == 1 %}  {# Event #}
+        A <select><option selected>{{a.subject2.1.type.name}}</option></select>
+        took place <input value="{{a.date|default:""}}"/>
+        in <input value="{{a.place|default:""}}">
+        <span class="surety" _scheme="1" _order="3"></span>
+        <br>
+        <input value="{{a.subject1.1.name}} ({{a.subject1.1.id}})"/> was a
+        <select><option selected>{{a.subject2.2}}</option></select> at this event.
+
+        {% elif a.subject2.0 == 2 %}  {# Characteristic #}
+        <input value="{{a.subject1.1.name}} ({{a.subject1.1.id}})"/>
+        <select>
+           <option selected>{{a.subject2.1.name}}</option>
+        </select>
+        was
+             {% for pname, pval in a.subject2.2 %}
+             <span class="char">{{pname}}</span>: {{pval}}<br>
+             {% endfor %}
+        on <input value="{{a.date|default:""}}"/>
+
+        {% endif %}
+
+        {% if a.rationale %}
+        because <input value="{{a.rationale|default:""}}"/>
+        {% endif %}
+
+        <span class="surety" _scheme="{{a.surety.scheme_id}}" _order="{{a.surety.sequence_number}}"></span>
+        <div class="buttons">
+           <input type="button" value="+">
+           <input type="button" value="-">
+        </div>
+     </div> {# info #}
+     {% endfor %}
+  </div>  {# containers #}
+
+  {# ----- Information ---- #}
+
+  <hr style="margin-top:40px">
+  Below is just a mockup
+
+  <h3>Information / Claims</h3>
   <div class="buttons">
      <input type="button" value="+ Event"/>
      <input type="button" value="+ Relationship"/>
@@ -286,64 +349,6 @@
      <span class="surety" _scheme="1" _order="1"></span>
   </div>
 
-  {# ----- Generated ------ #}
-
-  <h3>Information (generated)</h3>
-  <div class="onUse">Same as the above, just a test that GeneaProve can actually generate that info</div>
-  <div class="containers">
-     {% for a in s.asserts %}
-
-     <div class="info
-        {% if a.subject2.0 == 0 %}  {# Persona #}
-      p2p
-        {% elif a.subject2.0 == 1 %}  {# Event #}
-      event
-        {% elif a.subject2.0 == 2 %}  {# Characteristic #}
-      attr
-        {% endif %}
-
-        {% if a.disproved %}
-      disproved
-        {% endif %}
-     "/>
-
-        {% if a.subject2.0 == 0 %}  {# Persona #}
-        <input value="{{a.subject1.1.name}} ({{a.subject1.1.id}})"/> (above)
-        is the same as <input value="{{a.subject2.name}} ({{a.subject1.id}})"/>
-
-        {% elif a.subject2.0 == 1 %}  {# Event #}
-        A <select><option selected>{{a.subject2.1.type.name}}</option></select>
-        took place <input value="{{a.date|default:""}}"/>
-        in <input value="{{a.place|default:""}}">
-        <span class="surety" _scheme="1" _order="3"></span>
-        <br>
-        <input value="{{a.subject1.1.name}} ({{a.subject1.1.id}})"/> was a
-        <select><option selected>{{a.subject2.2}}</option></select> at this event.
-
-        {% elif a.subject2.0 == 2 %}  {# Characteristic #}
-        <input value="{{a.subject1.1.name}} ({{a.subject1.1.id}})"/>
-        <select>
-           <option selected>{{a.subject2.1.name}}</option>
-        </select>
-        was
-             {% for pname, pval in a.subject2.2 %}
-             <span class="char">{{pname}}</span>: {{pval}}<br>
-             {% endfor %}
-        on <input value="{{a.date|default:""}}"/>
-
-        {% endif %}
-
-        {% if a.rationale %}
-        because <input value="{{a.rationale|default:""}}"/>
-        {% endif %}
-
-        <span class="surety" _scheme="{{a.surety.scheme_id}}" _order="{{a.surety.sequence_number}}"></span>
-        <div class="buttons">
-           <input type="button" value="+">
-           <input type="button" value="-">
-        </div>
-     </div>  {# containers #}
-     {% endfor %}
   </div>
 </div> {# sourceDetails #}
 {% endblock contents %}

@@ -396,6 +396,18 @@ documents the citation styles.""")
       """Meta data for the model"""
       db_table = "source"
 
+   def compute_medium(self):
+       """
+       Return the medium type for Self. This could be inherited from higher
+       sources.
+       """
+       if self.medium:
+           return self.medium
+       elif self.higher_source:
+           return self.higher_source.compute_medium()
+       else:
+           return ""
+
 
 class Repository_Source (GeneaProveModel):
    """

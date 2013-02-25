@@ -110,6 +110,25 @@ def extended_sources(ids, schemes):
     return sources
 
 
+def prepare_citation_parts(src, parts):
+    """
+    :param parts: a dictionary (key,value) giving overriding values to some
+       of the citation parts.
+    :return: a dictionary (key,value) for the citation parts of src and its
+       higher sources. It is modified in place.
+    """
+    result = {}
+    while src:
+        for part in src.parts.select_related('type__name').all():
+            if part.value:
+                result[part.type.name] = part.value
+        src = src.higher_source
+
+    for k, v in parts.iteritems():
+        result[k] = v
+    return result
+
+
 def list_of_citations(medium, src=None):
     """
     :param medium: the id of the mediaType
@@ -118,29 +137,35 @@ def list_of_citations(medium, src=None):
        includes the parts that are set explicitly in the database, as well as
        the parts that are necessary for a complete citation of the full (as
        driven by the style templates).
-       This also returns various attribtes of the source itself, starting with
+       This also returns various attributes of the source itself, starting with
        '_'.
+       The result is a list of tuples (part_name, value, from_higher) where
+       from_parent is true when this citation part comes from a higher level
+       source.
     """
 
+    medium = medium or src.compute_medium()
     result = dict()
-
     for part in Citations.get_citation(medium).required_parts():
-        result[part] = ''
+        result[part] = ('', False)
 
     if src is not None:
-        result['_biblio'] = src.biblio
-        result['_title'] = src.title
-        result['_abbrev'] = src.abbrev
-        result['_medium'] = src.medium
-        result['_notes'] = src.comments
-        # result['_lastAccess'] = src.last_change
-        # result['_subjectPlace'] = src.subject_place.name
-        # result['_jurisdictionPlace'] = src.jurisdiction_place.name
+        for k, v in prepare_citation_parts(src.higher_source, {}).iteritems():
+            result[k] = (v, True)
 
         for part in src.parts.select_related('type__name').all():
-            result[part.type.name] = part.value
+            result[part.type.name] = (part.value, False)
 
-    return sorted((k, v) for k, v in result.iteritems())
+        result['_biblio'] = (src.biblio, False)
+        result['_title'] = (src.title, False)
+        result['_abbrev'] = (src.abbrev, False)
+        result['_medium'] = (medium, False)
+        result['_notes'] = (src.comments, False)
+        # result['_lastAccess'] = (src.last_change, False)
+        # result['_subjectPlace'] = (src.subject_place.name, False)
+        # result['_jurisdictionPlace'] = (src.jurisdiction_place.name, False)
+
+    return sorted((k, v[0], v[1]) for k, v in result.iteritems())
 
 
 def citationParts(request, medium):
@@ -150,7 +175,7 @@ def citationParts(request, medium):
     """
     if medium.isdigit():
         src = models.Source.objects.get(id=medium)
-        result = list_of_citations(src.medium, src)
+        result = list_of_citations(None, src)
     else:
         result = list_of_citations(medium)
     return HttpResponse(to_json(result), content_type="application/json")
@@ -166,7 +191,14 @@ def fullCitation(request):
 
     if request.method == 'POST':
         medium = request.POST.get('sourceMediaType')
-        result = Citations.get_citation(medium).cite(request.POST)
+        params = request.POST
+
+        if request.POST.get('_higherSource'):
+            higher = models.Source.objects.get(
+                id=int(request.POST.get('_higherSource')))
+            params = prepare_citation_parts(higher, request.POST)
+
+        result = Citations.get_citation(medium).cite(params)
     return HttpResponse(to_json(result), content_type="application/json")
 
 
@@ -191,7 +223,7 @@ def view(request, id):
     return render_to_response (
         'geneaprove/sources.html',
         {"s": sources[id],
-         "parts": to_json(list_of_citations(sources[id].medium, sources[id])),
+         "parts": to_json(list_of_citations(None, sources[id])),
          "repository_types": models.Repository_Type.objects.all(),
          "source_types":   Citations.source_types(),
          "schemes": surety_schemes,
@@ -212,10 +244,6 @@ def editCitation(request, source_id):
         src.parts.all().delete()
 
         if src.medium != new_type:
-            # Changing the medium: we should not preserve citation parts that
-            # are no longer used for the new type. The GUI has temporary saved
-            # them and can restore them if the user immediately choses to go
-            # back to the previous value.
             parts = Citations.get_citation(new_type).required_parts()
         else:
             parts = None
@@ -224,7 +252,13 @@ def editCitation(request, source_id):
             if key in ('csrfmiddlewaretoken', 'sourceId'):
                 continue
             elif key == 'sourceMediaType':
-                src.medium = value
+                # Only set the medium if different from the parent. Otherwise,
+                # leave it null, so that changing the parent also changes the
+                # lower level sources
+                if src.higher_source is None or src.higher_source.medium != value:
+                    src.medium = value
+                else:
+                    src.medium = None
             elif key == '_notes':
                 src.comments = value
             elif key == '_abbrev':
@@ -244,6 +278,8 @@ def editCitation(request, source_id):
             elif key in ('_repoName', '_repoType', '_repoAddr'):
                 # ??? Not handled yet
                 pass
+            elif key == '_higherSource':
+                src.higher_source_id = int(value)
             elif key[0] == '_':
                 raise Exception('Field not processed: %s' % key)
             elif value and (parts is None or key in parts):
@@ -257,8 +293,10 @@ def editCitation(request, source_id):
                 p = models.Citation_Part(type=type, value=value)
                 src.parts.add(p)
 
-        if src.medium and src.medium != 'unknown':
-            c = Citations.get_citation(src.medium).cite(src, unknown_as_text=False)
+        medium = src.compute_medium()
+        if medium:
+            params = prepare_citation_parts(src.higher_source, request.POST)
+            c = Citations.get_citation(medium).cite(params, unknown_as_text=False)
             src.biblio = c.biblio
             src.title = c.full
             src.abbrev = c.short

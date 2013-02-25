@@ -1,5 +1,5 @@
 /** Description sent by the server for all the parts of a citation
- * Each element in the array is a (key,value) pair.
+ * Each element in the array is a (key,value,from_higher) pair.
  * @typedef {Array.<Array.<string>>}
  */
 window.CitationParts;
@@ -80,6 +80,7 @@ SourceCitation.prototype.restoreFields_ = function(parts) {
    for (var p = 0; p < parts.length; p++) {
       var k = parts[p][0];
       var v = parts[p][1] || this.saved_[k] || "";
+      var from_higher = parts[p][2];
       if (k == '_medium') {
          $('select[name=sourceMediaType] option[value="' + v + '"]', this.div)
             .prop('selected', true);
@@ -98,9 +99,11 @@ SourceCitation.prototype.restoreFields_ = function(parts) {
       } else if (k == '_subjectDate') {
          $('input[name=_subjectDate]', this.div).val(v);
       } else if (k[0] != '_') {
-          fields += '<span><label for="' + k + '">' + k +
-             '</label><input type="text" id="' + k + '" name="' + k +
-             '" value="' + v + '"/></span>';
+         var c = (from_higher ? ' class="disabled"' : '');
+         var c2 = (from_higher ? ' disabled' : '');
+         fields += '<span' + c + '><label for="' + k + '">' + k +
+            '</label><input type="text" id="' + k + '" name="' + k +
+            '" value="' + v + '"' + c2 + '/></span>';
       }
    }
    this.fieldsDiv.empty().append(fields).slideDown("fast");
