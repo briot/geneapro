@@ -159,26 +159,24 @@
          </div> {# moreInfo #}
       </div> {# sourceInfo #}
 
-      {% if s.representations.all %}
       <div id="sourceGallery" class="gallery">
-         {% for r in s.representations.all %}
-         <div title="{{r.comments}}" _id="{{r.id}}">
-            <img alt="not found" src="/repr/400/{{r.id}}" />
-         </div>
-         {% endfor %}
          <div class="actions">
             <input type="button" value="+"/>
             <input type="button" value="-"/>
             <input type="button" title="Zoom in on this specific representation (you can also double-click)" id="viewRepr" value="View"/>
          </div>
       </div>
-      {% endif %}
   </div> {# pane1 #}
 
   {# ----- Generated ------ #}
 
   <h3>Information / Claims</h3>
   <div class="onUse">The persons cited in this section are the ones referenced in the source document. They are not related to existing persons in the database. Such links are created in the Conclusions section below.</div>
+  <div class="buttons">
+     <input type="button" value="+ Event"/>
+     <input type="button" value="+ Relationship"/>
+     <input type="button" value="+ Characteristic"/>
+
   <div class="containers">
      {% for a in s.asserts %}
 
@@ -207,7 +205,7 @@
         <span class="surety" _scheme="1" _order="3"></span>
         <br>
         <input value="{{a.subject1.1.name}} ({{a.subject1.1.id}})"/> was a
-        <select><option selected>{{a.subject2.2}}</option></select> at this event.
+        <select><option selected>{{a.subject2.2}}</option></select> at this event
 
         {% elif a.subject2.0 == 2 %}  {# Characteristic #}
         <input value="{{a.subject1.1.name}} ({{a.subject1.1.id}})"/>
@@ -228,8 +226,8 @@
 
         <span class="surety" _scheme="{{a.surety.scheme_id}}" _order="{{a.surety.sequence_number}}"></span>
         <div class="buttons">
-           <input type="button" value="+">
-           <input type="button" value="-">
+           <input type="button" value="+" title="Add a person to this event">
+           {#<input type="button" value="-"> #}
         </div>
      </div> {# info #}
      {% endfor %}
@@ -241,11 +239,6 @@
   Below is just a mockup
 
   <h3>Information / Claims</h3>
-  <div class="buttons">
-     <input type="button" value="+ Event"/>
-     <input type="button" value="+ Relationship"/>
-     <input type="button" value="+ Characteristic"/>
-
   <div class="info event">   {# Describes one piece of info from the source #}
      A <select>
         <option selected>Marriage</option>
@@ -364,6 +357,11 @@ $(document).ready(function(){
    {% endfor %}
    };
    var parts = {{parts|safe}};
-   initSource(schemes, parts);
+   var repr = [
+      {% for r in s.representations.all %}
+      new Representation({{r.id}}, '{{r.comments}}'),
+      {% endfor %}
+   ];
+   initSource(schemes, parts, repr);
 });
 {% endblock script %}

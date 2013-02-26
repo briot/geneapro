@@ -359,7 +359,7 @@ Canvas.prototype.onResize = function() {
 Canvas.prototype.onStartDrag = function(e, dragdata) {
     this.setAutoScale(false);
     dragdata.offset = {left: this.left, top: this.top};
-    dragdata.scale_ = 1 / -this.scale_;
+    dragdata.scale = 1 / -this.scale_;
     dragdata.weight = 400;  //  Only throwing when in background
 };
 

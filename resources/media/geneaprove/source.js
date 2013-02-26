@@ -114,7 +114,7 @@ SourceCitation.prototype.restoreFields_ = function(parts) {
  * the medium type, though, we still have the fields values from the previous
  * medium. So we pass all saved values to the server, which will take care of
  * filtering out the irrelevant parts.
- * @param {Event} e   The event.
+ * @param {Event=} e   The event.
  * @private
  */
 
@@ -153,10 +153,12 @@ SourceCitation.prototype.onFieldChange_ = function(e) {
 /** Initialize the source details page
  * @param {window.SuretySchemes} schemes   The necessary surety schemes.
  * @param {window.CitationParts} parts   The list of all parts.
+ * @param {Array.<Representation>} images  The representations of the source.
  */
 
-function initSource(schemes, parts) {
+function initSource(schemes, parts, images) {
    var gallery = new Gallery($('#sourceGallery'), 400);
+   gallery.addImages(images);
    var dp = new DragPane($('div.scrollable img')[0]);
    new SourceCitation($('#sourceCitation')[0], parts);
 
@@ -180,6 +182,7 @@ function initSource(schemes, parts) {
    }
 
    function update() {
+      // ??? Should use a Representation instance instead.
       var id = $(gallery.getCurrent()).attr('_id');
       dp.setAutoScale(true);
       dp.setsrc('/repr/full/' + id);

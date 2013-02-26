@@ -181,7 +181,6 @@ function initBase(id, name) {
    p['givn'] = name;
    new Person(p).select();
 
-   $(window).resize();
    $("#importButton").click(on_import);
 }
 

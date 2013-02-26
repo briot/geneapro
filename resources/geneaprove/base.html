@@ -97,6 +97,9 @@
   });
   {% block script %}
   {% endblock script %}
+  $(document).ready(function() {
+        $(window).resize();
+  });
  </script>
 
  <div id="importDialog" title="Import GEDCOM" style="display:none">

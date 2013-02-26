@@ -1,4 +1,47 @@
 /**
+ * A representation to be displayed in a gallery
+ * @constructor
+ */
+
+function Representation(id, title) {
+   this.id = id;
+   this.title = title;
+   /** @type {jQuery} */ this.element = null;
+}
+
+/**
+ * Create the HTML to insert this representation in a gallery
+ * @param {number=} size   The maximal dimensions of the image. If
+ *  undefined, use full sized images.
+ * @return {jQuery}  the element to insert in the gallery.
+ * @private
+ */
+
+Representation.prototype.toHTML = function(size) {
+   if (!this.element) {
+      this.element = $('<div title="' + this.title + '" _id="' + this.id +
+            '"><img alt="not found" src="' + this.url(size) +
+            '"/></div>');
+   }
+   return this.element;
+};
+
+/**
+ * Return the URL to download the image at the given size
+ * @param {number=} size   The maximaml dimensions of the image. If undefined
+ *    downloads the full image.
+ * @return {string}   The url.
+ */
+
+Representation.prototype.url = function(size) {
+   if (!size) {
+       return '/repr/full/' + this.id;
+   } else {
+       return '/repr/' + size + '/' + this.id;
+   }
+};
+
+/**
  * Transforms root into a gallery. Each of its direct <div> children
  * will be animated, so that they are laid out side by side and only a
  * few of them are visible at a time.
@@ -14,7 +57,6 @@ function Gallery(root, childSize) {
    this.root = root;
    this.childSize = childSize;
    this.setUp_();
-   this.onSetCurrent_(0, false);
 }
 
 /** Index of current child */
@@ -47,24 +89,7 @@ Gallery.prototype.children;
 
 Gallery.prototype.setUp_ = function() {
    var gallery = this;
-
-   var all_images = this.root.find('>div');
-
-   /** @type {Array.<Element>} */
-   this.children = [];
-
    this.bottom = 50;
-
-   this.root.find('>div').each(function() {
-      if (!$(this).is('.actions')) {
-         $(this).css({'overflow': 'hidden',
-                      'display': 'none',
-                      'position': 'absolute',
-                      'bottom': this.bottom + 'px'})
-           .click(function() { gallery.setCurrent(this)});
-         gallery.children.push(this);
-      }
-   });
 
    this.root.height(this.childSize)
       .mousewheel($.proxy(this.onMouseWheel_, this));
@@ -77,23 +102,72 @@ Gallery.prototype.setUp_ = function() {
             'height': '1.2em',
             'font-size': 'smaller',
             'text-align': 'center'});
-   $('>.actions', this.root).insertBefore(this.title)
+   this.actions = $('>.actions', this.root).insertBefore(this.title)
       .css({'float': 'right'});
-   var buttons = $('<div class="gallery-buttons"></div>')
+   this.buttons = $('<div class="gallery-buttons"></div>')
       .insertAfter(this.title)
       .css({'width': '100%',
             'height': '30px',
             'text-align': 'center'})
       .mousewheel($.proxy(this.onMouseWheel_, this));
-   this.sliders = $('<div></div>').appendTo(buttons)
-      .slider({'min': 0, 'max': this.children.length - 1, 'value': 0,
+   this.sliders = $('<div></div>').appendTo(this.buttons)
+      .slider({'min': 0, 'value': 0,
                'change': function() {
                   gallery.onSetCurrent_(
                      /** @type{number} */($(this).slider('value')), true)},
                'slide': function(e, ui) {
                   gallery.onSetCurrent_(ui.value, true)}});
+
+   /** @type {Array.<Element>} */
+   this.children = [];
+   this.addImages(this.root.find('>div').filter(':not(.actions)'));
+};
+
+/** Change the visibility of the gallery depending on whether it has images.
+ */
+
+Gallery.prototype.toggleVisibility = function() {
+   if (this.children.length == 0) {
+      this.root.height(100);
+   } else {
+      this.root.height(this.childSize);
+   }
    if (this.children.length <= 1) {
       this.sliders.hide();
+   } else {
+      this.sliders.show();
+   }
+   this.sliders.slider({'max': this.children.length - 1});
+};
+
+/** Add one or more images to the gallery
+ * @param {Array.<Representation>|jQuery} images
+ *     The images to add.
+ */
+
+Gallery.prototype.addImages = function(images) {
+   var _this = this;
+   var hadImages = this.children.length != 0;
+
+   $(images).each(function() {
+      if (this.toHTML) {
+         var c = this.toHTML(_this.childSize);
+         _this.root.append(c);
+      } else {
+         c = $(this);
+      }
+      c.css({'overflow': 'hidden',
+             'display': 'none',
+             'position': 'absolute',
+             'bottom': _this.bottom + 'px'})
+         .click(function() { _this.setCurrent(this)});
+      _this.children.push(c);
+   });
+   this.toggleVisibility();
+
+   if (!hadImages) {
+      this.current = undefined; // force onSetCurrent_
+      this.onSetCurrent_(0, false);
    }
 };
 
@@ -187,9 +261,14 @@ Gallery.prototype.onSetCurrent_ = function(index, animate) {
    var leftX = totalWidth / 2 - this.childSize / 2;
 
    var title = $(center).attr('title') || '';
-   this.title.text(
-      title + ' (' +
-      (this.current + 1) + ' out of ' + this.children.length + ')');
+
+   if (this.children.length == 0) {
+      this.title.text('No media available');
+   } else {
+      this.title.text(
+         title + ' (' +
+         (this.current + 1) + ' out of ' + this.children.length + ')');
+   }
 
    $(center)
       .animate({'z-index': 20,
