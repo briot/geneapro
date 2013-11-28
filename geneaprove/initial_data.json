@@ -614,7 +614,7 @@
         "model": "geneaprove.characteristic_part_type", 
         "pk": 43
     }, 
-    {
+     {
         "fields": {
             "gedcom": "", 
             "is_name_part": false, 
@@ -920,6 +920,16 @@
         "model": "geneaprove.characteristic_part_type", 
         "pk": 13
     }, 
+    {
+        "fields": {
+            "gedcom": "REFN", 
+            "is_name_part": false, 
+            "name": "Reference Number"
+        }, 
+        "model": "geneaprove.characteristic_part_type", 
+        "pk": 60
+    }, 
+
     {
         "fields": {
             "gedcom": "", 
