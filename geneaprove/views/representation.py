@@ -6,6 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from geneaprove import models
+from geneaprove.views.json import to_json
 import os.path
 
 
@@ -64,3 +65,20 @@ def view(request, size, repr_id):
 
     except Exception, e:
         print "Got exception", e
+
+
+def higherSourceReprList(request, source_id):
+    """
+    The list of representations for the higher sources of source_id.
+    :return: a list of tuples (id,title)
+    """
+    result = []
+    s = models.Source.objects.get(id=source_id)
+    if s:
+        s = s.higher_source
+        while s:
+            for r in models.Representation.objects.filter(source=s).all:
+                result.append((r.id, r.comments))
+            s = s.higher_source
+    return HttpResponse(to_json(result), content_type="application/json")
+

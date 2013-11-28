@@ -16,7 +16,7 @@ raised. This check is based on the Gedcom 5.5 grammar
 This file has no external dependency, except for the _ function which is
 used for internationalization.
 
-This parser is reasonably fast, and will parse the ITIS.ged file in 3:40 min
+This parser is reasonably fast, and will parse the ITIS.ged file in 3:08 min
 (472_676 individuals)
 
 ??? Missing: handling of charsets. We should always convert to utf8 in the
@@ -499,7 +499,7 @@ class _Lexical(object):
         return r
 
     def _parse_next_line(self):
-        """Fetch the next relevant file of the GEDCOM stream,
+        """Fetch the next relevant line of the GEDCOM stream,
            and split it into its fields"""
 
         self.line += 1
@@ -998,3 +998,6 @@ class Gedcom(object):
         result = self.parser.parse(_Lexical(filename))
         result.filename = filename
         return result
+
+if __name__ == '__main__':
+    Gedcom().parse(sys.argv[1])

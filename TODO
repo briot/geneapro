@@ -188,4 +188,30 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    http://timforsythe.com/blog/evidence-based-genealogy-vs-conclusion-based-genealogy/
    http://www.geneamusings.com/2012/02/more-on-conclusion-based-and-evidence.html
    http://www.youtube.com/watch?v=7mlSV1E6saA
+** splatter heatmaps
+   http://timforsythe.com/blog/introducing-splatter-the-gedcom-population-distribution-heatmap/
+** Calendars
+   http://books.google.fr/books/about/Calendrical_Calculations.html?id=DPbx0-qgXu0C&redir_esc=y
+
+* Existing code
+** gedcom parsers
+*** gedcom55   https://github.com/Necropolis/gedcom55
+*** gedcom-parser-library  http://gedcom-parse.sourceforge.net/doc/usage.html
+*** GHOSTS  http://www.nongnu.org/ghosts/users/index.html
+** gedcom matching and merging
+*** GDBI http://gdbi.sourceforge.net/merge.html
+** objective-c
+*** https://github.com/rowanj/Boost-iOS
+
+* other programs
+** Mac
+http://blog.eogn.com/eastmans_online_genealogy/2013/03/genealogy-programs-for-macintosh.html
+http://blog.eogn.com/eastmans_online_genealogy/2013/05/macfamilytree-7-and-mobilefamilytree-7-released-.html
    
+* Replace icons with fonts
+  http://fortawesome.github.com/Font-Awesome/
+  This can also be used to replace the star plugin, see the above page
+
+* CSS
+  http://learnlayout.com
+

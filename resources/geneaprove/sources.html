@@ -164,6 +164,11 @@
             <input type="button" value="+"/>
             <input type="button" value="-"/>
             <input type="button" title="Zoom in on this specific representation (you can also double-click)" id="viewRepr" value="View"/>
+            <br>
+            {% if s.higher_source_id %}
+            <input type="checkbox" title="View representations for the higher sources" id="viewHighRepr"/>Higher sources
+            {% endif %}
+
          </div>
       </div>
   </div> {# pane1 #}

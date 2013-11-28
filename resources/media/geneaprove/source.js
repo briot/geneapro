@@ -160,7 +160,7 @@ function initSource(schemes, parts, images) {
    var gallery = new Gallery($('#sourceGallery'), 400);
    gallery.addImages(images);
    var dp = new DragPane($('div.scrollable img')[0]);
-   new SourceCitation($('#sourceCitation')[0], parts);
+   var citation = new SourceCitation($('#sourceCitation')[0], parts);
 
    // Support for the gallery and the zoomed-in view for a single media
 
@@ -197,6 +197,21 @@ function initSource(schemes, parts, images) {
    $('#showAllRepr').click(function() { toggleZoomed() });
    $('#previousRepr').click(function() { gallery.previous(); update() });
    $('#nextRepr').click(function() { gallery.next(); update() });
+   $('#viewHighRepr').toggle(function() {
+      if (this.checked) {
+         $.get('/reprList/' + citation.sourceId,
+            function(data) {
+               var repr = [];
+               for (var d = 0; d < data.length; d++) {
+                  repr.push(new Representation(data[d][0], data[d][1]));
+               }
+               gallery.addImages(repr);
+            });
+
+      } else {
+         null;
+      }
+   });
 
    // Initialize rating system
 

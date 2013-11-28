@@ -1,11 +1,15 @@
 /**
  * A representation to be displayed in a gallery
+ * @param {number} id            The id of the image in the database.
+ * @param {string} title         A description of the image.
+ * @param {boolean=} fromHigher  True if image is from higher source.
  * @constructor
  */
 
-function Representation(id, title) {
+function Representation(id, title, fromHigher) {
    this.id = id;
    this.title = title;
+   this.fromHigher = fromHigher;
    /** @type {jQuery} */ this.element = null;
 }
 
@@ -19,9 +23,13 @@ function Representation(id, title) {
 
 Representation.prototype.toHTML = function(size) {
    if (!this.element) {
-      this.element = $('<div title="' + this.title + '" _id="' + this.id +
-            '"><img alt="not found" src="' + this.url(size) +
-            '"/></div>');
+      var str = '<div title="' + this.title + '" _id="' + this.id + '"';
+      if (this.fromHigher) {
+         str += ' _higher="true"';
+      }
+      this.element = $(
+         str + '><img alt="not found" src="' + this.url(size) +
+         '"/></div>');
    }
    return this.element;
 };

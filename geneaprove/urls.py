@@ -24,7 +24,12 @@ urlpatterns = patterns('',
     (r'^personaEvents/(\d+)$', geneaprove.views.persona.personaEvents),
 
     (r'^places$', geneaprove.views.places.view_list),
+
+    # The image for a specific representation
     (r'^repr/(.*)/(\d+)$', geneaprove.views.representation.view),
+
+    # The list of representations for the higher sources
+    (r'^reprList/(?P<source_id>\d+)', geneaprove.views.representation.higherSourceReprList),
 
     (r'^pedigree/(\d+)$', geneaprove.views.pedigree.pedigree_view),
     (r'^fanchart/(\d+)$', geneaprove.views.pedigree.fanchart_view),
