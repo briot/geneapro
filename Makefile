@@ -6,8 +6,6 @@ test_verbose:
 syncdb:
 	./manage.py syncdb
 
-full_reset: syncdb reset
-
 dump:
 	./manage.py dumpdata --format=xml geneaprove > dump.xml
 	./manage.py dumpdata --format=json geneaprove | python -mjson.tool > dump.json
