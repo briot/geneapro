@@ -59,3 +59,6 @@ class AJAXSimpleExceptionResponse:
                     response += "%s\n" % tb
                 print response
                 return HttpResponseServerError(response)
+        else:
+            super(AJAXSimpleExceptionResponse, self).process_exception(
+               request, exception)

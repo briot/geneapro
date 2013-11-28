@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import *
 import geneaprove.views.pedigree
 import geneaprove.views.persona
 import geneaprove.views.places

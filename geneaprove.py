@@ -12,7 +12,7 @@ if not os.path.isfile("geneaprove.db"):
     print "======================="
     print "Creating a new database"
     print "======================="
-    execute_from_command_line([sys.argv[0], "reset", "--noinput", "geneaprove"])
-    execute_from_command_line([sys.argv[0], "loaddata", "geneaprove/initial_data.json"])
+    execute_from_command_line(["manage.py", "syncdb", "--noinput"])
+    execute_from_command_line(["manage.py", "loaddata", "geneaprove/initial_data.json"])
 
 execute_from_command_line([sys.argv[0], "runserver"])
