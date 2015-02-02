@@ -16,5 +16,5 @@ def view_list(request):
     return render_to_response(
         'geneaprove/places_list.html',
         {"places": places,
-        },
+         },
         context_instance=RequestContext(request))

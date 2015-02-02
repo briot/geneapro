@@ -25,48 +25,50 @@ event_types_for_pedigree = (
 
 EventInfo = collections.namedtuple(
     'EventInfo', 'event, role, assertion')
-    # "event" has fields like "sources", "place", "Date"
-    #   where "Date" is a geneaprove.utils.DateRange object and should not be
-    #   used for display
+# "event" has fields like "sources", "place", "Date"
+#   where "Date" is a geneaprove.utils.DateRange object and should not be
+#   used for display
 CharInfo = collections.namedtuple(
     'CharInfo', 'char, parts, assertion')
-    # "char" has fields like "place", "sources", "Date"
-    # parts = [CharPartInfo]
+# "char" has fields like "place", "sources", "Date"
+# parts = [CharPartInfo]
 CharPartInfo = collections.namedtuple(
     'CharPartInfo', 'name, value')
 GroupInfo = collections.namedtuple(
     'GroupInfo', 'group, assertion')
-    # "group" has fields like "source",...
+# "group" has fields like "source",...
 
 
-def __add_default_person_attributes (person):
-   """Add the default computed attributes for the person.
-      PERSON is an instance of Persona"""
+def __add_default_person_attributes(person):
+    """Add the default computed attributes for the person.
+       PERSON is an instance of Persona"""
 
-   person.sex = "?"
-   person.birth = None
-   person.death = None
-   person.marriage = None
-   person.all_events = dict() # All events of the person {evt_id -> EventInfo}
-   person.all_chars = dict()  # Characteristics of the person (id -> CharInfo)
-   person.all_groups = dict() # Groups the person belongs to (id -> GroupInfo)
+    person.sex = "?"
+    person.birth = None
+    person.death = None
+    person.marriage = None
+    # All events of the person {evt_id -> EventInfo}
+    person.all_events = dict()
+    person.all_chars = dict()  # Characteristics of the person (id -> CharInfo)
+    # Groups the person belongs to (id -> GroupInfo)
+    person.all_groups = dict()
 
-   n = person.name.split('/', 2)
-   person.given_name = n[0]
-   person.base_given_name = n[0]
-   if len(n) >= 2:
-      person.surname = n[1]
-   else:
-      person.surname = ""
+    n = person.name.split('/', 2)
+    person.given_name = n[0]
+    person.base_given_name = n[0]
+    if len(n) >= 2:
+        person.surname = n[1]
+    else:
+        person.surname = ""
 
-   person.base_surname = person.surname
+    person.base_surname = person.surname
 
 
 def __get_events(nodes, styles, graph, types=None, schemes=None,
                  query_groups=True):
     """Compute the events for the various persons in IDS (all all persons in
        the database if None)
-       
+
        :param nodes:
            A set of graph.Persona_node, or None to get all persons from the
            database.
@@ -90,7 +92,7 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
     compute_parts = styles and styles.need_place_parts()
 
     roles = dict()  # role_id  -> name
-    places = dict() # place_id -> place
+    places = dict()  # place_id -> place
 
     assert(schemes is None or isinstance(schemes, set))
 
@@ -103,7 +105,7 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
     # Create the personas that will be returned.
     ##############
 
-    persons = dict() # id -> person
+    persons = dict()  # id -> person
     if ids:
         for p in sql_in(models.Persona.objects, "id", ids):
             # p.id is always the main_id, since that's how ids was built
@@ -136,7 +138,7 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
     # All query the 'principal' for each events, so that we can provide
     # that information graphically.
     for p in sql_in(events, "person", all_ids):
-        #or_q=Q(role=models.Event_Type_Role.principal)):
+        # or_q=Q(role=models.Event_Type_Role.principal)):
         e = p.event
 
         p_node = graph.node_from_id(p.person_id)
@@ -230,11 +232,11 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
         ch.parts.append(CharPartInfo(name=part.type.name, value=part.name))
 
         if part.type_id == models.Characteristic_Part_Type.sex:
-           person.sex = part.name
+            person.sex = part.name
         elif part.type_id == models.Characteristic_Part_Type.given_name:
-           person.given_name = part.name
+            person.given_name = part.name
         elif part.type_id == models.Characteristic_Part_Type.surname:
-           person.surname = part.name
+            person.surname = part.name
 
     ########
     # Compute place parts once, to limit the number of queries
@@ -243,20 +245,20 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
     ########
 
     if compute_parts:
-       prev_place = None
-       d = None
+        prev_place = None
+        d = None
 
-       for p in sql_in(models.Place_Part.objects
-           .order_by('place').select_related('type'),
-           "place", places.keys()):
+        for p in sql_in(models.Place_Part.objects
+                        .order_by('place').select_related('type'),
+                        "place", places.keys()):
 
-          # ??? We should also check the parent place to gets its own parts
-          if p.place_id != prev_place:
-             prev_place = p.place_id
-             d = dict()
-             setattr(places[prev_place], "parts", d)
+            # ??? We should also check the parent place to gets its own parts
+            if p.place_id != prev_place:
+                prev_place = p.place_id
+                d = dict()
+                setattr(places[prev_place], "parts", d)
 
-          d[p.type.name] = p.name
+            d[p.type.name] = p.name
 
     return persons
 
@@ -275,7 +277,7 @@ def extended_personas(nodes, styles, event_types=None, as_css=False, graph=graph
            See __get_events for a definition of SCHEMES
     """
     if styles:
-        styles.start ()
+        styles.start()
 
     persons = __get_events(
         nodes=nodes, styles=styles, graph=graph, types=event_types, schemes=schemes,
@@ -299,7 +301,7 @@ def view(request, id):
             'geneaprove/firsttime.html',
             context_instance=RequestContext(request))
 
-    schemes = set() # The surety schemes that are needed
+    schemes = set()  # The surety schemes that are needed
     styles = None
     p = extended_personas(
         nodes=set([graph.node_from_id(id)]),
@@ -329,7 +331,7 @@ def view(request, id):
          "groups": decujus.all_groups,
          "schemes": surety_schemes,
          "p2p": [(0, a) for a in assertions],
-        },
+         },
         context_instance=RequestContext(request))
 
 
@@ -342,7 +344,7 @@ def view_list(request):
             'geneaprove/firsttime.html',
             context_instance=RequestContext(request))
 
-    styles = Styles(style_rules, graph=graph, decujus=1) # ??? Why "1"
+    styles = Styles(style_rules, graph=graph, decujus=1)  # ??? Why "1"
     all = extended_personas(
         nodes=None, styles=styles, event_types=event_types_for_pedigree,
         graph=graph, as_css=True)
@@ -352,9 +354,9 @@ def view_list(request):
 
     return render_to_response(
         'geneaprove/persona_list.html',
-        {"persons":all,
-         "name":[p.name.encode("utf-8") for p in all],
-         "legend":getLegend()},
+        {"persons": all,
+         "name": [p.name.encode("utf-8") for p in all],
+         "legend": getLegend()},
         context_instance=RequestContext(request))
 
 
@@ -365,27 +367,26 @@ def personaEvents(request, id):
 
     graph.update_if_needed()
 
-    schemes = set() # The surety schemes that are needed
+    schemes = set()  # The surety schemes that are needed
     styles = None
     p = extended_personas(
         nodes=set([graph.node_from_id(id)]),
         styles=styles, as_css=True, graph=graph, schemes=schemes)
 
     data = ["%s: %s (%s)%s" % (e.event.name, e.event.date, e.event.place,
-                               u"\u2713" if e.event.sources  else u"\u2717")
+                               u"\u2713" if e.event.sources else u"\u2717")
             for i, e in p[id].all_events.items()
             if e.role == 'principal'
-               and not e.assertion.disproved]
+            and not e.assertion.disproved]
     data.extend("%s: %s%s%s" % (
-                c.char.name, 
+                c.char.name,
                 " ".join("%s:%s" % (p.name, p.value) for p in c.parts),
                 "(%s)" % c.char.date if c.char.date else "",
                 u"\u2713" if c.char.sources else u"\u2717")
-             for k, c in p[id].all_chars.items()
-             if not c.assertion.disproved
+                for k, c in p[id].all_chars.items()
+                if not c.assertion.disproved
                 and c.char.name not in ("_UID", ))
 
     return HttpResponse(
         to_json(data, year_only=False),
         content_type="application/json")
-

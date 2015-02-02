@@ -20,6 +20,7 @@ import datetime
 # Maximum number of years in a typical lifespan, when we have to guess
 maximum_lifespan = 100
 
+
 def debug(msg):
     # print msg
     pass
@@ -39,7 +40,7 @@ def compare(p1, p2):
 
     one_year = datetime.timedelta(days=365)
     place_score = 0   # If at least two events occurred in same place.
-                      # This help separate people from different cities
+    # This help separate people from different cities
 
     for a2 in p2.all_events.itervalues():
         evt_score = 0   # best score for this event
@@ -61,10 +62,10 @@ def compare(p1, p2):
                     tmp_debug += " [Both dates unknown]"
                 elif (ev.date_sort is None or a2.event.date_sort is None):
                     tmp_score += 5  # Only one is unknown, might have been set
-                                # somewhere else
+                    # somewhere else
                     tmp_debug += " [One date unknown]"
                 elif ev.date_sort == a2.event.date_sort:
-                    tmp_score += 20 # Same dates
+                    tmp_score += 20  # Same dates
                     tmp_debug += " [Same sort %s]" % ev.date_sort
 
                     if ev.date == a2.event.date:
@@ -74,9 +75,9 @@ def compare(p1, p2):
                         tmp_score += 20
                         tmp_debug += " [Same date]"
 
-                #elif abs(ev.date_sort - a2.event.date_sort) < one_year:
-                    #    # ??? Perhaps just if places are known and the same ?
-                    #tmp_score += 10 # Close dates
+                # elif abs(ev.date_sort - a2.event.date_sort) < one_year:
+                    # ??? Perhaps just if places are known and the same ?
+                    # tmp_score += 10 # Close dates
                     #tmp_debug += " [Close %s %s]" % (ev.date_sort, a2.event.date_sort)
 
                 if ev.place is not None and ev.place == a2.event.place:
@@ -89,7 +90,8 @@ def compare(p1, p2):
 
         if evt_score:
             score += evt_score
-            debug("evt_score (%s) (%s) %s => %d / %d" % (a2.event, evt_evt, evt_debug, evt_score, score))
+            debug("evt_score (%s) (%s) %s => %d / %d" %
+                  (a2.event, evt_evt, evt_debug, evt_score, score))
 
     # Also compare properties (this also compares names)
     # For UID properties, the score increase is worth more
@@ -97,7 +99,7 @@ def compare(p1, p2):
     a1_chars = dict()
     for a1 in p1.all_chars.itervalues():
         r = a1.char.name   # a1.char is a Characteristic: name, place, date
-                           # a1.parts is a part: type, name
+        # a1.parts is a part: type, name
         a1_chars[r] = a1_chars.get(r, []) + [a1]
 
     for a2 in p2.all_chars.itervalues():
@@ -113,7 +115,7 @@ def compare(p1, p2):
                     score += 20  # Same date
                     debug("  char, same date %s %d" % (att.char.date, score))
 
-                parts = {p.name:p.value for p in att.parts}
+                parts = {p.name: p.value for p in att.parts}
                 for p in a2.parts:
                     if p.name in parts \
                        and parts[p.name].lower() == p.value.lower():
@@ -184,8 +186,8 @@ def find_candidate(graph):
             death = p.death.date_sort
         if birth is None or death is None:
             h = [a.event.date_sort
-                   for a in p.all_events.itervalues()
-                   if a.event.date_sort is not None]
+                 for a in p.all_events.itervalues()
+                 if a.event.date_sort is not None]
             if h:
                 h.sort()
                 birth = birth or h[0] - delta
@@ -215,7 +217,7 @@ def find_candidate(graph):
             elif date.year < 1970:
                 continue
             else:
-                #print "Compare %s and %s" % (person.name, a.name)
+                # print "Compare %s and %s" % (person.name, a.name)
                 comparisons += 1
                 score = compare(a, person)
                 if score >= 150:
@@ -231,9 +233,10 @@ def find_candidate(graph):
     print "Number of comparisons: ", comparisons
     print "Possible merges: ", same
 
+
 def view(request):
     try:
         graph.update_if_needed()
         find_candidate(graph=graph)
-    except Exception (e):
+    except Exception(e):
         print "Terminated ", e

@@ -5,6 +5,7 @@ from geneaprove.views.pedigree import pedigree_view
 from geneaprove.importers.gedcomimport import GedcomFileImporter
 from geneaprove.views.graph import graph
 
+
 def import_gedcom(request):
     try:
         data = request.FILES['file']

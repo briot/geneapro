@@ -38,6 +38,7 @@ import heapq
 
 
 class Digraph(object):
+
     """A directed graph.
        Nodes can be of any hashable type (string, instances,...).
        Edges can be of any type so that  edge[0] and edge[1] are the two
@@ -54,7 +55,7 @@ class Digraph(object):
 
         self.__cyclic = None      # unknown
         self.__backedges = None  # only meaningful when cyclic, includes
-                                  # edges to remove to break cycles
+        # edges to remove to break cycles
 
     def __len__(self):
         """
@@ -93,7 +94,7 @@ class Digraph(object):
         outedgesiter can be used to restrict the search to a subset of
         the edges outgoing from source.
         """
-        #return not self.outedges[source].isdisjoint(self.inedges[target])
+        # return not self.outedges[source].isdisjoint(self.inedges[target])
 
         if outedgesiter is None:
             outedgesiter = self.out_edges
@@ -295,13 +296,13 @@ class Digraph(object):
 
         seen = set()
         if maxdepth != 0:
-           for node in roots:
-               if node not in seen:
-                   if distance is not None:
-                       distance[node] = 0
-                   yield node
-                   for d in bfs(seen, node, dist=1):
-                       yield d
+            for node in roots:
+                if node not in seen:
+                    if distance is not None:
+                        distance[node] = 0
+                    yield node
+                    for d in bfs(seen, node, dist=1):
+                        yield d
 
     def depth_first_search(self, roots=None, outedgesiter=None):
         """
@@ -433,7 +434,7 @@ class Digraph(object):
         This is only meaningful for directed acyclic graphs.
         """
         dfs = list(self.depth_first_search(
-                roots=roots, outedgesiter=outedgesiter))
+            roots=roots, outedgesiter=outedgesiter))
         dfs.reverse()
         return dfs
 
@@ -558,8 +559,8 @@ class Digraph(object):
             return ""
 
     def write_graphviz(
-        self, file=sys.stdout, number_nodes=False, nodes=None,
-        edgeiter=None):
+            self, file=sys.stdout, number_nodes=False, nodes=None,
+            edgeiter=None):
         """
         Write a representation of the graph in a format suitable for graphviz.
         Nodes should define a __str__ function to represent their label.
@@ -577,7 +578,7 @@ class Digraph(object):
             nodes = self.__iter__()
 
         if not edgeiter:
-            edgeiter=self.out_edges
+            edgeiter = self.out_edges
 
         for index, node in enumerate(nodes):
             label = self.node_label(node)
@@ -833,11 +834,11 @@ class Digraph(object):
                 for c in tree.in_edges(n):
                     yield c
 
-            #DEBUG_assert_ranking(ranks)
+            # DEBUG_assert_ranking(ranks)
             data = tree.post_order(outedgesiter=unordered_edges)
 
             min_cut_value = None   # edge with lowest cut_value
-            leave_edge  = None
+            leave_edge = None
             leave_HEAD = None
 
             for e in tree.edges():
@@ -894,7 +895,7 @@ class Digraph(object):
         tree, ranks = build_feasible_tree()
 
         #self = Digraph()
-        #self.add_edges([(0,1), (1,2), (2,3), (3,7), (4,6), (5,6), (6,7),
+        # self.add_edges([(0,1), (1,2), (2,3), (3,7), (4,6), (5,6), (6,7),
         #                (0,4), (0,5)])
         #tree = Digraph()
         #tree.add_edges([(0,1), (1,2), (2,3), (3,7), (4,6), (5,6), (6,7)])
@@ -902,7 +903,7 @@ class Digraph(object):
         #outedgesiter = self.out_edges
         #inedgesiter = self.in_edges
 
-        removed_edges.update(tree.edges()) # Can't enter edges already in tree
+        removed_edges.update(tree.edges())  # Can't enter edges already in tree
 
         # ??? Should we do a maximal number of iterations ?
         while True:
@@ -983,13 +984,13 @@ class Digraph(object):
             # children appear first in the list.
             weights = {}
             for n in layer1:
-               total = 0
-               count = 1
-               for index2, n2 in enumerate(layer2):
-                   if self.has_edge(n, n2, outedgesiter=self.out_edges):
-                       total += index2 + 1
-                       count += 1
-               weights[n] = float(total) / float(count)
+                total = 0
+                count = 1
+                for index2, n2 in enumerate(layer2):
+                    if self.has_edge(n, n2, outedgesiter=self.out_edges):
+                        total += index2 + 1
+                        count += 1
+                weights[n] = float(total) / float(count)
 
             layer1.sort(key=lambda x: weights[x])
 

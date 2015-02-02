@@ -54,13 +54,13 @@ def view(request, size, repr_id):
         f = repr.file
 
         if size != 'full':
-            f = create_resized_image(f.replace("/","__"), repr.file,
+            f = create_resized_image(f.replace("/", "__"), repr.file,
                                      xconstrain=int(size),
                                      yconstrain=int(size))
 
         response = HttpResponse(open(f).read(), mimetype=repr.mime_type)
         response['Content-Disposition'] = 'attachment; filename=%s' % (
-            os.path.basename (repr.file))
+            os.path.basename(repr.file))
         return response
 
     except Exception, e:
@@ -81,4 +81,3 @@ def higherSourceReprList(request, source_id):
                 result.append((r.id, r.comments))
             s = s.higher_source
     return HttpResponse(to_json(result), content_type="application/json")
-

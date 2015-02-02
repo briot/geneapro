@@ -31,8 +31,8 @@ def view(request, id):
 
     id = int(id)
     e = extended_events([id])
-    return render_to_response (
+    return render_to_response(
         'geneaprove/event.html',
         {"e": e.get(id, None),
-        },
+         },
         context_instance=RequestContext(request))

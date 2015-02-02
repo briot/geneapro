@@ -16,79 +16,82 @@ display in diagrams.
 """
 
 try:
-   # Check that we can correctly import and use the translation module.
-   # If not, we still want to use this module standalone
-   from django.utils.translation import ugettext as _
-   _("foo")
+    # Check that we can correctly import and use the translation module.
+    # If not, we still want to use this module standalone
+    from django.utils.translation import ugettext as _
+    _("foo")
 except:
-   def _ (txt): return txt
+    def _(txt):
+        return txt
 
-import datetime, re, time
+import datetime
+import re
+import time
 
 __all__ = ["from_roman_literal", "to_roman_literal", "DateRange",
            "Calendar", "CalendarGregorian", "CalendarFrench",
            "CalendarJulian"]
 
-## The following strings indicate how to specify date ranges in your language.
-## These are regexp, and should not include parenthesis groups
+# The following strings indicate how to specify date ranges in your language.
+# These are regexp, and should not include parenthesis groups
 
-RE_FROM    = _("from|de")          # for span ranges: "from"
-RE_TO      = _("to|a")             # for span ranges: "to"
+RE_FROM = _("from|de")          # for span ranges: "from"
+RE_TO = _("to|a")             # for span ranges: "to"
 RE_BETWEEN = _("bet|between|entre")    # for between ranges: "between"
-RE_AND     = _("and|et")           # for between ranges: "and"
-RE_DAYS    = _("d|days?|jours?")   # When adding delta
-RE_MONTHS  = _("m|months?|mois?")  # When adding delta
-RE_YEARS   = _("y|years?|ans?")    # When adding delta
-RE_BEFORE  = _("before|bef|avant")
-RE_AFTER   = _("after|aft|apres")
-RE_ABOUT   = _("about|abt\\.?|circa|ca|environ|env")
+RE_AND = _("and|et")           # for between ranges: "and"
+RE_DAYS = _("d|days?|jours?")   # When adding delta
+RE_MONTHS = _("m|months?|mois?")  # When adding delta
+RE_YEARS = _("y|years?|ans?")    # When adding delta
+RE_BEFORE = _("before|bef|avant")
+RE_AFTER = _("after|aft|apres")
+RE_ABOUT = _("about|abt\\.?|circa|ca|environ|env")
 RE_EST = _("estimated|est\.?|cal")  # "cal" is used for "calculated" in gramps
 DEFAULT_DDMM_FORMAT = _("mm/dd/yyyy")  # or "mm/dd/yyy" depending on locale
 
 # Month names should be all lower cases
-MONTH_NAMES = {_("jan"):1,
-               _("january"):1,
-               _("feb"):2,
-               _("februrary"):2,
-               _("mar"):3,
-               _("march"):3,
-               _("apr"):4,
-               _("april"):4,
-               _("may"):5,
-               _("jun"):6,
-               _("june"):6,
-               _("jul"):7,
-               _("july"):7,
-               _("aug"):8,
-               _("august"):8,
-               _("sep"):9,
-               _("september"):9,
-               _("oct"):10,
-               _("october"):10,
-               _("nov"):11,
-               _("november"):11,
-               _("dec"):12,
-               _("december"):12}
+MONTH_NAMES = {_("jan"): 1,
+               _("january"): 1,
+               _("feb"): 2,
+               _("februrary"): 2,
+               _("mar"): 3,
+               _("march"): 3,
+               _("apr"): 4,
+               _("april"): 4,
+               _("may"): 5,
+               _("jun"): 6,
+               _("june"): 6,
+               _("jul"): 7,
+               _("july"): 7,
+               _("aug"): 8,
+               _("august"): 8,
+               _("sep"): 9,
+               _("september"): 9,
+               _("oct"): 10,
+               _("october"): 10,
+               _("nov"): 11,
+               _("november"): 11,
+               _("dec"): 12,
+               _("december"): 12}
 
 WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday",
             "Thursday", "Friday", "Saturday"]
 
 FRENCH_MONTHS = [
-  ("vendemiaire", "vend"),
-  ("brumaire", "brum"),
-  ("frimaire", "frim"),
-  ("nivose", "nivo"),
-  ("pluviose", "pluv"),
-  ("ventose",  "vent"),
-  ("germinal", "germ"),
-  ("floreal", "flor"),
-  ("prairial", "prai"),
-  ("messidor", "mess"),
-  ("thermidor", "ther"),
-  ("fructidor", "fruc"),
-  ("",)]
+    ("vendemiaire", "vend"),
+    ("brumaire", "brum"),
+    ("frimaire", "frim"),
+    ("nivose", "nivo"),
+    ("pluviose", "pluv"),
+    ("ventose",  "vent"),
+    ("germinal", "germ"),
+    ("floreal", "flor"),
+    ("prairial", "prai"),
+    ("messidor", "mess"),
+    ("thermidor", "ther"),
+    ("fructidor", "fruc"),
+    ("",)]
 
-## No translation below
+# No translation below
 
 FROM_TEXT = "(" + RE_FROM + ")\s+(.+)"
 FROM_RE = re.compile("^\s*" + FROM_TEXT, re.IGNORECASE)
@@ -96,11 +99,11 @@ FROM_RE = re.compile("^\s*" + FROM_TEXT, re.IGNORECASE)
 TO_TEXT = "(" + RE_TO + ")\s+(.+)"
 TO_RE = re.compile("^\s*" + TO_TEXT, re.IGNORECASE)
 
-PERIOD_RE = re.compile (
+PERIOD_RE = re.compile(
     "^" + FROM_TEXT + "\s+" + TO_TEXT + "\s*$", re.IGNORECASE)
-BETWEEN_RE = re.compile ("^\s*(" + RE_BETWEEN + ")\s+(.+)\s+(" +
-                         RE_AND + ")\s+(.*)\s*$", re.IGNORECASE)
-TIME_RE = re.compile ("\s*(\d?\d):(\d?\d)(:(\d?\d))?(am|pm)?")
+BETWEEN_RE = re.compile("^\s*(" + RE_BETWEEN + ")\s+(.+)\s+(" +
+                        RE_AND + ")\s+(.*)\s*$", re.IGNORECASE)
+TIME_RE = re.compile("\s*(\d?\d):(\d?\d)(:(\d?\d))?(am|pm)?")
 
 DELTA_YEARS = "(\d+)\s*(?:" + RE_YEARS + ")"
 DELTA_MONTHS = "(\d+)\s*(?:" + RE_MONTHS + ")"
@@ -108,94 +111,98 @@ DELTA_DAYS = "(\d+)\s*(?:" + RE_DAYS + ")"
 DELTA_RE = ("(?:" + DELTA_YEARS + ")?"
             + "\s*(?:" + DELTA_MONTHS + ")?"
             + "\s*(?:" + DELTA_DAYS + ")?")
-ADD_RE  = re.compile("\s*([-+])?\s*" + DELTA_RE + "\s*$", re.IGNORECASE)
+ADD_RE = re.compile("\s*([-+])?\s*" + DELTA_RE + "\s*$", re.IGNORECASE)
 # Recognizes a delta:  $1=>sign $2=>years  $3=>months,  $4=>days
 
 YEAR_RE = "(\d{1,4}|(?:an\s+)?[MDCXVI]+)"
 
 OPTDAY = "(\d?\d|\?*)"  # day (one or two digits), or any number of "?"
 
-YYYYMMDD_RE = re.compile ("^\s*" + YEAR_RE + "[-/]"+OPTDAY+"[-/]"+OPTDAY+"$",
-                          re.IGNORECASE)
-ISO_RE = re.compile ("^\s*" + YEAR_RE + "(\d{2})(\d{2})$", re.IGNORECASE)
-DDMMYYYY_RE = re.compile ("^\s*(\d\d)[/-](\d\d)[/-]" + YEAR_RE + "$",
-                          re.IGNORECASE)
-SPELLED_OUT_RE = re.compile ("^\s*(?:(\d\d?)\s+)?([a-z]+),?\s*" + YEAR_RE + "$",
+YYYYMMDD_RE = re.compile("^\s*" + YEAR_RE + "[-/]" + OPTDAY + "[-/]" + OPTDAY + "$",
+                         re.IGNORECASE)
+ISO_RE = re.compile("^\s*" + YEAR_RE + "(\d{2})(\d{2})$", re.IGNORECASE)
+DDMMYYYY_RE = re.compile("^\s*(\d\d)[/-](\d\d)[/-]" + YEAR_RE + "$",
+                         re.IGNORECASE)
+SPELLED_OUT_RE = re.compile("^\s*(?:(\d\d?)\s+)?([a-z]+),?\s*" + YEAR_RE + "$",
+                            re.IGNORECASE)
+SPELLED_OUT2_RE = re.compile("^\s*(\w+)\s+(\d\d?),?\s*" + YEAR_RE + "$",
                              re.IGNORECASE)
-SPELLED_OUT2_RE = re.compile ("^\s*(\w+)\s+(\d\d?),?\s*" + YEAR_RE + "$",
-                             re.IGNORECASE)
-YYYYMM_RE = re.compile ("^\s*" + YEAR_RE + "([-/](\d\d?))?$", re.IGNORECASE)
-DDMM_RE   = re.compile ("^\s*(\d{2})[-/](\d{2})$")
+YYYYMM_RE = re.compile("^\s*" + YEAR_RE + "([-/](\d\d?))?$", re.IGNORECASE)
+DDMM_RE = re.compile("^\s*(\d{2})[-/](\d{2})$")
 
-BEFORE_RE = re.compile ("(<|" + RE_BEFORE + "|[^\d]/(\\d))", re.IGNORECASE)
-AFTER_RE  = re.compile ("(>|" + RE_AFTER + "|(\\d)/[^\d])", re.IGNORECASE)
-ABOUT_RE  = re.compile ("\s*(\\b(?:" + RE_ABOUT + ")|~)\s*", re.IGNORECASE)
-EST_RE    = re.compile ("\s*((?:" + RE_EST + ")\s*|\?\s*$)", re.IGNORECASE)
+BEFORE_RE = re.compile("(<|" + RE_BEFORE + "|[^\d]/(\\d))", re.IGNORECASE)
+AFTER_RE = re.compile("(>|" + RE_AFTER + "|(\\d)/[^\d])", re.IGNORECASE)
+ABOUT_RE = re.compile("\s*(\\b(?:" + RE_ABOUT + ")|~)\s*", re.IGNORECASE)
+EST_RE = re.compile("\s*((?:" + RE_EST + ")\s*|\?\s*$)", re.IGNORECASE)
 
-SPAN_FROM    = 1
+SPAN_FROM = 1
 SPAN_BETWEEN = 2
 
 DATE_BEFORE = 1
-DATE_ON     = 2
-DATE_AFTER  = 3
+DATE_ON = 2
+DATE_AFTER = 3
 
-PRECISION_ABOUT     = 1
+PRECISION_ABOUT = 1
 PRECISION_ESTIMATED = 2
-PRECISION_EXACT     = 3
+PRECISION_EXACT = 3
 
-ROMAN_LITERALS = dict (I=1, V=5, X=10, L=50, C=100, D=500, M=1000)
+ROMAN_LITERALS = dict(I=1, V=5, X=10, L=50, C=100, D=500, M=1000)
 
-def from_roman_literal (text):
-   """Convert a roman literal into an int"""
 
-   total = 0
-   subtotal = 0
-   prev_char = 0
+def from_roman_literal(text):
+    """Convert a roman literal into an int"""
 
-   for p in text:
-      if p == prev_char:
-         subtotal = subtotal + ROMAN_LITERALS[p]
-      elif prev_char and ROMAN_LITERALS[prev_char] < ROMAN_LITERALS[p]:
-         total = total + ROMAN_LITERALS[p] - subtotal
-         subtotal = 0
-         prev_char = 0
-      else:
-         total = total + subtotal
-         subtotal = ROMAN_LITERALS[p]
-         prev_char = p
+    total = 0
+    subtotal = 0
+    prev_char = 0
 
-   return total + subtotal
+    for p in text:
+        if p == prev_char:
+            subtotal = subtotal + ROMAN_LITERALS[p]
+        elif prev_char and ROMAN_LITERALS[prev_char] < ROMAN_LITERALS[p]:
+            total = total + ROMAN_LITERALS[p] - subtotal
+            subtotal = 0
+            prev_char = 0
+        else:
+            total = total + subtotal
+            subtotal = ROMAN_LITERALS[p]
+            prev_char = p
 
-def to_roman_literal (val):
-   """Convert an int to its roman literal representation"""
+    return total + subtotal
 
-   def proc (digit, ten, five, unit):
-      """Convert a single digit to its roman literal representation"""
-      if digit == 0:
-         return ""
-      elif digit < 4:
-         return unit * digit
-      elif digit == 4:
-         return unit + five
-      elif digit < 9:
-         return five + unit * (digit - 5)
-      else:
-         return unit + ten
 
-   return proc (val / 1000, ten="MMMMMMMMMM", five="MMMMM", unit="M") \
-     + proc ((val % 1000) / 100, ten="M", five="D", unit="C") \
-     + proc ((val % 100) / 10, ten="C", five="L", unit="X") \
-     + proc (val % 10, ten="X", five="V", unit="I")
+def to_roman_literal(val):
+    """Convert an int to its roman literal representation"""
 
-def __get_year (text):
-   """Convert a year string (possibly in roman literals) into an int"""
-   if text.isdigit ():
-      return int (text)
-   else:
-      # In the french calendar, the date is often spelled with
-      #  "25 fructidor an X", where "an" means "year"
-      text = re.sub ("an\s*", "", text)
-      return from_roman_literal (text)
+    def proc(digit, ten, five, unit):
+        """Convert a single digit to its roman literal representation"""
+        if digit == 0:
+            return ""
+        elif digit < 4:
+            return unit * digit
+        elif digit == 4:
+            return unit + five
+        elif digit < 9:
+            return five + unit * (digit - 5)
+        else:
+            return unit + ten
+
+    return proc (val / 1000, ten="MMMMMMMMMM", five="MMMMM", unit="M") \
+        + proc ((val % 1000) / 100, ten="M", five="D", unit="C") \
+        + proc ((val % 100) / 10, ten="C", five="L", unit="X") \
+        + proc(val % 10, ten="X", five="V", unit="I")
+
+
+def __get_year(text):
+    """Convert a year string (possibly in roman literals) into an int"""
+    if text.isdigit():
+        return int(text)
+    else:
+        # In the french calendar, the date is often spelled with
+        #  "25 fructidor an X", where "an" means "year"
+        text = re.sub("an\s*", "", text)
+        return from_roman_literal(text)
+
 
 def as_int(d):
     """Converts d to an integer, or returns the empty string if not
@@ -206,359 +213,371 @@ def as_int(d):
     except:
         return 0
 
-def get_ymd (txt, months):
-   """Extracts year, month and day from txt. Returns a tuple with
-      (year, month, day, year_specified, month_specified, day_specified)
-      The last three fields indicate whether the field was specified or
-      txt or whether a default value was used.
-      _months_ is a dict of month names for the current calendar. It can
-      contain an entry matching the empty string which is used as the default
-      when the month is not found.
-   """
 
-   m = YYYYMMDD_RE.search (txt) or ISO_RE.search (txt)
-   if m:
-      return (__get_year (m.group (1)),
-              as_int (m.group (2)),
-              as_int (m.group (3)),
-              True, True, True)
+def get_ymd(txt, months):
+    """Extracts year, month and day from txt. Returns a tuple with
+       (year, month, day, year_specified, month_specified, day_specified)
+       The last three fields indicate whether the field was specified or
+       txt or whether a default value was used.
+       _months_ is a dict of month names for the current calendar. It can
+       contain an entry matching the empty string which is used as the default
+       when the month is not found.
+    """
 
-   m = DDMMYYYY_RE.search (txt)
-   if m:
-      if DEFAULT_DDMM_FORMAT == "dd/mm/yyyy":
-         month = int (m.group (2))
-         day   = int (m.group (1))
-      else:
-         month = int (m.group (1))
-         day   = int (m.group (2))
+    m = YYYYMMDD_RE.search(txt) or ISO_RE.search(txt)
+    if m:
+        return (__get_year(m.group(1)),
+                as_int(m.group(2)),
+                as_int(m.group(3)),
+                True, True, True)
 
-      if month > 12:
-         month, day = day, month
+    m = DDMMYYYY_RE.search(txt)
+    if m:
+        if DEFAULT_DDMM_FORMAT == "dd/mm/yyyy":
+            month = int(m.group(2))
+            day = int(m.group(1))
+        else:
+            month = int(m.group(1))
+            day = int(m.group(2))
 
-      return (__get_year (m.group (3)), month, day, True, True, True)
+        if month > 12:
+            month, day = day, month
 
-   m = SPELLED_OUT_RE.search (txt)
-   if m:
-      try:
-         month = months[m.group (2).lower()]
-         month_specified = True
-      except KeyError:
-         month = 1
-         month_specified = False
-      try:
-         day = int (m.group (1))
-      except TypeError:
-         day = 1
-      return (__get_year(m.group (3)), month, day, True, month_specified, True)
+        return (__get_year(m.group(3)), month, day, True, True, True)
 
-   m = SPELLED_OUT2_RE.search (txt)
-   if m:
-      try:
-         month = months[m.group (1).lower()]
-      except KeyError:
-         month = months.get ("")
-      if month:
-         return (__get_year (m.group (3)), month, int (m.group (2)),
-                 True, True, True)
+    m = SPELLED_OUT_RE.search(txt)
+    if m:
+        try:
+            month = months[m.group(2).lower()]
+            month_specified = True
+        except KeyError:
+            month = 1
+            month_specified = False
+        try:
+            day = int(m.group(1))
+        except TypeError:
+            day = 1
+        return (__get_year(m.group(3)), month, day, True, month_specified, True)
 
-   m = DDMM_RE.search (txt)
-   if m:
-      if DEFAULT_DDMM_FORMAT == "dd/mm/yyyy":
-         month = int (m.group (2))
-         day   = int (m.group (1))
-      else:
-         month = int (m.group (1))
-         day   = int (m.group (2))
+    m = SPELLED_OUT2_RE.search(txt)
+    if m:
+        try:
+            month = months[m.group(1).lower()]
+        except KeyError:
+            month = months.get("")
+        if month:
+            return (__get_year(m.group(3)), month, int(m.group(2)),
+                    True, True, True)
 
-      if month > 12:
-         month, day = day, month
-      return (-4000, month, day, False, True, True)
+    m = DDMM_RE.search(txt)
+    if m:
+        if DEFAULT_DDMM_FORMAT == "dd/mm/yyyy":
+            month = int(m.group(2))
+            day = int(m.group(1))
+        else:
+            month = int(m.group(1))
+            day = int(m.group(2))
 
-   m = YYYYMM_RE.search (txt)
-   if m:
-      if m.group (3):
-         return (__get_year (m.group (1)), int (m.group (3)), 1,
-                 True, True, False)
-      else:
-         return (__get_year (m.group (1)), 1, 1, True, False, False)
+        if month > 12:
+            month, day = day, month
+        return (-4000, month, day, False, True, True)
 
-   return (-4000, 1, 1, False, False, False)
+    m = YYYYMM_RE.search(txt)
+    if m:
+        if m.group(3):
+            return (__get_year(m.group(1)), int(m.group(3)), 1,
+                    True, True, False)
+        else:
+            return (__get_year(m.group(1)), 1, 1, True, False, False)
+
+    return (-4000, 1, 1, False, False, False)
 
 ########################
-## Calendar
+# Calendar
 ########################
+
 
 class Calendar (object):
-   """Abstract base class for all types of calendars we support"""
 
-   def __init__ (self, suffixes, prefixes=None):
-      self.__re = re.compile \
-        ('\\s*\\(?(' + suffixes + ')\\)?\\s*', re.IGNORECASE)
-      self._month_names = MONTH_NAMES
+    """Abstract base class for all types of calendars we support"""
 
-   def is_a (self, text):
-      """If str is expressed in the calendar, returns the string that remains
-         after removing the calendar indication. Return None if the date does
-         not match the calendar
-         Default implementation is to check for a suffix that matches that of
-         the calendar. However, calendar implementations are encouraged to
-         check month names or other recognizable characteristics"""
+    def __init__(self, suffixes, prefixes=None):
+        self.__re = re.compile \
+            ('\\s*\\(?(' + suffixes + ')\\)?\\s*', re.IGNORECASE)
+        self._month_names = MONTH_NAMES
 
-      m = self.__re.search (text)
-      if m:
-         return text [:m.start(0)] + text[m.end(0):]
-      return None
+    def is_a(self, text):
+        """If str is expressed in the calendar, returns the string that remains
+           after removing the calendar indication. Return None if the date does
+           not match the calendar
+           Default implementation is to check for a suffix that matches that of
+           the calendar. However, calendar implementations are encouraged to
+           check month names or other recognizable characteristics"""
 
-   def __unicode__ (self):
-      """Convert to a unicode string"""
-      return ""
+        m = self.__re.search(text)
+        if m:
+            return text[:m.start(0)] + text[m.end(0):]
+        return None
 
-   def parse(self, txt):
-      """Parse a simple date expressed in this calendar. str contains
-         information about day, month and year only, although some of this
-         info might be missing. Classes are encouraged to support as many
-         formats as possible for completeness.
-         None should be returned if the date could not be parsed.
-         This returns a tuple containing
-            (julian_day_number, year_specified, month_specified, day_specified,
-             calendar)
-      """
-      year, month, day, yk, mk, dk = get_ymd (txt, self._month_names)
-      if not yk:
-         year = None
+    def __unicode__(self):
+        """Convert to a unicode string"""
+        return ""
 
-      if not dk:
-         day = None
+    def parse(self, txt):
+        """Parse a simple date expressed in this calendar. str contains
+           information about day, month and year only, although some of this
+           info might be missing. Classes are encouraged to support as many
+           formats as possible for completeness.
+           None should be returned if the date could not be parsed.
+           This returns a tuple containing
+              (julian_day_number, year_specified, month_specified, day_specified,
+               calendar)
+        """
+        year, month, day, yk, mk, dk = get_ymd(txt, self._month_names)
+        if not yk:
+            year = None
 
-      if not mk:
-         month = None
+        if not dk:
+            day = None
 
-      return self.from_components(year, month, day)
+        if not mk:
+            month = None
 
-   def from_components(self, year=None, month=None, day=None):
-      """Given an expanded (possibly partial) date, return the same result
-         as parse.
-         This returns a tuple containing
-            (julian_day_number, year_specified, month_specified, day_specified,
-             calendar)
-      """
-      raise NotImplementedError
+        return self.from_components(year, month, day)
 
-   def components(self, julian_day):
-      """Return a tuple (year, month, day) for the given day"""
-      raise NotImplementedError
+    def from_components(self, year=None, month=None, day=None):
+        """Given an expanded (possibly partial) date, return the same result
+           as parse.
+           This returns a tuple containing
+              (julian_day_number, year_specified, month_specified, day_specified,
+               calendar)
+        """
+        raise NotImplementedError
 
-   def date_unicode(self, julian_day, year_known=True,
-                 month_known=True, day_known=True, year_only=False):
-      """Return a string representing the julian day in the self calendar.
-         If year_only is true, only the year is returned"""
-      (year, month, day) = self.components(julian_day)
+    def components(self, julian_day):
+        """Return a tuple (year, month, day) for the given day"""
+        raise NotImplementedError
 
-      if year_only:
-         if year_known:
-            return "%(year)d" % {"year":year}
-         else:
-            return ""
+    def date_unicode(self, julian_day, year_known=True,
+                     month_known=True, day_known=True, year_only=False):
+        """Return a string representing the julian day in the self calendar.
+           If year_only is true, only the year is returned"""
+        (year, month, day) = self.components(julian_day)
 
-      if year_known:
-         if month_known and not day_known:
-            formt = "%(year)d-%(month)02d"
-         elif month_known and day_known:
-            formt = "%(year)d-%(month)02d-%(day)02d"
-         elif day_known:
-            formt = "%(year)d-??-%(day)02d"
-         else:
-            formt = "%(year)d"
-      else:
-         formt = "????-%(month)02d-%(day)02d"
+        if year_only:
+            if year_known:
+                return "%(year)d" % {"year": year}
+            else:
+                return ""
 
-      return formt % {"year":year, "month":month, "day":day}
+        if year_known:
+            if month_known and not day_known:
+                formt = "%(year)d-%(month)02d"
+            elif month_known and day_known:
+                formt = "%(year)d-%(month)02d-%(day)02d"
+            elif day_known:
+                formt = "%(year)d-??-%(day)02d"
+            else:
+                formt = "%(year)d"
+        else:
+            formt = "????-%(month)02d-%(day)02d"
+
+        return formt % {"year": year, "month": month, "day": day}
+
 
 class CalendarGregorian (Calendar):
-   """The gregorian calendar, first created in 1582 but adopted sometimes
-      much later in some countries
-   """
 
-   def __init__ (self):
-      Calendar.__init__ (self, "\\b(GR|G|Gregorian)\\b")
+    """The gregorian calendar, first created in 1582 but adopted sometimes
+       much later in some countries
+    """
 
-   def from_components (self, year=None, month=None, day=None):
-      """See inherited documentation"""
-      y = year or -4000
-      m = month or 1
-      d = day or 1
+    def __init__(self):
+        Calendar.__init__(self, "\\b(GR|G|Gregorian)\\b")
 
-      # If date is before the invention of gregorian calendar, assume we have
-      # a julian date
+    def from_components(self, year=None, month=None, day=None):
+        """See inherited documentation"""
+        y = year or -4000
+        m = month or 1
+        d = day or 1
 
-      if year and (y, m, d) < (1582, 2, 24):
-         return CalendarJulian().from_components(year, month, day)
+        # If date is before the invention of gregorian calendar, assume we have
+        # a julian date
 
-      else:
-         feb_29_4800 = 32045 # Julian day for Feb 29th, -4800 in gregorian cal.
-         a = (14 - m) / 12
-         y2 = y + 4800 - a
-         m2 = m + 12 * a - 3
-         d += (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400\
-           - feb_29_4800
-         return (d, year != None, month != None, day != None, self)
+        if year and (y, m, d) < (1582, 2, 24):
+            return CalendarJulian().from_components(year, month, day)
 
-   @staticmethod
-   def today ():
-      """Return today's date"""
-      t = time.localtime()
-      return CalendarGregorian ().from_components (
-          t.tm_year, t.tm_mon, t.tm_mday)
+        else:
+            # Julian day for Feb 29th, -4800 in gregorian cal.
+            feb_29_4800 = 32045
+            a = (14 - m) / 12
+            y2 = y + 4800 - a
+            m2 = m + 12 * a - 3
+            d += (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400\
+                - feb_29_4800
+            return (d, year != None, month != None, day != None, self)
 
-   def components (self, julian_day):
-      """See inherited documentation"""
-      # Algorithm from wikipedia "julian day"
-      days_per_four_years = 1461 # julian days per four year period
-      j = julian_day + 32044
-      g = j / 146097
-      dg = j % 146097
-      c = (dg / 36524 + 1) * 3 / 4
-      dc = dg - c * 36524
-      b = dc / days_per_four_years
-      db = dc % days_per_four_years
-      a = (db / 365 + 1) * 3 / 4
-      da = db - a * 365
-      y = g * 400 + c * 100 + b * 4 + a
-      m = (da * 5 + 308) / 153 - 2
-      d = da - (m + 4) * 153 / 5 + 122
+    @staticmethod
+    def today():
+        """Return today's date"""
+        t = time.localtime()
+        return CalendarGregorian().from_components(
+            t.tm_year, t.tm_mon, t.tm_mday)
 
-      return (y - 4800 + (m + 2) / 12, (m + 2) % 12 + 1, d + 1)
+    def components(self, julian_day):
+        """See inherited documentation"""
+        # Algorithm from wikipedia "julian day"
+        days_per_four_years = 1461  # julian days per four year period
+        j = julian_day + 32044
+        g = j / 146097
+        dg = j % 146097
+        c = (dg / 36524 + 1) * 3 / 4
+        dc = dg - c * 36524
+        b = dc / days_per_four_years
+        db = dc % days_per_four_years
+        a = (db / 365 + 1) * 3 / 4
+        da = db - a * 365
+        y = g * 400 + c * 100 + b * 4 + a
+        m = (da * 5 + 308) / 153 - 2
+        d = da - (m + 4) * 153 / 5 + 122
+
+        return (y - 4800 + (m + 2) / 12, (m + 2) % 12 + 1, d + 1)
+
 
 class CalendarFrench (Calendar):
-   """The french revolutionary calendar, which was only used during a few
-      years during the french revolution.
-   """
 
-   def __init__ (self):
-      # The @#DFRENCH R@ notation comes from gramps
-      Calendar.__init__ (self, "\\b(F|FR|French Republican)\\b|@#DFRENCH R@")
-      self._month_names = dict ()
-      for index, f in enumerate (FRENCH_MONTHS):
-         for m in f:
-            self._month_names[m] = index + 1
+    """The french revolutionary calendar, which was only used during a few
+       years during the french revolution.
+    """
 
-      self.__months_re = re.compile\
-         ("|".join ([k for k in self._month_names.keys() if k != ""]),
-          re.IGNORECASE)
+    def __init__(self):
+        # The @#DFRENCH R@ notation comes from gramps
+        Calendar.__init__(self, "\\b(F|FR|French Republican)\\b|@#DFRENCH R@")
+        self._month_names = dict()
+        for index, f in enumerate(FRENCH_MONTHS):
+            for m in f:
+                self._month_names[m] = index + 1
 
-   def __unicode__ (self):
-      # Do not return the name of the calendar when we spell out the month
-      # name in date_str(), since there is no ambiguity in this case
-      #return "French Republican"
-      return ""
+        self.__months_re = re.compile\
+            ("|".join([k for k in self._month_names.keys() if k != ""]),
+             re.IGNORECASE)
 
-   def is_a (self, text):
-      """See inherited documentation"""
-      result = Calendar.is_a (self, text)
-      if result:
-         return result
+    def __unicode__(self):
+        # Do not return the name of the calendar when we spell out the month
+        # name in date_str(), since there is no ambiguity in this case
+        # return "French Republican"
+        return ""
 
-      m = self.__months_re.search (text)
-      if m:
-         return text
+    def is_a(self, text):
+        """See inherited documentation"""
+        result = Calendar.is_a(self, text)
+        if result:
+            return result
 
-      return None
+        m = self.__months_re.search(text)
+        if m:
+            return text
 
-   def from_components (self, year=None, month=None, day=None):
-      """See inherited documentation"""
-      if year and year >= 1:
-         y = year or -4000
-         m = month or 1
-         d = day or 1
-         sep_21_1792 = 2375839
-         return (sep_21_1792 + (y  - 1) * 365 + y / 4 + m * 30 - 30 + d,
-                 year != None, month != None, day != None, self)
-      else:
-         return (0, False, False, False, self)
+        return None
 
-   def components (self, julian_day):
-      """See inherited documentation"""
-      # From http://www.scottlee.net
-      days_per_four_years = 1461 # julian days per four year period
-      epoch = 2375474
-      days_per_month = 30
-      tmp = (julian_day - epoch) * 4 - 1
-      y = tmp / days_per_four_years
-      day_of_year = (tmp % days_per_four_years) / 4
-      m = day_of_year / days_per_month + 1
-      d = day_of_year % days_per_month + 1
+    def from_components(self, year=None, month=None, day=None):
+        """See inherited documentation"""
+        if year and year >= 1:
+            y = year or -4000
+            m = month or 1
+            d = day or 1
+            sep_21_1792 = 2375839
+            return (sep_21_1792 + (y - 1) * 365 + y / 4 + m * 30 - 30 + d,
+                    year != None, month != None, day != None, self)
+        else:
+            return (0, False, False, False, self)
 
-      return (y, m, d)
+    def components(self, julian_day):
+        """See inherited documentation"""
+        # From http://www.scottlee.net
+        days_per_four_years = 1461  # julian days per four year period
+        epoch = 2375474
+        days_per_month = 30
+        tmp = (julian_day - epoch) * 4 - 1
+        y = tmp / days_per_four_years
+        day_of_year = (tmp % days_per_four_years) / 4
+        m = day_of_year / days_per_month + 1
+        d = day_of_year % days_per_month + 1
 
-   def date_unicode(self, julian_day, year_known=True, month_known=True,
-                 day_known=True, year_only=False):
-      """See inherited documentation"""
-      (y, m, d) = self.components (julian_day)
-      output = ""
+        return (y, m, d)
 
-      if year_only:
-         return to_roman_literal (y)
+    def date_unicode(self, julian_day, year_known=True, month_known=True,
+                     day_known=True, year_only=False):
+        """See inherited documentation"""
+        (y, m, d) = self.components(julian_day)
+        output = ""
 
-      if day_known:
-         output = unicode(d) + " "
+        if year_only:
+            return to_roman_literal(y)
 
-      if month_known:
-         if m == 13:
-            output = output + _("jours feries ")
-         else:
-            output = output + FRENCH_MONTHS [m - 1][0] + " "
+        if day_known:
+            output = unicode(d) + " "
 
-      if year_known:
-         output = output + to_roman_literal (y)
+        if month_known:
+            if m == 13:
+                output = output + _("jours feries ")
+            else:
+                output = output + FRENCH_MONTHS[m - 1][0] + " "
 
-      return output
+        if year_known:
+            output = output + to_roman_literal(y)
+
+        return output
+
 
 class CalendarJulian (Calendar):
-   """The julian calendar (in use before the gregorian calendar)"""
 
-   def __init__ (self):
-      # OS stands for "Old style"
-      Calendar.__init__ (self, "\\b(JU|J|Julian|OS)\\b|@#DJULIAN@")
-      self._month_names = MONTH_NAMES
+    """The julian calendar (in use before the gregorian calendar)"""
 
-   def __unicode__(self):
-      return u"Julian"
+    def __init__(self):
+        # OS stands for "Old style"
+        Calendar.__init__(self, "\\b(JU|J|Julian|OS)\\b|@#DJULIAN@")
+        self._month_names = MONTH_NAMES
 
-   def from_components (self, year=None, month=None, day=None):
-      """See inherited doc"""
-      # Conversion formulat from Wikipedia "Julian Day"
-      y = year or -4000
-      m = month or 1
-      d = day or 1
+    def __unicode__(self):
+        return u"Julian"
 
-      feb_29_4800 = 32083 # Julian day number for Feb 29th, -4800
-      a = (14 - m) / 12
-      y2 = y + 4800 - a
-      m2 = m + 12 * a - 3
-      return ((d + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4) - feb_29_4800,
-              year != None, month != None, day != None, self)
+    def from_components(self, year=None, month=None, day=None):
+        """See inherited doc"""
+        # Conversion formulat from Wikipedia "Julian Day"
+        y = year or -4000
+        m = month or 1
+        d = day or 1
 
-   def components (self, julian_day):
-      """See inherited doc"""
-      days_per_four_years = 1461 # julian days per four year period
-      j = julian_day + 32083
-      b = j / days_per_four_years
-      db = j % days_per_four_years
-      a = (db / 365 + 1) * 3 / 4
-      da = db - a * 365
-      y = b * 4 + a
-      m = (da * 5 + 308) / 153 - 2
-      return (y - 4800 + (m + 2) / 12, (m + 2) % 12 + 1,
-              da - (m + 4) * 153 / 5 + 122)
+        feb_29_4800 = 32083  # Julian day number for Feb 29th, -4800
+        a = (14 - m) / 12
+        y2 = y + 4800 - a
+        m2 = m + 12 * a - 3
+        return ((d + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4) - feb_29_4800,
+                year != None, month != None, day != None, self)
+
+    def components(self, julian_day):
+        """See inherited doc"""
+        days_per_four_years = 1461  # julian days per four year period
+        j = julian_day + 32083
+        b = j / days_per_four_years
+        db = j % days_per_four_years
+        a = (db / 365 + 1) * 3 / 4
+        da = db - a * 365
+        y = b * 4 + a
+        m = (da * 5 + 308) / 153 - 2
+        return (y - 4800 + (m + 2) / 12, (m + 2) % 12 + 1,
+                da - (m + 4) * 153 / 5 + 122)
 
 # The list of predefined calendars
 KNOWN_CALENDARS = [CalendarJulian(), CalendarFrench(), CalendarGregorian()]
 
 #####################
-## Time Delta
+# Time Delta
 #####################
 
+
 class TimeDelta(object):
+
     """A difference between two dates.
        You can add a number of years or months to a date. This directly
        adds on the components of the dates (which are then normalized).
@@ -592,38 +611,39 @@ class TimeDelta(object):
            info.
         """
 
-        self.days   = 0
+        self.days = 0
         self.months = 0
-        self.years  = 0
+        self.years = 0
         mult = 1
 
         while True:
-           match = ADD_RE.search(txt)
-           if not match or len(match.group(0).strip()) == 0:
-               break
+            match = ADD_RE.search(txt)
+            if not match or len(match.group(0).strip()) == 0:
+                break
 
-           if match.group(1) == "-":
-               mult = -1
-           else:
-               mult = 1
+            if match.group(1) == "-":
+                mult = -1
+            else:
+                mult = 1
 
-           if match.group(2):
-               self.years += mult * int(match.group(2))
-           if match.group(3):
-               self.months += mult * int(match.group(3))
-           if match.group(4):
-               self.days += mult * int(match.group(4))
+            if match.group(2):
+                self.years += mult * int(match.group(2))
+            if match.group(3):
+                self.months += mult * int(match.group(3))
+            if match.group(4):
+                self.days += mult * int(match.group(4))
 
-           txt = txt[:match.start(0)] + txt [match.end(0):]
+            txt = txt[:match.start(0)] + txt[match.end(0):]
 
         return txt
 
 
 #####################
-## _Date
+# _Date
 #####################
 
 class _Date(object):
+
     """Internal representation for a specific point in time (not a range of
        dates).
        The date might be imprecise ("about 1700") or incomplete ("1802-02",
@@ -645,80 +665,80 @@ class _Date(object):
         self.year_known = False
         self.day_known = False
         if text:
-            self.__parse ()
+            self.__parse()
 
-    def __parse (self):
-       """Parse self.text into a meaningful date"""
-       txt = self.text
+    def __parse(self):
+        """Parse self.text into a meaningful date"""
+        txt = self.text
 
-       for cal in KNOWN_CALENDARS:
-          remain = cal.is_a(self.text)
-          if remain:
-             self.calendar = cal
-             txt = remain
-             break
+        for cal in KNOWN_CALENDARS:
+            remain = cal.is_a(self.text)
+            if remain:
+                self.calendar = cal
+                txt = remain
+                break
 
-       if not self.calendar:
-          self.calendar = CalendarGregorian ()
+        if not self.calendar:
+            self.calendar = CalendarGregorian()
 
-       self.type = DATE_ON
-       match = BEFORE_RE.search (txt)
-       if match:
-          self.type = DATE_BEFORE
-          txt = (match.group (2) or "") + txt[match.end(1):]
-       else:
-          match = AFTER_RE.search (txt)
-          if match:
-             self.type = DATE_AFTER
-             txt = (match.group (2) or "") + txt[match.end(1):]
+        self.type = DATE_ON
+        match = BEFORE_RE.search(txt)
+        if match:
+            self.type = DATE_BEFORE
+            txt = (match.group(2) or "") + txt[match.end(1):]
+        else:
+            match = AFTER_RE.search(txt)
+            if match:
+                self.type = DATE_AFTER
+                txt = (match.group(2) or "") + txt[match.end(1):]
 
-       self.precision = PRECISION_EXACT
-       match = ABOUT_RE.search (txt)
-       if match:
-          self.precision = PRECISION_ABOUT
-          txt = txt[:match.start(0)] + txt[match.end(0):]
-       else:
-          match = EST_RE.search (txt)
-          if match:
-             self.precision = PRECISION_ESTIMATED
-             txt = txt[:match.start(0)] + txt[match.end(0):]
+        self.precision = PRECISION_EXACT
+        match = ABOUT_RE.search(txt)
+        if match:
+            self.precision = PRECISION_ABOUT
+            txt = txt[:match.start(0)] + txt[match.end(0):]
+        else:
+            match = EST_RE.search(txt)
+            if match:
+                self.precision = PRECISION_ESTIMATED
+                txt = txt[:match.start(0)] + txt[match.end(0):]
 
-       # Do we have a time indicated ?
-       match = TIME_RE.search (txt)
-       if match:
-          if match.group (4):
-             secs = int (match.group (4))
-          else:
-             secs = 0
+        # Do we have a time indicated ?
+        match = TIME_RE.search(txt)
+        if match:
+            if match.group(4):
+                secs = int(match.group(4))
+            else:
+                secs = 0
 
-          if match.group (5) == "pm":
-             hour = int (match.group (1)) + 12
-          else:
-             hour = int (match.group (1))
+            if match.group(5) == "pm":
+                hour = int(match.group(1)) + 12
+            else:
+                hour = int(match.group(1))
 
-          self.seconds = datetime.time (hour=hour,
-                                        minute=int (match.group (2)),
-                                        second=secs)
-          txt = txt[:match.start(0)]
-       else:
-          self.seconds = None
+            self.seconds = datetime.time(hour=hour,
+                                         minute=int(match.group(2)),
+                                         second=secs)
+            txt = txt[:match.start(0)]
+        else:
+            self.seconds = None
 
-       delta = TimeDelta()
-       txt = delta.parse(txt)
+        delta = TimeDelta()
+        txt = delta.parse(txt)
 
-       txt = txt.strip()
-       day = self.calendar.parse(txt)
+        txt = txt.strip()
+        day = self.calendar.parse(txt)
 
-       if day:
-          (self.date, self.year_known, self.month_known, self.day_known,
-           self.calendar) = day
-       else:
-          self.date = None
+        if day:
+            (self.date, self.year_known, self.month_known, self.day_known,
+             self.calendar) = day
+        else:
+            self.date = None
 
-       if delta.years or delta.months or delta.days:
-          r = self + delta
-          self.date = r.date
-          self.calendar = r.calendar
+        if delta.years or delta.months or delta.days:
+            r = self + delta
+            self.date = r.date
+            self.calendar = r.calendar
 
     def __repr__(self):
         return self.__unicode__()
@@ -729,12 +749,12 @@ class _Date(object):
            one parsed from the initial string"""
         return self.display(calendar=None)
 
-    def sort_date (self):
+    def sort_date(self):
         """Return a single date that can be used when sorting Dates"""
         if self.year_known:
-           return CalendarGregorian().date_unicode(self.date)
+            return CalendarGregorian().date_unicode(self.date)
         else:
-           return None  # Can't do any sorting
+            return None  # Can't do any sorting
 
     def year(self, calendar=None):
         """Return the year component of self, in the associated calendar"""
@@ -745,55 +765,55 @@ class _Date(object):
         return self.date == date.date
 
     @staticmethod
-    def today ():
-       """Return today's date"""
-       date = CalendarGregorian().today ()
-       result = _Date("")
-       (result.date, result.year_known, result.month_known, result.day_known,
-        result.calendar) = date
-       return result
+    def today():
+        """Return today's date"""
+        date = CalendarGregorian().today()
+        result = _Date("")
+        (result.date, result.year_known, result.month_known, result.day_known,
+         result.calendar) = date
+        return result
 
     def display(self, calendar=None, year_only=False, original=False):
-       """Return a string representing string. By default, this uses the
-          calendar parsed when the date was created, but it is possible to
-          force the display in other date formats.
-          If the date could not be parsed, it is returned exactly as written
-          by the user.
-          If ORIGINAL is true, the date is output exactly as the user entered
-          it.
-       """
+        """Return a string representing string. By default, this uses the
+           calendar parsed when the date was created, but it is possible to
+           force the display in other date formats.
+           If the date could not be parsed, it is returned exactly as written
+           by the user.
+           If ORIGINAL is true, the date is output exactly as the user entered
+           it.
+        """
 
-       if original and self.text:
-          return unicode(self.text)
+        if original and self.text:
+            return unicode(self.text)
 
-       else:
-          cal = calendar or self.calendar
-          result = u""
+        else:
+            cal = calendar or self.calendar
+            result = u""
 
-          if self.precision == PRECISION_ABOUT:
-             result += "~"
+            if self.precision == PRECISION_ABOUT:
+                result += "~"
 
-          if self.type == DATE_BEFORE:
-             result += "/"
+            if self.type == DATE_BEFORE:
+                result += "/"
 
-          result = result + cal.date_unicode(
-              self.date, self.year_known, self.month_known, self.day_known,
-              year_only=year_only)
+            result = result + cal.date_unicode(
+                self.date, self.year_known, self.month_known, self.day_known,
+                year_only=year_only)
 
-          if not year_only and self.seconds != None:
-             result += " " + unicode(self.seconds)
+            if not year_only and self.seconds != None:
+                result += " " + unicode(self.seconds)
 
-          if self.type == DATE_AFTER:
-             result += "/"
+            if self.type == DATE_AFTER:
+                result += "/"
 
-          if self.precision == PRECISION_ESTIMATED:
-             result += " ?"
+            if self.precision == PRECISION_ESTIMATED:
+                result += " ?"
 
-          cal = unicode (cal)
-          if cal:
-             result += " (" + cal + ")"
+            cal = unicode(cal)
+            if cal:
+                result += " (" + cal + ")"
 
-          return result
+            return result
 
     def __add__(self, delta):
         """Add a delta to a date"""
@@ -875,10 +895,11 @@ class _Date(object):
 
 
 ##################
-## DateRange
+# DateRange
 ##################
 
 class DateRange(object):
+
     """This class represents a date or a range of date, as read from the
        user. Such dates might be incomplete or unprecise. The text entered
        by the user is meant to be kept forever, this class provides an
@@ -893,9 +914,9 @@ class DateRange(object):
 
         self.text = text.strip()  # Date as the user entered it
         self.ends = [None, None]  # The two ends of the range. These are
-                                  # either _Date instances or DateRange
-                                  # instances if self is a period whose
-                                  # start or end are ranges.
+        # either _Date instances or DateRange
+        # instances if self is a period whose
+        # start or end are ranges.
         self.span = -1  # SPAN_FROM or SPAN_BETWEEN, to describe the range
         self.__parse()
 
@@ -941,9 +962,9 @@ class DateRange(object):
     def year(self, calendar=None):
         """Return the year to be used for the range, when sorting"""
         if self.ends[0] and self.ends[0].year_known:
-           return self.ends[0].year(calendar)
+            return self.ends[0].year(calendar)
         else:
-           return None
+            return None
 
     def __eq__(self, date):
         return self.ends == date.ends
@@ -966,17 +987,17 @@ class DateRange(object):
 
         if self.ends[0] is None:
             d2 = self.ends[1].display(
-               calendar=calendar, year_only=year_only, original=original)
+                calendar=calendar, year_only=year_only, original=original)
             if self.ends[1] is not None:
                 return u"to %s" % d2
             return unicode(self.text)
 
         d1 = self.ends[0].display(
-           calendar=calendar, year_only=year_only, original=original)
+            calendar=calendar, year_only=year_only, original=original)
 
         if self.ends[1] is not None:
             d2 = self.ends[1].display(
-               calendar=calendar, year_only=year_only, original=original)
+                calendar=calendar, year_only=year_only, original=original)
 
             if self.span == SPAN_FROM:
                 return u"from %s to %s" % (d1, d2)
@@ -997,12 +1018,12 @@ class DateRange(object):
            Only full years are counted
         """
         if self.ends[0] is not None \
-               and self.ends[0].year_known \
-               and date.ends[0] is not None \
-               and date.ends[0].year_known:
-           return (self.ends[0] - date.ends[0]).years
+                and self.ends[0].year_known \
+                and date.ends[0] is not None \
+                and date.ends[0].year_known:
+            return (self.ends[0] - date.ends[0]).years
         else:
-           return None
+            return None
 
     def day_of_week(self):
         """Return the day of week for the start date"""
@@ -1066,10 +1087,10 @@ class DateRange(object):
         if self.span != SPAN_BETWEEN:
             groups = BETWEEN_RE.search(self.text)
             if groups:
-               self.ends = (_Date(groups.group(2)),
-                            _Date(groups.group(4)))
-               self.span = SPAN_BETWEEN
-               return
+                self.ends = (_Date(groups.group(2)),
+                             _Date(groups.group(4)))
+                self.span = SPAN_BETWEEN
+                return
 
         self.ends = (_Date(self.text), None)
         self.span = -1

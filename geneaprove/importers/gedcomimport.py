@@ -44,10 +44,12 @@ def location(obj):
         return "???"
 
 ##################################
-## GedcomImporter
+# GedcomImporter
 ##################################
 
+
 class GedcomImporter(object):
+
     """
     Abstract Gedcom importer. This translates from the gedcom data model
     into our own, and can be used by any importer for which the software
@@ -76,8 +78,8 @@ class GedcomImporter(object):
 
             self._births = dict()  # Index on persona id, contains Event
 
-            self._objects = dict() # Objects that were inserted in this import
-                                # to avoid duplicates.  file => Representation
+            self._objects = dict()  # Objects that were inserted in this import
+            # to avoid duplicates.  file => Representation
 
             self._principal = models.Event_Type_Role.objects.get(
                 pk=models.Event_Type_Role.principal)
@@ -94,10 +96,10 @@ class GedcomImporter(object):
             self._places = dict()
             self._repo = dict()
 
-            self._sourcePersona = dict() # Indexed on (sourceId, personId)
-               # returns the Persona to use for that source. As a special
-               # case, sourceId is set to NO_SOURCE for those events and
-               # characteristics with no source.
+            self._sourcePersona = dict()  # Indexed on (sourceId, personId)
+            # returns the Persona to use for that source. As a special
+            # case, sourceId is set to NO_SOURCE for those events and
+            # characteristics with no source.
 
             self._sources = dict()
             for r in data.REPO:
@@ -119,7 +121,7 @@ class GedcomImporter(object):
                 self._create_indi(s)
                 if DEBUG and index % 20 == 0:
                     print "%d / %d (%0.2f %%)" % (
-                        index, max, float(index)/float(max) * 100.0)
+                        index, max, float(index) / float(max) * 100.0)
             if DEBUG:
                 print "Done importing indi"
 
@@ -133,7 +135,8 @@ class GedcomImporter(object):
             for k, v in data.for_all_fields():
                 if k not in ("SOUR", "INDI", "FAM", "HEAD", "SUBM",
                              "TRLR", "ids", "filename"):
-                    self.report_error("%s Unhandled FILE.%s" % (location(v), k))
+                    self.report_error(
+                        "%s Unhandled FILE.%s" % (location(v), k))
 
             transaction.commit()
         except:
@@ -158,7 +161,8 @@ class GedcomImporter(object):
 
         self._char_types['_MIDL'] = \
             models.Characteristic_Part_Type.objects.get(id=40)
-        self._char_types['NAME'] = True  # Handled specially in _create_characteristic
+        # Handled specially in _create_characteristic
+        self._char_types['NAME'] = True
 
         for p in models.Place_Part_Type.objects.exclude(gedcom__isnull=True):
             if p.gedcom:
@@ -188,7 +192,7 @@ class GedcomImporter(object):
                 date = d.DATE.value
                 if d.DATE.TIME:
                     tmp = datetime.datetime.strptime(
-                       date + " " + d.DATE.TIME, "%d %b %Y %H:%M:%S")
+                        date + " " + d.DATE.TIME, "%d %b %Y %H:%M:%S")
                 else:
                     tmp = datetime.datetime.strptime(date, "%d %b %Y")
 
@@ -251,7 +255,8 @@ class GedcomImporter(object):
             else:
                 for k, v in repo.for_all_fields():
                     if k not in ("CALN", ):
-                        self.report_error("%s Unhandled REPO.%s" % (location(v), k))
+                        self.report_error(
+                            "%s Unhandled REPO.%s" % (location(v), k))
 
             caln = repo.CALN  # call number
             if caln:
@@ -282,7 +287,7 @@ class GedcomImporter(object):
             models.Repository_Source.objects.create(
                 repository=rep,
                 source=src,
-                #activity=None,
+                # activity=None,
                 call_number=None,
                 description=None)
 
@@ -320,12 +325,12 @@ class GedcomImporter(object):
             return
 
         form_to_mime = {
-            'jpeg': 'image/jpeg', # Gramps
-            'image/png': 'image/png', # Gramps
+            'jpeg': 'image/jpeg',  # Gramps
+            'image/png': 'image/png',  # Gramps
             'image/jpeg': 'image/jpeg',
-            'png': 'image/png', # rootsMagic
-            'jpg': 'image/jpg', # rootsMagic
-            'JPG': 'image/jpg', # rootsMagic
+            'png': 'image/png',  # rootsMagic
+            'jpg': 'image/jpg',  # rootsMagic
+            'JPG': 'image/jpg',  # rootsMagic
             '': 'application/octet-stream'}
 
         mime = form_to_mime.get(data.FORM, 'application/octet-stream')
@@ -432,19 +437,20 @@ class GedcomImporter(object):
         long_name = data.value + self._addr_image(addr)
         if data.MAP:
             long_name = long_name + ' MAP=%s,%s' % (data.MAP.LATI,
-                    data.MAP.LONG)
+                                                    data.MAP.LONG)
 
         p = self._places.get(long_name)
 
         if not p:
             p = models.Place.objects.create(name=data.value, date=None,
-                    parent_place=None)
+                                            parent_place=None)
             self._places[long_name] = p  # For reuse
 
             if data.MAP:
                 pp = models.Place_Part.objects.create(place=p,
-                        type=self._place_part_types['MAP'], name=data.MAP.LATI
-                        + ' ' + data.MAP.LONG)
+                                                      type=self._place_part_types[
+                                                          'MAP'], name=data.MAP.LATI
+                                                      + ' ' + data.MAP.LONG)
 
             if addr:
                 for key, val in addr.for_all_fields():
@@ -455,7 +461,7 @@ class GedcomImporter(object):
                                 'Unknown place part: ' + key)
                         else:
                             pp = models.Place_Part.objects.create(place=p,
-                                    type=part, name=val)
+                                                                  type=part, name=val)
 
         # ??? Unhandled attributes of PLAC: FORM, SOURCE and NOTE
         # FORM would in fact tell us how to split the name to get its
@@ -484,7 +490,7 @@ class GedcomImporter(object):
             return indi
 
         if sourceId != INLINE_SOURCE:
-            p = self._sourcePersona.get((sourceId,indi._gedcom_id), None)
+            p = self._sourcePersona.get((sourceId, indi._gedcom_id), None)
             if p:
                 return p
 
@@ -568,7 +574,7 @@ class GedcomImporter(object):
             else:
                 # Processes ADDR and PLAC
                 place = self._create_place(val)
-                self._create_obje_for_place(val, place) # processes OBJE
+                self._create_obje_for_place(val, place)  # processes OBJE
 
                 c = models.Characteristic.objects.create(
                     place=place,
@@ -594,7 +600,7 @@ class GedcomImporter(object):
 
             if typ:
                 models.Characteristic_Part.objects.create(characteristic=c,
-                        type=typ, name=str_value)
+                                                          type=typ, name=str_value)
 
             # We might have other characteristic part, most notably for names.
 
@@ -620,11 +626,11 @@ class GedcomImporter(object):
                                     characteristic=c, type=t, name=n[0])
 
                                 for m in n[1:]:
-                                   if m:
-                                     models.Characteristic_Part.objects.create(
-                                        characteristic=c,
-                                        type=self._char_types['_MIDL'],
-                                        name=m)
+                                    if m:
+                                        models.Characteristic_Part.objects.create(
+                                            characteristic=c,
+                                            type=self._char_types['_MIDL'],
+                                            name=m)
                         elif v:
                             models.Characteristic_Part.objects.create(
                                 characteristic=c, type=t, name=v)
@@ -661,7 +667,6 @@ class GedcomImporter(object):
                         subject_place=place)
             else:
                 self.report_error("%s Unhandled OBJE" % (location(data.OBJE)))
-
 
     def _create_event(self, indi, field, data, CHAN=None):
         """Create a new event, associated with INDI by way of one or more
@@ -713,7 +718,7 @@ class GedcomImporter(object):
             if principal is None:
                 self.report_error(
                     "%s No principal given for event: %s - %s" % (
-                    location(data), field, data))
+                        location(data), field, data))
 
         else:
             principal = indi
@@ -738,9 +743,9 @@ class GedcomImporter(object):
 
         if not evt:
             place = self._create_place(data)
-            self._create_obje_for_place(data, place, CHAN) # processes OBJE
+            self._create_obje_for_place(data, place, CHAN)  # processes OBJE
             evt = models.Event.objects.create(type=event_type, place=place,
-                    name=name, date=getattr(data, "DATE", None))
+                                              name=name, date=getattr(data, "DATE", None))
 
             if event_type.gedcom == 'BIRT':
                 self._births[principal.id] = evt
@@ -888,7 +893,8 @@ class GedcomImporter(object):
                              and isinstance(value[0], basestring))):
                 # A GEDCOM extension by an application.
                 # If this is a simple string value, assume this is a characteristic.
-                # Create the corresponding type in the database, and import the field
+                # Create the corresponding type in the database, and import the
+                # field
 
                 typ = models.Characteristic_Part_Type.objects.create(
                     is_name_part=False,
@@ -915,10 +921,10 @@ class GedcomImporter(object):
                     value=GedcomRecord(
                         value='',
                         SOUR=[GedcomRecord(
-                           TITLE=data.TITL,  # used both for object and source
-                           ABBR=data.TITL,
-                           CHAN=None,
-                           OBJE=value)]),
+                            TITLE=data.TITL,  # used both for object and source
+                            ABBR=data.TITL,
+                            CHAN=None,
+                            OBJE=value)]),
                     indi=indi)
 
             else:
@@ -932,10 +938,11 @@ class GedcomImporter(object):
 
         filename = getattr(self._data.HEAD, "FILE", "") or self._data.filename
         p = models.Project.objects.create(name='Gedcom import',
-                description='Import from ' + filename,
-                scheme=models.Surety_Scheme.objects.get(id=1))
+                                          description='Import from ' +
+                                          filename,
+                                          scheme=models.Surety_Scheme.objects.get(id=1))
         models.Researcher_Project.objects.create(researcher=researcher,
-                project=p, role='Generated GEDCOM file')
+                                                 project=p, role='Generated GEDCOM file')
         return p
 
     @staticmethod
@@ -978,32 +985,36 @@ class GedcomImporter(object):
         subm = self._data.HEAD.SUBM
         if subm:
             return models.Researcher.objects.create(name=subm.NAME.value
-                    or 'unknown',
-                    comment=GedcomImporter._addr_to_string(subm.ADDR))
+                                                    or 'unknown',
+                                                    comment=GedcomImporter._addr_to_string(subm.ADDR))
         else:
             return models.Researcher.objects.create(name='unknown', comment='')
 
 ##################################
-## GedcomImporterCumulate
+# GedcomImporterCumulate
 ##################################
 
+
 class GedcomImporterCumulate(GedcomImporter):
+
     def __init__(self, *args, **kwargs):
         self.errors = []
         super(GedcomImporterCumulate, self).__init__(*args, **kwargs)
-    
+
     def report_error(self, msg):
         self.errors.append(msg)
 
 
 ##################################
-## GedcomFileImporter
+# GedcomFileImporter
 ##################################
 
 class GedcomFileImporter(geneaprove.importers.Importer):
+
     """Register a new importer in geneaprove: imports GEDCOM files"""
 
     class Meta:
+
         """see inherited documentation"""
         displayName = _('GEDCOM')
         description = _('Imports a standard GEDCOM file, which most genealogy'

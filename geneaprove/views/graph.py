@@ -17,6 +17,7 @@ from geneaprove.utils.graphs import Digraph
 
 
 class Persona_node(object):
+
     """A persona from the genealogy"""
 
     def __init__(self, ids, name, different):
@@ -50,7 +51,7 @@ class Persona_node(object):
         return self.__main_id
 
     def __repr__(self):
-        #return "%s-%s" % (self.main_id, self.name.encode("utf-8"))
+        # return "%s-%s" % (self.main_id, self.name.encode("utf-8"))
         return "%s" % (self.main_id, )
 
     def _graphlabel(self):
@@ -58,6 +59,7 @@ class Persona_node(object):
 
 
 class P2P_Link(object):
+
     """A link between two personas"""
 
     KIND_FATHER = 0   # from is FATHER of to
@@ -85,6 +87,7 @@ class P2P_Link(object):
 
 
 class GeneaGraph(Digraph):
+
     """
     A graph that represents various relationships between people in the
     database. It does not contain all the info from the database, but should be
@@ -119,7 +122,7 @@ class GeneaGraph(Digraph):
         self.__nodes = dict()   # id -> Persona()
 
         sameas = dict()  # id -> [set of persona ids]
-        different = dict() # id -> [set of persona ids, disproved]
+        different = dict()  # id -> [set of persona ids, disproved]
 
         #####
         # Group same-as personas into a single node.
@@ -144,7 +147,7 @@ class GeneaGraph(Digraph):
         query = models.P2P.objects.filter(type=models.P2P.sameAs)
         for p in query.values_list('person1', 'person2', 'disproved'):
             add_to_dict(different if p[2] else sameas, p[0], p[1])
-                
+
         ######
         # Create nodes for all the persona from the database
 
@@ -182,20 +185,19 @@ class GeneaGraph(Digraph):
         for e in events.itervalues():
             if e[0] is not None and e[1] is not None:
                 self.add_edge(P2P_Link(
-                        fromP=self.node_from_id(e[1]),
-                        toP=self.node_from_id(e[0]),
-                        kind=P2P_Link.KIND_FATHER))
+                    fromP=self.node_from_id(e[1]),
+                    toP=self.node_from_id(e[0]),
+                    kind=P2P_Link.KIND_FATHER))
             if e[0] is not None and e[2] is not None:
                 self.add_edge(P2P_Link(
-                        fromP=self.node_from_id(e[2]),
-                        toP=self.node_from_id(e[0]),
-                        kind=P2P_Link.KIND_MOTHER))
+                    fromP=self.node_from_id(e[2]),
+                    toP=self.node_from_id(e[0]),
+                    kind=P2P_Link.KIND_MOTHER))
             if e[1] is not None and e[2] is not None:
                 self.add_edge(P2P_Link(
-                        fromP=self.node_from_id(e[1]),
-                        toP=self.node_from_id(e[2]),
-                        kind=P2P_Link.KIND_SPOUSE))
-
+                    fromP=self.node_from_id(e[1]),
+                    toP=self.node_from_id(e[2]),
+                    kind=P2P_Link.KIND_SPOUSE))
 
         # Sex of the persons
         #    SELECT p2c.person, characteristic_part.name
@@ -206,20 +208,20 @@ class GeneaGraph(Digraph):
         query = ("SELECT %(cp_id)s, %(cp_name)s, %(p2c_person)s AS person"
                  " FROM %(p2c)s, %(cp)s"
                  " WHERE %(cp_type)s=%(val)d AND %(p2c_char)s=%(cp_char)s") % {
-                    "p2c": models.sql_table_name(models.P2C),
-                    "cp":  models.sql_table_name(models.Characteristic_Part),
-                    "p2c_person": models.sql_field_name(models.P2C, "person"),
-                    "p2c_char": models.sql_field_name(
-                         models.P2C, "characteristic"),
-                    "cp_id": models.sql_field_name(
-                         models.Characteristic_Part, "pk"),
-                    "cp_name": models.sql_field_name(
-                         models.Characteristic_Part, "name"),
-                    "cp_type": models.sql_field_name(
-                         models.Characteristic_Part, "type"),
-                    "cp_char": models.sql_field_name(
-                         models.Characteristic_Part, "characteristic"),
-                    "val": models.Characteristic_Part_Type.sex}
+            "p2c": models.sql_table_name(models.P2C),
+            "cp":  models.sql_table_name(models.Characteristic_Part),
+            "p2c_person": models.sql_field_name(models.P2C, "person"),
+            "p2c_char": models.sql_field_name(
+                models.P2C, "characteristic"),
+            "cp_id": models.sql_field_name(
+                models.Characteristic_Part, "pk"),
+            "cp_name": models.sql_field_name(
+                models.Characteristic_Part, "name"),
+            "cp_type": models.sql_field_name(
+                models.Characteristic_Part, "type"),
+            "cp_char": models.sql_field_name(
+                models.Characteristic_Part, "characteristic"),
+            "val": models.Characteristic_Part_Type.sex}
 
         for c in models.Characteristic_Part.objects.raw(query):
             self.node_from_id(c.person).sex = c.name
@@ -304,9 +306,9 @@ class GeneaGraph(Digraph):
             node_or_id = self.node_from_id(node_or_id.id)
         elif not isinstance(node_or_id, Persona_node):
             node_or_id = self.node_from_id(node_or_id)
-        return [e[0] 
-               for e in self.in_edges(node_or_id)
-               if e.kind == P2P_Link.KIND_MOTHER]
+        return [e[0]
+                for e in self.in_edges(node_or_id)
+                if e.kind == P2P_Link.KIND_MOTHER]
 
     def fathers(self, node_or_id):
         """
@@ -317,9 +319,9 @@ class GeneaGraph(Digraph):
             node_or_id = self.node_from_id(node_or_id.id)
         elif not isinstance(node_or_id, Persona_node):
             node_or_id = self.node_from_id(node_or_id)
-        return [e[0] 
-               for e in self.in_edges(node_or_id)
-               if e.kind == P2P_Link.KIND_FATHER]
+        return [e[0]
+                for e in self.in_edges(node_or_id)
+                if e.kind == P2P_Link.KIND_FATHER]
 
     def json(self, subset=None):
         """
@@ -356,7 +358,7 @@ class GeneaGraph(Digraph):
             """
 
             tmp = dict()  # families: (father,mother,child1,child2,...)
-                          # indexed on (father, mother)
+            # indexed on (father, mother)
 
             for n in graph:
                 father = mother = None
@@ -368,21 +370,22 @@ class GeneaGraph(Digraph):
                         mother = e[0]
 
                 if father is not None or mother is not None:
-                    tmp.setdefault((father, mother), [mother, father]).append(n)
+                    tmp.setdefault(
+                        (father, mother), [mother, father]).append(n)
 
             byLayer = dict()   # Contains list of families for each layer
-    
+
             for family in tmp.itervalues():
                 rightMostLayer = min(
                     layers_by_id[p] for p in family if p is not None)
                 byLayer.setdefault(rightMostLayer + 1, []).append(family)
-    
+
             # ??? Should be computed independently
             indexInLayer = dict()
             for layer in layers:
                 for index, node in enumerate(layer):
                     indexInLayer[node] = index
-    
+
             # Sort the families within each layer. If one of the parents is in
             # another layer, we want that marriage to appear first.
 
@@ -398,13 +401,13 @@ class GeneaGraph(Digraph):
                           layers_by_id[family[1]] if family[1] else 0),
                      min(indexInLayer.get(family[0], -1),
                          indexInLayer.get(family[1], -1))))
-    
+
                 # Pass the ids of the family members, not the nodes
                 result.append(
                     [map(lambda node: min(node.ids) if node else -1,
                          family)
                      for family in r])
-    
+
             return result
 
         # Prepare a temporary graph: it is used to subset the list of nodes
@@ -443,7 +446,7 @@ class GeneaGraph(Digraph):
                 [(n.main_id, n.name.encode("utf-8"), n.sex)
                  for n in layers[lay]])
 
-        #for index, l in enumerate(result):
+        # for index, l in enumerate(result):
         #    print "MANU layer[%d] = %s" % (index, sorted([p[0] for p in l]))
         return {"persons": to_json(result, year_only=True),
                 "families": families}
@@ -479,15 +482,15 @@ class GeneaGraph(Digraph):
                 ids.update(self.spouses(id))
 
         to_match = set(self.breadth_first_search(
-                roots=ids,
-                maxdepth=maxdepthAncestors,
-                distance=distance,
-                edgeiter=self.in_parent_edges))
+            roots=ids,
+            maxdepth=maxdepthAncestors,
+            distance=distance,
+            edgeiter=self.in_parent_edges))
         to_match.update(self.breadth_first_search(
-                roots=ids,
-                maxdepth=maxdepthDescendants,
-                distance=distance,
-                edgeiter=self.out_children_edges))
+            roots=ids,
+            maxdepth=maxdepthDescendants,
+            distance=distance,
+            edgeiter=self.out_children_edges))
         return to_match
 
 
@@ -526,7 +529,7 @@ def quilts_view(request, decujus=None):
 
     #graph.export(file("graph.pickle", "w"))
     #graph.write_graphviz(file("graph.dot", "wb"))
-    #graph.write_graphviz(file("genea.dot", "w"),
+    # graph.write_graphviz(file("genea.dot", "w"),
     #                 edgeiter=g.out_children_edges)
 
     data = graph.json(subset)

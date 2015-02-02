@@ -14,6 +14,7 @@ from geneaprove.utils.citations import Citations
 
 
 class Fact(object):
+
     """Describes a fact extracted from an assertion"""
 
     __slots__ = ("surety", "rationale", "disproved", "date",
@@ -32,20 +33,20 @@ class Fact(object):
             A tuple (type, info*)
         :param subject2:
             A tuple (type, info*)
-            
+
         where info is one or more elements depending on the type.
             (TYPE_EVENT, event, role)
             (TYPE_CHARACTERISTIC, characteristic, parts)
             (TYPE_PERSON, persona)
         """
 
-        self.surety    = surety
+        self.surety = surety
         self.rationale = rationale
-        self.date      = date
-        self.place     = place
+        self.date = date
+        self.place = place
         self.disproved = disproved
-        self.subject1  = subject1
-        self.subject2  = subject2
+        self.subject1 = subject1
+        self.subject2 = subject2
 
 
 def extended_sources(ids, schemes):
@@ -58,11 +59,11 @@ def extended_sources(ids, schemes):
     assert(isinstance(ids, list))
     assert schemes is None or isinstance(schemes, set)
 
-    sources = dict() # id -> Source
+    sources = dict()  # id -> Source
 
     for s in sql_in(models.Source.objects.select_related(
-                         "repositories", "researcher"),
-                    "id", ids):
+            "repositories", "researcher"),
+            "id", ids):
         sources[s.id] = s
         s.asserts = []
 
@@ -89,7 +90,7 @@ def extended_sources(ids, schemes):
     for c in sql_in(p2c, "source", ids):
         parts = []
         for p in models.Characteristic_Part.objects.filter(
-           characteristic=c.characteristic).select_related():
+                characteristic=c.characteristic).select_related():
             parts.append((p.type.name, p.name))
 
         f = Fact(
@@ -220,14 +221,14 @@ def view(request, id):
     for s in schemes:
         surety_schemes[s] = models.Surety_Scheme.objects.get(id=s).parts.all()
 
-    return render_to_response (
+    return render_to_response(
         'geneaprove/sources.html',
         {"s": sources[id],
          "parts": to_json(list_of_citations(None, sources[id])),
          "repository_types": models.Repository_Type.objects.all(),
          "source_types":   Citations.source_types(),
          "schemes": surety_schemes,
-        },
+         },
         context_instance=RequestContext(request))
 
 
@@ -296,7 +297,8 @@ def editCitation(request, source_id):
         medium = src.compute_medium()
         if medium:
             params = prepare_citation_parts(src.higher_source, request.POST)
-            c = Citations.get_citation(medium).cite(params, unknown_as_text=False)
+            c = Citations.get_citation(medium).cite(
+                params, unknown_as_text=False)
             src.biblio = c.biblio
             src.title = c.full
             src.abbrev = c.short
