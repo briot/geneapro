@@ -433,7 +433,8 @@ PedigreeCanvas.prototype.computeBoundingBox = function() {
        break;
     }
 
-    // For children, the COMPACT and EXPANDED modes are the same since we can't
+    //t float fy = doLayoutExpand(maxGen, generation + 1, sosaNumber * 2.0, maxY, sosa);
+    //For children, the COMPACT and EXPANDED modes are the same since we can't
     // know the theoritical number of children.
 
     function doLayoutChildren(indiv) {

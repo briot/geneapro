@@ -47,7 +47,7 @@ class PartialDateField(models.CharField):
    def __init__(self, max_length=0, null=True, *args, **kwargs):
       kwargs["null"] = null
       super (PartialDateField, self).__init__(
-         self, max_length=100, *args, **kwargs)
+         max_length=100, *args, **kwargs)
 
    def contribute_to_class(self, cls, name):
       """Add the partialDateField to a class, as well as a second field
@@ -592,7 +592,7 @@ class Characteristic_Part_Type (Part_Type):
       """Meta data for the model"""
       db_table = "characteristic_part_type"
 
-   is_name_part = models.BooleanField ()
+   is_name_part = models.BooleanField(default=False)
 
    # Some hard-coded values for efficiency. Ideally, we should look these
    # from the database. The problem is if the database gets translated

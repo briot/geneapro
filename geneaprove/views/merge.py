@@ -6,7 +6,6 @@ Handles merging of personas.
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.translation import ugettext as _
-from django.utils import simplejson
 from django.http import HttpResponse
 from geneaprove import models
 from geneaprove.views.custom_highlight import style_rules

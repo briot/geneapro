@@ -1,6 +1,6 @@
 """Convert data to JSON"""
 
-from django.utils import simplejson
+import json
 from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.styles import get_place
@@ -9,7 +9,7 @@ def to_json (obj, year_only=True):
    """Converts a type to json data, properly converting database instances.
       If year_only is true, then the dates will only include the year"""
 
-   class ModelEncoder (simplejson.JSONEncoder):
+   class ModelEncoder(json.JSONEncoder):
       """Encode an object or a list of objects extracted from our model into
          JSON"""
 
@@ -64,5 +64,5 @@ def to_json (obj, year_only=True):
 
          return super (ModelEncoder, self).default(obj)
 
-   return simplejson.dumps (obj, cls=ModelEncoder, separators=(',',':'))
+   return json.dumps (obj, cls=ModelEncoder, separators=(',',':'))
 

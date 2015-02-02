@@ -6,11 +6,10 @@ from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.db.models import Q
 from django.utils.translation import ugettext as _
-from django.utils import simplejson
 from django.http import HttpResponse
 from geneaprove import models
 from geneaprove.utils.date import DateRange
-from geneaprove.views.json import to_json
+from geneaprove.views.to_json import to_json
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import graph
 from geneaprove.views.styles import Styles

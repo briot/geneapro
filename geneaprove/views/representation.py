@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from geneaprove import models
-from geneaprove.views.json import to_json
+from geneaprove.views.to_json import to_json
 import os.path
 
 

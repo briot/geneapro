@@ -6,14 +6,13 @@ import datetime
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 from django.utils.translation import ugettext as _
-from django.utils import simplejson
 from django.http import HttpResponse
 from geneaprove import models
 from geneaprove.utils.date import CalendarGregorian
 from geneaprove.views.styles import *
 from geneaprove.views.graph import graph
 from geneaprove.views.persona import extended_personas, event_types_for_pedigree
-from geneaprove.views.json import to_json
+from geneaprove.views.to_json import to_json
 
 def view (request, decujus=1):
    """Display the statistics for a given person"""

@@ -620,13 +620,6 @@ class Digraph(object):
         Split the nodes into layers, so that: the head of edges are in strictly
         higher layers than the tail.
 
-        The two iterators should be symmetrical: outedgesiter is used to make
-        sure the nodes are visited in the proper order internally, and
-        inedgesiter are the ones used to satisfy the constraint above. So
-        the head of all edges returned inedgesiter will be in a higher
-        layer than their tails. outedgesiter should return the opposite
-        edges.
-
         preferred_length can be used to return the preferred length of edges.
         1 means the head and the tail should preferrably be one generation
         apart.
