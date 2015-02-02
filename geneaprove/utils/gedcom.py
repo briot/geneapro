@@ -329,6 +329,7 @@ _GRAMMAR = dict(
              "ENGA", "MARR", "MARB", "MARC",
              "MARL", "MARS",
              "EVEN"), 0, unlimited, "EVENT_FOR_INDI"),
+           ("_UID", 0, 1, None),   # Reunion on OSX
            ("HUSB:XREF(INDI)", 0, 1,         None),
            ("WIFE:XREF(INDI)", 0, 1,         None),
            ("CHIL:XREF(INDI)", 0, unlimited, None),  # xref to children
@@ -519,9 +520,12 @@ class _Lexical(object):
             self.encoding = 'utf-8'
             line = line[3:]
 
-        if len(line) > 255:
-            print "%s Line is too long (%d characters)" % (
-                self.get_location(), len(line))
+        # The standard limits the length of lines, but some software ignore
+        # that, like Reunion on OSX for instance (#20)
+
+        #if len(line) > 255:
+        #    print "%s Line is too long (%d characters)" % (
+        #        self.get_location(), len(line))
 
         g = LINE_RE.match(line)
         if not g:
