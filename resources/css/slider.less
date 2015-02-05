@@ -1,0 +1,73 @@
+@import "base.less";
+
+.ui-slider {
+   .ui-slider-generic;
+}
+.ui-slider-generic(@barheight:2px, @handleheight:12px) {
+   clear:both;
+   position: relative;
+   &.horizontal {
+      margin: auto (@handleheight/2) auto (@handleheight/2);
+      border-radius: @barheight;
+      height: @barheight;
+      background: @menubar-color;
+      a {
+         outline:none;
+         position: absolute;
+         z-index: 2;
+         top: @barheight/2;
+
+         // We have to nest a span, so that its center is aligned on the position for a.
+         // That way, at 0% the <a> is position on the left of the slider, but the span
+         // extends slightly further into the left margin.
+         span.handle {
+            background-color: #fff;
+            border: 1px solid #000;
+            border-radius: 100%;
+            position: absolute;
+            left: -@handleheight/2;
+            top: -@handleheight/2;
+            height: @handleheight;
+            width: @handleheight;
+            &:after {
+               content: '';
+               background-color: @menubar-color;
+               width: @handleheight / 3;
+               height: @handleheight / 3;
+               position: absolute;   // reference is top-left of the handle
+               top: @handleheight / 3;
+               left: @handleheight / 3;
+               border-radius: 100%;
+            }
+            &:hover {
+               &:after { background-color: @menubar-color}
+            }
+         }
+         &.active {
+            span.handle:after {
+               background: red;
+            }
+            .bubble {
+               display: inline;
+            }
+         }
+         .bubble {
+            display: none; // refpoint is middle of the span.handle
+            position: absolute;
+            left: @handleheight / 2 + 1px;
+            top: -@barheight / 2 - 11px;  // 11px ~= 0.8em
+         }
+      }
+   }
+   span {
+      font-size: 0.8em;
+      color: @menubar-color;
+   }
+   > span {
+      margin-top: @barheight;
+      float: left;
+      position:relative
+   }
+   > span.right {float:right}
+}
+

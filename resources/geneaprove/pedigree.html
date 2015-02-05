@@ -1,58 +1,72 @@
-{% extends "geneaprove/base.html" %}
-{% block title %}GeneaProve: pedigree {{decujus}}{% endblock %}
-
-{% block script %}
-$(document).ready (function() {
-   initPedigree({{pedigree_data|safe}});
-});
-{% endblock script %}
-
-{% block leftside %}
-<h2 class="settings">Settings</h2>
-<div id="settings">
-   <div class="config"><span>Ancestors</span>
-      <div id="gens"><span>0</span><span class="right">max</span></div>
+<div id='sidebar'>
+   <div class='panel'>
+      <h2>Pedigree</h2>
+      <div class="config"><span>Ancestors</span>
+         <div gp-slider ng-model='$root.settings.pedigree.gens' min='1' max='30'></div>
+      </div>
+      <div class="config"><span>Descendants</span>
+         <div gp-slider ng-model='$root.settings.pedigree.descendant_gens' min='1' max='30'></div>
+      </div>
+      <div class="config"><span>Sourced events</span>
+         <input type="checkbox" ng-model='$root.settings.sourcedEvents'/>
+      </div>
+      <div class="config"><span>Show details</span>
+         <input type="checkbox" title='Whether to show additional details as you zoom in'
+                ng-model='$root.settings.pedigree.showDetails'/>
+      </div>
+      <div class="config"><span>Marriages</span>
+         <input type="checkbox" ng-model='$root.settings.pedigree.showMarriages'/>
+      </div>
    </div>
-   <div class="config"><span>Descendants</span>
-      <div id="Dgens"><span>0</span><span class="right">max</span></div>
+   <div class='panel'>
+      <h2>Colors</h2>
+      <div class="config"><span>Same size</span>
+         <input type="checkbox" ng-model='$root.settings.pedigree.sameSize'/>
+      </div>
+      <div class="config"><span>Colors</span>
+         <select ng-model='$root.settings.pedigree.colorScheme'>
+           <option value="0">Rules</option>
+           <option value="1">Pedigree</option>
+           <option value="2">Generation</option>
+           <option value="3">No box</option>
+           <option value="5">Quartile</option>
+         </select>
+      </div>
+      <div class="config"><span>Appearance</span>
+         <select ng-model='$root.settings.pedigree.appearance'>
+            <option value="0">Flat</option>
+            <option value="1">Gradient</option>
+         </select>
+      </div>
+      <div class="config"><span>Layout</span>
+         <select ng-model='$root.settings.pedigree.layoutScheme'>
+            <option value="0">Expanded</option>
+            <option value="1">Compact</option>
+         </select>
+      </div>
+      <div class="config"><span>Links</span>
+         <select ng-model='$root.settings.pedigree.linkStyle'>
+            <option value="0">Straight</option>
+            <option value="1">Orthogonal</option>
+            <option value="2">Curves</option>
+         </select>
+      </div>
+      <div class="config"><span>Horizontal spacing</span>
+         <div gp-slider ng-model='$root.settings.pedigree.horizPadding' min='0' max='200'></div>
+      </div>
+      <div class="config"><span>Vertical spacing</span>
+         <div gp-slider ng-model='$root.settings.pedigree.vertPadding' min='0' max='60'></div>
+      </div>
+      <input type='button' ng-click='$root.resetSettings("pedigree")' value='Reset'/>
    </div>
-   <div class="config"><span>Same size</span>
-      <input type="checkbox" name="sameSize"/>
-   </div>
-   <div class="config"><span>Colors</span>
-      <select name="colors">
-        <option value="0">Rules</option>
-        <option value="1">Pedigree</option>
-        <option value="2">Generation</option>
-        <option value="3">No box</option>
-      </select>
-   </div>
-   <div class="config"><span>Appearance</span>
-      <select name="appearance">
-         <option value="0">Flat</option>
-         <option value="1">Gradient</option>
-      </select>
-   </div>
-   <div class="config"><span>Layout</span>
-      <select name="layout">
-         <option value="0">Expanded</option>
-         <option value="1">Compact</option>
-      </select>
-   </div>
-   <div class="config"><span>Auto scale</span>
-      <input type="checkbox" name="autoScale"/>
-   </div>
-   <div class="config"><span>Horizontal spacing</span>
-      <div id="hspace"></div>
-   </div>
-   <div class="config"><span>Vertical spacing</span>
-      <div id="vspace"></div>
-   </div>
+   <!--  {{legend|safe}} -->
 </div>
 
-{{legend|safe}}
-{% endblock leftside %}
-
-{% block contents %}
-<canvas class="graph" id="pedigree"></canvas>
-{% endblock contents %}
+<div id="contents" ui-view>
+   <div class='graph' gp-pedigree='decujus'></div>
+   <div id='contextMenu' class='contextMenu'>
+      <ul>
+         <li><a ng-click='focusPerson()'>Set as decujus</a></li>
+      </ul>
+   </div>
+</div>

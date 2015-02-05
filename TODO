@@ -32,6 +32,7 @@ http://www.beholdgenealogy.com/blog/?p=876
 ** Testing
    http://timforsythe.com/blog/gedcom-import-testing-introduction/
    http://heiner-eichmann.de/gedcom/gedcom.htm
+   http://gedcomindex.com/gedcoms.html
 
 * Pedigree View
 ** Dnd on Pedigree icon should display the pedigree for that person
@@ -52,6 +53,16 @@ http://www.beholdgenealogy.com/blog/?p=876
    next time it is displayed. This configuration can also be used to detect whether
    we need to recompute the layout. This will also allow reloading the whole page
    when selecting a new decujus, which will preserve Back and Forward arrows.
+** http://stackoverflow.com/questions/13763352/how-do-i-show-marriages-in-a-d3-js-based-family-tree
+
+* Bracket View
+** http://bl.ocks.org/jdarling/2503502
+
+* Force layout
+** label placement
+http://bl.ocks.org/MoritzStefaner/1377729
+** Timestamp
+http://www.cotrino.com/lifespan/
 
 ** Dynamic "infinite" expansion
 See "Interactive Visualization of Genealogical Graphs"
@@ -179,6 +190,27 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 ** http://github.com/FamilySearch/gedcomx
 ** http://www.tamurajones.net/FamilySearchReleasesGEDCOMX.xhtml
 
+* dates
+** From W. Berry:
+  I did have a quick look at the dates module. I note that you have coded
+  in the date at which France adopted the Gregorian Calendar. Great
+  Britain did not adopt the Gregorian until 1752. Secondly, there was
+  another complication in Britain, in that the day on which the year
+  number changed was ("Old Style") March 25. Therefore  the day after
+  March 24 1588 was March 25 1589.
+  1752 was the first year in which the year ended on 31 December. The
+  Gregorian Calendar was adopted as from September 2 (which became
+  September 14). See http://www.crowl.org/lawrence/time/britgreg.html
+
+  to which I replied:
+  Basically, the intent is to leave this to the user as much as possible. The
+  "normalized" dates should not appear on the various views (where we only
+  want to show whatever the user has entered, i.e. presumably what was found
+  in the original documents).
+  The normalized dates are only used for sorting, so exact conversion is not
+  necessarily needed, although of course it would be better to handle this
+  correctly.
+
 * web
 ** timeline
   http://www.chronozoomproject.org/
@@ -223,6 +255,10 @@ http://blog.eogn.com/eastmans_online_genealogy/2013/05/macfamilytree-7-and-mobil
 
 * CSS
   http://learnlayout.com
+
+* GUI
+** The toplevel menubar sections should match the genealogical process (collect, analyze,...)
+** Use consistent black-and-white icons
 
 
 

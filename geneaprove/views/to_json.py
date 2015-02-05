@@ -4,9 +4,10 @@ import json
 from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.styles import get_place
+import django.db.models.query
 
 
-def to_json(obj, year_only=True):
+def to_json(obj, year_only=True, show_age=False):
     """Converts a type to json data, properly converting database instances.
        If year_only is true, then the dates will only include the year"""
 
@@ -33,8 +34,9 @@ def to_json(obj, year_only=True):
             if isinstance(obj, models.Persona):
                 b = self._event(obj.birth)
                 d = self._event(obj.death)
+                m = self._event(obj.marriage)
 
-                if not year_only and obj.birth:
+                if show_age and obj.birth:
                     if obj.death:
                         if obj.death.Date:
                             age = " (age " \
@@ -47,10 +49,15 @@ def to_json(obj, year_only=True):
                               + ")"
                         d = [age, None, None]
 
-                return {"id": obj.id, "givn": obj.given_name,
-                        'surn': obj.surname, 'sex': obj.sex,
+                return {"id":   obj.id,
+                        "givn": obj.given_name,
+                        'surn': obj.surname,
+                        'sex':  obj.sex,
                         'generation': obj.generation,
-                        'y': obj.styles, 'b': b, 'd': d}
+                        'y':    obj.styles,
+                        'b':    b,
+                        'd':    d,
+                        'm':    m}
 
             elif isinstance(obj, DateRange):
                 return obj.display(year_only=year_only)
@@ -59,6 +66,9 @@ def to_json(obj, year_only=True):
                 return self._event(obj)
 
             elif isinstance(obj, set):
+                return list(obj)
+
+            elif isinstance(obj, django.db.models.query.QuerySet):
                 return list(obj)
 
             elif hasattr(obj, 'to_json'):

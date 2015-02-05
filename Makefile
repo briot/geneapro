@@ -1,3 +1,7 @@
+# Need to install node modules
+all:
+	npm install
+
 test:
 	./manage.py test --verbosity=1 --settings=testsettings
 test_verbose:

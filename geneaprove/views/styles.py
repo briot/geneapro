@@ -169,7 +169,7 @@ class ColorScheme(object):
 
     def compute(self, person, as_css=False):
         if as_css:
-            person.styles = "color:black; background:white"
+            person.styles = "color:black"
         else:
             person.styles = 0   # index into array returned by all_styles
 
@@ -406,7 +406,9 @@ class Styles(ColorScheme):
         # Default background value
 
         if not "fill" in styles:
-            styles["fill"] = "white"
+            styles["fill"] = "none"
+        if not "stroke" in styles:
+            styles["stroke"] = "black"
 
         s = self._all_styles.get(hashes, None)
         if not s:

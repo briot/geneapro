@@ -53,6 +53,8 @@ def __add_default_person_attributes(person):
     # Groups the person belongs to (id -> GroupInfo)
     person.all_groups = dict()
 
+    person.generation = None
+
     n = person.name.split('/', 2)
     person.given_name = n[0]
     person.base_given_name = n[0]
@@ -352,12 +354,14 @@ def view_list(request):
     all = [p for p in all.itervalues()]
     all.sort(key=lambda x: x.surname)
 
-    return render_to_response(
-        'geneaprove/persona_list.html',
-        {"persons": all,
-         "name": [p.name.encode("utf-8") for p in all],
-         "legend": getLegend()},
-        context_instance=RequestContext(request))
+    data = {
+        'persons': all,
+    }
+    #    'legend': getLegend()},
+
+    return HttpResponse(
+        to_json(data, year_only=False, show_age=False),
+        content_type='application/json')
 
 
 def personaEvents(request, id):

@@ -1,0 +1,62 @@
+<div id='sidebar'>
+   <!-- {{legend|safe}} -->
+   <div class='panel'>
+      <h2>List of persons</h2>
+      <div class='config'>
+         <span>Rows per page</span>
+         <select ng-model='$root.settings.personas.rows' ng-options='a.rows as a.label for a in rows'>
+         </select>
+      </div>
+      <div class='config'>
+         <span>Colors</span>
+         <select ng-model='$root.settings.personas.colorScheme'>
+            <option value='0'>Rules</option>
+            <option value='4'>No colors</option>
+         </select>
+      </div>
+   </div>
+</div>
+
+<div id='contents' ui-view>
+   <div class="persona list">
+      <table cellspacing="0" cellpadding="0">
+         <thead>
+            <tr class='controls'>
+               <th colspan='5'>
+                   <input placeholder='filter' ng-model='filter.value' style='float:right; width: 250px'/>
+                   <span>({{offset + 1}} - {{offsetMax + 1}} / {{filteredPersons.length}})</span>
+               </th>
+            </tr>
+            <tr>
+               <th>Surname</th>
+               <th>Given name</th>
+               <th>Birth</th>
+               <th>Death</th>
+               <th>Marriage</th>
+               <!--<th>Last changed</th>-->
+            </tr>
+         </thead>
+         <tbody>
+            <tr ng-if='persons===undefined'>
+               <td colspan='5'>Loading...</td>
+            </tr>
+            <tr ng-repeat='p in filteredPersons | paginate: page : $root.settings.personas.rows' ng-click='select(p)' ng-dblclick='show(p)'>
+               <td>{{p.surn || '-'}}</td>
+               <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.y}}'>{{p.givn || '-'}}</span></td>
+               <td ng-if='$root.settings.personas.colorScheme==4'><span>{{p.givn || '-'}}</span></td>
+               <td>{{p.b[0]||''}}</td>
+               <td>{{p.d[0]||''}}</td>
+               <td>{{p.m[0]||''}}</td>
+               <!--<td>{{p.last_change}}</td>-->
+            </tr>
+         </tbody>
+      </table>
+      <div class='pagination'>
+         <span ng-click='setPage(1)'>&laquo;</span>
+         <span ng-click='setPage(page-1)'>&lsaquo;</span>
+         <span ng-repeat='p in pageRange' ng-click='setPage(p)' ng-class='{current:page==p}'>{{p}}</span>
+         <span ng-click='setPage(page+1)'>&rsaquo;</span>
+         <span ng-click='setPage(maxPage)'>&raquo;</span>
+      </div>
+   </div>
+</div>

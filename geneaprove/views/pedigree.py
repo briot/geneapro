@@ -101,55 +101,6 @@ def get_sosa_tree(graph, id, max_levels, style_rules,
             'styles':      styles.all_styles()}
 
 
-def pedigree_view(request, decujus=1):
-    """Display the pedigree of a person as a tree"""
-    decujus = int(decujus)
-    gens = int(request.GET.get("gens", 4))
-
-    # ??? Should lock the graph until the view has been generated
-    graph.update_if_needed()
-    if len(graph) == 0:
-        return render_to_response(
-            'geneaprove/firsttime.html',
-            context_instance=RequestContext(request))
-
-    data = get_sosa_tree(
-        graph, id=decujus, max_levels=gens, style_rules=style_rules)
-    dec = data['persons'][decujus]
-
-    return render_to_response(
-        'geneaprove/pedigree.html',
-        {"pedigree_data": to_json(data),
-         "decujus": decujus,
-         "decujus_name": "%s %s" % (dec.given_name, dec.surname),
-         "legend": getLegend()},
-        context_instance=RequestContext(request))
-
-
-def fanchart_view(request, decujus=1):
-    """Display the pedigree of a person as a fanchart"""
-    decujus = int(decujus)
-    gens = int(request.GET.get("gens", 4))
-
-    # ??? Should lock the graph until the view has been generated
-    graph.update_if_needed()
-    if len(graph) == 0:
-        return render_to_response(
-            'geneaprove/firsttime.html',
-            context_instance=RequestContext(request))
-
-    data = get_sosa_tree(
-        graph, id=decujus, max_levels=gens, style_rules=style_rules)
-    dec = data['persons'][decujus]
-    return render_to_response(
-        'geneaprove/fanchart.html',
-        {"legend": getLegend(),
-         "decujus": decujus,
-         "decujus_name": "%s %s" % (dec.given_name, dec.surname),
-         "pedigree_data": to_json(data)},
-        context_instance=RequestContext(request))
-
-
 def pedigree_data(request, decujus):
     """Return the data for the Pedigree or Fanchart views. This is only
        needed when the user changes the settings, since initially this data

@@ -1,58 +1,64 @@
-{% extends "geneaprove/base.html" %}
-{% block title %}GeneaProve: fanchart {{decujus}}{% endblock %}
+<div id='sidebar'>
+   <div class='panel'>
+      <h2>Fanchart</h2>
+      <div class="config"><span>Ancestors</span>
+         <div gp-slider ng-model='$root.settings.fanchart.gens' min='1' max='30'></div>
+      </div>
+      <div class="config"><span>Sourced events</span>
+         <input type="checkbox" ng-model='$root.settings.sourcedEvents'/>
+      </div>
+      <div class="config"><span>Marriages</span>
+         <input type="checkbox" ng-model='$root.settings.fanchart.showMarriages'/>
+      </div>
+      <div class="config"><span>Show missing persons</span>
+         <input type="checkbox" ng-model='$root.settings.fanchart.showMissing'/>
+      </div>
+   </div>
+   <div class='panel'>
+      <h2>Colors</h2>
+      <div class="config"><span>Size</span>
+         <div gp-slider ng-model='$root.settings.fanchart.angle' min='90' max='360'></div>
+      </div>
+      <div class="config"><span>Space between couples</span>
+         <div gp-slider ng-model='$root.settings.fanchart.space' min='0' max='100'></div>
+      </div>
+      <div class="config"><span>Rotate text</span>
+         <input type="checkbox" ng-model='$root.settings.fanchart.readableNames'/>
+      </div>
+      <div class="config"><span>Colors</span>
+         <select ng-model='$root.settings.fanchart.colorScheme'>
+           <option value="0">Rules</option>
+           <option value="1">Pedigree</option>
+           <option value="2">Generation</option>
+           <option value="4">No fill</option>
+           <option value="5">Quartile</option>
+         </select>
+      </div>
+      <div class="config"><span>Appearance</span>
+         <select ng-model='$root.settings.fanchart.appearance'>
+            <option value="0">Flat</option>
+            <option value="1">Gradient</option>
+         </select>
+      </div>
+   </div>
+   <input type='button' ng-click='$root.resetSettings("fanchart")' value='Reset'/>
+</div>
 
-{% block header %}
-<script type="text/javascript" src="{{MEDIA_URL}}jquery.color.js"></script>
-{% endblock header %}
+<!--  {{legend|safe}} -->
 
-{% block script %}
-$(document).ready(function() {
-   initFanchart({{pedigree_data|safe}});
-});
-{% endblock script %}
-
-{% block leftside %}
-<h2>Fanchart View</h2>
-<div id="settings">
-   <div class="config"><span>Generations</span>
-      <div id="gens"><span>2</span><span class="right">max</span></div>
-   </div>
-   <div class="config"><span>Size</span>
-      <div id="size"><span>90</span><span class="right">360</span></div>
-   </div>
-   <div class="config"><span>Space between couples</span>
-      <div id="separator"></div>
-   </div>
-   <div class="config"><span>Marriages</span>
-      <input type="checkbox" name="marriages"/>
-   </div>
-   <div class="config"><span>Layout</span>
-      <select name="layout">
-        <option value="0">Expanded</option>
-        <option value="1">Compact</option>
-      </select>
-   </div>
-   <div class="config"><span>Colors</span>
-      <select name="colors">
-         <option value="0">Rules</option>
-         <option value="1">Pedigree</option>
-         <option value="2">Generation</option>
-      </select>
-   </div>
-   <div class="config"><span>Appearance</span>
-      <select name="appearance">
-          <option value="0">Flat</option>
-           <option value="1">Gradient</option>
-      </select>
-   </div>
-   <div class="config"><span>Auto Scale</span>
-      <input type="checkbox" name="autoScale"/>
+<div id="contents" ui-view>
+   <div class='graph' gp-fanchart='decujus'>
+      <!--  SVG will go here, with its own scope -->
+      <!--  The contextual menu executes in the scope of fanchart.html -->
+      <div id='contextMenu' class='contextMenu'>
+         <ul>
+            <li><a ng-click='focusPerson()'>Set as decujus</a></li>
+            <li ng-if='contextual.d.generation > 0'>
+            <a ng-click='expandPerson()'> {{ contextual.d.$expand ? 'Unexpand': 'Expand'}}</a>
+            </li>
+         </ul>
+      </div>
    </div>
 </div>
 
-{{legend|safe}}
-{% endblock leftside %}
 
-{% block contents %}
-<canvas class="graph" id="fanchart"></canvas>
-{% endblock contents %}

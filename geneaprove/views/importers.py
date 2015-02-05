@@ -1,7 +1,6 @@
 
 from django.shortcuts import redirect, render_to_response
 from django.template import RequestContext
-from geneaprove.views.pedigree import pedigree_view
 from geneaprove.importers.gedcomimport import GedcomFileImporter
 from geneaprove.views.graph import graph
 

@@ -1,21 +1,42 @@
-{% extends "geneaprove/base.html" %}
-{% block title %}GeneaProve: index{% endblock %}
-{% block contents %}
-{% load i18n %}
-{% trans "This is from a template" %}
-
-{{ hello }}
-
-<p>
-We have defined {{placesCount}} places
-</p>
-<p>
- <ul>
- {% for place in places %}
-     <li>{{ place }}</li>
- {% endfor %}
- </ul>
-</p>
-
-{% endblock contents %}
-
+<!DOCTYPE html>
+<html ng-app='geneaprove'>
+<head>
+   <title>GeneaProve</title>
+   <meta http-equiv="content-type" content="text/html;charset=utf-8">
+   <link rel="stylesheet" href="geneaprove.min.css"/>
+   <script type="text/javascript" src="geneaprove.min.js"></script>
+</head>
+<body>
+   <nav>
+      <div class="logo">
+         <a href="/">G&eacute;n&eacute;aprove</a>
+         <div class="tagline">Evidence your genealogy</div>
+      </div>
+      <div>
+         <h2 class='first'>Lists</h2>
+         <ul>
+            <li gp-menubutton='/personas' title='All persons' data-icon='images/menu/persons30.png'></li>
+            <li gp-menubutton='/places'   title='All places'  data-icon='images/menu/places.png'></li>
+            <li gp-menubutton='/sources'  title='All sources' data-icon='images/menu/sources.svg'></li>
+         </ul>
+      </div>
+      <div>
+         <h2>Reports</h2>
+         <ul>
+            <li gp-menubutton='/persona'  title='Details'  data-icon='images/menu/user40.png'></li>
+            <li gp-menubutton='/pedigree' title='Pedigree' data-icon='images/menu/pedigree30.png'></li>
+            <li gp-menubutton='/fanchart' title='Fanchart' data-icon='images/menu/fanchart.svg'></li>
+            <li gp-menubutton='/quilts'   title='Quilts'   data-icon='images/menu/quilts30.png'></li>
+            <li gp-menubutton='/stats'    title='Stats'    data-icon='images/menu/stats30.gif'></li>
+         </ul>
+      </div>
+      <div>
+         <h2>File</h2>
+         <ul>
+            <li gp-menubutton='import' title='Import' data-icon='images/menu/import.svg'></li>
+         </ul>
+      </div>
+   </nav>
+   <div id='page_wrap' ui-view></div>
+</body>
+</html>

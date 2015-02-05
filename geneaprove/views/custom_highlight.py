@@ -9,7 +9,7 @@ style_rules = [
     ("Persons that are alive",
      RULE_ATTR,
      [("ALIVE", RULE_IS, "Y")],
-     {"fontweight": "bold"}),
+     {"font-weight": "bold"}),
 
     ("Born or dead in La Baussaine before 1862",
      RULE_EVENT,
@@ -18,7 +18,7 @@ style_rules = [
       ("place.name", RULE_CONTAINS_INSENSITIVE, "baussaine"),
       ("role",  RULE_IS,         models.Event_Type_Role.principal),
       ("date",  RULE_BEFORE,     "1862")],
-     {"color": "red"}),
+     {"color": "rgba(200,0,0,0.7)", "stroke": "black"}),
 
     ("Died younger than 60",
      RULE_EVENT,
@@ -46,7 +46,7 @@ style_rules = [
      [("type",  RULE_IS, models.Event_Type.marriage),
       ("role",  RULE_IS, models.Event_Type_Role.principal),
       ("count", RULE_GREATER, 1)],
-     {"fill": "#AA0000"}),
+     {"fill": "rgba(0,155,0,0.5)"}),
 
     ("PROBLEM: Persons too young at birth of child",
      RULE_EVENT,

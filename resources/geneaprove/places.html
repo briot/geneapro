@@ -1,0 +1,54 @@
+<div id='sidebar'>
+   <div class='panel'>
+      <h2>List of places</h2>
+      <div class='config'>
+         <span>Rows per page</span>
+         <select ng-model='$root.settings.places.rows' ng-options='a.rows as a.label for a in rows'>
+         </select>
+      </div>
+   </div>
+</div>
+
+<div id='contents' ui-view>
+   <div class="place list">
+      <table cellspacing="0" cellpadding="0">
+         <thead>
+            <tr class='controls'>
+               <th colspan='3'>
+                   <input placeholder='filter' ng-model='filter.value' style='float:right; width: 250px'/>
+                   <span>({{offset + 1}} - {{offsetMax + 1}} / {{filteredPlaces.length}})</span>
+               </th>
+            </tr>
+            <tr>
+               <th>Name</th>
+               <th>Id</th>
+               <th>Details</th>
+            </tr>
+         </thead>
+         <tbody>
+           <tr ng-repeat='p in filteredPlaces | paginate: page : $root.settings.places.rows'>
+              <td>{{p.name}}</td>
+              <td>{{p.id}}</td>
+              <td>
+                 <!--{% for pa in p.parts.all %}
+                 <span class="char">{{pa.type.name}}</span>: {{pa.name}}<br>
+                 {% endfor %}
+        
+                 {% if p.parent_place %}
+                 <span class="char">Parent place</span>: {{p.parent_place.name}}<br>
+                 {% endif %}
+                 -->
+              </td>
+           </tr>
+         </tbody>
+      </table>
+      <div class='pagination'>
+         <span ng-click='setPage(1)'>&laquo;</span>
+         <span ng-click='setPage(page-1)'>&lsaquo;</span>
+         <span ng-repeat='p in pageRange' ng-click='setPage(p)' ng-class='{current:page==p}'>{{p}}</span>
+         <span ng-click='setPage(page+1)'>&rsaquo;</span>
+         <span ng-click='setPage(maxPage)'>&raquo;</span>
+      </div>
+   </div>
+</div>
+

@@ -1,4 +1,5 @@
 from django.conf.urls import *
+from django.shortcuts import render_to_response
 import geneaprove.views.pedigree
 import geneaprove.views.persona
 import geneaprove.views.places
@@ -11,54 +12,53 @@ import geneaprove.views.merge
 import geneaprove.views.graph
 import geneaprove.views.importers
 
-urlpatterns = patterns('',
-                       (r'^$', geneaprove.views.pedigree.pedigree_view),
-                       (r'^sources$', geneaprove.views.sources.source_list),
-                       (r'^sources/(\d+)$', geneaprove.views.sources.view),
-                       (r'^event/(\d+)$', geneaprove.views.events.view),
+def index(request):
+    return render_to_response('geneaprove/index.html')
 
-                       (r'^personas$',  geneaprove.views.persona.view_list),
-                       (r'^persona/(\d+)$', geneaprove.views.persona.view),
+urlpatterns = patterns(
+    '',
+    url(r'^$', index, name='index'),
+    (r'data/pedigree/(\d+)$', geneaprove.views.pedigree.pedigree_data),
+    (r'data/personas$',       geneaprove.views.persona.view_list),
+    (r'data/places$',         geneaprove.views.places.view_list),
 
-                       # Returns JSON, the list of all events for the person.
-                       # Param is the id
-                       (r'^personaEvents/(\d+)$',
-                        geneaprove.views.persona.personaEvents),
+    # ... below: not moved to angularJS yet
 
-                       (r'^places$', geneaprove.views.places.view_list),
+    (r'^sources$', geneaprove.views.sources.source_list),
+    (r'^sources/(\d+)$', geneaprove.views.sources.view),
+    (r'^event/(\d+)$', geneaprove.views.events.view),
 
-                       # The image for a specific representation
-                       (r'^repr/(.*)/(\d+)$',
-                        geneaprove.views.representation.view),
+    (r'^persona/(\d+)$', geneaprove.views.persona.view),
 
-                       # The list of representations for the higher sources
-                       (r'^reprList/(?P<source_id>\d+)',
-                           geneaprove.views.representation.higherSourceReprList),
+    # Returns JSON, the list of all events for the person.
+    # Param is the id
+    (r'^personaEvents/(\d+)$',
+     geneaprove.views.persona.personaEvents),
 
-                       (r'^pedigree/(\d+)$',
-                        geneaprove.views.pedigree.pedigree_view),
-                       (r'^fanchart/(\d+)$',
-                        geneaprove.views.pedigree.fanchart_view),
+    # The image for a specific representation
+    (r'^repr/(.*)/(\d+)$',
+     geneaprove.views.representation.view),
 
-                       (r'^pedigreeData/(\d+)$',
-                        geneaprove.views.pedigree.pedigree_data),
+    # The list of representations for the higher sources
+    (r'^reprList/(?P<source_id>\d+)',
+        geneaprove.views.representation.higherSourceReprList),
 
-                       (r'^stats$',        geneaprove.views.stats.view),
-                       (r'^stats/(\d+)$',  geneaprove.views.stats.view),
-                       (r'^quilts/(\d+)?$',
-                        geneaprove.views.graph.quilts_view),
+    (r'^stats$',        geneaprove.views.stats.view),
+    (r'^stats/(\d+)$',  geneaprove.views.stats.view),
+    (r'^quilts/(\d+)?$',
+     geneaprove.views.graph.quilts_view),
 
-                       (r'^editCitation/(?P<source_id>\w+)$',
-                           geneaprove.views.sources.editCitation),
-                       (r'^citationParts/(?P<medium>\w+)$',
-                           geneaprove.views.sources.citationParts),
-                       (r'^fullCitation$',
-                        geneaprove.views.sources.fullCitation),
+    (r'^editCitation/(?P<source_id>\w+)$',
+        geneaprove.views.sources.editCitation),
+    (r'^citationParts/(?P<medium>\w+)$',
+        geneaprove.views.sources.citationParts),
+    (r'^fullCitation$',
+     geneaprove.views.sources.fullCitation),
 
-                       # Importing a GEDCOM file
-                       (r'^import$',
-                        geneaprove.views.importers.import_gedcom),
+    # Importing a GEDCOM file
+    (r'^import$',
+     geneaprove.views.importers.import_gedcom),
 
-                       # Experimental, does not work yet
-                       (r'^merge$',        geneaprove.views.merge.view),
-                       )
+    # Experimental, does not work yet
+    (r'^merge$',        geneaprove.views.merge.view),
+    )
