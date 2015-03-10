@@ -18,17 +18,18 @@ def index(request):
 urlpatterns = patterns(
     '',
     url(r'^$', index, name='index'),
-    (r'data/pedigree/(\d+)$', geneaprove.views.pedigree.pedigree_data),
-    (r'data/personas$',       geneaprove.views.persona.view_list),
-    (r'data/places$',         geneaprove.views.places.view_list),
+    (r'^data/pedigree/(\d+)$', geneaprove.views.pedigree.pedigree_data),
+    (r'^data/personas$',       geneaprove.views.persona.view_list),
+    (r'^data/places$',         geneaprove.views.places.view_list),
+    (r'^data/persona/(\d+)$',  geneaprove.views.persona.view),
+    (r'^data/suretySchemes$',  geneaprove.views.persona.surety_schemes_view),
+    (r'^data/event/(\d+)$',    geneaprove.views.events.view),
 
     # ... below: not moved to angularJS yet
 
     (r'^sources$', geneaprove.views.sources.source_list),
     (r'^sources/(\d+)$', geneaprove.views.sources.view),
-    (r'^event/(\d+)$', geneaprove.views.events.view),
 
-    (r'^persona/(\d+)$', geneaprove.views.persona.view),
 
     # Returns JSON, the list of all events for the person.
     # Param is the id

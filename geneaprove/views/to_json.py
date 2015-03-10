@@ -1,10 +1,27 @@
 """Convert data to JSON"""
 
 import json
+import collections
+import datetime
 from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.styles import get_place
 import django.db.models.query
+
+
+def event_for_json(evt, year_only=True):
+    """
+    Extract relevant data from an event, to include in JSON.
+    """
+    if evt is None:
+        return []
+    else:
+        place = get_place(evt, "name") or ""
+        if year_only and evt.Date:
+            return [evt.Date.display(year_only=year_only), place, evt.sources]
+        else:
+            # Reuse user date if possible
+            return [evt.date, place, evt.sources]
 
 
 def to_json(obj, year_only=True, show_age=False):
@@ -12,61 +29,23 @@ def to_json(obj, year_only=True, show_age=False):
        If year_only is true, then the dates will only include the year"""
 
     class ModelEncoder(json.JSONEncoder):
-
         """Encode an object or a list of objects extracted from our model into
            JSON"""
-
-        def _event(self, evt):
-            """Encode event"""
-            if evt is None:
-                return ""
-            else:
-                place = get_place(evt, "name") or ""
-                if year_only and evt.Date:
-                    return [evt.Date.display(year_only=True), place, evt.sources]
-                else:
-                    # Reuse user date if possible
-                    return [evt.date, place, evt.sources]
 
         def default(self, obj):
             """See inherited documentation"""
 
-            if isinstance(obj, models.Persona):
-                b = self._event(obj.birth)
-                d = self._event(obj.death)
-                m = self._event(obj.marriage)
-
-                if show_age and obj.birth:
-                    if obj.death:
-                        if obj.death.Date:
-                            age = " (age " \
-                                + str (obj.death.Date.years_since (obj.birth.Date)) \
-                                + ")"
-                            d[0] += age
-                    else:
-                        age = " (age " \
-                              + str (DateRange.today().years_since (obj.birth.Date)) \
-                              + ")"
-                        d = [age, None, None]
-
-                return {"id":   obj.id,
-                        "givn": obj.given_name,
-                        'surn': obj.surname,
-                        'sex':  obj.sex,
-                        'generation': obj.generation,
-                        'y':    obj.styles,
-                        'b':    b,
-                        'd':    d,
-                        'm':    m}
-
-            elif isinstance(obj, DateRange):
+            if isinstance(obj, DateRange):
                 return obj.display(year_only=year_only)
 
             elif isinstance(obj, models.Event):
-                return self._event(obj)
+                return event_for_json(obj)
 
             elif isinstance(obj, set):
                 return list(obj)
+
+            elif isinstance(obj, datetime.datetime):
+                return obj.isoformat()
 
             elif isinstance(obj, django.db.models.query.QuerySet):
                 return list(obj)

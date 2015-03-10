@@ -21,6 +21,7 @@ app.factory('contextMenu', function($document, $rootScope) {
 
    contextMenu.prototype.destroy = function() {
       if (this.menu) {
+         // $rootScope.$broadcast('contextMenuClose');
          this.menu.style('display', 'none');
          this.menu = undefined;
          this.data = undefined;
@@ -28,7 +29,6 @@ app.factory('contextMenu', function($document, $rootScope) {
          $document.unbind('click', onClick);
          $document.unbind('keyup', onKeyup);
          $document.unbind('contextmenu', onClick);
-         $rootScope.$broadcast('contextMenuClose');
       }
    };
 
@@ -47,7 +47,7 @@ app.factory('contextMenu', function($document, $rootScope) {
       $document.bind('click', onClick);
       $document.bind('contextmenu', onClick);
       $document.bind('keyup', onKeyup);
-      scope.$on('$destroy', angular.bind(this.destroy, this));
+      //scope.$on('$destroy', angular.bind(this.destroy, this));
 
       $rootScope.$broadcast('contextMenuOpen');
    };

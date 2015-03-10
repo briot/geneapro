@@ -41,12 +41,12 @@
                <td colspan='5'>Loading...</td>
             </tr>
             <tr ng-repeat='p in filteredPersons | paginate: page : $root.settings.personas.rows' ng-click='select(p)' ng-dblclick='show(p)'>
-               <td>{{p.surn || '-'}}</td>
-               <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.y}}'>{{p.givn || '-'}}</span></td>
-               <td ng-if='$root.settings.personas.colorScheme==4'><span>{{p.givn || '-'}}</span></td>
-               <td>{{p.b[0]||''}}</td>
-               <td>{{p.d[0]||''}}</td>
-               <td>{{p.m[0]||''}}</td>
+               <td>{{p.surname || '-'}}</td>
+               <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.y}}'>{{p.given_name || '-'}}</span></td>
+               <td ng-if='$root.settings.personas.colorScheme==4'><span>{{p.given_name || '-'}}</span></td>
+               <td>{{p.birth[0]||''}}</td>
+               <td>{{p.death[0]||''}}</td>
+               <td>{{p.marriage[0]||''}}</td>
                <!--<td>{{p.last_change}}</td>-->
             </tr>
          </tbody>

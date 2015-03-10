@@ -1,0 +1,171 @@
+<div id='sidebar'>
+   <div class='panel'>
+      <h2>Contents</h2>
+      <ul>
+         <li>Characteristics</li>
+         <li>Events</li>
+         <li>Groups</li>
+         <li>Links</li>
+      </ul>
+   </div>
+</div>
+
+<div id='contents' ui-view>
+  <div id='personaDetails' class='persona details'>
+     <h2>
+        <span class="givenName">{{person.base_given_name}}</span>
+        <span class="surName">{{person.base_surname}}</span>
+        <span class="details">({{person.birth[0] || ''}} - {{person.death[0] || ''}})</span>
+     </h2>
+
+     <h3>Characteristics</h3>
+     <table id="attrs" class="highlightCurrent" cellspacing='0' cellpadding='0' sort-on='person.all_chars' sort-default='char.name'>
+       <thead>
+          <tr>
+             <th sort-by='char.name'>Type</th>
+             <th>Value</th>
+             <th sort-by='char.date_sort'>Date</th>
+             <th sort-by='char.place.name'>Place</th>
+             <th>Surety</th>
+          </tr>
+       </thead>
+       <tbody>
+          <tr ng-repeat='c in person.all_chars'>
+             <td class="type">{{c.char.name}}
+                <span ng-repeat='s in c.char.sources' ng-if='s'>
+                   <a class="source" href="/sources/{{s}}">{{s}}</a>
+                </span>
+             </td>
+
+             <td ng-if='c.parts.length == 1'>
+                {{c.parts[0].value}}
+             </td>
+             <td ng-if='c.parts.length != 1'>
+                <span ng-repeat='p in c.parts'>
+                   <span class="char">{{p.name}}</span>: {{p.value}}<br>
+                </span>
+             </td>
+     
+             <td class="date">{{c.char.date || ''}}</td>
+             <td class="place">{{c.char.place.name || ''}}</td>
+             <td><span gp-surety='c.assertion.surety'></span></td>
+           </tr>
+        </tbody>
+     </table>
+
+     <h3>Events</h3>
+     <table id="events" class="highlightCurrent" cellspacing='0' cellpadding='0' sort-on='person.all_events' sort-default='event.date_sort'>
+       <thead>
+          <tr>
+             <th sort-by='event.type.name'>Type</th>
+             <th sort-by='event.name'>Name</th>
+             <th sort-by='event.date_sort' sorter='date'>Date</th>
+             <th sort-by='event.place.name'>Place</th>
+             <th>Surety</th>
+          </tr>
+       </thead>
+       <tbody>
+          <tr ng-repeat-start='e in person.all_events' ng-class='{disproved: e.assertion.disproved, open: e.$open}' class='hasRowDetails' ng-click='toggleEventDetails(e)'/>
+             <td class="type">
+                {{e.event.type.name}}
+                <span ng-if='e.role != "principal"' class='role'>(as {{e.role || ''}})</span>
+
+                <span ng-repeat='s in e.event.sources' ng-if='s'>
+                   <a class="source" href="/sources/{{s}}">{{s}}</a>
+                </span>
+             </td>
+             <td>
+                {{ e.role == 'principal' ? '' : e.event.name }}
+             </td>
+             <td class="date">{{e.event.date || ''}}</td>
+             <td class="place">{{e.event.place.name || ''}}</td>
+             <td><span gp-surety='e.assertion.surety'></span></td>
+          </tr>
+          <tr ng-repeat-end class='rowDetails' ng-show='e.$open'>
+             <td class='extra' colspan='10'>
+                <div>
+                   <i class='fa fa-spinner fa-spin' ng-if='e.$details===undefined'></i>
+                   <table ng-if='e.$details'>
+                      <tr>
+                         <th>Person</th>
+                         <th>Role</th>
+                         <th>Rationale</th>
+                         <th>Surety</th>
+                         <th>Sources</th>
+                      </tr>
+                      <tr ng-repeat='p in e.$details.p2e' ng-class='{disproved:p.disproved}'>
+                         <td>
+                            <a href='#'>{{p.person.name}} ({{p.person.id}})</a>
+                         </td>
+                         <td>{{p.role_name}}</td>
+                         <td>{{p.rationale || ''}}</td>
+                         <td><span gp-surety='p.surety'></span></td>
+                         <td>
+                            <a ng-if='p.source.id' href='/sources/{{p.source.id}}'>{{p.source.id}}</a>
+                         </td>
+                      </tr>
+                   </table>
+                </div>
+             </td>
+          </tr>
+       </tbody>
+     </table>
+
+     <h3>Groups</h3>
+     <table id="events" class="highlightCurrent" cellspacing='0' cellpadding='0' sort-on='person.all_events' sort-default='event.date_sort'>
+       <thead>
+          <tr>
+             <th sort-by='event.name'>Name</th>
+             <th sort-by='event.date_sort' sorter='date'>Date</th>
+             <th sort-by='event.place.name'>Place</th>
+             <th>Surety</th>
+          </tr>
+       </thead>
+       <tbody>
+          <tr ng-repeat='g in person.all_groups'>
+             <td>{{g.group.name}} ({{g.group.role || ''}})
+                <span ng-repeat='s in g.group.sources' ng-if='s'>
+                   <a class="source" href="/sources/{{s}}">{{s}}</a>
+                </span>
+             </td>
+             <td class="date">{{g.group.date || ''}}</td>
+             <td class="place">{{g.group.place || ''}}</td>
+             <td><span gp-surety='g.assertion.surety'></span></td>
+          </tr>
+       </tbody>
+     </table>
+
+     <div ng-id='p2p.length!=-'>
+        <h3>Links to other personas</h3>
+
+        <p class="onUse" style="margin-top:10px; margin-left:30px;">
+        This person is made up of several persona in the database. Each of
+        these persona was constructed from one or more sources, and then they
+        were all linked together with the following assertions. Disproving any
+        of these will change the information displayed above.
+        
+        Click on a persona id to see events and attributes related to that persona.
+        </p>
+     
+        <table id="p2p_assert">
+          <thead>
+             <tr>
+                <th>Persona1</th>
+                <th>Persona2</th>
+                <th>These are the same because</th>
+                <th>Surety</th>
+             </tr>
+          </thead>
+          <tbody>
+             <tr ng-repeat='p in p2p' ng-if='p.person1_id!=p.person2_id' ng-class='{disproved:p.disproved}'>
+                <!-- ??? Should we show sources and researcher -->
+                <td class="persona" _persona="{{p.person1_id}}">{{p.person1_id}}</td>
+                <td class="persona" _persona="{{p.person2_id}}">{{p.person2_id}}</td>
+                <td>{{p.rationale || ''}}</td>
+                <td><span gp-surety='p.surety'></span></td>
+            </tr>
+          </tbody>
+        </table>
+     </div>
+  </div>
+</div>

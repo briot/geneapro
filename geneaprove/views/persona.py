@@ -28,15 +28,79 @@ EventInfo = collections.namedtuple(
 # "event" has fields like "sources", "place", "Date"
 #   where "Date" is a geneaprove.utils.DateRange object and should not be
 #   used for display
+
 CharInfo = collections.namedtuple(
     'CharInfo', 'char, parts, assertion')
-# "char" has fields like "place", "sources", "Date"
-# parts = [CharPartInfo]
 CharPartInfo = collections.namedtuple(
     'CharPartInfo', 'name, value')
 GroupInfo = collections.namedtuple(
     'GroupInfo', 'group, assertion')
 # "group" has fields like "source",...
+
+
+class Export(object):
+    def export(self, obj):
+        '''
+        Return a simplified version of obj suitable for export to JSON
+        '''
+        if isinstance(obj, list):
+            return [self.export(e) for e in obj]
+
+        elif isinstance(obj, dict):
+            return {k: self.export(e)  for (k, e) in obj.iteritems()}
+
+        elif isinstance(obj, GroupInfo):
+            return dict(
+                group=self.export(obj.group),
+                assertion=self.export(obj.assertion))
+
+        elif isinstance(obj, CharInfo):
+            return dict(
+                char=self.export(obj.char),
+                parts=self.export(obj.parts),
+                assertion=self.export(obj.assertion))
+
+        elif isinstance(obj, CharPartInfo):
+            return dict(name=obj.name, value=obj.value)
+
+        elif isinstance(obj, models.Characteristic):
+            return dict(
+                name=obj.name,
+                sources=list(obj.sources),
+                date=obj.date,
+                date_sort=obj.date_sort,
+                place=self.export(obj.place))
+
+        elif isinstance(obj, models.Assertion):
+            result = dict(
+                disproved=obj.disproved,
+                rationale=obj.rationale,
+                surety=obj.surety_id)
+
+            if isinstance(obj, models.P2P):
+                result['person1_id'] = obj.person1_id
+                result['person2_id'] = obj.person2_id
+
+            return result
+
+        elif isinstance(obj, EventInfo):
+            return dict(
+                event=self.export(obj.event),
+                role=self.export(obj.role),
+                assertion=self.export(obj.assertion))
+
+        elif isinstance(obj, models.Event):
+            return dict(
+                id=obj.id,
+                name=obj.name,
+                type=obj.type,
+                place=self.export(obj.place),
+                sources=list(obj.sources),
+                date=obj.date,
+                date_sort=obj.date_sort)
+
+        else:
+            return obj
 
 
 def __add_default_person_attributes(person):
@@ -298,20 +362,15 @@ def view(request, id):
     id = int(id)
 
     graph.update_if_needed()
-    if len(graph) == 0:
-        return render_to_response(
-            'geneaprove/firsttime.html',
-            context_instance=RequestContext(request))
+    #if len(graph) == 0:
+    #    return render_to_response(
+    #        'geneaprove/firsttime.html',
+    #        context_instance=RequestContext(request))
 
-    schemes = set()  # The surety schemes that are needed
     styles = None
     p = extended_personas(
         nodes=set([graph.node_from_id(id)]),
-        styles=styles, as_css=True, graph=graph, schemes=schemes)
-
-    surety_schemes = dict()
-    for s in schemes:
-        surety_schemes[s] = models.Surety_Scheme.objects.get(id=s).parts.all()
+        styles=styles, as_css=True, graph=graph, schemes=None)
 
     query = models.P2P.objects.filter(
         type=models.P2P.sameAs)
@@ -323,18 +382,32 @@ def view(request, id):
 
     decujus = p[node.main_id]
 
-    return render_to_response(
-        'geneaprove/persona.html',
-        {"decujus": id,
-         "person": decujus,
-         "decujus_name": "%s %s" % (decujus.given_name, decujus.surname),
-         "chars": decujus.all_chars,
-         "events": decujus.all_events,
-         "groups": decujus.all_groups,
-         "schemes": surety_schemes,
-         "p2p": [(0, a) for a in assertions],
-         },
-        context_instance=RequestContext(request))
+    decujus.all_chars = Export().export(decujus.all_chars.values())
+    decujus.all_events = Export().export(decujus.all_events.values())
+    decujus.all_groups = Export().export(decujus.all_groups.values())
+
+    data = {
+        "person": decujus,
+        "p2p": Export().export(assertions),
+    };
+
+    return HttpResponse(
+        to_json(data, year_only=False, show_age=False),
+        content_type='application/json')
+
+
+def surety_schemes_view(request):
+    schemes = [{'id': s.id,
+                'name': s.name,
+                'description': s.description,
+                'parts': [
+                    {'id': p.id,
+                     'name': p.name,
+                     'description': p.description,
+                     'sequence': p.sequence_number} for p in s.parts.all()]
+            } for s in models.Surety_Scheme.objects.all()]
+            
+    return HttpResponse(to_json(schemes), content_type='application/json')
 
 
 def view_list(request):

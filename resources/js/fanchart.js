@@ -12,7 +12,7 @@ config(function($stateProvider) {
    });
 }).
 
-controller('fanchartCtrl', function($scope, Pedigree, $location, $stateParams, contextMenu) {
+controller('fanchartCtrl', function($scope, Pedigree, $location, $stateParams, $state, contextMenu) {
    $scope.$on('$locationChangeSuccess', function() {
       $scope.decujus = $location.search().id || $scope.decujus;
    });
@@ -42,12 +42,16 @@ controller('fanchartCtrl', function($scope, Pedigree, $location, $stateParams, c
    };
    $scope.focusPerson = function() {
       var mdata = contextMenu.data;
+      var id = mdata.d.id;  // capture since menu will be destroyed
       d3.select(mdata.element).transition()
          .attr('transform', 'scale(1.5)')
          .each('end', function() {
-            $location.search('id', mdata.d.id);
+            $location.search('id', id);
             $scope.$apply();
          });
+   };
+   $scope.showPerson = function() {
+      $state.go('person', {id: contextMenu.data.d.id});
    };
 
 }).

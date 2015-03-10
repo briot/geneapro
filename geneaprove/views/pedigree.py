@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from geneaprove import models
 from geneaprove.views.styles import ColorScheme, Styles
 from geneaprove.views.persona import extended_personas, event_types_for_pedigree
-from geneaprove.views.to_json import to_json
+from geneaprove.views.to_json import to_json, event_for_json
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.rules import getLegend
 from geneaprove.views.graph import graph
@@ -92,9 +92,39 @@ def get_sosa_tree(graph, id, max_levels, style_rules,
         build_sosa_tree(sosa_tree, marriage, 1, decujus.main_id)
         build_children_tree(children, id=decujus.main_id, gen=1)
 
+    simplePersons = {}
+    show_age = False
+    year_only = True
+    for obj in persons.values():
+        b = event_for_json(obj.birth, year_only=year_only)
+        d = event_for_json(obj.death, year_only=year_only)
+        m = event_for_json(obj.marriage, year_only=year_only)
+
+        if show_age and obj.birth:
+            if obj.death:
+                if obj.death.Date:
+                    age = " (age %s)" % (
+                        str (obj.death.Date.years_since (obj.birth.Date)), )
+                    d[0] += age
+            else:
+                age = " (age %s)" % (
+                    str (DateRange.today().years_since (obj.birth.Date)), )
+                d = [age, None, None]
+
+        simplePersons[obj.id] = {
+            "id":   obj.id,
+            "givn": obj.given_name,
+            'surn': obj.surname,
+            'sex':  obj.sex,
+            'generation': obj.generation,
+            'y':    obj.styles,
+            'b':    b,
+            'd':    d,
+            'm':    m}
+
     return {'generations': max_levels,
             'descendants': maxdepthDescendants,
-            'persons':     persons,    # All persons indexed by id
+            'persons':     simplePersons, # All persons indexed by id
             'sosa':        sosa_tree,  # sosa_number -> person_id
             'children':    children,   # personId -> [children_id*]
             'marriage':    marriage,   # sosa_number -> marriage info

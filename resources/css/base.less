@@ -50,7 +50,7 @@
 
 @category-border-width: 3px;
 
-@max-width:        1100px; // in some contexts
+@max-width:        1200px; // in some contexts
 @sidebar-width:    180px;
 @vmargin:          15px;   //  between vertical elements
 
@@ -121,6 +121,8 @@
    .border-radius(2px);
    box-shadow: 0 1px 1px rgba(0,0,0,.05);
 
+   // The title of a block (optional).
+   // You can use a <span class='details'> for secondary information
    .heading, h2 {
       font-weight: normal;
       font-size: medium;
@@ -130,11 +132,12 @@
       background-color: @heading-bg;
       color: @heading-text;
       padding: 8px 15px;
-   }
 
-   .secondary {
-      text-align: center;
-      font-size: smaller;
+      span.details {
+         margin-left: 10px;
+         font-size: smaller;
+         font-weight: normal;
+      }
    }
 }
 .standard-panel() {
@@ -197,6 +200,12 @@ nav {
 
       a {
         color: @menubar-color;
+        &.notImplemented {
+          color: #ccc;
+        }
+        &:hover {
+          color: darken(@menubar-color, 10%);
+        }
       }
 
       h2 {
@@ -294,6 +303,8 @@ nav {
 
 .contextMenu {
    .noselect();
+   .box-shadow();
+   min-width: 150px;
    display: none;
    position: fixed;
    background-color: @menubar-bg;
@@ -312,23 +323,6 @@ nav {
            background-color: @menubar-separator;
         }
       }
-   }
-}
-
-//------------------------------------------------------------------
-// Page titles
-//------------------------------------------------------------------
-
-#title {
-   border-bottom: 2px solid black;
-   font-size: 180%;
-   margin: 0 0 @vmargin 0;
-   padding: 0 0 4px 0;
-
-   span.details {
-      margin-left: 10px;
-      font-size: smaller;
-      font-weight: normal;
    }
 }
 
@@ -413,41 +407,151 @@ nav {
 // persona list page
 //----------------------------------------------------------------
 
-.list(@heading-text, @heading-bg, @border) {
-   .panel(@heading-text, white, @heading-bg, @border);
-   margin: @contents-corner 10px 0 10px;
+.list(@heading-text, @heading-bg, @border, @border-top:@border) {
    table {
       width: 100%;
-      table-layout: fixed;
+      background: white;
+      border-collapse: collapse;
       border-bottom: 1px solid @border;
+      border-top: 3px solid @border-top;
+
+      table {  // nested table
+         border-top: 0;
+         background: none;
+      }
+
       tr.controls {
          th {
             padding: 0;
          }
       }
+      thead th {
+         border-bottom: 2px solid @gray-lighter;
+      }
+      thead th {
+         border-right: 1px solid @border;
+      }
+      thead th:last-child {
+         border-right: 0px solid @border;
+      }
       th {
-         background: @heading-bg;
          color: @heading-text;
          font-weight: bold;
          padding: 8px 10px;
       }
-      td {
-         border-left: 1px solid @border;
-         border-right: 1px solid @border;
-         padding: 8px 10px;
+      th:after {
+         position:absolute;
+         margin-left: 20px;
+         font-family: FontAwesome;
+         color: #c9c9c9;
       }
-      tr:hover {
-         background: @gray-lighter;
+      th.sortable:hover:after {
+         content: '\f0dc';  // @fa-var-sort
+      }
+      th.sortable.headerSortDown:after {
+         content: '\f0dd';  // @fa-var-sort-desc
+      }
+      th.sortable.headerSortUp:after {
+         content: '\f0de';  // @fa-var-sort-asc
+      }
+      td {
+         border-bottom: 1px solid @border;
+         padding: 4px 10px;
+
+         overflow:hidden;
+         text-overflow: ellipsis;
+         white-space: nowrap;
+      }
+      tbody tr:hover {
+         background: darken(#fff, 2%);
+      }
+      .type {
+         font-weight: bold;
+         color: #aaa;//@gray-light;
+      }
+      span.role {
+         font-size: smaller;
+         font-weight: normal;
+      }
+      .source {
+         font-size: smaller;
+         vertical-align: super;
+      }
+      .persona {
+         font-style: italic;
+         font-size: 0.9em;
+         color: @gray-light;
+         cursor: pointer;
+         &:before {
+           content: "id ";
+         }
+      }
+
+      // Some rows have an arrow on the side, which can be clicked on to
+      // display a second row and show more details. The parent row should
+      // have the class 'hasRowDetails', and the child row should have the
+      // class 'rowDetails'.
+      tr.hasRowDetails {
+         td:first-child {
+            padding-left: 20px;
+            &:before {
+               position: absolute;
+               left: 7px;
+               font-size: 0.8em;
+            }
+         }
+         &:hover td:first-child:before {
+            content: '\25B6';
+         }
+         &.open td:first-child:before {
+            content: '\25BC';
+         }
+      }
+      tr.rowDetails {
+         td {
+            padding: 0;
+         }
+         td > div {
+            background: @border;
+            padding: 2px;
+            margin: 0 20px 5px 20px;
+         }
       }
    }
 }
 
+.persona.details {
+   margin: @contents-corner 10px 0 10px;
+   .panel(@person-dark, white, @person-light, @person-medium);
+   .list(black, @gray-light, @gray-lighter, @person-dark);
+   background: darken(white,2%);
+   h3 {
+      margin: 20px 0 10px 0;
+   }
+}
+
 .persona.list {
+   margin: @contents-corner 10px 0 10px;
+   .panel(@person-dark, white, @person-light, @person-medium);
    .list(@person-dark, @person-light, @person-medium);
+   table {
+      table-layout: fixed;
+      th {
+         background: @person-light;
+      }
+   }
 }
 
 .place.list {
+   margin: @contents-corner 10px 0 10px;
+   .panel(@places-dark, white, @places-light, @places-medium);
    .list(@places-dark, @places-light, @places-medium);
+   table {
+      table-layout: fixed;
+      th {
+         background: @places-light;
+      }
+   }
 }
 
 //----------------------------------------------------------------
@@ -603,9 +707,6 @@ nav {
       &.p2p {
          border-color: @p2p-color;
       }
-      .surety {
-         float: right;
-      }
 
       &.disproved {
          text-decoration:line-through;
@@ -622,6 +723,30 @@ nav {
     h3 {
       margin-top: 20px;
     }
+}
+
+//----------------------------------------------------------------
+// Rating
+//----------------------------------------------------------------
+ul.rating {
+   display: inline-block;
+   list-style-type: none;
+   color: #c9c9c9;
+   li {
+      display: inline-block;
+      width: 20px;
+      padding: 1px;
+      text-align: center;
+      font-weight: bold;
+      cursor: pointer;
+      i {
+         font-size: 0.5em;
+         &.filled {
+            font-size: 1em;
+            color: #ec8d05;
+         }
+      }
+   }
 }
 
 //----------------------------------------------------------------

@@ -13,12 +13,13 @@ config(function($stateProvider) {
    });
 }).
 
-controller('pedigreeCtrl', function($scope,  Pedigree, $location, $stateParams, contextMenu) {
+controller('pedigreeCtrl', function($scope,  Pedigree, $state, $stateParams, contextMenu, $location, $rootScope) {
    // When the search parameter (id) changes, angularjs-ui-router will not
    // reload the page and create a new controller, so we monitor these
    // instead (that's on purpose so that we can have animation in the SVG).
    // This page might also be loaded without specifying an explicit person, in
    // which case we must reuse the current decujus.
+   // We need to monitor the location, not the state, to handle Back and Forward
    $scope.$on('$locationChangeSuccess', function() {
       $scope.decujus = $location.search().id || $scope.decujus;
    });
@@ -30,11 +31,14 @@ controller('pedigreeCtrl', function($scope,  Pedigree, $location, $stateParams, 
     */
    $scope.$on('contextMenuOpen', function() {
       $scope.contextual = contextMenu.data;
-      $scope.$apply();
+      $scope.$apply();  // update contents of the contextual menu
    });
    $scope.focusPerson = function() {
-      $location.search('id', contextMenu.data.d.id);
-   //   scope.$apply();
+      var id = contextMenu.data.d.id;  // capture since menu will be destroyed
+      $location.search('id', id);
+   };
+   $scope.showPerson = function() {
+      $state.go('person', {id: contextMenu.data.d.id});
    };
   
 }).
@@ -126,7 +130,7 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
             }
 
             function contextmenu(d) {
-               contextMenu.create(scope, '#contextMenu', d3.event, {d: d});
+               contextMenu.create(scope, '#contextMenu', d3.event, {d: d, element: this});
             }
 
             // Create the box for each person

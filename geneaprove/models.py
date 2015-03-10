@@ -625,7 +625,7 @@ class Event_Type_Role(GeneaProveModel):
     birth__mother = 7
 
 
-class Event(models.Model):
+class Event(GeneaProveModel):
 
     """
     An event is any type of happening
@@ -668,8 +668,7 @@ class Characteristic_Part_Type (Part_Type):
     surname = 7
 
 
-class Characteristic (models.Model):
-
+class Characteristic(GeneaProveModel):
     """
     A characteristic is any data that distinguishes one person from another.
     A Characteristic is associated with a Persona or a Group through an
@@ -742,7 +741,7 @@ class Group_Type_Role (GeneaProveModel):
         db_table = "group_type_role"
 
 
-class Group (models.Model):
+class Group(GeneaProveModel):
 
     """
     The groups as found in our various sources
