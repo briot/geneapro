@@ -42,7 +42,7 @@
             </tr>
             <tr ng-repeat='p in filteredPersons | paginate: page : $root.settings.personas.rows' ng-click='select(p)' ng-dblclick='show(p)'>
                <td>{{p.surname || '-'}}</td>
-               <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.y}}'>{{p.given_name || '-'}}</span></td>
+               <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.styles}}'>{{p.given_name || '-'}}</span></td>
                <td ng-if='$root.settings.personas.colorScheme==4'><span>{{p.given_name || '-'}}</span></td>
                <td>{{p.birth[0]||''}}</td>
                <td>{{p.death[0]||''}}</td>
