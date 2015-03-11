@@ -11,7 +11,6 @@ from geneaprove.views.styles import ColorScheme, Styles
 from geneaprove.views.persona import extended_personas, event_types_for_pedigree
 from geneaprove.views.to_json import to_json, event_for_json
 from geneaprove.views.custom_highlight import style_rules
-from geneaprove.views.rules import getLegend
 from geneaprove.views.graph import graph
 import logging
 

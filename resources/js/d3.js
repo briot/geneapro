@@ -336,7 +336,8 @@ app.factory('gpd3', function() {
                 var st = data.getStyle(p);
                 return st['color'];
              };
-             if (settings.appearance == gpd3.appearance.GRADIENT) {
+             // Disable gradients for custom colors
+             if (false && settings.appearance == gpd3.appearance.GRADIENT) {
                 result.fillStyle = gpd3.gradientForEachAngle(
                    group,
                    nodes,

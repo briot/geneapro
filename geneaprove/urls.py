@@ -24,6 +24,7 @@ urlpatterns = patterns(
     (r'^data/persona/(\d+)$',  geneaprove.views.persona.view),
     (r'^data/suretySchemes$',  geneaprove.views.persona.surety_schemes_view),
     (r'^data/event/(\d+)$',    geneaprove.views.events.view),
+    (r'^data/legend$',         geneaprove.views.rules.getLegend),
 
     # ... below: not moved to angularJS yet
 

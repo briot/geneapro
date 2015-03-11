@@ -31,6 +31,7 @@
            <option value="3">No box</option>
            <option value="5">Quartile</option>
          </select>
+         <span ng-show='$root.settings.pedigree.colorScheme==0' gp-legend></span>
       </div>
       <div class="config"><span>Appearance</span>
          <select ng-model='$root.settings.pedigree.appearance'>
@@ -59,7 +60,6 @@
       </div>
       <input type='button' ng-click='$root.resetSettings("pedigree")' value='Reset'/>
    </div>
-   <!--  {{legend|safe}} -->
 </div>
 
 <div id="contents" ui-view>

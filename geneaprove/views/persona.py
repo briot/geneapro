@@ -13,7 +13,6 @@ from geneaprove.views.to_json import to_json
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import graph
 from geneaprove.views.styles import Styles
-from geneaprove.views.rules import getLegend
 from geneaprove.views.queries import sql_in
 import collections
 
@@ -430,7 +429,6 @@ def view_list(request):
     data = {
         'persons': all,
     }
-    #    'legend': getLegend()},
 
     return HttpResponse(
         to_json(data, year_only=False, show_age=False),

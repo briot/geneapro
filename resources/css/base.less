@@ -280,6 +280,9 @@ nav {
       input, select {
          float: right;
       }
+      input[type=button] {
+         margin: 3px;
+      }
    }
 }
 
@@ -334,17 +337,14 @@ nav {
    position:absolute;
    left: @sidebar-width;
    background-color: @block-background;
+   border: 1px solid #777;
    z-index: 100;
    padding: 5px;
-   .box-shadow();
+   .box-shadow(2px, 2px, #777);
    width: 250px;
    width: -moz-max-content;
    overflow-y: auto;
-   top:0;
-}
-
-#legendButton {
-   margin-top:20px;
+   top: 10px;
 }
 
 //----------------------------------------------------------------
@@ -614,10 +614,6 @@ nav {
             fieldset {
                 border: 0px;
                 padding-bottom: 5px;
-            }
-            legend {
-                font-size: smaller;
-                color: @table-gray;
             }
             &.edited {
                 border: 1px solid @logo-color;
