@@ -228,12 +228,24 @@ app.factory('gpd3', function() {
     * @param {Array} nodes     list of all persons.
     * @param {function} color0  first color to use (given a node).
     * @param {function} color1  second color to use (given a node).
+    *    If it returns 'undefined', no gradient is applied for that person.
     * @return {function}       Given a person, returns its fill style.
     */
    gpd3.gradientForEachAngle = function(group, nodes, color0, color1, isRadial) {
+      angular.forEach(nodes, function(d) {
+         if (color1(d) === undefined) {
+            d.$fill = color0(d);
+            d.$fillGradient = false;
+         } else {
+            d.$fill = 'url(#gradient' + d.id + ')';
+            d.$fillGradient = true;
+         }
+      });
+
       if (isRadial) {
          var g = group.append("defs").selectAll('radialGradient')
-            .data(nodes, function(d) {return d.id})
+            .data(nodes.filter(function(d) { return d.$fillGradient }),
+                  function(d) {return d.id})
             .enter()
             .append("radialGradient")
             .attr('id', function(p) {return "gradient" + p.id })
@@ -249,7 +261,8 @@ app.factory('gpd3', function() {
             }};
       } else {
          var g = group.append("defs").selectAll('linearGradient')
-            .data(nodes, function(d) {return d.id})
+            .data(nodes.filter(function(d) { return d.$fillGradient }),
+                  function(d) {return d.id})
             .enter()
             .append("linearGradient")
             .attr("id", function(p) {return "gradient" + p.id })
@@ -259,7 +272,7 @@ app.factory('gpd3', function() {
       }
       g.append("stop").attr("offset", offset1).attr("stop-color", color0);
       g.append("stop").attr("offset", "100%").attr("stop-color", color1);
-      return function(p) {return 'url(#gradient' + p.id + ')'};
+      return function(d) { return d.$fill };
    };
 
    /**
@@ -337,14 +350,19 @@ app.factory('gpd3', function() {
                 return st['color'];
              };
              // Disable gradients for custom colors
-             if (false && settings.appearance == gpd3.appearance.GRADIENT) {
+             if (settings.appearance == gpd3.appearance.GRADIENT) {
                 result.fillStyle = gpd3.gradientForEachAngle(
                    group,
                    nodes,
                    result.fillStyle,
                    function(p) {
                       var st = data.getStyle(p);
-                      return d3.rgb(st['fill']).darker();
+                      if (st['fill'] == 'none' || st['fill'] == 'white' ) {
+                         // disable gradient
+                         return undefined;
+                      } else {
+                         return d3.rgb(st['fill']).darker();
+                      }
                    }, isRadial);
              }
              break;

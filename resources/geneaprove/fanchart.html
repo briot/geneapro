@@ -33,6 +33,7 @@
            <option value="4">No fill</option>
            <option value="5">Quartile</option>
          </select>
+         <span ng-show='$root.settings.fanchart.colorScheme==0' gp-legend></span>
       </div>
       <div class="config"><span>Appearance</span>
          <select ng-model='$root.settings.fanchart.appearance'>
@@ -43,8 +44,6 @@
    </div>
    <input type='button' ng-click='$root.resetSettings("fanchart")' value='Reset'/>
 </div>
-
-<!--  {{legend|safe}} -->
 
 <div id="contents" ui-view>
    <div class='graph' gp-fanchart='decujus'>

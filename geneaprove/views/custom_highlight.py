@@ -18,7 +18,7 @@ style_rules = [
       ("place.name", RULE_CONTAINS_INSENSITIVE, "baussaine"),
       ("role",  RULE_IS,         models.Event_Type_Role.principal),
       ("date",  RULE_BEFORE,     "1862")],
-     {"color": "rgba(200,0,0,0.7)", "stroke": "black"}),
+     {"color": "rgb(200,0,0)", "stroke": "black"}),
 
     ("Died younger than 60",
      RULE_EVENT,
@@ -46,7 +46,7 @@ style_rules = [
      [("type",  RULE_IS, models.Event_Type.marriage),
       ("role",  RULE_IS, models.Event_Type_Role.principal),
       ("count", RULE_GREATER, 1)],
-     {"fill": "rgba(0,155,0,0.5)"}),
+     {"fill": "rgb(0,155,0)"}),
 
     ("PROBLEM: Persons too young at birth of child",
      RULE_EVENT,
