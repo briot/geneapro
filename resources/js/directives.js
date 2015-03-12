@@ -28,6 +28,24 @@ directive('gpMenubutton', function(Pedigree) {
 }).
 
 /**
+ * A link to a persona.
+ */
+directive('personaLink', function($state) {
+   return {
+      scope: {
+         personId: '=personaLink'   // The id of the person
+      },
+      link: function(scope, element) {
+         element.addClass('personaLink')
+           .append('<span class="id">' + scope.personId + '</span>')
+           .on('click', function() {
+               $state.go('person', {id: scope.personId});
+           });
+      },
+   };
+}).
+
+/**
  * Split a list into several pages, and return the items for a specific list
  */
 

@@ -41,8 +41,8 @@
             <tr ng-if='persons===undefined'>
                <td colspan='5'>Loading...</td>
             </tr>
-            <tr ng-repeat='p in filteredPersons | paginate: page : $root.settings.personas.rows' ng-click='select(p)' ng-dblclick='show(p)'>
-               <td>{{p.surname || '-'}}</td>
+            <tr ng-repeat='p in filteredPersons | paginate: page : $root.settings.personas.rows'>
+               <td><a persona-link='p.id'>{{p.surname || '-'}}</a></td>
                <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.styles}}'>{{p.given_name || '-'}}</span></td>
                <td ng-if='$root.settings.personas.colorScheme==4'><span>{{p.given_name || '-'}}</span></td>
                <td>{{p.birth[0]||''}}</td>

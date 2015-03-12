@@ -375,6 +375,24 @@ nav {
    max-width: @max-width;
 }
 
+.personaLink {
+   cursor: pointer;
+   &:hover {
+      text-decoration: underline;
+   }
+   &:before {
+      font-family: FontAwesome;
+      content: '\f007';  // @far-var-user
+      margin-right: 4px;
+   }
+   span.id {  // the id
+      vertical-align: super;
+      font-size: x-small;
+      font-style: italic;
+      margin-left: 4px;
+   }
+}
+
 //-----------------------------------------------
 // Pagination
 //-----------------------------------------------
@@ -467,7 +485,7 @@ nav {
       }
       .type {
          font-weight: bold;
-         color: #aaa;//@gray-light;
+         color: #aaa;
       }
       span.role {
          font-size: smaller;

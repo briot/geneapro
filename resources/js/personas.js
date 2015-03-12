@@ -8,7 +8,7 @@ config(function($stateProvider) {
    });
 }).
 
-controller('personasCtrl', function($scope, $rootScope, $http, $location, $filter) {
+controller('personasCtrl', function($scope, $rootScope, $http, $state, $filter) {
    $scope.rows = [{rows: 10, label: '10'},
                   {rows: 20, label: '20'},
                   {rows: 30, label: '30'},
@@ -59,10 +59,6 @@ controller('personasCtrl', function($scope, $rootScope, $http, $location, $filte
       $scope.filteredPersons = $scope.persons;
       $scope.setPage(1);
    });
-
-   $scope.show = function(person) {
-      $location.path('/persona/' + person.id);
-   };
    $scope.select = function(person) {
       $rootScope.decujus = person.id;
    };

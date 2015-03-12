@@ -8,7 +8,8 @@ config(function($stateProvider) {
    });
 }).
 
-controller('personCtrl', function($scope, $http, $stateParams) {
+controller('personCtrl', function($scope, $http, $stateParams, $rootScope) {
+   $rootScope.decujus = $stateParams.id;
    $http.get('/data/persona/' + $stateParams.id).then(function(resp) {
       $scope.person = resp.data.person;
       $scope.p2p = resp.data.p2p;
