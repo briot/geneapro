@@ -352,18 +352,22 @@ nav {
 //----------------------------------------------------------------
 
 #stats {
-   background-color: @block-background;
-   max-width: @max-width;
-   h2 {
-      background-color: @header-bg;
-      color: @header-color;
-      padding: 2px 0 2px 15px;
-      margin-top: 20px;
-   }
+   .standard-panel();
+   background: darken(white,2%);
+   margin: @contents-corner 10px 0 10px;
 
-   #genLegend table {
-      width:100%;
-      td { text-align: left}
+   .generationsLegend {
+      text-size: 0.8em;
+      > div {
+         float: left;
+         width: 33%;
+      }
+      span {
+         display: inline-block;
+         margin: 2px;
+         width: 20px;
+         height: 10px;
+      }
    }
 }
 
@@ -848,5 +852,26 @@ svg {
         shape-rendering: crispEdges;
      }
    }
+
+   .axis {
+      line, path {
+         fill: none;
+         stroke: #000;
+         shape-rendering: crispEdges;
+      }
+      text {
+         font-size: 0.8em;
+      }
+    }
+    .grid {
+       path {
+          stroke-width: 0;
+       }
+       .tick {
+          fill: none;
+          stroke: #ccc;
+          shape-rendering: crispEdges;
+       }
+    }
 }
 

@@ -107,16 +107,16 @@ def view(request, decujus=1):
                 else:
                     ages[int(age / 5)][3] += 1
 
-    return render_to_response(
-        'geneaprove/stats.html',
-        {"total_ancestors": len(ancestors),
-         "total_father":    len(fathers),
-         "total_mother":    len(mothers),
-         "total_persons":   len(graph),
-         "ranges":          ranges,
-         "ages":            ages,
-         "decujus":         decujus,
-         "decujus_name":  "%s %s" % (persons[decujus].given_name,
-                                     persons[decujus].surname)
-         },
-        context_instance=RequestContext(request))
+    data = {
+        "total_ancestors": len(ancestors),
+        "total_father":    len(fathers),
+        "total_mother":    len(mothers),
+        "total_persons":   len(graph),
+        "ranges":          ranges,
+        "ages":            ages,
+        "decujus":         decujus,
+        "decujus_name":  "%s %s" % (
+            persons[decujus].given_name, persons[decujus].surname)
+    }
+
+    return HttpResponse(to_json(data), content_type='application/json')

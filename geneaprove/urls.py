@@ -25,6 +25,7 @@ urlpatterns = patterns(
     (r'^data/suretySchemes$',  geneaprove.views.persona.surety_schemes_view),
     (r'^data/event/(\d+)$',    geneaprove.views.events.view),
     (r'^data/legend$',         geneaprove.views.rules.getLegend),
+    (r'^data/stats$',          geneaprove.views.stats.view),
 
     # ... below: not moved to angularJS yet
 
@@ -45,8 +46,6 @@ urlpatterns = patterns(
     (r'^reprList/(?P<source_id>\d+)',
         geneaprove.views.representation.higherSourceReprList),
 
-    (r'^stats$',        geneaprove.views.stats.view),
-    (r'^stats/(\d+)$',  geneaprove.views.stats.view),
     (r'^quilts/(\d+)?$',
      geneaprove.views.graph.quilts_view),
 

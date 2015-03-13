@@ -1,0 +1,44 @@
+<div id='sidebar'>
+</div>
+
+<div id='contents'>
+   <div id="stats">
+      <h2 id="title">Statistics</h2>
+
+      <div>
+         Total number of persons in the database: {{data.total_persons}}<br>
+         Number of persons in the tree (ancestors and descendants): {{data.total_ancestors}}<br>
+         Number of persons in father's tree: {{data.total_father}}<br>
+         Number of persons in mother's tree: {{data.total_mother}}<br>
+      </div>
+
+      <!--
+      For whole population, for males only, for females only
+      Includes population count, average, deviance, min, max, 
+      Age at first marriage:
+      Age at first child:
+      Age at last child:
+      Age at death:
+      #Name tags:
+      #Birth group tags:
+      #Death group tags:
+      #Marriage group tags:
+      #Divorce group tags:
+      #Child tags:
+      Sons:
+      Daughters:
+      -->
+
+      <h2>Generations timespan (oldest birth - latest death)</h2>
+
+      <div id="generations" style="height:350px"></div>
+      <div class='generationsLegend'>
+         <div ng-repeat='gen in data.ranges'>
+            <span style='background:{{colors(gen[0])}}'>&nbsp;</span>{{gen[3]}}
+         </div>
+      </div>
+
+      <h2>Lifespan age distribution (persons in the tree, only)</h2>
+      <div id="lifespan" style="height:150px"></div>
+   </div>
+</div>
