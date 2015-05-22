@@ -46,18 +46,20 @@ directive('personaLink', function($state) {
 }).
 
 /**
- * Split a list into several pages, and return the items for a specific list
+ * A link to a source.
  */
-
-filter('paginate', function() {
-   return function(input, page, pageSize, filter) {
-      if (pageSize === undefined) {
-         return input;
-      }
-      if (input) {
-         page = (Number(page, 1) - 1) * pageSize;
-         return input.slice(page, page + pageSize);
-      }
+directive('sourceLink', function($state) {
+   return {
+      scope: {
+         sourceId: '=sourceLink'   // The id of the source
+      },
+      link: function(scope, element) {
+         element.addClass('sourceLink')
+           .append('<span class="id">' + scope.sourceId + '</span>')
+           .on('click', function() {
+               $state.go('source', {id: scope.sourceId});
+           });
+      },
    };
 }).
 

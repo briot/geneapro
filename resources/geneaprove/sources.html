@@ -1,0 +1,37 @@
+<div id='sidebar'>
+   <div class='panel'>
+      <h2>List of sources</h2>
+      <div class='config'>
+         <span>Rows per page</span>
+         <select ng-model='$root.settings.sources.rows' ng-options='a.rows as a.label for a in rows'>
+         </select>
+      </div>
+   </div>
+</div>
+
+<div id='contents' ui-view>
+   <div class="source list">
+      <table cellspacing="0" cellpadding="0">
+         <thead>
+            <tr class='controls'>
+               <th colspan='2' gp-paginate-header></th>
+            </tr>
+            <tr>
+               <th>Short citation</th>
+               <th>Full citation</th>
+            </tr>
+         </thead>
+         <tbody>
+            <tr ng-if='data===undefined'>
+              <td colspan='2'>Loading...</td>
+            </tr>
+            <tr ng-repeat='p in filteredData | paginate: page : $root.settings.sources.rows'>
+               <td><a source-link='p.id'></a> {{p.abbrev}}</td>
+               <td>{{p.title}}</td>
+            </tr>
+         </tbody>
+      </table>
+      <div gp-paginate-pages></div>
+   </div>
+</div>
+

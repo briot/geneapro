@@ -310,6 +310,10 @@ def editCitation(request, source_id):
         content_type="application/json")
 
 
-def source_list(request):
+def view_list(request):
     """View the list of all sources"""
-    return None
+
+    sources = models.Source.objects.order_by('abbrev', 'title')
+    return HttpResponse(
+        to_json(sources),
+        content_type='application/json')

@@ -190,6 +190,10 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 ** http://github.com/FamilySearch/gedcomx
 ** http://www.tamurajones.net/FamilySearchReleasesGEDCOMX.xhtml
 
+* Maps
+** https://ingenealogie.wordpress.com/2014/04/06/carte-didentite-du-systeme-aluze-charrecey/
+** https://desaieuxetdeshommes.wordpress.com/2014/12/16/identifier-les-migrations-de-ses-ancetres/
+
 * dates
 ** From W. Berry:
   I did have a quick look at the dates module. I note that you have coded
@@ -214,6 +218,7 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 * web
 ** timeline
   http://www.chronozoomproject.org/
+  http://www.geneanet.org/blog/index.php/post/2015/03/Des-frises-chronologiques-a-creer-soi-meme.html
 ** What are conclusions ?
    http://michaelhait.wordpress.com/2012/02/26/simple-and-complex/
 ** Evidence-based genealogy
@@ -233,6 +238,8 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    http://histfam.familysearch.org/descend.php?personID=I1891&tree=Nixon
 ** Local history: toilets in the middle ages
    http://blog.geneanet.org/index.php/post/2013/11/L-histoire-par-le-petit-bout-de-la-lorgnette-%3A-les-besoins-au-XVIIIe-siecle.html
+** Old maps
+   http://www.oldmapsonline.org/#bbox=-2.25731,47.420731,-2.032776,47.530723&q=&datefrom=1000&dateto=1745
 
 * Existing code
 ** gedcom parsers
@@ -248,6 +255,7 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 ** Mac
 http://blog.eogn.com/eastmans_online_genealogy/2013/03/genealogy-programs-for-macintosh.html
 http://blog.eogn.com/eastmans_online_genealogy/2013/05/macfamilytree-7-and-mobilefamilytree-7-released-.html
+http://www.macg.co/logiciels/2015/03/ohmigene-perd-son-createur-et-cherche-un-repreneur-87999
    
 * Replace icons with fonts
   http://fortawesome.github.com/Font-Awesome/
@@ -259,6 +267,3 @@ http://blog.eogn.com/eastmans_online_genealogy/2013/05/macfamilytree-7-and-mobil
 * GUI
 ** The toplevel menubar sections should match the genealogical process (collect, analyze,...)
 ** Use consistent black-and-white icons
-
-
-

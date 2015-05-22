@@ -24,9 +24,13 @@
 @person-medium: #d6e9c6;
 @person-dark:   #3c763d;
 
-@places-medium: #faebcc;
-@places-light:  lighten(@places-medium,6.5%);   // yellow
+@places-medium: #faebcc;   // yellow
+@places-light:  lighten(@places-medium,6.5%);
 @places-dark:   darken(@places-medium,40%);
+
+@sources-medium: #e4cbfa;  // purple
+@sources-light:  lighten(@sources-medium,6.5%);
+@sources-dark:   darken(@sources-medium,40%);
 
 @logo-color:   @darkblue;
 
@@ -372,29 +376,42 @@ nav {
 }
 
 //----------------------------------------------------------------
-// Persona details page
+// Links
 //----------------------------------------------------------------
 
-#personaDetails {
-   max-width: @max-width;
-}
-
-.personaLink {
+.specialLink(@symbol) {
    cursor: pointer;
    &:hover {
       text-decoration: underline;
    }
    &:before {
       font-family: FontAwesome;
-      content: '\f007';  // @far-var-user
+      content: @symbol;
       margin-right: 4px;
    }
    span.id {  // the id
       vertical-align: super;
       font-size: x-small;
       font-style: italic;
-      margin-left: 4px;
+      margin-left: -2px;
+      margin-right: 6px;
    }
+}
+
+.personaLink {
+  .specialLink('\f007');   //  @fa-var-user
+}
+
+.sourceLink {
+  .specialLink('\f02d');   //  @fa-book
+}
+
+//----------------------------------------------------------------
+// Persona details page
+//----------------------------------------------------------------
+
+#personaDetails {
+   max-width: @max-width;
 }
 
 //-----------------------------------------------
@@ -575,6 +592,18 @@ nav {
       }
    }
 }
+.source.list {
+   margin: @contents-corner 10px 0 10px;
+   .panel(@sources-dark, white, @sources-light, @sources-medium);
+   .list(@sources-dark, @sources-light, @sources-medium);
+   table {
+      table-layout: fixed;
+      th {
+         background: @sources-light;
+      }
+   }
+}
+
 
 //----------------------------------------------------------------
 // place list page

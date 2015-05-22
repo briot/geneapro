@@ -23,10 +23,7 @@
       <table cellspacing="0" cellpadding="0">
          <thead>
             <tr class='controls'>
-               <th colspan='5'>
-                   <input placeholder='filter' ng-model='filter.value' style='float:right; width: 250px'/>
-                   <span>({{offset + 1}} - {{offsetMax + 1}} / {{filteredPersons.length}})</span>
-               </th>
+               <th colspan='5' gp-paginate-header></th>
             </tr>
             <tr>
                <th>Surname</th>
@@ -38,11 +35,11 @@
             </tr>
          </thead>
          <tbody>
-            <tr ng-if='persons===undefined'>
+            <tr ng-if='data===undefined'>
                <td colspan='5'>Loading...</td>
             </tr>
-            <tr ng-repeat='p in filteredPersons | paginate: page : $root.settings.personas.rows'>
-               <td><a persona-link='p.id'>{{p.surname || '-'}}</a></td>
+            <tr ng-repeat='p in filteredData | paginate: page : $root.settings.personas.rows'>
+               <td><a persona-link='p.id'></a>{{p.surname || '-'}}</td>
                <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.styles}}'>{{p.given_name || '-'}}</span></td>
                <td ng-if='$root.settings.personas.colorScheme==4'><span>{{p.given_name || '-'}}</span></td>
                <td>{{p.birth[0]||''}}</td>
@@ -52,12 +49,6 @@
             </tr>
          </tbody>
       </table>
-      <div class='pagination'>
-         <span ng-click='setPage(1)'>&laquo;</span>
-         <span ng-click='setPage(page-1)'>&lsaquo;</span>
-         <span ng-repeat='p in pageRange' ng-click='setPage(p)' ng-class='{current:page==p}'>{{p}}</span>
-         <span ng-click='setPage(page+1)'>&rsaquo;</span>
-         <span ng-click='setPage(maxPage)'>&raquo;</span>
-      </div>
+      <div gp-paginate-pages></div>
    </div>
 </div>

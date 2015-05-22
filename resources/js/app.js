@@ -19,7 +19,11 @@ run(function(gpd3, $rootScope, localStorageService) {
 
       personas: {
          colorScheme: gpd3.colorScheme.TRANSPARENT,
-         rows: 10    // Number of rows per page
+         rows: 10    // Rows per page
+      },
+
+      sources: {
+         rows: 10     // Rows per page
       },
 
       places: {
