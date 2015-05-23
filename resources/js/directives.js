@@ -35,13 +35,12 @@ directive('personaLink', function($state) {
       scope: {
          personId: '=personaLink'   // The id of the person
       },
-      link: function(scope, element) {
-         element.addClass('personaLink')
-           .append('<span class="id">' + scope.personId + '</span>')
-           .on('click', function() {
-               $state.go('person', {id: scope.personId});
-           });
-      },
+      transclude: true,  // content of element should use the outside scope
+      template:
+         '<a href="#/person?id={{personId}}" class="personaLink">' +
+            '<span>{{personId}}</span>' +
+         '</a>' +
+         '<span ng-transclude></span>'
    };
 }).
 
@@ -53,13 +52,12 @@ directive('sourceLink', function($state) {
       scope: {
          sourceId: '=sourceLink'   // The id of the source
       },
-      link: function(scope, element) {
-         element.addClass('sourceLink')
-           .append('<span class="id">' + scope.sourceId + '</span>')
-           .on('click', function() {
-               $state.go('source', {id: scope.sourceId});
-           });
-      },
+      transclude: true,  // content of element should use the outside scope
+      template:
+         '<a href="#/source?id={{sourceId}}" class="sourceLink">' +
+            '<span>{{sourceId}}</span>' +
+         '</a>' +
+         '<span ng-transclude></span>'
    };
 }).
 

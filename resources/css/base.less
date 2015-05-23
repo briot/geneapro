@@ -388,6 +388,8 @@ nav {
 
 .specialLink(@symbol) {
    cursor: pointer;
+   text-decoration: none;
+   color: inherit;
    &:hover {
       text-decoration: underline;
    }
@@ -396,7 +398,7 @@ nav {
       content: @symbol;
       margin-right: 4px;
    }
-   span.id {  // the id
+   span {
       vertical-align: super;
       font-size: x-small;
       font-style: italic;
