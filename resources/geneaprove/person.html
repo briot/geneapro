@@ -33,7 +33,7 @@
           <tr ng-repeat='c in person.all_chars'>
              <td class="type">{{c.char.name}}
                 <span ng-repeat='s in c.char.sources' ng-if='s'>
-                   <a class="source" href="/sources/{{s}}">{{s}}</a>
+                   <span source-link='s'></span>
                 </span>
              </td>
 
@@ -71,7 +71,7 @@
                 <span ng-if='e.role != "principal"' class='role'>(as {{e.role || ''}})</span>
 
                 <span ng-repeat='s in e.event.sources' ng-if='s'>
-                   <a class="source" href="/sources/{{s}}">{{s}}</a>
+                   <span source-link='s'></span>
                 </span>
              </td>
              <td>
@@ -95,13 +95,13 @@
                       </tr>
                       <tr ng-repeat='p in e.$details.p2e' ng-class='{disproved:p.disproved}'>
                          <td>
-                            <a persona-link='p.person.id'>{{p.person.name}}</a>
+                            <a persona-link='p.person.id'></a>{{p.person.name}}
                          </td>
                          <td>{{p.role_name}}</td>
                          <td>{{p.rationale || ''}}</td>
                          <td><span gp-surety='p.surety'></span></td>
                          <td>
-                            <a ng-if='p.source.id' href='/sources/{{p.source.id}}'>{{p.source.id}}</a>
+                            <span ng-if='p.source.id' source-link='p.source.id'></span>
                          </td>
                       </tr>
                    </table>
@@ -125,7 +125,7 @@
           <tr ng-repeat='g in person.all_groups'>
              <td>{{g.group.name}} ({{g.group.role || ''}})
                 <span ng-repeat='s in g.group.sources' ng-if='s'>
-                   <a class="source" href="/sources/{{s}}">{{s}}</a>
+                   <span source-link='s'></span>
                 </span>
              </td>
              <td class="date">{{g.group.date || ''}}</td>
@@ -159,8 +159,8 @@
           <tbody>
              <tr ng-repeat='p in p2p' ng-if='p.person1_id!=p.person2_id' ng-class='{disproved:p.disproved}'>
                 <!-- ??? Should we show sources and researcher -->
-                <td class="persona" _persona="{{p.person1_id}}">{{p.person1_id}}</td>
-                <td class="persona" _persona="{{p.person2_id}}">{{p.person2_id}}</td>
+                <td><span persona-link='p.person1_id'></span></td>
+                <td><span persona-link='p.person2_id'></span></td>
                 <td>{{p.rationale || ''}}</td>
                 <td><span gp-surety='p.surety'></span></td>
             </tr>
