@@ -111,10 +111,16 @@
    color: @header-color;
    min-width: 60px;
    cursor: pointer;
-   float: right;
    margin: 20px 5px 0 5px;
    text-decoration: none;
    text-align: center;
+}
+input[type=button] {
+   .button;
+}
+span.button {
+   .button;
+   padding: 3px;
 }
 
 .panel(@heading-text, @bg, @heading-bg, @border) {
@@ -266,6 +272,7 @@ nav {
       padding: 5px;
       &[type=button] {
         .button;
+        float: right;
       }
    }
    .config {
@@ -793,6 +800,26 @@ ul.rating {
             color: #ec8d05;
          }
       }
+   }
+}
+
+//----------------------------------------------------------------
+// Import page
+//----------------------------------------------------------------
+
+.importPage {
+   p {
+      max-width: 500px;
+      margin-top: 20px;
+      pre, &.error {
+         background: #ecdca7;
+      }
+   }
+   pre {
+      background: #ecdca7;
+      margin: 20px;
+      padding: 10px;
+      border: 1px solid black;
    }
 }
 

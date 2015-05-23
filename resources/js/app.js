@@ -2,11 +2,12 @@ var app = angular.module(
       'geneaprove',
       ['ui.router', 
        'LocalStorageModule',
+       'lr.upload'
        // 'ngSanitize', 'ngDialog', 'ngQuickDate', 'ngCsv',
       ]).
 
 config(function($urlRouterProvider) {
-      $urlRouterProvider.otherwise('/pedigree?id=1');
+      $urlRouterProvider.otherwise('/import');
 }).
 
 run(function(gpd3, $rootScope, localStorageService) {

@@ -64,6 +64,43 @@ directive('sourceLink', function($state) {
 }).
 
 /**
+ * A button that opens a file selection dialog, and then executes a callback.
+ * The value of ngModel is set to either a single tuple or a list of tuples,
+ * each of which of the form:   [name, <input_element>].
+ * The input_element can be used with the upload service
+ */
+directive('ngFileImport', function($window) {
+   return {
+      scope: {
+         text: '@ngFileImport',
+         ngModel: '=',
+         multiple: '@'
+      },
+      link: function(scope, elem) {
+         scope.ngModel = scope.multiple ? [] : undefined;
+         elem.find('input').bind('change', function() {
+            var inputFile = angular.element(this);
+
+            if (scope.multiple) {
+               // Keep all inputs around so that we can submit the form
+               var clone = inputFile.clone(true);
+               clone.removeAttr('id');
+               inputFile.after(clone).css('display', 'none');
+               scope.ngModel.push([clone.val(), clone]);
+            } else {
+               scope.ngModel = [inputFile.val(), inputFile];
+            }
+            scope.$apply();
+         });
+      },
+      template: '<label for="fileinput">' +
+                '  <span class="button">{{text}}...</span>' +
+                '  <input type="file" id="fileinput" ' +
+                'style="opacity:0; filter:alpha(opacity=0)"></label>'
+  };
+}).
+
+/**
  * Set this on a table header to make the <table> sortable.
  * <table sort-on='list'>
  *   <tr>

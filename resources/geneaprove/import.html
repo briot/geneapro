@@ -1,0 +1,55 @@
+<div id='sidebar'>
+   <div class='panel'>
+      <h2>Import GEDCOM</h2>
+   </div>
+</div>
+
+<div id='contents' class='importPage' ui-view>
+   <h2>Importing data into GeneaProve</h2>
+
+   <p>
+   Your database does not contain any person yet !
+   </p>
+
+   <p>
+   At this stage, GeneaProve is mostly read-only. As such, we recommend importing
+   data from an other genealogy software. In particular, the authors have tested
+   imported from Gramps or Roots Magic.
+   </p>
+   
+   <p>
+   Most genealogy software are capable of exporting your data as a <b>GEDCOM</b>
+   file, which GeneaProve can then import to get you started.
+   </p>
+
+   <div ng-file-import='Import GEDCOM' ng-model='data.importFileName'
+        style='margin-top: 20px'>
+   </div>
+
+   <div ng-if='importing'>
+      Importing your data. This might take a while.
+   </div>
+
+   <p class='error' ng-if='success==false'>
+      GeneaProve could not import your file.
+      <br>
+      This is either because your file does
+      not contain correct GEDCOM data, or more likely because of limitations in
+      GeneaProve. Please
+      <a href="http://github.com/briot/geneapro/issues/new">Report</a>
+      this issue to the GeneaProve developers. If your GEDCOM data contains
+      information you wish to keep private, you can use the script
+      <em>gedcom_anon.py</em> to anonymize the data before you send it to us.
+      <br>
+   </p>
+   <p class='error' ng-if='success==true && error'>
+      Your file was successfully imported, although some data might be missing.
+      Check the output of the importer below:
+      <br>
+   </p>
+   <p class='error' ng-if='success==true && !error'>
+      Your data was successfully imported.
+   </p>
+   <pre class='error' ng-if='error'>{{error}}</pre>
+
+</div>

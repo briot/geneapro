@@ -91,6 +91,7 @@ module.exports = function(grunt) {
                      'node_modules/d3/d3.min.js' :
                      'node_modules/d3/d3.js'),
                 'node_modules/angular-local-storage/dist/angular-local-storage.min.js',
+                'node_modules/angular-upload/angular-upload.js',
                 'resources/tmp/<%= pkg.name %>.min.js'],
           dest: 'resources/<%= pkg.name %>.min.js',
           nonnull: true   // Warn when file is missing

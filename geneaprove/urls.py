@@ -27,6 +27,7 @@ urlpatterns = patterns(
     (r'^data/event/(\d+)$',    geneaprove.views.events.view),
     (r'^data/legend$',         geneaprove.views.rules.getLegend),
     (r'^data/stats$',          geneaprove.views.stats.view),
+    (r'^import$',              geneaprove.views.importers.import_gedcom),
 
     # ... below: not moved to angularJS yet
 
@@ -55,10 +56,6 @@ urlpatterns = patterns(
         geneaprove.views.sources.citationParts),
     (r'^fullCitation$',
      geneaprove.views.sources.fullCitation),
-
-    # Importing a GEDCOM file
-    (r'^import$',
-     geneaprove.views.importers.import_gedcom),
 
     # Experimental, does not work yet
     (r'^merge$',        geneaprove.views.merge.view),
