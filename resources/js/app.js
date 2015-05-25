@@ -6,8 +6,12 @@ var app = angular.module(
        // 'ngSanitize', 'ngDialog', 'ngQuickDate', 'ngCsv',
       ]).
 
-config(function($urlRouterProvider) {
+config(function($urlRouterProvider, $httpProvider) {
       $urlRouterProvider.otherwise('/import');
+
+      // Support for django csrf
+      $httpProvider.defaults.xsrfCookieName = 'csrftoken';
+      $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
 }).
 
 run(function(gpd3, $rootScope, localStorageService) {
