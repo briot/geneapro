@@ -158,10 +158,10 @@
              </tr>
           </thead>
           <tbody>
-             <tr ng-repeat='p in p2p' ng-if='p.person1_id!=p.person2_id' ng-class='{disproved:p.disproved}'>
+             <tr ng-repeat='p in p2p' ng-if='p.person1.id!=p.person2.id' ng-class='{disproved:p.disproved}'>
                 <!-- ??? Should we show sources and researcher -->
-                <td><span persona-link='p.person1_id'></span></td>
-                <td><span persona-link='p.person2_id'></span></td>
+                <td><span persona-link='p.person1.id'>{{p.person1.name}}</span></td>
+                <td><span persona-link='p.person2.id'>{{p.person2.name}}</span></td>
                 <td>{{p.rationale || ''}}</td>
                 <td><span gp-surety='p.surety'></span></td>
             </tr>

@@ -13,42 +13,6 @@ from geneaprove.views.graph import graph
 from geneaprove.utils.citations import Citations
 
 
-class Fact(object):
-
-    """Describes a fact extracted from an assertion"""
-
-    __slots__ = ("surety", "rationale", "disproved", "date",
-                 "subject1_url", "subject2_url",
-                 "subject1", "subject2",
-                 "subject2_type",
-                 "place", "parts")
-    TYPE_PERSON = 0
-    TYPE_EVENT = 1
-    TYPE_CHARACTERISTIC = 2
-
-    def __init__(self, surety, rationale, disproved, date, place,
-                 subject1, subject2):
-        """
-        :param subject1:
-            A tuple (type, info*)
-        :param subject2:
-            A tuple (type, info*)
-
-        where info is one or more elements depending on the type.
-            (TYPE_EVENT, event, role)
-            (TYPE_CHARACTERISTIC, characteristic, parts)
-            (TYPE_PERSON, persona)
-        """
-
-        self.surety = surety
-        self.rationale = rationale
-        self.date = date
-        self.place = place
-        self.disproved = disproved
-        self.subject1 = subject1
-        self.subject2 = subject2
-
-
 def extended_sources(ids, schemes):
     """Return a dict of Source instances, with extra attributes
        :param schemes:
@@ -71,39 +35,13 @@ def extended_sources(ids, schemes):
 
     p2e = models.P2E.objects.select_related()
     for c in sql_in(p2e, "source", ids):
-        f = Fact(
-            surety=c.surety,
-            rationale=c.rationale,
-            date=c.event.date and DateRange(c.event.date),
-            place=c.event.place and c.event.place.name,
-            disproved=c.disproved,
-            subject1=(Fact.TYPE_PERSON, c.person),
-            subject2=(Fact.TYPE_EVENT,
-                      c.event,
-                      c.role.name))
-        sources[c.source_id].asserts.append(f)
-
+        sources[c.source_id].asserts.append(c)
         if schemes is not None:
             schemes.add(c.surety.scheme_id)
 
     p2c = models.P2C.objects.select_related()
     for c in sql_in(p2c, "source", ids):
-        parts = []
-        for p in models.Characteristic_Part.objects.filter(
-                characteristic=c.characteristic).select_related():
-            parts.append((p.type.name, p.name))
-
-        f = Fact(
-            surety=c.surety,
-            rationale=c.rationale,
-            date=c.characteristic.date and DateRange(c.characteristic.date),
-            place=c.characteristic.place and c.characteristic.place.name,
-            disproved=c.disproved,
-            subject1=(Fact.TYPE_PERSON, c.person),
-            subject2=(Fact.TYPE_CHARACTERISTIC,
-                      c.characteristic,
-                      parts))
-        sources[c.source_id].asserts.append(f)
+        sources[c.source_id].asserts.append(c)
 
         if schemes is not None:
             schemes.add(c.surety.scheme_id)
@@ -221,15 +159,14 @@ def view(request, id):
     for s in schemes:
         surety_schemes[s] = models.Surety_Scheme.objects.get(id=s).parts.all()
 
-    return render_to_response(
-        'geneaprove/sources.html',
-        {"s": sources[id],
-         "parts": to_json(list_of_citations(None, sources[id])),
-         "repository_types": models.Repository_Type.objects.all(),
-         "source_types":   Citations.source_types(),
-         "schemes": surety_schemes,
-         },
-        context_instance=RequestContext(request))
+    data = {
+        'source': sources[id],
+        'parts': list_of_citations(None, sources[id]),
+        'repository_types': models.Repository_Type.objects.all(),
+        'source_types': Citations.source_types(),
+        'schemes': surety_schemes
+    }
+    return HttpResponse(to_json(data), content_type='application/json')
 
 
 def editCitation(request, source_id):

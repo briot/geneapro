@@ -10,7 +10,7 @@ config(function($stateProvider) {
 
 controller('personasCtrl', function($scope, Paginated, $rootScope) {
    Paginated.instrument(
-      $scope, '/data/personas', 'settings.personas.rows',
+      $scope, '/data/persona/list', 'settings.personas.rows',
       function(data) { return data.persons });
 
    $scope.select = function(person) {

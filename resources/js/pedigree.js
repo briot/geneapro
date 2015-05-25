@@ -23,8 +23,9 @@ controller('pedigreeCtrl', function($scope,  Pedigree, $state, $stateParams, con
    $scope.$on('$locationChangeSuccess', function() {
       $scope.decujus = $location.search().id || $scope.decujus;
    });
-   $scope.decujus = $stateParams.id !== undefined ?
-       Number($stateParams.id) : Pedigree.decujus() || 1;
+   if ($stateParams.id !== undefined) {
+       $scope.decujus = Number($stateParams.id);
+   }
 
    /**
     * Support for the contextual menu
@@ -200,11 +201,11 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
                      node.text.push(birth + ' - ' + death);
                   } else {
                      if (birth) {
-                        var place = p.birth ? p.birth[1] : '';
+                        var place = p.birth ? p.birth.place : '';
                         node.text.push('b: ' + birth + (place ? ' - ' + place : ''));
                      }
                      if (death) {
-                        var place = p.death ? p.death[1] : '';
+                        var place = p.death ? p.death.place : '';
                         node.text.push('d: ' + death + (place ? ' - ' + place : ''));
                      }
                      if (node.text.length <= linesCount) {

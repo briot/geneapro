@@ -19,10 +19,11 @@ urlpatterns = patterns(
     '',
     url(r'^$', index, name='index'),
     (r'^data/pedigree/(\d+)$', geneaprove.views.pedigree.pedigree_data),
-    (r'^data/personas$',       geneaprove.views.persona.view_list),
-    (r'^data/places$',         geneaprove.views.places.view_list),
-    (r'^data/sources$',        geneaprove.views.sources.view_list),
+    (r'^data/persona/list$',   geneaprove.views.persona.view_list),
     (r'^data/persona/(\d+)$',  geneaprove.views.persona.view),
+    (r'^data/places$',         geneaprove.views.places.view_list),
+    (r'^data/sources/lists$',  geneaprove.views.sources.view_list),
+    (r'^data/sources/(\d+)$',  geneaprove.views.sources.view),
     (r'^data/suretySchemes$',  geneaprove.views.persona.surety_schemes_view),
     (r'^data/event/(\d+)$',    geneaprove.views.events.view),
     (r'^data/legend$',         geneaprove.views.rules.getLegend),
@@ -30,8 +31,6 @@ urlpatterns = patterns(
     (r'^import$',              geneaprove.views.importers.import_gedcom),
 
     # ... below: not moved to angularJS yet
-
-    (r'^sources/(\d+)$', geneaprove.views.sources.view),
 
 
     # Returns JSON, the list of all events for the person.

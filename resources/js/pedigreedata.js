@@ -29,8 +29,8 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
       this.id = /** @type {number} */ (data['id']);
       this.sex = /** @type {string} */ (data['sex']);
       this.style = /** @type {string} */ (data['y']);
-      this.birth = /** @type {window.GeneaEvent} */ (data['b']);
-      this.death = /** @type {window.GeneaEvent} */ (data['d']);
+      this.birth = /** @type {Object} */ (data['b']);
+      this.death = /** @type {Object} */ (data['d']);
 
       /** @type {Array.<Person>} */
       this.children = [];
@@ -79,10 +79,10 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
     */
    PersonData.prototype.event_to_string = function(e) {
       if (e) {
-         var s = e[0] || '';
+         var s = e.Date || e.date || '';
          //  Show whether the event has a source
          if (s && $rootScope.settings.sourcedEvents) {
-            s += (e[2] ? ' \u2713' : ' \u2717');
+            s += (e.sources ? ' \u2713' : ' \u2717');
          }
          return s;
       } else {
@@ -106,7 +106,7 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
       this.persons = {};
 
       /** Marriage information for the person at the given sosa id
-       * @type {Object.<number, window.GeneaEvent>}
+       * @type {Object.<number, Object>}
        */
       this.marriage = {};
 

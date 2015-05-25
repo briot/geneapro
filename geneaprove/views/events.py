@@ -49,5 +49,5 @@ def view(request, id):
     id = int(id)
     data = extended_events([id]).get(id, None)
     return HttpResponse(
-        to_json(data, year_only=False, show_age=False),
+        to_json(data, year_only=False),
         content_type='application/json')

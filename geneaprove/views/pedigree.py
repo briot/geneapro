@@ -9,7 +9,7 @@ from django.http import HttpResponse
 from geneaprove import models
 from geneaprove.views.styles import ColorScheme, Styles
 from geneaprove.views.persona import extended_personas, event_types_for_pedigree
-from geneaprove.views.to_json import to_json, event_for_json
+from geneaprove.views.to_json import to_json
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import graph
 import logging
@@ -95,20 +95,18 @@ def get_sosa_tree(graph, id, max_levels, style_rules,
     show_age = False
     year_only = True
     for obj in persons.values():
-        b = event_for_json(obj.birth, year_only=year_only)
-        d = event_for_json(obj.death, year_only=year_only)
-        m = event_for_json(obj.marriage, year_only=year_only)
+        b = obj.birth
+        d = obj.death
+        m = obj.marriage
 
         if show_age and obj.birth:
-            if obj.death:
-                if obj.death.Date:
-                    age = " (age %s)" % (
-                        str (obj.death.Date.years_since (obj.birth.Date)), )
-                    d[0] += age
+            if d:
+                if d.Date:
+                    d.Date += " (age %s)" % (
+                        str (d.Date.years_since (obj.birth.Date)), )
             else:
-                age = " (age %s)" % (
-                    str (DateRange.today().years_since (obj.birth.Date)), )
-                d = [age, None, None]
+                d = {Date: " (age %s)" % (
+                       str (DateRange.today().years_since (obj.birth.Date)), )}
 
         simplePersons[obj.id] = {
             "id":   obj.id,

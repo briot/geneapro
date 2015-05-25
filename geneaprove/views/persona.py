@@ -9,7 +9,8 @@ from django.utils.translation import ugettext as _
 from django.http import HttpResponse
 from geneaprove import models
 from geneaprove.utils.date import DateRange
-from geneaprove.views.to_json import to_json
+from geneaprove.views.to_json import \
+        to_json, CharInfo, CharPartInfo, GroupInfo, EventInfo
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import graph
 from geneaprove.views.styles import Styles
@@ -21,85 +22,6 @@ event_types_for_pedigree = (
     models.Event_Type.birth,
     models.Event_Type.death,
     models.Event_Type.marriage)
-
-EventInfo = collections.namedtuple(
-    'EventInfo', 'event, role, assertion')
-# "event" has fields like "sources", "place", "Date"
-#   where "Date" is a geneaprove.utils.DateRange object and should not be
-#   used for display
-
-CharInfo = collections.namedtuple(
-    'CharInfo', 'char, parts, assertion')
-CharPartInfo = collections.namedtuple(
-    'CharPartInfo', 'name, value')
-GroupInfo = collections.namedtuple(
-    'GroupInfo', 'group, assertion')
-# "group" has fields like "source",...
-
-
-class Export(object):
-    def export(self, obj):
-        '''
-        Return a simplified version of obj suitable for export to JSON
-        '''
-        if isinstance(obj, list):
-            return [self.export(e) for e in obj]
-
-        elif isinstance(obj, dict):
-            return {k: self.export(e)  for (k, e) in obj.iteritems()}
-
-        elif isinstance(obj, GroupInfo):
-            return dict(
-                group=self.export(obj.group),
-                assertion=self.export(obj.assertion))
-
-        elif isinstance(obj, CharInfo):
-            return dict(
-                char=self.export(obj.char),
-                parts=self.export(obj.parts),
-                assertion=self.export(obj.assertion))
-
-        elif isinstance(obj, CharPartInfo):
-            return dict(name=obj.name, value=obj.value)
-
-        elif isinstance(obj, models.Characteristic):
-            return dict(
-                name=obj.name,
-                sources=list(obj.sources),
-                date=obj.date,
-                date_sort=obj.date_sort,
-                place=self.export(obj.place))
-
-        elif isinstance(obj, models.Assertion):
-            result = dict(
-                disproved=obj.disproved,
-                rationale=obj.rationale,
-                surety=obj.surety_id)
-
-            if isinstance(obj, models.P2P):
-                result['person1_id'] = obj.person1_id
-                result['person2_id'] = obj.person2_id
-
-            return result
-
-        elif isinstance(obj, EventInfo):
-            return dict(
-                event=self.export(obj.event),
-                role=self.export(obj.role),
-                assertion=self.export(obj.assertion))
-
-        elif isinstance(obj, models.Event):
-            return dict(
-                id=obj.id,
-                name=obj.name,
-                type=obj.type,
-                place=self.export(obj.place),
-                sources=list(obj.sources),
-                date=obj.date,
-                date_sort=obj.date_sort)
-
-        else:
-            return obj
 
 
 def __add_default_person_attributes(person):
@@ -381,18 +303,15 @@ def view(request, id):
 
     decujus = p[node.main_id]
 
-    decujus.all_chars = Export().export(decujus.all_chars.values())
-    decujus.all_events = Export().export(decujus.all_events.values())
-    decujus.all_groups = Export().export(decujus.all_groups.values())
+    decujus.all_chars = decujus.all_chars.values()
+    decujus.all_events = decujus.all_events.values()
+    decujus.all_groups = decujus.all_groups.values()
 
     data = {
         "person": decujus,
-        "p2p": Export().export(assertions),
+        "p2p": assertions,
     };
-
-    return HttpResponse(
-        to_json(data, year_only=False, show_age=False),
-        content_type='application/json')
+    return HttpResponse(to_json(data), content_type='application/json')
 
 
 def surety_schemes_view(request):
@@ -430,9 +349,7 @@ def view_list(request):
         'persons': all,
     }
 
-    return HttpResponse(
-        to_json(data, year_only=False, show_age=False),
-        content_type='application/json')
+    return HttpResponse(to_json(data), content_type='application/json')
 
 
 def personaEvents(request, id):
