@@ -17,7 +17,6 @@ from geneaprove.views.styles import Styles
 from geneaprove.views.queries import sql_in
 import collections
 
-
 event_types_for_pedigree = (
     models.Event_Type.birth,
     models.Event_Type.death,
@@ -344,6 +343,13 @@ def view_list(request):
 
     all = [p for p in all.itervalues()]
     all.sort(key=lambda x: x.surname)
+
+    all = [{'surname': p.surname,
+            'given_name': p.given_name,
+            'birth': p.birth,
+            'death': p.death,
+            'marriage': p.marriage}
+           for p in all]
 
     data = {
         'persons': all,

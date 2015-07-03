@@ -42,9 +42,9 @@
                <td><span persona-link='p.id'>{{p.surname || '-'}}</span></td>
                <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.styles}}'>{{p.given_name || '-'}}</span></td>
                <td ng-if='$root.settings.personas.colorScheme==4'><span>{{p.given_name || '-'}}</span></td>
-               <td>{{p.birth[0]||''}}</td>
-               <td>{{p.death[0]||''}}</td>
-               <td>{{p.marriage[0]||''}}</td>
+               <td>{{p.birth.date||''}}</td>
+               <td>{{p.death.date||''}}</td>
+               <td>{{p.marriage.date||''}}</td>
                <!--<td>{{p.last_change}}</td>-->
             </tr>
          </tbody>

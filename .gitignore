@@ -10,3 +10,4 @@ resources/js/lib/angular-1.3.12.js
 resources/tmp
 manu/
 geneaprove/utils/citations/tmp.txt
+*.pyc
