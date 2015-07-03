@@ -29,6 +29,7 @@ urlpatterns = patterns(
     (r'^data/legend$',         geneaprove.views.rules.getLegend),
     (r'^data/stats$',          geneaprove.views.stats.view),
     (r'^import$',              geneaprove.views.importers.import_gedcom),
+    (r'^data/citationModel/(.+)$', geneaprove.views.sources.citation_model),
 
     # ... below: not moved to angularJS yet
 

@@ -49,6 +49,19 @@ def extended_sources(ids, schemes):
     return sources
 
 
+def citation_model(request, id):
+    """
+    Return the citation model for a given id
+    """
+    citation = Citations.get_citation(id)
+    data = {
+        'biblio': citation.biblio,
+        'full': citation.full,
+        'short': citation.short
+    }
+    return HttpResponse(to_json(data), content_type='application/json')
+
+
 def prepare_citation_parts(src, parts):
     """
     :param parts: a dictionary (key,value) giving overriding values to some
@@ -78,8 +91,8 @@ def list_of_citations(medium, src=None):
        driven by the style templates).
        This also returns various attributes of the source itself, starting with
        '_'.
-       The result is a list of tuples (part_name, value, from_higher) where
-       from_parent is true when this citation part comes from a higher level
+       The result is a list of dict (part_name, value, from_higher) where
+       from_higher is true when this citation part comes from a higher level
        source.
     """
 
@@ -104,7 +117,9 @@ def list_of_citations(medium, src=None):
         # result['_subjectPlace'] = (src.subject_place.name, False)
         # result['_jurisdictionPlace'] = (src.jurisdiction_place.name, False)
 
-    return sorted((k, v[0], v[1]) for k, v in result.iteritems())
+    return sorted({'name': k,
+                   'value': v[0],
+                   'fromHigher': v[1]} for k, v in result.iteritems())
 
 
 def citationParts(request, medium):

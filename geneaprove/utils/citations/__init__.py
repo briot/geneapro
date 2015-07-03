@@ -24,6 +24,7 @@ class Citations(object):
         """
         Return the list of all known source types.
         """
-        return sorted(
-            (t.type, key) for key, t in Citations.style_guide.iteritems())
+        d = [{'id': key, 'type': t.type, 'category': t.category}
+             for key, t in Citations.style_guide.iteritems()]
+        return sorted(d, key=lambda e: (e['category'], e['type']))
 

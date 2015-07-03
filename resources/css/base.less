@@ -111,7 +111,6 @@
    color: @header-color;
    min-width: 60px;
    cursor: pointer;
-   margin: 20px 5px 0 5px;
    text-decoration: none;
    text-align: center;
 }
@@ -162,6 +161,10 @@ span.button {
 //----------------------------------------------------------------
 
 * {margin:0; padding:0}
+
+optgroup option {
+   padding-left: 20px;
+}
 
 body {
    font-size: 14px;
@@ -272,6 +275,7 @@ nav {
       padding: 5px;
       &[type=button] {
         .button;
+        margin: 20px 5px 0 5px;
         float: right;
       }
    }
@@ -338,24 +342,6 @@ nav {
         }
       }
    }
-}
-
-//-----------------------------------------------
-// Legend
-//-----------------------------------------------
-
-.legend {
-   position:absolute;
-   left: @sidebar-width;
-   background-color: @block-background;
-   border: 1px solid #777;
-   z-index: 100;
-   padding: 5px;
-   .box-shadow(2px, 2px, #777);
-   width: 250px;
-   width: -moz-max-content;
-   overflow-y: auto;
-   top: 10px;
 }
 
 //----------------------------------------------------------------
@@ -626,16 +612,9 @@ nav {
 // source details page
 //----------------------------------------------------------------
 
-#sourceDetails {
+.sourceDetails {
    max-width: @max-width;
    margin-bottom: 40px;
-
-   .place { background: url('/media/place.png') no-repeat left center }
-   .person { background: url('/media/user.png') no-repeat left center }
-   .ui-tabs-nav a,
-   .ui-tabs-nav a span {
-       background: url('/media/tab.png') no-repeat
-   }
 
    #sourceCitation {
       .box-shadow();
@@ -666,7 +645,7 @@ nav {
           }
          .details {
             text-align: left;
-            display: none; 
+            //display: none; 
             clear: both;
             margin-bottom: 5px;
             padding-bottom: 5px;
@@ -674,6 +653,14 @@ nav {
             fieldset {
                 border: 0px;
                 padding-bottom: 5px;
+                margin-top: 20px;
+                > span {
+                   width: 100%;
+                   margin-top: 5px;
+                }
+            }
+            legend {
+                color: @table-gray;
             }
             &.edited {
                 border: 1px solid @logo-color;
@@ -709,11 +696,10 @@ nav {
                        padding-right: @field-padding; 
                }
                select, textarea, input {
-                  float: right;
-                  width: @field-input-width;
-                  &.double {
-                     width: 2 * @field-input-width + @field-label-width + @field-padding;
-                  }
+                  width: 2 * @field-input-width + @field-label-width + @field-padding;
+               }
+               input[type=button] {
+                  width: auto;
                }
                select, input {line-height: 1.5em}
 

@@ -126,6 +126,20 @@ class ModelEncoder(json.JSONEncoder):
 
             return result
 
+        elif isinstance(obj, models.Source):
+            return dict(
+                higher_source_id=obj.higher_source_id,
+                subject_place=obj.subject_place,
+                jurisdiction_place=obj.jurisdiction_place,
+                researcher=obj.researcher,
+                subject_date=obj.subject_date,
+                medium=obj.medium,
+                title=obj.title,
+                abbrev=obj.abbrev,
+                biblio=obj.biblio,
+                last_change=obj.last_change,
+                comments=obj.comments)
+
         elif isinstance(obj, EventInfo):
             return dict(
                 event=obj.event,
