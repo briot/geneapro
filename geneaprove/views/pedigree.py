@@ -12,12 +12,9 @@ from geneaprove.views.persona import extended_personas, event_types_for_pedigree
 from geneaprove.views.to_json import to_json
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import graph
-import logging
-
-logger = logging.getLogger(__name__)
 
 
-def get_sosa_tree(graph, id, max_levels, style_rules,
+def __get_json_sosa_tree(graph, id, max_levels, style_rules,
                   last_descendant_known=-1,
                   maxdepthDescendants=1, last_gen_known=-1):
     """
@@ -29,7 +26,6 @@ def get_sosa_tree(graph, id, max_levels, style_rules,
     """
 
     decujus = graph.node_from_id(id)
-
     styles = Styles(style_rules, graph, decujus=decujus.main_id)
 
     distance = dict()
@@ -48,84 +44,80 @@ def get_sosa_tree(graph, id, max_levels, style_rules,
     sosa_tree = dict()
     marriage = dict()
     children = {}
-    persons = {}
 
+    persons = {}
     all_person_nodes = set(ancestors).union(descendants)
     if all_person_nodes:
         persons = extended_personas(
             all_person_nodes, styles,
             event_types=event_types_for_pedigree, graph=graph)
 
-        def build_sosa_tree(sosa_tree, marriage, sosa, id):
-            # A person might not be in 'persons', and yet its parent be there,
-            # in case we have filtered out earlier generations.
-            if id in persons:
-                sosa_tree[sosa] = id
-                persons[id].generation = distance[graph.node_from_id(id)]
-                if persons[id].marriage:
-                    marriage[sosa] = persons[id].marriage
-            fathers = graph.fathers(id)
-            if fathers:
-                build_sosa_tree(
-                    sosa_tree, marriage, sosa * 2, fathers[0].main_id)
-            mothers = graph.mothers(id)
-            if mothers:
-                build_sosa_tree(
-                    sosa_tree, marriage, sosa * 2 + 1, mothers[0].main_id)
+    def add_parents(p):
+        p.generation = distance[graph.node_from_id(p.id)]
 
-        def build_children_tree(children, id, gen):
-            if id in persons:
-                children[id] = []
-            sorted = [(persons[node.main_id] if node.main_id in persons else None, node)
-                      for node in graph.children(id)]
-            sorted.sort(
-                key=lambda p: p[0].birth.Date if p[0] and p[0].birth else None)
-            for p in sorted:
-                if p[0]:
-                    p[0].generation = -distance[p[1]]
-                    if id in persons:
-                        children[id].append(p[0].id)
-                if gen < maxdepthDescendants:
-                    build_children_tree(children, id=p[0].id, gen=gen + 1)
+        fathers = graph.fathers(p.id)
+        mothers = graph.mothers(p.id)
+        p.parents = [
+            None if not fathers else persons.get(fathers[0].main_id, None),
+            None if not mothers else persons.get(mothers[0].main_id, None)]
 
-        build_sosa_tree(sosa_tree, marriage, 1, decujus.main_id)
-        build_children_tree(children, id=decujus.main_id, gen=1)
+        for pa in p.parents:
+            if pa:
+                add_parents(pa)
 
-    simplePersons = {}
+    def add_children(p, gen):
+        p.children = []
+        sorted = [(persons[node.main_id] if node.main_id in persons else None,
+                   node)
+                  for node in graph.children(p.id)]
+        sorted.sort(
+            key=lambda c: c[0].birth.Date if c[0] and c[0].birth else None)
+        for c in sorted:
+            if c[0]:
+                c[0].generation = -gen # distance[c[1]]
+                p.children.append(c[0])
+            if gen < maxdepthDescendants:
+                add_children(c, gen + 1)
+
+    main = persons[decujus.main_id]
+    add_parents(main)
+    add_children(main, gen=1)
+
+    # We will however return a simpler version of the information computed
+    # above (which includes all known events for the persons)
+
     show_age = False
-    year_only = True
-    for obj in persons.values():
-        b = obj.birth
-        d = obj.death
-        m = obj.marriage
+    def person_to_json_for_pedigree(obj):
+        if isinstance(obj, models.Persona):
+            d = obj.death
+            if show_age and obj.birth:
+                if d:
+                    if d.Date:
+                        d.Date += " (age %s)" % (
+                            str(d.Date.years_since(obj.birth.Date)), )
+                else:
+                    d = {Date: " (age %s)" % (
+                       str(DateRange.today().years_since(obj.birth.Date)), )}
 
-        if show_age and obj.birth:
-            if d:
-                if d.Date:
-                    d.Date += " (age %s)" % (
-                        str (d.Date.years_since (obj.birth.Date)), )
-            else:
-                d = {Date: " (age %s)" % (
-                       str (DateRange.today().years_since (obj.birth.Date)), )}
+            return {
+                'id':   obj.id,
+                'givn': obj.given_name,
+                'surn': obj.surname,
+                'sex':  obj.sex,
+                'generation': obj.generation,
+                'parents': obj.parents if hasattr(obj, 'parents') else None,
+                'children': obj.children if hasattr(obj, 'children') else None,
+                'style': obj.styles,
+                'birth': obj.birth,
+                'marriage': obj.marriage,
+                'death': d}
 
-        simplePersons[obj.id] = {
-            "id":   obj.id,
-            "givn": obj.given_name,
-            'surn': obj.surname,
-            'sex':  obj.sex,
-            'generation': obj.generation,
-            'y':    obj.styles,
-            'b':    b,
-            'd':    d,
-            'm':    m}
-
-    return {'generations': max_levels,
-            'descendants': maxdepthDescendants,
-            'persons':     simplePersons, # All persons indexed by id
-            'sosa':        sosa_tree,  # sosa_number -> person_id
-            'children':    children,   # personId -> [children_id*]
-            'marriage':    marriage,   # sosa_number -> marriage info
-            'styles':      styles.all_styles()}
+    return to_json(
+        obj= {'generations': max_levels,
+              'descendants': maxdepthDescendants,
+              'decujus':     main, 
+              'styles':      styles.all_styles()},
+        custom=person_to_json_for_pedigree) 
 
 
 def pedigree_data(request, decujus):
@@ -133,19 +125,14 @@ def pedigree_data(request, decujus):
        needed when the user changes the settings, since initially this data
        is already part of the view.
     """
-    decujus = int(decujus)
-    generations = int(request.GET.get("gens", 5))
-    descendant_gens = int(request.GET.get("descendant_gens", 1))
-    desc_known = int(request.GET.get("desc_known", -1))
-    generations_known = int(request.GET.get("gens_known", -1))
     # ??? Should lock until the view has been generated
     graph.update_if_needed()
 
-    data = get_sosa_tree(
-        graph, id=decujus, max_levels=generations, style_rules=style_rules,
-        maxdepthDescendants=descendant_gens,
-        last_descendant_known=desc_known,
-        last_gen_known=generations_known)
-    return HttpResponse(
-        to_json(data),
-        content_type="application/json")
+    data = __get_json_sosa_tree(
+        graph, id=int(decujus),
+        style_rules=style_rules,
+        max_levels=int(request.GET.get("gens", 5)),
+        maxdepthDescendants=int(request.GET.get("descendant_gens", 1)),
+        last_descendant_known=int(request.GET.get("desc_known", -1)),
+        last_gen_known=int(request.GET.get("gens_known", -1)))
+    return HttpResponse(data, content_type="application/json")

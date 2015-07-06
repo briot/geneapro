@@ -58,12 +58,24 @@ class ModelEncoder(json.JSONEncoder):
     representation.
     """
 
-    def __init__(self, year_only=False):
+    def __init__(self, custom=None, year_only=False):
+        """
+        :param custom: a function that gets an object, and returns its JSON
+           encoding as a string, or a simple version of the object that should
+           be encoded recursively It should return None to fallback to the
+           default encoding.
+        """
         super(ModelEncoder, self).__init__(separators=(',', ':'))
         self.year_only = year_only
+        self.custom = custom
 
     def default(self, obj):
         """See inherited documentation"""
+
+        if self.custom:
+            p = self.custom(obj)
+            if p:
+                return p
 
         if isinstance(obj, DateRange):
             return obj.display(year_only=self.year_only)
@@ -165,9 +177,13 @@ class ModelEncoder(json.JSONEncoder):
         else:
             return super(ModelEncoder, self).default(obj)
 
-def to_json(obj, year_only=True):
+def to_json(obj, custom=None, year_only=True):
     """
     Converts a type to json data, properly converting database instances.
     If year_only is true, then the dates will only include the year
+    :param custom: a function that gets an object, and returns its JSON
+       encoding as a string, or a simple version of the object that should
+       be encoded recursively It should return None to fallback to the default
+       encoding.
     """
-    return ModelEncoder(year_only=year_only).encode(obj)
+    return ModelEncoder(year_only=year_only, custom=custom).encode(obj)

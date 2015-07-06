@@ -30,14 +30,23 @@ controller('fanchartCtrl', function($scope, Pedigree, $location, $stateParams, $
    $scope.expandPerson = function() {
       var mdata = contextMenu.data;
       var d = mdata.d;
-      d.$expand = !d.$expand;
-      if (d.$expand) {
+      if (!d.$expand) {
          // the partner (wife/husband) cannot also be expanded
-         var partner = (d.sosa % 2 == 0) ? d.sosa + 1 : d.sosa - 1;
-         if (mdata.data.sosa[partner]) {
-            mdata.data.sosa[partner].$expand = false;
+         function _reset(p) {
+            angular.forEach(p.parents, function(pa) {
+               if (pa) {
+                  _reset(pa);
+                  if (pa == d) {
+                     angular.forEach(p.parents, function(pa2) {
+                        pa2.$expand = false;
+                     });
+                  }
+               }
+            });
          }
+         _reset(Pedigree.main);
       }
+      d.$expand = !d.$expand;
       mdata.render(mdata.data);  // redo the drawing
    };
    $scope.focusPerson = function() {
@@ -198,8 +207,8 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
                   .attr('dy', '1em')
                   .attr('x', 0)
                   .text(function(d) {
-                     var birth = d.event_to_string(d.birth);
-                     var death = d.event_to_string(d.death);
+                     var birth = data.event_to_string(d.birth);
+                     var death = data.event_to_string(d.death);
                      return (birth || '') + ' - ' + (death || '')});
             }
  
@@ -265,7 +274,7 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
                   .append('textPath')
                   .attr('startOffset', '50%')
                   .attr('text-anchor', 'middle')
-                  .text(function(d) { return d.event_to_string(data.marriage[2 * d.sosa])})
+                  .text(function(d) { return data.event_to_string(d.marriage)})
                   .attr('xlink:href', function(d) { return '#textMarriage' + d.id});
             }
 
@@ -290,7 +299,7 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
             g.append('text')
                .attr('x', 5)
                .attr('y', '1em')
-               .text(function(d) { return d.displayName() });
+               .text(data.displayName);
             children
                .attr('transform', function(d) {
                   return 'translate(' + d.x + ',' + d.y + ')';
@@ -413,9 +422,9 @@ factory('FanchartLayout', function($rootScope) {
       function doLayout(indiv, minAngle, maxAngle, separator) {
          setupIndivBox(indiv, minAngle, maxAngle);
   
-         if (indiv.generation < settings.gens) {
-            var father = data.sosa[indiv.sosa * 2];
-            var mother = data.sosa[indiv.sosa * 2 + 1];
+         if (indiv.generation < settings.gens && indiv.parents) {
+            var father = indiv.parents[0];
+            var mother = indiv.parents[1];
 
             if (father && mother) {
                if (father.$expand) {
@@ -440,7 +449,7 @@ factory('FanchartLayout', function($rootScope) {
             }
          }
       }
-      doLayout(data.sosa[1], minAngle + separator / 2,
+      doLayout(data.main, minAngle + separator / 2,
                maxAngle - separator / 2, separator);
 
       var height = maxY - minY;
@@ -470,7 +479,7 @@ factory('FanchartLayout', function($rootScope) {
   
       // Compute the position for the children and decujus
   
-      var decujus = data.sosa[1];
+      var decujus = data.main;
       childnodes.push(decujus);
       decujus.x = - boxWidth / 2;   // relative to centerX
       decujus.y = minDist + 5;      // relative to centerY
@@ -478,7 +487,7 @@ factory('FanchartLayout', function($rootScope) {
       decujus.h = boxHeight;
       decujus.fs = textHeight;
   
-      var children = data.sosa[1].children;
+      var children = data.main.children;
       if (children && children.length) {
          var y = decujus.y;
          for (var c = 0; c < children.length; c++) {

@@ -10,105 +10,12 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
    // SVG elements
    var uniqueId = -1; 
 
-   /**
-    * Extra data stored for each person that needs to be represented
-    * on screen
-    * A person has the additional attributes:
-    * - 'generation': the generation number (1 for decujus and 0 for children)
-    * - 'sosa': the SOSA number (1 for decujus, 0 .. -n for children)
-    * - 'angle': position of the person in the generation, from 0.0 to 1.0.
-    * - 'parent_': pointer to parent person (for descendants of decujus)
-    *
-    * @param {Object} data   read from the server.
-    * @constructor
-    */
-   function PersonData(data) {
-      this.givn = /** @type {string} */ (data['givn']);
-      this.surn = /** @type {string} */ (data['surn']);
-      this.generation = /** @type {number} */ (data['generation']);
-      this.id = /** @type {number} */ (data['id']);
-      this.sex = /** @type {string} */ (data['sex']);
-      this.style = /** @type {string} */ (data['y']);
-      this.birth = /** @type {Object} */ (data['b']);
-      this.death = /** @type {Object} */ (data['d']);
-
-      /** @type {Array.<Person>} */
-      this.children = [];
-
-      /** @type {Person|undefined} */
-      this.parent_ = undefined;
-
-      /** @type {Array.<string>|undefined} */
-      this.details = undefined;
-
-      // sosa number compared to current decujus, negative for descendants
-      this.sosa = 0;
-
-      // 'angle' for the person (0..1) within its generation
-      this.angle = 0;
-
-      /** The person's position on the screen
-       * @type {LayoutInfo} */
-      this.box;
-   }
-
-   /** Return the name to display for a person */
-   PersonData.prototype.displayName = function() {
-      return (this.surn || '') + ' ' + (this.givn || ' ');
-   };
-
-   /**
-    * Download additional details on the person (events,...) unless these
-    * have already been downloaded.
-    * @return A promise if some download is taking place, or undefined if
-    *    details are already available in this.details.
-    */
-
-   PersonData.prototype.getDetails = function() {
-      var self = this;
-      if (self.details === undefined) {
-         self.details = [];  // prevent a second parallel download
-         return $http.get('/personaEvents/' + self.id).then(function(resp) {
-            self.details = resp.data;
-         });
-      }
-   };
-   
-   /**
-    * Convert an event to a string that can be displayed.
-    */
-   PersonData.prototype.event_to_string = function(e) {
-      if (e) {
-         var s = e.Date || e.date || '';
-         //  Show whether the event has a source
-         if (s && $rootScope.settings.sourcedEvents) {
-            s += (e.sources ? ' \u2713' : ' \u2717');
-         }
-         return s;
-      } else {
-         return '';
-      };
-   };
-
-   /**
-    * Whether this is an unknown person
-    * @return {bool}
-    */
-   PersonData.prototype.isUnknown = function() {
-      return this.id < 0;
-   };
-
    function Pedigree() {
-      /** The list of persons, indexed by their unique id.
-       * @type {Object.<number,Person>}
-       * @protected
-       */
-      this.persons = {};
+      /** The id of the main person (set even before we query the server) */
+      this.id = undefined;
 
-      /** Marriage information for the person at the given sosa id
-       * @type {Object.<number, Object>}
-       */
-      this.marriage = {};
+      /** The main person (decujus) in this tree */
+      this.mainPerson = undefined;
 
       /** All the styles to display personas
        * @type {Object.<DisplayAttr>}
@@ -133,11 +40,8 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
          return;
       }
 
-      /** The list of persons, indexed by their sosa id.
-       * @type {Object.<number, Person>}
-       * @protected
-       */
-      this.sosa = {};
+      this.id = id;
+      this.mainPerson = undefined;
 
       this.loaded_generations = undefined;
       this.loaded_descendants = undefined;
@@ -145,9 +49,6 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
       this.requested_gens = 0;
       this.requested_desc = 0;
       this.promise_ = undefined;  // asynchronous loading
-
-      /* decujus, for which we store the pedigree info */
-      this.id = id;
    }
 
    /**
@@ -175,8 +76,9 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
                 {params: {
                     'gens': gens,
                     'descendant_gens': descendant_gens,
-                    'gens_known': self.loaded_generations || -1,
-                    'desc_known': self.loaded_descendants || -1}}).
+                    //'gens_known': self.loaded_generations || -1,
+                    //'desc_known': self.loaded_descendants || -1
+                }}).
       then(function(resp) {
          self.setData_(resp.data);
          q.resolve(self);
@@ -190,10 +92,56 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
    };
 
    /**
+    * Download additional details on the person (events,...) unless these
+    * have already been downloaded.
+    * @return A promise if some download is taking place, or undefined if
+    *    details are already available in this.details.
+    */
+
+   Pedigree.prototype.getDetails = function(person) {
+      if (person.details === undefined) {
+         person.details = [];  // prevent a second parallel download
+         return $http.get('/personaEvents/' + person.id).then(function(resp) {
+            person.details = resp.data;
+         });
+      }
+   };
+
+   /**
+    * Whether this is an unknown person
+    * @return {bool}
+    */
+   Pedigree.prototype.isUnknown = function(p) {
+      return p.id < 0;
+   };
+ 
+   /** Return the name to display for a person */
+   Pedigree.prototype.displayName = function(person) {
+      return (person.surn || '') + ' ' + (person.givn || ' ');
+   };
+
+   /**
+    * Convert an event to a string that can be displayed.
+    */
+   Pedigree.prototype.event_to_string = function(e) {
+      if (e) {
+         var s = e.Date || e.date || '';
+         //  Show whether the event has a source
+         if (s && $rootScope.settings.sourcedEvents) {
+            s += (e.sources ? ' \u2713' : ' \u2717');
+         }
+         return s;
+      } else {
+         return '';
+      };
+   };
+
+
+   /**
     * Return the style to use for a person
     */
    Pedigree.prototype.getStyle = function(person) {
-      if (!person.style) {
+      if (person.style === undefined) {
          return {fill: 'white', stroke: 'black'};
       } else {
          return this.styles[person.style];
@@ -201,51 +149,37 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
    };
 
    /**
-    * Create data for a new person
-    * @param {Object=} data   The data read from the server.
-    */
-   Pedigree.prototype.createPerson = function(data) {
-      if (!data) {
-         data = {};
-      }
-      if (data.id === undefined) {
-         data.id = uniqueId --;
-      }
-      
-      return new PersonData(data);
-   };
-
-   /**
     * Add entries for unknown persons
     */
    Pedigree.prototype.addUnknown = function(gens) {
-      var self = this;
-      var data = {persons: {}, sosa: {}, generations: gens};
+      var data = {decujus: this.main, generations: gens};
 
       function addParents(indiv) {
          if (indiv.generation < gens) {
-            var father = self.sosa[indiv.sosa * 2];
+            if (!indiv.parents) {
+               indiv.parents = [null, null];
+            }
+
+            var father = indiv.parents[0];
             if (!father) {
-               father = self.createPerson();
-               father.generation = indiv.generation + 1;
-               father.sosa = indiv.sosa * 2;
-               data.persons[father.id] = father;
-               data.sosa[father.sosa] = father.id;
+               father = {id: uniqueId--,
+                         generation: indiv.generation + 1,
+                         sosa: indiv.sosa * 2};
+               indiv.parents[0] = father;
             }
             addParents(father);
 
-            var mother = self.sosa[indiv.sosa * 2 + 1];
+            var mother = indiv.parents[1];
             if (!mother) {
-               mother = self.createPerson();
-               mother.generation = indiv.generation + 1;
-               mother.sosa = indiv.sosa * 2 + 1;
-               data.persons[mother.id] = mother;
-               data.sosa[mother.sosa] = mother.id;
+               mother = {id: uniqueId--,
+                         generation: indiv.generation + 1,
+                         sosa: indiv.sosa * 2 + 1};
+               indiv.parents[1] = mother;
             }
             addParents(mother);
          }
       }
-      addParents(this.sosa[1]);
+      addParents(this.main);
 
       this.setData_(data);  //  merge with existing data
    };
@@ -255,12 +189,19 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
     */
    Pedigree.prototype.removeUnknown = function() {
       var self = this;
-      angular.forEach(self.persons, function(p, id) {
-         if (p.isUnknown()) {
-            delete self.sosa[p.sosa];
-            delete self.persons[id];
+      function _remove(p) {
+         if (p.parents) {
+            angular.forEach(p.parents, function(pa, idx) {
+               if (pa) {
+                  _remove(pa);
+                  if (self.isUnknown(pa)) {
+                     p.parents[idx] = undefined;
+                  }
+               }
+            });
          }
-      });
+      }
+      _remove(this.main);
    };
 
    /**
@@ -271,18 +212,14 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
     * the server.
     */
    Pedigree.prototype.setData_ = function(data) {
-      var dp = data['persons'];
+      this.main = data['decujus']
+      var dt = data['styles'];
       var dg = data['generations'];
       var dd = data['descendants'];
-      var ds = data['sosa'];
-      var dc = data['children'];
-      var dt = data['styles'];
-      var dm = data['marriage'];
 
      if (this.loaded_generations !== undefined) {
          this.loaded_generations = Math.max(dg, this.loaded_generations);
          this.loaded_descendants = Math.max(dd, this.loaded_descendants);
-
       } else {
          this.loaded_generations = dg;
          this.loaded_descendants = dd;
@@ -290,52 +227,28 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
 
       // Merge the information
 
-      for (var d in dp) {
-         d = Number(d);
-         if (!this.persons[d]) {
-            this.persons[d] = this.createPerson(dp[d]);
-         } else {
-            this.persons[d].generation = dp[d].generation;
-         }
-      }
-      for (var d in dm) {
-         d = Number(d);
-         this.marriage[d] = dm[d];
-      }
       for (var d in dt) {
          this.styles[d] = dt[d];
       }
 
-      // Traverse the list of all known persons directly, not by iterating
-      // generations and then persons, since in fact a tree is often sparse.
-      // We iterate from generation 0, in case the server sent too much
-      // information
+      // Compute the angle for each visible person. This is used to
+      // compute colors in some contexts
 
-      var count = [];   // Maximum number of persons per generation
-      for (var gen = 0; gen <= dg; gen++) {
-         count[gen] = Math.pow(2, gen);
-      }
-      for (var sosa in ds) {
-         sosa = Number(sosa);
-         var p = this.persons[ds[sosa]];
+      function _setAngle(p, sosa, maxInGen) {
+         var maxNextGen = maxInGen * 2;
          p.sosa = sosa;
-         p.angle = sosa / count[p.generation] - 1;
-         this.sosa[sosa] = p;
-      }
-
-      for (var p in dc) {
-         p = Number(p);
-         var parent = this.persons[p];
-         var children = parent.children = [];
-         var len = dc[p].length;
-         for (var c = 0; c < len; c++) {
-            var pc = this.persons[dc[p][c]];
-            pc.sosa = -1;   // ??? Should be relative to the parent
-            // pc.angle is computed later
-            pc.parent_ = parent;
-            children.push(pc);
+         p.angle = (sosa - maxInGen) / maxInGen;
+         if (p.parents) {
+            var s = 0;
+            while (s < p.parents.length) {
+               if (p.parents[s]) {
+                  _setAngle(p.parents[s], sosa * 2 + s, maxNextGen);
+               }
+               s++;
+            }
          }
       }
+      _setAngle(this.main, 1, 1);
 
       /** @param {Person} indiv  The person.
        *  @param {number} from   start angle.
@@ -347,6 +260,8 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
             var step = (to - from) / indiv.children.length;
             for (var c = 0; c < indiv.children.length; c++) {
                if (indiv.children[c]) {
+                  indiv.children[c].sosa = -1;
+                  indiv.children[c].parent_ = indiv;
                   _doAnglesForChildren(indiv.children[c],
                                        from + c * step,
                                        from + (c + 1) * step);
@@ -354,7 +269,7 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
             }
          }
       }
-      _doAnglesForChildren(this.sosa[1], 0, 1);
+      _doAnglesForChildren(this.main, 0, 1);
    };
 
    return new Pedigree;

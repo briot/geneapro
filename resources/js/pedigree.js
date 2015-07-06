@@ -19,7 +19,8 @@ controller('pedigreeCtrl', function($scope,  Pedigree, $state, $stateParams, con
    // instead (that's on purpose so that we can have animation in the SVG).
    // This page might also be loaded without specifying an explicit person, in
    // which case we must reuse the current decujus.
-   // We need to monitor the location, not the state, to handle Back and Forward
+   // We need to monitor the location, not the state, to handle Back and
+   // Forward
    $scope.$on('$locationChangeSuccess', function() {
       $scope.decujus = $location.search().id || $scope.decujus;
    });
@@ -60,9 +61,10 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
             function() {
                $rootScope.cleanupSettings();
                Pedigree.select(scope.decujus);
-               Pedigree.get(set.gens, set.descendant_gens).then(function(data) {
-                  render(data);
-               });
+               Pedigree.get(set.gens, set.descendant_gens).then(
+                  function(data) {
+                     render(data);
+                  });
             },
             true);
 
@@ -91,7 +93,7 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
           * @param {Object}  data    as loaded from the server.
           */
          function render(data) {
-            if (!data || !data.persons) {
+            if (!data) {
                return;
             }
 
@@ -138,7 +140,7 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
             var persons = group
                .selectAll('g.person')
                .data(layout.nodes, function(d) { return d.id});
-            var decujusbox = data.sosa[1];
+            var decujusbox = data.main;
             persons.exit()
                .transition()
                .duration(durationForExit)
@@ -192,10 +194,10 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
                      return;
                   }
 
-                  node.text.push(p.displayName());
+                  node.text.push(data.displayName(p));
 
-                  var birth = p.event_to_string(p.birth);
-                  var death = p.event_to_string(p.death);
+                  var birth = data.event_to_string(p.birth);
+                  var death = data.event_to_string(p.death);
 
                   if (!set.showDetails || linesCount < 4) {
                      node.text.push(birth + ' - ' + death);
@@ -209,7 +211,7 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
                         node.text.push('d: ' + death + (place ? ' - ' + place : ''));
                      }
                      if (node.text.length <= linesCount) {
-                        var d = p.getDetails();
+                        var d = data.getDetails(p);
                         if (d) {
                            d.then(group.applyScale);
                         } else {
@@ -251,10 +253,7 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
                   m.enter().append('text')
                      .attr('class', 'marriage')
                      .attr('dy', '0.4em');
-                  m.text(function(d) {
-                        return d.event_to_string(
-                           data.marriage[2 * d.sosa])
-                     })
+                  m.text(function(d) {return data.event_to_string(d.marriage)})
                      .transition()
                      .delay(durationForExit)
                      .attr('font-size', function(d) { return d.parentsMarriageFS; })
@@ -383,10 +382,12 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
          }
       }
 
-      // X coordinates are computed once we know the sizes. Left-most coordinate
-      // is always 0
+      // X coordinates are computed once we know the sizes. Left-most
+      // coordinate is always 0
       left[-settings.descendant_gens] = 0;
-      for (var gen = -settings.descendant_gens + 1; gen <= settings.gens + 1; gen++) {
+      for (var gen = -settings.descendant_gens + 1;
+               gen <= settings.gens + 1; gen++)
+      {
          left[gen] = left[gen - 1] +
             widths[Math.abs(gen - 1)] + paddings[Math.abs(gen)];
       }
@@ -397,21 +398,19 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
 
       switch (settings.layoutScheme) {
       case gpd3.layoutScheme.EXPANDED:
-         function doLayoutExpand(gen, sosa) {
-            if (gen < settings.gens) {
-               var fy = doLayoutExpand(gen + 1, 2 * sosa);
-               var my = doLayoutExpand(gen + 1, 2 * sosa + 1);
+         function doLayoutExpand(gen, p) {
+            if (gen < settings.gens && p.parents) {
+               var fy = doLayoutExpand(gen + 1, p.parents[0]);
+               var my = doLayoutExpand(gen + 1, p.parents[1]);
                var y = (fy + my + heights[gen + 1] - heights[gen]) / 2;
             } else {
                y = maxY + settings.vertPadding;
             }
             maxY = Math.max(maxY, y + heights[gen]);
-            if (data.sosa[sosa]) {
-               setupIndivBox(data.sosa[sosa], y);
-            }
+            setupIndivBox(p, y);
             return y;
          }
-         doLayoutExpand(0, 1);
+         doLayoutExpand(0, data.main);
          break;
 
       case gpd3.layoutScheme.COMPACT:
@@ -423,8 +422,8 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
          function doLayoutCompact(indiv) {
             var gen = indiv.generation;
             if (gen < settings.gens) {
-               var father = data.sosa[2 * indiv.sosa];
-               var mother = data.sosa[2 * indiv.sosa + 1];
+               var father = indiv.parents[0];
+               var mother = indiv.parents[1];
             } else {
                father = mother = undefined;
             }
@@ -455,7 +454,7 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
             }
             maxY = Math.max(maxY, y + indiv.h);
          }
-         doLayoutCompact(data.sosa[1]);
+         doLayoutCompact(data.main);
          break;
       }
 
@@ -502,14 +501,14 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
 
       // We'll need to adjust the offsets so that the coordinates of decujus
       // computed after parent and children layouts match
-      var yAfterParent = data.sosa[1].y;
+      var yAfterParent = data.main.y;
       var maxChildY = 0;
-      doLayoutChildren(data.sosa[1]);
+      doLayoutChildren(data.main);
 
       // Apply the offset (to the children, since in general we will have more
       // ancestors displayed). At this point, we know the parents extend from
       // minY..maxY, so we adjust minY and maxY as needed
-      var offset = yAfterParent - data.sosa[1].y;
+      var offset = yAfterParent - data.main.y;
       function doOffsetChildren(indiv) {
          indiv.y += offset;
          minY = Math.min(minY, indiv.y);
@@ -523,19 +522,19 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
             }
          }
       }
-      doOffsetChildren(data.sosa[1]);
+      doOffsetChildren(data.main);
 
       // Compute the links
       var links = [];
       angular.forEach(nodes, function(node) {
          if (node.sosa <= 0) {
             links.push([node, node.parent_]);
-         } else {
-            var father = data.sosa[2 * node.sosa];
+         } if (node.generation < settings.gens && node.parents) {
+            var father = node.parents[0];
             if (father) {
                links.push([node, father]);
             }
-            var mother = data.sosa[2 * node.sosa + 1];
+            var mother = node.parents[1];
             if (mother) {
                links.push([node, mother]);
             }
