@@ -37,9 +37,9 @@ def __get_json_sosa_tree(graph, id, max_levels, style_rules,
     descendants = graph.people_in_tree(
         id=decujus.main_id, maxdepthAncestors=0,
         distance=distance, maxdepthDescendants=maxdepthDescendants)
-    descendants.remove(decujus)
     descendants = [
-        a for a in descendants if distance[a] >= last_descendant_known]
+        a for a in descendants
+        if a != decujus and distance[a] >= last_descendant_known]
 
     sosa_tree = dict()
     marriage = dict()
@@ -54,6 +54,8 @@ def __get_json_sosa_tree(graph, id, max_levels, style_rules,
 
     def add_parents(p):
         p.generation = distance[graph.node_from_id(p.id)]
+        if p.generation >= max_levels:
+            return
 
         fathers = graph.fathers(p.id)
         mothers = graph.mothers(p.id)
@@ -76,8 +78,8 @@ def __get_json_sosa_tree(graph, id, max_levels, style_rules,
             if c[0]:
                 c[0].generation = -gen # distance[c[1]]
                 p.children.append(c[0])
-            if gen < maxdepthDescendants:
-                add_children(c, gen + 1)
+                if gen < maxdepthDescendants:
+                    add_children(c[0], gen + 1)
 
     main = persons[decujus.main_id]
     add_parents(main)

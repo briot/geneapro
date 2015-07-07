@@ -885,6 +885,21 @@ svg {
          fill: rgba(150,150,150,0.2);
       }
    }
+   .radial {
+      .node circle {
+         // nodes always above links
+         z-index: 1000;
+      }
+      .node {
+        font: 10px sans-serif;
+      }
+      
+      .link {
+        fill: none;
+        stroke: #ccc;
+        stroke-width: 1.5px;
+      }
+   }
    .marriage {
       font-size: smaller;
       fill: #555;

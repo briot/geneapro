@@ -62,6 +62,13 @@ run(function(gpd3, $rootScope, localStorageService) {
          vertPadding: 20   // same as textHeight
       },
 
+      radial: {
+         gens: 6,
+         colorScheme: gpd3.colorScheme.WHITE,
+         appearance: gpd3.appearance.FLAT,
+         showText: true
+      },
+
       fanchart: {
          colorScheme: gpd3.colorScheme.PEDIGREE,
          appearance: gpd3.appearance.GRADIENT,
@@ -124,6 +131,10 @@ run(function(gpd3, $rootScope, localStorageService) {
       p.colorScheme = +p.colorScheme;
       p.appearance = +p.appearance;
       p.layoutScheme = +p.layoutScheme;
+
+      p = $rootScope.settings.radial;
+      p.colorScheme = +p.colorScheme;
+      p.appearance = +p.appearance;
 
       p = $rootScope.settings.personas;
       p.colorScheme = +p.colorScheme;

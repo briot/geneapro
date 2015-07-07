@@ -15,4 +15,4 @@ if not os.path.isfile("geneaprove.db"):
     execute_from_command_line(["manage.py", "syncdb", "--noinput"])
     execute_from_command_line(["manage.py", "loaddata", "geneaprove/initial_data.json"])
 
-execute_from_command_line([sys.argv[0], "runserver", "8002"])
+execute_from_command_line([sys.argv[0], "runserver", "8000"])

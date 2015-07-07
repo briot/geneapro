@@ -62,9 +62,7 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
                $rootScope.cleanupSettings();
                Pedigree.select(scope.decujus);
                Pedigree.get(set.gens, set.descendant_gens).then(
-                  function(data) {
-                     render(data);
-                  });
+                  function(data) { render(data)});
             },
             true);
 

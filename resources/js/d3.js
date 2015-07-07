@@ -83,6 +83,11 @@ app.factory('gpd3', function() {
          .on('dblclick.zoom', null)  // disable double-click
          .append('g')
 
+      g.setTranslate = function(x, y) {
+         currentTranslate = [x, y];
+         return g;
+      };
+
       g.applyScale = function() {
          g.transition()
           .duration(500)
