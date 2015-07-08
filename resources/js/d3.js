@@ -74,7 +74,7 @@ app.factory('gpd3', function() {
          .on('zoom', function() {
             currentScale = d3.event.scale;
             currentTranslate = d3.event.translate;
-            g.applyScale()});
+            g.applyScale(1)});
       zoom.scale(currentScale).translate(currentTranslate);
       var g = d3.select(element[0])
          .append("svg")
@@ -85,12 +85,13 @@ app.factory('gpd3', function() {
 
       g.setTranslate = function(x, y) {
          currentTranslate = [x, y];
+         zoom.translate(currentTranslate);
          return g;
       };
 
-      g.applyScale = function() {
+      g.applyScale = function(delay) {
          g.transition()
-          .duration(500)
+          .duration(delay || 500)
           .attr(
             'transform',
             'translate(' + currentTranslate +

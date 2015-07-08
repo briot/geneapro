@@ -99,7 +99,7 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
                    return result;
                 })
                 .separation(function(p1, p2) {
-                   return (p1.parent == p2.parent ? 1 : 2) / p1.depth });
+                   return (p1.parent == p2.parent ? 1 : 2) /* / p1.depth */ });
             
             var diagonal = d3.svg.diagonal.radial()
                 .projection(function(d) { return [d.y, d.x / 180 * Math.PI]});
@@ -114,14 +114,18 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
 
             var link = group.selectAll(".link").data(links);
             link.exit().remove();
-            link.enter().append("path").attr("class", "link");
+            link.enter().insert("path", ':first-child').attr("class", "link");
             link.attr("d", diagonal);
             
             var node = group.selectAll(".node")
                .data(nodes, function(p) { return p.id});
             node.exit().remove();
 
-            var n = node.enter().append("g").attr("class", "node");
+            var n = node.enter().append("g").attr("class", "node")
+               .on('contextmenu', function(d) {
+                  contextMenu.create(
+                     scope, '#contextMenu', d3.event, {d: d, element: this});
+               });
             node.attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; });
 
             node.select('circle').remove();
@@ -139,7 +143,7 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
                 .text(function(d) { return d.surn; });
             }
             
-            group.setTranslate(diameter / 2, diameter / 2).applyScale();
+            group.setTranslate(diameter / 2, diameter / 2).applyScale(1);
          }
       }
    };
