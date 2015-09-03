@@ -4,7 +4,7 @@ Various views related to displaying the pedgree of a person graphically
 
 from django.shortcuts import render_to_response
 from django.template import RequestContext
-from django.db.models import Q
+from django.db.models import Q, Min
 from django.utils.translation import ugettext as _
 from django.http import HttpResponse
 from geneaprove import models
@@ -309,7 +309,22 @@ def view(request, id):
     data = {
         "person": decujus,
         "p2p": assertions,
-    };
+    }
+    return HttpResponse(to_json(data), content_type='application/json')
+
+
+def get_settings(request):
+    """
+    Return the user settings. These include the following fields:
+    * defaultPerson
+      id of the person to show when the user connects initially.
+      It returns -1 if the database is currently empty.
+    """
+
+    p = models.Persona.objects.aggregate(Min('id'))
+    data = {
+        "defaultPerson": p['id__min'] if p else -1
+    }
     return HttpResponse(to_json(data), content_type='application/json')
 
 

@@ -7,7 +7,7 @@ var app = angular.module(
       ]).
 
 config(function($urlRouterProvider, $httpProvider) {
-      $urlRouterProvider.otherwise('/import');
+      $urlRouterProvider.otherwise('/');
 
       // Support for django csrf
       $httpProvider.defaults.xsrfCookieName = 'csrftoken';

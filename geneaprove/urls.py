@@ -31,6 +31,8 @@ urlpatterns = patterns(
     (r'^import$',              geneaprove.views.importers.import_gedcom),
     (r'^data/citationModel/(.+)$', geneaprove.views.sources.citation_model),
 
+    (r'^data/settings', geneaprove.views.persona.get_settings),
+
     # ... below: not moved to angularJS yet
 
 
