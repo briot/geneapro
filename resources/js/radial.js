@@ -71,7 +71,13 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
             }
             group.attr('class', 'radial color-' + set.colorScheme);
 
-            var diameter = 960;
+            var circleSize = 10;  // diameter of the circles
+            // We are displaying gens*2+1 generations, and leave space
+            // between two circles equal to 5 times the size of a circle.
+            var diameter = (Math.abs(set.gens) * 2 + 1) * (circleSize * 6);
+
+            gpd3.setViewBox(element, {x: 0, y: 0, width: diameter, height: diameter});
+
             var tree = d3.layout.tree()
                 .size([360, diameter / 2 - 120])
                 .children(function(d) {
@@ -117,9 +123,11 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
             link.enter().insert("path", ':first-child').attr("class", "link");
             link.attr("d", diagonal);
             
+            group.selectAll('.node').remove();
+
             var node = group.selectAll(".node")
-               .data(nodes, function(p) { return p.id});
-            node.exit().remove();
+               // There can be multiple nodes with the same id (implex)
+               .data(nodes);
 
             var n = node.enter().append("g").attr("class", "node")
                .on('contextmenu', function(d) {
@@ -129,7 +137,7 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
             node.attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; });
 
             node.select('circle').remove();
-            node.append("circle").attr("r", 4.5)
+            node.append("circle").attr("r", circleSize)
                .style('stroke', styles.strokeStyle)
                .style('fill', styles.fillStyle)
                .attr('title', function(p) { return data.displayName(p)});

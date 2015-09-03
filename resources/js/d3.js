@@ -386,10 +386,10 @@ app.factory('gpd3', function() {
          case gpd3.colorScheme.QUARTILE:
             // Only applies to fanchart
 
-            var base = ['rgb(236,250,253)',
-                        'rgb(242,250,235)',
-                        'rgb(255,235,234)',
-                        'rgb(255,253,238)'];
+            var base = ['rgb(127,229,252)',
+                        'rgb(185,253,130)',
+                        'rgb(252,120,118)',
+                        'rgb(255,236,88)'];
             var border = ['rgb(93,183,217)',
                           'rgb(148,194,95)',
                           'rgb(243,96,80)',
