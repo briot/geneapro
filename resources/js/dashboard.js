@@ -3,7 +3,7 @@ config(function($stateProvider) {
    $stateProvider.
    state('main', {
       url: '',
-      templateUrl: 'geneaprove/main.html',
+      templateUrl: 'geneaprove/dashboard.html',
       controller: 'mainCtrl'
    });
 }).
