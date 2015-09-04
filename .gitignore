@@ -1,8 +1,8 @@
 .DS_Store
 geneaprove.db
 node_modules/
-resources/geneaprove.css_gz
 resources/geneaprove.min.js_gz
+resources/geneaprove.min.css_gz
 resources/geneaprove.min.css
 resources/geneaprove.min.js
 resources/js/lib/d3-3.5.3.js
