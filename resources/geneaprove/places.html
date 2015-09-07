@@ -1,17 +1,23 @@
-<div id='sidebar'>
-   <div class='panel'>
-      <h2>List of places</h2>
-      <div class='config'>
-         <span>Rows per page</span>
-         <select ng-model='$root.settings.places.rows' ng-options='a.rows as a.label for a in rows'>
-         </select>
+<div class='row'>
+
+   <!-- Sidebar -->
+   <div class='col-md-2'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>List of places</div>
+         <div class='panel-body'>
+            <ul class='nav nav-pills nav-stacked'>
+               <li class='config'>
+                  <span>Rows per page</span>
+                  <select ng-model='$root.settings.places.rows' ng-options='a.rows as a.label for a in rows'>
+                  </select>
+               </li>
+            </ul>
+         </div>
       </div>
    </div>
-</div>
 
-<div id='contents' ui-view>
-   <div class="place list">
-      <table cellspacing="0" cellpadding="0">
+   <div class='col-md-10 AAplace AAlist'>
+      <table class='table'>
          <thead>
             <tr class='controls'>
                <th colspan='3' gp-paginate-header></th>

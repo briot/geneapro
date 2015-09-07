@@ -1,5 +1,5 @@
 var gulp = require('gulp');
-var less = require('gulp-less');
+var sass = require('gulp-sass');
 var autoprefix = require('gulp-autoprefixer');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
@@ -11,9 +11,13 @@ var minifyHTML = require('gulp-minify-html');
 var addsrc = require('gulp-add-src');
 var rename = require('gulp-rename');
 
+var bootstrap = 'node_modules/bootstrap-sass/assets/stylesheets/bootstrap';
+
 gulp.task('css', function() {
-   return gulp.src('resources/css/main.less')
-       .pipe(less({compress: true, cleancss: true}))
+   return gulp.src('resources/sass/main.scss')
+       .pipe(sass({includePaths: [bootstrap],
+                   outputStyle: 'expanded'})
+             .on('error', sass.logError))
        .pipe(autoprefix({browser: ['last 2 versions'], cascade: false}))
        .pipe(addsrc.append([
              'node_modules/font-awesome/css/font-awesome.css']))
@@ -54,6 +58,6 @@ gulp.task('js', ['templates'], function() {
 
 gulp.task('default', ['css', 'js']);
 gulp.task('watch', ['default'], function() {
-   gulp.watch(['resources/css/*', 'gulpfile.js'], ['css']);
+   gulp.watch(['resources/sass/*', 'gulpfile.js', bootstrap + '/*'], ['css']);
    gulp.watch(['resources/js/*', 'gulpfile.js', 'resources/html/**'], ['js']);
 });

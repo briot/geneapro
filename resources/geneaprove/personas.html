@@ -1,26 +1,31 @@
-<div id='sidebar'>
-   <!-- {{legend|safe}} -->
-   <div class='panel'>
-      <h2>List of persons</h2>
-      <div class='config'>
-         <span>Rows per page</span>
-         <select ng-model='$root.settings.personas.rows' ng-options='a.rows as a.label for a in rows'>
-         </select>
-      </div>
-      <div class='config'>
-         <span>Colors</span>
-         <select ng-model='$root.settings.personas.colorScheme'>
-            <option value='0'>Rules</option>
-            <option value='4'>No colors</option>
-         </select>
-         <span ng-show='$root.settings.personas.colorScheme==0' gp-legend></span>
-      </div>
-   </div>
-</div>
+<div class='row'>
 
-<div id='contents' ui-view>
-   <div class="persona list">
-      <table cellspacing="0" cellpadding="0">
+   <!-- Sidebar -->
+   <div class='col-md-2'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>List of persons</div>
+         <div class='panel-body'>
+            <ul class='nav nav-pills nav-stacked'>
+               <li class='config'>
+                  <span>Rows per page</span>
+                  <select ng-model='$root.settings.personas.rows' ng-options='a.rows as a.label for a in rows'>
+                  </select>
+               </li>
+               <li class='config'>
+                  <span>Colors</span>
+                  <select ng-model='$root.settings.personas.colorScheme'>
+                     <option value='0'>Rules</option>
+                     <option value='4'>No colors</option>
+                  </select>
+                  <span ng-show='$root.settings.personas.colorScheme==0' gp-legend></span>
+               </li>
+            </ul>
+         </div> <!-- panel-body -->
+      </div> <!-- panel -->
+   </div> <!-- col -->
+
+   <div class='col-md-10 AApersona AAlist'>
+      <table class='table'>
          <thead>
             <tr class='controls'>
                <th colspan='5' gp-paginate-header></th>

@@ -18,7 +18,7 @@
       "gulp-minify-html": "^1.0.4",
       "gulp-rename": "^1.2.2",
       "gulp-ng-annotate": "^1.1.0",
-      "gulp-less": "",
+      "gulp-sass": "",
       "gulp-uglify": "^1.4.0"
    },
    "dependencies": {
@@ -28,6 +28,7 @@
       "angular-ui-router": "0.2.13",
       "angular-upload": "1.0.11",
       "d3": "3.5.x",
+      "bootstrap-sass": "^3.3.x",
       "font-awesome": ""
    }
 }

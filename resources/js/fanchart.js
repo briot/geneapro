@@ -191,6 +191,7 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
 
             function drawText(txt) {
                txt
+                  // ??? Works in Firefox, but not in Chrome or Safari
                   .attr('text-anchor', 'middle')
                   .text(function(d) { return d.surn})
 

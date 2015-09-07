@@ -1,56 +1,73 @@
-<div id='sidebar'>
-   <div class='panel'>
-      <h2>Fanchart</h2>
-      <div class="config"><span>Ancestors</span>
-         <div gp-slider ng-model='$root.settings.fanchart.gens' min='1' max='30'></div>
+<div class='row'>
+   <div class='col-md-2'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Fanchart</div>
+         <div class='panel-body'>
+            <ul class='nav nav-pills nav-stacked'>
+               <li class='config'>
+                  <span>Ancestors</span>
+                  <div gp-slider ng-model='$root.settings.fanchart.gens' min='1' max='30'></div>
+               </li>
+               <li class='config'>
+                  <span>Sourced events</span>
+                  <input type="checkbox" ng-model='$root.settings.sourcedEvents'/>
+               </li>
+               <li class='config'>
+                  <span>Marriages</span>
+                  <input type="checkbox" ng-model='$root.settings.fanchart.showMarriages'/>
+               </li>
+               <li class='config'>
+                  <span>Show missing persons</span>
+                  <input type="checkbox" ng-model='$root.settings.fanchart.showMissing'/>
+               </li>
+            </ul>
+         </div>
       </div>
-      <div class="config"><span>Sourced events</span>
-         <input type="checkbox" ng-model='$root.settings.sourcedEvents'/>
-      </div>
-      <div class="config"><span>Marriages</span>
-         <input type="checkbox" ng-model='$root.settings.fanchart.showMarriages'/>
-      </div>
-      <div class="config"><span>Show missing persons</span>
-         <input type="checkbox" ng-model='$root.settings.fanchart.showMissing'/>
-      </div>
-   </div>
-   <div class='panel'>
-      <h2>Colors</h2>
-      <div class="config"><span>Size</span>
-         <div gp-slider ng-model='$root.settings.fanchart.angle' min='90' max='360'></div>
-      </div>
-      <div class="config"><span>Space between couples</span>
-         <div gp-slider ng-model='$root.settings.fanchart.space' min='0' max='100'></div>
-      </div>
-      <div class="config"><span>Rotate text</span>
-         <input type="checkbox" ng-model='$root.settings.fanchart.readableNames'/>
-      </div>
-      <div class="config"><span>Colors</span>
-         <select ng-model='$root.settings.fanchart.colorScheme'>
-           <option value="0">Rules</option>
-           <option value="1">Pedigree</option>
-           <option value="2">Generation</option>
-           <option value="4">No fill</option>
-           <option value="5">Quartile</option>
-         </select>
-         <span ng-show='$root.settings.fanchart.colorScheme==0' gp-legend></span>
-      </div>
-      <div class="config"><span>Appearance</span>
-         <select ng-model='$root.settings.fanchart.appearance'>
-            <option value="0">Flat</option>
-            <option value="1">Gradient</option>
-         </select>
-      </div>
-   </div>
-   <input type='button' ng-click='$root.resetSettings("fanchart")' value='Reset'/>
-</div>
 
-<div id="contents" ui-view>
-   <div class='graph' gp-fanchart='decujus'>
-      <!--  SVG will go here, with its own scope -->
-      <!--  The contextual menu executes in the scope of fanchart.html -->
-      <div id='contextMenu' class='contextMenu'>
-         <ul>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Colors</div>
+         <div class='panel-body'>
+            <ul class='nav nav-pills nav-stacked'>
+               <li class='config'>
+                  <span>Size</span>
+                  <div gp-slider ng-model='$root.settings.fanchart.angle' min='90' max='360'></div>
+               </li>
+               <li class='config'>
+                  <span>Space between couples</span>
+                  <div gp-slider ng-model='$root.settings.fanchart.space' min='0' max='100'></div>
+               </li>
+               <li class='config'>
+                  <span>Rotate text</span>
+                  <input type="checkbox" ng-model='$root.settings.fanchart.readableNames'/>
+               </li>
+               <li class='config'>
+                  <span>Colors</span>
+                  <select ng-model='$root.settings.fanchart.colorScheme'>
+                    <option value="0">Rules</option>
+                    <option value="1">Pedigree</option>
+                    <option value="2">Generation</option>
+                    <option value="4">No fill</option>
+                    <option value="5">Quartile</option>
+                  </select>
+                  <span ng-show='$root.settings.fanchart.colorScheme==0' gp-legend></span>
+               </li>
+               <li class='config'>
+                  <span>Appearance</span>
+                  <select ng-model='$root.settings.fanchart.appearance'>
+                     <option value="0">Flat</option>
+                     <option value="1">Gradient</option>
+                  </select>
+               </li>
+            </ul>
+            <button class='btn btn-default' ng-click='$root.resetSettings("fanchart")'>Reset</button>
+         </div>
+      </div>  <!--  panel -->
+   </div> <!-- color -->
+
+   <div class='col-md-10'>
+      <div class='graph' gp-fanchart='decujus'>
+      <div id='contextMenu' class='contextMenu navbar navbar-default'>
+         <ul class='nav nav-pills nav-stacked'>
             <li><a ng-click='focusPerson()'>Set as decujus</a></li>
             <li ng-if='contextual.d.generation > 0'>
                <a ng-click='expandPerson()'> {{ contextual.d.$expand ? 'Unexpand': 'Expand'}}</a>
@@ -60,5 +77,3 @@
       </div>
    </div>
 </div>
-
-

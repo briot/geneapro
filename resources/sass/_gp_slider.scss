@@ -1,21 +1,18 @@
-@import "base.less";
+@mixin ui-slider-generic($barheight:2px, $handleheight:12px) {
+   $menubar-color: #ddd;
 
-.ui-slider {
-   .ui-slider-generic;
-}
-.ui-slider-generic(@barheight:2px, @handleheight:12px) {
    clear:both;
    position: relative;
    &.horizontal {
-      margin: auto (@handleheight/2) auto (@handleheight/2);
-      border-radius: @barheight;
-      height: @barheight;
-      background: @menubar-color;
+      margin: 15px ($handleheight/2) 15px ($handleheight/2);
+      border-radius: $barheight;
+      height: $barheight;
+      background: $menubar-color;
       a {
          outline:none;
          position: absolute;
          z-index: 2;
-         top: @barheight/2;
+         top: $barheight/2;
 
          // We have to nest a span, so that its center is aligned on the position for a.
          // That way, at 0% the <a> is position on the left of the slider, but the span
@@ -25,22 +22,22 @@
             border: 1px solid #000;
             border-radius: 100%;
             position: absolute;
-            left: -@handleheight/2;
-            top: -@handleheight/2;
-            height: @handleheight;
-            width: @handleheight;
+            left: -$handleheight/2;
+            top: -$handleheight/2;
+            height: $handleheight;
+            width: $handleheight;
             &:after {
                content: '';
-               background-color: @menubar-color;
-               width: @handleheight / 3;
-               height: @handleheight / 3;
+               background-color: $menubar-color;
+               width: $handleheight / 3;
+               height: $handleheight / 3;
                position: absolute;   // reference is top-left of the handle
-               top: @handleheight / 3;
-               left: @handleheight / 3;
+               top: $handleheight / 3;
+               left: $handleheight / 3;
                border-radius: 100%;
             }
             &:hover {
-               &:after { background-color: @menubar-color}
+               &:after { background-color: $menubar-color}
             }
          }
          &.active {
@@ -54,20 +51,24 @@
          .bubble {
             display: none; // refpoint is middle of the span.handle
             position: absolute;
-            left: @handleheight / 2 + 1px;
-            top: -@barheight / 2 - 11px;  // 11px ~= 0.8em
+            left: $handleheight / 2 + 1px;
+            top: -$barheight / 2 - 11px;  // 11px ~= 0.8em
          }
       }
    }
    span {
       font-size: 0.8em;
-      color: @menubar-color;
+      color: $menubar-color;
    }
    > span {
-      margin-top: @barheight;
+      margin-top: $barheight;
       float: left;
       position:relative
    }
    > span.right {float:right}
+}
+
+.ui-slider {
+   @include ui-slider-generic;
 }
 

@@ -1,17 +1,20 @@
-<div id='sidebar'>
-   <div class='panel'>
-      <h2>Contents</h2>
-      <ul>
-         <li>Characteristics</li>
-         <li>Events</li>
-         <li>Groups</li>
-         <li>Links</li>
-      </ul>
-   </div>
-</div>
+<div class='row'>
 
-<div id='contents' ui-view>
-  <div id='personaDetails' class='persona details'>
+   <div class='col-md-2'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Contents</div>
+         <div class='panel-body'>
+            <ul class='nav nav-pills nav-stacked'>
+               <li>Characteristics</li>
+               <li>Events</li>
+               <li>Groups</li>
+               <li>Links</li>
+            </ul>
+         </div>
+      </div>
+   </div>
+
+   <div class='col-md-10 AApersona AAdetails'>
      <h2>
         <span class="givenName">{{person.base_given_name}}</span>
         <span class="surName">{{person.base_surname}}</span>
@@ -19,7 +22,7 @@
      </h2>
 
      <h3>Characteristics</h3>
-     <table id="attrs" class="highlightCurrent" cellspacing='0' cellpadding='0' sort-on='person.all_chars' sort-default='char.name'>
+     <table id="attrs" class="table table-condensed" sort-on='person.all_chars' sort-default='char.name'>
        <thead>
           <tr>
              <th sort-by='char.name'>Type</th>
@@ -54,7 +57,7 @@
      </table>
 
      <h3>Events</h3>
-     <table id="events" class="highlightCurrent" cellspacing='0' cellpadding='0' sort-on='person.all_events' sort-default='event.date_sort'>
+     <table id="events" class="table table-hover table-condensed" sort-on='person.all_events' sort-default='event.date_sort'>
        <thead>
           <tr>
              <th sort-by='event.type.name'>Type</th>
@@ -85,7 +88,7 @@
              <td class='extra' colspan='10'>
                 <div>
                    <i class='fa fa-spinner fa-spin' ng-if='e.$details===undefined'></i>
-                   <table ng-if='e.$details'>
+                   <table class='table table-condensed' ng-if='e.$details'>
                       <tr>
                          <th>Person</th>
                          <th>Role</th>
@@ -113,7 +116,7 @@
      </table>
 
      <h3>Groups</h3>
-     <table id="events" class="highlightCurrent" cellspacing='0' cellpadding='0' sort-on='person.all_events' sort-default='event.date_sort'>
+     <table id="events" class="table table-condensed" sort-on='person.all_events' sort-default='event.date_sort'>
        <thead>
           <tr>
              <th sort-by='event.name'>Name</th>
@@ -148,7 +151,7 @@
         Click on a persona id to see events and attributes related to that persona.
         </p>
      
-        <table id="p2p_assert">
+        <table class='table table-condensed' id="p2p_assert">
           <thead>
              <tr>
                 <th>Persona1</th>

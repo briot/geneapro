@@ -95,7 +95,7 @@ app.factory('gpd3', function() {
           .attr(
             'transform',
             'translate(' + currentTranslate +
-               ')scale(' + currentScale + ')');
+               ') scale(' + currentScale + ')');
          if (onzoom) {
             onzoom.call(g, currentScale);
          }

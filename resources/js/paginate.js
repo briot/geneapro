@@ -91,14 +91,16 @@ directive('gpPaginatePages', function() {
    return {
       replace: true,
       template:
-         '<div class="pagination">' +
-            '<span ng-click="setPage(1)">&laquo;</span>' +
-            '<span ng-click="setPage(page-1)">&lsaquo;</span>' +
-            '<span ng-repeat="p in pageRange" ng-click="setPage(p)"' +
-               ' ng-class="{current:page==p}">{{p}}</span>' +
-            '<span ng-click="setPage(page+1)">&rsaquo;</span>' +
-            '<span ng-click="setPage(maxPage)">&raquo;</span>' +
-         '</div>'
+         '<nav>' +
+            '<ul class="pagination">' +
+               '<li><a ng-click="setPage(1)">&laquo;</a></li>' +
+               '<li><a ng-click="setPage(page-1)">&lsaquo;</a></li>' +
+               '<li ng-repeat="p in pageRange" ng-class="{active:page==p}">' +
+                  '<a ng-click="setPage(p)">{{p}}</a></li>' +
+               '<li><a ng-click="setPage(page+1)">&rsaquo;</a></li>' +
+               '<li><a ng-click="setPage(maxPage)">&raquo;</a></li>' +
+            '</ul>' +
+         '</nav>'
    };
 }).
 

@@ -1,8 +1,5 @@
-<div id='sidebar'>
-</div>
-
-<div id='contents'>
-   <div id="stats">
+<div class='row'>
+   <div id='stats' class='col-md-12'>
       <h2 id="title">Statistics</h2>
 
       <div>
@@ -32,7 +29,7 @@
       <h2>Generations timespan (oldest birth - latest death)</h2>
 
       <div id="generations" style="height:350px"></div>
-      <div class='generationsLegend'>
+      <div class='generationsLegend clearfix'>
          <div ng-repeat='gen in data.ranges'>
             <span style='background:{{colors(gen[0])}}'>&nbsp;</span>{{gen[3]}}
          </div>

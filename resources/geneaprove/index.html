@@ -9,37 +9,42 @@
    <script type="text/javascript" src="geneaprove.min.js"></script>
 </head>
 <body>
-   <nav>
-      <div class="logo">
-         <a href="/">G&eacute;n&eacute;aprove</a>
-         <div class="tagline">Evidence your genealogy</div>
-      </div>
-      <div>
-         <h2>File</h2>
-         <ul>
-            <li gp-menubutton='import' title='Import' data-font='fa-folder-open'></li>
-         </ul>
-      </div>
-      <div>
-         <h2 class='first'>Lists</h2>
-         <ul>
-            <li gp-menubutton='/personas' title='All persons' data-font='fa-users'></li>
-            <li gp-menubutton='/places'   title='All places'  data-font='fa-globe'></li>
-            <li gp-menubutton='/sources'  title='All sources' data-font='fa-book'></li>
-         </ul>
-      </div>
-      <div>
-         <h2>Reports</h2>
-         <ul>
-            <li gp-menubutton='/person'   title='Details'  data-font='fa-user'></li>
-            <li gp-menubutton='/pedigree' title='Pedigree' data-font='fa-sitemap'></li>
-            <li gp-menubutton='/fanchart' title='Fanchart' data-font='fa-wifi'></li>
-            <li gp-menubutton='/radial'   title='Radial'   data-font='fa-asterisk'></li>
-            <li gp-menubutton='/quilts'   title='Quilts'   data-font='fa-server' data-not-implemented='1'></li>
-            <li gp-menubutton='/stats'    title='Stats'    data-font='fa-pie-chart'></li>
-         </ul>
+   <nav class='navbar navbar-default'>
+      <div class='container-fluid'>
+         <div class='navbar-header'>
+            <a href='/' class="navbar-brand logo">
+               G&eacute;n&eacute;aprove
+               <div class="tagline">Evidence your genealogy</div>
+            </a>
+         </div>
+         <div>
+            <ul class='nav navbar-nav navbar-left'>
+               <li class='group'>File</li>
+               <li gp-menubutton='import' title='Import' data-font='fa-folder-open'></li>
+
+               <li class='group'>Lists</li>
+               <li gp-menubutton='/personas' title='All persons' data-font='fa-users'></li>
+               <li gp-menubutton='/places'   title='All places'  data-font='fa-globe'></li>
+               <li class='disabled' gp-menubutton='/sources'  title='All sources' data-font='fa-book'></li>
+
+               <li class='group'>Reports</li>
+               <li gp-menubutton='/person'   title='Details'  data-font='fa-user'></li>
+               <li gp-menubutton='/pedigree' title='Pedigree' data-font='fa-sitemap'></li>
+               <li gp-menubutton='/fanchart' title='Fanchart' data-font='fa-wifi'></li>
+               <li gp-menubutton='/radial'   title='Radial'   data-font='fa-asterisk'></li>
+               <li class='disabled' gp-menubutton='/quilts'   title='Quilts'   data-font='fa-server' data-not-implemented='1'></li>
+               <li gp-menubutton='/stats'    title='Stats'    data-font='fa-pie-chart'></li>
+            </ul>
+            <ul class='nav navbar-nav navbar-right'>
+               <li>
+                  <label for='addSource' class='sr-only'>Add source</label>
+                  <button class='btn btn-primary navbar-btn' id='addSource'>Add Source</button>
+               </li>
+            </ul>
+          </div>
       </div>
    </nav>
-   <div id='page_wrap' ui-view></div>
+   <div class='container-fluid' ui-view>
+   </div>
 </body>
 </html>

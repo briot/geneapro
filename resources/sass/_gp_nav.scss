@@ -1,0 +1,11 @@
+.nav {
+   .group {
+      font-size: 0.8em;
+      transform: rotate(-90deg);
+      border-top: 1px solid $navbar-default-brand-color;
+      color: $navbar-default-brand-color;
+      top: $line-height-base / 0.8 * 1em;
+      width: $navbar-height;
+      text-align: center;
+   }
+}

@@ -8,7 +8,6 @@ directive('gpMenubutton', function(Pedigree) {
       scope: {
          url: '@gpMenubutton', // target url
          title: '@',
-         icon: '@',
          font: '@',
          notImplemented: '@'
       },
@@ -21,8 +20,7 @@ directive('gpMenubutton', function(Pedigree) {
       template: '<li>' +
          '<a href="{{target}}" title="{{title}}" ng-class="{notImplemented:notImplemented}">' +
             '<span ng-if="!icon&&!font">{{title}}</span>' +
-            '<img ng-if="icon" ng-src="{{icon}}"/>' +
-            '<i ng-if="font" class="fa fa-2x {{font}}"></i>' +
+            '<i ng-if="font" class="fa {{font}}" style="font-size:1.4em"></i>' +
          '</a></li>'
    };
 }).
@@ -92,7 +90,7 @@ directive('ngFileImport', function($window) {
          });
       },
       template: '<label for="fileinput">' +
-                '  <span class="button">{{text}}...</span>' +
+                '  <span class="btn btn-primary">{{text}}...</span>' +
                 '  <input type="file" id="fileinput" ' +
                 'style="opacity:0; filter:alpha(opacity=0)"></label>'
   };

@@ -58,6 +58,9 @@ http://www.beholdgenealogy.com/blog/?p=876
 * Bracket View
 ** http://bl.ocks.org/jdarling/2503502
 
+* Puzzilla
+** puzzilla.org
+
 * Force layout
 ** label placement
 http://bl.ocks.org/MoritzStefaner/1377729
@@ -117,6 +120,9 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 ** Slow to display with big databases
    If we paginate based on first letter of last name and only query those,
    it might be made much faster, and also easier to navigate.
+** Pagination
+   Should show first letter of name, rather than page number.
+   Must ensure that the pagination is kept in a constant place, for easy clicking
 
 * Sources
 ** Use Bibtex as a reference for which fields are needed for the various
@@ -137,6 +143,8 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    a different copy, so should likely be a different entry in the list of sources
    (for instance a lower-level source). Perhaps we should not try to handle
    repositories separately at all.
+** Hiearchical sources
+   http://parallax-viewpoint.blogspot.fr/2015/01/hierarchical-sources.html
 
 * Groups
 ** For: neighbor, friend, clergy, care-taker, and more
