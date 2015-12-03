@@ -1,11 +1,4 @@
-// Core variables and mixins from bootstrap
-
-@import "variables";
-@import "mixins";
-
-// Our custom overriding of predefined styles
-
-$icon-font-path: '../media/';
+@import "gp_vars";
 
 // standard bootstrap files
 
@@ -56,12 +49,3 @@ $icon-font-path: '../media/';
 @import "utilities";
 @import "responsive-utilities";
 
-// Geneaprove files
-
-//@import "base";
-@import "gp_logo";
-@import "gp_nav";
-@import "gp_rating";
-@import "gp_slider";
-@import "gp_diagrams";
-@import "gp_menu";

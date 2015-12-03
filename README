@@ -6,7 +6,7 @@ Q. What do I need to install first ?
    Compiling and running geneaprove requires the following packages:
        python 2.6 or 2.7
        python-pil  (image library for python)
-       django >= 1.4.0
+       django >= 1.7.0
        sqlite >= 3.6
        npm >= 2.6.1
 
@@ -15,8 +15,7 @@ Q. What do I need to install first ?
    support obsolete versions of these tools.
 
    You need to run the following commands:
-       npm install
-       node_modules/grunt-cli/bin/grunt
+       npm start
 
    The only database backend that has been tested so far is sqlite, although
    Django is such that it might work with other backends.
@@ -29,7 +28,7 @@ Q. How do I setup the application ?
 Q. How do I start the server ?
 
    Type
-       ./geneaprove.py
+       npm run server
    to create an empty database (if none exists yet) and start the server.
 
    Then open a web browser and connect to

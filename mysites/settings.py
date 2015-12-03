@@ -49,7 +49,7 @@ USE_TZ = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = os.path.join(os.path.dirname(__file__), '../resources/')
+MEDIA_ROOT = os.path.join(os.path.dirname(__file__), '../dist/')
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash.
@@ -112,7 +112,7 @@ ROOT_URLCONF = 'mysites.urls'
 WSGI_APPLICATION = 'mysites.wsgi.application'
 
 TEMPLATE_DIRS = (
-    os.path.join(os.path.dirname(__file__), '../resources/'),
+    os.path.join(os.path.dirname(__file__), '../dist/'),
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
