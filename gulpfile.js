@@ -73,7 +73,10 @@ gulp.task('static', function() {
 });
 
 gulp.task('default', ['css', 'js', 'static']);
-gulp.task('watch', ['default'], function() {
-   gulp.watch(resources.scss + resources.bootstrap, ['css']);
-   gulp.watch(resources.js + resources.html, ['js']);
+gulp.task('watch', [], function() {
+   gulp.watch(resources.scss, ['css']);
+   gulp.watch(resources.bootstrap, ['css']);
+   gulp.watch(resources.html, ['js']);
+   gulp.watch(resources.js, ['js']);
+   gulp.watch(resources.statics, ['static']);
 });

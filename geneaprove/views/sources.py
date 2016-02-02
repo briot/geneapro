@@ -13,6 +13,12 @@ from geneaprove.views.graph import graph
 from geneaprove.utils.citations import Citations
 
 
+def create_empty_source():
+    s = models.Source()
+
+    return s
+
+
 def extended_sources(ids, schemes):
     """Return a dict of Source instances, with extra attributes
        :param schemes:
@@ -23,13 +29,18 @@ def extended_sources(ids, schemes):
     assert(isinstance(ids, list))
     assert schemes is None or isinstance(schemes, set)
 
-    sources = dict()  # id -> Source
-
+    sources = {}   # id -> Source
+    
     for s in sql_in(models.Source.objects.select_related(
             "repositories", "researcher"),
             "id", ids):
         sources[s.id] = s
         s.asserts = []
+
+    for id in ids:
+        if id not in sources:
+            sources[id] = create_empty_source()
+            sources[id].asserts = []
 
     # Assertions deducted from this source
 
@@ -160,12 +171,6 @@ def view(request, id):
     """View a specific source"""
 
     id = int(id)
-
-    graph.update_if_needed()
-    if len(graph) == 0:
-        return render_to_response(
-            'geneaprove/firsttime.html',
-            context_instance=RequestContext(request))
 
     schemes = set()  # The surety schemes that are needed
     sources = extended_sources([id], schemes=schemes)

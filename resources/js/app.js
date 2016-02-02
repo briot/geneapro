@@ -14,9 +14,11 @@ config(function($urlRouterProvider, $httpProvider) {
       $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
 }).
 
-run(function(gpd3, $rootScope, localStorageService) {
+run(function(gpd3, $rootScope, localStorageService, $state) {
    // (readonly, set via Pedigree.select())
    $rootScope.decujus = 1;
+
+   $rootScope.$state = $state;
 
    var defaultSettings = {
       // Show a tick mark next to events with a souce

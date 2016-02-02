@@ -143,7 +143,7 @@ class ModelEncoder(json.JSONEncoder):
                 higher_source_id=obj.higher_source_id,
                 subject_place=obj.subject_place,
                 jurisdiction_place=obj.jurisdiction_place,
-                researcher=obj.researcher,
+                researcher=obj.researcher if obj.researcher_id else None,
                 subject_date=obj.subject_date,
                 medium=obj.medium,
                 title=obj.title,

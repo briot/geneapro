@@ -85,7 +85,7 @@ class Config (GeneaProveModel):
         db_table = "config"
 
 
-class Researcher (GeneaProveModel):
+class Researcher(GeneaProveModel):
 
     """
     A researcher is a person who gathers data or made assertions

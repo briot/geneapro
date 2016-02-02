@@ -278,3 +278,6 @@ http://www.wolframalpha.com/input/?i=great+grand+mother%27s+niece
 * GUI
 ** The toplevel menubar sections should match the genealogical process (collect, analyze,...)
 ** Use consistent black-and-white icons
+
+* Handling of names
+** http://www.w3.org/International/questions/qa-personal-names

@@ -23,7 +23,7 @@ urlpatterns = patterns(
     (r'^data/persona/(\d+)$',  geneaprove.views.persona.view),
     (r'^data/places$',         geneaprove.views.places.view_list),
     (r'^data/sources/lists$',  geneaprove.views.sources.view_list),
-    (r'^data/sources/(\d+)$',  geneaprove.views.sources.view),
+    (r'^data/sources/(-?\d+)$',  geneaprove.views.sources.view),
     (r'^data/suretySchemes$',  geneaprove.views.persona.surety_schemes_view),
     (r'^data/event/(\d+)$',    geneaprove.views.events.view),
     (r'^data/legend$',         geneaprove.views.rules.getLegend),

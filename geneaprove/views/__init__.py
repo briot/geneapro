@@ -14,6 +14,5 @@ def index(request):
     return render_to_response(
         'geneaprove/index.html',
         {'placesCount': len(places),
-         'places': places,
-         'hello': _("Hello")},
+         'places': places},
         context_instance=RequestContext(request))

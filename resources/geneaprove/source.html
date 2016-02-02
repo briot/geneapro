@@ -1,0 +1,376 @@
+<div class='row'>
+
+   <div class='col-md-12'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Citation details: {{source.title}}</div>
+         <div class='panel-body'>
+            <form>
+               <div class='col-md-12'>
+                  <label>Parent source</label>
+                  <span ng-if='source.higher_source_id' source-link='source.higher_source_id'></span>
+                  <input ng-if='!source.higher_source_id' type='button' value='Select' title='Select the source in which this one was found, for instance a specific will inside a will book'/>
+               </div>
+
+               <span class='col-md-12 form-group'>
+                  <label for='_sourceType'>Source type</label>
+                  <select id='_sourceType' class='form-control' title='Select the type of source. This will change the details below to those needed for proper citation' ng-options='opt.id as opt.type group by opt.category for opt in source_types' ng-model='source.medium'>
+                     <option value=''>Unknown</option>
+                  </select>
+               </span>
+
+               <div ng-repeat='p in required_parts' class='col-md-6 form-group'>
+                  <label>{{p}}</label>
+                  <input type='text' class='form-control' ng-model='cached_parts[p]'>
+               </div>
+
+               <!-- Should select whether this is a primary source,... (or
+               original/derivative although this distinction is sometimes
+               better left for each evidence/pieces of info found in this
+               source.  See QuickLesson 2 from Elizabeth Shown Mill's website.
+               Evidence is our interpretation of the pieces of information -->
+
+            </form>
+         </div>
+      </div>
+   </div>
+
+   <!-- Details common to all sources, needed by the GenTech data model -->
+   <div class='col-md-12'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Research details</div>
+         <div class='panel-body'>
+            <div class='col-md-6 form-group'>
+               <label for="_subjectDate">Subject date</label>
+               <input type="text" id="_subjectDate" class='form-control'
+                      ng-model='source.subject_date_id'
+                      title="The date the source is about. This isn't the date of the source itself."/>
+            </div>
+            <div class='col-md-6 form-group'>
+               <label for="_subjectPlace">Subject place</label>
+               <input type="text" id="_subjectPlace" class='form-control'
+                      ng-model='source.subject_place_id'
+                      title="The place the source is about" />
+            </div>
+            <div class='col-md-6 form-group'>
+               <label for="_jurisdictionPlace">Jurisdiction place</label>
+               <input type="text" id="_jurisdictionPlace" class='form-control'
+                      ng-model='source.jurisdiction_place_id'
+                      title="Where the source was found"/>
+            </div>
+            <div class='col-md-6 form-group'>
+               <label for="_title">Title</label>
+               <textarea id="_title" class="form-control" ng-model='source.title'></textarea>
+            </div>
+            <div class='col-md-6 form-group'>
+               <label for="_biblio">Biblio</label>
+               <textarea id="_biblio" class="form-control" ng-model='source.biblio'></textarea>
+            </div>
+            <div class='col-md-6 form-group'>
+               <label for="_abbrev">Abbrev.</label>
+               <textarea id="_abbrev" class="form-control" ng-model='source.abbrev'></textarea>
+            </div>
+            <div class='col-md-6 form-group'>
+               <label for="_notes">Notes</label>
+               <textarea class="form-control" id="_notes" ng-model='source.comments'></textarea>
+            </div>
+            <div class='col-md-6 form-group'>
+               <label>Researched by</label>
+               {{source.researcher.name}}   <!-- not editable -->
+            </div>
+            <div class='col-md-6 form-group'>
+               <label>Last accessed</label>
+               {{source.last_change | date}}   <!-- not editable -->
+            </div>
+         </div>
+      </div>
+   </div>
+
+<div style='display:none'>
+ 
+<div class="sourceDetails">
+   <div id="pane1">
+      <div class="scrollable">
+         <div class="buttons">
+            <input type="button" id="showAllRepr" value="Back"/>
+            <input type="button" id="previousRepr" value="&#x25C0;"/>
+            <input type="button" id="nextRepr" value="&#x25B6;"/>
+            <span style="border-left: 1px solid black; margin: 0 5px"></span>
+
+            <input type="button" id="grayscaleButton" value="Grayscale"/>
+            <input type="button" id="edgesButton" value="Edges"/>
+            <input type="button" id="invertButton" value="Invert"/>
+            <input type="button" id="noiseButton" value="Remove noise"/>
+         </div>
+         <img alt="Document not found" src=""/>
+      </div>
+      <div id="sourceCitation">
+         <div class="moreCitation">
+            <form id="citationForm">
+               <input type="hidden" name="sourceId" value="{{s.id}}"/>
+               <div class="arrow" title="Edit source citation"></div>
+               <div class="details">
+
+                  {% if s.repositories.all %}
+                  <fieldset>
+                     <legend>Repositories</legend>
+                     <!--<div class="actions"> 
+                        <input type="button" value="+"/>
+                        <input type="button" value="-"/>
+                     </div>-->
+                     {% for r in s.repositories.all %}
+                     <div class="repositoryInfo">
+                        <div class="fieldGroup">
+                           <span class="field">
+                              <label for="_repoName1">Name</label>
+                              <input type="text" id="_repoName1" value="{{r.name}}"
+                                     name='_repoName'
+                                     title="A repository is a physical (or Internet) location where the source was found. It will in general give access to several sources">
+                           </span>
+                           <span class="field">
+                              <label for="_repoType1">Type</label>
+                              <select name="_repoType">
+                                  <option>unknown</option>
+                                  {% for t in repository_types %}
+                                  <option
+                                     {% if t.name == r.type.name %}
+                                     selected
+                                     {% endif %}
+                                  >{{t.name}}</option>
+                                  {% endfor %}
+                              </select>
+                           </span>
+                        </div>
+                        <span class="field">
+                           <label for="_repoAddr1">Address/URL</label>
+                           <textarea lines="3" name='_repoAddr'>{{s.repo.url}}</textarea>
+                        </span>
+                     </div> <!-- repositoryInfo -->
+                     {% endfor %}
+                  </fieldset>
+                  {% endif %}
+
+                  <div class="buttons">
+                     <input type="button" value="Save" name="save"/>
+                     <input type="button" value="Cancel" name="cancel"/>
+                  </div>
+               </div>{# details #}
+           </form> {# citationForm #}
+         </div> {# moreInfo #}
+      </div> {# sourceInfo #}
+
+      <div id="sourceGallery" class="gallery">
+         <div class="actions">
+            <input type="button" value="+"/>
+            <input type="button" value="-"/>
+            <input type="button" title="Zoom in on this specific representation (you can also double-click)" id="viewRepr" value="View"/>
+            <br>
+            {% if s.higher_source_id %}
+            <input type="checkbox" title="View representations for the higher sources" id="viewHighRepr"/>Higher sources
+            {% endif %}
+
+         </div>
+      </div>
+  </div> {# pane1 #}
+
+  {# ----- Generated ------ #}
+
+  <h3>Information / Claims</h3>
+  <div class="onUse">The persons cited in this section are the ones referenced in the source document. They are not related to existing persons in the database. Such links are created in the Conclusions section below.</div>
+  <div class="buttons">
+     <input type="button" value="+ Event"/>
+     <input type="button" value="+ Relationship"/>
+     <input type="button" value="+ Characteristic"/>
+
+  <div class="containers">
+     {% for a in s.asserts %}
+
+     <div class="info
+        {% if a.subject2.0 == 0 %}  {# Persona #}
+      p2p
+        {% elif a.subject2.0 == 1 %}  {# Event #}
+      event
+        {% elif a.subject2.0 == 2 %}  {# Characteristic #}
+      attr
+        {% endif %}
+
+        {% if a.disproved %}
+      disproved
+        {% endif %}
+     "/>
+
+        {% if a.subject2.0 == 0 %}  {# Persona #}
+        <input value="{{a.subject1.1.name}} ({{a.subject1.1.id}})"/> (above)
+        is the same as <input value="{{a.subject2.name}} ({{a.subject1.id}})"/>
+
+        {% elif a.subject2.0 == 1 %}  {# Event #}
+        A <select><option selected>{{a.subject2.1.type.name}}</option></select>
+        took place <input value="{{a.date|default:""}}"/>
+        in <input value="{{a.place|default:""}}">
+        <span class="surety" _scheme="1" _order="3"></span>
+        <br>
+        <input value="{{a.subject1.1.name}} ({{a.subject1.1.id}})"/> was a
+        <select><option selected>{{a.subject2.2}}</option></select> at this event
+
+        {% elif a.subject2.0 == 2 %}  {# Characteristic #}
+        <input value="{{a.subject1.1.name}} ({{a.subject1.1.id}})"/>
+        <select>
+           <option selected>{{a.subject2.1.name}}</option>
+        </select>
+        was
+             {% for pname, pval in a.subject2.2 %}
+             <span class="char">{{pname}}</span>: {{pval}}<br>
+             {% endfor %}
+        on <input value="{{a.date|default:""}}"/>
+
+        {% endif %}
+
+        {% if a.rationale %}
+        because <input value="{{a.rationale|default:""}}"/>
+        {% endif %}
+
+        <span class="surety" _scheme="{{a.surety.scheme_id}}" _order="{{a.surety.sequence_number}}"></span>
+        <div class="buttons">
+           <input type="button" value="+" title="Add a person to this event">
+           {#<input type="button" value="-"> #}
+        </div>
+     </div> {# info #}
+     {% endfor %}
+  </div>  {# containers #}
+
+  {# ----- Information ---- #}
+
+  <hr style="margin-top:40px">
+  Below is just a mockup
+
+  <h3>Information / Claims</h3>
+  <div class="info event">   {# Describes one piece of info from the source #}
+     A <select>
+        <option selected>Marriage</option>
+        <option>Birth</option>
+        <option>Death</option>
+        <option>Event</option>
+       </select> took place <input value="1900-01-01"/>
+     in <input value="Paris, France"/>
+     <span class="surety" _scheme="1" _order="1"></span>
+     <br>
+     <input value="John Smith"/> was a <select>
+        <option selected>husband</option>
+        <option>Aide</option>
+        <option>Celebrant</option>
+        <option>Clergy</option>
+        <option>Familly</option>
+        <option>Signed by</option>
+     </select> at this event.
+     <span class="surety" _scheme="1" _order="1"></span>
+     <br>
+     <input value="Mary Clyde"/> was a <select><option selected>wife</option></select> at this event.
+     <span class="surety" _scheme="1" _order="1"></span>
+     <br>
+     <input value="Henry Duval"/> was a <select><option selected>witness</option></select> at this event.
+     <span class="surety" _scheme="1" _order="1"></span>
+     <br>
+     <input value="Robert Smith"/> was a <select><option selected>witness</option></select> at this event.
+     <span class="surety" _scheme="1" _order="1"></span>
+
+     <div class="buttons">
+        <input type="button" value="+">
+        <input type="button" value="-">
+     </div>
+  </div>
+
+  <div class="info p2p">
+     <input value="Robert Smith"/> is <select>
+        <option selected>brother</option>
+        <option>sister</option>
+        <option>daughter</option>
+        <option>son</option>
+        <option>father</option>
+        <option>mother</option>
+        <option>neighbor</option>
+        <option>Godfather</option>
+        <option>Godmother</option>
+     </select> to <input value="John Smith"/> on <input value=""/>
+     <span class="surety" _scheme="1" _order="2"></span>
+  </div>
+
+  <div class="info p2p">
+     <input value="Henry Duval"/> is <select><option selected>neighbor</option></select> to <input value="Mary Clyde"/> on <input value="1900-01-01"/>.
+     <span class="surety" _scheme="1" _order="2"></span>
+  </div>
+
+  <div class="info attr">
+     <input value="John Smith"/> <select>
+        <option selected>Residence</option>
+        <option>Occupation</option>
+        <option>Education</option>
+        <option>Number of children</option>
+     </select> was <input value="address"/> on <input value="before 1900-01-01"/>
+     <span class="surety" _scheme="1" _order="2"></span>
+  </div>
+
+  <div class="info attr">
+     <input value="John Smith"/> <select><option selected>Occupation</option></select> was <input value="Work"/> on <input value="1900-01-01"/>
+     <span class="surety" _scheme="1" _order="2"></span>
+  </div>
+
+  {# -----  Conclusions ------ #}
+  <h3>Conclusions</h3>
+  <div class="onUse">This section associated persons cited in the source with persons already in the database</div>
+
+  <div class="info p2p">
+     <input value="John Smith"/> (above) is the same as <input value="John D. Smith (23)"/>
+     because <input value="Some reasoning"/>
+     <span class="surety" _scheme="1" _order="2"></span>
+  </div>
+
+  <div class="info p2p">
+     <input value="Mary Clyde"/> (above) is the same as <input value="Mary Clyde (262)"/>
+     because <input value="Some reasoning"/>
+     <span class="surety" _scheme="1" _order="2"></span>
+  </div>
+
+  <div class="info p2p disproved">
+     <input value="Mary Clyde"/> (above) is <b>not</b> the same as <input value="Mary Clyde (26)"/>
+     because <input value="the second one was already dead on 1900-01-01"/>
+     <span class="surety" _scheme="1" _order="2"></span>
+  </div>
+
+
+  <div class="info event">
+     A <select><option selected>Death</option></select>
+     took place <input value="before 1900-01-01"/> in <input value=""/>
+     because <input value="John Smith was orphan at his marriage"/>
+     <span class="surety" _scheme="1" _order="3"></span>
+     <br>
+     <input value="Paul Smith (892)"/> was a <select><option selected>principal</option></select> at this event.
+     <span class="surety" _scheme="1" _order="1"></span>
+  </div>
+
+  </div>
+</div> {# sourceDetails #}
+
+<!--
+{% endblock contents %}
+{% block script %}
+$(document).ready(function(){
+   var schemes = {
+   {% for i, s in schemes.items %}
+     {{i}}: [
+     {% for p in s %}
+        '{{p.name}}',
+     {% endfor %}
+     ],
+   {% endfor %}
+   };
+   var parts = {{parts|safe}};
+   var repr = [
+      {% for r in s.representations.all %}
+      new Representation({{r.id}}, '{{r.comments}}'),
+      {% endfor %}
+   ];
+   initSource(schemes, parts, repr);
+});
+-->
+</div>
+
+</div>
