@@ -131,40 +131,6 @@ def list_of_citations(medium, src=None):
                    'fromHigher': v[1]} for k, v in result.iteritems())
 
 
-def citationParts(request, medium):
-    """
-    Return the list of citation parts needed for this medium.
-    :param medium: either the id of the mediaType, or the id of a source.
-    """
-    if medium.isdigit():
-        src = models.Source.objects.get(id=medium)
-        result = list_of_citations(None, src)
-    else:
-        result = list_of_citations(medium)
-    return HttpResponse(to_json(result), content_type="application/json")
-
-
-def fullCitation(request):
-    """
-    Compute the full citation, given the parts. This does not edit the
-    database.
-    :return: a dictionary of 'full', 'short' and 'biblio'.
-    """
-    result = {}
-
-    if request.method == 'POST':
-        medium = request.POST.get('sourceMediaType')
-        params = request.POST
-
-        if request.POST.get('_higherSource'):
-            higher = models.Source.objects.get(
-                id=int(request.POST.get('_higherSource')))
-            params = prepare_citation_parts(higher, request.POST)
-
-        result = Citations.get_citation(medium).cite(params)
-    return HttpResponse(to_json(result), content_type="application/json")
-
-
 def view(request, id):
     """View a specific source"""
 

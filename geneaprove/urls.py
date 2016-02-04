@@ -54,10 +54,6 @@ urlpatterns = patterns(
 
     (r'^editCitation/(?P<source_id>\w+)$',
         geneaprove.views.sources.editCitation),
-    (r'^citationParts/(?P<medium>\w+)$',
-        geneaprove.views.sources.citationParts),
-    (r'^fullCitation$',
-     geneaprove.views.sources.fullCitation),
 
     # Experimental, does not work yet
     (r'^merge$',        geneaprove.views.merge.view),
