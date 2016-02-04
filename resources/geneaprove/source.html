@@ -2,7 +2,7 @@
 
    <div class='col-md-12'>
       <div class='panel panel-default'>
-         <div class='panel-heading'>Citation details: {{source.title}}</div>
+         <div class='panel-heading'>Citation Details</div>
          <div class='panel-body'>
             <div class='col-md-12 form-group floatlabel'>
                <select id='_sourceType'
@@ -15,10 +15,24 @@
                <label>Source Type</label>
             </div>
 
+            <div class='col-md-12 form-group floatlabel' ng-if='source.medium'>
+               <span ng-bind-html='source.title' class='form-control nonempty' readonly></span>
+               <label>Full Citation</label>
+            </div>
+
+            <div class='col-md-12 form-group floatlabel' ng-if='source.medium'>
+               <span ng-bind-html='source.abbrev' class='form-control nonempty' readonly></span>
+               <label>Short Citation</label>
+            </div>
+
+            <div class='col-md-12 form-group floatlabel' ng-if='source.medium'>
+               <span ng-bind-html='source.biblio' class='form-control nonempty' readonly></span>
+               <label>Bibliography Citation</label>
+            </div>
+
             <div gp-float-label model='source.higher_source_id'
                  title='Select the source in which this one was found, for instance a specific will inside a will book'
                  label='Parent source'></div>
-
 
             <div gp-float-label ng-repeat='p in required_parts'
                  model='cached_parts[p]'
@@ -37,7 +51,7 @@
    <!-- Details common to all sources, needed by the GenTech data model -->
    <div class='col-md-12'>
       <div class='panel panel-default'>
-         <div class='panel-heading'>Research details</div>
+         <div class='panel-heading'>Research Details</div>
          <div class='panel-body'>
 
             <div gp-float-label model='source.subject_date_id'
@@ -52,13 +66,9 @@
                  title='Where the source was found'
                  label='Jurisdiction place'></div>
 
-            <div gp-float-label model='source.abbrev' label='Abbrev.'></div>
-
-            <div gp-float-label model='source.title' label='Title' lines=3></div>
-            <div gp-float-label model='source.biblio' label='Biblio' lines=3></div>
             <div gp-float-label model='source.comments' label='Notes' lines=3></div>
 
-            <div class='col-md-6 floatlabel form-group'>
+            <div class='col-md-12 form-group floatlabel'>
                <input readonly class='nonempty form-control' value="{{source.researcher.name}} (changed on {{source.last_change | date}})"/>
                <label>Researched by</label>
             </div>

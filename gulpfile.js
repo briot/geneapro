@@ -54,6 +54,7 @@ gulp.task('js', function() {
       // Finally add third parties that are already minified
       .pipe($.addSrc.prepend([
          'node_modules/angular/angular.min.js',
+         'node_modules/angular-sanitize/angular-sanitize.min.js',
          'node_modules/angular-ui-router/release/angular-ui-router.min.js',
          'node_modules/d3/d3.min.js',
          'node_modules/angular-local-storage/dist/angular-local-storage.min.js',

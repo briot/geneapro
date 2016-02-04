@@ -2,8 +2,8 @@ var app = angular.module(
       'geneaprove',
       ['ui.router', 
        'LocalStorageModule',
-       'lr.upload'
-       // 'ngSanitize', 'ngDialog', 'ngQuickDate', 'ngCsv',
+       'lr.upload',
+       'ngSanitize', //'ngDialog', 'ngQuickDate', 'ngCsv',
       ]).
 
 config(function($urlRouterProvider, $httpProvider) {
