@@ -33,8 +33,8 @@
       "gulp-cssmin": "^0.1.7"
    },
    "dependencies": {
-      "angular": "1.2.x",
-      "angular-sanitize": "1.2.x",
+      "angular": "1.4.x",
+      "angular-sanitize": "1.4.x",
       "angular-local-storage": "0.1.x",
       "angular-ui-router": "0.2.13",
       "angular-upload": "1.0.11",

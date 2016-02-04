@@ -73,7 +73,7 @@ gulp.task('static', function() {
 });
 
 gulp.task('default', ['css', 'js', 'static']);
-gulp.task('watch', [], function() {
+gulp.task('watch', ['default'], function() {
    gulp.watch(resources.scss, ['css']);
    gulp.watch(resources.bootstrap, ['css']);
    gulp.watch(resources.html, ['js']);
