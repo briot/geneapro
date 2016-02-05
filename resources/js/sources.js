@@ -34,7 +34,7 @@ controller('sourceCtrl', function($scope, $http, $stateParams) {
    // The citation template for the currently selected medium
    var citation = {full: '', short: '', biblio: ''};
 
-   $scope.source = {};
+   $scope.source = {}
 
    if (id === undefined) {
       id = -1;
@@ -78,37 +78,39 @@ controller('sourceCtrl', function($scope, $http, $stateParams) {
    $scope.$watch('cached_parts', computeCitation, true);
 
    function computeCitation() {
-      var full = citation.full;
-      var biblio = citation.biblio;
-      var abbrev = citation.short;
+      if ($scope.source.medium) {
+         var full = citation.full;
+         var biblio = citation.biblio;
+         var abbrev = citation.short;
 
-      angular.forEach($scope.required_parts, function(name) {
-         // Use a function for the replacement, to protect "$" characters
-         function repl() { return $scope.cached_parts[name] || ''}
-         full = full.replace('{{' + name + '}}', repl);
-         biblio = biblio.replace('{{' + name + '}}', repl);
-         abbrev = abbrev.replace('{{' + name + '}}', repl);
-      });
+         angular.forEach($scope.required_parts, function(name) {
+            // Use a function for the replacement, to protect "$" characters
+            function repl() { return $scope.cached_parts[name] || ''}
+            full = full.replace('{{' + name + '}}', repl);
+            biblio = biblio.replace('{{' + name + '}}', repl);
+            abbrev = abbrev.replace('{{' + name + '}}', repl);
+         });
 
-      /** Remove special chars like commas, quotes,... when they do not
-       *  separate words, in case some parts has not been set.
-       */
-      function cleanup(str) {
-         var s = ''
-         while (s != str) {
-            s = str;
-            str = str.replace(/^ *[,:;.] */g, ''). // leading characters
-                      replace(/"[,.]?"/g, '').
-                      replace(/\( *[,.:;]? *\)/g, '').
-                      replace("<I></I>", '').
-                      replace(/[,:;] *$/, '').
-                      replace(/([,:;.]) *[,:;.]/g, "$1");
+         /** Remove special chars like commas, quotes,... when they do not
+          *  separate words, in case some parts has not been set.
+          */
+         function cleanup(str) {
+            var s = ''
+            while (s != str) {
+               s = str;
+               str = str.replace(/^ *[,:;.] */g, ''). // leading characters
+                         replace(/"[,.]?"/g, '').
+                         replace(/\( *[,.:;]? *\)/g, '').
+                         replace("<I></I>", '').
+                         replace(/[,:;] *$/, '').
+                         replace(/([,:;.]) *[,:;.]/g, "$1");
+            }
+            return str;
          }
-         return str;
+         
+         $scope.source.title = cleanup(full);
+         $scope.source.biblio = cleanup(biblio);
+         $scope.source.abbrev = cleanup(abbrev);
       }
-      
-      $scope.source.title = cleanup(full);
-      $scope.source.biblio = cleanup(biblio);
-      $scope.source.abbrev = cleanup(abbrev);
    }
 });

@@ -1,0 +1,36 @@
+.floatlabel {
+   position: relative;
+   margin-top: 0;
+   margin-bottom: 0.4em;
+   vertical-align: middle;
+
+   input {
+      outline: 0;
+      background: transparent;
+      box-sizing: border-box;
+   }
+   label {
+      color: #888;
+      font-weight: normal;
+      position: absolute;
+      margin-left: 5px;
+      top: 50%;
+      margin-top: -0.5em;
+      transition: 0.2s;
+      box-sizing: border-box;
+   }
+   select.nonempty + label,
+   select:focus + label {
+      display: none;
+   }
+
+   input.nonempty + label,
+   input:focus + label,
+   span.nonempty + label,
+   textarea.nonempty + label,
+   textarea:focus + label {
+      font-size: 0.6em;
+      top: 0;
+      margin-top: 0;
+   }
+}

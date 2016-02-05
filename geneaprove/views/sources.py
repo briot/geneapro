@@ -14,7 +14,9 @@ from geneaprove.utils.citations import Citations
 
 
 def create_empty_source():
-    return models.Source()
+    s = models.Source()
+    s.title = 'Untitled source'
+    return s
 
 
 def extended_sources(ids, schemes):

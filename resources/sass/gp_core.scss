@@ -1,0 +1,10 @@
+
+/**
+ * Set this on a panel-heading when it is clickable to reveal details.
+ */
+.editable-title {
+   cursor: pointer;
+   &:before {
+      padding-right: 10px;
+   }
+}
