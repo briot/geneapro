@@ -4,7 +4,10 @@ config(function($stateProvider) {
    state('person', {
       url: '/person?id',
       templateUrl: 'geneaprove/person.html',
-      controller: 'personCtrl'
+      controller: 'personCtrl',
+      data: {
+         pageTitle: '[Geneaprove] Person {{id}}'
+      }
    });
 }).
 

@@ -1,6 +1,6 @@
 var app = angular.module(
       'geneaprove',
-      ['ui.router', 
+      ['ui.router',
        'LocalStorageModule',
        'lr.upload',
        'ngSanitize', //'ngDialog', 'ngQuickDate', 'ngCsv',
@@ -14,11 +14,20 @@ config(function($urlRouterProvider, $httpProvider) {
       $httpProvider.defaults.xsrfHeaderName = 'X-CSRFToken';
 }).
 
-run(function(gpd3, $rootScope, localStorageService, $state) {
+run(function(gpd3, $rootScope, localStorageService, $state, $interpolate) {
    // (readonly, set via Pedigree.select())
    $rootScope.decujus = 1;
 
    $rootScope.$state = $state;
+
+   // Change the window title automatically using state's data.pageTitle
+   // parameter. Only the state data is available for substitution.
+   $rootScope.$on('$stateChangeSuccess', function(event, toState, toParams) {
+      $rootScope.pageTitle = (
+         toState.data ?
+            $interpolate(toState.data.pageTitle)(toParams) : 'Geneaprove');
+   });
+
 
    var defaultSettings = {
       // Show a tick mark next to events with a souce

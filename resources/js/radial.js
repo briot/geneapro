@@ -9,7 +9,10 @@ config(function($stateProvider) {
       // it to the history), but not reload the controller, since otherwise
       // any animation in SVG would not occur. See $location.search(...)
       reloadOnSearch: false,
-      controller: 'radialCtrl'
+      controller: 'radialCtrl',
+      data: {
+         pageTitle: '[Genaprove] Fan chart for person {{id}}'
+      }
    });
 }).
 
@@ -35,7 +38,7 @@ controller('radialCtrl', function($scope,  Pedigree, $state, $stateParams, conte
    $scope.showPerson = function() {
       $state.go('person', {id: contextMenu.data.d.id});
    };
-  
+
 }).
 
 directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMenu) {
@@ -106,10 +109,10 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
                 })
                 .separation(function(p1, p2) {
                    return (p1.parent == p2.parent ? 1 : 2) /* / p1.depth */ });
-            
+
             var diagonal = d3.svg.diagonal.radial()
                 .projection(function(d) { return [d.y, d.x / 180 * Math.PI]});
-            
+
             d3.select(element[0]).select('svg')
                 .attr("width", diameter)
                 .attr("height", diameter - 150);
@@ -122,7 +125,7 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
             link.exit().remove();
             link.enter().insert("path", ':first-child').attr("class", "link");
             link.attr("d", diagonal);
-            
+
             group.selectAll('.node').remove();
 
             var node = group.selectAll(".node")
@@ -150,7 +153,7 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
                 .attr("transform", function(d) { return d.x < 180 ? "translate(8)" : "rotate(180)translate(-8)"; })
                 .text(function(d) { return d.surn; });
             }
-            
+
             group.setTranslate(diameter / 2, diameter / 2).applyScale(1);
          }
       }

@@ -4,17 +4,26 @@ config(function($stateProvider) {
    state('sources', {
       url: '/sources/list',
       templateUrl: 'geneaprove/sources.html',
-      controller: 'sourcesCtrl'
+      controller: 'sourcesCtrl',
+      data: {
+         pageTitle: '[GP] List of sources'
+      }
    }).
    state('source_new', {
       url: '/sources/new',
       templateUrl: 'geneaprove/source.html',
-      controller: 'sourceCtrl'
+      controller: 'sourceCtrl',
+      data: {
+         pageTitle: '[GP] New Source'
+      }
    }).
    state('source', {
       url: '/sources/:id',
       templateUrl: 'geneaprove/source.html',
-      controller: 'sourceCtrl'
+      controller: 'sourceCtrl',
+      data: {
+         pageTitle: '[GP] Source {{id}}'
+      }
    });
 }).
 

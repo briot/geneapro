@@ -4,7 +4,10 @@ config(function($stateProvider) {
    state('stats', {
       url: '/stats',
       templateUrl: 'geneaprove/stats.html',
-      controller: 'statsCtrl'
+      controller: 'statsCtrl',
+      data: {
+         pageTitle: '[Genaprove] Statistics'
+      }
    });
 }).
 
@@ -45,17 +48,17 @@ controller('statsCtrl', function($scope, $http, $stateParams, $rootScope, $windo
       svg.append("g")
          .attr('class', 'grid')
          .attr('transform', 'translate(' + 0 + ',' + (height - margin) + ')')
-         .call(make_x_axis().tickSize(-height, 0, 0).tickFormat('')); 
+         .call(make_x_axis().tickSize(-height, 0, 0).tickFormat(''));
       svg.append("g")
          .attr('class', 'grid')
          .attr("transform", 'translate(' + margin + ',0)')
-         .call(make_y_axis().tickSize(-width, 0, 0).tickFormat('')); 
+         .call(make_y_axis().tickSize(-width, 0, 0).tickFormat(''));
 
       // The axis
       svg.append("svg:g")
          .attr('class', 'axis x-axis')
          .attr('transform', 'translate(' + 0 + ',' + (height - margin) + ')')
-         .call(make_x_axis()); 
+         .call(make_x_axis());
 
       svg.append("svg:g")
          .attr('class', 'axis y-axis')
@@ -100,11 +103,11 @@ controller('statsCtrl', function($scope, $http, $stateParams, $rootScope, $windo
          .domain($scope.data.ages.map(function (d) {return d[0]; }))
          .rangePoints([margin, width]);
       var y = d3.scale.linear()
-         .domain([0,          
+         .domain([0,
                   d3.max(remapped, function(d) {
                      return d3.max(d, function(d) { return d.y0 + d.y });
                   })])
-         .range([height - margin, 0]);   
+         .range([height - margin, 0]);
 
       var colors = d3.scale.category10();
 
@@ -122,17 +125,17 @@ controller('statsCtrl', function($scope, $http, $stateParams, $rootScope, $windo
       svg.append("g")
          .attr('class', 'grid')
          .attr('transform', 'translate(' + 0 + ',' + (height - margin) + ')')
-         .call(make_x_axis().tickSize(-height, 0, 0).tickFormat('')); 
+         .call(make_x_axis().tickSize(-height, 0, 0).tickFormat(''));
       svg.append("g")
          .attr('class', 'grid')
          .attr("transform", 'translate(' + margin + ',0)')
-         .call(make_y_axis().tickSize(-width, 0, 0).tickFormat('')); 
+         .call(make_y_axis().tickSize(-width, 0, 0).tickFormat(''));
 
       // The axis
       svg.append("svg:g")
          .attr('class', 'axis x-axis')
          .attr('transform', 'translate(' + 0 + ',' + (height - margin) + ')')
-         .call(make_x_axis()); 
+         .call(make_x_axis());
 
       svg.append("svg:g")
          .attr('class', 'axis y-axis')
@@ -147,7 +150,7 @@ controller('statsCtrl', function($scope, $http, $stateParams, $rootScope, $windo
          .attr("class", "layer")
          .style("fill", function(d, i) { return colors(i); })
          .style("stroke", function(d, i) { return d3.rgb(colors(i)).darker(); });
- 
+
       // Add a rect for each date.
       var rect = groups.selectAll("rect")
             .data(function(d) { return d})

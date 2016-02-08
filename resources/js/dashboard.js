@@ -4,7 +4,10 @@ config(function($stateProvider) {
    state('main', {
       url: '',
       templateUrl: 'geneaprove/dashboard.html',
-      controller: 'mainCtrl'
+      controller: 'mainCtrl',
+      data: {
+         pageTitle: '[Genaprove] Dashboard'
+      }
    });
 }).
 

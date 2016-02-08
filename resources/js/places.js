@@ -4,7 +4,10 @@ config(function($stateProvider) {
    state('places', {
       url: '/places',
       templateUrl: 'geneaprove/places.html',
-      controller: 'placesCtrl'
+      controller: 'placesCtrl',
+      data: {
+         pageTitle: '[Genaprove] List of places'
+      }
    });
 }).
 

@@ -8,7 +8,10 @@ config(function($stateProvider) {
       url: '/fanchart?id',
       templateUrl: 'geneaprove/fanchart.html',
       reloadOnSearch: false,  // See pedigree.js
-      controller: 'fanchartCtrl'
+      controller: 'fanchartCtrl',
+      data: {
+         pageTitle: '[Genaprove] Fanchar for person {{id}}'
+      }
    });
 }).
 
@@ -212,7 +215,7 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
                      var death = data.event_to_string(d.death);
                      return (birth || '') + ' - ' + (death || '')});
             }
- 
+
             // text along curve for generations < genThreshold
             drawText(persons
                .filter(function(d) { return d.generation < FanchartLayout.genThreshold()})
@@ -306,7 +309,7 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
                   return 'translate(' + d.x + ',' + d.y + ')';
                })
                .on('contextmenu', contextmenu);
-             
+
             gpd3.setViewBox(element, layout);
          }
       }
@@ -386,14 +389,14 @@ factory('FanchartLayout', function($rootScope) {
             nodes.push(p);
          }
       }
-  
+
       // Compute the bounding box for the fan itself, as if it was
       // centered on (0, 0).
       var minX = 0;
       var minY = 0;
       var maxX = 0;
       var maxY = 0;
-  
+
       /** Register the layout information for a given individual
        *  ??? We should also check at each of the North,West,South,East
        *  points, since these can also intersect the bounding box. We
@@ -422,7 +425,7 @@ factory('FanchartLayout', function($rootScope) {
 
       function doLayout(indiv, minAngle, maxAngle, separator) {
          setupIndivBox(indiv, minAngle, maxAngle);
-  
+
          if (indiv.generation < settings.gens && indiv.parents) {
             var father = indiv.parents[0];
             var mother = indiv.parents[1];
@@ -457,7 +460,7 @@ factory('FanchartLayout', function($rootScope) {
 
       // The space there should be below centerYx so that the fanchart
       // does not hide the decujus box partially.
-  
+
       var angle = PI_TWO - (maxAngle - minAngle);
       var minDist;  // distance between left side of decujus box and fan center
       if (angle >= Math.PI) {
@@ -477,9 +480,9 @@ factory('FanchartLayout', function($rootScope) {
          height: height,
          childnodes: childnodes,
          nodes: nodes};
-  
+
       // Compute the position for the children and decujus
-  
+
       var decujus = data.main;
       childnodes.push(decujus);
       decujus.x = - boxWidth / 2;   // relative to centerX
@@ -487,7 +490,7 @@ factory('FanchartLayout', function($rootScope) {
       decujus.w = boxWidth;
       decujus.h = boxHeight;
       decujus.fs = textHeight;
-  
+
       var children = data.main.children;
       if (children && children.length) {
          var y = decujus.y;

@@ -9,7 +9,10 @@ config(function($stateProvider) {
       // it to the history), but not reload the controller, since otherwise
       // any animation in SVG would not occur. See $location.search(...)
       reloadOnSearch: false,
-      controller: 'pedigreeCtrl'
+      controller: 'pedigreeCtrl',
+      data: {
+         pageTitle: '[Genaprove] Pedigree for person {{id}}'
+      }
    });
 }).
 
@@ -42,7 +45,7 @@ controller('pedigreeCtrl', function($scope,  Pedigree, $state, $stateParams, con
    $scope.showPerson = function() {
       $state.go('person', {id: contextMenu.data.d.id});
    };
-  
+
 }).
 
 directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $location, contextMenu) {
