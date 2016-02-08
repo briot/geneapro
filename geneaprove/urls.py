@@ -26,7 +26,8 @@ urlpatterns = patterns(
     (r'^data/persona/(\d+)$',  geneaprove.views.persona.view),
     (r'^data/places$',         geneaprove.views.places.view_list),
     (r'^data/sources/lists$',  geneaprove.views.sources.view_list),
-    (r'^data/sources/(-?\d+)$',  geneaprove.views.sources.view),
+    (r'^data/sources/(-?\d+|null)$',  geneaprove.views.sources.view),
+    (r'^data/sources/(-?\d+|null)/saveparts$', geneaprove.views.sources.editCitation),
     (r'^data/suretySchemes$',  geneaprove.views.persona.surety_schemes_view),
     (r'^data/event/(\d+)$',    geneaprove.views.events.view),
     (r'^data/legend$',         geneaprove.views.rules.getLegend),
@@ -54,9 +55,6 @@ urlpatterns = patterns(
 
     (r'^quilts/(\d+)?$',
      geneaprove.views.graph.quilts_view),
-
-    (r'^editCitation/(?P<source_id>\w+)$',
-        geneaprove.views.sources.editCitation),
 
     # Experimental, does not work yet
     (r'^merge$',        geneaprove.views.merge.view),

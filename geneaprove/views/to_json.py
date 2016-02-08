@@ -147,6 +147,7 @@ class ModelEncoder(json.JSONEncoder):
                 subject_date=obj.subject_date,
                 medium=obj.medium,
                 title=obj.title,
+                id=obj.id,
                 abbrev=obj.abbrev,
                 biblio=obj.biblio,
                 last_change=obj.last_change,

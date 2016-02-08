@@ -15,9 +15,10 @@ from geneaprove.utils.citations import Citations
 
 def create_empty_source():
     s = models.Source()
-    s.title = 'Untitled source'
-    return s
 
+    # ??? Should get the researcher from the logged person
+    s.researcher = models.Researcher.objects.get(id=1)
+    return s
 
 def extended_sources(ids, schemes):
     """Return a dict of Source instances, with extra attributes
@@ -37,10 +38,9 @@ def extended_sources(ids, schemes):
         sources[s.id] = s
         s.asserts = []
 
-    for id in ids:
-        if id not in sources:
-            sources[id] = create_empty_source()
-            sources[id].asserts = []
+    if -1 in ids:
+        sources[-1] = create_empty_source()
+        sources[-1].asserts = []
 
     # Assertions deducted from this source
 
@@ -158,9 +158,15 @@ def view(request, id):
 def editCitation(request, source_id):
     """
     Perform some changes in the citation parts for a source, and returns a
-    JSON with the list of parts and their values.
+    JSON similar to view():
+        {source: ...,  parts: ... }
     """
-    src = models.Source.objects.get(id=source_id)
+    source_id = int(source_id)
+
+    if source_id == -1:
+        src = create_empty_source()
+    else:
+        src = models.Source.objects.get(id=source_id)
 
     if request.method == 'POST':
         new_type = request.POST.get('sourceMediaType')
@@ -175,7 +181,7 @@ def editCitation(request, source_id):
         for key, value in request.POST.iteritems():
             if key in ('csrfmiddlewaretoken', 'sourceId'):
                 continue
-            elif key == 'sourceMediaType':
+            elif key == 'medium':
                 # Only set the medium if different from the parent. Otherwise,
                 # leave it null, so that changing the parent also changes the
                 # lower level sources
@@ -183,26 +189,23 @@ def editCitation(request, source_id):
                     src.medium = value
                 else:
                     src.medium = None
-            elif key == '_notes':
+            elif key == 'comments':
                 src.comments = value
-            elif key == '_abbrev':
+            elif key == 'abbrev':
                 src.abbrev = value
-            elif key == '_biblio':
+            elif key == 'biblio':
                 src.biblio = value
-            elif key == '_title':
+            elif key == 'title':
                 src.title = value
-            elif key == '_subjectDate':
+            elif key == 'subject_date':
                 src.subject_date = value
-            elif key == '_subjectPlace':
+            elif key == 'subject_place':
                 pass
                 # src.subject_place = value
-            elif key == '_jurisdictionPlace':
+            elif key == 'jurisdiction_place':
                 pass
                 #src.jurisdiction_place = value
-            elif key in ('_repoName', '_repoType', '_repoAddr'):
-                # ??? Not handled yet
-                pass
-            elif key == '_higherSource':
+            elif key == 'higher_source_id':
                 src.higher_source_id = int(value)
             elif key[0] == '_':
                 raise Exception('Field not processed: %s' % key)
@@ -228,9 +231,11 @@ def editCitation(request, source_id):
 
         src.save()
 
-    return HttpResponse(
-        to_json(list_of_citations(src.medium, src)),
-        content_type="application/json")
+    data = {
+        'source': src,
+        'parts': list_of_citations(src.medium, src)
+    }
+    return HttpResponse(to_json(data), content_type='application/json')
 
 
 def view_list(request):

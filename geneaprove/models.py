@@ -421,12 +421,15 @@ The value for this field is the key into the citations.py dictionary that
 documents the citation styles.""")
     title = models.TextField(
         null=True,
+        default='Untitled',
         help_text="The (possibly computed) full citation for this source")
     abbrev = models.TextField(
         null=True,
+        default='Untitled',
         help_text="An (possibly computed) abbreviated citation")
     biblio = models.TextField(
         null=True,
+        default='Untitled',
         help_text="Full citation for a bibliography")
 
     comments = models.TextField(null=True)

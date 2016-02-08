@@ -31,8 +31,12 @@ controller('sourcesCtrl', function($scope, Paginated) {
    Paginated.instrument($scope, '/data/sources/list', 'settings.sources.rows');
 }).
 
-controller('sourceCtrl', function($scope, $http, $stateParams) {
+controller('sourceCtrl', function($scope, $http, $state, $stateParams) {
    var id = $stateParams.id;
+   if (id === undefined) {
+      id = -1;
+   }
+
    var re_part = /\{\{([^}]+)\}\}/g;
 
    // The values that have been set by the user for the fields. This might
@@ -43,23 +47,19 @@ controller('sourceCtrl', function($scope, $http, $stateParams) {
    // The citation template for the currently selected medium
    var citation = {full: '', short: '', biblio: ''};
 
+   // Always display the citation if the source does not exist yet
+   $scope.showCitation = id = -1;
    $scope.source = {}
 
-   if (id === undefined) {
-      id = -1;
-   }
-
+   // ??? Should use a service instead
    $http.get('/data/sources/' + id).then(function(resp) {
-      $scope.source = resp.data.source;
       $scope.source_types = resp.data.source_types;
-      $scope.parts = resp.data.parts;
-      angular.forEach($scope.parts, function(p) {
-         $scope.cached_parts[p.name] = p.value;
-      });
+      parseJson(resp);
    });
 
    $scope.$watch('source.medium', function(val) {
       if (val) {
+         // ??? Should use a service instead
          $http.get('/data/citationModel/' + val).then(function(resp) {
             citation = resp.data;
             var required = [];
@@ -85,6 +85,19 @@ controller('sourceCtrl', function($scope, $http, $stateParams) {
    });
 
    $scope.$watch('cached_parts', computeCitation, true);
+
+   // Parse a JSON response from the server (the 'source' and 'parts'
+   // fields)
+   function parseJson(resp) {
+      $scope.source = resp.data.source;
+      if ($scope.source.id == null) {
+         $scope.source.id = -1;
+      }
+      $scope.parts = resp.data.parts;
+      angular.forEach($scope.parts, function(p) {
+         $scope.cached_parts[p.name] = p.value;
+      });
+   }
 
    function computeCitation() {
       if ($scope.source.medium) {
@@ -116,10 +129,29 @@ controller('sourceCtrl', function($scope, $http, $stateParams) {
             }
             return str;
          }
-         
+
          $scope.source.title = cleanup(full);
          $scope.source.biblio = cleanup(biblio);
          $scope.source.abbrev = cleanup(abbrev);
       }
    }
+
+   $scope.saveParts = function() {
+      //  ??? Should use a service instead
+      var data = angular.copy($scope.source);
+      angular.forEach($scope.required_parts, function(name) {
+         if ($scope.cached_parts[name]) {
+            data[name] = $scope.cached_parts[name];
+         }
+      });
+
+      $http.post('/data/sources/' + $scope.source.id + '/saveparts', data).
+         then(function(resp) {
+            parseJson(resp);
+            $state.transitionTo(
+               'source',
+               {id: $scope.source.id},
+               {location:'replace', reload:false});
+         });
+   };
 });

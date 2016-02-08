@@ -77,15 +77,18 @@
               <div gp-float-label model='source.comments' label='Notes' size=12 lines=5></div>
 
             </div>
+
+            <button class='btn btn-primary center-block' ng-click='saveParts()'>{{source.id>=0? "Save" : "Create"}}</button>
          </div>
       </div>
    </div>
 
    <!-- The media for the source -->
-   <div class='col-md-12'>
+   <div class='col-md-12' ng-if="source.id>=0">
       <div class='panel panel-default'>
          <div class='panel-heading'>Media</div>
          <div class='panel-body'>
+            <div gp-download-form></div>
          </div>
       </div>
    </div>

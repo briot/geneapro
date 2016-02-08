@@ -1,0 +1,62 @@
+@import "gp_vars";
+
+/**
+ * A panel that lets users upload file or drag-and-drop them
+ */
+
+.download-form {
+   $bg: #c8dadf;
+
+   padding: 60px 20px;
+   position: relative;
+   background: $bg;
+
+   .box__input {
+      text-align: center;
+      width: 100%;
+   }
+
+   .icon {
+      color: #92b0b3;
+      font-size: 5em;
+   }
+
+   // Hide the input, but still display it so that it works
+   input[type=file] {
+      width: 0.1px;
+      height: 0.1px;
+      opacity: 0;
+      overflow: hidden;
+      position: absolute;
+      z-index: -1;
+   }
+
+   label {
+      cursor: pointer;
+      width: 100%;
+      .normal {
+         font-weight: normal;
+      }
+      &:hover {
+        color: $brand-primary;
+      }
+   }
+
+   button {
+      margin-top: 20px;
+   }
+
+   .box__uploading,
+   .box__success,
+   .box__error {
+      display: none;
+   }
+
+   &.hasDnd {
+      outline: 2px dashed #92b0b3;
+      outline-offset: -10px;
+   }
+   &.dragover {
+      background: darken($bg, 10%);
+   }
+}
