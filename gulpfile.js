@@ -9,8 +9,12 @@ var resources = {
           'node_modules/font-awesome/scss/font-awesome.scss'],
    bootstrap: ['node_modules/bootstrap-sass/assets/stylesheets/bootstrap'],
    html: ['resources/geneaprove/**/*.html',
+          '!resources/geneaprove/**/\.#*.html',
+          '!resources/geneaprove/**/#*.html#',
           '!resources/geneaprove/index.html'],
-   js: ['resources/js/*'],
+   js: ['resources/js/*',
+        '!resources/js/\.#*.js',
+        '!resources/js/#*.js#'],
    statics: ['resources/fonts/*',
              'resources/geneaprove/index.html']
 };
