@@ -1,5 +1,6 @@
 from django.conf.urls import *
 from django.shortcuts import render_to_response
+from django.core.context_processors import csrf
 import geneaprove.views.pedigree
 import geneaprove.views.persona
 import geneaprove.views.places
@@ -13,7 +14,9 @@ import geneaprove.views.graph
 import geneaprove.views.importers
 
 def index(request):
-    return render_to_response('geneaprove/index.html')
+    c = {}
+    c.update(csrf(request))
+    return render_to_response('geneaprove/index.html', c)
 
 urlpatterns = patterns(
     '',
