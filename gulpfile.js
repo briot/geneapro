@@ -2,12 +2,18 @@
 var gulp = require('gulp');
 var $ = require('gulp-load-plugins')();
 
-var DEST = 'dist';
+// Changing the font-path for font-awesome seems complex without changing the
+// files themselves. Since that path defaults to "../fonts", we will simply
+// put our CSS files in DEST+'/css' to workaround the issue.
+var DEST = 'static';
+
 var resources = {
+   bootstrap: ['node_modules/bootstrap-sass/assets/stylesheets/bootstrap'],
+   fontawesome: ['node_modules/font-awesome/scss'],
    scss: ['resources/sass/*.scss',
           '!resources/sass/_*.scss',
-          'node_modules/font-awesome/scss/font-awesome.scss'],
-   bootstrap: ['node_modules/bootstrap-sass/assets/stylesheets/bootstrap'],
+          'node_modules/font-awesome/scss/font-awesome.scss'
+         ],
    html: ['resources/geneaprove/**/*.html',
           '!resources/geneaprove/**/\.#*.html',
           '!resources/geneaprove/**/#*.html#',
@@ -16,6 +22,7 @@ var resources = {
         '!resources/js/\.#*.js',
         '!resources/js/#*.js#'],
    statics: ['resources/fonts/*',
+             'resources/geneaprove/initial_data.json',
              'resources/geneaprove/index.html']
 };
 
@@ -31,9 +38,9 @@ gulp.task('css', function() {
           .pipe($.remember('all_css'))
           .pipe($.concat('geneaprove.min.css'))
        .pipe($.sourcemaps.write('.'))
-       .pipe(gulp.dest(DEST))
+       .pipe(gulp.dest(DEST + '/css'))
        .pipe($.gzip())
-       .pipe(gulp.dest(DEST));
+       .pipe(gulp.dest(DEST + '/css'));
 });
 
 gulp.task('js', function() {
@@ -66,9 +73,9 @@ gulp.task('js', function() {
 
       // Write the result
       .pipe($.concat('geneaprove.min.js'))
-      .pipe(gulp.dest(DEST))
+      .pipe(gulp.dest(DEST + '/js'))
       .pipe($.gzip())
-      .pipe(gulp.dest(DEST));
+      .pipe(gulp.dest(DEST + '/js'));
 });
 
 gulp.task('static', function() {

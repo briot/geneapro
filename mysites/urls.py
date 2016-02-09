@@ -5,19 +5,19 @@ import django.views.defaults
 import geneaprove.urls
 
 # Uncomment the next two lines to enable the admin:
-from django.contrib import admin
-admin.autodiscover()
+# from django.contrib import admin
+# admin.autodiscover()
 
 urlpatterns = patterns('',
-	(r'^', include(geneaprove.urls)),
-	(r'^geneaprove/', include(geneaprove.urls)),
-
     ## Serve static files (images and CSS). This is not recommended for use
     ## in production since this is insecure and inefficient according to the
     ## doc. One trick is commented out below and is to add a new variable
     ## in settings.py
-    (r'^%s(?P<path>.*)$' % settings.MEDIA_URL[1:],
-          static.serve, {"document_root": settings.MEDIA_ROOT}),
+    (r'^%s(?P<path>.*)$' % settings.STATIC_URL[1:],
+          static.serve, {"document_root": settings.STATIC_ROOT}),
+
+	(r'^', include(geneaprove.urls)),
+
 	#if settings.LOCAL_DEVELOPMENT:
 	#    urlpatterns += patterns("django.views",
 	#        url(r"%s(?P<path>.*)/$" % settings.MEDIA_URL[1:], "static.serve", {

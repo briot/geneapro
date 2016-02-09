@@ -1,19 +1,17 @@
 # Django settings for GeneaProve project.
 import os
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = False
 
-ADMINS = (
+MANAGERS = ADMINS = (
     ('Emmanuel Briot', 'briot.emmanuel@gmail.com'),
 )
-
-MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'geneaprove.db',
+        'NAME': 'geneaprove.sqlite',
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
@@ -47,20 +45,22 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
-# Absolute filesystem path to the directory that will hold user-uploaded files.
-# Example: "/home/media/media.lawrence.com/media/"
-MEDIA_ROOT = os.path.join(os.path.dirname(__file__), '../dist/')
-
-# URL that handles the media served from MEDIA_ROOT. Make sure to use a
-# trailing slash.
-# Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
-MEDIA_URL = '/'
-
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = ''
+STATIC_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '../static/')) + '/'
+
+# Absolute filesystem path to the directory that will hold user-uploaded files.
+# Example: "/home/media/media.lawrence.com/media/"
+MEDIA_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '../upload/'))
+
+# URL that handles the media served from MEDIA_ROOT. Make sure to use a
+# trailing slash.
+# Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
+MEDIA_URL = '/upload/'
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -112,18 +112,15 @@ ROOT_URLCONF = 'mysites.urls'
 WSGI_APPLICATION = 'mysites.wsgi.application'
 
 TEMPLATE_DIRS = (
-    os.path.join(os.path.dirname(__file__), '../dist/'),
-    # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
-    # Always use forward slashes, even on Windows.
-    # Don't forget to use absolute paths, not relative paths.
+    STATIC_ROOT,
 )
 
 INSTALLED_APPS = (
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
+    # 'django.contrib.auth',
+    # 'django.contrib.contenttypes',
     'django.contrib.sessions',
-    'django.contrib.sites',
-    'django.contrib.messages',
+    # 'django.contrib.sites',
+    # 'django.contrib.messages',
     'django.contrib.staticfiles',
 
     'geneaprove',
@@ -158,8 +155,8 @@ LOGGING = {
     },
     'handlers': {
         'mail_admins': {
-            # email all ERROR or higher to admin
-            'level': 'ERROR',
+            # email all CRITICAL or higher to admin
+            'level': 'CRITICAL',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
         },

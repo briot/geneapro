@@ -1,6 +1,7 @@
 .DS_Store
-geneaprove.db
+geneaprove.sqlite
 node_modules/
+static/
 resources/geneaprove.min.js_gz
 resources/geneaprove.min.css_gz
 resources/geneaprove.min.css
