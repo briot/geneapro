@@ -35,11 +35,10 @@
             <div class='row'>
                <div class='col-md-12 form-group floatlabel'>
                   <select id='_sourceType'
-                     class='form-control'
-                     ng-class='{nonempty: source.medium}'
+                     class='form-control nonempty'
                      title='Select the type of source. This will change the details below to those needed for proper citation'
                      ng-options='opt.id as opt.type group by opt.category for opt in source_types'
-                     ng-model='source.medium' required>
+                     ng-model='source.medium'>
                   </select>
                   <label>Source Type</label>
                </div>

@@ -103,7 +103,9 @@ factory('CitationTemplates', function($http, $q) {
     */
    function CitationTemplates() {
       this.models = [];
-      this.details = {};  // for each model, the CitationTemplate
+      this.details = {  // for each model, the CitationTemplate
+         '': new CitationTemplate({full: '', biblio: '', abbrev: ''})
+      };
    }
 
    /**
@@ -116,7 +118,10 @@ factory('CitationTemplates', function($http, $q) {
          d.resolve(self.models);
       } else {
          $http.get('/data/citationModels').then(function(resp) {
-            self.models = resp.data.source_types;
+            self.models = [{id: '',
+                            type: 'Select citation template',
+                            category: ''}].
+                concat(resp.data.source_types);
             d.resolve(self.models);
          }, function() {
             d.reject();
@@ -191,12 +196,10 @@ controller('sourceCtrl', function(
    });
 
    $scope.$watch('source.medium', function(val) {
-      if (val) {
-         CitationTemplates.get_templates(val).then(function(template) {
-            $scope.citation = template;
-            computeCitation();
-         });
-      }
+      CitationTemplates.get_templates(val).then(function(template) {
+         $scope.citation = template;
+         computeCitation();
+      });
    });
 
    $scope.$watch('cache', computeCitation, true);
@@ -204,6 +207,10 @@ controller('sourceCtrl', function(
    function computeCitation() {
       if ($scope.source.medium) {
          var c = $scope.citation.cite($scope.cache);
+      } else {
+         c = $scope.source._saved_citation;
+      }
+      if (c) {
          $scope.source.title = c.full;
          $scope.source.biblio = c.biblio;
          $scope.source.abbrev = c.abbrev;
@@ -217,6 +224,13 @@ controller('sourceCtrl', function(
       if ($scope.source.id == null) {
          $scope.source.id = -1;
       }
+      if ($scope.source.medium == null) {
+         $scope.source.medium = '';
+      }
+      $scope.source._saved_citation = {
+         full:  $scope.source.title,
+         abbrev: $scope.source.abbrev,
+         biblio: $scope.source.biblio};
       $scope.parts = resp.data.parts;
       angular.forEach($scope.parts, function(p) {
          $scope.cache[p.name] = p.value;
