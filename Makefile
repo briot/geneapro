@@ -14,6 +14,10 @@ dump:
 	./manage.py dumpdata --format=xml geneaprove > dump.xml
 	./manage.py dumpdata --format=json geneaprove | python -mjson.tool > dump.json
 
+pyinstall:
+	pyinstaller.py --name=geneaprove geneaprove.spec
+
+
 ## The following require the django extensions and graphviz
 ## See the list of installed apps in settings.py
 
