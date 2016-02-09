@@ -9,19 +9,19 @@
             <h4>Citation</h4>
             <div class='row'>
                <div class='col-md-12 form-group floatlabel'>
-                  <span ng-bind-html='source.title' class='form-control nonempty' readonly ng-if='source.medium'></span>
+                  <span ng-bind-html='source.title' class='form-control nonempty' readonly ng-if='source.medium' title='{{citation.full}}'></span>
                   <input ng-model='source.title' class='form-control nonempty' ng-if='!source.medium'></input>
                   <label>Full Citation</label>
                </div>
 
                <div class='col-md-12 form-group floatlabel'>
-                  <span ng-bind-html='source.abbrev' class='form-control nonempty' readonly ng-if='source.medium'></span>
+                  <span ng-bind-html='source.abbrev' class='form-control nonempty' readonly ng-if='source.medium' title='{{citation.abbrev}}'></span>
                   <input ng-model='source.abbrev' class='form-control nonempty' ng-if='!source.medium'></input>
                   <label>Short Citation</label>
                </div>
 
                <div class='col-md-12 form-group floatlabel'>
-                  <span ng-bind-html='source.biblio' class='form-control nonempty' readonly ng-if='source.medium'></span>
+                  <span ng-bind-html='source.biblio' class='form-control nonempty' readonly ng-if='source.medium' title='{{citation.biblio}}'></span>
                   <input ng-model='source.biblio' class='form-control nonempty' ng-if='!source.medium'></input>
                   <label>Bibliography Citation</label>
                </div>

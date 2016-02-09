@@ -1,19 +1,19 @@
 #!/usr/bin/env python
 """
 This file parses the output of
-http://jytangledweb.org/genealogy/evidencestyle/esm_templates.txt
+   wget http://jytangledweb.org/genealogy/evidencestyle/esm_templates.txt
 """
 
 from string import Template
 import re
 
-f = file("tmp.txt")
+f = file("esm_templates.txt")
 contents = f.read().replace("\r", "").splitlines()
 
 def process(line):
     """Extract the citation from the given line"""
-    return contents[line].replace("[", "{{") \
-            .replace("]", "}}") \
+    return contents[line].replace("[", "{") \
+            .replace("]", "}") \
             .replace("'", "\\'") \
             .title()
 
