@@ -1,24 +1,30 @@
-<div id='sidebar'>
-   <div class='panel'>
-      <h2>List of sources</h2>
-      <div class='config'>
-         <span>Rows per page</span>
-         <select ng-model='$root.settings.sources.rows' ng-options='a.rows as a.label for a in rows'>
-         </select>
+<div class='row'>
+
+   <!-- Sidebar -->
+   <div class='col-md-2'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>List of sources</div>
+         <div class='panel-body'>
+            <ul class='nav nav-pills nav-stacked'>
+               <li class='config'>
+                  <span>Rows per page</span>
+                  <select ng-model='$root.settings.sources.rows' ng-options='a.rows as a.label for a in rows'>
+                  </select>
+               </li>
+            </ul>
+         </div>
       </div>
    </div>
-</div>
 
-<div id='contents' ui-view>
-   <div class="source list">
-      <table cellspacing="0" cellpadding="0">
+   <div class='col-md-10'>
+      <table class='table'>
          <thead>
             <tr class='controls'>
                <th colspan='2' gp-paginate-header></th>
             </tr>
             <tr>
+               <th>Id</th>
                <th>Short citation</th>
-               <th>Full citation</th>
             </tr>
          </thead>
          <tbody>
@@ -26,8 +32,8 @@
               <td colspan='2'>Loading...</td>
             </tr>
             <tr ng-repeat='p in filteredData | paginate: page : $root.settings.sources.rows'>
-               <td><a source-link='p.id'></a> {{p.abbrev}}</td>
-               <td>{{p.title}}</td>
+               <td><a source-link='p.id'></a></td>
+               <td><span ng-bind-html='p.abbrev||p.title' title='{{p.title}}'></span></td>
             </tr>
          </tbody>
       </table>

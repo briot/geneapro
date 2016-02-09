@@ -52,7 +52,7 @@ directive('sourceLink', function($state) {
       },
       transclude: true,  // content of element should use the outside scope
       template:
-         '<a href="#/sources/{{sourceId}}" class="sourceLink">' +
+         '<a href="#/source/{{sourceId}}" class="sourceLink">' +
             '<span>{{sourceId}}</span>' +
          '</a>' +
          '<span ng-transclude></span>'

@@ -2,11 +2,11 @@ app.
 config(function($stateProvider) {
    $stateProvider.
    state('sources', {
-      url: '/sources/list',
+      url: '/sources',
       templateUrl: 'geneaprove/sources.html',
       controller: 'sourcesCtrl',
       data: {
-         pageTitle: '[GP] List of sources'
+         pageTitle: '[GeneaProve] List of sources'
       }
    }).
    state('source_new', {
@@ -14,7 +14,7 @@ config(function($stateProvider) {
       templateUrl: 'geneaprove/source.html',
       controller: 'sourceCtrl',
       data: {
-         pageTitle: '[GP] New Source'
+         pageTitle: '[GeneaProve] New Source'
       }
    }).
    state('source', {
@@ -22,7 +22,7 @@ config(function($stateProvider) {
       templateUrl: 'geneaprove/source.html',
       controller: 'sourceCtrl',
       data: {
-         pageTitle: '[GP] Source {{id}}'
+         pageTitle: '[GeneaProve] Source {{id}}'
       }
    });
 }).
