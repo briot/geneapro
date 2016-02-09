@@ -1,8 +1,15 @@
 # Django settings for GeneaProve project.
 import os
+import appdirs
 
 DEBUG = False
 TEMPLATE_DEBUG = False
+
+user_data_dir = appdirs.user_data_dir(
+    appname='geneaprove',
+    appauthor='geneaprove',
+    version='1.0',
+    roaming=True)
 
 MANAGERS = ADMINS = (
     ('Emmanuel Briot', 'briot.emmanuel@gmail.com'),
@@ -11,7 +18,7 @@ MANAGERS = ADMINS = (
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'geneaprove.sqlite',
+        'NAME': os.path.join(user_data_dir, 'geneaprove.sqlite'),
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.

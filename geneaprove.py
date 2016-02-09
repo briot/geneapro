@@ -10,10 +10,12 @@ if __name__ == "__main__":
     
     # If there is no database, create an empty one
     
-    if not os.path.isfile(settings.DATABASES['default']['NAME']):
+    db = settings.DATABASES['default']['NAME']
+    if not os.path.isfile(db):
         print "======================="
-        print "Creating a new database"
+        print "Creating a new database %s" % db
         print "======================="
+        os.makedirs(os.path.dirname(db))
         execute_from_command_line(["manage.py", "syncdb", "--noinput"])
 
         f = os.path.join(settings.STATIC_ROOT, 'geneaprove/initial_data.json')
