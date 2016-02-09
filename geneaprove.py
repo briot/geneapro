@@ -15,7 +15,10 @@ if __name__ == "__main__":
         print "======================="
         print "Creating a new database %s" % db
         print "======================="
-        os.makedirs(os.path.dirname(db))
+        try:
+            os.makedirs(os.path.dirname(db))
+        except OSError:
+            pass
         execute_from_command_line(["manage.py", "syncdb", "--noinput"])
 
         f = os.path.join(settings.STATIC_ROOT, 'geneaprove/initial_data.json')
