@@ -445,7 +445,7 @@ class GedcomString(unicode):
 
     def __add__(self, value):
         r = GedcomString(unicode(self) + value)
-        r.line = getattr(self, "line", "???")
+        r._line = getattr(self, "line", "???")
         return r
 
     def _setLine(self, line):
@@ -453,7 +453,7 @@ class GedcomString(unicode):
            LINES is the list of GEDCOM lines that were used in creating the value.
            LINES can either be a single integer or a list of integers
         """
-        self.line = line
+        self._line = line
 
     def location(self):
         """A string showing the location where SELF was defined"""
@@ -614,7 +614,6 @@ class _Lexical(object):
 
 
 class GedcomRecord(object):
-
     """A Gedcom record (either individual, source, family,...)
        Each record contains one field per valid child node, even if the
        corresponding node did not exist in the file:

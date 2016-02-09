@@ -10,9 +10,7 @@ import json
 def import_gedcom(request):
     # params = json.loads(request.body)  # parse angularJS JSON parameters
     try:
-        print "MANU import_gedcom FILES=%s", request.FILES
         data = request.FILES['file']
-        #data = params['file']
         success, errors = GedcomFileImporter().parse(data)
         graph.mark_as_invalid()   # Will need a refresh
         resp = {'error': errors, 'success': success}

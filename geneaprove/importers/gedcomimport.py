@@ -81,6 +81,11 @@ class GedcomImporter(object):
             self._objects = dict()  # Objects that were inserted in this import
             # to avoid duplicates.  file => Representation
 
+            self._obje_for_places = dict()
+            # The OBJE created for each place.
+            # This is needed because at least GRAMPS outputs the PLAC for an
+            # event along with all its OBJE (so we have lots of duplicates)
+
             self._principal = models.Event_Type_Role.objects.get(
                 pk=models.Event_Type_Role.principal)
             self._birth__father = models.Event_Type_Role.objects.get(
@@ -272,6 +277,13 @@ class GedcomImporter(object):
         except:
             chan = None
 
+        title = getattr(sour, "TITL", "")
+        if not title:
+            try:
+                title = "S%s" % sour.id
+            except:
+                title = "Unnamed source"
+
         src = models.Source.objects.create(
             higher_source_id=None,
             subject_place=subject_place,
@@ -279,8 +291,9 @@ class GedcomImporter(object):
             researcher=self._researcher,
             subject_date=None,
             medium=medium,
-            title=getattr(sour, "TITL", ""),
-            abbrev=getattr(sour, "ABBR", ""),
+            title=title,
+            abbrev=getattr(sour, "ABBR", "") or title,
+            biblio=title,
             last_change=self._create_CHAN(chan),
             comments='')
         if rep is not None:
@@ -378,10 +391,12 @@ class GedcomImporter(object):
         # wife in the geneaprove database, thus losing information from gedcom
 
         if found == 0:
+            family_built = GedcomRecord()
+            family_built._setLine(data._line)
             self._create_event(
                 [(husb, self._principal), (wife, self._principal)],
                 "MARR",
-                GedcomRecord(),
+                family_built,
                 CHAN=data.CHAN)
 
         # Now add the children
@@ -390,11 +405,17 @@ class GedcomImporter(object):
         last_change = self._create_CHAN(data.CHAN)
 
         for c in data.CHIL:
+            # Associate parents with the child's birth event. This does not
+            # recreate an event if one already exists.
+
+            # ??? If the child already had a birth, we should attach to the
+            # existing event, since in GEDCOM these are the same.
             self._create_event(
-                [(self._sourcePersona[(NO_SOURCE, c.id)], self._principal),
-                 (husb, self._birth__father),
-                 (wife, self._birth__mother)],
-                "BIRT", data=c, CHAN=data.CHAN)
+                indi=[
+                    (self._sourcePersona[(NO_SOURCE, c.id)], self._principal),
+                    (husb, self._birth__father),
+                    (wife, self._birth__mother)],
+                field="BIRT", data=c, CHAN=data.CHAN)
 
         for k, v in data.for_all_fields():
             if k not in ("CHIL", "HUSB", "WIFE", "id",
@@ -655,18 +676,25 @@ class GedcomImporter(object):
         # is duplicated).
 
         if getattr(data, "OBJE", None):
-            if getattr(data, "PLAC", None) and place:
-                for obj in data.OBJE:
+            # Make sure we do not add the same OBJE multiple times for a
+            # given place, and in addition create a source every time
+            known_obje = self._obje_for_places.setdefault(place, set())
+            obje = [ob
+                    for ob in getattr(data, "OBJE", None)
+                    if getattr(ob, "TITL", "") not in known_obje]
+            known_obje.update(getattr(ob, "TITL", "") for ob in obje)
+
+            if obje:
+                if getattr(data, "PLAC", None) and place:
                     self._create_source(
                         GedcomRecord(
                             REPO=None,
                             CHAN=CHAN,
-                            TITL='Source for %s' % data.PLAC.value,
-                            ABBR='Source for %s' % data.PLAC.value,
-                            OBJE=obj),
+                            TITL='Media for %s' % data.PLAC.value,
+                            OBJE=obje),
                         subject_place=place)
-            else:
-                self.report_error("%s Unhandled OBJE" % (location(data.OBJE)))
+                else:
+                    self.report_error("%s Unhandled OBJE" % (location(data.OBJE)))
 
     def _create_event(self, indi, field, data, CHAN=None):
         """Create a new event, associated with INDI by way of one or more
@@ -749,9 +777,11 @@ class GedcomImporter(object):
 
             if event_type.gedcom == 'BIRT':
                 self._births[principal.id] = evt
+            all_src = self._create_sources_ref(data)
+        else:
+            all_src = self._create_sources_ref(None)
 
         last_change = self._create_CHAN(CHAN)
-        all_src = self._create_sources_ref(data)
 
         for person, role in indi:
             if person:
@@ -803,6 +833,8 @@ class GedcomImporter(object):
                 # Gedcom, this is always an xref.
 
                 if not s.value or s.value not in self._sources:
+                    if not getattr(s, "TITL", None):
+                        s.TITL = "source at %s %s" % (data.location(), data)
                     sour = (INLINE_SOURCE, self._create_source(s))
                 else:
                     sour = (s.value, self._sources[s.value])
@@ -810,27 +842,38 @@ class GedcomImporter(object):
                 # If we have parts, we need to create a nested source instead
                 parts = []
                 for k, v in s.for_all_fields():
-                    parts.append((k, v))
+                    if k == "DATA":
+                        for k2, v2 in v.for_all_fields():
+                            if k2 == "DATE":
+                                parts.append(("DATE", v2)) # Entry recording date
+                            elif k2 == "TEXT":
+                                parts.append(("VERBATIM", v2)) # Verbatim copy
+                            else:
+                                parts.append((k2, v2))  # Custom
+                    elif k == "NOTE":
+                        pass   # Handled separately below
+                    elif k == "OBJE":
+                        self.report_error(
+                            "%s Unhandled SOUR.%s" % (location(v), k))
+                    else:
+                        parts.append((k, v))
 
                 parts_string = u"".join(u" %s=%s" % p for p in parts)
 
                 if parts:
-                    sour2 = models.Source.objects.create(
-                        higher_source=sour[1],
-                        researcher=self._researcher,
-                        title=(sour[1].title or u'') + parts_string,
-                        abbrev=(sour[1].abbrev or u'') + parts_string,
-                        comments="".join(getattr(s, "NOTE", [])),
-                        last_change=sour[1].last_change)
-                    sour = (sour[0], sour2)
+                    # Try to reuse an existing source with the same parts,
+                    # since gedcom duplicates them
+                    new_id = '%s %s' % (s.value, parts_string)
+                    if new_id not in self._sources:
+                        sour2 = models.Source.objects.create(
+                            higher_source=sour[1],
+                            researcher=self._researcher,
+                            title=(sour[1].title or u'') + parts_string,
+                            abbrev=(sour[1].abbrev or u'') + parts_string,
+                            comments="".join(getattr(s, "NOTE", [])),
+                            last_change=sour[1].last_change)
 
-                    for k, v in parts:
-                        if k == "NOTE":
-                            continue  # already handled
-                        elif k == "OBJE":
-                            self.report_error(
-                                "%s Unhandled SOUR.%s" % (location(v), k))
-                        else:
+                        for k, v in parts:
                             try:
                                 type = models.Citation_Part_Type.objects.get(
                                     gedcom=k)
@@ -839,7 +882,13 @@ class GedcomImporter(object):
                                     name=k.title(), gedcom=k)
                             p = models.Citation_Part(type=type, value=v)
                             sour2.parts.add(p)
-                    sour2.save()
+                        sour2.save()
+
+                        self._sources[new_id] = sour2
+                    else:
+                        sour2 = self._sources[new_id]
+
+                    sour = (sour[0], sour2)
 
                 all_sources.append(sour)
 
@@ -921,8 +970,7 @@ class GedcomImporter(object):
                     value=GedcomRecord(
                         value='',
                         SOUR=[GedcomRecord(
-                            TITLE=data.TITL,  # used both for object and source
-                            ABBR=data.TITL,
+                            TITL="Media for %s" % name,  # used both for object and source
                             CHAN=None,
                             OBJE=value)]),
                     indi=indi)
