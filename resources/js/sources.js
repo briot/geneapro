@@ -27,25 +27,155 @@ config(function($stateProvider) {
    });
 }).
 
+/**
+ * A service that downloads, and caches, the list of citation templates.
+ */
+factory('CitationTemplates', function($http, $q) {
+   var re_part = /\{([^}]+)\}/g;
+
+   /**
+    * The templates for a specific model.
+    * @param {{full:string, biblio:string, short:string}} data The template.
+    */
+   function CitationTemplate(data) {
+      var self = this;
+      self.full = data.full;
+      self.biblio = data.biblio;
+      self.abbrev = data.short;
+      self.fields = [];
+
+      // Use an explicit order for citations, to get better control
+      // on the order of fields in the UI.
+      var found = {};
+      angular.forEach([self.full, self.biblio, self.abbrev], function(cite) {
+         var m;
+         while ((m = re_part.exec(cite)) != null) {
+            if (!found[m[1]]) {
+               found[m[1]] = 1;
+               self.fields.push(m[1]);
+            }
+         }
+      });
+   };
+
+   /**
+    * Resolve the template given some values for the fields.
+    * @param {Object} vals    The values for the fields.
+    * @returns {{full:string, biblio:string, abbrev:string}}
+    */
+   CitationTemplate.prototype.cite = function(vals) {
+      var full = this.full;
+      var biblio = this.biblio;
+      var abbrev = this.abbrev;
+
+      angular.forEach(this.fields, function(name) {
+         // Use a function for the replacement, to protect "$" characters
+         function repl() { return vals[name] || ''}
+         full   = full.replace('{' + name + '}', repl);
+         biblio = biblio.replace('{' + name + '}', repl);
+         abbrev = abbrev.replace('{' + name + '}', repl);
+      });
+
+      /** Remove special chars like commas, quotes,... when they do not
+       *  separate words, in case some parts has not been set.
+       */
+      function cleanup(str) {
+         var s = ''
+         while (s != str) {
+            s = str;
+            str = str.replace(/^ *[,:;.] */g, ''). // leading characters
+                      replace(/"[,.]?"/g, '').
+                      replace(/\( *[,.:;]? *\)/g, '').
+                      replace("<I></I>", '').
+                      replace(/[,:;] *$/, '').
+                      replace(/([,:;.]) *[,:;.]/g, "$1");
+         }
+         return str;
+      }
+
+      return {full: cleanup(full),
+              biblio: cleanup(biblio),
+              abbrev: cleanup(abbrev)};
+   };
+
+   /**
+    * The list of models
+    */
+   function CitationTemplates() {
+      this.models = [];
+      this.details = {};  // for each model, the CitationTemplate
+   }
+
+   /**
+    * Return a promise for the list of all known citation models
+    */
+   CitationTemplates.prototype.all_models = function() {
+      var self = this;
+      var d = $q.defer();
+      if (self.models.length != 0) {
+         d.resolve(self.models);
+      } else {
+         $http.get('/data/citationModels').then(function(resp) {
+            self.models = resp.data.source_types;
+            d.resolve(self.models);
+         }, function() {
+            d.reject();
+         });
+      }
+      return d.promise;
+   };
+
+   /**
+    * Return the templates for a specific model.
+    * @return a promise for an instance of the CitationTemplate class
+    */
+
+   CitationTemplates.prototype.get_templates = function(model_id) {
+      var self = this;
+      var d = $q.defer();
+      if (this.details[model_id]) {
+         d.resolve(this.details[model_id]);
+      } else {
+         $http.get('/data/citationModel/' + model_id).then(function(resp) {
+            d.resolve(
+               self.details[model_id] = new CitationTemplate(resp.data));
+         }, function() {
+            d.reject();
+         });
+      }
+      return d.promise;
+   };
+
+   return new CitationTemplates;
+}).
+
+/**
+ * The page that displays the list of sources
+ */
+
 controller('sourcesCtrl', function($scope, Paginated) {
    Paginated.instrument($scope, '/data/sources/list', 'settings.sources.rows');
 }).
 
-controller('sourceCtrl', function($scope, $http, $state, $stateParams) {
+/**
+ * The page that displays and edits the details for a single source
+ */
+
+controller('sourceCtrl', function(
+         $scope, $http, $state, $stateParams, CitationTemplates)
+{
    var id = $stateParams.id;
    if (id === undefined) {
       id = -1;
    }
 
-   var re_part = /\{([^}]+)\}/g;
-
    // The values that have been set by the user for the fields. This might
    // store information that are not used by the current medium, but were
    // entered for another medium, in case the user goes back to that medium
-   $scope.cached_parts = {};
+   $scope.cache = {};
 
-   // The citation template for the currently selected medium
-   $scope.citation = {full: '', short: '', biblio: ''};
+   // The CitationTemplate for the currently selected medium
+   $scope.citation = undefined;
 
    // Always display the citation if the source does not exist yet
    $scope.showCitation = id = -1;
@@ -53,97 +183,52 @@ controller('sourceCtrl', function($scope, $http, $state, $stateParams) {
 
    // ??? Should use a service instead
    $http.get('/data/sources/' + id).then(function(resp) {
-      $scope.source_types = resp.data.source_types;
       parseJson(resp);
+   });
+
+   CitationTemplates.all_models().then(function(models) {
+      $scope.source_types = models;
    });
 
    $scope.$watch('source.medium', function(val) {
       if (val) {
-         // ??? Should use a service instead
-         $http.get('/data/citationModel/' + val).then(function(resp) {
-            $scope.citation = resp.data;
-            var required = [];
-            var found = {};
-
-            // Use an explicit order for citations, to get better control
-            // on the order of fields in the UI.
-            angular.forEach(
-               [$scope.citation.full,
-                $scope.citation.biblio,
-                $scope.citation.short],
-               function(cite) {
-               var m;
-               while ((m = re_part.exec(cite)) != null) {
-                  if (!found[m[1]]) {
-                     found[m[1]] = 1;
-                     required.push(m[1]);
-                  }
-               }
-            });
-            $scope.required_parts = required;
+         CitationTemplates.get_templates(val).then(function(template) {
+            $scope.citation = template;
             computeCitation();
          });
       }
    });
 
-   $scope.$watch('cached_parts', computeCitation, true);
+   $scope.$watch('cache', computeCitation, true);
+
+   function computeCitation() {
+      if ($scope.source.medium) {
+         var c = $scope.citation.cite($scope.cache);
+         $scope.source.title = c.full;
+         $scope.source.biblio = c.biblio;
+         $scope.source.abbrev = c.abbrev;
+      }
+   }
 
    // Parse a JSON response from the server (the 'source' and 'parts'
    // fields)
    function parseJson(resp) {
-      $scope.source = resp.data.source;
+      $scope.source = resp.data.source_and_asserts;
       if ($scope.source.id == null) {
          $scope.source.id = -1;
       }
       $scope.parts = resp.data.parts;
       angular.forEach($scope.parts, function(p) {
-         $scope.cached_parts[p.name] = p.value;
+         $scope.cache[p.name] = p.value;
       });
-   }
-
-   function computeCitation() {
-      if ($scope.source.medium) {
-         var full = $scope.citation.full;
-         var biblio = $scope.citation.biblio;
-         var abbrev = $scope.citation.short;
-
-         angular.forEach($scope.required_parts, function(name) {
-            // Use a function for the replacement, to protect "$" characters
-            function repl() { return $scope.cached_parts[name] || ''}
-            full = full.replace('{' + name + '}', repl);
-            biblio = biblio.replace('{' + name + '}', repl);
-            abbrev = abbrev.replace('{' + name + '}', repl);
-         });
-
-         /** Remove special chars like commas, quotes,... when they do not
-          *  separate words, in case some parts has not been set.
-          */
-         function cleanup(str) {
-            var s = ''
-            while (s != str) {
-               s = str;
-               str = str.replace(/^ *[,:;.] */g, ''). // leading characters
-                         replace(/"[,.]?"/g, '').
-                         replace(/\( *[,.:;]? *\)/g, '').
-                         replace("<I></I>", '').
-                         replace(/[,:;] *$/, '').
-                         replace(/([,:;.]) *[,:;.]/g, "$1");
-            }
-            return str;
-         }
-
-         $scope.source.title = cleanup(full);
-         $scope.source.biblio = cleanup(biblio);
-         $scope.source.abbrev = cleanup(abbrev);
-      }
    }
 
    $scope.saveParts = function() {
       //  ??? Should use a service instead
       var data = angular.copy($scope.source);
-      angular.forEach($scope.required_parts, function(name) {
-         if ($scope.cached_parts[name]) {
-            data[name] = $scope.cached_parts[name];
+      angular.forEach($scope.citation.fields, function(name) {
+         if ($scope.cache[name]) {
+            data[name] = $scope.cache[name];
          }
       });
 

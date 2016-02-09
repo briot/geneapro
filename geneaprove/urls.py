@@ -34,6 +34,7 @@ urlpatterns = patterns(
     (r'^data/stats$',          geneaprove.views.stats.view),
     (r'^import$',              geneaprove.views.importers.import_gedcom),
     (r'^data/citationModel/(.+)$', geneaprove.views.sources.citation_model),
+    (r'^data/citationModels$', geneaprove.views.sources.citation_models),
 
     (r'^data/settings', geneaprove.views.persona.get_settings),
 

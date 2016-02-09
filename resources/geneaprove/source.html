@@ -44,8 +44,7 @@
                   <label>Source Type</label>
                </div>
 
-               <div gp-float-label ng-repeat='p in required_parts'
-                    model='cached_parts[p]'
+               <div gp-float-label ng-repeat='p in citation.fields' model='cache[p]'
                     label='{{p}}'></div>
 
                <!-- Should select whether this is a primary source,... (or

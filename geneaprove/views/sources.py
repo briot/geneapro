@@ -73,6 +73,17 @@ def citation_model(request, id):
     return HttpResponse(to_json(data), content_type='application/json')
 
 
+def citation_models(request):
+    """
+    Return the list of all known citation models
+    """
+    data = {
+        'repository_types': models.Repository_Type.objects.all(),
+        'source_types': Citations.source_types()
+    }
+    return HttpResponse(to_json(data), content_type='application/json')
+
+
 def prepare_citation_parts(src, parts):
     """
     :param parts: a dictionary (key,value) giving overriding values to some
@@ -141,16 +152,14 @@ def view(request, id):
     schemes = set()  # The surety schemes that are needed
     sources = extended_sources([id], schemes=schemes)
 
-    surety_schemes = dict()
-    for s in schemes:
-        surety_schemes[s] = models.Surety_Scheme.objects.get(id=s).parts.all()
+    #surety_schemes = dict()
+    #for s in schemes:
+    #    surety_schemes[s] = models.Surety_Scheme.objects.get(id=s).parts.all()
+    #    'schemes': surety_schemes
 
     data = {
-        'source': sources[id],
+        'source_and_asserts': sources[id],
         'parts': list_of_citations(None, sources[id]),
-        'repository_types': models.Repository_Type.objects.all(),
-        'source_types': Citations.source_types(),
-        'schemes': surety_schemes
     }
     return HttpResponse(to_json(data), content_type='application/json')
 
@@ -231,11 +240,7 @@ def editCitation(request, source_id):
 
         src.save()
 
-    data = {
-        'source': src,
-        'parts': list_of_citations(src.medium, src)
-    }
-    return HttpResponse(to_json(data), content_type='application/json')
+    return view(request, id=src.id)
 
 
 def view_list(request):
