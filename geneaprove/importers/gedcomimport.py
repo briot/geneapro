@@ -44,6 +44,199 @@ def location(obj):
         return "???"
 
 ##################################
+# Sources manager
+##################################
+
+class SourceManager(object):
+    """
+    A class responsible for creating sources in the database, from sources
+    and source references in Gedcom.
+    The goal is that all sources in Gedcom are created in the database (even
+    if they have no associated asserts). On the other hand, we want to merge
+    a source and its reference when there is only one of the latter.
+    This avoids lots of useless sources in the database.
+    """
+
+    def __init__(self, importer):
+        """
+        :param GedcomImporter importer:
+        """
+        self.importer = importer
+        self.sources = {}
+
+    def add_SOUR(self, source, subject_place=None):
+        """
+        :param GedcomRecord source: a SOUR record from gedcom
+        :return: A models.Source object
+        """
+        return self.__create_source(source, subject_place=subject_place)
+
+    def __create_source(self, sour, subject_place=None):
+        """
+        Actual creation in the database
+        :param GedcomRecord sour: a SOUR record from gedcom
+        :param subject_place: the place the source is about
+        :return: A models.Source object
+        """
+        medium = ""
+        rep = None
+
+        if getattr(sour, "REPO", None):
+            repo = sour.REPO
+            if repo.value:
+                # If we just have a "CALN", no need to create a repository
+                rep = self.importer._create_repo(repo)
+            else:
+                for k, v in repo.for_all_fields():
+                    if k not in ("CALN", ):
+                        self.importer.report_error(
+                            "%s Unhandled REPO.%s" % (location(v), k))
+
+            caln = repo.CALN  # call number
+            if caln:
+                medium = (caln[0].MEDI or '').lower()
+
+            for k, v in repo.for_all_fields():
+                if k not in ("CALN", ):
+                    self.importer.report_error(
+                        "%s Unhandled REPO.%s" % (location(v), k))
+
+        try:
+            chan = sour.CHAN
+        except:
+            chan = None
+
+        title = getattr(sour, "TITL", "")
+        if not title:
+            try:
+                title = "S%s" % sour.id
+            except:
+                title = "Unnamed source"
+
+        src = models.Source.objects.create(
+            higher_source_id=None,
+            subject_place=subject_place,
+            jurisdiction_place_id=None,
+            researcher=self.importer._researcher,
+            subject_date=None,
+            medium=medium,
+            title=title,
+            abbrev=getattr(sour, "ABBR", "") or title,
+            biblio=title,
+            last_change=self.importer._create_CHAN(chan),
+            comments='')
+        if rep is not None:
+            models.Repository_Source.objects.create(
+                repository=rep,
+                source=src,
+                # activity=None,
+                call_number=None,
+                description=None)
+
+        obje = sour.OBJE
+        if obje:
+            if not isinstance(obje, list):
+                obje = [obje]
+            for o in obje:
+                obj = self.importer._create_obje(o, src)
+
+        for k, v in sour.for_all_fields():
+            if k == "id":
+                # ??? Should we preserve gedcom ids ?
+                pass
+
+            elif k not in ("REPO", "OBJE", "TITL", "CHAN", "ABBR"):
+                self.importer.report_error(
+                    "%s Unhandled SOUR.%s" % (location(v), k))
+
+        if hasattr(sour, "id"):
+            self.sources[sour.id] = src
+
+        return src
+
+    def create_sources_ref(self, data):
+        """Create a list of instances of Source for the record described by
+         DATA. For instance, if Data is an event, these are all the sources in
+         which the event was references.
+         The return value is a list of tuples (source_id, Source instance).
+         If there are no reference, this returns a list with a single element,
+         None. As a result, you can always iterate over the result to insert
+         rows in the database."""
+
+        if not isinstance(data, unicode) and getattr(data, "SOUR", None):
+            all_sources = []
+
+            for s in data.SOUR:
+                # As a convenience for the python API (this doesn't happen in a
+                # Gedcom file), we allow direct source creation here. In
+                # Gedcom, this is always an xref.
+
+                if not s.value or s.value not in self.sources:
+                    if not getattr(s, "TITL", None):
+                        s.TITL = "source at %s %s" % (data.location(), data)
+                    sour = (INLINE_SOURCE, self.__create_source(s))
+                else:
+                    sour = (s.value, self.sources[s.value])
+
+                # If we have parts, we need to create a nested source instead
+                parts = []
+                for k, v in s.for_all_fields():
+                    if k == "DATA":
+                        for k2, v2 in v.for_all_fields():
+                            if k2 == "DATE":
+                                parts.append(("DATE", v2)) # Entry recording date
+                            elif k2 == "TEXT":
+                                parts.append(("VERBATIM", v2)) # Verbatim copy
+                            else:
+                                parts.append((k2, v2))  # Custom
+                    elif k == "NOTE":
+                        pass   # Handled separately below
+                    elif k == "OBJE":
+                        self.importer.report_error(
+                            "%s Unhandled SOUR.%s" % (location(v), k))
+                    else:
+                        parts.append((k, v))
+
+                parts_string = u"".join(u" %s=%s" % p for p in parts)
+
+                if parts:
+                    # Try to reuse an existing source with the same parts,
+                    # since gedcom duplicates them
+                    new_id = '%s %s' % (s.value, parts_string)
+                    if new_id not in self.sources:
+                        sour2 = models.Source.objects.create(
+                            higher_source=sour[1],
+                            researcher=self.importer._researcher,
+                            title=(sour[1].title or u'') + parts_string,
+                            abbrev=(sour[1].abbrev or u'') + parts_string,
+                            comments="".join(getattr(s, "NOTE", [])),
+                            last_change=sour[1].last_change)
+
+                        for k, v in parts:
+                            try:
+                                type = models.Citation_Part_Type.objects.get(
+                                    gedcom=k)
+                            except:
+                                type = models.Citation_Part_Type.objects.create(
+                                    name=k.title(), gedcom=k)
+                            p = models.Citation_Part(type=type, value=v)
+                            sour2.parts.add(p)
+                        sour2.save()
+
+                        self.sources[new_id] = sour2
+                    else:
+                        sour2 = self.sources[new_id]
+
+                    sour = (sour[0], sour2)
+
+                all_sources.append(sour)
+
+            return all_sources
+
+        return [(NO_SOURCE, None)]
+
+
+##################################
 # GedcomImporter
 ##################################
 
@@ -106,18 +299,15 @@ class GedcomImporter(object):
             # case, sourceId is set to NO_SOURCE for those events and
             # characteristics with no source.
 
-            self._sources = dict()
+            self.source_manager = SourceManager(self)
+
             for r in data.REPO:
                 self._create_repo(r)
             if DEBUG:
                 print "Done importing repositories"
 
-            if DEBUG:
-                print "Importing %d sources" % (len(data.SOUR))
             for s in data.SOUR:
-                self._create_source(s)
-            if DEBUG:
-                print "Done importing sources"
+                self.source_manager.add_SOUR(s)
 
             max = len(data.INDI)
             if DEBUG:
@@ -247,85 +437,6 @@ class GedcomImporter(object):
                 self.report_error("%s Unhandled REPO.%s" % (location(v), k))
 
         return r
-
-    def _create_source(self, sour, subject_place=None):
-        medium = ""
-        rep = None
-
-        if sour.__dict__.has_key('REPO') and sour.REPO:
-            repo = sour.REPO
-            if repo.value:
-                # If we just have a "CALN", no need to create a repository
-                rep = self._create_repo(repo)
-            else:
-                for k, v in repo.for_all_fields():
-                    if k not in ("CALN", ):
-                        self.report_error(
-                            "%s Unhandled REPO.%s" % (location(v), k))
-
-            caln = repo.CALN  # call number
-            if caln:
-                medium = (caln[0].MEDI or '').lower()
-
-            for k, v in repo.for_all_fields():
-                if k not in ("CALN", ):
-                    self.report_error(
-                        "%s Unhandled REPO.%s" % (location(v), k))
-
-        try:
-            chan = sour.CHAN
-        except:
-            chan = None
-
-        title = getattr(sour, "TITL", "")
-        if not title:
-            try:
-                title = "S%s" % sour.id
-            except:
-                title = "Unnamed source"
-
-        src = models.Source.objects.create(
-            higher_source_id=None,
-            subject_place=subject_place,
-            jurisdiction_place_id=None,
-            researcher=self._researcher,
-            subject_date=None,
-            medium=medium,
-            title=title,
-            abbrev=getattr(sour, "ABBR", "") or title,
-            biblio=title,
-            last_change=self._create_CHAN(chan),
-            comments='')
-        if rep is not None:
-            models.Repository_Source.objects.create(
-                repository=rep,
-                source=src,
-                # activity=None,
-                call_number=None,
-                description=None)
-
-        obje = sour.OBJE
-        if obje:
-            if not isinstance(obje, list):
-                obje = [obje]
-            for o in obje:
-                obj = self._create_obje(o, src)
-
-        for k, v in sour.for_all_fields():
-            if k == "id":
-                # ??? Should we preserve gedcom ids ?
-                pass
-
-            elif k not in ("REPO", "OBJE", "TITL", "CHAN", "ABBR"):
-                self.report_error(
-                    "%s Unhandled SOUR.%s" % (location(v), k))
-
-        try:
-            self._sources[sour.id] = src
-        except:
-            pass
-
-        return src
 
     def _create_obje(self, data, source):
         """Create an object (representation) in the database"""
@@ -606,7 +717,7 @@ class GedcomImporter(object):
             # Associate the characteristic with the persona.
             # Such an association is done via assertions, based on sources.
 
-            for sid, s in self._create_sources_ref(val):
+            for sid, s in self.source_manager.create_sources_ref(val):
                 ind = self._indi_for_source(sourceId=sid, indi=indi)
                 models.P2C.objects.create(
                     surety=self._default_surety,
@@ -657,7 +768,7 @@ class GedcomImporter(object):
                                 characteristic=c, type=t, name=v)
 
                     elif k == 'SOUR':
-                        pass  # handled in the _create_sources_ref loop above
+                        pass  # handled in the create_sources_ref loop above
 
                     elif k in ("ADDR", "PLAC", "OBJE"):
                         pass  # handled in _create_place
@@ -686,7 +797,7 @@ class GedcomImporter(object):
 
             if obje:
                 if getattr(data, "PLAC", None) and place:
-                    self._create_source(
+                    self.source_manager.add_SOUR(
                         GedcomRecord(
                             REPO=None,
                             CHAN=CHAN,
@@ -777,9 +888,9 @@ class GedcomImporter(object):
 
             if event_type.gedcom == 'BIRT':
                 self._births[principal.id] = evt
-            all_src = self._create_sources_ref(data)
+            all_src = self.source_manager.create_sources_ref(data)
         else:
-            all_src = self._create_sources_ref(None)
+            all_src = self.source_manager.create_sources_ref(None)
 
         last_change = self._create_CHAN(CHAN)
 
@@ -814,87 +925,6 @@ class GedcomImporter(object):
                 self.report_error("%s Unhandled EVENT.%s" % (location(v), k))
 
         return evt
-
-    def _create_sources_ref(self, data):
-        """Create a list of instances of Source for the record described by
-         DATA. For instance, if Data is an event, these are all the sources in
-         which the event was references.
-         The return value is a list of tuples (source_id, Source instance).
-         If there are no reference, this returns a list with a single element,
-         None. As a result, you can always iterate over the result to insert
-         rows in the database."""
-
-        if not isinstance(data, unicode) and getattr(data, "SOUR", None):
-            all_sources = []
-
-            for s in data.SOUR:
-                # As a convenience for the python API (this doesn't happen in a
-                # Gedcom file), we allow direct source creation here. In
-                # Gedcom, this is always an xref.
-
-                if not s.value or s.value not in self._sources:
-                    if not getattr(s, "TITL", None):
-                        s.TITL = "source at %s %s" % (data.location(), data)
-                    sour = (INLINE_SOURCE, self._create_source(s))
-                else:
-                    sour = (s.value, self._sources[s.value])
-
-                # If we have parts, we need to create a nested source instead
-                parts = []
-                for k, v in s.for_all_fields():
-                    if k == "DATA":
-                        for k2, v2 in v.for_all_fields():
-                            if k2 == "DATE":
-                                parts.append(("DATE", v2)) # Entry recording date
-                            elif k2 == "TEXT":
-                                parts.append(("VERBATIM", v2)) # Verbatim copy
-                            else:
-                                parts.append((k2, v2))  # Custom
-                    elif k == "NOTE":
-                        pass   # Handled separately below
-                    elif k == "OBJE":
-                        self.report_error(
-                            "%s Unhandled SOUR.%s" % (location(v), k))
-                    else:
-                        parts.append((k, v))
-
-                parts_string = u"".join(u" %s=%s" % p for p in parts)
-
-                if parts:
-                    # Try to reuse an existing source with the same parts,
-                    # since gedcom duplicates them
-                    new_id = '%s %s' % (s.value, parts_string)
-                    if new_id not in self._sources:
-                        sour2 = models.Source.objects.create(
-                            higher_source=sour[1],
-                            researcher=self._researcher,
-                            title=(sour[1].title or u'') + parts_string,
-                            abbrev=(sour[1].abbrev or u'') + parts_string,
-                            comments="".join(getattr(s, "NOTE", [])),
-                            last_change=sour[1].last_change)
-
-                        for k, v in parts:
-                            try:
-                                type = models.Citation_Part_Type.objects.get(
-                                    gedcom=k)
-                            except:
-                                type = models.Citation_Part_Type.objects.create(
-                                    name=k.title(), gedcom=k)
-                            p = models.Citation_Part(type=type, value=v)
-                            sour2.parts.add(p)
-                        sour2.save()
-
-                        self._sources[new_id] = sour2
-                    else:
-                        sour2 = self._sources[new_id]
-
-                    sour = (sour[0], sour2)
-
-                all_sources.append(sour)
-
-            return all_sources
-
-        return [(NO_SOURCE, None)]
 
     def _create_indi(self, data):
         """Create the equivalent of an INDI in the database"""
