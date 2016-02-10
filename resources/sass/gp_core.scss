@@ -8,3 +8,16 @@
       padding-right: 10px;
    }
 }
+
+/**
+ * Links to some genealogy entity (sources, places,...)
+ */
+.gpLink {
+   span {
+      margin-left: 5px;
+   }
+   &:before {
+      vertical-align: super;
+      font-size: 0.8em;
+   }
+}

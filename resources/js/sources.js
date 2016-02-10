@@ -2,7 +2,7 @@ app.
 config(function($stateProvider) {
    $stateProvider.
    state('sources', {
-      url: '/sources',
+      url: '/sources/list',
       templateUrl: 'geneaprove/sources.html',
       controller: 'sourcesCtrl',
       data: {
@@ -173,7 +173,6 @@ controller('sourceCtrl', function(
    if (id === undefined) {
       id = -1;
    }
-
    // The values that have been set by the user for the fields. This might
    // store information that are not used by the current medium, but were
    // entered for another medium, in case the user goes back to that medium
@@ -183,7 +182,7 @@ controller('sourceCtrl', function(
    $scope.citation = undefined;
 
    // Always display the citation if the source does not exist yet
-   $scope.showCitation = id = -1;
+   $scope.showCitation = id == -1;
    $scope.source = {}
 
    // ??? Should use a service instead

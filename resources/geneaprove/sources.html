@@ -32,7 +32,7 @@
               <td colspan='2'>Loading...</td>
             </tr>
             <tr ng-repeat='p in filteredData | paginate: page : $root.settings.sources.rows'>
-               <td><a source-link='p.id'></a></td>
+               <td><span source-link='p.id'></span></td>
                <td><span ng-bind-html='p.abbrev||p.title' title='{{p.title}}'></span></td>
             </tr>
          </tbody>

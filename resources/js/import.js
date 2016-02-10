@@ -23,15 +23,10 @@ controller('importCtrl', function($scope, $http, upload) {
             data: {
                file: val[1]
             },
-            onSuccess: function() {console.log("MANU success")},
-            onError: function() {console.log("MANU error")},
-            onUpload: function() {console.log("MANU upload")},
-            onComplete: function() {console.log("MANU complete")},
          }).then(function(resp) {
             $scope.success = resp.data.success;
             $scope.error = resp.data.error;
             $scope.importing = false;
-            console.log("MANU response=", resp);
          });
       }
    });

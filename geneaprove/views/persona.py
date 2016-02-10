@@ -363,6 +363,7 @@ def view_list(request):
             'given_name': p.given_name,
             'birth': p.birth,
             'death': p.death,
+            'id': p.id,
             'marriage': p.marriage}
            for p in all]
 

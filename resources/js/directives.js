@@ -31,14 +31,14 @@ directive('gpMenubutton', function(Pedigree) {
 directive('personaLink', function($state) {
    return {
       scope: {
-         personId: '=personaLink'   // The id of the person
+         personId: '=personaLink',  // The id of the person
+         name: '='                  // Defaults to Id
       },
-      transclude: true,  // content of element should use the outside scope
+      replace: true,
       template:
-         '<a href="#/person?id={{personId}}" class="personaLink">' +
-            '<span>{{personId}}</span>' +
-         '</a>' +
-         '<span ng-transclude></span>'
+         '<a ui-sref="person({id:personId})" class="fa fa-user gpLink">' +
+            '<span>{{name||personId}}</span>' +
+         '</a>'
    };
 }).
 
@@ -48,14 +48,14 @@ directive('personaLink', function($state) {
 directive('sourceLink', function($state) {
    return {
       scope: {
-         sourceId: '=sourceLink'   // The id of the source
+         sourceId: '=sourceLink',  // The id of the source
+         name: '='                 // Default to Id
       },
-      transclude: true,  // content of element should use the outside scope
+      replace: true,  // content of element should use the outside scope
       template:
-         '<a href="#/source/{{sourceId}}" class="sourceLink">' +
-            '<span>{{sourceId}}</span>' +
-         '</a>' +
-         '<span ng-transclude></span>'
+         '<a ui-sref="source({id:sourceId})" class="fa fa-book gpLink">' +
+            '<span>{{name||sourceId}}</span>' +
+         '</a>'
    };
 }).
 

@@ -24,11 +24,11 @@
       </div> <!-- panel -->
    </div> <!-- col -->
 
-   <div class='col-md-10 AApersona AAlist'>
+   <div class='col-md-10'>
       <table class='table'>
          <thead>
             <tr class='controls'>
-               <th colspan='5' gp-paginate-header></th>
+               <th colspan='6' gp-paginate-header></th>
             </tr>
             <tr>
                <th>Surname</th>
@@ -44,7 +44,7 @@
                <td colspan='5'>Loading...</td>
             </tr>
             <tr ng-repeat='p in filteredData | paginate: page : $root.settings.personas.rows'>
-               <td><span persona-link='p.id'>{{p.surname || '-'}}</span></td>
+               <td><span persona-link='p.id' name='p.surname'></span></td>
                <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.styles}}'>{{p.given_name || '-'}}</span></td>
                <td ng-if='$root.settings.personas.colorScheme==4'><span>{{p.given_name || '-'}}</span></td>
                <td>{{p.birth.date||''}}</td>
