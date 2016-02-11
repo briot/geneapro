@@ -118,10 +118,7 @@ def list_of_citations(medium, src=None):
        source.
     """
 
-    medium = medium or src.compute_medium()
     result = dict()
-    for part in Citations.get_citation(medium).required_parts():
-        result[part] = ('', False)
 
     if src is not None:
         for k, v in prepare_citation_parts(src.higher_source, {}).iteritems():
@@ -129,15 +126,6 @@ def list_of_citations(medium, src=None):
 
         for part in src.parts.select_related('type__name').all():
             result[part.type.name] = (part.value, False)
-
-        result['_biblio'] = (src.biblio, False)
-        result['_title'] = (src.title, False)
-        result['_abbrev'] = (src.abbrev, False)
-        result['_medium'] = (medium, False)
-        result['_notes'] = (src.comments, False)
-        # result['_lastAccess'] = (src.last_change, False)
-        # result['_subjectPlace'] = (src.subject_place.name, False)
-        # result['_jurisdictionPlace'] = (src.jurisdiction_place.name, False)
 
     return sorted({'name': k,
                    'value': v[0],

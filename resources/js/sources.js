@@ -230,9 +230,16 @@ controller('sourceCtrl', function(
          full:  $scope.source.title,
          abbrev: $scope.source.abbrev,
          biblio: $scope.source.biblio};
-      $scope.parts = resp.data.parts;
-      angular.forEach($scope.parts, function(p) {
+
+      var parts = resp.data.parts; // [{fromHigher, name, value}]
+      $scope.extra_parts = [];
+      angular.forEach(parts, function(p) {
          $scope.cache[p.name] = p.value;
+
+         // The list of parts stored in DB but not part of the template
+         if ($scope.citation && !(p.name in $scope.citation.fields)) {
+            $scope.extra_parts.push(p);
+         }
       });
    }
 

@@ -55,6 +55,16 @@
 
            </div>
 
+           <div ng-if='extra_parts.length>0'>
+              <h4>Extra Details</h4>
+              <p>The following information is stored in the database, but not
+                 needed for the citation templates (perhaps imported from GEDCOM).</p>
+              <div class='row'>
+                  <div gp-float-label ng-repeat='p in extra_parts' model='p.value'
+                       label='{{p.name}}'></div>
+              </div>
+           </div>
+
            <!-- Details common to all sources, needed by the GenTech data model -->
 
            <h4>Research Details</h4>
