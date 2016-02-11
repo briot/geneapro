@@ -219,7 +219,10 @@ controller('sourceCtrl', function(
    // Parse a JSON response from the server (the 'source' and 'parts'
    // fields)
    function parseJson(resp) {
-      $scope.source = resp.data.source_and_asserts;
+      $scope.source = resp.data.source;
+      $scope.asserts = resp.data.asserts;
+      $scope.repr = resp.data.repr;
+
       if ($scope.source.id == null) {
          $scope.source.id = -1;
       }

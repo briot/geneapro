@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.conf.urls import *
 from django.shortcuts import render_to_response
 from django.core.context_processors import csrf
@@ -35,20 +36,16 @@ urlpatterns = patterns(
     (r'^import$',              geneaprove.views.importers.import_gedcom),
     (r'^data/citationModel/(.+)$', geneaprove.views.sources.citation_model),
     (r'^data/citationModels$', geneaprove.views.sources.citation_models),
-
-    (r'^data/settings', geneaprove.views.persona.get_settings),
+    (r'^data/settings',        geneaprove.views.persona.get_settings),
+    (r'^repr/(?P<id>\d+)(?:/(?P<size>\d+))?$',
+                               geneaprove.views.representation.view),
 
     # ... below: not moved to angularJS yet
-
 
     # Returns JSON, the list of all events for the person.
     # Param is the id
     (r'^personaEvents/(\d+)$',
      geneaprove.views.persona.personaEvents),
-
-    # The image for a specific representation
-    (r'^repr/(.*)/(\d+)$',
-     geneaprove.views.representation.view),
 
     # The list of representations for the higher sources
     (r'^reprList/(?P<source_id>\d+)',

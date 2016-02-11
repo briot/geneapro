@@ -108,6 +108,12 @@ class ModelEncoder(json.JSONEncoder):
                 date_sort=obj.date_sort,
                 place=obj.place)
 
+        elif isinstance(obj, models.Representation):
+            return dict(
+                source=obj.source,
+                url=obj.url(),
+                comments=obj.comments)
+
         elif isinstance(obj, models.Assertion):
             result = dict(
                 disproved=obj.disproved,
@@ -122,7 +128,8 @@ class ModelEncoder(json.JSONEncoder):
                 result['date'] = obj.event.date and DateRange(obj.event.date)
                 result['place'] = obj.event.place and obj.event.place.name
                 result['person1'] = obj.person
-                result['event2'] = (obj.event, obj.role.name)
+                result['event2'] = obj.event
+                result['role'] = obj.role.name
 
             elif isinstance(obj, models.P2C):
                 parts = []
@@ -135,6 +142,14 @@ class ModelEncoder(json.JSONEncoder):
                      obj.characteristic.place and obj.characteristic.place.name
                 result['person1'] = obj.person
                 result['char2'] = (obj.characteristic, parts)
+
+            elif isinstance(obj, models.P2G):
+                result['person1'] = obj.person
+                result['group2'] = obj.group
+                result['role'] = obj.role.name
+
+            else:
+                raise Exception("Encoding unknown assertion")
 
             return result
 

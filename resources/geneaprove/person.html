@@ -98,7 +98,7 @@
                       </tr>
                       <tr ng-repeat='p in e.$details.p2e' ng-class='{disproved:p.disproved}'>
                          <td>
-                            <span persona-link='p.person.id'>{{p.person.name}}</span>
+                            <span persona-link='p.person.id' name='p.person.name'></span>
                          </td>
                          <td>{{p.role_name}}</td>
                          <td>{{p.rationale || ''}}</td>

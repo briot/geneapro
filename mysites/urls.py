@@ -13,8 +13,8 @@ urlpatterns = patterns('',
     ## in production since this is insecure and inefficient according to the
     ## doc. One trick is commented out below and is to add a new variable
     ## in settings.py
-    (r'^%s(?P<path>.*)$' % settings.STATIC_URL[1:],
-          static.serve, {"document_root": settings.STATIC_ROOT}),
+    (r'^static/(?P<path>.*)$',
+     static.serve, {"document_root": settings.STATIC_ROOT}),
 
 	(r'^', include(geneaprove.urls)),
 

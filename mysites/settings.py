@@ -2,7 +2,7 @@
 import os
 import appdirs
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = False
 
 user_data_dir = appdirs.user_data_dir(
@@ -71,7 +71,7 @@ MEDIA_URL = '/upload/'
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/static/'
+STATIC_URL = '/static_url/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (

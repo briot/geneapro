@@ -45,26 +45,22 @@ def create_resized_image(image_name, original_location,
     return name
 
 
-def view(request, size, repr_id):
+def view(request, id, size=None):
     """Return a specific representation"""
 
-    repr = models.Representation.objects.get(id=repr_id)
+    repr = models.Representation.objects.get(id=id)
 
-    try:
-        f = repr.file
+    f = repr.file
 
-        if size != 'full':
-            f = create_resized_image(f.replace("/", "__"), repr.file,
-                                     xconstrain=int(size),
-                                     yconstrain=int(size))
+    if size:
+        f = create_resized_image(f.replace("/", "__"), repr.file,
+                                 xconstrain=int(size),
+                                 yconstrain=int(size))
 
-        response = HttpResponse(open(f).read(), mimetype=repr.mime_type)
-        response['Content-Disposition'] = 'attachment; filename=%s' % (
-            os.path.basename(repr.file))
-        return response
-
-    except Exception, e:
-        print "Got exception", e
+    response = HttpResponse(open(f).read(), content_type=repr.mime_type)
+    response['Content-Disposition'] = 'attachment; filename=%s' % (
+        os.path.basename(repr.file))
+    return response
 
 
 def higherSourceReprList(request, source_id):
