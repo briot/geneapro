@@ -53,8 +53,8 @@ directive('sourceLink', function($state) {
       },
       replace: true,  // content of element should use the outside scope
       template:
-         '<a ui-sref="source({id:sourceId})" class="fa fa-book gpLink">' +
-            '<span>{{name||sourceId}}</span>' +
+         '<a ui-sref="source({id:sourceId})" class="gpLink" ng-show="sourceId">' +
+            '<span class="fa fa-book">{{name||sourceId}}</span>' +
          '</a>'
    };
 }).

@@ -4,7 +4,7 @@ It parses a GEDCOM file, and creates a tree in memory corresponding
 to the GEDCOM file, without doing any interpretation of this tree.
 
 Example of use:
-    ged = Gedcom().parse ("myfile.ged")
+    ged = Gedcom().parse("myfile.ged")
 
 The resulting data structure is a GedcomFile, which provides subprograms
 to access the various fields.
@@ -677,8 +677,9 @@ class GedcomRecord(object):
         # it might not have been parsed already. So we'll have to do it in
         # __getattr__ if not available yet
 
-        if gedcom.ids.get(xref):
-            self._all = gedcom.ids[xref]
+        obj = gedcom.obj_from_id(xref)
+        if obj:
+            self._all = obj
         else:
             self._gedcom = gedcom
 
@@ -698,12 +699,13 @@ class GedcomRecord(object):
             if xref:
                 if name == "_all":
                     # Cache the derefenced object
-                    obj = self._gedcom.ids[xref]
+                    obj = self._gedcom.obj_from_id(xref)
                     del self.__dict__["_gedcom"]  # no longer needed
                     self.__dict__["_all"] = obj
                     return obj
-
-                return self._all.__getattribute__(name)
+                else:
+                    # Possibly will call __getattr__ for "_all"
+                    return self._all.__getattribute__(name)
         except AttributeError:
             pass
 
@@ -722,12 +724,32 @@ class GedcomRecord(object):
                 pass   # Nothing to do, field is unset
             elif key == "value":
                 pass   # Ignored, this is the simple value for the field
-            elif key == "_line":
+            elif key in ("_line", "_ids", "_gedcom", "_Gedcom__filename",
+                         "_all"):
                 pass   # Internal
             elif key.startswith("__"):
                 pass   # python internal
             else:
                 yield key, val
+
+    def for_all_fields_recursive(self, level=1):
+        """
+        recursive for_all_fields, Lists are flattened.
+        :return: (key, value, level)
+        """
+        for key, val in self.for_all_fields():
+            if isinstance(val, GedcomRecord):
+                yield key, val, level
+                for k, v, lev in val.for_all_fields_recursive(level + 1):
+                    yield k, v, lev
+            elif isinstance(val, list):
+                for v2 in val:
+                    yield key, v2, level
+                    if isinstance(v2, GedcomRecord):
+                        for k, v, lev in v2.for_all_fields_recursive(level + 1):
+                            yield k, v, lev
+            else:
+                yield key, val, level
 
     def __str__(self):
         return "gedcomRecord(%s)" % self.value
@@ -871,7 +893,7 @@ class _GedcomParser(object):
             # Register the entity if need be
             if startlevel == 0 and line[_Lexical.XREF_ID]:
                 result.id = line[_Lexical.XREF_ID]
-                gedcomFile.ids[line[_Lexical.XREF_ID]] = result
+                gedcomFile.store_id(line[_Lexical.XREF_ID], result)
 
         else:
             startlevel = -1
@@ -969,7 +991,13 @@ class GedcomFile(GedcomRecord):
 
     def __init__(self):
         super(GedcomFile, self).__init__()
-        self.ids = dict()
+        self._ids = dict()
+
+    def obj_from_id(self, id):
+        return self._ids.get(id, None)
+
+    def store_id(self, id, obj):
+        self._ids[id] = obj
 
 
 class GedcomIndi(GedcomRecord):
@@ -1020,8 +1048,11 @@ class Gedcom(object):
             filename = file(filename, "U")
 
         result = self.parser.parse(_Lexical(filename))
-        result.filename = filename
+        result.__filename = filename
         return result
+
+    def get_filename(self):
+        return self.__filename
 
 if __name__ == '__main__':
     Gedcom().parse(sys.argv[1])

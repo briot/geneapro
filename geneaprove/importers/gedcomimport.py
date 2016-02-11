@@ -32,14 +32,20 @@ INLINE_SOURCE = -2
 NO_SOURCE = -1
 
 
+def as_list(obj):
+    """
+    Encapsulate obj in a list, if it is not a list already.
+    """
+    if isinstance(obj, list):
+        return obj
+    else:
+        return [obj]
+
 def location(obj):
     """Return the location (in the gedcom file) of obj"""
 
     try:
-        if isinstance(obj, list):
-            return obj[0].location()
-        else:
-            return obj.location()
+        return as_list(obj)[0].location()
     except AttributeError:
         return "???"
 
@@ -57,12 +63,20 @@ class SourceManager(object):
     This avoids lots of useless sources in the database.
     """
 
-    def __init__(self, importer):
+    def __init__(self, importer, whole_file):
         """
         :param GedcomImporter importer:
+        :param GedcomRecord whole_file: the whole gedcom file, used to check
+           which sources have references and how many of those.
         """
         self.importer = importer
-        self.sources = {}
+        self.sources = {}  # sourceId => models.Source
+        self.refs = {}    # sourceId => [GedcomRecord] for refs to that source
+
+        # Count the number of references for each source
+        for key, value, level in whole_file.for_all_fields_recursive(level=1):
+            if key == "SOUR" and level > 1 and isinstance(value, GedcomRecord):
+                self.refs.setdefault(value.value, []).append(value)
 
     def add_SOUR(self, source, subject_place=None):
         """
@@ -71,6 +85,51 @@ class SourceManager(object):
         """
         return self.__create_source(source, subject_place=subject_place)
 
+    def __add_OBJE_to_source(self, source, obje):
+        """
+        :param models.Source source: the source to which we add a
+           representation
+        :param GedcomRecord obje: the OBJE description. This can also be a
+           list of such objects
+        """
+        if obje:
+            for o in as_list(obje):
+                obj = self.importer._create_obje(o, source)
+
+    def __add_source_to_REPO(self, source, repo):
+        """
+        Add a source to a repository
+        :param models.Source source: the source to which we add a
+           representation
+        :param GedcomRecord repo: the REPO description.
+        """
+
+        if repo:
+            # If we just have a "CALN", no need to create a repository
+            rep = self.importer._create_repo(repo)
+            caln = None   # Description of the call number
+            source_type = None
+
+            for k, v in repo.for_all_fields():
+                if k == "CALN":
+                    if len(v) > 1:
+                        self.importer.report_error(
+                            "%s A single CALN per REPO is supported" % (
+                                location(v), ))
+                    else:
+                        caln = v[0].value
+                        source_type =  (v[0].MEDI or '').lower()
+                else:
+                    self.importer.report_error(
+                        "%s Unhandled REPO.%s" % (location(v), k))
+
+            models.Repository_Source.objects.create(
+                repository=rep,
+                source=source,
+                # activity=None,
+                call_number=caln,
+                description=source_type)
+
     def __create_source(self, sour, subject_place=None):
         """
         Actual creation in the database
@@ -78,40 +137,7 @@ class SourceManager(object):
         :param subject_place: the place the source is about
         :return: A models.Source object
         """
-        medium = ""
-        rep = None
-
-        if getattr(sour, "REPO", None):
-            repo = sour.REPO
-            if repo.value:
-                # If we just have a "CALN", no need to create a repository
-                rep = self.importer._create_repo(repo)
-            else:
-                for k, v in repo.for_all_fields():
-                    if k not in ("CALN", ):
-                        self.importer.report_error(
-                            "%s Unhandled REPO.%s" % (location(v), k))
-
-            caln = repo.CALN  # call number
-            if caln:
-                medium = (caln[0].MEDI or '').lower()
-
-            for k, v in repo.for_all_fields():
-                if k not in ("CALN", ):
-                    self.importer.report_error(
-                        "%s Unhandled REPO.%s" % (location(v), k))
-
-        try:
-            chan = sour.CHAN
-        except:
-            chan = None
-
-        title = getattr(sour, "TITL", "")
-        if not title:
-            try:
-                title = "S%s" % sour.id
-            except:
-                title = "Unnamed source"
+        title = getattr(sour, "TITL", "Unnamed source")
 
         src = models.Source.objects.create(
             higher_source_id=None,
@@ -119,26 +145,15 @@ class SourceManager(object):
             jurisdiction_place_id=None,
             researcher=self.importer._researcher,
             subject_date=None,
-            medium=medium,
+            medium="",
             title=title,
             abbrev=getattr(sour, "ABBR", "") or title,
             biblio=title,
-            last_change=self.importer._create_CHAN(chan),
+            last_change=self.importer._create_CHAN(getattr(sour, "CHAN", None)),
             comments='')
-        if rep is not None:
-            models.Repository_Source.objects.create(
-                repository=rep,
-                source=src,
-                # activity=None,
-                call_number=None,
-                description=None)
 
-        obje = sour.OBJE
-        if obje:
-            if not isinstance(obje, list):
-                obje = [obje]
-            for o in obje:
-                obj = self.importer._create_obje(o, src)
+        self.__add_OBJE_to_source(src, sour.OBJE)
+        self.__add_source_to_REPO(src, getattr(sour, "REPO", None))
 
         for k, v in sour.for_all_fields():
             if k == "id":
@@ -155,45 +170,45 @@ class SourceManager(object):
         return src
 
     def create_sources_ref(self, data):
-        """Create a list of instances of Source for the record described by
-         DATA. For instance, if Data is an event, these are all the sources in
-         which the event was references.
-         The return value is a list of tuples (source_id, Source instance).
-         If there are no reference, this returns a list with a single element,
-         None. As a result, you can always iterate over the result to insert
-         rows in the database."""
+        """
+        Create a list of instances of Source for the record described by
+        DATA. For instance, if Data is an event, these are all the sources in
+        which the event was references.
+
+        :return: [(source_id, models.Source)] or [None]
+        """
 
         if not isinstance(data, unicode) and getattr(data, "SOUR", None):
             all_sources = []
 
             for s in data.SOUR:
+
+                # Whether to add new parts to the source we found, rather than
+                # create a child source (this is true for sources defined
+                # inline or sources with a single xref)
+
+                extend_source = False
+
                 # As a convenience for the python API (this doesn't happen in a
                 # Gedcom file), we allow direct source creation here. In
                 # Gedcom, this is always an xref.
 
                 if not s.value or s.value not in self.sources:
-                    if not getattr(s, "TITL", None):
-                        s.TITL = "source at %s %s" % (data.location(), data)
                     sour = (INLINE_SOURCE, self.__create_source(s))
+                    extend_source = True
                 else:
                     sour = (s.value, self.sources[s.value])
+                    extend_source = len(self.refs[s.value]) <= 1
 
-                # If we have parts, we need to create a nested source instead
+                # If we have parts, we possibly need to create a nested source
+
                 parts = []
                 for k, v in s.for_all_fields():
                     if k == "DATA":
                         for k2, v2 in v.for_all_fields():
-                            if k2 == "DATE":
-                                parts.append(("DATE", v2)) # Entry recording date
-                            elif k2 == "TEXT":
-                                parts.append(("VERBATIM", v2)) # Verbatim copy
-                            else:
-                                parts.append((k2, v2))  # Custom
-                    elif k == "NOTE":
+                            parts.append((k2, v2))
+                    elif k in ("NOTE", "OBJE"):
                         pass   # Handled separately below
-                    elif k == "OBJE":
-                        self.importer.report_error(
-                            "%s Unhandled SOUR.%s" % (location(v), k))
                     else:
                         parts.append((k, v))
 
@@ -203,14 +218,20 @@ class SourceManager(object):
                     # Try to reuse an existing source with the same parts,
                     # since gedcom duplicates them
                     new_id = '%s %s' % (s.value, parts_string)
-                    if new_id not in self.sources:
-                        sour2 = models.Source.objects.create(
-                            higher_source=sour[1],
-                            researcher=self.importer._researcher,
-                            title=(sour[1].title or u'') + parts_string,
-                            abbrev=(sour[1].abbrev or u'') + parts_string,
-                            comments="".join(getattr(s, "NOTE", [])),
-                            last_change=sour[1].last_change)
+                    if new_id in self.sources:
+                        nested_source = self.sources[new_id]
+                    else:
+                        if extend_source:
+                            nested_source = sour[1]  # The parent source
+                        else:
+                            nested_source = models.Source.objects.create(
+                                higher_source=sour[1],
+                                researcher=self.importer._researcher,
+                                title=(sour[1].title or u'') + parts_string,
+                                abbrev=(sour[1].abbrev or u'') + parts_string,
+                                comments="",
+                                last_change=sour[1].last_change)
+                            self.sources[new_id] = nested_source
 
                         for k, v in parts:
                             try:
@@ -220,14 +241,14 @@ class SourceManager(object):
                                 type = models.Citation_Part_Type.objects.create(
                                     name=k.title(), gedcom=k)
                             p = models.Citation_Part(type=type, value=v)
-                            sour2.parts.add(p)
-                        sour2.save()
+                            nested_source.parts.add(p)
 
-                        self.sources[new_id] = sour2
-                    else:
-                        sour2 = self.sources[new_id]
+                    nested_source.comments += "\n".join(getattr(s, "NOTE", []))
+                    nested_source.save()
+                    self.__add_OBJE_to_source(
+                        nested_source, getattr(s, "OBJE", None))
 
-                    sour = (sour[0], sour2)
+                    sour = (sour[0], nested_source)
 
                 all_sources.append(sour)
 
@@ -299,7 +320,7 @@ class GedcomImporter(object):
             # case, sourceId is set to NO_SOURCE for those events and
             # characteristics with no source.
 
-            self.source_manager = SourceManager(self)
+            self.source_manager = SourceManager(self, data)
 
             for r in data.REPO:
                 self._create_repo(r)
@@ -376,8 +397,8 @@ class GedcomImporter(object):
 
         if not data:
             data = []
-        elif not isinstance(data, list):
-            data = [data]
+        else:
+            data = as_list(data)
 
         for d in data:
             date = "01 JAN 1970"
@@ -401,6 +422,10 @@ class GedcomImporter(object):
             return django.utils.timezone.now()
 
     def _create_repo(self, data):
+        """
+        Create a repository, or return an existing one.
+        """
+
         if data.value and self._repo.get(data.value, None):
             return self._repo[data.value]
 
@@ -653,7 +678,7 @@ class GedcomImporter(object):
         n = []
         for p in getattr(data, "NOTE", []):
             if p.startswith("@") and p.endswith("@"):
-                n.append(self._data.ids[p].value)
+                n.append(self._data.obj_from_id(p).value)
             else:
                 n.append(p)
 
@@ -688,8 +713,7 @@ class GedcomImporter(object):
         else:
             typ = self._char_types[key]
 
-        if not isinstance(value, list):
-            value = [value]
+        value = as_list(value)
 
         for val_index, val in enumerate(value):
             if val is None:
@@ -981,10 +1005,7 @@ class GedcomImporter(object):
                     gedcom=field)
                 self._char_types[field] = typ
 
-                if not isinstance(value, list):
-                    value = [value]
-
-                for v in value:
+                for v in as_list(value):
                     self._create_characteristic(field, v, indi)
 
             elif field == "SOUR":
@@ -1014,7 +1035,7 @@ class GedcomImporter(object):
     def _create_project(self, researcher):
         """Register the project in the database"""
 
-        filename = getattr(self._data.HEAD, "FILE", "") or self._data.filename
+        filename = getattr(self._data.HEAD, "FILE", "") or self._data.get_filename()
         p = models.Project.objects.create(name='Gedcom import',
                                           description='Import from ' +
                                           filename,
