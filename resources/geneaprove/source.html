@@ -96,9 +96,15 @@
    </div>
 
    <!-- The media for the source -->
-   <div class='col-md-12' ng-if="source.id>=0">
+   <div class='col-md-12' ng-if="repr.length>0">
       <div class='panel panel-default'>
-         <div class='panel-heading'>Media</div>
+         <div class='panel-heading'>
+            Media
+            <span class='nav navbar-nav' style='float:right'>
+               <label for='addMedia' class='sr-only'>Add Media</label>
+               <button id='addMedia' class='fa fa-plus btn btn-xs btn-primary' title='Add new media'></button>
+            </span>
+         </div>
          <div class='panel-body'>
             <div ng-repeat='r in repr'>
                <figure>
@@ -106,13 +112,12 @@
                   <figcaption>{{r.comments}}</figcaption>
                </figure>
             </div>
-            <div gp-download-form></div>
          </div>
       </div>
    </div>
 
    <!-- The assertions for the source -->
-   <div class='col-md-12' ng-if="source.id>=0">
+   <div class='col-md-12' ng-if="asserts.length>0">
       <div class='panel panel-default'>
          <div class='panel-heading'>Assertions</div>
          <div class='panel-body'>
@@ -138,6 +143,11 @@
             </div>
          </div>
       </div>
+   </div>
+
+   <!-- Adding new media -->
+   <div class='col-md-12' ng-if='source.id>=0'>
+       <div gp-download-form></div>
    </div>
 
 </div>

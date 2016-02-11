@@ -1,4 +1,3 @@
-
 /**
  * Set this on a panel-heading when it is clickable to reveal details.
  */
@@ -27,4 +26,20 @@
  */
 .disproved {
    text-decoration: line-through;
+}
+
+/**
+ * Figures
+ */
+figure {
+   img {
+      border: 1px solid #999;
+      max-width: 100%;
+   }
+
+   figcaption {
+      text-align: right;
+      font-style: italic;
+      font-size: 0.8em;
+   }
 }

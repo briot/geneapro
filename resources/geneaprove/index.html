@@ -12,23 +12,23 @@
    {% csrf_token %}
    <nav class='navbar navbar-default'>
       <div class='container-fluid'>
-         <div class='navbar-header'>
+         <div class='navbar-header hide-if-small'>
             <a href='/' class="navbar-brand logo">
                G&eacute;n&eacute;aprove
                <div class="tagline">Evidence your genealogy</div>
             </a>
          </div>
-         <div>
-            <ul class='nav navbar-nav navbar-left'>
-               <li class='group'>File</li>
+         <div class='Acollapse navbar-collapse'>
+            <ul class='nav navbar-nav'>
+               <li class='group hide-if-small'>File</li>
                <li gp-menubutton='import' title='Import' data-font='fa-folder-open'></li>
 
-               <li class='group'>Lists</li>
+               <li class='group hide-if-small'>Lists</li>
                <li gp-menubutton='/personas' title='All persons' data-font='fa-users'></li>
                <li gp-menubutton='/places'   title='All places'  data-font='fa-globe'></li>
                <li gp-menubutton='/sources/list'  title='All sources' data-font='fa-book'></li>
 
-               <li class='group'>Reports</li>
+               <li class='group hide-if-small'>Reports</li>
                <li gp-menubutton='/person'   title='Details'  data-font='fa-user'></li>
                <li gp-menubutton='/pedigree' title='Pedigree' data-font='fa-sitemap'></li>
                <li gp-menubutton='/fanchart' title='Fanchart' data-font='fa-wifi'></li>
@@ -36,10 +36,10 @@
                <li class='disabled' gp-menubutton='/quilts'   title='Quilts'   data-font='fa-server' data-not-implemented='1'></li>
                <li gp-menubutton='/stats'    title='Stats'    data-font='fa-pie-chart'></li>
             </ul>
-            <ul class='nav navbar-nav navbar-right'>
+            <ul class='nav navbar-nav navbar-right hide-if-small'>
                <li>
                   <label for='addSource' class='sr-only'>Add source</label>
-                  <button class='btn btn-primary navbar-btn' id='addSource' ng-click='$state.go("source_new")'>Add Source</button>
+                  <button class='btn btn-primary navbar-btn fa fa-plus' id='addSource' ng-click='$state.go("source_new")' title='Add source'></button>
                </li>
             </ul>
           </div>

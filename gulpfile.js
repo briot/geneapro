@@ -9,7 +9,6 @@ var DEST = 'static';
 
 var resources = {
    bootstrap: ['node_modules/bootstrap-sass/assets/stylesheets/bootstrap'],
-   fontawesome: ['node_modules/font-awesome/scss'],
    scss: ['resources/sass/*.scss',
           '!resources/sass/_*.scss',
           'node_modules/font-awesome/scss/font-awesome.scss'

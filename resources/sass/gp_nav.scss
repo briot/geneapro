@@ -10,3 +10,25 @@
       text-align: center;
    }
 }
+
+/**
+ * Navbar
+ */
+.navbar-collapse {
+   @media (max-width: 768px) {
+      .navbar-nav > li {
+         font-size: 0.6em;
+         display: inline;
+      }
+
+      .navbar-nav > li > a {
+         display: inline;
+      }
+   }
+}
+
+@media (max-width: $grid-float-breakpoint) {
+   .hide-if-small {
+      display: none !important;
+   }
+}
