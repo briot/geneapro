@@ -137,13 +137,14 @@ class ModelEncoder(json.JSONEncoder):
                 parts = []
                 for p in models.Characteristic_Part.objects.filter(
                         characteristic=obj.characteristic).select_related():
-                    parts.append((p.type.name, p.name))
+                    parts.append({'name': p.type.name, 'value': p.name})
                 result['date'] = \
                      obj.characteristic.date and DateRange(obj.characteristic.date)
                 result['place'] = \
                      obj.characteristic.place and obj.characteristic.place.name
                 result['person1'] = obj.person
-                result['char2'] = (obj.characteristic, parts)
+                result['char2'] = obj.characteristic
+                result['char_parts2'] = parts
 
             elif isinstance(obj, models.P2G):
                 result['person1'] = obj.person
