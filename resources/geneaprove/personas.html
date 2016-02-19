@@ -1,9 +1,48 @@
 <div class='row'>
 
-   <!-- Sidebar -->
-   <div class='col-md-2'>
+   <div class='col-md-10 col-lg-9'>
       <div class='panel panel-default'>
-         <div class='panel-heading'>List of persons</div>
+         <div class='panel-heading'>
+            List of persons <span gp-paginate-header></span>
+         </div>
+         <div class='panel-body'>
+            <table class='table'>
+               <thead>
+                  <tr>
+                     <th>Surname</th>
+                     <th>Given name</th>
+                     <th>Birth</th>
+                     <th>Death</th>
+                     <th>Marriage</th>
+                     <!--<th>Last changed</th>-->
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr ng-if='data===undefined'>
+                     <td colspan='5'>Loading...</td>
+                  </tr>
+                  <tr ng-repeat='p in filteredData | paginate: page : $root.settings.personas.rows'>
+                     <td><span persona-link='p.id' name='p.surname'></span></td>
+                     <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.styles}}'>{{p.given_name || '-'}}</span></td>
+                     <td ng-if='$root.settings.personas.colorScheme==4'><span>{{p.given_name || '-'}}</span></td>
+                     <td>{{p.birth.date||''}}</td>
+                     <td>{{p.death.date||''}}</td>
+                     <td>{{p.marriage.date||''}}</td>
+                     <!--<td>{{p.last_change}}</td>-->
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+         <div class='panel-footer'>
+            <div gp-paginate-pages></div>
+         </div>
+      </div>
+   </div>
+
+   <!-- Sidebar -->
+   <div class='col-md-2 col-lg-3 sidebar'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Settings</div>
          <div class='panel-body'>
             <ul class='nav nav-pills nav-stacked'>
                <li class='config'>
@@ -24,36 +63,4 @@
       </div> <!-- panel -->
    </div> <!-- col -->
 
-   <div class='col-md-10'>
-      <table class='table'>
-         <thead>
-            <tr class='controls'>
-               <th colspan='6' gp-paginate-header></th>
-            </tr>
-            <tr>
-               <th>Surname</th>
-               <th>Given name</th>
-               <th>Birth</th>
-               <th>Death</th>
-               <th>Marriage</th>
-               <!--<th>Last changed</th>-->
-            </tr>
-         </thead>
-         <tbody>
-            <tr ng-if='data===undefined'>
-               <td colspan='5'>Loading...</td>
-            </tr>
-            <tr ng-repeat='p in filteredData | paginate: page : $root.settings.personas.rows'>
-               <td><span persona-link='p.id' name='p.surname'></span></td>
-               <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.styles}}'>{{p.given_name || '-'}}</span></td>
-               <td ng-if='$root.settings.personas.colorScheme==4'><span>{{p.given_name || '-'}}</span></td>
-               <td>{{p.birth.date||''}}</td>
-               <td>{{p.death.date||''}}</td>
-               <td>{{p.marriage.date||''}}</td>
-               <!--<td>{{p.last_change}}</td>-->
-            </tr>
-         </tbody>
-      </table>
-      <div gp-paginate-pages></div>
-   </div>
 </div>

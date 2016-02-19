@@ -1,0 +1,23 @@
+.panel {
+   h4 {
+      margin-top: 5px;
+      margin-left: 10px;
+      font-weight: bold;
+   }
+}
+
+.sidebar .panel {
+   box-shadow: 1px 1px 3px rgba(0,0,0,.5);
+}
+
+.panel-footer {
+   padding-top: 0;
+   padding-bottom: 0;
+
+   nav {
+      text-align: center;
+      .pagination {
+         margin: 5px 0;
+      }
+   }
+}

@@ -1,5 +1,9 @@
 // Core variables and mixins from bootstrap
 
-@import "variables";
-@import "mixins";
-
+$body-bg: #E0D9D2;
+$navbar-default-bg: darken($body-bg, 8%);
+$navbar-default-link-color: #333;
+$panel-border-radius: 10px;
+$panel-default-heading-bg: $navbar-default-bg;
+$panel-footer-bg: lighten($navbar-default-bg, 5%);
+$panel-default-border: $navbar-default-bg;

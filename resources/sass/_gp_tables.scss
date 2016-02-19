@@ -1,0 +1,13 @@
+@import "gp_vars";
+
+tr.rowDetails td.extra {
+   padding-left: 40px;
+   border-top: 0;  // merge with top-row
+
+   table.table-condensed > tbody > tr > td {
+      background-color: $panel-bg; // darken($panel-bg, 10%);
+   }
+}
+tr.open td {
+   border-bottom: 0;  // merge with details row
+}

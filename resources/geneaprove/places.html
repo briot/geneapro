@@ -1,9 +1,47 @@
 <div class='row'>
 
-   <!-- Sidebar -->
-   <div class='col-md-2'>
+   <div class='col-md-10 col-lg-9'>
       <div class='panel panel-default'>
-         <div class='panel-heading'>List of places</div>
+         <div class='panel-heading'>
+            List of places <span gp-paginate-header></span>
+         </div>
+         <div class='panel-body'>
+            <table class='table'>
+               <thead>
+                  <tr>
+                     <th>Name</th>
+                     <th>Id</th>
+                     <th>Details</th>
+                  </tr>
+               </thead>
+               <tbody>
+                 <tr ng-repeat='p in filteredData | paginate: page : $root.settings.places.rows'>
+                    <td>{{p.name}}</td>
+                    <td>{{p.id}}</td>
+                    <td>
+                       <!--{% for pa in p.parts.all %}
+                       <span class="char">{{pa.type.name}}</span>: {{pa.name}}<br>
+                       {% endfor %}
+              
+                       {% if p.parent_place %}
+                       <span class="char">Parent place</span>: {{p.parent_place.name}}<br>
+                       {% endif %}
+                       -->
+                    </td>
+                 </tr>
+               </tbody>
+            </table>
+         </div>
+         <div class='panel-footer'>
+            <div gp-paginate-pages></div>
+         </div>
+      </div>
+   </div>
+
+   <!-- Sidebar -->
+   <div class='col-md-2 col-lg-3 sidebar'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Settings</div>
          <div class='panel-body'>
             <ul class='nav nav-pills nav-stacked'>
                <li class='config'>
@@ -16,36 +54,5 @@
       </div>
    </div>
 
-   <div class='col-md-10'>
-      <table class='table'>
-         <thead>
-            <tr class='controls'>
-               <th colspan='3' gp-paginate-header></th>
-            </tr>
-            <tr>
-               <th>Name</th>
-               <th>Id</th>
-               <th>Details</th>
-            </tr>
-         </thead>
-         <tbody>
-           <tr ng-repeat='p in filteredData | paginate: page : $root.settings.places.rows'>
-              <td>{{p.name}}</td>
-              <td>{{p.id}}</td>
-              <td>
-                 <!--{% for pa in p.parts.all %}
-                 <span class="char">{{pa.type.name}}</span>: {{pa.name}}<br>
-                 {% endfor %}
-        
-                 {% if p.parent_place %}
-                 <span class="char">Parent place</span>: {{p.parent_place.name}}<br>
-                 {% endif %}
-                 -->
-              </td>
-           </tr>
-         </tbody>
-      </table>
-      <div gp-paginate-pages></div>
-   </div>
 </div>
 

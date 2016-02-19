@@ -1,51 +1,14 @@
 @import "gp_vars";
-
-// standard bootstrap files
-
-// Reset and dependencies
-@import "normalize";
-@import "print";
-@import "glyphicons";
-
-// Core CSS
-@import "scaffolding";
-@import "type";
-@import "code";
-@import "grid";
-@import "tables";
-@import "forms";
-@import "buttons";
-
-// Components
-@import "component-animations";
-@import "dropdowns";
-@import "button-groups";
-@import "input-groups";
-@import "navs";
-@import "navbar";
-@import "breadcrumbs";
-@import "pagination";
-@import "pager";
-@import "labels";
-@import "badges";
-@import "jumbotron";
-@import "thumbnails";
-@import "alerts";
-@import "progress-bars";
-@import "media";
-@import "list-group";
-@import "panels";
-@import "responsive-embed";
-@import "wells";
-@import "close";
-
-// Components w/ JavaScript
-// @import "modals";
-// @import "tooltip";
-// @import "popovers";
-// @import "carousel";
-
-// Utility classes
-@import "utilities";
-@import "responsive-utilities";
-
+@import "bootstrap";
+@import "font-awesome";
+@import "gp_core.scss";
+@import "gp_diagrams.scss";
+@import "gp_downloads.scss";
+@import "gp_float_labels.scss";
+@import "gp_logo.scss";
+@import "gp_menu.scss";
+@import "gp_nav.scss";
+@import "gp_panels.scss";
+@import "gp_rating.scss";
+@import "gp_slider.scss";
+@import "gp_tables.scss";

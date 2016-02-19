@@ -8,10 +8,10 @@ var $ = require('gulp-load-plugins')();
 var DEST = 'static';
 
 var resources = {
-   bootstrap: ['node_modules/bootstrap-sass/assets/stylesheets/bootstrap'],
-   scss: ['resources/sass/*.scss',
-          '!resources/sass/_*.scss',
-          'node_modules/font-awesome/scss/font-awesome.scss'
+   bootstrap: 'node_modules/bootstrap-sass/assets/stylesheets',
+   fontawesome: 'node_modules/font-awesome/scss',
+   scss: [//  'resources/sass/myboostrap.scss',  //  Keep this first
+          'resources/sass/*.scss'
          ],
    html: ['resources/geneaprove/**/*.html',
           '!resources/geneaprove/**/\.#*.html',
@@ -26,15 +26,20 @@ var resources = {
 };
 
 gulp.task('css', function() {
-   return gulp.src(resources.scss)
+   return gulp.src(resources.scss) // "resources/sass/myboostrap.scss")
        .pipe($.sourcemaps.init())
-          .pipe($.cached('all_css'))
-              .pipe($.sass({includePaths: resources.bootstrap})
-                    .on('error', $.sass.logError))
+          //.pipe($.cached('all_css'))
+              .pipe($.sass({
+                 includePaths: [resources.bootstrap, resources.fontawesome]
+                 })
+                 .on("error", $.notify.onError(function(error) {
+                    return "Error: " + error.message;
+                 })))
+                 //.on('error', $.sass.logError))
               .pipe($.autoprefixer(
                        {browser: ['last 2 versions'], cascade: false}))
               .pipe($.cssmin())
-          .pipe($.remember('all_css'))
+          //.pipe($.remember('all_css'))
           .pipe($.concat('geneaprove.min.css'))
        .pipe($.sourcemaps.write('.'))
        .pipe(gulp.dest(DEST + '/css'))

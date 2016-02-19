@@ -1,6 +1,16 @@
 <div class='row'>
 
-   <div class='col-md-2'>
+   <div class='col-md-10 col-lg-9 panel'>
+      <div class='graph' gp-radial='decujus'></div>
+      <div id='contextMenu' class='contextMenu navbar navbar-default'>
+         <ul class='nav nav-pills nav-stacked'>
+            <li><a ng-click='focusPerson()'>Set as decujus</a></li>
+            <li><a ng-click='showPerson()'>Show details</a></li>
+         </ul>
+      </div>
+   </div>
+
+   <div class='col-md-2 col-lg-3 sidebar'>
       <div class='panel panel-default'>
          <div class='panel-heading'>Radial</div>
          <div class='panel-body'>
@@ -38,13 +48,4 @@
       </div>
    </div>
 
-   <div class='col-md-10'>
-      <div class='graph' gp-radial='decujus'></div>
-      <div id='contextMenu' class='contextMenu navbar navbar-default'>
-         <ul class='nav nav-pills nav-stacked'>
-            <li><a ng-click='focusPerson()'>Set as decujus</a></li>
-            <li><a ng-click='showPerson()'>Show details</a></li>
-         </ul>
-      </div>
-   </div>
 </div>

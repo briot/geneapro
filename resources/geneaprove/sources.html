@@ -1,9 +1,39 @@
 <div class='row'>
 
-   <!-- Sidebar -->
-   <div class='col-md-2'>
+   <div class='col-md-10 col-lg-9'>
       <div class='panel panel-default'>
-         <div class='panel-heading'>List of sources</div>
+         <div class='panel-heading'>
+            List of sources <span gp-paginate-header></span>
+         </div>
+         <div class='panel-body'>
+            <table class='table'>
+               <thead>
+                  <tr>
+                     <th>Id</th>
+                     <th>Short citation</th>
+                  </tr>
+               </thead>
+               <tbody>
+                  <tr ng-if='data===undefined'>
+                    <td colspan='2'>Loading...</td>
+                  </tr>
+                  <tr ng-repeat='p in filteredData | paginate: page : $root.settings.sources.rows'>
+                     <td><span source-link='p.id'></span></td>
+                     <td><span ng-bind-html='p.abbrev||p.title' title='{{p.title}}'></span></td>
+                  </tr>
+               </tbody>
+            </table>
+         </div>
+         <div class='panel-footer'>
+            <div gp-paginate-pages></div>
+         </div>
+      </div>
+   </div>
+
+   <!-- Sidebar -->
+   <div class='col-md-2 col-lg-3 sidebar'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Settings</div>
          <div class='panel-body'>
             <ul class='nav nav-pills nav-stacked'>
                <li class='config'>
@@ -16,28 +46,5 @@
       </div>
    </div>
 
-   <div class='col-md-10'>
-      <table class='table'>
-         <thead>
-            <tr class='controls'>
-               <th colspan='2' gp-paginate-header></th>
-            </tr>
-            <tr>
-               <th>Id</th>
-               <th>Short citation</th>
-            </tr>
-         </thead>
-         <tbody>
-            <tr ng-if='data===undefined'>
-              <td colspan='2'>Loading...</td>
-            </tr>
-            <tr ng-repeat='p in filteredData | paginate: page : $root.settings.sources.rows'>
-               <td><span source-link='p.id'></span></td>
-               <td><span ng-bind-html='p.abbrev||p.title' title='{{p.title}}'></span></td>
-            </tr>
-         </tbody>
-      </table>
-      <div gp-paginate-pages></div>
-   </div>
 </div>
 

@@ -72,7 +72,7 @@ def view(request, decujus=1):
                     if year is not None:
                         gen_range[2] = year
 
-        gen_range[3] = "Generation %02d (%d out of %d) (%s - %s)" \
+        gen_range[3] = "Gen. %02d (%d / %d) (%s - %s)" \
             % (index + 1, len(generations[index]), 2 ** (index + 1),
                gen_range[1], gen_range[2])
 
