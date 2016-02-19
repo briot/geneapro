@@ -193,6 +193,23 @@ directive('sortBy', function() {
                      'headerSortDown:sortCriteria.ascending && sortCriteria.field==field}"' +
          ' ng-click="sort()" ng-transclude></th>'
    };
+}).
+
+/**
+ * Convert number model to strings, for use in <select> boxes
+ * http://stackoverflow.com/questions/19809717/ng-select-gives-only-string-but-i-want-integer
+ */
+
+directive('convertToNumber', function() {
+   return {
+      require: 'ngModel',
+      link: function(scope, element, attrs, ngModel) {
+         ngModel.$parsers.push(function(val) {
+            return parseInt(val, 10);
+         });
+         ngModel.$formatters.push(function(val) {
+            return '' + val;
+         });
+      }
+   };
 });
-
-

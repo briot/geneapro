@@ -57,7 +57,7 @@
                </li>
                <li class='config'>
                   <span>Colors</span>
-                  <select ng-model='$root.settings.fanchart.colorScheme'>
+                  <select ng-model='$root.settings.fanchart.colorScheme' convert-to-number>
                     <option value="0">Rules</option>
                     <option value="1">Pedigree</option>
                     <option value="2">Generation</option>
@@ -68,7 +68,7 @@
                </li>
                <li class='config'>
                   <span>Appearance</span>
-                  <select ng-model='$root.settings.fanchart.appearance'>
+                  <select ng-model='$root.settings.fanchart.appearance' convert-to-number>
                      <option value="0">Flat</option>
                      <option value="1">Gradient</option>
                   </select>

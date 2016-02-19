@@ -49,7 +49,7 @@
                </li>
                <li class='config'>
                   <span>Colors</span>
-                  <select ng-model='$root.settings.pedigree.colorScheme'>
+                  <select ng-model='$root.settings.pedigree.colorScheme' convert-to-number>
                     <option value="0">Rules</option>
                     <option value="1">Pedigree</option>
                     <option value="2">Generation</option>
@@ -60,21 +60,21 @@
                </li>
                <li class='config'>
                   <span>Appearance</span>
-                  <select ng-model='$root.settings.pedigree.appearance'>
+                  <select ng-model='$root.settings.pedigree.appearance' convert-to-number>
                      <option value="0">Flat</option>
                      <option value="1">Gradient</option>
                   </select>
                </li>
                <li class='config'>
                   <span>Layout</span>
-                  <select ng-model='$root.settings.pedigree.layoutScheme'>
+                  <select ng-model='$root.settings.pedigree.layoutScheme' convert-to-number>
                      <option value="0">Expanded</option>
                      <option value="1">Compact</option>
                   </select>
                </li>
                <li class='config'>
                   <span>Links</span>
-                  <select ng-model='$root.settings.pedigree.linkStyle'>
+                  <select ng-model='$root.settings.pedigree.linkStyle' convert-to-number>
                      <option value="0">Straight</option>
                      <option value="1">Orthogonal</option>
                      <option value="2">Curves</option>
