@@ -1,17 +1,18 @@
 @import "gp_vars";
 .rating {
    padding-left: 0;
-   display: inline-block;
    list-style-type: none;
    color: #c9c9c9;
+   line-height: 1em;
+   margin-bottom: 0;
    li {
       display: inline-block;
-      width: 20px;
+      width: 1em;
       padding: 1px;
       text-align: center;
-      font-weight: bold;
       cursor: pointer;
       i {
+         vertical-align: middle;
          font-size: 0.5em;
          &.filled {
             font-size: 1em;
