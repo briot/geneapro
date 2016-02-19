@@ -28,18 +28,15 @@ var resources = {
 gulp.task('css', function() {
    return gulp.src(resources.scss) // "resources/sass/myboostrap.scss")
        .pipe($.sourcemaps.init())
-          //.pipe($.cached('all_css'))
-              .pipe($.sass({
-                 includePaths: [resources.bootstrap, resources.fontawesome]
-                 })
-                 .on("error", $.notify.onError(function(error) {
-                    return "Error: " + error.message;
-                 })))
-                 //.on('error', $.sass.logError))
-              .pipe($.autoprefixer(
-                       {browser: ['last 2 versions'], cascade: false}))
-              .pipe($.cssmin())
-          //.pipe($.remember('all_css'))
+          .pipe($.sass({
+             includePaths: [resources.bootstrap, resources.fontawesome]
+             })
+             .on("error", $.notify.onError(function(error) {
+                return error.message;
+             })))
+          .pipe($.autoprefixer(
+                   {browser: ['last 2 versions'], cascade: false}))
+          .pipe($.cssmin())
           .pipe($.concat('geneaprove.min.css'))
        .pipe($.sourcemaps.write('.'))
        .pipe(gulp.dest(DEST + '/css'))

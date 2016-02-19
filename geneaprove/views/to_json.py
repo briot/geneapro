@@ -118,6 +118,8 @@ class ModelEncoder(json.JSONEncoder):
             result = dict(
                 disproved=obj.disproved,
                 rationale=obj.rationale,
+                researcher=obj.researcher if obj.researcher_id else None,
+                last_change=obj.last_change,
                 surety=obj.surety_id)
 
             if isinstance(obj, models.P2P):

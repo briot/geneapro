@@ -74,7 +74,7 @@ class Researcher_Project (GeneaProveModel):
     given researcher might be working simulatenously on several projects.
     """
 
-    researcher = models.ForeignKey(Researcher)
+    researcher = models.ForeignKey(Researcher, null=False)
     project = models.ForeignKey(Project)
     role = models.TextField(null=True,
                             help_text="Role that the researcher plays for that project")

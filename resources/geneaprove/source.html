@@ -121,7 +121,7 @@
       <div class='panel panel-default'>
          <div class='panel-heading'>Assertions</div>
          <div class='panel-body'>
-            <div ng-repeat='a in asserts' ng-class='{disproved: a.disproved}'>
+            <div ng-repeat='a in asserts' ng-class='{disproved: a.disproved}' class='clearfix'>
                <span persona-link='a.person.id'  name='a.person.name' ng-if='a.person'></span>
                <span persona-link='a.person1.id' name='a.person1.name' ng-if='a.person1'></span>
                <span persona-link='a.person2.id' name='a.person2.name' ng-if='a.person2'></span>
@@ -136,8 +136,8 @@
                </span>
 
                <span gp-surety='a.surety'></span>
-               <br>
-               (researched by {{a.researcher}})
+               <span class='researchedBy'>researched by {{a.researcher.name}} ({{a.last_change|date}})</span>
+              </div>
                <br>
                {{a.rationale}}
             </div>
