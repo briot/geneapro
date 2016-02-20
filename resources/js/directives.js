@@ -36,9 +36,43 @@ directive('personaLink', function($state) {
       },
       replace: true,
       template:
-         '<a ui-sref="person({id:personId})" class="fa fa-user gpLink">' +
-            '<span>{{name||personId}}</span>' +
-         '</a>'
+         '<a ui-sref="person({id:personId})" class="fa fa-user gpLink">'
+         +   '{{name||personId}}'
+         + '</a>'
+   };
+}).
+
+/**
+ * A link to a place.
+ */
+directive('placeLink', function($state) {
+   return {
+      scope: {
+         id: '=placeLink',  // The id of the place
+         name: '='               // Defaults to Id
+      },
+      replace: true,
+      template:
+        '<a ui-sref="place({id:id})" class="fa fa-globe gpLink" ng-show="id">'
+        +    '{{name||id}}'
+        + '</a>'
+   };
+}).
+
+/**
+ * A link to a timeline.
+ */
+directive('timeLink', function($state) {
+   return {
+      scope: {
+         date: '=timeLink',
+         name: '='       // Defaults to date
+      },
+      replace: true,
+      template:
+        '<a ui-sref="timeline({date:date})" class="fa fa-calendar gpLink" ng-show="date">'
+        +    '{{name||date}}'
+        + '</a>'
    };
 }).
 
@@ -53,9 +87,9 @@ directive('sourceLink', function($state) {
       },
       replace: true,  // content of element should use the outside scope
       template:
-         '<a ui-sref="source({id:sourceId})" class="gpLink" ng-show="sourceId">' +
-            '<span class="fa fa-book">{{name||sourceId}}</span>' +
-         '</a>'
+         '<a ui-sref="source({id:sourceId})" class="fa fa-book gpLink" ng-show="sourceId">'
+         +   '{{name||sourceId}}'
+         + '</a>'
    };
 }).
 

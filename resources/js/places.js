@@ -8,9 +8,21 @@ config(function($stateProvider) {
       data: {
          pageTitle: '[Genaprove] List of places'
       }
+   }).
+
+   state('place', {
+      url: '/place/:id',
+      templateUrl: 'geneaprove/place.html',
+      controller: 'placeCtrl',
+      data: {
+         pageTitle: '[Geneaprove] Place {{id}}'
+      }
    });
 }).
 
 controller('placesCtrl', function($scope, Paginated) {
    Paginated.instrument($scope, '/data/places', 'settings.places.rows');
+}).
+
+controller('placeCtrl', function($scope) {
 });

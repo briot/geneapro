@@ -21,12 +21,10 @@ h2:first-child {
  * Links to some genealogy entity (sources, places,...)
  */
 .gpLink {
-   span {
-      margin-left: 5px;
-   }
    &:before {
+      margin-right: 5px;
       vertical-align: super;
-      font-size: 0.8em;
+      font-size: 0.7em;
    }
 }
 

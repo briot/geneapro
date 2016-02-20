@@ -147,8 +147,8 @@
                      <span ng-if='a.role != "principal"' class='role'>(as {{a.role || ''}})</span>
                   </span>
                   <br>
-                  <span class='date'>{{a.event2.date}}</span>
-                  <span class='place'>{{a.event2.place.name}}</span>
+                  <span time-link='a.event2.date_sort' name='a.event2.date' style='margin-right:10px'></span>
+                  <span place-link='a.event2.place.id' name='a.event2.place.name'></span>
                </span>
 
                <!-- P2C -->
@@ -164,8 +164,8 @@
                      </span>
                   </span>
                   <br>
-                  <span class='date'>{{a.char2.date || ''}}</span>
-                  <span class='place'>{{a.char2.place.name || ''}}</span>
+                  <span time-link='a.char2.date_sort' name='a.char2.date' style='margin-right:10px'></span>
+                  <span place-link='a.char2.place.id' name='a.char2.place.name'></span>
                </span>
 
                <!-- P2G -->
@@ -173,8 +173,8 @@
                <span ng-if='a.group2'>
                   {{a.group2.name}} ({{a.role}})
                   <br>
-                  <span class='date'>{{a.group2.date || ''}}</span>
-                  <span class='place'>{{a.group2.place.name || ''}}</span>
+                  <span time-link='a.group2.date_sort' name='a.group2.date' style='margin-right:10px'></span>
+                  <span place-link='a.group2.place.id' name='a.group2.place.name'></span>
                </span>
 
                <!-- Rationale -->
