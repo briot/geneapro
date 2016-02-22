@@ -108,7 +108,8 @@
          <div class='panel-body'>
             <div ng-repeat='r in repr'>
                <figure>
-               <img ng-src='{{r.url}}' alt='{{r.file}}'>
+                  <span zoom-image src='r.url'></span>
+                  <!-- img ng-src='{{r.url}}' alt='{{r.file}}'> -->
                   <figcaption>{{r.comments}}</figcaption>
                </figure>
             </div>
