@@ -109,6 +109,12 @@
                <button class='btn btn-xs btn-default fa fa-forward' ng-click='nextImage()' ng-disabled='current_repr==repr.length - 1'></button>
             </span>
 
+            <!-- Image operations -->
+            <span style='margin-left: 30px' ng-if='img'>
+               <button class='btn btn-xs btn-default fa fa-search-minus' ng-click='img.zoomOut()'></button>
+               <button class='btn btn-xs btn-default fa fa-search-plus' ng-click='img.zoomIn()'></button>
+            </span>
+
             <!-- Adding new images -->
 
             <span class='nav navbar-nav navbar-right'>
@@ -125,7 +131,7 @@
          <div class='panel-body'>
             <div gp-download-form ng-if='repr.length==0' onupload='onupload()' url='/data/sources/{{source.id}}/addRepr'></div>
             <figure ng-if='repr.length!=0'>
-               <span zoom-image src='repr[current_repr].url'></span>
+               <span zoom-image src='repr[current_repr].url' image='img'></span>
                <figcaption>{{repr[current_repr].comments}}</figcaption>
             </figure>
          </div>

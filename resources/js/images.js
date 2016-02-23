@@ -1,166 +1,200 @@
-app.
-directive('zoomImage', function() {
+/**
+ * An image that can be manipulated (scroll, zoom, ...).
+ * This in fact encapsulate several images.
+ * @constructor
+ */
+app.factory('ZoomImage', function() {
+   function ZoomImage() {
+      this.scale = 1;
+      this.left = 0;
+      this.top = 0;
+      this.img = undefined;  // @type {Image}
+      this.canvas = undefined;  // @type {Canvas}
+      this.cache = {};   // url->Image
+   }
+   
+   /**
+    * Set the image
+    * @param {string}  url    The url to load.
+    */
+   ZoomImage.prototype.setImage = function(url) {
+      if (this.cache[url]) {
+         this.img = this.cache[url];
+         this.fit();
+      } else {
+         this.img = this.cache[url] = new Image();
+         this.img.onload = angular.bind(this, this.fit);
+         this.img.src = url;
+      }
+   };
+   
+   /**
+    * Set the canvas on which the image should be displayed
+    * @param {Canvas} canvas   The canvas in which the image is displayed
+    */
+   ZoomImage.prototype.setCanvas = function(canvas) {
+      this.canvas = canvas;
+   };
+   
+   /**
+    * Convert from pixel coordinates to image coordinates
+    */
+   ZoomImage.prototype.toAbsX = function(xpixel) {
+      return xpixel / this.scale + this.left;
+   };
+   ZoomImage.prototype.toAbsY = function(ypixel) {
+      return ypixel / this.scale + this.top;
+   };
+   
+   /**
+    * Convert from image coordinates to pixels
+    */
+   
+   ZoomImage.prototype.toScreenX = function(xabs) {
+      return (xabs - this.left) * this.scale;
+   };
+   ZoomImage.prototype.toScreenY = function(yabs) {
+      return (yabs - this.top) * this.scale;
+   };
+   
+   /**
+    * Zoom-to-fit and center in the canvas
+    */
+   ZoomImage.prototype.fit = function() {
+      // Zoom-to-fit
+      this.scale = Math.min(
+         this.canvas.width / this.img.width,
+         this.canvas.height / this.img.height);
+   
+      // Center the image initially
+      this.left = -(this.canvas.width / this.scale - this.img.width) / 2;
+      this.top  = -(this.canvas.height / this.scale - this.img.height) / 2;
+   
+      this._draw();
+   };
+   
+   /**
+    * Draw the image on the canvas
+    */
+   ZoomImage.prototype._draw = function() {
+      if (this.canvas && this.img) {
+         var ctxt = this.canvas.getContext('2d');
+         ctxt.save();
+            // Clear the canvas
+            ctxt.setTransform(1, 0, 0, 1, 0, 0);
+            ctxt.clearRect(0, 0, this.canvas.width, this.canvas.height);
+   
+            // Draw the image
+            ctxt.setTransform(
+                  this.scale, 0, 0, this.scale,
+                  this.toScreenX(0), this.toScreenY(0))
+            ctxt.drawImage(this.img, 0, 0);
+         ctxt.restore();
+      }
+   };
+   
+   /**
+    * Scroll the image
+    * @param {Number} left    Absolute position of top-left corner.
+    * @param {Number} top     Absolute position of top-left corner.
+    */
+   ZoomImage.prototype.scroll = function(left, top) {
+      this.left = left;
+      this.top = top;
+      this._draw();
+   };
+   
+   /**
+    * Update scale of the canvas, and keep (xoffs, yoffs) in same place
+    * on the screen.
+    * @param {=Number} xoffs    Optional, position to preserve on screen
+    */
+   ZoomImage.prototype.zoom = function(newScale, xoffs, yoffs) {
+      if (xoffs === undefined) {
+         xoffs = this.canvas.width / 2;
+      }
+   
+      if (yoffs === undefined) {
+         yoffs = this.canvas.height / 2;
+      }
+   
+      var old_scale = this.scale;
+      var xabs = this.toAbsX(xoffs);
+      var yabs = this.toAbsY(yoffs);
+      this.scale = newScale;
+      this.left = xabs - (xabs - this.left) * old_scale / this.scale;
+      this.top = yabs - (yabs - this.top) * old_scale / this.scale;
+      this._draw();
+   };
+   
+   /**
+    * Zoom in, keeping the given pixel (if specified) at the same
+    * coordinates.
+    */
+   ZoomImage.prototype.zoomIn = function(xpixel, ypixel) {
+      this.zoom(this.scale * 1.2, xpixel, ypixel);
+   };
+   
+   /**
+    * Zoom out, keeping the given pixel (if specified) at the same
+    * coordinates.
+    */
+   ZoomImage.prototype.zoomOut = function(xpixel, ypixel) {
+      this.zoom(this.scale / 1.2, xpixel, ypixel);
+   };
 
+   return ZoomImage;
+}).
+
+directive('zoomImage', function(ZoomImage) {
    return {
       scope: {
-         src: '=',
+         src: '=',    // a String (URL)
+         image: '='   // a ZoomImage
       },
       replace: true,
       link: function(scope, element) {
          var canvas = element[0];
-         var ctxt = canvas.getContext('2d');
-         var img;
-         var cache = {}; // local cache for images
-         var scale = 1;
-         var left = 0;
-         var top = 0;
 
-         /**
-          * Draw the image on the canvas
-          */
-
-         function _redraw() {
-            ctxt.save();
-               // Clear the canvas
-               ctxt.setTransform(1, 0, 0, 1, 0, 0);
-               ctxt.clearRect(0, 0, canvas.width, canvas.height);
-
-               // Draw the image
-               ctxt.setTransform(
-                     scale, 0, 0, scale, _toScreenX(0), _toScreenY(0))
-               ctxt.drawImage(img, 0, 0);
-            ctxt.restore();
+         if (!scope.image) {
+            scope.image = new ZoomImage();
          }
+         scope.image.setCanvas(canvas);
 
-         /**
-          * Convert from pixel coordinates to image coordinates.
-          */
-
-         function _toAbsX(xpixel) {
-            return xpixel / scale + left;
-         }
-         function _toAbsY(ypixel) {
-            return ypixel / scale + top;
-         }
-
-         /**
-          * Convert from image coordinates to pixels
-          */
-
-         function _toScreenX(xabs) {
-            return (xabs - left) * scale;
-         }
-         function _toScreenY(yabs) {
-            return (yabs - top) * scale;
-         }
-
-         /**
-          * Update scale of the canvas, and keep (xoffs, yoffs) in same place
-          * on the screen.
-          */
-         function _updateZoom(newScale, xoffs, yoffs) {
-            var old_scale = scale;
-            var xabs = _toAbsX(xoffs);
-            var yabs = _toAbsY(yoffs);
-
-            scale = newScale;
-            left = xabs - (xabs - left) * old_scale / scale;
-            top = yabs - (yabs - top) * old_scale / scale;
-            _redraw();
-         }
-
-         /**
-          * Zoom-to-fit and center
-          */
-         function _zoomToFit() {
-            // Zoom-to-fit
-            scale = Math.min(
-               canvas.width / img.width, canvas.height / img.height);
-
-            // Center the image initially
-            left = -(canvas.width / scale - img.width) / 2;
-            top  = -(canvas.height / scale - img.height) / 2;
-
-            _redraw();
-         }
-
-         /**
-          * Zoom in, keeping the given pixel (if specified) at the same
-          * coordinates.
-          */
-         scope.zoomIn = function(xpixel, ypixel) {
-            if (xpixel === undefined) {
-               xpixel = canvas.width / 2;
-               ypixel = canvas.height / 2;
-            }
-            _updateZoom(scale * 1.2, xpixel, ypixel);
-         };
-
-         /**
-          * Zoom out, keeping the given pixel (if specified) at the same
-          * coordinates.
-          */
-         scope.zoomOut = function(xpixel, ypixel) {
-            if (xpixel === undefined) {
-               xpixel = canvas.width / 2;
-               ypixel = canvas.height / 2;
-            }
-            _updateZoom(scale / 1.2, xpixel, ypixel);
-         };
-
-         /**
-          * Handle events
-          */
-
-         canvas.addEventListener('wheel', function(e) {
+         element.on('wheel', function(e) {
             if (e.deltaY < 0) {
-               scope.zoomIn(e.layerX, e.layerY);
+               scope.image.zoomIn(e.layerX, e.layerY);
             } else {
-               scope.zoomOut(e.layerX, e.layerY);
+               scope.image.zoomOut(e.layerX, e.layerY);
             }
             e.stopPropagation();
             e.preventDefault();
+            scope.$apply();
             return false;
          });
 
-         /**
-          * Drag events
-          */
-         canvas.addEventListener('mousedown', function(e) {
+         element.on('mousedown', function(e) {
             var offset = {left: e.pageX, top: e.pageY};
-            var initial = {left: left, top: top}
+            var initial = {left: scope.image.left, top: scope.image.top}
 
             function _onMouseMove(e) {
                var newOffs = {left: e.pageX, top: e.pageY};
-               left = initial.left + (offset.left - newOffs.left) / scale;
-               top = initial.top + (offset.top - newOffs.top) / scale;
-               _redraw();
+               scope.image.scroll(
+                  initial.left + (offset.left - newOffs.left) / scope.image.scale,
+                  initial.top + (offset.top - newOffs.top) / scope.image.scale);
             }
             function _onMouseUp(e) {
-               canvas.removeEventListener('mousemove', _onMouseMove);
-               canvas.removeEventListener('mouseup', _onMouseUp);
+               element.off('mousemove', _onMouseMove);
+               element.off('mouseup', _onMouseUp);
             }
-            canvas.addEventListener('mousemove', _onMouseMove);
-            canvas.addEventListener('mouseup', _onMouseUp);
+            element.on('mousemove', _onMouseMove);
+            element.on('mouseup', _onMouseUp);
          });
 
-         /**
-          * Loading the image
-          */
-
          scope.$watch('src', function(v) {
-            if (cache[v]) {
-               img = cache[v];
-               _zoomToFit();
-            } else {
-               cache[v] = img = new Image();
-               img.onload = function() {
-                  canvas.width = canvas.offsetWidth;
-                  canvas.height = canvas.offsetHeight;
-                  _zoomToFit();
-               };
-               img.src = v;
-            }
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            scope.image.setImage(v);
          });
       },
       template: '<canvas style="width:100%; height:600px; background:#666">'

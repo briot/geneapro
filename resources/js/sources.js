@@ -167,7 +167,7 @@ controller('sourcesCtrl', function($scope, Paginated) {
  */
 
 controller('sourceCtrl', function(
-         $scope, $http, $state, $stateParams, CitationTemplates)
+         $scope, $http, $state, $stateParams, CitationTemplates, ZoomImage)
 {
    var id = $stateParams.id;
    if (id === undefined) {
@@ -184,6 +184,7 @@ controller('sourceCtrl', function(
    // Always display the citation if the source does not exist yet
    $scope.showCitation = id == -1;
    $scope.source = {}
+   $scope.img = new ZoomImage();
 
    // ??? Should use a service instead
    $http.get('/data/sources/' + id).then(function(resp) {
