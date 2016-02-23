@@ -131,7 +131,7 @@ app.factory('ZoomImage', function() {
     * Zoom in, keeping the given pixel (if specified) at the same
     * coordinates.
     */
-   ZoomImage.prototype.zoomIn = function(xpixel, ypixel) {
+   ZoomImage.prototype.zoomIn = function(factor, xpixel, ypixel) {
       this.zoom(this.scale * 1.2, xpixel, ypixel);
    };
    
@@ -139,7 +139,7 @@ app.factory('ZoomImage', function() {
     * Zoom out, keeping the given pixel (if specified) at the same
     * coordinates.
     */
-   ZoomImage.prototype.zoomOut = function(xpixel, ypixel) {
+   ZoomImage.prototype.zoomOut = function(factor, xpixel, ypixel) {
       this.zoom(this.scale / 1.2, xpixel, ypixel);
    };
 
@@ -162,15 +162,16 @@ directive('zoomImage', function(ZoomImage) {
          scope.image.setCanvas(canvas);
 
          element.on('wheel', function(e) {
-            if (e.deltaY < 0) {
-               scope.image.zoomIn(e.layerX, e.layerY);
-            } else {
-               scope.image.zoomOut(e.layerX, e.layerY);
+            if (e.altKey) {
+               if (e.deltaY < 0) {
+                  scope.image.zoomIn(e.layerX, e.layerY);
+               } else {
+                  scope.image.zoomOut(e.layerX, e.layerY);
+               }
+               e.stopPropagation();
+               e.preventDefault();
+               scope.$apply();
             }
-            e.stopPropagation();
-            e.preventDefault();
-            scope.$apply();
-            return false;
          });
 
          element.on('mousedown', function(e) {
