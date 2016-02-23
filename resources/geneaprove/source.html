@@ -100,19 +100,34 @@
       <div class='panel panel-default'>
          <div class='panel-heading'>
             Media
+
+            <!-- Selecting the media -->
+
+            <span style='margin-left: 30px' ng-if='repr.length!=0'>
+               <button class='btn btn-xs btn-default fa fa-backward' ng-click='prevImage()' ng-disabled='current_repr==0'></button>
+               {{current_repr + 1}} / {{repr.length}}
+               <button class='btn btn-xs btn-default fa fa-forward' ng-click='nextImage()' ng-disabled='current_repr==repr.length - 1'></button>
+            </span>
+
+            <!-- Adding new images -->
+
             <span class='nav navbar-nav navbar-right'>
-               <label for='addMedia' class='sr-only'>Add Media</label>
+               <div gp-download-form mini=1 autosubmit=1 onupload='onupload()' url='/data/sources/{{source.id}}/addRepr'></div>
+
+               <!--<label for='addMedia' class='sr-only'>Add Media</label>-->
                <button id='addMedia' class='fa fa-plus btn btn-xs btn-primary' title='Add new media' style='margin-right:10px'></button>
             </span>
+
          </div>
+
+         <!-- Image representation or Adding new media -->
+
          <div class='panel-body'>
-            <div ng-repeat='r in repr'>
-               <figure>
-                  <span zoom-image src='r.url'></span>
-                  <!-- img ng-src='{{r.url}}' alt='{{r.file}}'> -->
-                  <figcaption>{{r.comments}}</figcaption>
-               </figure>
-            </div>
+            <div gp-download-form ng-if='repr.length==0' onupload='onupload()' url='/data/sources/{{source.id}}/addRepr'></div>
+            <figure ng-if='repr.length!=0'>
+               <span zoom-image src='repr[current_repr].url'></span>
+               <figcaption>{{repr[current_repr].comments}}</figcaption>
+            </figure>
          </div>
       </div>
    </div>
@@ -187,10 +202,4 @@
          </div>
       </div>
    </div>
-
-   <!-- Adding new media -->
-   <div class='col-md-12' ng-if='source.id>=0'>
-       <div gp-download-form></div>
-   </div>
-
 </div>

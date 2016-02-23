@@ -9,7 +9,8 @@ directive('zoomImage', function() {
       link: function(scope, element) {
          var canvas = element[0];
          var ctxt = canvas.getContext('2d');
-         var img = new Image();
+         var img;
+         var cache = {}; // local cache for images
          var scale = 1;
          var left = 0;
          var top = 0;
@@ -147,12 +148,20 @@ directive('zoomImage', function() {
           * Loading the image
           */
 
-         img.onload = function() {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            _zoomToFit();
-         };
-         img.src = scope.src;
+         scope.$watch('src', function(v) {
+            if (cache[v]) {
+               img = cache[v];
+               _zoomToFit();
+            } else {
+               cache[v] = img = new Image();
+               img.onload = function() {
+                  canvas.width = canvas.offsetWidth;
+                  canvas.height = canvas.offsetHeight;
+                  _zoomToFit();
+               };
+               img.src = v;
+            }
+         });
       },
       template: '<canvas style="width:100%; height:600px; background:#666">'
         + '</canvas>'

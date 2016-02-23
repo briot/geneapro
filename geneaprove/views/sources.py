@@ -2,6 +2,8 @@
 Source-related views
 """
 
+import os
+from django.conf import settings
 from django.shortcuts import render_to_response
 from django.http import HttpResponse
 from django.template import RequestContext
@@ -160,4 +162,52 @@ def view_list(request):
     sources = models.Source.objects.order_by('abbrev', 'title')
     return HttpResponse(
         to_json(sources),
+        content_type='application/json')
+
+
+def representations(request, id):
+    id = int(id)
+    source = get_source(id)
+    data = {
+        'source':  source,
+        'repr':    source.get_representations()
+    }
+    return HttpResponse(to_json(data), content_type='application/json')
+
+
+def add_repr(request, id):
+    """
+    Adding a new representation to a source.
+    """
+
+    id = int(id)
+    source = get_source(id)
+
+    files = request.FILES['file']
+    if not isinstance(files, list):
+        files = [files]
+
+    try:
+        os.makedirs(settings.MEDIA_ROOT)
+    except OSError:
+        pass
+
+    for f in files:
+        # ??? Dangerous, could override existing file
+        name = os.path.join(settings.MEDIA_ROOT, f.name)
+
+        w = open(name, "w")
+        for c in f.chunks():
+            w.write(c)
+        w.close
+
+        r = models.Representation.objects.create(
+            source=source,
+            mime_type=f.content_type,
+            file=name,
+            comments=f.name)
+        r.save()
+
+    return HttpResponse(
+        to_json(True),
         content_type='application/json')

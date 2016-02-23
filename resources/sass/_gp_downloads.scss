@@ -5,20 +5,46 @@
  */
 
 .download-form {
-   $bg: #c8dadf;
+   $bg: rgba(0,0,0,0.1); //#c8dadf
+   $bg_on_drag: #EEE; // darken($bg, 10%)
+   $fg: #555; // #92b0b3
 
-   padding: 60px 20px;
-   position: relative;
    background: $bg;
 
-   .box__input {
-      text-align: center;
-      width: 100%;
+   &.maxi {
+      padding: 60px 20px;
+      &.hasDnd {
+         outline: 2px dashed #92b0b3;
+         outline-offset: -10px;
+      }
+      .icon {
+         color: $fg;
+         font-size: 5em;
+      }
+      label {
+         width: 100%;
+      }
+   }
+   &.mini {
+      display: inline;
+      padding: 5px 5px;
+      .box__input {
+         display: inline;
+      }
+      .icon {
+         color: $fg;
+         font-size: 1em;
+      }
+      label {
+         margin-left: 5px;
+      }
    }
 
-   .icon {
-      color: #92b0b3;
-      font-size: 5em;
+   label {
+      margin-right: 10px;
+   }
+   .box__input {
+      text-align: center;
    }
 
    // Hide the input, but still display it so that it works
@@ -33,7 +59,6 @@
 
    label {
       cursor: pointer;
-      width: 100%;
       .normal {
          font-weight: normal;
       }
@@ -42,21 +67,13 @@
       }
    }
 
-   button {
-      margin-top: 20px;
-   }
-
    .box__uploading,
    .box__success,
    .box__error {
       display: none;
    }
 
-   &.hasDnd {
-      outline: 2px dashed #92b0b3;
-      outline-offset: -10px;
-   }
    &.dragover {
-      background: darken($bg, 10%);
+      background: $bg_on_drag;
    }
 }

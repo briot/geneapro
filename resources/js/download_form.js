@@ -1,5 +1,5 @@
 app.
-directive('gpDownloadForm', function() {
+directive('gpDownloadForm', function($http) {
    // Code from https://css-tricks.com/drag-and-drop-file-uploading/
 
    var div = document.createElement('div');
@@ -9,10 +9,15 @@ directive('gpDownloadForm', function() {
                 'FileReader' in window;
 
    return {
-      controller: function($scope) {
-         $scope.hasDnd = hasDnd;
+      scope: {
+         mini: '@',
+         autosubmit: '@',
+         url: '@',
+         onupload: '&'
       },
+      replace: true,
       link: function(scope, element) {
+         scope.hasDnd = hasDnd;
          scope.files = [];
          scope.isUploading = false;
 
@@ -35,6 +40,9 @@ directive('gpDownloadForm', function() {
                   scope.files.push(f);
                });
                scope.$apply();
+               if (scope.autosubmit) {
+                  scope.send();
+               }
             });
          }
 
@@ -50,56 +58,46 @@ directive('gpDownloadForm', function() {
                   ajaxData.append('file', f);
                });
 
-               scope.files = [];
-               scope.isUploading = false;
-
-               //$.ajax({
-               //  url: $form.attr('action'),
-               //  type: $form.attr('method'),
-               //  data: ajaxData,
-               //  dataType: 'json',
-               //  cache: false,
-               //  contentType: false,
-               //  processData: false,
-               //  complete: function() {
-               //    $form.removeClass('is-uploading');
-               //  },
-               //  success: function(data) {
-               //    $form.addClass( data.success == true ? 'is-success' : 'is-error' );
-               //    if (!data.success) $errorMsg.text(data.error);
-               //  },
-               //  error: function() {
-               //    // Log the error, show an alert, whatever works for you
-               //  }
-               //});
+               $http.post(scope.url, ajaxData,
+                     {headers: {'Content-Type': undefined },
+                      transformRequest: angular.identity 
+                     }).then(function() {
+                  scope.isUploading = false;
+                  scope.files = [];
+                  scope.onupload();
+               }, function() {
+                  scope.isUploading = false;
+               });
 
             } else {
-               // Only for IE9, ignored for now
+               alert('Cannot upload from IE9. Please upgrade your browser');
             }
          };
       },
       template: 
-         '<form class="download-form" method="post" enctype="multipart/form-data"'
-         +   ' ng-class="{hasDnd:hasDnd, dragover:dragover}">'
+         '<form class="download-form"'
+         +   ' method="post" enctype="multipart/form-data"'
+         +   ' ng-class="{hasDnd:hasDnd, maxi:!mini, mini:mini, dragover:dragover}">'
          + '<div class="box__input">'
-         +    '<div class="fa fa-download icon"></div>'
+         +    '<span class="fa fa-download icon"></span>'
          +    '<input type="file" name="files[]" id="file"'
          +           ' data-multiple-caption="{count} files selected" multiple />'
          +    '<label for="file">'
          +       '<span ng-if="files.length==0">'
-         +          '<span class="Abtn Abtn-info">Choose a file</span>'
-         +          '<span ng-if="hasDnd" class="normal"> or drag it here</span>.'
+         +          '<span ng-if="!mini">Choose a file or </span>'
+         +          '<span ng-if="hasDnd" class="normal">drop it here</span>.'
          +       '</span>'
          +       '<span ng-if="files.length!=0" ng-repeat="f in files" style="margin-right:10px">'
          +          '{{f.name}}'
          +       '</span>'
          +    '</label>'
-         +    '<button ng-if="files.length!=0" class="btn btn-primary"'
+         +    '<button ng-if="files.length!=0 && !autosubmit" class="btn btn-primary"'
+         +           ' ng-class="{\'btn-xs\': mini}"'
          +           ' ng-click="send()">Upload</button>'
          + '</div>'
-         + '<div ng-if="isUploading">Uploading&hellip;</div>'
-         + '<div class="box__success">Done!</div>'
-         + '<div class="box__error">Error! <span></span>.</div>'
+         + '<div ng-if="isUploading" class="fa fa-spin fa-spinner"></div>'
+         //+ '<div class="box__success">Done!</div>'
+         //+ '<div class="box__error">Error! <span></span>.</div>'
          + '</form>'
    };
 });

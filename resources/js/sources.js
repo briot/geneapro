@@ -222,6 +222,7 @@ controller('sourceCtrl', function(
       $scope.source = resp.data.source;
       $scope.asserts = resp.data.asserts;
       $scope.repr = resp.data.repr;
+      $scope.current_repr = 0;
 
       if ($scope.source.id == null) {
          $scope.source.id = -1;
@@ -245,6 +246,23 @@ controller('sourceCtrl', function(
          }
       });
    }
+
+   $scope.prevImage = function() {
+      $scope.current_repr--;
+   };
+   $scope.nextImage = function() {
+      $scope.current_repr++;
+   };
+
+   $scope.onupload = function() {
+      $http.get('/data/sources/' + $scope.source.id + '/allRepr').then(
+            function(resp) {
+               $scope.repr = resp.data.repr;
+
+               // Select last item, which has just been uploaded
+               $scope.current_repr = $scope.repr.length - 1;
+            })
+   };
 
    $scope.saveParts = function() {
       //  ??? Should use a service instead

@@ -49,7 +49,6 @@ def view(request, id, size=None):
     """Return a specific representation"""
 
     repr = models.Representation.objects.get(id=id)
-
     f = repr.file
 
     if size:
