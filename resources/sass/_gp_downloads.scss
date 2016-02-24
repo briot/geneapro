@@ -13,10 +13,6 @@
 
    &.maxi {
       padding: 60px 20px;
-      &.hasDnd {
-         outline: 2px dashed #92b0b3;
-         outline-offset: -10px;
-      }
       .icon {
          color: $fg;
          font-size: 5em;

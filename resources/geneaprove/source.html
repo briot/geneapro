@@ -96,7 +96,7 @@
    </div>
 
    <!-- The media for the source -->
-   <div class='col-md-12' ng-if="repr.length>0">
+   <div class='col-md-12'>
       <div class='panel panel-default'>
          <div class='panel-heading'>
             Media
@@ -110,7 +110,7 @@
             </span>
 
             <!-- Image operations -->
-            <span style='margin-left: 30px' ng-if='img'>
+            <span style='margin-left: 30px' ng-if='img && repr.length!=0'>
                <button class='btn btn-xs btn-default fa fa-search-minus' ng-click='img.zoomOut()' title='alt-wheel to zoom interactively'></button>
                <button class='btn btn-xs btn-default fa fa-search-plus' ng-click='img.zoomIn()' title='alt-wheel to zoom interactively'></button>
             </span>
