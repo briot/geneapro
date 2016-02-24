@@ -70,13 +70,13 @@ app.factory('ZoomImage', function() {
       this.left = -(this.canvas.width / this.scale - this.img.width) / 2;
       this.top  = -(this.canvas.height / this.scale - this.img.height) / 2;
    
-      this._draw();
+      this.draw();
    };
    
    /**
     * Draw the image on the canvas
     */
-   ZoomImage.prototype._draw = function() {
+   ZoomImage.prototype.draw = function() {
       if (this.canvas && this.img) {
          var ctxt = this.canvas.getContext('2d');
          ctxt.save();
@@ -101,7 +101,7 @@ app.factory('ZoomImage', function() {
    ZoomImage.prototype.scroll = function(left, top) {
       this.left = left;
       this.top = top;
-      this._draw();
+      this.draw();
    };
    
    /**
@@ -124,7 +124,7 @@ app.factory('ZoomImage', function() {
       this.scale = newScale;
       this.left = xabs - (xabs - this.left) * old_scale / this.scale;
       this.top = yabs - (yabs - this.top) * old_scale / this.scale;
-      this._draw();
+      this.draw();
    };
    
    /**
@@ -146,7 +146,7 @@ app.factory('ZoomImage', function() {
    return ZoomImage;
 }).
 
-directive('zoomImage', function(ZoomImage) {
+directive('zoomImage', function(ZoomImage, $window) {
    return {
       scope: {
          src: '=',    // a String (URL)
@@ -190,6 +190,12 @@ directive('zoomImage', function(ZoomImage) {
             }
             element.on('mousemove', _onMouseMove);
             element.on('mouseup', _onMouseUp);
+         });
+
+         angular.element($window).bind('resize', function() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            scope.image.draw();
          });
 
          scope.$watch('src', function(v) {
