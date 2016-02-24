@@ -149,6 +149,11 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    repositories separately at all.
 ** Hiearchical sources
    http://parallax-viewpoint.blogspot.fr/2015/01/hierarchical-sources.html
+** Uploading media
+*** Should support sound files
+*** Allow droping on existing image, rather than just in the "Drop it here" area
+*** Resize image when browser is resized
+*** Display media info, in particular file name and comments, and make these editable
 
 * Groups
 ** For: neighbor, friend, clergy, care-taker, and more
@@ -164,8 +169,6 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 
 * Packaging
 ** Use py2exe and py2app to provide standalone executables
-** Compile with Closure compiler for efficiency
-** Compile CSS for efficiency
 ** Add a way to precompute (into a .js file) all the tree data for
    a given person, so that we can have a demo of the program running
    on github

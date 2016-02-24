@@ -187,14 +187,23 @@ def add_repr(request, id):
     if not isinstance(files, list):
         files = [files]
 
+    dir = os.path.join(settings.MEDIA_ROOT, 'S%s' % id)
     try:
-        os.makedirs(settings.MEDIA_ROOT)
+        os.makedirs(dir)
     except OSError:
         pass
 
     for f in files:
-        # ??? Dangerous, could override existing file
-        name = os.path.join(settings.MEDIA_ROOT, f.name)
+        # Find a unique name
+        name = os.path.join(dir, f.name)
+        index = 1
+        while os.path.isfile(name):
+            name, ext = os.path.splitext(name)
+            if index == 1:
+                name = '%s_%s%s' % (name, index, ext)
+            else:
+                name = '%s_%s%s' % (name[0:name.rfind('_')], index, ext)
+            index += 1
 
         w = open(name, "w")
         for c in f.chunks():
@@ -205,7 +214,7 @@ def add_repr(request, id):
             source=source,
             mime_type=f.content_type,
             file=name,
-            comments=f.name)
+            comments=os.path.basename(name))
         r.save()
 
     return HttpResponse(
