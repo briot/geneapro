@@ -9,9 +9,9 @@
    $bg_on_drag: #EEE; // darken($bg, 10%)
    $fg: #555; // #92b0b3
 
-   background: $bg;
-
-   &.maxi {
+   /* Large form */
+   .maxi {
+      text-align: center;
       padding: 60px 20px;
       .icon {
          color: $fg;
@@ -19,14 +19,14 @@
       }
       label {
          width: 100%;
+         margin-right: 10px;
       }
    }
-   &.mini {
+   /* Inline form */
+   .mini {
+      margin-right: 10px;
       display: inline;
       padding: 5px 5px;
-      .box__input {
-         display: inline;
-      }
       .icon {
          color: $fg;
          font-size: 1em;
@@ -34,13 +34,9 @@
       label {
          margin-left: 5px;
       }
-   }
-
-   label {
-      margin-right: 10px;
-   }
-   .box__input {
-      text-align: center;
+      span.btn {
+         margin-left: 5px;
+      }
    }
 
    // Hide the input, but still display it so that it works
@@ -53,6 +49,13 @@
       z-index: -1;
    }
 
+   form {
+      background: $bg;
+   }
+   &.dragover form {
+      background: $bg_on_drag;
+   }
+
    label {
       cursor: pointer;
       .normal {
@@ -63,13 +66,4 @@
       }
    }
 
-   .box__uploading,
-   .box__success,
-   .box__error {
-      display: none;
-   }
-
-   &.dragover {
-      background: $bg_on_drag;
-   }
 }

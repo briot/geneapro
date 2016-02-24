@@ -146,7 +146,7 @@ app.factory('ZoomImage', function() {
    return ZoomImage;
 }).
 
-directive('zoomImage', function(ZoomImage, $window) {
+directive('zoomImage', function(ZoomImage, $window, $document) {
    return {
       scope: {
          src: '=',    // a String (URL)
@@ -185,11 +185,11 @@ directive('zoomImage', function(ZoomImage, $window) {
                   initial.top + (offset.top - newOffs.top) / scope.image.scale);
             }
             function _onMouseUp(e) {
-               element.off('mousemove', _onMouseMove);
-               element.off('mouseup', _onMouseUp);
+               $document.off('mousemove', _onMouseMove);
+               $document.off('mouseup', _onMouseUp);
             }
-            element.on('mousemove', _onMouseMove);
-            element.on('mouseup', _onMouseUp);
+            $document.on('mousemove', _onMouseMove);
+            $document.on('mouseup', _onMouseUp);
          });
 
          angular.element($window).bind('resize', function() {

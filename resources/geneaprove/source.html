@@ -112,24 +112,23 @@
             <!-- Image operations -->
             <span style='margin-left: 30px' ng-if='img && repr.length!=0'>
                <button class='btn btn-xs btn-default fa fa-search-minus' ng-click='img.zoomOut()' title='alt-wheel to zoom interactively'></button>
+               <button class='btn btn-xs btn-default fa fa-square-o' ng-click='img.fit()' title='Fit image'></button>
                <button class='btn btn-xs btn-default fa fa-search-plus' ng-click='img.zoomIn()' title='alt-wheel to zoom interactively'></button>
             </span>
 
             <!-- Adding new images -->
 
-            <span class='nav navbar-nav navbar-right'>
-               <div gp-download-form mini=1 autosubmit=1 onupload='onupload()' url='/data/sources/{{source.id}}/addRepr'></div>
-
-               <!--<label for='addMedia' class='sr-only'>Add Media</label>-->
-               <button id='addMedia' class='fa fa-plus btn btn-xs btn-primary' title='Add new media' style='margin-right:10px'></button>
+            <span class='nav navbar-nav navbar-right' gp-upload-target url='/data/sources/{{source.id}}/addRepr' onupload='onupload()' autosubmit=1>
+               <span gp-download-form-mini></span>
             </span>
 
          </div>
 
          <!-- Image representation or Adding new media -->
+         <!-- The whole area is a drop target for adding new media -->
 
-         <div class='panel-body'>
-            <div gp-download-form ng-if='repr.length==0' onupload='onupload()' url='/data/sources/{{source.id}}/addRepr'></div>
+         <div class='panel-body' gp-upload-target url='/data/sources/{{source.id}}/addRepr' onupload='onupload()' autosubmit=1>
+            <div gp-download-form ng-if='repr.length==0'></div>
             <figure ng-if='repr.length!=0'>
                <span zoom-image src='repr[current_repr].url' image='img'></span>
                <figcaption>{{repr[current_repr].comments}}</figcaption>
