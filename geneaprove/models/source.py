@@ -69,6 +69,21 @@ documents the citation styles.""")
         """Meta data for the model"""
         db_table = "source"
 
+    def to_json(self):
+        return {
+            "higher_source_id": self.higher_source_id,
+            "subject_place": self.subject_place,
+            "jurisdiction_place": self.jurisdiction_place,
+            "researcher": self.researcher if self.researcher_id else None,
+            "subject_date": self.subject_date,
+            "medium": self.medium,
+            "title": self.title,
+            "id": self.id,
+            "abbrev": self.abbrev,
+            "biblio": self.biblio,
+            "last_change": self.last_change,
+            "comments": self.comments}
+
     def compute_medium(self):
         """
         Return the medium type for Self. This could be inherited from higher

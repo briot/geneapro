@@ -58,6 +58,14 @@ class Assertion(GeneaProveModel):
         """Meta data for the model"""
         db_table = "assertion"
 
+    def to_json(self):
+        return {
+            "disproved": self.disproved,
+            "rationale": self.rationale,
+            "researcher": self.researcher if self.researcher_id else None,
+            "last_change": self.last_change,
+            "surety": self.surety_id}
+
 
 class P2P(Assertion):
     """Persona-to-Persona assertions, to represent the Persona.sameAs
@@ -77,6 +85,12 @@ class P2P(Assertion):
     #   several other personas, which in turn can be linked to other
     #   personas.
 
+    def to_json(self):
+        res = super(P2P, self).to_json()
+        res['person1'] = self.person1
+        res['person2'] = self.person2
+        return res
+
 
 class P2C(Assertion):
     """Persona-to-Characteristic assertions"""
@@ -88,6 +102,15 @@ class P2C(Assertion):
         """Meta data for the model"""
         db_table = "p2c"
 
+    def to_json(self):
+        res = super(P2C, self).to_json()
+        parts = []
+        for p in self.characteristic.parts.select_related():
+            parts.append({'name': p.type.name, 'value': p.name})
+        res['person1'] = self.person
+        res['char2'] = self.characteristic
+        res['char_parts2'] = parts
+        return res
 
 class P2E(Assertion):
     """Persona-to-Event assertions"""
@@ -107,6 +130,13 @@ class P2E(Assertion):
         """Meta data for the model"""
         db_table = "p2e"
 
+    def to_json(self):
+        res = super(P2E, self).to_json()
+        res['person1'] = self.person
+        res['event2'] = self.event
+        res['role'] = self.role.name
+        return res
+
 
 class P2G(Assertion):
     """Persona-to-Group assertions"""
@@ -117,6 +147,14 @@ class P2G(Assertion):
     class Meta:
         """Meta data for the model"""
         db_table = "p2g"
+
+    def to_json(self):
+        res = super(P2G, self).to_json()
+        res['person1'] = self.person
+        res['group2'] = self.group
+        res['role'] = self.role
+        return res
+
 
 
 # class E2C(Assertion):

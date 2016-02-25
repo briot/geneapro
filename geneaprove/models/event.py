@@ -71,3 +71,13 @@ class Event(GeneaProveModel):
         d = self.date
         date = " (on " + d + ")" if d else ""
         return self.name + date
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "type": self.type,
+            "place": self.place,
+            "sources": list(self.sources if hasattr(self, 'sources') else []),
+            "date": self.date,
+            "date_sort": self.date_sort}

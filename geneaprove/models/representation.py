@@ -26,3 +26,12 @@ class Representation(GeneaProveModel):
            from a web browser.
         """
         return '/repr/%s' % (self.id, )
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "url": self.url(),
+            "comments": self.comments,
+            "file": self.file,
+            "source_id": self.source_id,
+            "mime": self.mime_type}

@@ -100,97 +100,16 @@ class ModelEncoder(json.JSONEncoder):
         elif isinstance(obj, CharPartInfo):
             return dict(name=obj.name, value=obj.value)
 
-        elif isinstance(obj, models.Characteristic):
-            return dict(
-                name=obj.name,
-                sources=list(obj.sources if hasattr(obj, 'sources') else []),
-                date=obj.date,
-                date_sort=obj.date_sort,
-                place=obj.place)
-
-        elif isinstance(obj, models.Representation):
-            return dict(
-                id=obj.id,
-                #source=obj.source,
-                url=obj.url(),
-                comments=obj.comments)
-
-        elif isinstance(obj, models.Assertion):
-            result = dict(
-                disproved=obj.disproved,
-                rationale=obj.rationale,
-                researcher=obj.researcher if obj.researcher_id else None,
-                last_change=obj.last_change,
-                surety=obj.surety_id)
-
-            if isinstance(obj, models.P2P):
-                result['person1'] = obj.person1
-                result['person2'] = obj.person2
-
-            elif isinstance(obj, models.P2E):
-                result['date'] = obj.event.date and DateRange(obj.event.date)
-                result['place'] = obj.event.place and obj.event.place.name
-                result['person1'] = obj.person
-                result['event2'] = obj.event
-                result['role'] = obj.role.name
-
-            elif isinstance(obj, models.P2C):
-                parts = []
-                for p in models.Characteristic_Part.objects.filter(
-                        characteristic=obj.characteristic).select_related():
-                    parts.append({'name': p.type.name, 'value': p.name})
-                result['date'] = \
-                     obj.characteristic.date and DateRange(obj.characteristic.date)
-                result['place'] = \
-                     obj.characteristic.place and obj.characteristic.place.name
-                result['person1'] = obj.person
-                result['char2'] = obj.characteristic
-                result['char_parts2'] = parts
-
-            elif isinstance(obj, models.P2G):
-                result['person1'] = obj.person
-                result['group2'] = obj.group
-                result['role'] = obj.role.name
-
-            else:
-                raise Exception("Encoding unknown assertion")
-
-            return result
-
-        elif isinstance(obj, models.Source):
-            return dict(
-                higher_source_id=obj.higher_source_id,
-                subject_place=obj.subject_place,
-                jurisdiction_place=obj.jurisdiction_place,
-                researcher=obj.researcher if obj.researcher_id else None,
-                subject_date=obj.subject_date,
-                medium=obj.medium,
-                title=obj.title,
-                id=obj.id,
-                abbrev=obj.abbrev,
-                biblio=obj.biblio,
-                last_change=obj.last_change,
-                comments=obj.comments)
-
         elif isinstance(obj, EventInfo):
             return dict(
                 event=obj.event,
                 role=obj.role,
                 assertion=obj.assertion)
 
-        elif isinstance(obj, models.Event):
-            return dict(
-                id=obj.id,
-                name=obj.name,
-                type=obj.type,
-                place=obj.place,
-                sources=list(obj.sources if hasattr(obj, 'sources') else []),
-                date=obj.date,
-                date_sort=obj.date_sort)
-
         elif isinstance(obj, set):
             return list(obj)
 
+        # Must be last, since all model objects have a default to_json
         elif hasattr(obj, 'to_json'):
             return obj.to_json()
 

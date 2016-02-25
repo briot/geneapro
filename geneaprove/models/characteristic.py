@@ -36,6 +36,14 @@ class Characteristic(GeneaProveModel):
         """Meta data for the model"""
         db_table = "characteristic"
 
+    def to_json(self):
+        return {
+            "name": self.name,
+            "sources": list(self.sources if hasattr(self, 'sources') else []),
+            "date": self.date,
+            "date_sort": self.date_sort,
+            "place": self.place}
+
 
 class Characteristic_Part(GeneaProveModel):
     """
