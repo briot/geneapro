@@ -44,19 +44,3 @@ h2:first-child {
    font-style: italic;
    margin-left: 10px;
 }
-
-/**
- * Figures
- */
-figure {
-   img {
-      border: 1px solid #999;
-      max-width: 100%;
-   }
-
-   figcaption {
-      text-align: right;
-      font-style: italic;
-      font-size: 0.8em;
-   }
-}

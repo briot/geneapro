@@ -213,8 +213,7 @@ def add_repr(request, id):
         r = models.Representation.objects.create(
             source=source,
             mime_type=f.content_type,
-            file=name,
-            comments=os.path.basename(name))
+            file=name)
         r.save()
 
     return HttpResponse(

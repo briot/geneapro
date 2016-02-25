@@ -248,11 +248,17 @@ controller('sourceCtrl', function(
       });
    }
 
-   $scope.prevImage = function() {
+   $scope.prevMedia = function() {
       $scope.current_repr--;
+      if ($scope.current_repr < 0) {
+         $scope.current_repr = $scope.repr.length - 1;
+      }
    };
-   $scope.nextImage = function() {
+   $scope.nextMedia = function() {
       $scope.current_repr++;
+      if ($scope.current_repr >= $scope.repr.length) {
+         $scope.current_repr = 0;
+      }
    };
 
    $scope.deleteCurrentRepr = function() {

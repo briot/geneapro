@@ -149,8 +149,9 @@ app.factory('ZoomImage', function() {
 directive('zoomImage', function(ZoomImage, $window, $document) {
    return {
       scope: {
-         src: '=',    // a String (URL)
-         image: '='   // a ZoomImage
+         repr: '=',    // a String (URL)
+         image: '='   // a ZoomImage. Can be created in another scope, so that
+                      // it can zoom the image via buttons, for instance.
       },
       replace: true,
       link: function(scope, element) {
@@ -198,13 +199,49 @@ directive('zoomImage', function(ZoomImage, $window, $document) {
             scope.image.draw();
          });
 
-         scope.$watch('src', function(v) {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            scope.image.setImage(v);
+         scope.$watch('repr', function(repr) {
+            if (repr) {
+               canvas.width = canvas.offsetWidth;
+               canvas.height = canvas.offsetHeight;
+               scope.image.setImage(repr.url);
+            }
          });
       },
       template: '<canvas style="width:100%; height:600px; background:#666">'
-        + '</canvas>'
+         + '</canvas>'
+   };
+}).
+
+directive('gpMedia', function() {
+   return {
+      scope: {
+         representation: '=',    // a String (URL)
+         image: '='   // a ZoomImage. Can be created in another scope, so that
+                      // it can zoom the image via buttons, for instance.
+      },
+      link: function(scope, element) {
+         var orig_image = scope.image;
+         scope.$watch('representation', function(r) {
+            if (r) {
+               scope.isimage = r.mime.lastIndexOf('image/', 0) == 0;
+               scope.isaudio = r.mime.lastIndexOf('audio/', 0) == 0;
+            }
+            scope.image = (scope.isimage ? orig_image : null);
+         });
+      },
+      template:
+         '<figure ng-if="representation" class="media">'
+       +   '<span zoom-image repr="representation" image="image" ng-if="isimage"></span>' 
+       +   '<audio controls=1 preload=metadata ng-if="isaudio">'
+       +      '<source src="{{representation.url}}" type="{{representation.mime}}">'
+       +      'No support for audio files in this browser'
+       +   '</audio>'
+       +   '<figcaption>'
+       +      '<span class="mediaId">R{{representation.id}}</span>'
+       +      '{{representation.file}}<br>'
+       +      'mime: {{representation.mime}}<br>'
+       +      '{{representation.comments}}'
+       +   '</figcaption>'
+       + '</figure>'
    };
 });

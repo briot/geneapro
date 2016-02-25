@@ -1,0 +1,22 @@
+@import "gp_vars";
+
+.media {
+
+   .mediaId {
+      font-style: italic;
+      font-size: 2em;
+      //color: blue;
+      float: left;
+   }
+
+   img {
+      border: 1px solid #999;
+      max-width: 100%;
+   }
+
+   figcaption {
+      text-align: right;
+      font-style: italic;
+      font-size: 0.8em;
+   }
+}
