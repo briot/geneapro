@@ -110,7 +110,8 @@ class ModelEncoder(json.JSONEncoder):
 
         elif isinstance(obj, models.Representation):
             return dict(
-                source=obj.source,
+                id=obj.id,
+                #source=obj.source,
                 url=obj.url(),
                 comments=obj.comments)
 

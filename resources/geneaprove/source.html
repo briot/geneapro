@@ -110,10 +110,15 @@
             </span>
 
             <!-- Image operations -->
-            <span style='margin-left: 30px' ng-if='img && repr.length!=0'>
+            <span style='margin-left: 30px' ng-if='repr.length!=0'>
                <button class='btn btn-xs btn-default fa fa-search-minus' ng-click='img.zoomOut()' title='alt-wheel to zoom interactively'></button>
                <button class='btn btn-xs btn-default fa fa-square-o' ng-click='img.fit()' title='Fit image'></button>
                <button class='btn btn-xs btn-default fa fa-search-plus' ng-click='img.zoomIn()' title='alt-wheel to zoom interactively'></button>
+            </span>
+
+            <!-- Media operations -->
+            <span style='margin-left: 30px' ng-if='repr.length!=0'>
+               <button class='btn btn-xs btn-default fa fa-trash' ng-click='deleteCurrentRepr()' title='Delete the image'></button>
             </span>
 
             <!-- Adding new images -->

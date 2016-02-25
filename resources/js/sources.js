@@ -255,13 +255,38 @@ controller('sourceCtrl', function(
       $scope.current_repr++;
    };
 
-   $scope.onupload = function() {
+   $scope.deleteCurrentRepr = function() {
+      if (confirm(
+               "This will remove this media as a representation of the source.\n"
+               + "You will be given a chance not to delete the file.\n"
+               + "Are you sure ?"))
+      {
+         var del = confirm(
+               "OK to delete the media from the disk\nCancel to keep it");
+
+         $http.post(
+            '/data/sources/' + $scope.source.id
+            + "/delRepr/" + $scope.repr[$scope.current_repr].id
+            + "?ondisk=" + del)
+         .then(function() {
+            $scope.onupload(true /* preserveSelected */);  //  refresh teh list
+         });
+      }
+   };
+
+   // If preserveSelected is true, we keep the same number for the
+   // selected message.
+   $scope.onupload = function(preserveSelected) {
       $http.get('/data/sources/' + $scope.source.id + '/allRepr').then(
             function(resp) {
                $scope.repr = resp.data.repr;
 
                // Select last item, which has just been uploaded
-               $scope.current_repr = $scope.repr.length - 1;
+               if (!preserveSelected) {
+                  $scope.current_repr = $scope.repr.length - 1;
+               }
+               $scope.current_repr = Math.max(
+                  0, Math.min($scope.current_repr, $scope.repr.length - 1));
             })
    };
 

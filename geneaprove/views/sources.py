@@ -220,3 +220,24 @@ def add_repr(request, id):
     return HttpResponse(
         to_json(True),
         content_type='application/json')
+
+
+def del_repr(request, source_id, repr_id):
+    """
+    Deleting a representation from a source
+    """
+    ondisk = request.GET.get('ondisk', False)
+
+    error = ""
+    repr = models.Representation.objects.get(id=int(repr_id))
+    if ondisk:
+        try:
+            os.unlink(repr.file)
+        except:
+            error = "Could not delete %s" % (repr.file)
+
+    repr.delete()
+
+    return HttpResponse(
+        to_json(dict(error=error)),
+        content_type='application/json')
