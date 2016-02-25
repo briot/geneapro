@@ -29,6 +29,7 @@ urlpatterns = patterns(
     (r'^data/sources/list$',   geneaprove.views.sources.view_list),
     (r'^data/sources/(-?\d+)$',  geneaprove.views.sources.view),
     (r'^data/sources/(-?\d+)/saveparts$', geneaprove.views.sources.editCitation),
+    (r'^data/sources/(-?\d+)/parts$', geneaprove.views.sources.citation),
     (r'^data/sources/(\d+)/addRepr', geneaprove.views.sources.add_repr),
     (r'^data/sources/(\d+)/allRepr', geneaprove.views.sources.representations),
     (r'^data/sources/(\d+)/delRepr/(\d+)', geneaprove.views.sources.del_repr),

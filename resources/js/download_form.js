@@ -100,7 +100,7 @@ directive('gpDownloadFormMini', function() {
       template:
          '<form class="mini">'
        +    '<span class="fa fa-download icon"></span>'
-       +    '<input type=file name="files[]" id=file multiple/>'
+       +    '<input type=file id=file ng-model="upload.files" multiple/>'
        +    '<label for=file>'
        +       '<span class="normal">drop media here</span>'
        +       '<span ng-if="!upload.isUploading" class="btn btn-xs btn-primary fa fa-plus"></span>'

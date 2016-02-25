@@ -59,6 +59,18 @@ def citation_models(request):
     return HttpResponse(to_json(data), content_type='application/json')
 
 
+def citation(request, id):
+    """
+    Return the citation parts for the given source id
+    """
+    id = int(id)
+    source = get_source(id)
+    data = {
+        'parts':   source.get_citations_as_list()
+    }
+    return HttpResponse(to_json(data), content_type='application/json')
+
+
 def view(request, id):
     """View a specific source"""
 
@@ -68,7 +80,6 @@ def view(request, id):
         'source':  source,
         'asserts': source.get_asserts(),
         'repr':    source.get_representations(),
-        'parts':   source.get_citations_as_list()
     }
     return HttpResponse(to_json(data), content_type='application/json')
 

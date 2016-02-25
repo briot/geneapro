@@ -163,59 +163,175 @@ controller('sourcesCtrl', function($scope, Paginated) {
 }).
 
 /**
+ * Editing the citation for a source
+ */
+
+directive('gpSourceCitation', function(CitationTemplates, $http) {
+   return {
+      scope: {
+         source: '=gpSourceCitation'
+      },
+      templateUrl: 'geneaprove/source_citation.html',
+      controller: function($scope) {
+         // The CitationTemplate for the currently selected medium
+         $scope.citation = undefined;
+
+         CitationTemplates.all_models().then(function(models) {
+            $scope.source_types = models;
+         });
+
+         $scope.$watch('source.medium', function(val) {
+            CitationTemplates.get_templates(val).then(function(template) {
+               $scope.citation = template;
+               computeCitation();
+            });
+         });
+
+         var s = $scope.source;
+         var saved_citation = {
+            full:   s.title,
+            abbrev: s.abbrev,
+            biblio: s.biblio};
+         $http.get('/data/sources/' + s.id + '/parts').then(
+            function(resp) {
+               $scope.extra_parts = [];
+               angular.forEach(resp.data.parts, function(p) {
+                  $scope.cache[p.name] = p.value;
+
+                  // The list of parts stored in DB but not part of the
+                  // template
+
+                  if ($scope.citation &&
+                     !(p.name in $scope.citation.fields))
+                  {
+                     $scope.extra_parts.push(p);
+                  }
+               });
+            });
+
+         // The values that have been set by the user for the fields.
+         // This might store information that are not used by the current
+         // medium, but were entered for another medium, in case the user
+         // goes back to that medium
+         $scope.cache = {};
+         $scope.$watch('cache', computeCitation, true);
+
+         function computeCitation() {
+            if (s.medium) {
+               var c = $scope.citation.cite($scope.cache);
+            } else {
+               c = saved_citation;
+            }
+            if (c) {
+               s.title = c.full;
+               s.biblio = c.biblio;
+               s.abbrev = c.abbrev;
+            }
+         }
+
+         $scope.saveParts = function() {
+           //  ??? Should use a service instead
+           var data = angular.copy($scope.source);
+           angular.forEach($scope.citation.fields, function(name) {
+              if ($scope.cache[name]) {
+                 data[name] = $scope.cache[name];
+              }
+           });
+
+           $http.post('/data/sources/' + $scope.source.id + '/saveparts', data).
+              then(function(resp) {
+                 parseJson(resp);
+                 $state.transitionTo(
+                    'source',
+                    {id: $scope.source.id},
+                    {location:'replace', reload:false});
+              });
+         };
+     }
+   };
+}).
+
+/**
+ * Editing the media for a source
+ */
+directive('gpSourceMedia', function() {
+   return {
+      scope: {
+         source: '=gpSourceMedia',
+         repr: '='
+      },
+      templateUrl: 'geneaprove/source_media.html',
+      controller: function($scope, $http, ZoomImage) {
+         $scope.img = new ZoomImage();
+         $scope.current_repr = 0;
+         $scope.prevMedia = function() {
+            $scope.current_repr--;
+            if ($scope.current_repr < 0) {
+               $scope.current_repr = $scope.repr.length - 1;
+            }
+         };
+         $scope.nextMedia = function() {
+            $scope.current_repr++;
+            if ($scope.current_repr >= $scope.repr.length) {
+               $scope.current_repr = 0;
+            }
+         };
+
+         $scope.deleteCurrentRepr = function() {
+            if (confirm(
+               "This will remove this media as a representation of the source.\n"
+               + "You will be given a chance not to delete the file.\n"
+               + "Are you sure ?"))
+            {
+               var del = confirm(
+                     "OK to delete the media from the disk\nCancel to keep it");
+
+               $http.post(
+                  '/data/sources/' + $scope.source.id
+                  + "/delRepr/" + $scope.repr[$scope.current_repr].id
+                  + "?ondisk=" + del)
+               .then(function() {
+                  $scope.onupload(true /* preserveSelected */);
+               });
+            }
+         };
+
+         // If preserveSelected is true, we keep the same number for the
+         // selected message.
+         $scope.onupload = function(preserveSelected) {
+            $http.get('/data/sources/' + $scope.source.id + '/allRepr').then(
+                  function(resp) {
+                     $scope.repr = resp.data.repr;
+
+                     // Select last item, which has just been uploaded
+                     if (!preserveSelected) {
+                        $scope.current_repr = $scope.repr.length - 1;
+                     }
+                     $scope.current_repr = Math.max(
+                        0, Math.min($scope.current_repr, $scope.repr.length - 1));
+                  })
+         };
+      }
+   };
+}).
+
+/**
  * The page that displays and edits the details for a single source
  */
 
-controller('sourceCtrl', function(
-         $scope, $http, $state, $stateParams, CitationTemplates, ZoomImage)
-{
+controller('sourceCtrl', function($scope, $http, $state, $stateParams) {
    var id = $stateParams.id;
    if (id === undefined) {
       id = -1;
    }
-   // The values that have been set by the user for the fields. This might
-   // store information that are not used by the current medium, but were
-   // entered for another medium, in case the user goes back to that medium
-   $scope.cache = {};
-
-   // The CitationTemplate for the currently selected medium
-   $scope.citation = undefined;
-
    // Always display the citation if the source does not exist yet
    $scope.showCitation = id == -1;
    $scope.source = {}
-   $scope.img = new ZoomImage();
 
    // ??? Should use a service instead
    $http.get('/data/sources/' + id).then(function(resp) {
       parseJson(resp);
    });
-
-   CitationTemplates.all_models().then(function(models) {
-      $scope.source_types = models;
-   });
-
-   $scope.$watch('source.medium', function(val) {
-      CitationTemplates.get_templates(val).then(function(template) {
-         $scope.citation = template;
-         computeCitation();
-      });
-   });
-
-   $scope.$watch('cache', computeCitation, true);
-
-   function computeCitation() {
-      if ($scope.source.medium) {
-         var c = $scope.citation.cite($scope.cache);
-      } else {
-         c = $scope.source._saved_citation;
-      }
-      if (c) {
-         $scope.source.title = c.full;
-         $scope.source.biblio = c.biblio;
-         $scope.source.abbrev = c.abbrev;
-      }
-   }
 
    // Parse a JSON response from the server (the 'source' and 'parts'
    // fields)
@@ -223,7 +339,6 @@ controller('sourceCtrl', function(
       $scope.source = resp.data.source;
       $scope.asserts = resp.data.asserts;
       $scope.repr = resp.data.repr;
-      $scope.current_repr = 0;
 
       if ($scope.source.id == null) {
          $scope.source.id = -1;
@@ -231,87 +346,6 @@ controller('sourceCtrl', function(
       if ($scope.source.medium == null) {
          $scope.source.medium = '';
       }
-      $scope.source._saved_citation = {
-         full:  $scope.source.title,
-         abbrev: $scope.source.abbrev,
-         biblio: $scope.source.biblio};
-
-      var parts = resp.data.parts; // [{fromHigher, name, value}]
-      $scope.extra_parts = [];
-      angular.forEach(parts, function(p) {
-         $scope.cache[p.name] = p.value;
-
-         // The list of parts stored in DB but not part of the template
-         if ($scope.citation && !(p.name in $scope.citation.fields)) {
-            $scope.extra_parts.push(p);
-         }
-      });
    }
 
-   $scope.prevMedia = function() {
-      $scope.current_repr--;
-      if ($scope.current_repr < 0) {
-         $scope.current_repr = $scope.repr.length - 1;
-      }
-   };
-   $scope.nextMedia = function() {
-      $scope.current_repr++;
-      if ($scope.current_repr >= $scope.repr.length) {
-         $scope.current_repr = 0;
-      }
-   };
-
-   $scope.deleteCurrentRepr = function() {
-      if (confirm(
-               "This will remove this media as a representation of the source.\n"
-               + "You will be given a chance not to delete the file.\n"
-               + "Are you sure ?"))
-      {
-         var del = confirm(
-               "OK to delete the media from the disk\nCancel to keep it");
-
-         $http.post(
-            '/data/sources/' + $scope.source.id
-            + "/delRepr/" + $scope.repr[$scope.current_repr].id
-            + "?ondisk=" + del)
-         .then(function() {
-            $scope.onupload(true /* preserveSelected */);  //  refresh teh list
-         });
-      }
-   };
-
-   // If preserveSelected is true, we keep the same number for the
-   // selected message.
-   $scope.onupload = function(preserveSelected) {
-      $http.get('/data/sources/' + $scope.source.id + '/allRepr').then(
-            function(resp) {
-               $scope.repr = resp.data.repr;
-
-               // Select last item, which has just been uploaded
-               if (!preserveSelected) {
-                  $scope.current_repr = $scope.repr.length - 1;
-               }
-               $scope.current_repr = Math.max(
-                  0, Math.min($scope.current_repr, $scope.repr.length - 1));
-            })
-   };
-
-   $scope.saveParts = function() {
-      //  ??? Should use a service instead
-      var data = angular.copy($scope.source);
-      angular.forEach($scope.citation.fields, function(name) {
-         if ($scope.cache[name]) {
-            data[name] = $scope.cache[name];
-         }
-      });
-
-      $http.post('/data/sources/' + $scope.source.id + '/saveparts', data).
-         then(function(resp) {
-            parseJson(resp);
-            $state.transitionTo(
-               'source',
-               {id: $scope.source.id},
-               {location:'replace', reload:false});
-         });
-   };
 });
