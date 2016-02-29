@@ -252,6 +252,20 @@ directive('gpSourceCitation', function(CitationTemplates, $http) {
 }).
 
 /**
+ * Source asserts
+ */
+
+directive('gpSourceAsserts', function() {
+   return {
+      scope: {
+         source: '=gpSourceAsserts',
+         asserts: '='
+      },
+      templateUrl: 'geneaprove/source_asserts.html'
+   };
+}).
+
+/**
  * Editing the media for a source
  */
 directive('gpSourceMedia', function() {
