@@ -3,61 +3,18 @@
    <div class='panel-body'>
       <div ng-repeat='a in asserts' ng-class='{disproved: a.disproved}'
             class='clearfix' style='margin-bottom: 20px'>
-         <!-- General info -->
 
          <span class='researchedBy'>
             researched by {{a.researcher.name}} ({{a.last_change|date}})
          </span>
          <span gp-surety='a.surety' style='float:right'></span>
 
-         <!-- P2... -->
-
-         <span persona-link='a.person1.id' name='a.person1.name' ng-if='a.person1'></span>
+         <span gp-assert-person='a.person1' ng-if='a.person1'></span>
          <br>
-
-         <!-- P2P -->
-
-         <span persona-link='a.person2.id' name='a.person2.name' ng-if='a.person2'></span>
-
-         <!-- P2E -->
-
-         <span ng-if='a.event2'>
-            <span>
-               {{a.event2.type.name}}
-               <span ng-if='a.role != "principal"' class='role'>(as {{a.role || ''}})</span>
-            </span>
-            <br>
-            <span time-link='a.event2.date_sort' name='a.event2.date' style='margin-right:10px'></span>
-            <span place-link='a.event2.place.id' name='a.event2.place.name'></span>
-         </span>
-
-         <!-- P2C -->
-
-         <span ng-if='a.char2'>
-            {{a.char2.name}}
-            <span ng-if='a.char_parts2.length == 1'>
-               : {{a.char_parts2[0].value}}
-            </span>
-            <span ng-if='a.char_parts2.length != 1'>
-               <span ng-repeat='p in a.char_parts2'>
-                  <span class="char">{{p.name}}</span>: {{p.value}}<br>
-               </span>
-            </span>
-            <br>
-            <span time-link='a.char2.date_sort' name='a.char2.date' style='margin-right:10px'></span>
-            <span place-link='a.char2.place.id' name='a.char2.place.name'></span>
-         </span>
-
-         <!-- P2G -->
-
-         <span ng-if='a.group2'>
-            {{a.group2.name}} ({{a.role}})
-            <br>
-            <span time-link='a.group2.date_sort' name='a.group2.date' style='margin-right:10px'></span>
-            <span place-link='a.group2.place.id' name='a.group2.place.name'></span>
-         </span>
-
-         <!-- Rationale -->
+         <span gp-assert-person='a.person2' ng-if='a.person2'></span>
+         <span gp-assert-event='a.event2' role='a.role' ng-if='a.event2'></span>
+         <span gp-assert-characteristic='a.char2' parts='a.char_parts2' ng-if='a.char2'></span>
+         <span gp-assert-group='a.group2' ng-if='a.group2'></span>
 
          <br>
          {{a.rationale}}
