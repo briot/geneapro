@@ -1,4 +1,6 @@
 app.
+
+// Must apply to a <form> element
 directive('gpUploadTarget', function($http) {
    // Code from https://css-tricks.com/drag-and-drop-file-uploading/
 
@@ -54,8 +56,14 @@ directive('gpUploadTarget', function($http) {
                scope.$apply();
             });
 
-            scope.send = function() {
-               if (scope.isUploading || scope.files.length == 0) {
+            scope.onchange = function(input) {
+               if (scope.autosubmit) {
+                  scope.send(true /* force */);
+               }
+            };
+
+            scope.send = function(force) {
+               if (scope.isUploading || (!force && scope.files.length == 0)) {
                   return false;
                }
                scope.isUploading = true;
@@ -96,17 +104,21 @@ directive('gpDownloadFormMini', function() {
       scope: {},
       link:  function(scope, element, attrs, uploadCtrl) {
          scope.upload = uploadCtrl.scope;  //  Info from upload controller
+         scope.upload.autosubmit = true;   //  force autosubmit
+         element.find('input').bind('change', function() {
+            scope.upload.onchange(this);
+         });
       },
       template:
-         '<form class="mini">'
+         '<div class="mini">'
        +    '<span class="fa fa-download icon"></span>'
-       +    '<input type=file id=file ng-model="upload.files" multiple/>'
+       +    '<input type=file name=file id=file ng-model="upload.files" multiple/>'
        +    '<label for=file>'
        +       '<span class="normal">drop media here</span>'
        +       '<span ng-if="!upload.isUploading" class="btn btn-xs btn-primary fa fa-plus"></span>'
        +       '<span ng-if="upload.isUploading" class="fa fa-spin fa-spinner"></span>'
        +    '</label>'
-       + '</form>'
+       + '</div>'
    };
 }).
 
@@ -122,11 +134,14 @@ directive('gpDownloadForm', function() {
       scope: {},
       link:  function(scope, element, attrs, uploadCtrl) {
          scope.upload = uploadCtrl.scope;  //  Info from upload controller
+         element.find('input').bind('change', function() {
+            scope.upload.onchange(this);
+         });
       },
       template: 
-         '<form class="maxi">'
+         '<div class="maxi">'
        +    '<span class="fa fa-download icon"></span>'
-       +    '<input type="file" name="files[]" id="file" multiple/>'
+       +    '<input type=file name=file ng-model="upload.files" id=file multiple/>'
        +    '<label for="file">'
        +       '<span ng-if="upload.files.length==0">'
        +          '<span>Choose a file or </span>'
@@ -141,6 +156,6 @@ directive('gpDownloadForm', function() {
        +        'Upload'
        +    '</button>'
        +    '<div ng-if="upload.isUploading" class="fa fa-spin fa-spinner"></div>'
-       + '</form>'
+       + '</div>'
    };
 });

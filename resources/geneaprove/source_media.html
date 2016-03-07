@@ -24,17 +24,17 @@
 
       <!-- Adding new images -->
 
-      <span class='nav navbar-nav navbar-right' gp-upload-target url='/data/sources/{{source.id}}/addRepr' onupload='onupload()' autosubmit=1>
+      <form class='nav navbar-nav navbar-right' gp-upload-target url='/data/sources/{{source.id}}/addRepr' onupload='onupload()' autosubmit=1>
          <span gp-download-form-mini></span>
-      </span>
+      </form>
 
    </div>
 
    <!-- Image representation or Adding new media -->
    <!-- The whole area is a drop target for adding new media -->
 
-   <div class='panel-body' gp-upload-target url='/data/sources/{{source.id}}/addRepr' onupload='onupload()' autosubmit=1>
+   <form class='panel-body' gp-upload-target url='/data/sources/{{source.id}}/addRepr' onupload='onupload()' autosubmit=1>
       <div gp-download-form ng-if='repr.length==0'></div>
       <span gp-media representation='repr[current_repr]' image='img'></span>
-   </div>
+   </form>
 </div>
