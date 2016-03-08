@@ -268,6 +268,7 @@ class SourceManager(object):
                                 comments="",
                                 last_change=sour[1].last_change)
                             self.sources[new_id] = nested_source
+                            nested_source.comments += self.importer._get_note(s)
 
                         for k, v in parts:
                             try:
@@ -279,7 +280,6 @@ class SourceManager(object):
                             p = models.Citation_Part(type=type, value=v)
                             nested_source.parts.add(p)
 
-                    nested_source.comments += "\n".join(getattr(s, "NOTE", []))
                     nested_source.save()
                     self.__add_OBJE_to_source(
                         nested_source, getattr(s, "OBJE", None))
@@ -459,7 +459,7 @@ class GedcomImporter(object):
         if getattr(data, "RIN", None):
             info.append("\nRIN=" + data.RIN)
         if getattr(data, "NOTE", None):
-            info.append("\nNote=".join(data.NOTE))
+            info.append(self._get_note(data))
 
         info = "".join(info)
         r = None
@@ -985,7 +985,7 @@ class GedcomImporter(object):
         # The name to use is the first one in the list of names
         indi = models.Persona.objects.create(
             name=name,
-            description=data.NOTE,
+            description=self._get_note(data.NOTE),
             last_change=self._create_CHAN(data.CHAN))
         indi._gedcom_id = data.id
         self._sourcePersona[(NO_SOURCE, data.id)] = indi
