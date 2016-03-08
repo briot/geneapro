@@ -12,6 +12,7 @@ import re
 import datetime
 import traceback
 import time
+import os
 
 # If true, the given name read from gedcom is split (on spaces) into
 # a given name and one or more middle names. This might not be appropriate
@@ -36,7 +37,9 @@ def as_list(obj):
     """
     Encapsulate obj in a list, if it is not a list already.
     """
-    if isinstance(obj, list):
+    if not obj:
+        return []
+    elif isinstance(obj, list):
         return obj
     else:
         return [obj]
@@ -48,6 +51,25 @@ def location(obj):
         return as_list(obj)[0].location()
     except AttributeError:
         return "???"
+
+def parse_gedcom_date(data_date):
+    """
+    Return a datetime object from data (a DATE record).
+    The TIME is also taken into account, if specified.
+    """
+    if data_date:
+        date = data_date.value
+        if data_date.TIME:
+            tmp = datetime.datetime.strptime(
+                date + " " + data_date.TIME, "%d %b %Y %H:%M:%S")
+        else:
+            tmp = datetime.datetime.strptime(date, "%d %b %Y")
+
+        return django.utils.timezone.make_aware(
+            tmp, django.utils.timezone.get_default_timezone())
+
+    return None
+
 
 ##################################
 # Sources manager
@@ -63,7 +85,7 @@ class SourceManager(object):
     This avoids lots of useless sources in the database.
     """
 
-    def __init__(self, importer, whole_file):
+    def __init__(self, importer, gedcom_name, whole_file):
         """
         :param GedcomImporter importer:
         :param GedcomRecord whole_file: the whole gedcom file, used to check
@@ -72,6 +94,20 @@ class SourceManager(object):
         self.importer = importer
         self.sources = {}  # sourceId => models.Source
         self.refs = {}    # sourceId => [GedcomRecord] for refs to that source
+          
+        gedcom_date = parse_gedcom_date(whole_file.HEAD.DATE)
+        self.__source_for_gedcom = models.Source.objects.create(
+            higher_source_id=None,
+            subject_place=None,
+            jurisdiction_place_id=None,
+            researcher=self.importer._researcher,
+            subject_date=gedcom_date,
+            medium="",
+            title=gedcom_name,
+            abbrev=gedcom_name,
+            biblio=gedcom_name,
+            last_change=gedcom_date,
+            comments='')
 
         # Count the number of references for each source
         for key, value, level in whole_file.for_all_fields_recursive(level=1):
@@ -140,7 +176,7 @@ class SourceManager(object):
         title = getattr(sour, "TITL", "Unnamed source")
 
         src = models.Source.objects.create(
-            higher_source_id=None,
+            higher_source=self.__source_for_gedcom,
             subject_place=subject_place,
             jurisdiction_place_id=None,
             researcher=self.importer._researcher,
@@ -254,7 +290,7 @@ class SourceManager(object):
 
             return all_sources
 
-        return [(NO_SOURCE, None)]
+        return [(NO_SOURCE, self.__source_for_gedcom)]
 
 
 ##################################
@@ -271,7 +307,7 @@ class GedcomImporter(object):
     """
 
     @transaction.commit_manually
-    def __init__(self, data):
+    def __init__(self, gedcom_name, data):
         """
         From the data contained in a gedcom-like file (see description of
         the format in gedcom.py), creates corresponding data in the database.
@@ -290,7 +326,7 @@ class GedcomImporter(object):
             self._default_surety = \
                 self._default_surety[len(self._default_surety) / 2]
 
-            self._births = dict()  # Index on persona id, contains Event
+            self._births = dict()  # Index on gedcom persona id, contains Event
 
             self._objects = dict()  # Objects that were inserted in this import
             # to avoid duplicates.  file => Representation
@@ -315,12 +351,12 @@ class GedcomImporter(object):
             self._places = dict()
             self._repo = dict()
 
-            self._sourcePersona = dict()  # Indexed on (sourceId, personId)
+            self._sourcePersona = dict()  # Indexed on (sourceId, gedcom personId)
             # returns the Persona to use for that source. As a special
             # case, sourceId is set to NO_SOURCE for those events and
             # characteristics with no source.
 
-            self.source_manager = SourceManager(self, data)
+            self.source_manager = SourceManager(self, gedcom_name, data)
 
             for r in data.REPO:
                 self._create_repo(r)
@@ -329,6 +365,9 @@ class GedcomImporter(object):
 
             for s in data.SOUR:
                 self.source_manager.add_SOUR(s)
+
+            for index, s in enumerate(data.INDI):
+                self._create_bare_indi(s)
 
             max = len(data.INDI)
             if DEBUG:
@@ -394,30 +433,13 @@ class GedcomImporter(object):
         # we only preserve the most recent one
 
         result = None
-
-        if not data:
-            data = []
-        else:
-            data = as_list(data)
-
-        for d in data:
-            date = "01 JAN 1970"
-            time = "00:00:00"
-
-            if d.DATE:
-                date = d.DATE.value
-                if d.DATE.TIME:
-                    tmp = datetime.datetime.strptime(
-                        date + " " + d.DATE.TIME, "%d %b %Y %H:%M:%S")
-                else:
-                    tmp = datetime.datetime.strptime(date, "%d %b %Y")
-
-                if result is None or tmp > result:
-                    result = tmp
+        for d in as_list(data):
+            tmp = parse_gedcom_date(d.DATE)
+            if result is None or (tmp is not None and tmp > result):
+                result = tmp
 
         if result:
-            return django.utils.timezone.make_aware(
-                result, django.utils.timezone.get_default_timezone())
+            return result
         else:
             return django.utils.timezone.now()
 
@@ -535,23 +557,23 @@ class GedcomImporter(object):
                 family_built,
                 CHAN=data.CHAN)
 
-        # Now add the children
-
-        children = data.CHIL
-        last_change = self._create_CHAN(data.CHAN)
+        # Now add the children.
+        # If there is an explicit BIRT event for the child, this was already
+        # fully handled in _create_indi, so we do nothing more here. But if
+        # there is no known BIRT even, we still need to associate the child with
+        # its parents.
 
         for c in data.CHIL:
             # Associate parents with the child's birth event. This does not
             # recreate an event if one already exists.
 
-            # ??? If the child already had a birth, we should attach to the
-            # existing event, since in GEDCOM these are the same.
-            self._create_event(
-                indi=[
-                    (self._sourcePersona[(NO_SOURCE, c.id)], self._principal),
-                    (husb, self._birth__father),
-                    (wife, self._birth__mother)],
-                field="BIRT", data=c, CHAN=data.CHAN)
+            if self._births.get(c.id, None) is None:
+                self._create_event(
+                    indi=[
+                        (self._sourcePersona[(NO_SOURCE, c.id)], self._principal),
+                        (husb, self._birth__father),
+                        (wife, self._birth__mother)],
+                    field="BIRT", data=c, CHAN=data.CHAN)
 
         for k, v in data.for_all_fields():
             if k not in ("CHIL", "HUSB", "WIFE", "id",
@@ -894,7 +916,7 @@ class GedcomImporter(object):
 
         if event_type.gedcom == 'BIRT':
             name = 'Birth of ' + name
-            evt = self._births.get(principal.id, None)
+            evt = self._births.get(principal._gedcom_id, None)
         elif event_type.gedcom == 'MARR':
             name = 'Marriage of ' + name
         elif event_type.gedcom == "DEAT":
@@ -911,7 +933,7 @@ class GedcomImporter(object):
                                               name=name, date=getattr(data, "DATE", None))
 
             if event_type.gedcom == 'BIRT':
-                self._births[principal.id] = evt
+                self._births[principal._gedcom_id] = evt
             all_src = self.source_manager.create_sources_ref(data)
         else:
             all_src = self.source_manager.create_sources_ref(None)
@@ -950,9 +972,11 @@ class GedcomImporter(object):
 
         return evt
 
-    def _create_indi(self, data):
-        """Create the equivalent of an INDI in the database"""
-
+    def _create_bare_indi(self, data):
+        """
+        Create an entry for an INDI in the database, with no associated event
+        or characteristic.
+        """
         if not data.NAME:
             name = ''
         else:
@@ -964,8 +988,12 @@ class GedcomImporter(object):
             description=data.NOTE,
             last_change=self._create_CHAN(data.CHAN))
         indi._gedcom_id = data.id
-
         self._sourcePersona[(NO_SOURCE, data.id)] = indi
+
+    def _create_indi(self, data):
+        """Add events and characteristics to an INDI"""
+
+        indi = self._sourcePersona[(NO_SOURCE, data.id)]
 
         # For all properties of the individual
 
@@ -983,12 +1011,31 @@ class GedcomImporter(object):
                 # Already handled
                 pass
 
+            elif field == "BIRT":
+                # Special case for births, since we need to associate the
+                # parents as well (so that they share the same source)
+                local_indi = [(indi, self._principal)]
+                for famc in as_list(data.FAMC):
+                    if famc.HUSB:
+                        local_indi.append(
+                            (self._sourcePersona[(NO_SOURCE, famc.HUSB.id)],
+                             self._birth__father))
+                    if famc.WIFE:
+                        local_indi.append(
+                            (self._sourcePersona[(NO_SOURCE, famc.WIFE.id)],
+                             self._birth__mother))
+
+                for v in value:
+                    self._create_event(
+                        indi=local_indi, field=field, data=v, CHAN=data.CHAN)
+
             elif field in self._char_types:
                 self._create_characteristic(field, value, indi)
 
             elif field in self._event_types:
                 for v in value:
-                    self._create_event(indi=indi, field=field, data=v)
+                    self._create_event(
+                        indi=indi, field=field, data=v, CHAN=data.CHAN)
 
             elif field.startswith("_") \
                     and (isinstance(value, basestring)
@@ -1021,7 +1068,7 @@ class GedcomImporter(object):
                     value=GedcomRecord(
                         value='',
                         SOUR=[GedcomRecord(
-                            TITL="Media for %s" % name,  # used both for object and source
+                            TITL="Media for %s" % indi.name,  # used both for object and source
                             CHAN=None,
                             OBJE=value)]),
                     indi=indi)
@@ -1096,9 +1143,10 @@ class GedcomImporter(object):
 
 class GedcomImporterCumulate(GedcomImporter):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, gedcom_name, data, *args, **kwargs):
         self.errors = []
-        super(GedcomImporterCumulate, self).__init__(*args, **kwargs)
+        super(GedcomImporterCumulate, self).__init__(
+            *args, gedcom_name=gedcom_name, data=data, **kwargs)
 
     def report_error(self, msg):
         self.errors.append(msg)
@@ -1121,7 +1169,7 @@ class GedcomFileImporter(geneaprove.importers.Importer):
 
     def __init__(self):
         self._parser = None  # The gedcom parser
-        geneaprove.importers.Importer.__init__(self)
+        super(GedcomFileImporter, self).__init__()
 
     def parse(self, filename):
         """Parse and import a gedcom file.
@@ -1134,7 +1182,25 @@ class GedcomFileImporter(geneaprove.importers.Importer):
 
         try:
             parsed = Gedcom().parse(filename)
-            parser = GedcomImporterCumulate(parsed)
+
+            if isinstance(filename, unicode):
+                name = filename
+            else:
+                name = filename.name
+
+            gedcom_name = (
+                'GEDCOM "%s", %s, exported from %s,'
+                + ' created on %s, imported on %s') % (
+                os.path.basename(name),
+                parsed.HEAD.SUBM.NAME.value,
+                parsed.HEAD.SOUR.value,
+                parse_gedcom_date(parsed.HEAD.DATE).strftime(
+                    "%Y-%m-%d %H:%M:%S %Z"),
+                datetime.datetime.now(
+                    django.utils.timezone.get_default_timezone()).strftime(
+                    "%Y-%m-%d %H:%M:%S %Z"))
+
+            parser = GedcomImporterCumulate(gedcom_name, parsed)
             return (True, "\n".join(parser.errors))
 
         except Invalid_Gedcom, e:
