@@ -27,6 +27,13 @@ h2:first-child {
       font-size: 0.7em;
    }
 }
+.gpLinkSuper {  // as a superscript
+   vertical-align: super;
+   font-size: 0.7em;
+   &:before {
+      margin-right: 1px;
+   }
+}
 
 /**
  * Assertions

@@ -22,9 +22,7 @@
           <tbody>
              <tr ng-repeat='c in person.all_chars'>
                 <td class="type">{{c.char.name}}
-                   <span ng-repeat='s in c.char.sources' ng-if='s'>
-                      <span source-link='s'></span>
-                   </span>
+                   <span source-link='c.assertion.source_id' source-title='sources[c.assertion.source_id].title'></span>
                 </td>
 
                 <td ng-if='c.parts.length == 1'>
@@ -61,10 +59,7 @@
                 <td class="type">
                    {{e.event.type.name}}
                    <span ng-if='e.role != "principal"' class='role'>(as {{e.role || ''}})</span>
-
-                   <span ng-repeat='s in e.event.sources' ng-if='s'>
-                      <span source-link='s'></span>
-                   </span>
+                   <span source-link='e.assertion.source_id' source-title='sources[e.assertion.source_id].title'></span>
                 </td>
                 <td>
                    {{ e.role == 'principal' ? '' : e.event.name }}
@@ -96,7 +91,7 @@
                                <td>{{p.rationale || ''}}</td>
                                <td><span gp-surety='p.surety'></span></td>
                                <td>
-                                  <span ng-if='p.source.id' source-link='p.source.id'></span>
+                                  <span ng-if='p.source.id' source-link='p.source.id' source-title='sources[p.source.id].title'></span>
                                </td>
                             </tr>
                          </tbody>
@@ -122,9 +117,7 @@
           <tbody>
              <tr ng-repeat='g in person.all_groups'>
                 <td>{{g.group.name}} ({{g.group.role || ''}})
-                   <span ng-repeat='s in g.group.sources' ng-if='s'>
-                      <span source-link='s'></span>
-                   </span>
+                   <span source-link='g.assertion.source_id' source-title='sources[g.assertion.source_id].title'></span>
                 </td>
                 <td class="date">{{g.group.date || ''}}</td>
                 <td class="place">{{g.group.place || ''}}</td>

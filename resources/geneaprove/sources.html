@@ -9,7 +9,6 @@
             <table class='table'>
                <thead>
                   <tr>
-                     <th>Id</th>
                      <th>Short citation</th>
                   </tr>
                </thead>
@@ -18,8 +17,10 @@
                     <td colspan='2'>Loading...</td>
                   </tr>
                   <tr ng-repeat='p in filteredData | paginate: page : $root.settings.sources.rows'>
-                     <td><span source-link='p.id'></span></td>
-                     <td><span ng-bind-html='p.abbrev||p.title' title='{{p.title}}'></span></td>
+                     <td>
+                        <span ng-bind-html='p.abbrev||p.title'></span>
+                        <span source-link='p.id' source-title='p.title'></span>
+                     </td>
                   </tr>
                </tbody>
             </table>

@@ -78,6 +78,7 @@ def view(request, id):
     source = get_source(id)
     data = {
         'source':  source,
+        'higher_source': source.higher_source,
         'asserts': source.get_asserts(),
         'repr':    source.get_representations(),
     }

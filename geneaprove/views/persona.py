@@ -50,16 +50,24 @@ def __add_default_person_attributes(person):
     person.base_surname = person.surname
 
 
-def __get_events(nodes, styles, graph, types=None, schemes=None,
-                 query_groups=True):
-    """Compute the events for the various persons in IDS (all all persons in
-       the database if None)
+def extended_personas(
+    nodes, styles, graph, types=None, schemes=None,
+    all_sources=None, as_css=False, query_groups=True):
+    """
+    Compute the events for the various persons in IDS (all all persons in
+    the database if None)
+    Return a dict indexed on id containing extended instances of Persona,
+    with additional fields for the birth, the death,...
 
        :param nodes:
            A set of graph.Persona_node, or None to get all persons from the
            database.
        :param graph: an instance of Graph, which is used to compute whether
           two ids represent the same person.
+       :param dict all_sources: either a dictionary, or None. If specified, it
+          will be filled with  "sourceId -> models.Source" objects
+       :param as_css:
+           True to get the styles as a CSS string rather than a python dict
        :return: a list of persons:
           * persons is a dictionary of Persona instances, indexed on persona_id
 
@@ -81,6 +89,9 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
     places = dict()  # place_id -> place
 
     assert(schemes is None or isinstance(schemes, set))
+
+    if styles:
+        styles.start()
 
     # Get the role names
 
@@ -124,16 +135,20 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
     # All query the 'principal' for each events, so that we can provide
     # that information graphically.
     for p in sql_in(events, "person", all_ids):
-        # or_q=Q(role=models.Event_Type_Role.principal)):
         e = p.event
 
         p_node = graph.node_from_id(p.person_id)
         person = persons[p_node.main_id]
+
+        # ??? A person could be involved multiple times in the same
+        # event, under multiple roles. Here we are only preserving the
+        # last occurrence
         person.all_events[e.id] = EventInfo(
             event=e, role=roles[p.role_id], assertion=p)
 
-        e.sources = getattr(e, "sources", set())
-        e.sources.add(p.source_id)
+        if all_sources is not None:
+            all_sources.setdefault(p.source_id, {})
+
         e.Date = e.date and DateRange(e.date)
 
         if schemes is not None:
@@ -171,10 +186,8 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
             person = persons[p_node.main_id]
             person.all_groups[gr.group_id] = GroupInfo(
                 group=gr.group, assertion=gr)
-            if gr.source_id:
-                src = getattr(gr.group, "sources", [])
-                src.append(gr.source_id)
-                gr.group.sources = src
+            if all_sources is not None:
+                all_sources.setdefault(gr.source_id, {})
             gr.group.role = gr.role
 
             if schemes is not None:
@@ -194,8 +207,9 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
         person = persons[p_node.main_id]
         p2c[c.id] = person
 
-        c.sources = getattr(c, "sources", set())
-        c.sources.add(p.source_id)
+        if all_sources is not None:
+            all_sources.setdefault(p.source_id, {})
+
         c.date = c.date and DateRange(c.date)
 
         if schemes is not None:
@@ -246,28 +260,17 @@ def __get_events(nodes, styles, graph, types=None, schemes=None,
 
             d[p.type.name] = p.name
 
-    return persons
+    ##########
+    # Get the title for all sources that are mentioned
+    ##########
 
+    if all_sources is not None:
+        for s in sql_in(models.Source.objects, "id", all_sources.keys()):
+            all_sources[s.id] = s
 
-def extended_personas(nodes, styles, event_types=None, as_css=False, graph=graph,
-                      schemes=None, query_groups=True):
-    """Return a dict indexed on id containing extended instances of Persona,
-       with additional fields for the birth, the death,...
-
-       :param nodes:
-           A set of graph.Persona_node, or None to get all persons from the
-           database.
-       :param as_css:
-           True to get the styles as a CSS string rather than a python dict
-       :param schemes:
-           See __get_events for a definition of SCHEMES
-    """
-    if styles:
-        styles.start()
-
-    persons = __get_events(
-        nodes=nodes, styles=styles, graph=graph, types=event_types, schemes=schemes,
-        query_groups=query_groups)
+    ##########
+    # Compute the styles
+    ##########
 
     if styles:
         for p in persons.itervalues():
@@ -282,15 +285,12 @@ def view(request, id):
     id = int(id)
 
     graph.update_if_needed()
-    #if len(graph) == 0:
-    #    return render_to_response(
-    #        'geneaprove/firsttime.html',
-    #        context_instance=RequestContext(request))
 
-    styles = None
+    all_sources = {}
     p = extended_personas(
         nodes=set([graph.node_from_id(id)]),
-        styles=styles, as_css=True, graph=graph, schemes=None)
+        all_sources=all_sources,
+        styles=None, as_css=True, graph=graph, schemes=None)
 
     query = models.P2P.objects.filter(
         type=models.P2P.sameAs)
@@ -308,6 +308,7 @@ def view(request, id):
 
     data = {
         "person": decujus,
+        "sources": all_sources,
         "p2p": assertions,
     }
     return HttpResponse(to_json(data), content_type='application/json')
@@ -354,6 +355,7 @@ def view_list(request):
     styles = Styles(style_rules, graph=graph, decujus=1)  # ??? Why "1"
     all = extended_personas(
         nodes=None, styles=styles, event_types=event_types_for_pedigree,
+        all_sources=None,
         graph=graph, as_css=True)
 
     all = [p for p in all.itervalues()]
@@ -382,10 +384,9 @@ def personaEvents(request, id):
     graph.update_if_needed()
 
     schemes = set()  # The surety schemes that are needed
-    styles = None
     p = extended_personas(
         nodes=set([graph.node_from_id(id)]),
-        styles=styles, as_css=True, graph=graph, schemes=schemes)
+        styles=None, as_css=True, graph=graph, schemes=schemes)
 
     data = ["%s: %s (%s)%s" % (e.event.name, e.event.date, e.event.place,
                                u"\u2713" if e.event.sources else u"\u2717")

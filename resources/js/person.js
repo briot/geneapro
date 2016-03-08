@@ -17,6 +17,7 @@ controller('personCtrl', function($scope, $http, $stateParams, $rootScope) {
    }
    $http.get('/data/persona/' + $rootScope.decujus).then(function(resp) {
       $scope.person = resp.data.person;
+      $scope.sources = resp.data.sources;
       $scope.p2p = resp.data.p2p;
    });
 

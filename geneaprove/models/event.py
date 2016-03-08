@@ -78,6 +78,5 @@ class Event(GeneaProveModel):
             "name": self.name,
             "type": self.type,
             "place": self.place,
-            "sources": list(self.sources if hasattr(self, 'sources') else []),
             "date": self.date,
             "date_sort": self.date_sort}

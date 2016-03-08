@@ -64,6 +64,7 @@ class Assertion(GeneaProveModel):
             "rationale": self.rationale,
             "researcher": self.researcher if self.researcher_id else None,
             "last_change": self.last_change,
+            "source_id": self.source_id,
             "surety": self.surety_id}
 
 
