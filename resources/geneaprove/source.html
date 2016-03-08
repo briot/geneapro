@@ -2,7 +2,7 @@
    <div class='col-md-12'>
       <div class='panel panel-default'>
          <div class='panel-heading editable-title' ng-click='showCitation=!showCitation'>
-            <span class='fa fa-pencil editable-title' ng-bind-html='source.title'></span>
+            <span class='fa fa-pencil editable-title' ng-bind-html='source.title|linkyWithHtml'></span>
          </div>
          <div class='panel-body' ng-if='showCitation'>
             <div gp-source-citation='source' higher-sources='higher_sources'></div>

@@ -89,7 +89,7 @@ directive('sourceLink', function($state) {
       replace: true,  // content of element should use the outside scope
       template:
          '<span>'
-         + '<span ng-if=sourceName style="margin-right:5px" ng-bind-html="sourceName"></span>'
+         + '<span ng-if=sourceName style="margin-right:5px" ng-bind-html="sourceName|linkyWithHtml"></span>'
          + '<a ui-sref="source({id:sourceId})" class="fa fa-book gpLinkSuper" title="{{sourceTitle}}" ng-show="sourceId">'
          +   '{{sourceId}}'
          + '</a>'
@@ -248,6 +248,15 @@ directive('convertToNumber', function() {
          ngModel.$formatters.push(function(val) {
             return '' + val;
          });
+      }
+   };
+}).
+
+filter('linkyWithHtml', function($filter) {
+   return function(str) {
+      if (str) {
+         var s = $filter('linky')(str);
+         return s.replace(/\&gt;/g, '>').replace(/\&lt;/g, '<');
       }
    };
 });
