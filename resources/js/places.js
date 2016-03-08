@@ -6,7 +6,7 @@ config(function($stateProvider) {
       templateUrl: 'geneaprove/places.html',
       controller: 'placesCtrl',
       data: {
-         pageTitle: '[Genaprove] List of places'
+         pageTitle: 'List of places'
       }
    }).
 
@@ -15,7 +15,7 @@ config(function($stateProvider) {
       templateUrl: 'geneaprove/place.html',
       controller: 'placeCtrl',
       data: {
-         pageTitle: '[Geneaprove] Place {{id}}'
+         pageTitle: 'Place {{id}}'
       }
    });
 }).

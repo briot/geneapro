@@ -6,7 +6,7 @@ config(function($stateProvider) {
       templateUrl: 'geneaprove/person.html',
       controller: 'personCtrl',
       data: {
-         pageTitle: '[Geneaprove] Person {{id}}'
+         pageTitle: 'Person {{id}}'
       }
    });
 }).

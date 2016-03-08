@@ -6,7 +6,7 @@ config(function($stateProvider) {
       templateUrl: 'geneaprove/timeline.html',
       controller: 'timelineCtrl',
       data: {
-         pageTitle: '[GeneaProve] Timeline {{id}}'
+         pageTitle: 'Timeline {{id}}'
       }
    });
 }).

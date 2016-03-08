@@ -6,7 +6,7 @@ config(function($stateProvider) {
       templateUrl: 'geneaprove/sources.html',
       controller: 'sourcesCtrl',
       data: {
-         pageTitle: '[GeneaProve] List of sources'
+         pageTitle: 'List of sources'
       }
    }).
    state('source_new', {
@@ -14,7 +14,7 @@ config(function($stateProvider) {
       templateUrl: 'geneaprove/source.html',
       controller: 'sourceCtrl',
       data: {
-         pageTitle: '[GeneaProve] New Source'
+         pageTitle: 'New Source'
       }
    }).
    state('source', {
@@ -22,7 +22,7 @@ config(function($stateProvider) {
       templateUrl: 'geneaprove/source.html',
       controller: 'sourceCtrl',
       data: {
-         pageTitle: '[GeneaProve] Source {{id}}'
+         pageTitle: 'Source {{id}}'
       }
    });
 }).
