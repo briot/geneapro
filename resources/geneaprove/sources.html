@@ -18,8 +18,7 @@
                   </tr>
                   <tr ng-repeat='p in filteredData | paginate: page : $root.settings.sources.rows'>
                      <td>
-                        <span ng-bind-html='p.abbrev||p.title'></span>
-                        <span source-link='p.id' source-title='p.title'></span>
+                        <span source-link='p.id' source-name='p.abbrev||p.title' source-title='p.title'></span>
                      </td>
                   </tr>
                </tbody>

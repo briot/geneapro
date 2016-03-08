@@ -170,7 +170,7 @@ directive('gpSourceCitation', function(CitationTemplates, $http) {
    return {
       scope: {
          source: '=gpSourceCitation',
-         higherSource: '='
+         higherSources: '='
       },
       templateUrl: 'geneaprove/source_citation.html',
       controller: function($scope) {
@@ -352,8 +352,7 @@ controller('sourceCtrl', function($scope, $http, $state, $stateParams) {
    // fields)
    function parseJson(resp) {
       $scope.source = resp.data.source;
-      $scope.higher_source = resp.data.higher_source;
-      console.log("MANU ", resp.data);
+      $scope.higher_sources = resp.data.higher_sources;
       $scope.asserts = resp.data.asserts;
       $scope.repr = resp.data.repr;
 

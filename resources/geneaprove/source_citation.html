@@ -19,10 +19,23 @@
          <label>Bibliography Citation</label>
       </div>
 
-      <div gp-float-label model='source.higher_source_id'
-           title='Select the source in which this one was found, for instance a specific will inside a will book'
-           label='Parent source'></div>
-      <span source-link='higherSource.id' source-title='higherSource.title'></span>
+   </div>
+
+   <h4>Higher-level sources</h4>
+   <div class='row'>
+      <div class='col-md-12'>
+         <ul>
+            <li ng-repeat='h in higherSources | orderBy:$index:true'>
+               <span source-link='h.id' source-title='h.title' source-name='h.title'></span>
+               <div gp-float-label ng-if='$last'
+                    model='source.higher_source_id'
+                    size=6,
+                    title='Select the source in which this one was found, for instance a specific will inside a will book'
+                    label='Parent source'></div>
+               </div>
+            </li>
+         </ul>
+      </div>
    </div>
 
    <h4>Citation Details</h4>

@@ -83,14 +83,17 @@ directive('sourceLink', function($state) {
    return {
       scope: {
          sourceId: '=sourceLink',  // The id of the source
-         name: '=',                // Default to Id
+         sourceName: '=',                // Default to Id
          sourceTitle: '='
       },
       replace: true,  // content of element should use the outside scope
       template:
-         '<a ui-sref="source({id:sourceId})" class="fa fa-book gpLinkSuper" title="{{sourceTitle}}" ng-show="sourceId">'
-         +   '{{name||sourceId}}'
+         '<span>'
+         + '<span ng-if=sourceName style="margin-right:5px" ng-bind-html="sourceName"></span>'
+         + '<a ui-sref="source({id:sourceId})" class="fa fa-book gpLinkSuper" title="{{sourceTitle}}" ng-show="sourceId">'
+         +   '{{sourceId}}'
          + '</a>'
+         + '</span>'
    };
 }).
 

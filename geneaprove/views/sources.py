@@ -76,9 +76,16 @@ def view(request, id):
 
     id = int(id)
     source = get_source(id)
+
+    higher_sources = []
+    higher = source.higher_source
+    while higher:
+        higher_sources.append(higher)
+        higher = higher.higher_source
+
     data = {
         'source':  source,
-        'higher_source': source.higher_source,
+        'higher_sources': higher_sources,
         'asserts': source.get_asserts(),
         'repr':    source.get_representations(),
     }
