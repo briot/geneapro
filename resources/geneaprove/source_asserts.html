@@ -1,5 +1,10 @@
 <div class='panel panel-default'>
-   <div class='panel-heading'>Assertions ({{asserts.length}})</div>
+   <div class='panel-heading'>
+      Assertions ({{asserts.length}})
+      <div class='nav navbar-nav navbar-right' style='margin-right:0'>
+         <button class='btn btn-primary btn-xs fa fa-plus' title='Add a new assertion' ng-click='newAssert()'></button>
+      </div>
+   </div>
    <div class='panel-body'>
       <div ng-repeat='a in asserts' ng-class='{disproved: a.disproved}'
             class='clearfix' style='margin-bottom: 20px'>
@@ -9,16 +14,21 @@
          </span>
          <span gp-surety='a.surety' style='float:right'></span>
 
-         <span gp-assert-person='a.person1' ng-if='a.person1'></span>
-         <br>
-         <span gp-assert-person='a.person2' ng-if='a.person2'></span>
-         <span gp-assert-event='a.event2' role='a.role' ng-if='a.event2'></span>
-         <span gp-assert-characteristic='a.char2' parts='a.char_parts2' ng-if='a.char2'></span>
-         <span gp-assert-group='a.group2' ng-if='a.group2'></span>
+         <div gp-assert-subject='a.p1' edited='a.$edited' subject-num='1'></div>
+         <div gp-assert-subject='a.p2' edited='a.$edited' subject-num='2'></div>
 
-         <br>
-         {{a.rationale}}
-        </div>
+         <span ng-if='a.$edited'>
+            <input type=checkbox ng-model='a.disproved'>
+            Disproved
+         </span>
+
+         <span ng-if='!a.$edited'>{{a.rationale}}</span>
+         <div ng-if='a.$edited'
+              gp-float-label
+              model='a.rationale'
+              size=12
+              lines=5
+              label='Rationale'></div>
       </div>
    </div>
 </div>

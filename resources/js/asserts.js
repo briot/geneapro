@@ -1,68 +1,147 @@
+/**
+ * Manipulating assertion subjects
+ */
 app.
-directive('gpAssertPerson', function() {
-   return {
-      scope: {
-         person: '=gpAssertPerson'
-      },
-      template:
-        '<span persona-link="person.id" name="person.name"></span>'
+service('gpSubject', function() {
+
+   var SUBJECT_AS = {
+      UNKNOWN: 0,
+      PERSON: 1,
+      EVENT: 2,
+      CHAR: 3,
+      GROUP: 4
    };
+
+   var DEFAULT_PERSON = {
+      id: 1, name: 'Me'};
+   var DEFAULT_PLACE = {
+      id: 1, name: 'Somewhere'};
+   var DEFAULT_EVENT = {
+      name: 'Birth of me',
+      type: {name: 'Birth'},
+      date_sort: '',
+      date: '',
+      place: DEFAULT_PLACE};
+   var DEFAULT_ROLE = 'principal';
+   var DEFAULT_CHAR = {
+      name: 'Sex',
+      date_sort: '',
+      date: '',
+      place: DEFAULT_PLACE};
+   var DEFAULT_CHAR_PARTS = [
+      {name: 'sex', value: 'M'}];
+   var DEFAULT_GROUP = {
+      name: 'Some group',
+      date_sort: '',
+      date: '',
+      place: DEFAULT_PLACE};
+
+   /**
+    * @param {Object} s     The description of the subject.
+    * @param {Number} num   Either 1 or 2, indicating which subject.
+    * @constructor
+    */
+   function gpSubject(s, num) {
+      this.s = s;
+      this.num = num;
+      this.computeType();
+   }
+
+   /**
+    * Return the list of valid subject types, depending on whether we
+    * are manipulating the first or second subject, and the value alread
+    * set for the other subject
+    */
+   gpSubject.prototype.validTypes = function() {
+      if (this.num == 1) {
+         return [{id: SUBJECT_AS.PERSON,  name: 'person'}];
+      } else {
+         return [{id: SUBJECT_AS.PERSON,  name: 'person'},
+                 {id: SUBJECT_AS.EVENT,   name: 'event'},
+                 {id: SUBJECT_AS.CHAR,    name: 'characteristic'},
+                 {id: SUBJECT_AS.GROUP,   name: 'group'},
+                 {id: SUBJECT_AS.UNKNOWN, name: 'unknown'}];
+      }
+   };
+
+   /**
+    * Given an object representing an assertion subject, return its
+    */
+   gpSubject.prototype.computeType = function() {
+      this.s.$subjectType = (this.s.person ? SUBJECT_AS.PERSON
+              : this.s.event ? SUBJECT_AS.EVENT
+              : this.s.char ? SUBJECT_AS.CHAR
+              : this.s.group ? SUBJECT_AS.GROUP
+              : this.num == 1 ? SUBJECT_AS.PERSON  // default for subject1
+              : SUBJECT_AS.UNKNOWN);
+   };
+
+   /**
+    * Change the type of a subject.
+    * We preserve the values currently set by the user, in case he selects
+    * the same type again later.
+    */
+   gpSubject.prototype.setType = function(type) {
+      switch (this.s.$subjectType) {
+         case SUBJECT_AS.PERSON:
+            this.s.$person = this.s.person;
+            break;
+         case SUBJECT_AS.EVENT:
+            this.s.$event = this.s.event;
+            this.s.$role = this.s.role;
+            break;
+         case SUBJECT_AS.CHAR:
+            this.s.$char = this.s.char;
+            this.s.$parts = this.s.parts;
+            break;
+         case SUBJECT_AS.GROUP:
+            this.s.$group = this.s.group;
+            this.s.$role = this.s.role;
+            break;
+      }
+
+      this.s.$subjectType = type;
+
+      switch (type) {
+         case SUBJECT_AS.PERSON:
+            this.s.person = this.s.$person || DEFAULT_PERSON;
+            break;
+         case SUBJECT_AS.EVENT:
+            this.s.event = this.s.$event || DEFAULT_EVENT;
+            this.s.role = this.s.$role || DEFAULT_ROLE;
+            break;
+         case SUBJECT_AS.CHAR:
+            this.s.char = this.s.$char || DEFAULT_CHAR;
+            this.s.parts = this.s.$parts || DEFAULT_CHAR_PARTS;
+            break;
+         case SUBJECT_AS.GROUP:
+            this.s.group = this.s.$group || DEFAULT_GROUP;
+            this.s.role = this.s.$role || DEFAULT_ROLE;
+            break;
+      }
+   };
+
+   return gpSubject;
 }).
 
-directive('gpAssertEvent', function() {
+/**
+ * Dispay/Edit one of the subjects of an assertion.
+ * This modifies the subject to add a $partType field
+ */
+directive('gpAssertSubject', function(gpSubject) {
    return {
       scope: {
-         event: '=gpAssertEvent',
-         role: '='
+         sub: '=gpAssertSubject',
+         edited: '=',
+         subjectNum: '@'
       },
-      template:
-         '<span'
-       +    '<span>'
-       +       '{{event.name || event.type.name}}'
-       +       '<span ng-if="role!=\'principal\'" class="role">(as {{role || ""}})</span>'
-       +    '</span>'
-       +    '<br>'
-       +    '<span time-link="event.date_sort" name="event.date" style="margin-right:10px"></span>'
-       +    '<span place-link="event.place.id" name="event.place.name"></span>'
-       + '</span>'
-   };
-}).
-
-directive('gpAssertCharacteristic', function() {
-   return {
-      scope: {
-         char: '=gpAssertCharacteristic',
-         parts: '='
+      controller: function($scope) {
+         var s = new gpSubject($scope.sub, $scope.subjectNum);
+         $scope.validTypes = s.validTypes();
+         $scope.$watch('sub.$subjectType', function(type) {
+            s.setType(type);
+         });
       },
-      template:
-         '<span>'
-       +    '{{char.name}}'
-       +    '<span ng-if="parts.length == 1">: {{parts[0].value}}'
-       +    '</span>'
-       +    '<span ng-if="parts.length != 1">'
-       +       '<span ng-repeat="p in parts">'
-       +          '<span class="char">{{p.name}}</span>: {{p.value}}<br>'
-       +       '</span>'
-       +    '</span>'
-       +    '<br>'
-       +    '<span time-link="char.date_sort" name="char.date" style="margin-right:10px"></span>'
-       +    '<span place-link="char.place.id" name="char.place.name"></span>'
-       + '</span>'
-   };
-}).
-
-directive('gpAssertGroup', function() {
-   return {
-      scope: {
-         group: '=gpAssertGroup',
-         role: '='
-      },
-      template:
-         '<span>'
-       +    '{{group.name}} ({{role}})'
-       +    '<br>'
-       +    '<span time-link="group.date_sort" name="group.date" style="margin-right:10px"></span>'
-       +    '<span place-link="group.place.id" name="group.place.name"></span>'
-       + '</span>'
+      templateUrl: 'geneaprove/assert_subject.html'
    };
 });

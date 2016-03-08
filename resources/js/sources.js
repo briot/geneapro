@@ -262,7 +262,22 @@ directive('gpSourceAsserts', function() {
          source: '=gpSourceAsserts',
          asserts: '='
       },
-      templateUrl: 'geneaprove/source_asserts.html'
+      templateUrl: 'geneaprove/source_asserts.html',
+      controller: function($scope) {
+         $scope.newAssert = function() {
+            $scope.asserts.unshift({
+               $edited: true,
+               disproved: false,
+               rationale: '',
+               researcher: {id: undefined, name: 'you'},
+               last_change: new Date(),
+               source_id: $scope.source.id,
+               surety: undefined,
+               p1: {},
+               p2: {}
+            });
+         };
+      }
    };
 }).
 

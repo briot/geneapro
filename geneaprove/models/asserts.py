@@ -88,8 +88,8 @@ class P2P(Assertion):
 
     def to_json(self):
         res = super(P2P, self).to_json()
-        res['person1'] = self.person1
-        res['person2'] = self.person2
+        res['p1'] = {'person': self.person1}
+        res['p2'] = {'person': self.person2}
         return res
 
 
@@ -108,9 +108,8 @@ class P2C(Assertion):
         parts = []
         for p in self.characteristic.parts.select_related():
             parts.append({'name': p.type.name, 'value': p.name})
-        res['person1'] = self.person
-        res['char2'] = self.characteristic
-        res['char_parts2'] = parts
+        res['p1'] = {'person': self.person}
+        res['p2'] = {'char': self.characteristic, 'parts': parts}
         return res
 
 class P2E(Assertion):
@@ -133,9 +132,8 @@ class P2E(Assertion):
 
     def to_json(self):
         res = super(P2E, self).to_json()
-        res['person1'] = self.person
-        res['event2'] = self.event
-        res['role'] = self.role.name
+        res['p1'] = {'person': self.person}
+        res['p2'] = {'event': self.event, 'role': self.role.name}
         return res
 
 
@@ -151,9 +149,8 @@ class P2G(Assertion):
 
     def to_json(self):
         res = super(P2G, self).to_json()
-        res['person1'] = self.person
-        res['group2'] = self.group
-        res['role'] = self.role
+        res['p1'] = {'person': self.person}
+        res['p2'] = {'group': self.group, 'role': self.role.name}
         return res
 
 

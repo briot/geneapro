@@ -31,7 +31,7 @@ directive('gpFloatLabel', function() {
 
          return '<div class="col-md-{{size}} form-group floatlabel">'
        +    '<' + type + r + ' class="form-control"'
-       +        ' ng-class="{nonempty: model || model==0 || model.length>0}"'
+       +        ' ng-class="{nonempty: model===0 || model.length}"'
        +        ' ng-model="model"'
        +        ' id="floatlabel{{id}}"'
        +        ' title="{{title}}"></' + type + '>'
