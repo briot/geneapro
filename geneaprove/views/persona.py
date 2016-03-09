@@ -2,20 +2,17 @@
 Various views related to displaying the pedgree of a person graphically
 """
 
-from django.shortcuts import render_to_response
-from django.template import RequestContext
-from django.db.models import Q, Min
+from django.db.models import Min
 from django.utils.translation import ugettext as _
-from django.http import HttpResponse
 from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.to_json import \
-        to_json, CharInfo, CharPartInfo, GroupInfo, EventInfo
+        CharInfo, CharPartInfo, GroupInfo, EventInfo, JSONView
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import graph
 from geneaprove.views.styles import Styles
 from geneaprove.views.queries import sql_in
-import collections
+
 
 event_types_for_pedigree = (
     models.Event_Type.birth,
@@ -51,7 +48,7 @@ def __add_default_person_attributes(person):
 
 
 def extended_personas(
-    nodes, styles, graph, types=None, schemes=None,
+    nodes, styles, graph, event_types=None, schemes=None,
     all_sources=None, as_css=False, query_groups=True):
     """
     Compute the events for the various persons in IDS (all all persons in
@@ -68,6 +65,7 @@ def extended_personas(
           will be filled with  "sourceId -> models.Source" objects
        :param as_css:
            True to get the styles as a CSS string rather than a python dict
+       :param event_types: restricts the types of events that are retrieved
        :return: a list of persons:
           * persons is a dictionary of Persona instances, indexed on persona_id
 
@@ -121,8 +119,8 @@ def extended_personas(
 
     events = models.P2E.objects.select_related(
         'event', 'event__place', 'event__type', 'surety')
-    if types:
-        events = events.filter(event__type__in=types)
+    if event_types:
+        events = events.filter(event__type__in=event_types)
 
     all_ids = None
     if nodes:
@@ -279,129 +277,90 @@ def extended_personas(
     return persons
 
 
-def view(request, id):
+class PersonaView(JSONView):
     """Display all details known about persona ID"""
 
-    id = int(id)
+    def get_json(self, params, id):
+        graph.update_if_needed()
 
-    graph.update_if_needed()
+        all_sources = {}
+        p = extended_personas(
+            nodes=set([graph.node_from_id(id)]),
+            all_sources=all_sources,
+            styles=None, as_css=True, graph=graph, schemes=None)
 
-    all_sources = {}
-    p = extended_personas(
-        nodes=set([graph.node_from_id(id)]),
-        all_sources=all_sources,
-        styles=None, as_css=True, graph=graph, schemes=None)
+        query = models.P2P.objects.filter(
+            type=models.P2P.sameAs)
 
-    query = models.P2P.objects.filter(
-        type=models.P2P.sameAs)
+        node = graph.node_from_id(id)
+        assertions = list(models.P2P.objects.filter(
+            type=models.P2P.sameAs,
+            person1__in=node.ids.union(node.different)))
 
-    node = graph.node_from_id(id)
-    assertions = list(models.P2P.objects.filter(
-        type=models.P2P.sameAs,
-        person1__in=node.ids.union(node.different)))
+        decujus = p[node.main_id]
 
-    decujus = p[node.main_id]
+        decujus.all_chars = decujus.all_chars.values()
+        decujus.all_events = decujus.all_events.values()
+        decujus.all_groups = decujus.all_groups.values()
 
-    decujus.all_chars = decujus.all_chars.values()
-    decujus.all_events = decujus.all_events.values()
-    decujus.all_groups = decujus.all_groups.values()
-
-    data = {
-        "person": decujus,
-        "sources": all_sources,
-        "p2p": assertions,
-    }
-    return HttpResponse(to_json(data), content_type='application/json')
+        return {
+            "person": decujus,
+            "sources": all_sources,
+            "p2p": assertions,
+        }
 
 
-def get_settings(request):
+class GlobalSettings(JSONView):
     """
     Return the user settings. These include the following fields:
     * defaultPerson
       id of the person to show when the user connects initially.
       It returns -1 if the database is currently empty.
     """
-
-    p = models.Persona.objects.aggregate(Min('id'))
-    data = {
-        "defaultPerson": p['id__min'] if p else -1
-    }
-    return HttpResponse(to_json(data), content_type='application/json')
-
-
-def surety_schemes_view(request):
-    schemes = [{'id': s.id,
-                'name': s.name,
-                'description': s.description,
-                'parts': [
-                    {'id': p.id,
-                     'name': p.name,
-                     'description': p.description,
-                     'sequence': p.sequence_number} for p in s.parts.all()]
-            } for s in models.Surety_Scheme.objects.all()]
-            
-    return HttpResponse(to_json(schemes), content_type='application/json')
+    def get_json(self, params):
+        p = models.Persona.objects.aggregate(Min('id'))
+        return {
+            "defaultPerson": p['id__min'] if p else -1
+        }
 
 
-def view_list(request):
+class SuretySchemesList(JSONView):
+    """
+    Return the list of all defined surety schemes
+    """
+    def get_json(self, params):
+        return [{'id': s.id,
+                    'name': s.name,
+                    'description': s.description,
+                    'parts': [
+                        {'id': p.id,
+                         'name': p.name,
+                         'description': p.description,
+                         'sequence': p.sequence_number} for p in s.parts.all()]
+                } for s in models.Surety_Scheme.objects.all()]
+
+
+class PersonaList(JSONView):
     """View the list of all personas"""
+    def get_json(self, params):
+        graph.update_if_needed()
+        styles = Styles(style_rules, graph=graph, decujus=1)  # ??? Why "1"
+        all = extended_personas(
+            nodes=None, styles=styles,
+            event_types=event_types_for_pedigree,
+            all_sources=None, graph=graph, as_css=True)
 
-    graph.update_if_needed()
-    if len(graph) == 0:
-        return render_to_response(
-            'geneaprove/firsttime.html',
-            context_instance=RequestContext(request))
+        all = [p for p in all.itervalues()]
+        all.sort(key=lambda x: x.surname)
 
-    styles = Styles(style_rules, graph=graph, decujus=1)  # ??? Why "1"
-    all = extended_personas(
-        nodes=None, styles=styles, event_types=event_types_for_pedigree,
-        all_sources=None,
-        graph=graph, as_css=True)
+        all = [{'surname': p.surname,
+                'given_name': p.given_name,
+                'birth': p.birth,
+                'death': p.death,
+                'id': p.id,
+                'marriage': p.marriage}
+               for p in all]
 
-    all = [p for p in all.itervalues()]
-    all.sort(key=lambda x: x.surname)
-
-    all = [{'surname': p.surname,
-            'given_name': p.given_name,
-            'birth': p.birth,
-            'death': p.death,
-            'id': p.id,
-            'marriage': p.marriage}
-           for p in all]
-
-    data = {
-        'persons': all,
-    }
-
-    return HttpResponse(to_json(data), content_type='application/json')
-
-
-def personaEvents(request, id):
-    """All events for the person"""
-
-    id = int(id)
-
-    graph.update_if_needed()
-
-    schemes = set()  # The surety schemes that are needed
-    p = extended_personas(
-        nodes=set([graph.node_from_id(id)]),
-        styles=None, as_css=True, graph=graph, schemes=schemes)
-
-    data = ["%s: %s (%s)%s" % (e.event.name, e.event.date, e.event.place,
-                               u"\u2713" if e.event.sources else u"\u2717")
-            for i, e in p[id].all_events.items()
-            if e.role == 'principal'
-            and not e.assertion.disproved]
-    data.extend("%s: %s%s%s" % (
-                c.char.name,
-                " ".join("%s:%s" % (p.name, p.value) for p in c.parts),
-                "(%s)" % c.char.date if c.char.date else "",
-                u"\u2713" if c.char.sources else u"\u2717")
-                for k, c in p[id].all_chars.items()
-                if not c.assertion.disproved
-                and c.char.name not in ("_UID", ))
-
-    return HttpResponse(
-        to_json(data, year_only=False),
-        content_type="application/json")
+        return {
+            'persons': all,
+        }

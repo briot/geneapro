@@ -149,6 +149,17 @@ documents the citation styles.""")
         from .representation import Representation
         return Representation.objects.filter(source=self)
 
+    def get_higher_sources(self):
+        """
+        :return: the list of higher level sources, recursively.
+           The first element is the direct parent, the last is the top-most
+           source.
+        """
+        if self.higher_source:
+            return [self.higher_source].extend(
+                self.higher_source.get_higher_sources())
+        return []
+
 
 class Citation_Part_Type(Part_Type):
     """

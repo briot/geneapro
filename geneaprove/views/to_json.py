@@ -4,10 +4,13 @@ import json
 import collections
 import datetime
 import copy
+import django.db.models.query
+from django.conf import settings
+from django.views.generic import View
+from django.http import HttpResponse
 from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.styles import get_place
-import django.db.models.query
 
 
 ############################################################
@@ -126,3 +129,69 @@ def to_json(obj, custom=None, year_only=True):
        encoding.
     """
     return ModelEncoder(year_only=year_only, custom=custom).encode(obj)
+
+
+class JSONViewParams(dict):
+    """
+    A structure that encapsulates the HTTP parameters given to a JSONView.
+    This replaces the use of request.POST or request.GET, since AngularJS
+    encodes the information in the body of the request.
+    Moreover, when a request provides files, it is invalid to access this
+    body.
+
+    The parameters are accessed via::
+        self['param1']
+    The upload files are accessed via::
+        self.FILES
+    """
+
+    def __init__(self):
+        super(JSONViewParams, self).__init__()
+
+    def setFiles(self, files):
+        self.FILES = files
+
+    def setFromBody(self, body):
+        if body:
+            self.update(json.loads(body))
+
+
+class JSONView(View):
+    def get_json(self, params, *args, **kwargs):
+        """
+        Builds the JSON data to be returned by the view.
+        :param id: id parameters are always converted to integers
+        """
+        return {}
+
+    def __internal(self, method, params, *args, **kwargs):
+        # Always convert an "id" parameter to integer
+        if 'id' in kwargs:
+            kwargs['id'] = int(kwargs['id'])
+
+        result = to_json(method(params, *args, **kwargs))
+        if settings.DEBUG:
+            print "JSON=", result
+        return HttpResponse(result, content_type='application/json')
+
+    def get(self, request, *args, **kwargs):
+        params = JSONViewParams()
+        params.update(request.GET)
+        if settings.DEBUG:
+            print "=========== %s =============" % (self.__class__, )
+            print "Params: %s" % (params, )
+        return self.__internal(self.get_json, params, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
+        # decode the parameters from the body, since that's where AngularJS
+        # puts them with AJAX requests
+        params = JSONViewParams()
+        params.update(request.POST)
+        if not request.FILES:
+            params.setFromBody(request.body)
+        else:
+            params.setFiles(request.FILES)
+        if settings.DEBUG:
+            print "=========== %s =============" % (self.__class__, )
+            print "Params: %s" % (params, )
+        return self.__internal(self.post_json, params, *args, **kwargs)

@@ -1,5 +1,12 @@
 # for Emacs: -*- mode: org; mode: flyspell; fill-column: 79 -*-
 
+* Bugs
+** Source page
+*** select new medium, fill information and use the browser's completion:
+   AngularJS does not detect a change, and does not update the title's value.
+   Only characters typed explicitly are taken into account
+*** Edit citation, save => need to hide the Save button or provide feedback
+
 * Database
 ** Create indexes in database:
    Assertion.subject1
@@ -124,6 +131,11 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 ** Pagination
    Should show first letter of name, rather than page number.
    Must ensure that the pagination is kept in a constant place, for easy clicking
+
+* Source View
+** Paginate the list of assertions
+   So that the page displays faster when there are lots of assertions, and so
+   that assertions are not displayed too far from the images.
 
 * Sources
 ** Use Bibtex as a reference for which fields are needed for the various
@@ -274,6 +286,10 @@ http://www.wolframalpha.com/input/?i=great+grand+mother%27s+niece
 * Replace icons with fonts
   http://fortawesome.github.com/Font-Awesome/
   This can also be used to replace the star plugin, see the above page
+
+* Django
+** Class-based views
+   http://ccbv.co.uk
 
 * CSS
   http://learnlayout.com

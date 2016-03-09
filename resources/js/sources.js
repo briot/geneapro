@@ -1,3 +1,20 @@
+/**
+ * Parse a JSON response from the server (the 'source' and 'parts' fields)
+ */
+function parse_SourceView_response($scope, resp) {
+   $scope.source = resp.data.source;
+   $scope.higher_sources = resp.data.higher_sources;
+   $scope.asserts = resp.data.asserts;
+   $scope.repr = resp.data.repr;
+
+   if ($scope.source.id == null) {
+      $scope.source.id = -1;
+   }
+   if ($scope.source.medium == null) {
+      $scope.source.medium = '';
+   }
+}
+
 app.
 config(function($stateProvider) {
    $stateProvider.
@@ -64,9 +81,9 @@ factory('CitationTemplates', function($http, $q) {
     * @returns {{full:string, biblio:string, abbrev:string}}
     */
    CitationTemplate.prototype.cite = function(vals) {
-      var full = this.full;
-      var biblio = this.biblio;
-      var abbrev = this.abbrev;
+      var full = this.full || '';
+      var biblio = this.biblio || '';
+      var abbrev = this.abbrev || '';
 
       angular.forEach(this.fields, function(name) {
          // Use a function for the replacement, to protect "$" characters
@@ -166,7 +183,7 @@ controller('sourcesCtrl', function($scope, Paginated) {
  * Editing the citation for a source
  */
 
-directive('gpSourceCitation', function(CitationTemplates, $http) {
+directive('gpSourceCitation', function(CitationTemplates, $http, $state) {
    return {
       scope: {
          source: '=gpSourceCitation',
@@ -241,10 +258,10 @@ directive('gpSourceCitation', function(CitationTemplates, $http) {
 
            $http.post('/data/sources/' + $scope.source.id + '/saveparts', data).
               then(function(resp) {
-                 parseJson(resp);
+                 parse_SourceView_response($scope, resp);
                  $state.transitionTo(
                     'source',
-                    {id: $scope.source.id},
+                    {id: $scope.source.id}, // update URL if needed
                     {location:'replace', reload:false});
               });
          };
@@ -360,23 +377,7 @@ controller('sourceCtrl', function($scope, $http, $state, $stateParams) {
 
    // ??? Should use a service instead
    $http.get('/data/sources/' + id).then(function(resp) {
-      parseJson(resp);
+      parse_SourceView_response($scope, resp);
    });
-
-   // Parse a JSON response from the server (the 'source' and 'parts'
-   // fields)
-   function parseJson(resp) {
-      $scope.source = resp.data.source;
-      $scope.higher_sources = resp.data.higher_sources;
-      $scope.asserts = resp.data.asserts;
-      $scope.repr = resp.data.repr;
-
-      if ($scope.source.id == null) {
-         $scope.source.id = -1;
-      }
-      if ($scope.source.medium == null) {
-         $scope.source.medium = '';
-      }
-   }
 
 });

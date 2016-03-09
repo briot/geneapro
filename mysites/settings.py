@@ -2,7 +2,7 @@
 import os
 import appdirs
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = False
 
 user_data_dir = appdirs.user_data_dir(

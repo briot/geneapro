@@ -2,12 +2,11 @@
 Representation-related views
 """
 
+from django.conf import settings
 from django.http import HttpResponse
-from django.shortcuts import render_to_response
-from django.template import RequestContext
 from geneaprove import models
-from geneaprove.views.to_json import to_json
-import os.path
+import urllib
+import os
 
 
 def create_resized_image(image_name, original_location,
@@ -20,9 +19,6 @@ def create_resized_image(image_name, original_location,
     Adapted from http://djangosnippets.org/snippets/53/
     """
     from PIL import Image, ImageOps
-    import urllib
-    import os
-    from django.conf import settings
 
     # Ensure a resized image doesn't already exist in the default
     # MEDIA_ROOT/images/resized
@@ -60,19 +56,3 @@ def view(request, id, size=None):
     response['Content-Disposition'] = 'attachment; filename=%s' % (
         os.path.basename(repr.file))
     return response
-
-
-def higherSourceReprList(request, source_id):
-    """
-    The list of representations for the higher sources of source_id.
-    :return: a list of tuples (id,title)
-    """
-    result = []
-    s = models.Source.objects.get(id=source_id)
-    if s:
-        s = s.higher_source
-        while s:
-            for r in models.Representation.objects.filter(source=s).all:
-                result.append((r.id, r.comments))
-            s = s.higher_source
-    return HttpResponse(to_json(result), content_type="application/json")

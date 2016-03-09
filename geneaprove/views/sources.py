@@ -4,14 +4,9 @@ Source-related views
 
 import os
 from django.conf import settings
-from django.shortcuts import render_to_response
 from django.http import HttpResponse
-from django.template import RequestContext
-from geneaprove.views.to_json import to_json
+from geneaprove.views.to_json import JSONView
 from geneaprove import models
-from geneaprove.views.queries import sql_in
-from geneaprove.utils.date import DateRange
-from geneaprove.views.graph import graph
 from geneaprove.utils.citations import Citations
 
 
@@ -35,78 +30,67 @@ def get_source(id):
             'repositories', 'researcher').get(pk=id)
 
 
-def citation_model(request, id):
+class CitationModel(JSONView):
     """
     Return the citation model for a given id
     """
-    citation = Citations.get_citation(id)
-    data = {
-        'biblio': citation.biblio,
-        'full': citation.full,
-        'short': citation.short
-    }
-    return HttpResponse(to_json(data), content_type='application/json')
+    def get_json(self, params, model_id):
+        citation = Citations.get_citation(model_id)
+        return {
+            'biblio': citation.biblio,
+            'full': citation.full,
+            'short': citation.short
+        }
 
 
-def citation_models(request):
+class CitationModels(JSONView):
     """
     Return the list of all known citation models
     """
-    data = {
-        'repository_types': models.Repository_Type.objects.all(),
-        'source_types': Citations.source_types()
-    }
-    return HttpResponse(to_json(data), content_type='application/json')
+    def get_json(self, params):
+        return {
+            'repository_types': models.Repository_Type.objects.all(),
+            'source_types': Citations.source_types()
+        }
 
 
-def citation(request, id):
+class SourceCitation(JSONView):
     """
-    Return the citation parts for the given source id
+    Return the citation parts for a source
     """
-    id = int(id)
-    source = get_source(id)
-    data = {
-        'parts':   source.get_citations_as_list()
-    }
-    return HttpResponse(to_json(data), content_type='application/json')
+    def get_json(self, params, id):
+        return {
+            'parts': get_source(id).get_citations_as_list()
+        }
 
 
-def view(request, id):
-    """View a specific source"""
-
-    id = int(id)
-    source = get_source(id)
-
-    higher_sources = []
-    higher = source.higher_source
-    while higher:
-        higher_sources.append(higher)
-        higher = higher.higher_source
-
-    data = {
-        'source':  source,
-        'higher_sources': higher_sources,
-        'asserts': source.get_asserts(),
-        'repr':    source.get_representations(),
-    }
-    return HttpResponse(to_json(data), content_type='application/json')
+class SourceView(JSONView):
+    """
+    View a specific source by id
+    """
+    def get_json(self, params, id):
+        source = get_source(id)
+        return {
+            'source':  source,
+            'higher_sources': source.get_higher_sources(),
+            'asserts': source.get_asserts(),
+            'repr':    source.get_representations(),
+        }
 
 
-def editCitation(request, source_id):
+class EditSourceCitation(JSONView):
     """
     Perform some changes in the citation parts for a source, and returns a
     JSON similar to view():
         {source: ...,  parts: ... }
     """
-    source_id = int(source_id)
+    def post_json(self, params, id):
+        if id == -1:
+            src = create_empty_source()
+        else:
+            src = models.Source.objects.get(id=id)
 
-    if source_id == -1:
-        src = create_empty_source()
-    else:
-        src = models.Source.objects.get(id=source_id)
-
-    if request.method == 'POST':
-        new_type = request.POST.get('sourceMediaType')
+        new_type = params.get('medium')
 
         src.parts.all().delete()
 
@@ -115,7 +99,7 @@ def editCitation(request, source_id):
         else:
             parts = None
 
-        for key, value in request.POST.iteritems():
+        for key, value in params.iteritems():
             if key in ('csrfmiddlewaretoken', 'sourceId'):
                 continue
             elif key == 'medium':
@@ -157,105 +141,101 @@ def editCitation(request, source_id):
                 p = models.Citation_Part(type=type, value=value)
                 src.parts.add(p)
 
-        medium = src.compute_medium()
-        if medium:
-            parts = {k: v[0]   # discard the from_higher information
-                     for k, v in src.higher_source.get_citations().iteritems()}
-            for k, v in request.POST:
-                parts[k] = v
+        # ??? Citation has already been computed on the client
+        #medium = src.compute_medium()
+        #if medium:
+        #    parts = {k: v[0]   # discard the from_higher information
+        #             for k, v in src.higher_source.get_citations().iteritems()}
+        #    for k, v in params.iteritems():
+        #        parts[k] = v
 
-            c = Citations.get_citation(medium).cite(
-                parts, unknown_as_text=False)
-            src.biblio = c.biblio
-            src.title = c.full
-            src.abbrev = c.short
+        #    c = Citations.get_citation(medium).cite(
+        #        parts, unknown_as_text=False)
+        #    src.biblio = c.biblio
+        #    src.title = c.full
+        #    src.abbrev = c.short
 
         src.save()
 
-    return view(request, id=src.id)
+        return SourceView().get_json(params, id=src.id)
 
 
-def view_list(request):
-    """View the list of all sources"""
-
-    sources = models.Source.objects.order_by('abbrev', 'title')
-    return HttpResponse(
-        to_json(sources),
-        content_type='application/json')
-
-
-def representations(request, id):
-    id = int(id)
-    source = get_source(id)
-    data = {
-        'source':  source,
-        'repr':    source.get_representations()
-    }
-    return HttpResponse(to_json(data), content_type='application/json')
+class SourcesList(JSONView):
+    """
+    View the list of all sources
+    """
+    def get_json(self, params):
+        return models.Source.objects.order_by('abbrev', 'title')
 
 
-def add_repr(request, id):
+class SourceRepresentations(JSONView):
+    """
+    Return the list of representations for a source
+    """
+    def get_json(self, params, id):
+        source = get_source(id)
+        return {
+            'source':  source,
+            'repr':    source.get_representations()
+        }
+
+
+class AddSourceRepr(JSONView):
     """
     Adding a new representation to a source.
     """
+    def post_json(self, params, id):
+        source = get_source(id)
 
-    id = int(id)
-    source = get_source(id)
+        files = params.FILES['file']
+        if not isinstance(files, list):
+            files = [files]
 
-    files = request.FILES['file']
-    if not isinstance(files, list):
-        files = [files]
+        dir = os.path.join(settings.MEDIA_ROOT, 'S%s' % id)
+        try:
+            os.makedirs(dir)
+        except OSError:
+            pass
 
-    dir = os.path.join(settings.MEDIA_ROOT, 'S%s' % id)
-    try:
-        os.makedirs(dir)
-    except OSError:
-        pass
+        for f in files:
+            # Find a unique name
+            name = os.path.join(dir, f.name)
+            index = 1
+            while os.path.isfile(name):
+                name, ext = os.path.splitext(name)
+                if index == 1:
+                    name = '%s_%s%s' % (name, index, ext)
+                else:
+                    name = '%s_%s%s' % (name[0:name.rfind('_')], index, ext)
+                index += 1
 
-    for f in files:
-        # Find a unique name
-        name = os.path.join(dir, f.name)
-        index = 1
-        while os.path.isfile(name):
-            name, ext = os.path.splitext(name)
-            if index == 1:
-                name = '%s_%s%s' % (name, index, ext)
-            else:
-                name = '%s_%s%s' % (name[0:name.rfind('_')], index, ext)
-            index += 1
+            w = open(name, "w")
+            for c in f.chunks():
+                w.write(c)
+            w.close
 
-        w = open(name, "w")
-        for c in f.chunks():
-            w.write(c)
-        w.close
+            r = models.Representation.objects.create(
+                source=source,
+                mime_type=f.content_type,
+                file=name)
+            r.save()
 
-        r = models.Representation.objects.create(
-            source=source,
-            mime_type=f.content_type,
-            file=name)
-        r.save()
+        return True
 
-    return HttpResponse(
-        to_json(True),
-        content_type='application/json')
-
-
-def del_repr(request, source_id, repr_id):
+class DelSourceRepr(JSONView):
     """
     Deleting a representation from a source
     """
-    ondisk = request.GET.get('ondisk', False)
+    def post_json(self, params, id, repr_id):
+        ondisk = params.get('ondisk', False)
 
-    error = ""
-    repr = models.Representation.objects.get(id=int(repr_id))
-    if ondisk:
-        try:
-            os.unlink(repr.file)
-        except:
-            error = "Could not delete %s" % (repr.file)
+        error = ""
+        repr = models.Representation.objects.get(id=int(repr_id))
+        if ondisk:
+            try:
+                os.unlink(repr.file)
+            except:
+                error = "Could not delete %s" % (repr.file)
 
-    repr.delete()
-
-    return HttpResponse(
-        to_json(dict(error=error)),
-        content_type='application/json')
+        repr.delete()
+        return {"error": error}

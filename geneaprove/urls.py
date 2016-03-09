@@ -4,11 +4,16 @@ from django.shortcuts import render_to_response
 from django.core.context_processors import csrf
 import geneaprove.views.pedigree
 import geneaprove.views.persona
+from geneaprove.views.persona import \
+        PersonaList, PersonaView, SuretySchemesList, GlobalSettings
 import geneaprove.views.places
 import geneaprove.views.representation
 import geneaprove.views.rules
 import geneaprove.views.stats
-import geneaprove.views.sources
+from geneaprove.views.sources import \
+        SourceView, SourceCitation, EditSourceCitation, \
+        CitationModels, CitationModel, SourcesList, \
+        SourceRepresentations, AddSourceRepr, DelSourceRepr
 import geneaprove.views.events
 import geneaprove.views.merge
 import geneaprove.views.graph
@@ -23,41 +28,29 @@ urlpatterns = patterns(
     '',
     url(r'^$', index, name='index'),
     (r'^data/pedigree/(\d+)$', geneaprove.views.pedigree.pedigree_data),
-    (r'^data/persona/list$',   geneaprove.views.persona.view_list),
-    (r'^data/persona/(\d+)$',  geneaprove.views.persona.view),
+    (r'^data/persona/list$',                PersonaList.as_view()),
+    (r'^data/persona/(?P<id>\d+)$',         PersonaView.as_view()),
     (r'^data/places$',         geneaprove.views.places.view_list),
-    (r'^data/sources/list$',   geneaprove.views.sources.view_list),
-    (r'^data/sources/(-?\d+)$',  geneaprove.views.sources.view),
-    (r'^data/sources/(-?\d+)/saveparts$', geneaprove.views.sources.editCitation),
-    (r'^data/sources/(-?\d+)/parts$', geneaprove.views.sources.citation),
-    (r'^data/sources/(\d+)/addRepr', geneaprove.views.sources.add_repr),
-    (r'^data/sources/(\d+)/allRepr', geneaprove.views.sources.representations),
-    (r'^data/sources/(\d+)/delRepr/(\d+)', geneaprove.views.sources.del_repr),
-    (r'^data/suretySchemes$',  geneaprove.views.persona.surety_schemes_view),
+    (r'^data/sources/list$',                SourcesList.as_view()),
+    (r'^data/sources/(?P<id>-?\d+)$',       SourceView.as_view()),
+    (r'^data/sources/(?P<id>-?\d+)/saveparts$',   EditSourceCitation.as_view()),
+    (r'^data/sources/(?P<id>-?\d+)/parts$', SourceCitation.as_view()),
+    (r'^data/sources/(\d+)/addRepr',        AddSourceRepr.as_view()),
+    (r'^data/sources/(\d+)/allRepr',        SourceRepresentations.as_view()),
+    (r'^data/sources/(\d+)/delRepr/(\d+)',  DelSourceRepr.as_view()),
+    (r'^data/suretySchemes$',               SuretySchemesList.as_view()),
     (r'^data/event/(\d+)$',    geneaprove.views.events.view),
     (r'^data/legend$',         geneaprove.views.rules.getLegend),
     (r'^data/stats$',          geneaprove.views.stats.view),
     (r'^import$',              geneaprove.views.importers.import_gedcom),
-    (r'^data/citationModel/(.+)$', geneaprove.views.sources.citation_model),
-    (r'^data/citationModels$', geneaprove.views.sources.citation_models),
-    (r'^data/settings',        geneaprove.views.persona.get_settings),
+    (r'^data/citationModel/(?P<model_id>.+)$', CitationModel.as_view()),
+    (r'^data/citationModels$',           CitationModels.as_view()),
+    (r'^data/settings',                  GlobalSettings.as_view()),
     (r'^repr/(?P<id>\d+)(?:/(?P<size>\d+))?$',
                                geneaprove.views.representation.view),
 
     # ... below: not moved to angularJS yet
 
-    # Returns JSON, the list of all events for the person.
-    # Param is the id
-    (r'^personaEvents/(\d+)$',
-     geneaprove.views.persona.personaEvents),
-
-    # The list of representations for the higher sources
-    (r'^reprList/(?P<source_id>\d+)',
-        geneaprove.views.representation.higherSourceReprList),
-
-    (r'^quilts/(\d+)?$',
-     geneaprove.views.graph.quilts_view),
-
-    # Experimental, does not work yet
-    (r'^merge$',        geneaprove.views.merge.view),
+    (r'^quilts/(\d+)?$', geneaprove.views.graph.quilts_view),
+    (r'^merge$',         geneaprove.views.merge.view),
     )
