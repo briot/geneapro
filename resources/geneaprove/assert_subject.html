@@ -1,8 +1,8 @@
-<div class='assertSubject'>
-   <select ng-if='edited' ng-model='sub.$subjectType' ng-options='s.id as s.name for s in validTypes'>
+<div class='assertSubject' ng-class='{edited:assert.$edited}'>
+   <select ng-if='assert.$edited' ng-model='sub.$info' ng-options='s as s.name group by s.group for s in validTypes | orderBy:"name"'>
    </select>
 
-   <div ng-switch='sub.$subjectType' ng-class='{extraindent: edited}'>
+   <div ng-switch='sub.$info.kind'>
       <!-- A person -->
       <span ng-switch-when='1'>
          <span persona-link="sub.person.id" name="sub.person.name"></span>

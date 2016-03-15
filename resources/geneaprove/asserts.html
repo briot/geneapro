@@ -1,0 +1,25 @@
+<div class='clearfix assert'
+     ng-repeat='a in asserts'
+     ng-class='{disproved: a.disproved}'>
+
+   <span class='researchedBy'>
+      researched by {{a.researcher.name}} ({{a.last_change|date}})
+   </span>
+   <span gp-surety='a.surety' style='float:right'></span>
+
+   <div gp-assert-subject='a' subject-num='1'></div>
+   <div gp-assert-subject='a' subject-num='2'></div>
+
+   <span ng-if='a.$edited' class='form-group checkbox'>
+      <label><input type=checkbox ng-model='a.disproved'>Disproved</label>
+   </span>
+
+   <span ng-if='!a.$edited'>{{a.rationale}}</span>
+   <div ng-if='a.$edited'
+        gp-float-label
+        model='a.rationale'
+        size=0
+        lines=5
+        label='Rationale'></div>
+
+</div>

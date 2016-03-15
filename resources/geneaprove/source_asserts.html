@@ -6,29 +6,6 @@
       </div>
    </div>
    <div class='panel-body'>
-      <div ng-repeat='a in asserts' ng-class='{disproved: a.disproved}'
-            class='clearfix' style='margin-bottom: 20px'>
-
-         <span class='researchedBy'>
-            researched by {{a.researcher.name}} ({{a.last_change|date}})
-         </span>
-         <span gp-surety='a.surety' style='float:right'></span>
-
-         <div gp-assert-subject='a.p1' edited='a.$edited' subject-num='1'></div>
-         <div gp-assert-subject='a.p2' edited='a.$edited' subject-num='2'></div>
-
-         <span ng-if='a.$edited'>
-            <input type=checkbox ng-model='a.disproved'>
-            Disproved
-         </span>
-
-         <span ng-if='!a.$edited'>{{a.rationale}}</span>
-         <div ng-if='a.$edited'
-              gp-float-label
-              model='a.rationale'
-              size=12
-              lines=5
-              label='Rationale'></div>
-      </div>
+      <div gp-asserts='asserts'></div>
    </div>
 </div>

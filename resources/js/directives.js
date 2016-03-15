@@ -36,9 +36,12 @@ directive('personaLink', function($state) {
       },
       replace: true,
       template:
-         '<a ui-sref="person({id:personId})" class="fa fa-user gpLink">'
-         +   '{{name||personId}}'
+         '<span>'
+         + '<span ng-if=name style="margin-right:5px" ng-bind-html="name"></span>'
+         + '<a ui-sref="person({id:personId})" class="fa fa-book gpLinkSuper" ng-show="personId">'
+         +   '{{personId}}'
          + '</a>'
+         + '</span>'
    };
 }).
 
