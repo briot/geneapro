@@ -2,7 +2,7 @@ from django.conf import settings
 from django.conf.urls import *
 from django.shortcuts import render_to_response
 from django.core.context_processors import csrf
-import geneaprove.views.pedigree
+from geneaprove.views.pedigree import PedigreeData
 import geneaprove.views.persona
 from geneaprove.views.persona import \
         PersonaList, PersonaView, SuretySchemesList, GlobalSettings
@@ -27,7 +27,7 @@ def index(request):
 urlpatterns = patterns(
     '',
     url(r'^$', index, name='index'),
-    (r'^data/pedigree/(\d+)$', geneaprove.views.pedigree.pedigree_data),
+    (r'^data/pedigree/(?P<id>\d+)$',        PedigreeData.as_view()),
     (r'^data/persona/list$',                PersonaList.as_view()),
     (r'^data/persona/(?P<id>\d+)$',         PersonaView.as_view()),
     (r'^data/places$',         geneaprove.views.places.view_list),

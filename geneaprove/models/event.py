@@ -1,6 +1,7 @@
 from django.db import models
 from .place import Place
 from .base import GeneaProveModel, PartialDateField, Part_Type
+from geneaprove.utils.date import DateRange
 
 
 class Event_Type (Part_Type):
@@ -73,10 +74,12 @@ class Event(GeneaProveModel):
         return self.name + date
 
     def to_json(self):
+        # Convert the date sort to a datetime, so that we can then send either
+        # only the year or the full date to clients
         return {
             "id": self.id,
             "name": self.name,
             "type": self.type,
             "place": self.place,
             "date": self.date,
-            "date_sort": self.date_sort}
+            "date_sort": None if not self.date_sort else DateRange(self.date_sort)}

@@ -7,7 +7,7 @@ import copy
 import django.db.models.query
 from django.conf import settings
 from django.views.generic import View
-from django.http import HttpResponse
+from django.http import HttpResponse, QueryDict
 from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.styles import get_place
@@ -84,7 +84,10 @@ class ModelEncoder(json.JSONEncoder):
             return obj.display(year_only=self.year_only)
 
         elif isinstance(obj, datetime.datetime):
-            return obj.isoformat()
+            if self.year_only:
+                return obj.strftime('%Y')
+            else:
+                return obj.isoformat()
 
         elif isinstance(obj, django.db.models.query.QuerySet):
             return list(obj)
@@ -131,7 +134,7 @@ def to_json(obj, custom=None, year_only=True):
     return ModelEncoder(year_only=year_only, custom=custom).encode(obj)
 
 
-class JSONViewParams(dict):
+class JSONViewParams(QueryDict):
     """
     A structure that encapsulates the HTTP parameters given to a JSONView.
     This replaces the use of request.POST or request.GET, since AngularJS
@@ -143,10 +146,14 @@ class JSONViewParams(dict):
         self['param1']
     The upload files are accessed via::
         self.FILES
+
+    This extends a QueryDict, since django encodes parameters as lists
+    even when they are not lists, and properly return them as simple values
+    later on.
     """
 
     def __init__(self):
-        super(JSONViewParams, self).__init__()
+        super(JSONViewParams, self).__init__('', mutable=True)
 
     def setFiles(self, files):
         self.FILES = files
@@ -164,14 +171,22 @@ class JSONView(View):
         """
         return {}
 
+    def to_json(self, value):
+        """
+        Converts value to json
+        """
+        return to_json(value)
+
+    # internal implementation
+
     def __internal(self, method, params, *args, **kwargs):
         # Always convert an "id" parameter to integer
         if 'id' in kwargs:
             kwargs['id'] = int(kwargs['id'])
 
-        result = to_json(method(params, *args, **kwargs))
-        if settings.DEBUG:
-            print "JSON=", result
+        result = self.to_json(method(params, *args, **kwargs))
+        #if settings.DEBUG:
+        #    print "JSON=", result
         return HttpResponse(result, content_type='application/json')
 
     def get(self, request, *args, **kwargs):

@@ -55,8 +55,10 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
     * Download the pedigree information for that person
     * @param {Number} gens   Number of ancestor generations
     * @param {Number} descendant_gens  Number of descendant generations.
+    * @param {Boolean=} year_only  Whether to send full dates or only
+    *    years.
     */
-   Pedigree.prototype.get = function(gens, descendant_gens) {
+   Pedigree.prototype.get = function(gens, descendant_gens, year_only) {
       var self = this;
 
       // Shortcut when we need fewer generations than already loaded
@@ -76,13 +78,13 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
                 {params: {
                     'gens': gens,
                     'descendant_gens': descendant_gens,
+                    'year_only': year_only
                     //'gens_known': self.loaded_generations || -1,
                     //'desc_known': self.loaded_descendants || -1
                 }}).
       then(function(resp) {
          self.setData_(resp.data);
          q.resolve(self);
-         q.resolve(resp.data);
       }, function() {
          this.loaded_generations = undefined; // will force a full update
          q.reject();
@@ -122,10 +124,13 @@ app.factory('Pedigree', function($http, $q, $rootScope) {
 
    /**
     * Convert an event to a string that can be displayed.
+    * @param {bool=} use_date_sort
+    *    Whether to use the date (i.e. a string as entered by the user,
+    *    not parsable) or the sort_date (i.e. a formatted string)
     */
-   Pedigree.prototype.event_to_string = function(e) {
+   Pedigree.prototype.event_to_string = function(e, use_date_sort) {
       if (e) {
-         var s = e.Date || e.date || '';
+         var s = (use_date_sort ? e.date_sort : e.date) || '';
          //  Show whether the event has a source
          if (s && $rootScope.settings.sourcedEvents) {
             s += (e.sources ? ' \u2713' : ' \u2717');

@@ -1,6 +1,7 @@
 from django.db import models
 from .place import Place
 from .base import GeneaProveModel, PartialDateField, Part_Type
+from geneaprove.utils.date import DateRange
 
 
 class Characteristic_Part_Type(Part_Type):
@@ -41,7 +42,7 @@ class Characteristic(GeneaProveModel):
             "name": self.name,
             "sources": list(self.sources if hasattr(self, 'sources') else []),
             "date": self.date,
-            "date_sort": self.date_sort,
+            "date_sort": None if not self.date_sort else DateRange(self.date_sort),
             "place": self.place}
 
 

@@ -117,9 +117,6 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    See https://plus.google.com/u/0/115195430424417504730/posts/QrXM4z9JxrG
 ** Half and Quarter circle view
    http://www.gramps-project.org/wiki/index.php?title=GEPS_030:_New_Visualization_Techniques
-** Display rotated text (on a path)
-   when HTML5 canvas supports it (it is now part of the standard, but not implemented
-   by browsers yet)
 
 * Person View
 ** Add a rounded box showing the color from highlight_rules.py

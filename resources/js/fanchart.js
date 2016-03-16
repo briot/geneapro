@@ -79,13 +79,103 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
 
          // Generation at which we stop displaying names
          var textThreshold = 8;
+         var spaceBetweenGenerations = 0;
+
+         //  The paths for the sectors (with background colors)
+         var arc = d3.svg.arc()
+            .startAngle(function(d) { return d.minAngle })
+            .endAngle(function(d) { return d.maxAngle })
+            .innerRadius(function(d) { return d.minRadius })
+            .outerRadius(function(d) { return d.maxRadius });
+
+         //  The paths for the names of persons
+         function arcText(d) {
+            // Along an arc
+            if (d.generation < FanchartLayout.genThreshold()) {
+               // minAngle are set such that
+               //                0
+               //   -pi/2                  pi/2
+               //
+               // So we convert it (in m and M) to the usual math notations:
+               //    mathAngle = PI/2 - minAngle
+               // Since the screen is oriented upside-down compared to the
+               // usual math notation, we take the opposite:
+               //    angle = minAngle - PI/2
+
+               var r = (d.minRadius + d.maxRadius) / 2;
+               var m = d.minAngle - PI_HALF;
+               var M = d.maxAngle - PI_HALF;
+               var med = math.standardAngle((m + M) / 2);
+               var sweep = 1;
+               if (set.readableNames && med >= 0 && med <= Math.PI) {
+                  var t = m;
+                  m = M;
+                  M = t;
+                  sweep = 0
+               }
+               return 'M' + r * Math.cos(m) + ' ' + r * Math.sin(m) +
+                  'A' + r + ',' + r +   /* rx ry */
+                  ' 0 0 ' +  // x-axis-rotation large-arc-flag sweep-flag
+                  sweep + ' ' +
+                  r * Math.cos(M) + ' ' + r * Math.sin(M);
+
+            // rotated
+            } else {
+               var a = math.standardAngle((d.minAngle + d.maxAngle) / 2 - PI_HALF);
+               var r = d.minRadius;
+               var R = d.maxRadius;
+               if (set.readableNames && (a < -PI_HALF || a > PI_HALF)) {
+                  r = d.maxRadius;
+                  R = d.minRadius;
+               }
+               var ca = Math.cos(a);
+               var sa = Math.sin(a);
+               return 'M' + r * ca + ' ' + r * sa +
+                      'L' + R * ca + ' ' + R * sa;
+            }
+         }
+
+         //  The paths for the separators between generations
+         var arcSeparator = d3.svg.arc()
+            .startAngle(function(d) { return d.minAngle })
+            .endAngle(function(d) { return d.maxAngle })
+            .innerRadius(function(d) { return d.maxRadius })
+            .outerRadius(function(d) {
+               return d.maxRadius + spaceBetweenGenerations;
+            });
+
+         //  The paths for the marriages
+         function arcMarriage(d) {
+            if (d.generation >= set.gens || d.generation >= textThreshold - 1) {
+               return '';
+            }
+            var r = d.maxRadius + spaceBetweenGenerations / 2;
+            var m = d.minAngle - PI_HALF;
+            var M = d.maxAngle - PI_HALF;
+            var med = math.standardAngle((m + M) / 2);
+            var sweep = 1;
+            if (set.readableNames && med >= 0 && med <= Math.PI) {
+               var t = m;
+               m = M;
+               M = t;
+               sweep = 0;
+               r = r + 2;
+            } else {
+               r = r - 2;
+            }
+            return 'M' + r * Math.cos(m) + ' ' + r * Math.sin(m) +
+               'A' + r + ',' + r +   /* rx ry */
+               ' 0 0 ' +  // x-axis-rotation large-arc-flag sweep-flag
+               sweep + ' ' +
+               r * Math.cos(M) + ' ' + r * Math.sin(M);
+         }
 
          scope.$watch(
             function() { return [scope.decujus, $rootScope.settings]},
             function() {
                $rootScope.cleanupSettings();
                Pedigree.select(scope.decujus);
-               Pedigree.get(set.gens, 1).then(function(data) {
+               Pedigree.get(set.gens, 1, true /* year_only */).then(function(data) {
                   if (set.showMissing) {
                      data.addUnknown(set.gens - 1);
                   } else {
@@ -102,85 +192,20 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
             // ??? Should be set depending on whether the styles set a
             // separatorStyle, but computing the style needs the layout and
             // the layout needs the separator width...
-            var separator =
-               (set.colorScheme == gpd3.colorScheme.QUARTILE) ?
+            spaceBetweenGenerations =
+               (set.colorScheme == gpd3.colorScheme.QUARTILE ||
+                set.showMarriages) ?
                 FanchartLayout.SEPARATOR_WIDTH : 0;
 
-            var layout = FanchartLayout(data, separator);
+            var layout = FanchartLayout(data, spaceBetweenGenerations);
             var styles = gpd3.getStyles(
                   group, layout.nodes, set, data,
                   false /* preserve */,
                   true /* isRadial */);
 
-            group.attr('class', 'fanchart color-' + set.colorScheme)
-               .attr('transform',
-                     'translate(' + layout.centerX + ',' + layout.centerY + ')');
-
-            // The paths for the names
-            var paths = group.append('defs')
-               .selectAll('path')
-               .data(layout.nodes.filter(function(d) {
-                    return d.generation < FanchartLayout.genThreshold()}));
-            paths.exit().remove();
-            paths.enter()
-               .append('path')
-               .attr('id', function(d) {return 'text' + d.id});
-            paths
-               .transition()
-               .attr('d', function(d) {
-                  var r = (d.minRadius + d.maxRadius) / 2;
-                  var m = d.minAngle - PI_HALF;
-                  var M = d.maxAngle - PI_HALF;
-                  var sweep = 1;
-                  if (set.readableNames && m >= 0 && m <= Math.PI) {
-                     var t = m;
-                     m = M;
-                     M = t;
-                     sweep = 0
-                  }
-                  return 'M' + r * Math.cos(m) + ' ' + r * Math.sin(m) +
-                     'A' + r + ',' + r +   /* rx ry */
-                     ' 0 0 ' +  // x-axis-rotation large-arc-flag sweep-flag
-                     sweep + ' ' +
-                     r * Math.cos(M) + ' ' + r * Math.sin(M);
-               });
-
-            var persons = group
-               .selectAll('g.person')
-               .data(layout.nodes, function(d) { return d.id });
-            persons.exit().remove();
-            persons.enter()
-               .append('g')
-               .attr('class', 'person')
-               .on('contextmenu', contextmenu)
-               .append('path');
-
-            persons.selectAll('text').remove();
-
-            var arc = d3.svg.arc()
-               .startAngle(function(d) { return d.minAngle })
-               .endAngle(function(d) { return d.maxAngle })
-               .innerRadius(function(d) { return d.minRadius })
-               .outerRadius(function(d) { return d.maxRadius });
-            persons.selectAll('path')
-               .attr('stroke', styles.strokeStyle)  // immediate
-               .attr('fill', styles.fillStyle)      // immediate
-               .transition()
-               .duration(800)
-               .attr('d', arc);
-            if (separator && styles.separatorStyle) {
-               var arc2 = d3.svg.arc()
-                  .startAngle(function(d) { return d.minAngle })
-                  .endAngle(function(d) { return d.maxAngle })
-                  .innerRadius(function(d) { return d.maxRadius })
-                  .outerRadius(function(d) {
-                     return d.maxRadius + separator;
-                  });
-               persons.append('path')
-                  .attr('stroke', '#ccc')
-                  .attr('fill', styles.separatorStyle)
-                  .attr('d', arc2);
-            }
+            group.attr({
+               class: 'fanchart color-' + set.colorScheme,
+               transform: 'translate(' + layout.centerX + ',' + layout.centerY + ')'});
 
             // Handling of contextual menu
             function contextmenu(d) {
@@ -192,94 +217,112 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
                       render: render});  // function to redraw
             }
 
-            function drawText(txt) {
-               txt
-                  // ??? Works in Firefox, but not in Chrome or Safari
-                  .attr('text-anchor', 'middle')
-                  .text(function(d) { return d.surn})
+            // Add new groups for the persons
 
-                  .filter(function(d) { return d.generation <= 6 })
+            var persons = group
+               .selectAll('g.person')
+               .data(layout.nodes, function(d) { return d.id });
+            persons.exit().remove();
+            var persons_enter_g = persons.enter()
+               .append('g')
+               .attr('class', 'person')
+               .on('contextmenu', contextmenu);
 
+            //  Draw the background for persons
+
+            persons_enter_g  // enter
+               .append('path')
+               .attr('class', 'background');
+            persons         // enter+update
+               .selectAll('path.background')
+               .attr({
+                  stroke: styles.strokeStyle,
+                  fill:   styles.fillStyle})
+               .transition()
+                  .duration(800)
+                  .attr('d', arc);
+
+            //  Draw the names for persons
+            //  We must add a new text/textPath/tspan for each element if we
+            //  want them all to be horizontally centered, since setting a 'x'
+            //  property on a <tspan> makes it ignore its 'text-anchor'
+
+            function setText(selection, dy, className, text) {
+               selection
+                  .append('text')
+                  .append('textPath')
+                  .attr({
+                     'startOffset': '50%',
+                     'text-anchor': 'middle',
+                     'xlink:href': function(d) { return '#text' + d.id}})
                   .append('tspan')
-                  .attr('class', 'name')
-                  .attr('dy', '1em')
-                  .attr('x', 0)
-                  .text(function(d) { return d.givn })
-
-                  .append('tspan')
-                  .attr('class', 'details')
-                  .attr('dy', '1em')
-                  .attr('x', 0)
-                  .text(function(d) {
-                     var birth = data.event_to_string(d.birth);
-                     var death = data.event_to_string(d.death);
-                     return (birth || '') + ' - ' + (death || '')});
+                  .attr({dy: dy, 'class': className})
+                  .text(text);
             }
 
-            // text along curve for generations < genThreshold
-            drawText(persons
-               .filter(function(d) { return d.generation < FanchartLayout.genThreshold()})
-               .append('text')
-               .attr('class', 'name')
-               .append('textPath')
-               .attr('startOffset', '50%')
-               .attr('xlink:href', function(d) { return '#text' + d.id}));
+            var p = persons_enter_g
+               .filter(function(d) { return d.generation < textThreshold})
+            p.append('path')   // subset of enter
+               .attr({
+                  class: 'name',
+                  fill: 'none',
+                  id: function(d) { return 'text' + d.id}});
+            persons.selectAll('path.name')   // enter+update
+               .transition()
+               .duration(800)
+               .attr('d', arcText);
+            setText(p, '-0.5em', 'name', function(d) { return d.surn });
+            setText(p, '0.5em', 'name', function(d) { return d.givn});
+            setText(p, '1.5em', 'details', null);
 
-            // Rotated text for middle generations
-            drawText(persons
-               .filter(function(d) { return d.generation >= FanchartLayout.genThreshold() &&
-                                            d.generation < textThreshold})
-               .append('text')
-               .attr('transform',
-                  function(d) {
-                     var c = arc.centroid(d);
-                     var a = (d.minAngle + d.maxAngle) * 90 / Math.PI - 90;
-                     if (set.readableNames && (a < -90 || a > 90)) {
-                        a -= 180;
+            // Always update events text to show the source info (or not)
+            persons.selectAll('tspan.details')  // enter+update
+               .text(function(d) {
+                       var birth = data.event_to_string(d.birth, true /* use_date_sort */);
+                       var death = data.event_to_string(d.death, true /* use_date_sort */);
+                       return (birth || '') + ' - ' + (death || '')});
 
-                     }
-                     return 'rotate(' + a + ',' + c + ')translate(' + c + ')';
-                  }));
+            // The space between generations might be displays specially in
+            // some cases (as a gradient in the Quartile case, for instance)
+
+            persons.selectAll('path.separator').remove();
+            if (spaceBetweenGenerations && styles.separatorStyle) {
+               persons.append('path')
+                  .attr({
+                     class: 'separator',
+                     stroke: '#ccc',
+                     fill: styles.separatorStyle,
+                     d: arcSeparator});
+            }
 
             // Show the marriages
-            if (set.showMarriages) {
-               group.append('defs')
-                  .selectAll('path')
-                  .data(layout.nodes.filter(function(d) {
-                       return d.generation < textThreshold - 1;
-                  }))
-                  .enter()
-                  .append('path')
-                  .attr('id', function(d) {return 'textMarriage' + d.id})
-                  .attr('d', function(d) {
-                     var r = d.maxRadius - 2;
-                     var m = d.minAngle - PI_HALF;
-                     var M = d.maxAngle - PI_HALF;
-                     var sweep = 1;
-                     if (set.readableNames && m >= 0 && m <= Math.PI) {
-                        var t = m;
-                        m = M;
-                        M = t;
-                        sweep = 0
-                     }
-                     return 'M' + r * Math.cos(m) + ' ' + r * Math.sin(m) +
-                        'A' + r + ',' + r +   /* rx ry */
-                        ' 0 0 ' +  // x-axis-rotation large-arc-flag sweep-flag
-                        sweep + ' ' +
-                        r * Math.cos(M) + ' ' + r * Math.sin(M);
-                  });
 
-               persons
+            if (set.showMarriages) {
+               persons_enter_g  // enter
+                  .filter(function(d) { return d.generation < textThreshold - 1})
+                  .append('path')
+                  .attr({
+                     class: 'marriagePath',
+                     fill: 'none',
+                     id: function(d) {return 'textMarriage' + d.id}});
+
+               persons.selectAll('path.marriagePath')  // enter + update
+                  .transition()
+                  .duration(800)
+                  .attr('d', arcMarriage)
+
+               persons_enter_g  // enter
                   .filter(function(d) {
                      return d.generation < set.gens && d.generation < textThreshold - 1
                   })
                   .append('text')
                   .attr('class', 'marriage')
                   .append('textPath')
-                  .attr('startOffset', '50%')
-                  .attr('text-anchor', 'middle')
-                  .text(function(d) { return data.event_to_string(d.marriage)})
-                  .attr('xlink:href', function(d) { return '#textMarriage' + d.id});
+                  .attr({
+                     startOffset: '50%',
+                     'text-anchor': 'middle',
+                     'xlink:href': function(d) { return '#textMarriage' + d.id}})
+                  .text(function(d) { return data.event_to_string(d.marriage)});
             }
 
             // Show the children
@@ -458,7 +501,7 @@ factory('FanchartLayout', function($rootScope) {
 
       var height = maxY - minY;
 
-      // The space there should be below centerYx so that the fanchart
+      // The space there should be below centerY so that the fanchart
       // does not hide the decujus box partially.
 
       var angle = PI_TWO - (maxAngle - minAngle);
