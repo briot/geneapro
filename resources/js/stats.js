@@ -22,18 +22,18 @@ controller('statsCtrl', function($scope, $http, $stateParams, $rootScope, $windo
    function generations() {
       // Our data is a 2D array of the form:
       //   [ [ gen_number, min_date, max_date, legend], ...]
-      var div = angular.element($window.document.getElementById('generations'));
-      var width = div[0].clientWidth;
-      var height = div[0].clientHeight;
-      var margin = 30;
+      const div = angular.element($window.document.getElementById('generations'));
+      const width = div[0].clientWidth;
+      const height = div[0].clientHeight;
+      const margin = 30;
 
-      var svg = d3.select(div[0]).append('svg');
+      const svg = d3.select(div[0]).append('svg');
 
-      var x = d3.scale.linear()
+      const x = d3.scale.linear()
          .domain([d3.min($scope.data.ranges, function(d) { return d[1] }),
                   d3.max($scope.data.ranges, function(d) { return d[2] })])
          .range([margin, width]);
-      var y = d3.scale.linear()
+      const y = d3.scale.linear()
          .domain([1, $scope.data.ranges.length + 1])
          .range([height - margin, 0]);
 
@@ -65,7 +65,7 @@ controller('statsCtrl', function($scope, $http, $stateParams, $rootScope, $windo
          .attr("transform", 'translate(' + margin + ',0)')
          .call(make_y_axis());
 
-      var rect = svg.selectAll("rect")
+      const rect = svg.selectAll("rect")
             .data($scope.data.ranges)
             .enter().append("rect")
             .attr('fill', function(d) { return $scope.colors(d[0])})
@@ -77,7 +77,7 @@ controller('statsCtrl', function($scope, $http, $stateParams, $rootScope, $windo
    }
 
    function lifespan() {
-      var div = angular.element($window.document.getElementById('lifespan'));
+      const div = angular.element($window.document.getElementById('lifespan'));
 
       // Our ages data is a 2D array, of the form:
       //    [  [age1, males1, females1, unknown1],
@@ -86,7 +86,7 @@ controller('statsCtrl', function($scope, $http, $stateParams, $rootScope, $windo
       //    [  [{x:0, y:males1},   {x:1, y:males2}],
       //       [{x:0, y:females1}, {x:1, y:females2}], ... ]
 
-      var remapped = ['males', 'females', 'unknown'].map(function(sex, sex_i) {
+      const remapped = ['males', 'females', 'unknown'].map(function(sex, sex_i) {
          return $scope.data.ages.map(function(forsex, column) {
             return {x: $scope.data.ages[column][0] /* the age */,
                     y: forsex[sex_i + 1]   /* count for this age/sex */,
@@ -95,24 +95,24 @@ controller('statsCtrl', function($scope, $http, $stateParams, $rootScope, $windo
          });
       });
 
-      var stacked = d3.layout.stack()(remapped);
-      var width = div[0].clientWidth;
-      var height = div[0].clientHeight;
-      var margin = 30;
-      var x = d3.scale.ordinal()
+      const stacked = d3.layout.stack()(remapped);
+      const width = div[0].clientWidth;
+      const height = div[0].clientHeight;
+      const margin = 30;
+      const x = d3.scale.ordinal()
          .domain($scope.data.ages.map(function (d) {return d[0]; }))
          .rangePoints([margin, width]);
-      var y = d3.scale.linear()
+      const y = d3.scale.linear()
          .domain([0,
                   d3.max(remapped, function(d) {
                      return d3.max(d, function(d) { return d.y0 + d.y });
                   })])
          .range([height - margin, 0]);
 
-      var colors = d3.scale.category10();
+      const colors = d3.scale.category10();
 
       // Create the svg and toplevel group
-      var svg = d3.select(div[0]).append('svg');
+      const svg = d3.select(div[0]).append('svg');
 
       function make_x_axis() {
          return d3.svg.axis().scale(x).orient("bottom");
@@ -143,7 +143,7 @@ controller('statsCtrl', function($scope, $http, $stateParams, $rootScope, $windo
          .call(make_y_axis());
 
       // Add a group for each layer
-      var groups = svg.selectAll("g.layer")
+      const groups = svg.selectAll("g.layer")
          .data(stacked)
          .enter()
          .append("g")
@@ -152,7 +152,7 @@ controller('statsCtrl', function($scope, $http, $stateParams, $rootScope, $windo
          .style("stroke", function(d, i) { return d3.rgb(colors(i)).darker(); });
 
       // Add a rect for each date.
-      var rect = groups.selectAll("rect")
+      const rect = groups.selectAll("rect")
             .data(function(d) { return d})
             .enter().append("rect")
             .attr('title', function(d) {

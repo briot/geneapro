@@ -59,6 +59,10 @@ gulp.task('js', function() {
       // Now add all other javascripts and minify them all
       .pipe($.addSrc.prepend(resources.js))
       .pipe($.cached('all_scripts'))
+         .pipe($.babel({presets: 'es2015'})
+               .on("error", $.notify.onError(function(error) {
+                  return error.message;
+               })))
          .pipe($.ngAnnotate()
                .on("error", $.notify.onError(function(error) {
                   return error.message;

@@ -39,7 +39,7 @@ controller('pedigreeCtrl', function($scope,  Pedigree, $state, $stateParams, con
       $scope.$apply();  // update contents of the contextual menu
    });
    $scope.focusPerson = function() {
-      var id = contextMenu.data.d.id;  // capture since menu will be destroyed
+      const id = contextMenu.data.d.id;  // capture since menu will be destroyed
       $location.search('id', id);
    };
    $scope.showPerson = function() {
@@ -54,7 +54,7 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
          decujus: '=gpPedigree'
       },
       link: function(scope, element) {
-         var set = $rootScope.settings.pedigree;
+         const set = $rootScope.settings.pedigree;
 
          // Watch the settings (in case we want to draw differently) and the
          // decujus (in case we want to display a different person).
@@ -69,8 +69,8 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
             },
             true);
 
-         var drawTexts = function() {};
-         var group = gpd3.svg(
+         let drawTexts = function() {};
+         const group = gpd3.svg(
             element,
             function(currentScale) {  // onzoom
                // Use a maximal size for text, after which we start
@@ -99,17 +99,17 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
             }
 
             group.attr('class', 'pedigree color-' + set.colorScheme);
-            var layout = PedigreeLayout(data);
-            var styles = gpd3.getStyles(group, layout.nodes, set, data);
+            const layout = PedigreeLayout(data);
+            const styles = gpd3.getStyles(group, layout.nodes, set, data);
 
             gpd3.setViewBox(element, layout);
 
-            var durationForExit = 200;  // duration for exit() animation
+            const durationForExit = 200;  // duration for exit() animation
 
             // Draw the lines
-            var drawLinks = gpd3.linksDraw(set.linkStyle).linky(linkY_);
-            var links = group.selectAll('path.link')
-               .data(layout.links, function(d) { return d ? d[0].id + '-' + d[1].id : ''});
+            const drawLinks = gpd3.linksDraw(set.linkStyle).linky(linkY_);
+            const links = group.selectAll('path.link')
+               .data(layout.links, d => d ? d[0].id + '-' + d[1].id : '');
             links.exit()
                .transition()
                .duration(durationForExit)
@@ -125,8 +125,8 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
                .attr('d', drawLinks);
 
             if (set.colorScheme == gpd3.colorScheme.WHITE) {
-               var selflines = '';
-               angular.forEach(layout.nodes, function(node) {
+               let selflines = '';
+               angular.forEach(layout.nodes, node => {
                   selflines += 'M' + node.x + ' ' + linkY_(node) +
                                'h' + node.w;
                });
@@ -138,16 +138,16 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
             }
 
             // Create the box for each person
-            var persons = group
+            const persons = group
                .selectAll('g.person')
-               .data(layout.nodes, function(d) { return d.id});
-            var decujusbox = data.main;
+               .data(layout.nodes, d => d.id);
+            const decujusbox = data.main;
             persons.exit()
                .transition()
                .duration(durationForExit)
                .style('opacity', 0)
                .remove(); // remove no-longer needed boxes
-            var enter_g = persons.enter()          // add new boxes at correct position
+            const enter_g = persons.enter()          // add new boxes at correct position
                .append('g')
                .attr('class', 'person')
                .attr('transform', 'translate(' + decujusbox.x + ',' + decujusbox.y + ')')
@@ -158,7 +158,7 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
                .attr('rx', '6px')  // rounded rectangle
                .attr('ry', '6px');
             enter_g.append('clipPath')
-               .attr('id', function(d) { return 'clip' + d.id})
+               .attr('id', d => 'clip' + d.id)
                .append('rect')
                .attr('rx', '6px')  // rounded rectangle
                .attr('ry', '6px');
@@ -170,13 +170,12 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
             persons
                .transition()
                .delay(durationForExit)
-               .attr('transform',
-                   function(d) {return 'translate(' + d.x + ',' + d.y + ')'});
+               .attr('transform', d => 'translate(' + d.x + ',' + d.y + ')');
             persons.selectAll('rect')  // including clipPath>rect
                .transition()
                .delay(durationForExit)
-               .attr('width', function(d) {return d.w})
-               .attr('height', function(d) {return d.h});
+               .attr('width', d => d.w)
+               .attr('height', d => d.h);
 
             drawTexts = function(currentScale) {
                // Prepare the lines of text for each person, depending on the size
@@ -186,37 +185,37 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
 
                persons.selectAll('text').remove();
 
-               angular.forEach(layout.nodes, function(node) {
-                  var p = node;
+               angular.forEach(layout.nodes, node => {
+                  const p = node;
                   node.text = [];
                   node.absFontSize = Math.min(node.fs, 20 / currentScale);
-                  var linesCount = Math.floor(node.h / node.absFontSize);
+                  const linesCount = Math.floor(node.h / node.absFontSize);
                   if (linesCount < 1) {
                      return;
                   }
 
                   node.text.push(data.displayName(p));
 
-                  var birth = data.event_to_string(p.birth);
-                  var death = data.event_to_string(p.death);
+                  const birth = data.event_to_string(p.birth);
+                  const death = data.event_to_string(p.death);
 
                   if (!set.showDetails || linesCount < 4) {
                      node.text.push(birth + ' - ' + death);
                   } else {
                      if (birth) {
-                        var place = p.birth ? p.birth.place : '';
+                        const place = p.birth ? p.birth.place : '';
                         node.text.push('b: ' + birth + (place ? ' - ' + place : ''));
                      }
                      if (death) {
-                        var place = p.death ? p.death.place : '';
+                        const place = p.death ? p.death.place : '';
                         node.text.push('d: ' + death + (place ? ' - ' + place : ''));
                      }
                      if (node.text.length <= linesCount) {
-                        var d = data.getDetails(p);
+                        const d = data.getDetails(p);
                         if (d) {
                            d.then(group.applyScale);
                         } else {
-                           angular.forEach(p.details, function(d) {
+                           angular.forEach(p.details, d => {
                               if (node.text.length < linesCount) {
                                  node.text.push(d);
                               }
@@ -227,29 +226,28 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
                });
 
                // Draw the text
-               var tspan = persons.append('text')
-                  .attr('clip-path', function(d) { return 'url(#clip' + d.id + ')'})
-                  .attr('font-size', function(d) { return d.absFontSize; })
+               const tspan = persons.append('text')
+                  .attr('clip-path', d => 'url(#clip' + d.id + ')')
+                  .attr('font-size', d => d.absFontSize)
                   .attr('fill', styles.textStyle)
                   .selectAll('tspan')
-                  .data(function(d) {return d.text})
+                  .data(d => d.text)
                   .enter()
                   .append('tspan')
-                  .attr('class', function(d, i) {return i == 0 ? 'name' : 'details'})
-                  .attr('font-size', function(d, i) { return i == 0 ? '1em' : '0.8em'})
+                  .attr('class', (d, i) => i == 0 ? 'name' : 'details')
+                  .attr('font-size', (d, i) => i == 0 ? '1em' : '0.8em')
                   .attr('x', 5)
-                  .text(function(line) { return line });
+                  .text(line => line);
                if (set.colorScheme == gpd3.colorScheme.WHITE) {
-                  tspan.attr('dy', function(d, i) {
-                     return i == 0 ? '0.8em' : i == 1 ? '1.2em' : '1em'});
+                  tspan.attr('dy', (d, i) => i == 0 ? '0.8em' : i == 1 ? '1.2em' : '1em');
                } else {
-                  tspan.attr('dy', function(d, i) { return i == 1 ? '1.2em' : '1em'});
+                  tspan.attr('dy', (d, i) => i == 1 ? '1.2em' : '1em');
                }
 
                // The marriage date for the parents
                if (set.showMarriages) {
-                  var m = group.selectAll('text.marriage')
-                     .data(layout.nodes, function(d) {return d.id});
+                  const m = group.selectAll('text.marriage')
+                     .data(layout.nodes, d => d.id);
                   m.exit().remove();
                   m.enter().append('text')
                      .attr('class', 'marriage')
@@ -257,9 +255,9 @@ directive('gpPedigree', function(Pedigree, PedigreeLayout, $rootScope, gpd3, $lo
                   m.text(function(d) {return data.event_to_string(d.marriage)})
                      .transition()
                      .delay(durationForExit)
-                     .attr('font-size', function(d) { return d.parentsMarriageFS; })
-                     .attr('x', function(d) { return d.parentsMarriageX})
-                     .attr('y', function(d) { return linkY_(d)});
+                     .attr('font-size', d => d.parentsMarriageFS)
+                     .attr('x', d => d.parentsMarriageX)
+                     .attr('y', d => linkY_(d));
                } else {
                   group.selectAll('text.marriage').remove();
                }
@@ -296,33 +294,33 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
     */
 
    return function(data) {
-      var settings = $rootScope.settings.pedigree;
-      var nodes = [];  // list of node information
-      var same = settings.sameSize;
+      const settings = $rootScope.settings.pedigree;
+      let nodes = [];  // list of node information
+      const same = settings.sameSize;
 
       // Size ratio from generation n to n+1, until maxGenForRatio
-      var ratio = (same ? 1.0 : 0.75);
+      const ratio = (same ? 1.0 : 0.75);
 
       // Width ratio from generation n to n+1, until maxGenForRatio
-      var wratio = ratio;
+      const wratio = ratio;
 
       // size of the boxes at generation 1
-      var boxWidth = (same ? 200 : 300);
-      var boxHeight = 60;
+      const boxWidth = (same ? 200 : 300);
+      const boxHeight = 60;
 
       // Maximum fontSize (in pixels). After this, we start displaying more
       // information, rather than increase the font size
-      var maxFontSize = 20;
+      const maxFontSize = 20;
 
       // Actual height of a line of text at generation 1
-      var textHeight = 20;
+      const textHeight = 20;
 
       // Maximum generation for which we apply ratios. Later generations will
       // all have the same size.
       // Keep reducing until we reach 10% of the original size
-      var maxGenForRatio = (same ? 0 : Math.log(0.1) / Math.log(ratio));
+      const maxGenForRatio = (same ? 0 : Math.log(0.1) / Math.log(ratio));
 
-      var addedToNodes = {}; // which items were added to the nodes array
+      const addedToNodes = {}; // which items were added to the nodes array
 
       /** Store display info for a person
        * @param {Person} indiv  The person.
@@ -331,7 +329,7 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
        */
       function setupIndivBox(indiv, y, h) {
          if (indiv) {
-            var g = Math.abs(indiv.generation);
+            const g = Math.abs(indiv.generation);
             h = h || heights[g];
 
             if (!addedToNodes[indiv.id]) {
@@ -351,21 +349,21 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
          }
       }
 
-      var left = [];    //  left coordinate for each generation
-      var heights = []; //  box height for each generation
-      var widths = [];  //  box width for each generation
-      var fs = [];      //  fontSize for each generation
+      let left = [];    //  left coordinate for each generation
+      let heights = []; //  box height for each generation
+      let widths = [];  //  box width for each generation
+      let fs = [];      //  fontSize for each generation
 
       // Compute sizes for each generation
       heights[0] = heights[-1] = boxHeight;
       fs[0] = fs[-1] = textHeight * ratio;
       widths[0] = widths[-1] = boxWidth;
 
-      var padding = settings.horizPadding;
-      var paddings = [];
+      let padding = settings.horizPadding;
+      let paddings = [];
       paddings[0] = padding;
-      var maxgen = Math.max(settings.gens, settings.descendant_gens);
-      for (var gen = 1; gen <= maxgen + 1; gen++) {
+      const maxgen = Math.max(settings.gens, settings.descendant_gens);
+      for (let gen = 1; gen <= maxgen + 1; gen++) {
          if (gen <= maxGenForRatio) {
             heights[gen] = heights[gen - 1] * ratio;
             widths[gen] = widths[gen - 1] * wratio;
@@ -386,24 +384,25 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
       // X coordinates are computed once we know the sizes. Left-most
       // coordinate is always 0
       left[-settings.descendant_gens] = 0;
-      for (var gen = -settings.descendant_gens + 1;
+      for (let gen = -settings.descendant_gens + 1;
                gen <= settings.gens + 1; gen++)
       {
          left[gen] = left[gen - 1] +
             widths[Math.abs(gen - 1)] + paddings[Math.abs(gen)];
       }
 
-      var minX = left[0];
-      var minY = 0;
-      var maxY = 0;
+      let minX = left[0];
+      let minY = 0;
+      let maxY = 0;
 
       switch (settings.layoutScheme) {
       case gpd3.layoutScheme.EXPANDED:
          function doLayoutExpand(gen, p) {
+            let y;
             if (gen < settings.gens && p.parents) {
-               var fy = doLayoutExpand(gen + 1, p.parents[0]);
-               var my = doLayoutExpand(gen + 1, p.parents[1]);
-               var y = (fy + my + heights[gen + 1] - heights[gen]) / 2;
+               const fy = doLayoutExpand(gen + 1, p.parents[0]);
+               const my = doLayoutExpand(gen + 1, p.parents[1]);
+               y = (fy + my + heights[gen + 1] - heights[gen]) / 2;
             } else {
                y = maxY + settings.vertPadding;
             }
@@ -421,10 +420,12 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
          // persons with no ancestors.
 
          function doLayoutCompact(indiv) {
-            var gen = indiv.generation;
+            const gen = indiv.generation;
+            let father, mother, y;
+
             if (gen < settings.gens) {
-               var father = indiv.parents[0];
-               var mother = indiv.parents[1];
+               father = indiv.parents[0];
+               mother = indiv.parents[1];
             } else {
                father = mother = undefined;
             }
@@ -432,25 +433,25 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
                doLayoutCompact(father);
                doLayoutCompact(mother);
                // center the box on its parents
-               var y = (father.y + mother.y + heights[gen + 1] -
+               y = (father.y + mother.y + heights[gen + 1] -
                   heights[gen]) / 2;
-               var h =
+               const h =
                   (settings.colorScheme == gpd3.colorScheme.WHITE) ?
                   mother.y + heights[gen + 1] - y : undefined;
                setupIndivBox(indiv, y, h);
 
             } else if (father || mother) {
                // center on the existing parent
-               var p = (father || mother);
+               const p = (father || mother);
                doLayoutCompact(p);
-               var y = p.y + (heights[gen + 1] - heights[gen]) / 2;
-               var h =
+               y = p.y + (heights[gen + 1] - heights[gen]) / 2;
+               const h =
                    (settings.colorScheme == gpd3.colorScheme.WHITE) ?
                    p.y + heights[gen + 1] - y : undefined;
                setupIndivBox(indiv, y, h);
 
             } else {
-               var y = maxY + settings.vertPadding;
+               y = maxY + settings.vertPadding;
                setupIndivBox(indiv, y, heights[gen]);
             }
             maxY = Math.max(maxY, y + indiv.h);
@@ -463,21 +464,20 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
       // can't know the theoritical number of children.
 
       function doLayoutChildren(indiv) {
-         var gen = Math.abs(indiv.generation);
-
-         if (gen < settings.descendant_gens) {
-            var nextGen = indiv.children || [];
-         } else {
-            nextGen = [];
-         }
+         const gen = Math.abs(indiv.generation);
+         const nextGen = (
+            gen < settings.descendant_gens
+            ? indiv.children || []
+            : []);
+         let y;
 
          if (nextGen.length == 0) {
-            var y = maxChildY + settings.vertPadding;
+            y = maxChildY + settings.vertPadding;
             setupIndivBox(indiv, y, heights[gen]);
          } else {
-            var first = undefined;
-            var last = undefined;
-            for (var n = 0; n < nextGen.length; n++) {
+            let first = undefined;
+            let last = undefined;
+            for (let n = 0; n < nextGen.length; n++) {
                if (nextGen[n]) {
                   doLayoutChildren(nextGen[n]);
                   if (first === undefined) {
@@ -487,12 +487,12 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
                }
             }
             // Center the box on the next gen's boxes
-            var y = (nextGen[first].y +
+            y = (nextGen[first].y +
                      nextGen[last].y + nextGen[last].h -
                      heights[gen]) / 2;
 
             // In some modes, we leave as much height as possible to the box
-            var h = (settings.colorScheme == gpd3.colorScheme.WHITE) ?
+            const h = (settings.colorScheme == gpd3.colorScheme.WHITE) ?
                nextGen[last].y + nextGen[last].h - y : undefined;
             setupIndivBox(indiv, y, h);
          }
@@ -502,21 +502,21 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
 
       // We'll need to adjust the offsets so that the coordinates of decujus
       // computed after parent and children layouts match
-      var yAfterParent = data.main.y;
-      var maxChildY = 0;
+      const yAfterParent = data.main.y;
+      let maxChildY = 0;
       doLayoutChildren(data.main);
 
       // Apply the offset (to the children, since in general we will have more
       // ancestors displayed). At this point, we know the parents extend from
       // minY..maxY, so we adjust minY and maxY as needed
-      var offset = yAfterParent - data.main.y;
+      const offset = yAfterParent - data.main.y;
       function doOffsetChildren(indiv) {
          indiv.y += offset;
          minY = Math.min(minY, indiv.y);
          maxY = Math.max(maxY, indiv.y + indiv.h);
          if (Math.abs(indiv.generation) < settings.descendant_gens) {
-            var children = indiv.children || [];
-            for (var n = 0; n < children.length; n++) {
+            const children = indiv.children || [];
+            for (let n = 0; n < children.length; n++) {
                if (children[n]) {
                   doOffsetChildren(children[n]);
                }
@@ -526,16 +526,16 @@ factory('PedigreeLayout', function($rootScope, gpd3) {
       doOffsetChildren(data.main);
 
       // Compute the links
-      var links = [];
-      angular.forEach(nodes, function(node) {
+      let links = [];
+      angular.forEach(nodes, node => {
          if (node.sosa <= 0) {
             links.push([node, node.parent_]);
          } if (node.generation < settings.gens && node.parents) {
-            var father = node.parents[0];
+            const father = node.parents[0];
             if (father) {
                links.push([node, father]);
             }
-            var mother = node.parents[1];
+            const mother = node.parents[1];
             if (mother) {
                links.push([node, mother]);
             }

@@ -9,14 +9,13 @@ app.directive('gpSlider', function($document) {
          max: '@'
       },
       link: function(scope, element) {
-         var a = element.find('a');
-         var min = parseFloat(scope.min);
-         var range = parseFloat(scope.max) - min;
+         const a = element.find('a');
+         const min = parseFloat(scope.min);
+         const range = parseFloat(scope.max) - min;
          scope.val = scope.ngModel;
 
-         function update(val, notify) {
-            val = val || scope.min;
-            var r = (val - scope.min) / (range) * 100;
+         function update(val=scope.min, notify=null) {
+            const r = (val - scope.min) / (range) * 100;
             a.css('left', r + '%');
             if (notify) {  // val != scope.val) {
                scope.val = Math.floor(val);
@@ -26,8 +25,8 @@ app.directive('gpSlider', function($document) {
          update(scope.ngModel, false);
 
          element.bind('click', function(event) {
-            var r = element[0].getBoundingClientRect();
-            var ratio = (event.clientX - r.left) / r.width;
+            const r = element[0].getBoundingClientRect();
+            let ratio = (event.clientX - r.left) / r.width;
             ratio = Math.max(Math.min(ratio, 1), 0);
             scope.ngModel = Math.floor(min + ratio * range);
             update(scope.ngModel, true /* notify */);
@@ -38,8 +37,8 @@ app.directive('gpSlider', function($document) {
             event.preventDefault();
             a.addClass('active');
             $document.bind('mousemove', function(event) {
-               var r = element[0].getBoundingClientRect();
-               var ratio = (event.clientX - r.left) / r.width;
+               const r = element[0].getBoundingClientRect();
+               let ratio = (event.clientX - r.left) / r.width;
                ratio = Math.max(Math.min(ratio, 1), 0);
                update(min + ratio * range, true /* notify */);
             });

@@ -4,8 +4,8 @@ app.
 directive('gpUploadTarget', function($http) {
    // Code from https://css-tricks.com/drag-and-drop-file-uploading/
 
-   var div = document.createElement('div');
-   var hasDnd = (('draggable' in div) ||
+   const div = document.createElement('div');
+   const hasDnd = (('draggable' in div) ||
                   ('ondragstart' in div && 'ondrop' in div)) &&
                  'FormData' in window &&
                  'FileReader' in window;
@@ -68,7 +68,7 @@ directive('gpUploadTarget', function($http) {
                }
                scope.isUploading = true;
 
-               var ajaxData = new FormData(element[0]);
+               const ajaxData = new FormData(element[0]);
                angular.forEach(scope.files, function(f) {
                   ajaxData.append('file', f);
                });

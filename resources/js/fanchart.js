@@ -1,5 +1,5 @@
-var PI_HALF = Math.PI / 2;
-var PI_TWO = Math.PI * 2;
+const PI_HALF = Math.PI / 2;
+const PI_TWO = Math.PI * 2;
 
 app.
 config(function($stateProvider) {
@@ -31,8 +31,8 @@ controller('fanchartCtrl', function($scope, Pedigree, $location, $stateParams, $
       $scope.$apply();
    });
    $scope.expandPerson = function() {
-      var mdata = contextMenu.data;
-      var d = mdata.d;
+      const mdata = contextMenu.data;
+      const d = mdata.d;
       if (!d.$expand) {
          // the partner (wife/husband) cannot also be expanded
          function _reset(p) {
@@ -53,8 +53,8 @@ controller('fanchartCtrl', function($scope, Pedigree, $location, $stateParams, $
       mdata.render(mdata.data);  // redo the drawing
    };
    $scope.focusPerson = function() {
-      var mdata = contextMenu.data;
-      var id = mdata.d.id;  // capture since menu will be destroyed
+      const mdata = contextMenu.data;
+      const id = mdata.d.id;  // capture since menu will be destroyed
       d3.select(mdata.element).transition()
          .attr('transform', 'scale(1.5)')
          .each('end', function() {
@@ -74,19 +74,19 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
          decujus: '=gpFanchart',
       },
       link: function(scope, element) {
-         var set = $rootScope.settings.fanchart;
-         var group = gpd3.svg(element).append('g');
+         const set = $rootScope.settings.fanchart;
+         const group = gpd3.svg(element).append('g');
 
          // Generation at which we stop displaying names
-         var textThreshold = 8;
-         var spaceBetweenGenerations = 0;
+         const textThreshold = 8;
+         let spaceBetweenGenerations = 0;
 
          //  The paths for the sectors (with background colors)
-         var arc = d3.svg.arc()
-            .startAngle(function(d) { return d.minAngle })
-            .endAngle(function(d) { return d.maxAngle })
-            .innerRadius(function(d) { return d.minRadius })
-            .outerRadius(function(d) { return d.maxRadius });
+         const arc = d3.svg.arc()
+            .startAngle(d => d.minAngle)
+            .endAngle(d => d.maxAngle)
+            .innerRadius(d => d.minRadius)
+            .outerRadius(d => d.maxRadius);
 
          //  The paths for the names of persons
          function arcText(d) {
@@ -102,15 +102,13 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
                // usual math notation, we take the opposite:
                //    angle = minAngle - PI/2
 
-               var r = (d.minRadius + d.maxRadius) / 2;
-               var m = d.minAngle - PI_HALF;
-               var M = d.maxAngle - PI_HALF;
-               var med = math.standardAngle((m + M) / 2);
-               var sweep = 1;
+               const r = (d.minRadius + d.maxRadius) / 2;
+               let m = d.minAngle - PI_HALF;
+               let M = d.maxAngle - PI_HALF;
+               const med = math.standardAngle((m + M) / 2);
+               let sweep = 1;
                if (set.readableNames && med >= 0 && med <= Math.PI) {
-                  var t = m;
-                  m = M;
-                  M = t;
+                  [m, M] = [M, m];
                   sweep = 0
                }
                return 'M' + r * Math.cos(m) + ' ' + r * Math.sin(m) +
@@ -121,43 +119,39 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
 
             // rotated
             } else {
-               var a = math.standardAngle((d.minAngle + d.maxAngle) / 2 - PI_HALF);
-               var r = d.minRadius;
-               var R = d.maxRadius;
+               const a = math.standardAngle((d.minAngle + d.maxAngle) / 2 - PI_HALF);
+               let r = d.minRadius;
+               let R = d.maxRadius;
                if (set.readableNames && (a < -PI_HALF || a > PI_HALF)) {
                   r = d.maxRadius;
                   R = d.minRadius;
                }
-               var ca = Math.cos(a);
-               var sa = Math.sin(a);
+               const ca = Math.cos(a);
+               const sa = Math.sin(a);
                return 'M' + r * ca + ' ' + r * sa +
                       'L' + R * ca + ' ' + R * sa;
             }
          }
 
          //  The paths for the separators between generations
-         var arcSeparator = d3.svg.arc()
-            .startAngle(function(d) { return d.minAngle })
-            .endAngle(function(d) { return d.maxAngle })
-            .innerRadius(function(d) { return d.maxRadius })
-            .outerRadius(function(d) {
-               return d.maxRadius + spaceBetweenGenerations;
-            });
+         const arcSeparator = d3.svg.arc()
+            .startAngle(d => d.minAngle)
+            .endAngle(d => d.maxAngle)
+            .innerRadius(d => d.maxRadius)
+            .outerRadius(d => d.maxRadius + spaceBetweenGenerations);
 
          //  The paths for the marriages
          function arcMarriage(d) {
             if (d.generation >= set.gens || d.generation >= textThreshold - 1) {
                return '';
             }
-            var r = d.maxRadius + spaceBetweenGenerations / 2;
-            var m = d.minAngle - PI_HALF;
-            var M = d.maxAngle - PI_HALF;
-            var med = math.standardAngle((m + M) / 2);
-            var sweep = 1;
+            let r = d.maxRadius + spaceBetweenGenerations / 2;
+            let m = d.minAngle - PI_HALF;
+            let M = d.maxAngle - PI_HALF;
+            const med = math.standardAngle((m + M) / 2);
+            let sweep = 1;
             if (set.readableNames && med >= 0 && med <= Math.PI) {
-               var t = m;
-               m = M;
-               M = t;
+               [m ,M] = [M, m];
                sweep = 0;
                r = r + 2;
             } else {
@@ -197,15 +191,15 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
                 set.showMarriages) ?
                 FanchartLayout.SEPARATOR_WIDTH : 0;
 
-            var layout = FanchartLayout(data, spaceBetweenGenerations);
-            var styles = gpd3.getStyles(
+            const layout = FanchartLayout(data, spaceBetweenGenerations);
+            const styles = gpd3.getStyles(
                   group, layout.nodes, set, data,
                   false /* preserve */,
                   true /* isRadial */);
 
             group.attr({
-               class: 'fanchart color-' + set.colorScheme,
-               transform: 'translate(' + layout.centerX + ',' + layout.centerY + ')'});
+               class: `fanchart color-${set.colorScheme}`,
+               transform: `translate(${layout.centerX},${layout.centerY})`});
 
             // Handling of contextual menu
             function contextmenu(d) {
@@ -219,11 +213,11 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
 
             // Add new groups for the persons
 
-            var persons = group
+            const persons = group
                .selectAll('g.person')
-               .data(layout.nodes, function(d) { return d.id });
+               .data(layout.nodes, d => d.id);
             persons.exit().remove();
-            var persons_enter_g = persons.enter()
+            const persons_enter_g = persons.enter()
                .append('g')
                .attr('class', 'person')
                .on('contextmenu', contextmenu);
@@ -254,33 +248,32 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
                   .attr({
                      'startOffset': '50%',
                      'text-anchor': 'middle',
-                     'xlink:href': function(d) { return '#text' + d.id}})
+                     'xlink:href': d => `#text${d.id}`})
                   .append('tspan')
                   .attr({dy: dy, 'class': className})
                   .text(text);
             }
 
-            var p = persons_enter_g
-               .filter(function(d) { return d.generation < textThreshold})
+            const p = persons_enter_g.filter(d => d.generation < textThreshold)
             p.append('path')   // subset of enter
                .attr({
                   class: 'name',
                   fill: 'none',
-                  id: function(d) { return 'text' + d.id}});
+                  id: d => `text${d.id}`});
             persons.selectAll('path.name')   // enter+update
                .transition()
                .duration(800)
                .attr('d', arcText);
-            setText(p, '-0.5em', 'name', function(d) { return d.surn });
-            setText(p, '0.5em', 'name', function(d) { return d.givn});
+            setText(p, '-0.5em', 'name', d => d.surn);
+            setText(p, '0.5em', 'name', d => d.givn);
             setText(p, '1.5em', 'details', null);
 
             // Always update events text to show the source info (or not)
             persons.selectAll('tspan.details')  // enter+update
-               .text(function(d) {
-                       var birth = data.event_to_string(d.birth, true /* use_date_sort */);
-                       var death = data.event_to_string(d.death, true /* use_date_sort */);
-                       return (birth || '') + ' - ' + (death || '')});
+               .text(p => {
+                   const b = data.event_to_string(p.birth, true /* use_date_sort */);
+                   const d = data.event_to_string(p.death, true /* use_date_sort */);
+                   return `${b} - ${d}`});
 
             // The space between generations might be displays specially in
             // some cases (as a gradient in the Quartile case, for instance)
@@ -299,12 +292,12 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
 
             if (set.showMarriages) {
                persons_enter_g  // enter
-                  .filter(function(d) { return d.generation < textThreshold - 1})
+                  .filter(d => d.generation < textThreshold - 1)
                   .append('path')
                   .attr({
                      class: 'marriagePath',
                      fill: 'none',
-                     id: function(d) {return 'textMarriage' + d.id}});
+                     id: d => `textMarriage${d.id}`});
 
                persons.selectAll('path.marriagePath')  // enter + update
                   .transition()
@@ -312,34 +305,32 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
                   .attr('d', arcMarriage)
 
                persons_enter_g  // enter
-                  .filter(function(d) {
-                     return d.generation < set.gens && d.generation < textThreshold - 1
-                  })
+                  .filter(d => d.generation < set.gens && d.generation < textThreshold - 1)
                   .append('text')
                   .attr('class', 'marriage')
                   .append('textPath')
                   .attr({
                      startOffset: '50%',
                      'text-anchor': 'middle',
-                     'xlink:href': function(d) { return '#textMarriage' + d.id}})
-                  .text(function(d) { return data.event_to_string(d.marriage)});
+                     'xlink:href': d => `#textMarriage${d.id}`})
+                  .text(d => data.event_to_string(d.marriage));
             }
 
             // Show the children
-            var styles2 = gpd3.getStyles(
+            const styles2 = gpd3.getStyles(
                   group, layout.childnodes, set, data, true /* preserve */);
-            var children = group
+            const children = group
                .selectAll('g.child')
-               .data(layout.childnodes, function(d) { return d.id });
+               .data(layout.childnodes, d => d.id);
             children.exit().remove();
-            var g = children.enter()
+            const g = children.enter()
                .append('g')
                .attr('class', 'child');
             g.append('rect')
                .attr('rx', '6px')
                .attr('ry', '6px')
-               .attr('width', function(d) { return d.w})
-               .attr('height', function(d) { return d.h});
+               .attr('width', d => d.w)
+               .attr('height', d => d.h);
             children.selectAll('rect')
                .attr('fill', styles2.fillStyle)
                .attr('stroke', styles2.strokeStyle);
@@ -348,9 +339,7 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
                .attr('y', '1em')
                .text(data.displayName);
             children
-               .attr('transform', function(d) {
-                  return 'translate(' + d.x + ',' + d.y + ')';
-               })
+               .attr('transform', d => `translate(${d.x},${d.y})`)
                .on('contextmenu', contextmenu);
 
             gpd3.setViewBox(element, layout);
@@ -373,59 +362,59 @@ directive('gpFanchart', function(Pedigree, FanchartLayout, $rootScope, gpd3, $lo
 factory('FanchartLayout', function($rootScope) {
    // Generation after which the text is rotated 90 degrees to make it
    // more readable.
-   var genThreshold = 4;
+   const genThreshold = 4;
 
    /**
     * Compute a fanchart layout.
     * @param (Number) extraSep  extra amount of separation between generations
     */
    function layout(data, extraSep) {
-      var settings = $rootScope.settings.fanchart;
-      var rowHeight = 60;  //  height for a generation in the fanchart
+      const settings = $rootScope.settings.fanchart;
+      const rowHeight = 60;  //  height for a generation in the fanchart
 
       // row height for generations after genThreshold
-      var rowHeightAfterThreshold = 100;
+      const rowHeightAfterThreshold = 100;
 
       // Extra blank space between layer rings. This is used to display
       // marriage information.
-      var sepBetweenGens = Math.max(
+      const sepBetweenGens = Math.max(
          extraSep || 0,
          settings.showMarriages ? layout.SEPARATOR_WIDTH : 0);
 
       // Height of the inner white circle
-      var innerCircle = 20;
+      const innerCircle = 20;
 
       // Start and end angles in radians. Clockwise starting from the usual
       // 0 angle
-      var maxAngle = settings.angle * PI_HALF / 180 - Math.PI / 2;
-      var minAngle = -maxAngle - Math.PI;
+      const maxAngle = settings.angle * PI_HALF / 180 - Math.PI / 2;
+      const minAngle = -maxAngle - Math.PI;
 
       // Separator (in radians) between couples. Setting this to 0.5 or more
       // will visually separate the couples at each generation.
-      var separator = settings.space * PI_HALF / 900;
+      const separator = settings.space * PI_HALF / 900;
 
       // Size of boxes for children
-      var boxWidth = 100;
-      var boxHeight = 30;
+      const boxWidth = 100;
+      const boxHeight = 30;
 
       // Base size for the text
-      var textHeight = 20;
+      const textHeight = 20;
 
       // Compute the radius for each generation
-      var minRadius = [0];
-      var maxRadius = [innerCircle];
-      var fs = [textHeight];
-      for (var gen = 1; gen <= settings.gens; gen++) {
-         var m = maxRadius[gen - 1] + ((gen == 1) ? 0 : sepBetweenGens);
+      let minRadius = [0];
+      let maxRadius = [innerCircle];
+      let fs = [textHeight];
+      for (let gen = 1; gen <= settings.gens; gen++) {
+         const m = maxRadius[gen - 1] + ((gen == 1) ? 0 : sepBetweenGens);
          fs.push(fs[gen - 1] * 0.9);
          minRadius.push(m);
          maxRadius.push(
             m + (gen < genThreshold ?  rowHeight : rowHeightAfterThreshold));
       }
 
-      var addedToNodes = {};
-      var nodes = [];
-      var childnodes = [];
+      let addedToNodes = {};
+      let nodes = [];
+      let childnodes = [];
       function addToNodes(p) {
          if (p.sosa != 1 && !addedToNodes[p.id]) {
             addedToNodes[p.id] = true;
@@ -435,10 +424,10 @@ factory('FanchartLayout', function($rootScope) {
 
       // Compute the bounding box for the fan itself, as if it was
       // centered on (0, 0).
-      var minX = 0;
-      var minY = 0;
-      var maxX = 0;
-      var maxY = 0;
+      let minX = 0;
+      let minY = 0;
+      let maxX = 0;
+      let maxY = 0;
 
       /** Register the layout information for a given individual
        *  ??? We should also check at each of the North,West,South,East
@@ -449,11 +438,11 @@ factory('FanchartLayout', function($rootScope) {
        *  @param {number} maxAngle   end angle.
        */
       function setupIndivBox(indiv, minAngle, maxAngle) {
-         var maxR = maxRadius[indiv.generation];
-         var x1 = maxR * Math.cos(minAngle);
-         var y1 = maxR * Math.sin(minAngle);
-         var x2 = maxR * Math.cos(maxAngle);
-         var y2 = maxR * Math.sin(maxAngle);
+         const maxR = maxRadius[indiv.generation];
+         const x1 = maxR * Math.cos(minAngle);
+         const y1 = maxR * Math.sin(minAngle);
+         const x2 = maxR * Math.cos(maxAngle);
+         const y2 = maxR * Math.sin(maxAngle);
          minX = Math.min(minX, x1, x2);
          maxX = Math.max(maxX, x1, x2);
          minY = Math.min(minY, y1, y2);
@@ -470,27 +459,28 @@ factory('FanchartLayout', function($rootScope) {
          setupIndivBox(indiv, minAngle, maxAngle);
 
          if (indiv.generation < settings.gens && indiv.parents) {
-            var father = indiv.parents[0];
-            var mother = indiv.parents[1];
+            const father = indiv.parents[0];
+            const mother = indiv.parents[1];
+            let half;
 
             if (father && mother) {
                if (father.$expand) {
-                  var half = minAngle + (maxAngle - minAngle) * 0.95;
+                  half = minAngle + (maxAngle - minAngle) * 0.95;
                } else if (mother.$expand) {
-                  var half = minAngle + (maxAngle - minAngle) * 0.05;
+                  half = minAngle + (maxAngle - minAngle) * 0.05;
                } else {
-                  var half = (minAngle + maxAngle) / 2;
+                  half = (minAngle + maxAngle) / 2;
                }
                doLayout(
                   father, minAngle, half - separator / 2, separator / 2);
                doLayout(
                   mother, half + separator / 2, maxAngle, separator / 2);
             } else if (father) {
-               var tenth = minAngle + maxAngle * 0.95;
+               const tenth = minAngle + maxAngle * 0.95;
                doLayout(
                      father, minAngle, tenth - separator / 2, separator / 2);
             } else if (mother) {
-               var tenth = minAngle + maxAngle * 0.05;
+               const tenth = minAngle + maxAngle * 0.05;
                doLayout(
                      mother, tenth + separator / 2, maxAngle, separator / 2);
             }
@@ -499,13 +489,13 @@ factory('FanchartLayout', function($rootScope) {
       doLayout(data.main, minAngle + separator / 2,
                maxAngle - separator / 2, separator);
 
-      var height = maxY - minY;
+      const height = maxY - minY;
 
       // The space there should be below centerY so that the fanchart
       // does not hide the decujus box partially.
 
-      var angle = PI_TWO - (maxAngle - minAngle);
-      var minDist;  // distance between left side of decujus box and fan center
+      const angle = PI_TWO - (maxAngle - minAngle);
+      let minDist;  // distance between left side of decujus box and fan center
       if (angle >= Math.PI) {
          // Fanchart occupies less than a half circle
          minDist = 0;
@@ -514,7 +504,7 @@ factory('FanchartLayout', function($rootScope) {
       } else {
          minDist = boxWidth / 2 / Math.tan(angle / 2);
       }
-      var box = {
+      const box = {
          x: minX,
          y: minY,
          centerX: 0,
@@ -526,7 +516,7 @@ factory('FanchartLayout', function($rootScope) {
 
       // Compute the position for the children and decujus
 
-      var decujus = data.main;
+      const decujus = data.main;
       childnodes.push(decujus);
       decujus.x = - boxWidth / 2;   // relative to centerX
       decujus.y = minDist + 5;      // relative to centerY
@@ -534,10 +524,10 @@ factory('FanchartLayout', function($rootScope) {
       decujus.h = boxHeight;
       decujus.fs = textHeight;
 
-      var children = data.main.children;
+      const children = data.main.children;
       if (children && children.length) {
-         var y = decujus.y;
-         for (var c = 0; c < children.length; c++) {
+         let y = decujus.y;
+         for (let c = 0; c < children.length; c++) {
             y += boxHeight + 5;
             childnodes.push(children[c]);
             children[c].x = decujus.x + 30;

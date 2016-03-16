@@ -1,4 +1,4 @@
-var app = angular.module(
+const app = angular.module(
       'geneaprove',
       ['ui.router',
        'LocalStorageModule',
@@ -29,7 +29,7 @@ run(function(gpd3, $rootScope, localStorageService, $state, $interpolate) {
    });
 
 
-   var defaultSettings = {
+   const defaultSettings = {
       // Show a tick mark next to events with a souce
       sourcedEvents: false,
 
@@ -132,7 +132,7 @@ run(function(gpd3, $rootScope, localStorageService, $state, $interpolate) {
     * via the GUI, they might have been set as strings.
     */
    $rootScope.cleanupSettings = function() {
-      var p = $rootScope.settings.pedigree;
+      let p = $rootScope.settings.pedigree;
       p.colorScheme = +p.colorScheme;
       p.appearance = +p.appearance;
       p.layoutScheme = +p.layoutScheme;

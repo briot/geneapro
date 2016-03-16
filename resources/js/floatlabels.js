@@ -6,7 +6,7 @@ app.
  * the input contains some input.
  */
 directive('gpFloatLabel', function() {
-   var id=0;
+   let id=0;
 
    return {
       scope: {
@@ -21,14 +21,11 @@ directive('gpFloatLabel', function() {
          scope.size = scope.size || 6;
       },
       template: function(elem, attrs) {
-         if (attrs['lines']) {
-            var type='textarea rows=' + attrs['lines'];
-         } else {
-            type='input type=text';
-         }
-
-         var r = (attrs['readonly']) ? ' readonly' : '';
-
+         const type = (
+            attrs['lines']
+            ? 'textarea rows=' + attrs['lines']
+            : 'input type=text');
+         const r = (attrs['readonly']) ? ' readonly' : '';
          return '<div class="col-md-{{size}} form-group floatlabel">'
        +    '<' + type + r + ' class="form-control"'
        +        ' ng-class="{nonempty: model===0 || model.length}"'

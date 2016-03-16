@@ -116,11 +116,11 @@ directive('ngFileImport', function($window) {
       link: function(scope, elem) {
          scope.ngModel = scope.multiple ? [] : undefined;
          elem.find('input').bind('change', function() {
-            var inputFile = angular.element(this);
+            const inputFile = angular.element(this);
 
             if (scope.multiple) {
                // Keep all inputs around so that we can submit the form
-               var clone = inputFile.clone(true);
+               const clone = inputFile.clone(true);
                clone.removeAttr('id');
                inputFile.after(clone).css('display', 'none');
                scope.ngModel.push([clone.val(), clone]);
@@ -154,7 +154,7 @@ directive('sortOn', function() {
    //   'compare' is a comparison function:  (a, b) -> (-1, 0, 1)
    function numericCompare(a, b) {return a - b; }
    function strCompare(a, b) {if (a < b) return -2; if (b < a) return 2; return 0}
-   var sorters = {
+   const sorters = {
       'text': {compare: strCompare, format: angular.identity},
       'numeric': {compare: numericCompare, format: function(s) { return Number(s)}},
       'date': {compare: numericCompare, format: function(s) {return Date.parse(s)}},
@@ -166,39 +166,38 @@ directive('sortOn', function() {
          sortDefault: '@'
       },
       controller: function($scope, $parse, localStorageService) {
-         var self = this;
-         var listName = $scope.sortOn;
-         self.sorters = {};     // for each field, the sort criteria
-         self.sortCriteria = {  // referenced by headers to set ng-class
+         const listName = $scope.sortOn;
+         this.sorters = {};     // for each field, the sort criteria
+         this.sortCriteria = {  // referenced by headers to set ng-class
             field: '',
             ascending: true
          };
          /** If force is true, we always recompute the sort criteria */
-         self.sort = function(field, force) {
-            var list = $parse(listName)($scope.$parent);
+         this.sort = (field, force) => {
+            const list = $parse(listName)($scope.$parent);
             if (!angular.isArray(list)) {
                return;
             }
             if (!field) {
-               var v = localStorageService.get('sort_' + listName);
+               const v = localStorageService.get('sort_' + listName);
                if (!v) {
                   return;
                }
                field = v.substring(1);
             }
-            var sorter = sorters[self.sorters[field] || 'text'];
+            const sorter = sorters[this.sorters[field] || 'text'];
 
-            if (self.sortCriteria.field == field && !force) {
-               self.sortCriteria.ascending = !self.sortCriteria.ascending;
+            if (this.sortCriteria.field == field && !force) {
+               this.sortCriteria.ascending = !this.sortCriteria.ascending;
             } else {
-               self.sortCriteria.ascending = (v && v[0] == '+') ? false : true;
-               self.sortCriteria.field = field;
-               var getter = $parse(field);
+               this.sortCriteria.ascending = (v && v[0] == '+') ? false : true;
+               this.sortCriteria.field = field;
+               const getter = $parse(field);
                angular.forEach(list, function(v) {
                   v.$sort = sorter.format(getter(v));
                });
             }
-            if (self.sortCriteria.ascending) {
+            if (this.sortCriteria.ascending) {
                localStorageService.set('sort_' + listName, '-' + field);
                list.sort(function(a, b) {return sorter.compare(a.$sort, b.$sort)});
             } else {
@@ -206,9 +205,9 @@ directive('sortOn', function() {
                list.sort(function(a, b) {return -sorter.compare(a.$sort, b.$sort)});
             }
          };
-         $scope.$parent.$watch(listName, function() {
+         $scope.$parent.$watch(listName, () => {
             // Called when the actual list changes, but not when sorting
-            self.sort($scope.sortDefault, true);
+            this.sort($scope.sortDefault, true);
          });
       }
    };
@@ -258,7 +257,7 @@ directive('convertToNumber', function() {
 filter('linkyWithHtml', function($filter) {
    return function(str) {
       if (str) {
-         var s = $filter('linky')(str);
+         const s = $filter('linky')(str);
          return s.replace(/\&gt;/g, '>').replace(/\&lt;/g, '<');
       }
    };

@@ -9,25 +9,24 @@
  *     }
  */
 app.factory('suretySchemes', function($http, $q) {
-   /**
-    * The type returned by the service.
-    */
-   function SuretySchemes(schemes, parts) {
-      this.schemes = schemes;
-      this.parts = parts;
+   class SuretySchemes {
+      constructor(schemes, parts) {
+         this.schemes = schemes;
+         this.parts = parts;
+      }
+      partFromId(id) {
+         return this.parts[id];
+      }
+      schemeFromPart(partid) {
+         const p = this.parts[partid];
+         return p && this.schemes[p.scheme];
+      }
    }
-   SuretySchemes.prototype.partFromId = function(id) {
-      return this.parts[id];
-   };
-   SuretySchemes.prototype.schemeFromPart = function(partid) {
-      var p = this.parts[partid];
-      return p && this.schemes[p.scheme];
-   };
 
-   var q = $q.defer();
+   const q = $q.defer();
    $http.get('data/suretySchemes').then(function(resp) {
-      var schemes = resp.data;
-      var parts = {};
+      const schemes = resp.data;
+      let parts = {};
       angular.forEach(schemes, function(s, s_idx) {
          angular.forEach(s.parts, function(p) {
             parts[p.id] = p;
@@ -50,8 +49,8 @@ directive('gpSurety', function(suretySchemes) {
       replace: true,
       link: function(scope) {
          suretySchemes.then(function(data) {
-            var scheme = data.schemeFromPart(scope.surety);
-            var part = data.partFromId(scope.surety);
+            const scheme = data.schemeFromPart(scope.surety);
+            const part = data.partFromId(scope.surety);
             if (scheme) {
                scope.parts = scheme.parts;
                scope.selected = part.sequence;

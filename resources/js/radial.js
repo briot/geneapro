@@ -32,7 +32,7 @@ controller('radialCtrl', function($scope,  Pedigree, $state, $stateParams, conte
       $scope.$apply();  // update contents of the contextual menu
    });
    $scope.focusPerson = function() {
-      var id = contextMenu.data.d.id;  // capture since menu will be destroyed
+      const id = contextMenu.data.d.id;  // capture since menu will be destroyed
       $location.search('id', id);
    };
    $scope.showPerson = function() {
@@ -47,7 +47,7 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
          decujus: '=gpRadial'
       },
       link: function(scope, element) {
-         var set = $rootScope.settings.radial;
+         const set = $rootScope.settings.radial;
 
          // Watch the settings (in case we want to draw differently) and the
          // decujus (in case we want to display a different person).
@@ -62,7 +62,7 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
             },
             true);
 
-         var group = gpd3.svg(element);
+         const group = gpd3.svg(element);
 
          /**
           * Assuming the data is fully loaded, draw the graphics
@@ -74,24 +74,25 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
             }
             group.attr('class', 'radial color-' + set.colorScheme);
 
-            var circleSize = 10;  // diameter of the circles
+            const circleSize = 10;  // diameter of the circles
             // We are displaying gens*2+1 generations, and leave space
             // between two circles equal to 5 times the size of a circle.
-            var diameter = (Math.abs(set.gens) * 2 + 1) * (circleSize * 6);
+            const diameter = (Math.abs(set.gens) * 2 + 1) * (circleSize * 6);
 
             gpd3.setViewBox(element, {x: 0, y: 0, width: diameter, height: diameter});
 
-            var tree = d3.layout.tree()
+            const tree = d3.layout.tree()
                 .size([360, diameter / 2 - 120])
-                .children(function(d) {
-                   var result = [];
+                .children(d => {
+                   let result = [];
+                   let base;
 
                    if (set.gens > 0) {
                       // Ancestor tree
                       if (d.generation > set.gens) {
                          return result;
                       }
-                      var base = d.parents;
+                      base = d.parents;
                    } else {
                       // Descendants tree
                       if (d.generation < set.gens) {
@@ -110,29 +111,29 @@ directive('gpRadial', function(Pedigree, $rootScope, gpd3, $location, contextMen
                 .separation(function(p1, p2) {
                    return (p1.parent == p2.parent ? 1 : 2) /* / p1.depth */ });
 
-            var diagonal = d3.svg.diagonal.radial()
+            const diagonal = d3.svg.diagonal.radial()
                 .projection(function(d) { return [d.y, d.x / 180 * Math.PI]});
 
             d3.select(element[0]).select('svg')
                 .attr("width", diameter)
                 .attr("height", diameter - 150);
 
-            var nodes = tree.nodes(data.main);
-            var links = tree.links(nodes);
-            var styles = gpd3.getStyles(group, nodes, set, data);
+            const nodes = tree.nodes(data.main);
+            const links = tree.links(nodes);
+            const styles = gpd3.getStyles(group, nodes, set, data);
 
-            var link = group.selectAll(".link").data(links);
+            const link = group.selectAll(".link").data(links);
             link.exit().remove();
             link.enter().insert("path", ':first-child').attr("class", "link");
             link.attr("d", diagonal);
 
             group.selectAll('.node').remove();
 
-            var node = group.selectAll(".node")
+            const node = group.selectAll(".node")
                // There can be multiple nodes with the same id (implex)
                .data(nodes);
 
-            var n = node.enter().append("g").attr("class", "node")
+            const n = node.enter().append("g").attr("class", "node")
                .on('contextmenu', function(d) {
                   contextMenu.create(
                      scope, '#contextMenu', d3.event, {d: d, element: this});

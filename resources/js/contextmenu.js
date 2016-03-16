@@ -13,46 +13,48 @@
  */
 app.factory('contextMenu', function($document, $rootScope) {
 
-   function contextMenu() {
-      this.menu = undefined;
-      this.element = undefined; // on which the user clicked
-      this.data = undefined;
-   }
+   class contextMenu {
 
-   contextMenu.prototype.destroy = function() {
-      if (this.menu) {
-         // $rootScope.$broadcast('contextMenuClose');
-         this.menu.style('display', 'none');
+      constructor() {
          this.menu = undefined;
+         this.element = undefined; // on which the user clicked
          this.data = undefined;
-         this.element = undefined;
-         $document.unbind('click', onClick);
-         $document.unbind('keyup', onKeyup);
-         $document.unbind('contextmenu', onClick);
       }
-   };
 
-   contextMenu.prototype.create = function(scope, selector, event, data) {
-      this.destroy();
+      destroy() {
+         if (this.menu) {
+            // $rootScope.$broadcast('contextMenuClose');
+            this.menu.style('display', 'none');
+            this.menu = undefined;
+            this.data = undefined;
+            this.element = undefined;
+            $document.unbind('click', onClick);
+            $document.unbind('keyup', onKeyup);
+            $document.unbind('contextmenu', onClick);
+         }
+      }
 
-      this.data = data;
-      this.element = event.target;
-      this.menu = d3.select(selector);
-      this.menu.style('display', 'block')
-         .style('left', event.pageX + 'px')
-         .style('top', event.pageY + 'px');
-      event.preventDefault();
-      event.stopPropagation();
+      create(scope, selector, event, data) {
+         this.destroy();
 
-      $document.bind('click', onClick);
-      $document.bind('contextmenu', onClick);
-      $document.bind('keyup', onKeyup);
-      //scope.$on('$destroy', angular.bind(this.destroy, this));
+         this.data = data;
+         this.element = event.target;
+         this.menu = d3.select(selector);
+         this.menu.style('display', 'block')
+            .style('left', event.pageX + 'px')
+            .style('top', event.pageY + 'px');
+         event.preventDefault();
+         event.stopPropagation();
 
-      $rootScope.$broadcast('contextMenuOpen');
-   };
+         $document.bind('click', onClick);
+         $document.bind('contextmenu', onClick);
+         $document.bind('keyup', onKeyup);
+         //scope.$on('$destroy', angular.bind(this.destroy, this));
 
-   var globalMenu = new contextMenu();
+         $rootScope.$broadcast('contextMenuOpen');
+      }
+   }
+   const globalMenu = new contextMenu();
 
    function onKeyup(event) {
       if (event.keyCode === 27) {

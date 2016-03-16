@@ -1,18 +1,18 @@
 app
 .factory('Legend', function($http, $q) {
-   function Legend() {
-   }
-   Legend.prototype.get = function() {
-      if (this.promise === undefined) {
-         var q = $q.defer();
-         this.promise = q.promise;
-         $http.get('/data/legend').then(function(resp) {
-            q.resolve(resp.data);
-         }, function() {
-            q.reject();
-         });
+   class Legend {
+      get() {
+         if (this.promise === undefined) {
+            const q = $q.defer();
+            this.promise = q.promise;
+            $http.get('/data/legend').then(function(resp) {
+               q.resolve(resp.data);
+            }, function() {
+               q.reject();
+            });
+         }
+         return this.promise;
       }
-      return this.promise;
    }
    return new Legend;
 })
