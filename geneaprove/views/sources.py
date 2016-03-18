@@ -39,7 +39,7 @@ class CitationModel(JSONView):
         return {
             'biblio': citation.biblio,
             'full': citation.full,
-            'short': citation.short
+            'abbrev': citation.short
         }
 
 

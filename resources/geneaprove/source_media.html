@@ -5,26 +5,26 @@
       <!-- Selecting the media -->
 
       <span style='margin-left: 30px' ng-if='repr.length!=0'>
-         <button class='btn btn-xs btn-default fa fa-backward' ng-click='prevMedia()' ng-disabled='repr.length==1'></button>
-         {{current_repr + 1}} / {{repr.length}}
-         <button class='btn btn-xs btn-default fa fa-forward' ng-click='nextMedia()' ng-disabled='repr.length==1'></button>
+         <button class='btn btn-xs btn-default fa fa-backward' ng-click='ctrl.prevMedia()' ng-disabled='repr.length==1'></button>
+         {{ctrl.current_repr + 1}} / {{repr.length}}
+         <button class='btn btn-xs btn-default fa fa-forward' ng-click='ctrl.nextMedia()' ng-disabled='repr.length==1'></button>
       </span>
 
       <!-- Image operations -->
-      <span style='margin-left: 30px' ng-if='repr.length!=0 && img'>
-         <button class='btn btn-xs btn-default fa fa-search-minus' ng-click='img.zoomOut()' title='alt-wheel to zoom interactively'></button>
-         <button class='btn btn-xs btn-default fa fa-square-o' ng-click='img.fit()' title='Fit image'></button>
-         <button class='btn btn-xs btn-default fa fa-search-plus' ng-click='img.zoomIn()' title='alt-wheel to zoom interactively'></button>
+      <span style='margin-left: 30px' ng-if='repr.length!=0 && ctrl.img'>
+         <button class='btn btn-xs btn-default fa fa-search-minus' ng-click='ctrl.img.zoomOut()' title='alt-wheel to zoom interactively'></button>
+         <button class='btn btn-xs btn-default fa fa-square-o' ng-click='ctrl.img.fit()' title='Fit image'></button>
+         <button class='btn btn-xs btn-default fa fa-search-plus' ng-click='ctrl.img.zoomIn()' title='alt-wheel to zoom interactively'></button>
       </span>
 
       <!-- Media operations -->
       <span style='margin-left: 30px' ng-if='repr.length!=0'>
-         <button class='btn btn-xs btn-default fa fa-trash' ng-click='deleteCurrentRepr()' title='Delete the image'></button>
+         <button class='btn btn-xs btn-default fa fa-trash' ng-click='ctrl.deleteCurrentRepr()' title='Delete the image'></button>
       </span>
 
       <!-- Adding new images -->
 
-      <form class='nav navbar-nav navbar-right' gp-upload-target url='/data/sources/{{source.id}}/addRepr' onupload='onupload()' autosubmit=1>
+      <form class='nav navbar-nav navbar-right' gp-upload-target url='/data/sources/{{source.id}}/addRepr' onupload='ctrl.onupload()' autosubmit=1>
          <span gp-download-form-mini></span>
       </form>
 
@@ -33,8 +33,8 @@
    <!-- Image representation or Adding new media -->
    <!-- The whole area is a drop target for adding new media -->
 
-   <form class='panel-body' gp-upload-target url='/data/sources/{{source.id}}/addRepr' onupload='onupload()' autosubmit=1>
+   <form class='panel-body' gp-upload-target url='/data/sources/{{source.id}}/addRepr' onupload='ctrl.onupload()' autosubmit=1>
       <div gp-download-form ng-if='repr.length==0'></div>
-      <span gp-media representation='repr[current_repr]' image='img'></span>
+      <span gp-media representation='repr[ctrl.current_repr]' image='ctrl.img'></span>
    </form>
 </div>

@@ -51,7 +51,7 @@ def extended_personas(
     nodes, styles, graph, event_types=None, schemes=None,
     all_sources=None, as_css=False, query_groups=True):
     """
-    Compute the events for the various persons in IDS (all all persons in
+    Compute the events for the various persons in `nodes` (all all persons in
     the database if None)
     Return a dict indexed on id containing extended instances of Persona,
     with additional fields for the birth, the death,...
@@ -353,6 +353,7 @@ class PersonaList(JSONView):
         all = [p for p in all.itervalues()]
         all.sort(key=lambda x: x.surname)
 
+        # Necessary to avoid lots of queries to get extra information
         all = [{'surname': p.surname,
                 'given_name': p.given_name,
                 'birth': p.birth,
@@ -361,6 +362,7 @@ class PersonaList(JSONView):
                 'marriage': p.marriage}
                for p in all]
 
+        print "MANU all=", len(all)
         return {
             'persons': all,
         }

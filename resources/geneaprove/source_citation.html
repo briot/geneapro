@@ -2,20 +2,20 @@
    <h4>Citation</h4>
    <div class='row'>
       <div class='col-md-12 form-group floatlabel'>
-         <span ng-bind-html='source.title' class='form-control nonempty' readonly ng-if='source.medium' title='{{citation.full}}'></span>
-         <input ng-model='source.title' class='form-control nonempty' ng-if='!source.medium'></input>
+         <span ng-bind-html='ctrl.source.title' class='form-control nonempty' readonly ng-if='ctrl.source.medium' title='{{ctrl.citation.full}}'></span>
+         <input ng-model='ctrl.source.title' class='form-control nonempty' ng-if='!ctrl.source.medium'></input>
          <label>Full Citation</label>
       </div>
 
       <div class='col-md-12 form-group floatlabel'>
-         <span ng-bind-html='source.abbrev' class='form-control nonempty' readonly ng-if='source.medium' title='{{citation.abbrev}}'></span>
-         <input ng-model='source.abbrev' class='form-control nonempty' ng-if='!source.medium'></input>
+         <span ng-bind-html='ctrl.source.abbrev' class='form-control nonempty' readonly ng-if='ctrl.source.medium' title='{{ctrl.citation.abbrev}}'></span>
+         <input ng-model='ctrl.source.abbrev' class='form-control nonempty' ng-if='!ctrl.source.medium'></input>
          <label>Short Citation</label>
       </div>
 
       <div class='col-md-12 form-group floatlabel'>
-         <span ng-bind-html='source.biblio' class='form-control nonempty' readonly ng-if='source.medium' title='{{citation.biblio}}'></span>
-         <input ng-model='source.biblio' class='form-control nonempty' ng-if='!source.medium'></input>
+         <span ng-bind-html='ctrl.source.biblio' class='form-control nonempty' readonly ng-if='ctrl.source.medium' title='{{ctrl.citation.biblio}}'></span>
+         <input ng-model='ctrl.source.biblio' class='form-control nonempty' ng-if='!ctrl.source.medium'></input>
          <label>Bibliography Citation</label>
       </div>
 
@@ -25,10 +25,10 @@
    <div class='row'>
       <div class='col-md-12'>
          <ul>
-            <li ng-repeat='h in higherSources | orderBy:$index:true'>
+            <li ng-repeat='h in ctrl.higherSources | orderBy:$index:true'>
                <span source-link='h.id' source-title='h.title' source-name='h.title'></span>
                <div gp-float-label ng-if='$last'
-                    model='source.higher_source_id'
+                    model='ctrl.source.higher_source_id'
                     size=6,
                     title='Select the source in which this one was found, for instance a specific will inside a will book'
                     label='Parent source'></div>
@@ -44,13 +44,13 @@
          <select id='_sourceType'
             class='form-control nonempty'
             title='Select the type of source. This will change the details below to those needed for proper citation'
-            ng-options='opt.id as opt.type group by opt.category for opt in source_types'
-            ng-model='source.medium'>
+            ng-options='opt.id as opt.type group by opt.category for opt in ctrl.source_types'
+            ng-model='ctrl.source.medium'>
          </select>
          <label>Source Type</label>
       </div>
 
-      <div gp-float-label ng-repeat='p in citation.fields' model='cache[p]'
+      <div gp-float-label ng-repeat='p in ctrl.citation.fields' model='ctrl.cache[p]'
            label='{{p}}'></div>
 
       <!-- Should select whether this is a primary source,... (or
@@ -61,12 +61,12 @@
 
    </div>
 
-   <div ng-if='extra_parts.length>0'>
+   <div ng-if='ctrl.extra_parts.length>0'>
       <h4>Extra Details</h4>
       <p>The following information is stored in the database, but not
          needed for the citation templates (perhaps imported from GEDCOM).</p>
       <div class='row'>
-          <div gp-float-label ng-repeat='p in extra_parts' model='p.value'
+          <div gp-float-label ng-repeat='p in ctrl.extra_parts' model='p.value'
                label='{{p.name}}'></div>
       </div>
    </div>
@@ -75,26 +75,26 @@
 
    <h4>Research Details</h4>
    <div class='row'>
-      <div gp-float-label model='source.subject_date_id'
+      <div gp-float-label model='ctrl.source.subject_date_id'
            title="The date the source is about. This isn't the date of the source itself."
            label='Subject date'></div>
 
-      <div gp-float-label model='source.subject_place_id'
+      <div gp-float-label model='ctrl.source.subject_place_id'
            title="The place that the source is about"
            label='Subject place'></div>
 
-      <div gp-float-label model='source.jurisdiction_place_id'
+      <div gp-float-label model='ctrl.source.jurisdiction_place_id'
            title='Where the source was found'
            label='Jurisdiction place'></div>
 
       <div class='col-md-6 form-group floatlabel'>
-         <input readonly class='nonempty form-control' value="{{source.researcher.name}} (changed on {{source.last_change | date}})"/>
+         <input readonly class='nonempty form-control' value="{{ctrl.source.researcher.name}} (changed on {{ctrl.source.last_change | date}})"/>
          <label>Researched by</label>
       </div>
 
-      <div gp-float-label model='source.comments' label='Notes' size=12 lines=5></div>
+      <div gp-float-label model='ctrl.source.comments' label='Notes' size=12 lines=5></div>
 
    </div>
 
-   <button class='btn btn-primary center-block' ng-if='citationForm.$dirty || source.id<0' ng-click='saveParts()'>{{source.id>=0? "Save" : "Create"}}</button>
+   <button class='btn btn-primary center-block' ng-if='citationForm.$dirty || ctrl.source.id<0' ng-click='ctrl.saveParts()'>{{ctrl.source.id>=0? "Save" : "Create"}}</button>
 </form>

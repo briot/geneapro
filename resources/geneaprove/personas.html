@@ -18,10 +18,10 @@
                   </tr>
                </thead>
                <tbody>
-                  <tr ng-if='data===undefined'>
+                  <tr ng-if='paginate.data===undefined'>
                      <td colspan='5'>Loading...</td>
                   </tr>
-                  <tr ng-repeat='p in filteredData | paginate: page : $root.settings.personas.rows'>
+                  <tr ng-repeat='p in paginate.filteredData | paginate: paginate.page : $root.settings.personas.rows'>
                      <td><span persona-link='p.id' name='p.surname'></span></td>
                      <td ng-if='$root.settings.personas.colorScheme!=4'><span style='{{p.styles}}'>{{p.given_name || '-'}}</span></td>
                      <td ng-if='$root.settings.personas.colorScheme==4'><span>{{p.given_name || '-'}}</span></td>
@@ -47,7 +47,7 @@
             <ul class='nav nav-pills nav-stacked'>
                <li class='config'>
                   <span>Rows per page</span>
-                  <select ng-model='$root.settings.personas.rows' ng-options='a.rows as a.label for a in rows'>
+                  <select ng-model='$root.settings.personas.rows' ng-options='a.rows as a.label for a in paginate.rows'>
                   </select>
                </li>
                <li class='config'>

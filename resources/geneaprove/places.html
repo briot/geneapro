@@ -15,7 +15,7 @@
                   </tr>
                </thead>
                <tbody>
-                 <tr ng-repeat='p in filteredData | paginate: page : $root.settings.places.rows'>
+                 <tr ng-repeat='p in paginate.filteredData | paginate: paginate.page : $root.settings.places.rows'>
                     <td>{{p.name}}</td>
                     <td>{{p.id}}</td>
                     <td>
@@ -46,7 +46,7 @@
             <ul class='nav nav-pills nav-stacked'>
                <li class='config'>
                   <span>Rows per page</span>
-                  <select ng-model='$root.settings.places.rows' ng-options='a.rows as a.label for a in rows'>
+                  <select ng-model='$root.settings.places.rows' ng-options='a.rows as a.label for a in paginate.rows'>
                   </select>
                </li>
             </ul>

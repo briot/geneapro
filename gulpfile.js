@@ -1,5 +1,6 @@
 'use strict';
 var gulp = require('gulp');
+var merge = require('merge2');
 var $ = require('gulp-load-plugins')();
 
 // Changing the font-path for font-awesome seems complex without changing the
@@ -17,9 +18,8 @@ var resources = {
           '!resources/geneaprove/**/\.#*.html',
           '!resources/geneaprove/**/#*.html#',
           '!resources/geneaprove/index.html'],
-   js: ['resources/js/*',
-        '!resources/js/\.#*.js',
-        '!resources/js/#*.js#'],
+   ts: ['resources/ts/*',
+        'resources/ts/typings/**/*.d.ts'],
    statics: ['resources/fonts/*',
              'resources/geneaprove/initial_data.json',
              'resources/geneaprove/index.html']
@@ -44,43 +44,59 @@ gulp.task('css', function() {
        .pipe(gulp.dest(DEST + '/css'));
 });
 
+// Create a typescript project so that increment compilation occurs much
+// faster
+var tsProject = $.typescript.createProject({
+   module: 'system',
+   out: 'ts.js',   // all in a single file
+   removeComments: true,
+   declaration: false,      // do not generate the definition file
+   noExternalResolve: true, // All required files are in the stream
+   noLib: false,   // include standard library if needed
+   target: 'ES5',  // build for javascript 5 for now
+   sortOutput: true,
+   experimentalDecorators: false,
+   emitDecoratorMetadata: false,
+   preserveConstEnums: false,
+   noEmitOnError: false,
+   noImplicitAny: true,
+});
+
 gulp.task('js', function() {
-   return gulp
-      // First task is to compile the HTML templates into javascript so that
-      // we do not have to load them later on
-      .src(resources.html)
+   // Process HTML templates into javascript so that we do not have to load
+   // them later on
+   var html = gulp.src(resources.html)
       .pipe($.cached('all_templates'))
          .pipe($.minifyHtml({quotes: true}))
       .pipe($.remember('all_templates'))
       .pipe($.angularTemplatecache(
           {module: 'geneaprove', filename: 'templates.js',
-           root: 'geneaprove/'}))
+           root: 'geneaprove/'}));
 
-      // Now add all other javascripts and minify them all
-      .pipe($.addSrc.prepend(resources.js))
-      .pipe($.cached('all_scripts'))
-         .pipe($.babel({presets: 'es2015'})
-               .on("error", $.notify.onError(function(error) {
-                  return error.message;
-               })))
-         .pipe($.ngAnnotate()
-               .on("error", $.notify.onError(function(error) {
-                  return error.message;
-               })))
-         .pipe($.uglify())
-      .pipe($.remember('all_scripts'))
+   // Convert typescript files to javascript
+   var ts = gulp.src(resources.ts)
+      .pipe($.typescript(tsProject));
 
-      // Finally add third parties that are already minified
-      .pipe($.addSrc.prepend([
+   var uglified = merge(ts, html)  // in that order
+      .pipe($.ngAnnotate()
+            .on("error", $.notify.onError(function(error) {
+               return error.message;
+            })))
+      .pipe($.uglify());
+
+   // third parties
+   var third = gulp.src([
          'node_modules/angular/angular.min.js',
          'node_modules/angular-sanitize/angular-sanitize.min.js',
          'node_modules/angular-ui-router/release/angular-ui-router.min.js',
          'node_modules/d3/d3.min.js',
          'node_modules/angular-local-storage/dist/angular-local-storage.min.js',
-         'node_modules/angular-upload/angular-upload.min.js']))
+         'node_modules/angular-upload/angular-upload.min.js']);
 
-      // Write the result
-      .pipe($.concat('geneaprove.min.js'))
+   return merge(third, uglified)   // in sequence
+      .pipe($.sourcemaps.init())
+      .pipe($.concat('geneaprove.min.js'))  // move all files into one
+      .pipe($.sourcemaps.write('.'))
       .pipe(gulp.dest(DEST + '/js'))
       .pipe($.gzip())
       .pipe(gulp.dest(DEST + '/js'));
@@ -94,9 +110,7 @@ gulp.task('static', function() {
 
 gulp.task('default', ['css', 'js', 'static']);
 gulp.task('watch', ['default'], function() {
-   gulp.watch(resources.scss, ['css']);
-   gulp.watch(resources.bootstrap, ['css']);
-   gulp.watch(resources.html, ['js']);
-   gulp.watch(resources.js, ['js']);
+   gulp.watch(resources.scss.concat(resources.bootstrap), ['css']);
+   gulp.watch(resources.html.concat(resources.ts), ['js']);
    gulp.watch(resources.statics, ['static']);
 });

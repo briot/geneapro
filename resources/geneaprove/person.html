@@ -2,14 +2,14 @@
 
    <div class='col-md-10 col-lg-9'>
      <h2>
-        <span class="givenName">{{person.base_given_name}}</span>
-        <span class="surName">{{person.base_surname}}</span>
-        <span class="details">({{person.birth[0] || ''}} - {{person.death[0] || ''}})</span>
+        <span class="givenName">{{ctrl.person.base_given_name}}</span>
+        <span class="surName">{{ctrl.person.base_surname}}</span>
+        <span class="details">({{ctrl.person.birth.date || ''}} - {{ctrl.person.death.date || ''}})</span>
      </h2>
 
      <div class='panel panel-default'>
         <h4>Characteristics</h4>
-        <table id="attrs" class="table table-condensed" sort-on='person.all_chars' sort-default='char.name'>
+        <table id="attrs" class="table table-condensed" sort-on='ctrl.person.all_chars' sort-default='char.name'>
           <thead>
              <tr>
                 <th sort-by='char.name'>Type</th>
@@ -20,7 +20,7 @@
              </tr>
           </thead>
           <tbody>
-             <tr ng-repeat='c in person.all_chars'>
+             <tr ng-repeat='c in ctrl.person.all_chars'>
                 <td class="type">{{c.char.name}}
                    <span source-link='c.assertion.source_id' source-title='sources[c.assertion.source_id].title'></span>
                 </td>
@@ -44,7 +44,7 @@
 
      <div class='panel panel-default'>
         <h4>Events</h4>
-        <table id="events" class="table table-hover table-condensed" sort-on='person.all_events' sort-default='event.date_sort'>
+        <table id="events" class="table table-hover table-condensed" sort-on='ctrl.person.all_events' sort-default='event.date_sort'>
           <thead>
              <tr>
                 <th sort-by='event.type.name'>Type</th>
@@ -55,7 +55,7 @@
              </tr>
           </thead>
           <tbody>
-             <tr ng-repeat-start='e in person.all_events' ng-class='{disproved: e.assertion.disproved, open: e.$open}' class='hasRowDetails' ng-click='toggleEventDetails(e)'/>
+             <tr ng-repeat-start='e in ctrl.person.all_events' ng-class='{disproved: e.assertion.disproved, open: e.$open}' class='hasRowDetails' ng-click='ctrl.toggleEventDetails(e)'/>
                 <td class="type">
                    {{e.event.type.name}}
                    <span ng-if='e.role != "principal"' class='role'>(as {{e.role || ''}})</span>
@@ -105,17 +105,17 @@
 
      <div class='panel panel-default'>
         <h4>Groups</h4>
-        <table id="events" class="table table-condensed" sort-on='person.all_events' sort-default='event.date_sort'>
+        <table id="events" class="table table-condensed" sort-on='ctrl.person.all_groups' sort-default='group.date_sort'>
           <thead>
              <tr>
-                <th sort-by='event.name'>Name</th>
-                <th sort-by='event.date_sort' sorter='date'>Date</th>
-                <th sort-by='event.place.name'>Place</th>
+                <th sort-by='group.name'>Name</th>
+                <th sort-by='group.date_sort' sorter='date'>Date</th>
+                <th sort-by='group.place.name'>Place</th>
                 <th>Surety</th>
              </tr>
           </thead>
           <tbody>
-             <tr ng-repeat='g in person.all_groups'>
+             <tr ng-repeat='g in ctrl.person.all_groups'>
                 <td>{{g.group.name}} ({{g.group.role || ''}})
                    <span source-link='g.assertion.source_id' source-title='sources[g.assertion.source_id].title'></span>
                 </td>
@@ -127,7 +127,7 @@
         </table>
      </div>
 
-     <div class='panel panel-default' ng-if='p2p.length!=0'>
+     <div class='panel panel-default' ng-if='ctrl.p2p.length!=0'>
         <h4>Links to other personas</h4>
 
         <p class="onUse" style="margin-top:10px; margin-left:30px;">
@@ -147,7 +147,7 @@
              </tr>
           </thead>
           <tbody>
-             <tr ng-repeat='p in p2p' ng-if='p.person1.id!=p.person2.id' ng-class='{disproved:p.disproved}'>
+             <tr ng-repeat='p in ctrl.p2p' ng-if='p.person1.id!=p.person2.id' ng-class='{disproved:p.disproved}'>
                 <!-- ??? Should we show sources and researcher -->
                 <td><span persona-link='p.person1.id'>{{p.person1.name}}</span></td>
                 <td><span persona-link='p.person2.id'>{{p.person2.name}}</span></td>

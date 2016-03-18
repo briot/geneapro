@@ -4,8 +4,8 @@
       <div id='contextMenu' class='contextMenu navbar navbar-default'>
          <ul class='nav nav-pills nav-stacked'>
             <li><a ng-click='focusPerson()'>Set as decujus</a></li>
-            <li ng-if='contextual.d.generation > 0'>
-               <a ng-click='expandPerson()'> {{ contextual.d.$expand ? 'Unexpand': 'Expand'}}</a>
+            <li ng-if='contextual.d.p.generation > 0'>
+               <a ng-click='expandPerson()'> {{ contextual.d.p.$expand ? 'Unexpand': 'Expand'}}</a>
             </li>
             <li><a ng-click='showPerson()'>Show details</a></li>
          </ul>

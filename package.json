@@ -9,7 +9,7 @@
       "url": "http://github.com:briot/geneapro.git"
    },
    "scripts": {
-      "start": "npm install && gulp && ./geneaprove.py",
+      "start": "npm install && node ./node_modules/tsd/build/cli.js install && gulp && ./geneaprove.py",
       "server": "./geneaprove.py"
    },
    "devDependencies": {
@@ -23,13 +23,14 @@
       "gulp-rename": "^1.2.2",
       "gulp-sourcemaps": "",
       "gulp-notify": "",
-      "gulp-babel": "",
-      "babel-preset-es2015": "",
+      "merge2": "",
 
       "gulp-minify-html": "^1.0.4",
       "gulp-ng-annotate": "^1.1.0",
       "gulp-angular-templatecache": "^1.7.0",
       "gulp-uglify": "^1.4.0",
+
+      "gulp-typescript": "",
 
       "gulp-sass": "",
       "gulp-autoprefixer": "^2.3.1",

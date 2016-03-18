@@ -3,12 +3,15 @@
  * These are mostly copied from Google closure
  */
 
+const TWO_PI = Math.PI * 2
+const HALF_PI = Math.PI / 2
+
 class math {
    /**
     * Standard % has the same size for the modulo as the dividend,
     * as opposed to standard math
     */
-   static modulo(a, b) {
+   static modulo(a : number, b : number) : number {
       const r = a % b;
       return (r * b < 0) ? r + b : r;
    }
@@ -16,7 +19,7 @@ class math {
    /**
     * Normalize an angle to be in the range [0-2PI]
     */
-   static standardAngle(angle) {
-      return math.modulo(angle, 2 * Math.PI);
+   static standardAngle(angle : number) : number {
+      return math.modulo(angle, TWO_PI);
    };
 }

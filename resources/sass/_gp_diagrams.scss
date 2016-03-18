@@ -81,16 +81,16 @@ svg {
          font-size: 0.8em;
       }
     }
-    .grid {
-       path {
-          stroke-width: 0;
-       }
-       .tick {
-          fill: none;
-          stroke: #ccc;
-          shape-rendering: crispEdges;
-       }
-    }
+   .grid {
+      path {
+         stroke-width: 0;
+      }
+      .tick {
+         fill: none;
+         stroke: #ccc;
+         shape-rendering: crispEdges;
+      }
+   }
 }
 
 //----------------------------------------------------------------

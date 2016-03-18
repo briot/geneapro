@@ -1,22 +1,22 @@
 <div class='row'>
    <div class='col-md-12'>
       <div class='panel panel-default'>
-         <div class='panel-heading editable-title' ng-click='showCitation=!showCitation'>
-            <span class='fa fa-pencil editable-title' ng-bind-html='source.title|linkyWithHtml'></span>
+         <div class='panel-heading editable-title' ng-click='ctrl.showCitation=!ctrl.showCitation'>
+            <span class='fa fa-pencil editable-title' ng-bind-html='ctrl.source.title|linkyWithHtml'></span>
          </div>
-         <div class='panel-body' ng-if='showCitation'>
-            <div gp-source-citation='source' higher-sources='higher_sources'></div>
+         <div class='panel-body' ng-if='ctrl.showCitation'>
+            <div gp-source-citation='ctrl.source' higher-sources='ctrl.higher_sources'></div>
          </div>
       </div>
    </div>
 
    <!-- The media for the source -->
    <div class='col-md-12'>
-      <div gp-source-media='source' repr='repr'></div>
+      <div gp-source-media='ctrl.source' repr='ctrl.repr'></div>
    </div>
 
    <!-- The assertions for the source -->
    <div class='col-md-12'>
-      <div gp-source-asserts='source' asserts='asserts'></div>
+      <div gp-source-asserts='ctrl.source' asserts='ctrl.asserts'></div>
    </div>
 </div>
