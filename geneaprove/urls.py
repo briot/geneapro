@@ -22,7 +22,7 @@ import geneaprove.views.importers
 def index(request):
     c = {}
     c.update(csrf(request))
-    return render_to_response('geneaprove/index.html', c)
+    return render_to_response('index.html', c)
 
 urlpatterns = patterns(
     '',

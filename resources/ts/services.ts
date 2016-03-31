@@ -3,10 +3,10 @@
  * These are mostly copied from Google closure
  */
 
-const TWO_PI = Math.PI * 2
-const HALF_PI = Math.PI / 2
+export const TWO_PI = Math.PI * 2
+export const HALF_PI = Math.PI / 2
 
-class math {
+export class math {
    /**
     * Standard % has the same size for the modulo as the dividend,
     * as opposed to standard math

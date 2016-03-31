@@ -1,0 +1,28 @@
+{
+   "compilerOptions": {
+      "target": "es5",
+      "module": "commonjs",
+      "removeComments": true,
+      "experimentalDecorators": true,
+      "emitDecoratorMetadata": true,
+      "sourceMap": true,
+      "inlineSourceMap": false,
+      "preserveConstEnums": false,
+      "noEmitOnError": false,
+      "noImplicitAny": true,
+      "allowUnreachableCode": false,
+      "noFallthroughCasesInSwitch": true,
+      "noImplicitReturn": true,
+      "newLine": "LF"
+   },
+   "exclude": [
+      "node_modules",
+      "typings/main.d.ts",
+      "typings/main"
+   ],
+   "filesGlob": [
+      "./resources/ts/*.ts",
+      "node_modules/awesome-typescript-loader/lib/runtime.d.ts",
+      "typings/browser.d.ts"
+   ]
+}

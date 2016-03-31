@@ -1,0 +1,11 @@
+{
+  "name": "geneaprove",
+  "version": false,
+  "ambientDependencies": {
+    "angular-local-storage": "github:DefinitelyTyped/DefinitelyTyped/angular-local-storage/angular-local-storage.d.ts#cc3d223a946f661eff871787edeb0fcb8f0db156",
+    "angular": "github:DefinitelyTyped/DefinitelyTyped/angularjs/angular.d.ts#cc3d223a946f661eff871787edeb0fcb8f0db156",
+    "angular-ui-router": "github:DefinitelyTyped/DefinitelyTyped/angular-ui-router/angular-ui-router.d.ts#cc3d223a946f661eff871787edeb0fcb8f0db156",
+    "jquery": "github:DefinitelyTyped/DefinitelyTyped/jquery/jquery.d.ts#cc3d223a946f661eff871787edeb0fcb8f0db156",
+    "d3": "github:DefinitelyTyped/DefinitelyTyped/d3/d3.d.ts#cc3d223a946f661eff871787edeb0fcb8f0db156"
+  }
+}

@@ -2,13 +2,8 @@
 geneaprove.sqlite
 node_modules/
 static/
-resources/geneaprove.min.js_gz
-resources/geneaprove.min.css_gz
-resources/geneaprove.min.css
-resources/geneaprove.min.js
-resources/geneaprove/.templates.js
-resources/ts/typings/
-resources/tmp
+upload/
+typings/
 manu/
 geneaprove/utils/citations/tmp.txt
 *.pyc

@@ -1,35 +1,36 @@
-/// <reference path="./paginate.ts" />
-/// <reference path="./basetypes.ts" />
-/// <reference path="typings/angularjs/angular" />
-/// <reference path="typings/angular-ui-router/angular-ui-router" />
+import {} from 'angular';
+import {} from 'angular-ui-router';
+import {app} from './app';
+import {IPerson} from './basetypes';
+import {IPaginateScope, PaginatedService} from './paginate';
 
-module GP {
-   app.config(($stateProvider : angular.ui.IStateProvider) => {
-      $stateProvider.
-      state('personas', {
-         url: '/personas',
-         templateUrl: 'geneaprove/personas.html',
-         controller: PersonaListController,
-         controllerAs: 'ctrl',
-         data: {
-            pageTitle: '[Genaprove] List of persons'
-         }
-      });
-   });
+const html_personas = require('geneaprove/personas.html');
 
-   interface ServerPersonaListResp {
-      persons: IPerson[];
-   }
-
-   class PersonaListController {
-      static $inject = ['$scope', 'Paginated'];
-      constructor(
-         $scope     : IPaginateScope,
-         paginated  : PaginatedService)
-      {
-         paginated.instrument(
-            $scope, '/data/persona/list', 'settings.personas.rows',
-            (data : ServerPersonaListResp) => data.persons);
+app.config(($stateProvider : angular.ui.IStateProvider) => {
+   $stateProvider.
+   state('personas', {
+      url: '/personas',
+      templateUrl: html_personas,
+      controller: PersonaListController,
+      controllerAs: 'ctrl',
+      data: {
+         pageTitle: '[Genaprove] List of persons'
       }
+   });
+});
+
+interface ServerPersonaListResp {
+   persons: IPerson[];
+}
+
+class PersonaListController {
+   static $inject = ['$scope', 'Paginated'];
+   constructor(
+      $scope     : IPaginateScope,
+      paginated  : PaginatedService)
+   {
+      paginated.instrument(
+         $scope, '/data/persona/list', 'settings.personas.rows',
+         (data : ServerPersonaListResp) => data.persons);
    }
 }
