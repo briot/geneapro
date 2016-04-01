@@ -1,0 +1,25 @@
+<div class='panel panel-default'>
+   <div class='panel-heading'>
+      {{panelTitle}}
+      <span>
+         <input placeholder="filter" [ngFormControl]="filter" style="float:right; width:250px"/>
+         <span *ngIf='paginated.offsetMax!=0'>{{paginated.offset + 1}} - {{paginated.offsetMax + 1}} / {{paginated.filteredData.length}}</span>
+      </span>
+   </div>
+   <div class='panel-body'>
+      <ng-content></ng-content>
+   </div>
+   <div class='panel-footer'>
+      <nav>
+         <ul class="pagination">
+            <li><a (click)="paginated.setPage(1)">&laquo;</a></li>
+            <li><a (click)="paginated.setPage(paginated.page - 1)">&lsaquo;</a></li>
+            <li *ngFor="let p of paginated.pageRange" [class.active]="paginated.page==p">
+               <a (click)="paginated.setPage(p)">{{p}}</a>
+            </li>
+            <li><a (click)="paginated.setPage(paginated.page + 1)">&rsaquo;</a></li>
+            <li><a (click)="paginated.setPage(paginated.maxPage)">&raquo;</a></li>
+         </ul>
+      </nav>
+   </div>
+</div>

@@ -15,7 +15,7 @@ this is a list of simple rules, each of which is one of:
 
   (RULE_ATTR, [tests], css)
       format is similar to EVENT, but these are tested on the person,
-      not once per event. The "field" would be one of "surname", "given",
+      not once per event. The "field" would be one of "surname",
       "age","ancestor", "ALIVE", "SEX", "UNKNOWN_FATHER", "UNKNOWN_MOTHER",
       "IMPLEX", "descendant", ...
       The "age" is computed from the person's birth, not checking whether that
@@ -343,7 +343,7 @@ class Styles(ColorScheme):
                 match = True
                 for t in r[1]:
                     if t[0] == "surname":
-                        value = person.surname
+                        value = person.surn
                     elif t[0] == "ALIVE":
                         if alive(person):
                             value = "Y"

@@ -1,17 +1,12 @@
-import {} from 'angular';
-import {} from 'angular-ui-router';
-import {app} from './app';
-
 /**
  * A service that downloads information about the surety schemes created
  * by the user, and provide that information asynchronously.
- * The service must be used asynchronously:
- *     function controller(suretySchemes) {
- *        suretySchemes.then(function(data) {
- *           // data is of type SuretySchemes, see below
- *         });
- *     }
  */
+
+import {Component, Input, Injectable} from '@angular/core';
+import {CORE_DIRECTIVES} from '@angular/common';
+import {Http} from '@angular/http';
+import {Observable} from 'rxjs';
 
 interface SuretySchemePart {
    id          : number,
@@ -27,16 +22,18 @@ interface SuretyScheme {
    parts       : SuretySchemePart[]
 }
 
-class SuretySchemesList {
+/**
+ * A list of all the known surety schemes
+ */
+export class SuretyList {
    private _parts : SuretySchemePart[] = [];  // indexed by id
 
-   constructor(
-      public schemes : SuretyScheme[])
+   constructor(private schemes : SuretyScheme[])
    {
-      angular.forEach(schemes, (s, s_idx) => {
-         angular.forEach(s.parts, (p) => {
+      schemes.forEach((s, idx) => {
+         s.parts.forEach(p => {
             this._parts[p.id] = p;
-            p.scheme = s_idx;
+            p.scheme = idx;
          });
       });
    }
@@ -50,62 +47,45 @@ class SuretySchemesList {
    }
 }
 
-type ServerSuretySchemeResp = angular.IHttpPromiseCallbackArg<SuretyScheme[]>;
+/**
+ * A service that retrieves and caches the known surety schemes
+ */
+@Injectable()
+export class SuretyService {
+   allSchemes  : Observable<SuretyList>;
 
-class SuretySchemesService {
-   private _promise : angular.IPromise<SuretySchemesList>;
-
-   static $inject = ['$http', '$q'];
-   constructor(
-       public $http : angular.IHttpService,
-       public $q    : angular.IQService)
-   {
-   }
-
-   get() {
-      if (!this._promise) {
-         const q = this.$q.defer();
-         this._promise = q.promise;
-
-         this.$http.get('data/suretySchemes').then(
-            (resp : ServerSuretySchemeResp) => {
-                q.resolve(new SuretySchemesList(resp.data));
-         }, function() {
-            q.reject();
-         });
-       }
-      return this._promise;
+   constructor(http : Http) {
+      // This won't perform a request until someone subscribes to it.
+      // share() ensures that all subscribers will receive the same info,
+      // downloaded only once.
+      this.allSchemes = http.get('/data/suretySchemes')
+         .map(resp => new SuretyList(resp.json()))
+         .share();
    }
 }
 
-app.service('suretySchemes', SuretySchemesService);
+/**
+ * A Component to display a specific surety scheme
+ */
+@Component({
+   selector:   'surety',
+   template:   require('./surety.html'),
+   directives: [CORE_DIRECTIVES]
+})
+export class Surety {
+   @Input() part   : number;   // the id of a specific part
+   selected : number;
+   scheme   : SuretyScheme;
 
-interface GpSuretyScope extends angular.IScope {
-   surety   : number,
-   selected : number,
-   scheme   : SuretyScheme
+   constructor(private _schemes : SuretyService) {}
+
+   ngOnInit() {
+      this._schemes.allSchemes.subscribe((s : SuretyList) => {
+         this.scheme = s.schemeFromPart(this.part);
+         if (this.scheme) {
+            const part = s.partFromId(this.part);
+            this.selected = part.sequence;
+         }
+      });
+   }
 }
-
-app.directive('gpSurety', (suretySchemes : SuretySchemesService) => {
-   return {
-      scope: {
-         surety   : '=gpSurety'
-      },
-      replace: true,
-      link: (scope : GpSuretyScope) =>  {
-         suretySchemes.get().then((data) => {
-            scope.scheme = data.schemeFromPart(scope.surety);
-            const part = data.partFromId(scope.surety);
-            if (scope.scheme) {
-               scope.selected = part.sequence;
-            }
-         });
-      },
-      template: '<ul class="rating">' +
-         '<li ng-repeat="p in scheme.parts" title="{{p.name}}&#10;{{p.description}}">' +
-            '<i ng-if="p.sequence<=selected" class="filled fa fa-star"></i>' +
-            '<i ng-if="p.sequence>selected" class="fa fa-circle"></i>' +
-         '</li>' +
-         '</ul>'
-   };
-});

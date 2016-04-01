@@ -1,0 +1,186 @@
+<div class='row' *ngIf='data'>   <!-- No need to render if we haven't finished downloading -->
+
+   <div class='col-md-10 col-lg-9'>
+     <h2>
+        <span class="givenName">{{data.person.givn}}</span>
+        <span class="surName">{{data.person.surn}}</span>
+        <span class="details">({{data.person.birth?.date || ''}} - {{data.person.death?.date || ''}})</span>
+     </h2>
+     <div class='panel panel-default'>
+        <h4>Characteristics</h4>
+        <table id="attrs" class="table table-condensed" [sortOn]='data.person.all_chars' sortName='personChar'>
+          <thead>
+             <tr>
+                <th [sortBy]='getCharName' [isdefault]='true'>Type</th>
+                <th>Value</th>
+                <th [sortBy]='getCharDate'>Date</th>
+                <th [sortBy]='getCharPlaceName'>Place</th>
+                <th>Surety</th>
+             </tr>
+          </thead>
+          <tbody>
+             <tr *ngFor='let c of data.person.all_chars'>
+                <td class="type">{{c.char.name}}
+                   <source-link [id]='c.assertion.source_id' [sourceTitle]='data.sources[c.assertion.source_id].title'></source-link>
+                </td>
+
+                <td *ngIf='c.parts.length == 1'>
+                   {{c.parts[0].value}}
+                </td>
+                <td *ngIf='c.parts.length > 1'>
+                   <span *ngFor='let p of c.parts'>
+                      <span class="char">{{p.name}}</span>: {{p.value}}<br>
+                   </span>
+                </td>
+        
+                <td class="date">{{c.char.date || ''}}</td>
+                <td class="place">{{c.char.place?.name || ''}}</td>
+                <td><surety [part]='c.assertion?.surety'></surety></td>
+              </tr>
+           </tbody>
+        </table>
+     </div>
+
+     <div class='panel panel-default'>
+        <h4>Events</h4>
+        <table id="events" class="table table-hover table-condensed" [sortOn]='data.person.all_events' sortName='personEvents'>
+          <thead>
+             <tr>
+                <th [sortBy]='getEventTypeName'>Type</th>
+                <th [sortBy]='getEventName'>Name</th>
+                <th [sortBy]='getEventDate' sorter='date' [isdefault]='true'>Date</th>
+                <th [sortBy]='getEventPlaceName'>Place</th>
+                <th>Surety</th>
+             </tr>
+          </thead>
+          <tbody>
+             <template ngFor let-e [ngForOf]="data.person.all_events">
+                <tr [class.disproved]='e.assertion.disproved' [class.open]='e.$open' class='hasRowDetails' (click)='toggleEventDetails(e)'>
+                   <td class="type">
+                      {{e.event.type.name}}
+                      <span *ngIf='e.role != "principal"' class='role'>(as {{e.role || ''}})</span>
+                      <source-link [id]='e.assertion.source_id' [sourceTitle]='data.sources[e.assertion.source_id].title'></source-link>
+                   </td>
+                   <td>
+                      {{ e.role == 'principal' ? '' : e.event.name }}
+                   </td>
+                   <td class="date">{{e.event.date || ''}}</td>
+                   <td class="place">{{e.event.place?.name || ''}}</td>
+                   <td><surety [part]='e.assertion.surety'></surety></td>
+                </tr>
+                <tr class='rowDetails' [hidden]='!e.$open'>
+                   <td class='extra' colspan='10'>
+                      <div>
+                         <i class='fa fa-spinner fa-spin' *ngIf='e.$details===undefined'></i>
+                         <table class='table table-condensed' *ngIf='e.$details'>
+                            <thead>
+                               <tr>
+                                  <th>Person</th>
+                                  <th>Role</th>
+                                  <th>Rationale</th>
+                                  <th>Surety</th>
+                                  <th>Sources</th>
+                               </tr>
+                            </thead>
+                            <tbody>
+                               <tr *ngFor='let p of e.$details.p2e' [class.disproved]='p.disproved'>
+                                  <td>
+                                     <persona-link [id]='p.person.id' [name]='p.person.name'></persona-link>
+                                  </td>
+                                  <td>{{p.role_name}}</td>
+                                  <td>{{p.rationale || ''}}</td>
+                                  <td><surety [part]='p.surety'></surety></td>
+                                  <td>
+                                     <source-link *ngIf='p.source.id' [id]='p.source.id' [sourceTitle]='data.sources[p.source.id].title'></source-link>
+                                  </td>
+                               </tr>
+                            </tbody>
+                         </table>
+                      </div>
+                   </td>
+                </tr>
+             </template>
+          </tbody>
+        </table>
+     </div>
+
+     <div class='panel panel-default'>
+        <h4>Groups</h4>
+        <table id="events" class="table table-condensed" [sortOn]='data.person.all_groups' sortName='personGroups'>
+          <thead>
+             <tr>
+                <th [sortBy]='getGroupName'>Name</th>
+                <th [sortBy]='getGroupDate' sorter='date' [isdefault]='true'>Date</th>
+                <th [sortBy]='getGroupPlaceName'>Place</th>
+                <th>Surety</th>
+             </tr>
+          </thead>
+          <tbody>
+             <tr *ngFor='let g of data.person.all_groups'>
+                <td>{{g.group.name}} ({{g.group.role || ''}})
+                   <source-link [id]='g.assertion.source_id' [sourceTitle]='sources[g.assertion.source_id].title'></source-link>
+                </td>
+                <td class="date">{{g.group.date || ''}}</td>
+                <td class="place">{{g.group.place || ''}}</td>
+                <td><surety [part]='g.assertion.surety'></surety></td>
+             </tr>
+          </tbody>
+        </table>
+     </div>
+
+     <div class='panel panel-default' *ngIf='data.p2p.length!=0'>
+        <h4>Links to other personas</h4>
+
+        <p class="onUse" style="margin-top:10px; margin-left:30px;">
+        This person is made up of several persona in the database. Each of
+        these persona was constructed from one or more sources, and then they
+        were all linked together with the following assertions. Disproving any
+        of these will change the information displayed above.
+        </p>
+
+        <table class='table table-condensed' id="p2p_assert">
+          <thead>
+             <tr>
+                <th>Persona1</th>
+                <th>Persona2</th>
+                <th>These are the same because</th>
+                <th>Surety</th>
+             </tr>
+          </thead>
+          <tbody>
+             <template ngFor let-p [ngForOf]='data.p2p'>
+                <tr *ngIf='p.p1.person.id!=p.p2.person.id' [class.disproved]='p.disproved'>
+                   <!-- ??? Should we show sources and researcher -->
+                   <td><persona-link [id]='p.p1.person.id' [name]='p.p1.person.name'></persona-link></td>
+                   <td><persona-link [id]='p.p2.person.id' [name]='p.p2.person.name'></persona-link></td>
+                   <td>{{p.rationale || ''}}</td>
+                   <td><surety [part]='p.surety'></surety></td>
+                </tr>
+             </template>
+          </tbody>
+        </table>
+     </div>
+   </div>
+
+   <div class='col-md-2 col-lg-3 sidebar'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Contents</div>
+         <div class='panel-body'>
+            <ul class='nav nav-pills nav-stacked'>
+               <li>Characteristics</li>
+               <li>Events</li>
+               <li>Groups</li>
+               <li>Links</li>
+            </ul>
+         </div>
+      </div>
+
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Research</div>
+         <div class='panel-body'>
+            What should be done to improve this person's details
+         </div>
+      </div>
+   </div>
+
+</div>

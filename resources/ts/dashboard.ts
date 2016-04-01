@@ -1,30 +1,23 @@
-import {app} from './app';
-import {} from 'angular';
-import {} from 'angular-ui-router';
+import {Component} from '@angular/core';
+import {Settings} from './settings.service';
+import {RouterLink} from '@angular/router-deprecated';
 
-const html = require('geneaprove/dashboard.html');
+@Component({
+   template: require('./dashboard.html'),
+   directives: [RouterLink]
+})
+export class Dashboard {
+   constructor(settings : Settings) {
+      // $http.get('/data/settings').then((resp : ServerDashboardResp) => {
+      //    const dp = resp.data.defaultPerson;
+      // });
 
-app.config(($stateProvider : angular.ui.IStateProvider) => {
-   $stateProvider.state('main', {
-      url: '',
-      templateUrl: html,
-      controller: DashboardController,
-      data: { pageTitle: '[Genaprove] Dashboard' }
-   });
-});
-
-type ServerDashboardResp = angular.IHttpPromiseCallbackArg<{
-   defaultPerson : number;
-}>;
-
-class DashboardController {
-   static $inject = ['$scope', '$http'];
-   constructor(
-      $scope : angular.IScope,
-      $http  : angular.IHttpService)
-   {
-      $http.get('/data/settings').then((resp : ServerDashboardResp) => {
-         const dp = resp.data.defaultPerson;
-      });
+      settings.setTitle('Dashboard');
    }
 }
+
+// const html = require('geneaprove/dashboard.html');
+//type ServerDashboardResp = angular.IHttpPromiseCallbackArg<{
+//   defaultPerson : number;
+//}>;
+

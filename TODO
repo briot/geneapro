@@ -1,5 +1,17 @@
 # for Emacs: -*- mode: org; mode: flyspell; fill-column: 79 -*-
 
+* Port to Angular2
+** Pedigree View
+*** Select Show Details, and then Back => not refreshed
+   This is documented as an Angular2 bug on Safari.
+*** Change vertical spacing => display broken on Safari
+** Missing fanchart
+** Source view
+*** Use a markdown editor (npm has one)
+** Import
+*** Use download form
+
+
 * Bugs
 ** Source page
 *** select new medium, fill information and use the browser's completion:
@@ -261,6 +273,8 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    http://blog.geneanet.org/index.php/post/2013/11/L-histoire-par-le-petit-bout-de-la-lorgnette-%3A-les-besoins-au-XVIIIe-siecle.html
 ** Old maps
    http://www.oldmapsonline.org/#bbox=-2.25731,47.420731,-2.032776,47.530723&q=&datefrom=1000&dateto=1745
+** Gallica
+   http://www.aupresdenosracines.com/2016/05/64-ressources-de-gallica-pour-completer-votre-genealogie.html
 
 * Existing code
 ** gedcom parsers
@@ -289,7 +303,9 @@ http://www.wolframalpha.com/input/?i=great+grand+mother%27s+niece
    http://ccbv.co.uk
 
 * CSS
-  http://learnlayout.com
+** http://learnlayout.com
+** Optimize for large screen display
+   https://css-tricks.com/optimizing-large-scale-displays/
 
 * GUI
 ** The toplevel menubar sections should match the genealogical process (collect, analyze,...)

@@ -1,0 +1,6 @@
+<ul class="rating">
+   <li *ngFor='let p of scheme?.parts' title="{{p.name}}&#10;{{p.description}}">
+      <i *ngIf="p.sequence<=selected" class="filled fa fa-star"></i>
+      <i *ngIf="p.sequence>selected" class="fa fa-circle"></i>
+   </li>
+</ul>

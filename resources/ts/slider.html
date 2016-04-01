@@ -1,0 +1,12 @@
+<div class="ui-slider horizontal" (click)='setvalue($event)' >
+   <span>{{min}}</span>
+   <span class="right">{{max}}</span>
+   <span
+         class='handle'
+         [style.left]='percent + "%"'
+         (mousedown)='mousedown($event)'
+         [class.active]='dragging'>
+      <span class="round"></span>
+      <span class="bubble">{{value}}</span>
+   </span>
+</div>

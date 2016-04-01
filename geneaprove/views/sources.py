@@ -27,7 +27,7 @@ def get_source(id):
 
     else:
         return models.Source.objects.select_related(
-            'repositories', 'researcher').get(pk=id)
+            'researcher').get(pk=id)
 
 
 class CitationModel(JSONView):

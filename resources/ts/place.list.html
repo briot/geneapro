@@ -1,0 +1,52 @@
+<div class='row'>
+
+   <div class='col-md-10 col-lg-9'>
+      <paginate panelTitle='List of places'>
+         <table class='table'>
+            <thead>
+               <tr>
+                  <th>Name</th>
+                  <th>Details</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr *ngIf='paginate.pagedData==undefined'>
+                  <td colspan='100'>Loading...</td>
+               </tr>
+               <tr *ngFor='let p of paginate.pagedData'>
+                  <td><place-link [id]='p.id' [name]='p.name'></place-link></td>
+                 <td>
+                    <!--{% for pa in p.parts.all %}
+                    <span class="char">{{pa.type.name}}</span>: {{pa.name}}<br>
+                    {% endfor %}
+           
+                    {% if p.parent_place %}
+                    <span class="char">Parent place</span>: {{p.parent_place.name}}<br>
+                    {% endif %}
+                    -->
+                 </td>
+              </tr>
+            </tbody>
+         </table>
+      </paginate>
+   </div>
+
+   <!-- Sidebar -->
+   <div class='col-md-2 col-lg-3 sidebar'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Settings</div>
+         <div class='panel-body'>
+            <ul class='nav nav-pills nav-stacked'>
+               <li class='config'>
+                  <span>Rows per page</span>
+                  <select [ngFormControl]='rows'>
+                     <option *ngFor='let r of paginate.rows' [value]='r.rows'>{{r.label}}</option>
+                  </select>
+               </li>
+            </ul>
+         </div>
+      </div>
+   </div>
+
+</div>
+

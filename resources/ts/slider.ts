@@ -1,72 +1,52 @@
-import {} from 'angular';
-import {app} from './app';
-
-interface SliderScope extends angular.IScope {
-   ngModel : any,
-   min     : string,
-   max     : string,
-   val    ?: number;
-}
-
 /**
  * A horizontal slider
  */
-app.directive('gpSlider', ($document : angular.IDocumentService) => {
-   return {
-      scope: {
-         ngModel: '=',
-         min: '@',
-         max: '@'
-      },
-      link: (scope : SliderScope, element : angular.IAugmentedJQuery) => {
-         const a = element.find('a');
-         const min = parseFloat(scope.min);
-         const range = parseFloat(scope.max) - min;
-         scope.val = scope.ngModel;
 
-         function update(val = min, notify : boolean = false) {
-            const r = (val - min) / (range) * 100;
-            a.css('left', r + '%');
-            if (notify) {  // val != scope.val) {
-               scope.val = Math.floor(val);
-               scope.$apply();
-            }
-         }
-         update(scope.ngModel, false);
+import {Component, Input, Output, EventEmitter, ElementRef} from '@angular/core';
 
-         element.bind('click', function(event) {
-            const r = element[0].getBoundingClientRect();
-            let ratio = (event.clientX - r.left) / r.width;
-            ratio = Math.max(Math.min(ratio, 1), 0);
-            scope.ngModel = Math.floor(min + ratio * range);
-            update(scope.ngModel, true /* notify */);
-         });
+@Component({
+   selector: 'slider',
+   template: require('./slider.html')
+})
+export class Slider {
+   @Input() min : string;
+   @Input() max : string;
+   @Output() valueChange = new EventEmitter<number>();
+   @Input() value : number = 0;
 
-         a.bind('mousedown', function(event) {
-            event.stopPropagation();
-            event.preventDefault();
-            a.addClass('active');
-            $document.bind('mousemove', function(event) {
-               const r = element[0].getBoundingClientRect();
-               let ratio = (event.clientX - r.left) / r.width;
-               ratio = Math.max(Math.min(ratio, 1), 0);
-               update(min + ratio * range, true /* notify */);
-            });
-            $document.bind('mouseup', function() {
-               a.removeClass('active');
-               $document.unbind('mousemove');
-               $document.unbind('mouseup');
-               scope.ngModel = scope.val;
-               scope.$apply();
-            });
-         });
+   percent  : number = 0;
+   dragging : boolean = false;  // whether the mouse is dragging
 
-      },
-      replace: true,
-      template: '<div class="ui-slider horizontal">' +
-         '<span>{{min}}</span>' +
-         '<span class="right">{{max}}</span>' +
-         '<a href=""><span class="handle"></span><span class="bubble">{{val}}</span></a>' +
-         '</div>'
-   };
-});
+   constructor(private element : ElementRef) {}
+
+   ngOnInit() {
+      const min = parseFloat(this.min);
+      const range = parseFloat(this.max) - min;
+      this.percent = (this.value - min) / range * 100;
+   }
+
+   setvalue(event : MouseEvent) {
+      const min = parseFloat(this.min);
+      const range = parseFloat(this.max) - min;
+      const r = this.element.nativeElement.getBoundingClientRect();
+      let ratio = (event.clientX - r.left) / r.width;
+      ratio = Math.max(Math.min(ratio, 1), 0);
+      this.value = Math.floor(min + ratio * range);
+      this.percent = ratio * 100;
+      this.valueChange.next(this.value); // let the world know
+   }
+
+   mousedown(event : MouseEvent) {
+      this.dragging = true;
+
+      const onmousemove = (event : MouseEvent) => this.setvalue(event);
+      const onmouseup = (event : MouseEvent) => {
+         this.dragging = false;
+         document.removeEventListener('mousemove', onmousemove);
+         document.removeEventListener('mouseup', onmouseup);
+      };
+
+      document.addEventListener('mousemove', onmousemove);
+      document.addEventListener('mouseup', onmouseup);
+   }
+}

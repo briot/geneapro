@@ -1,7 +1,18 @@
-import {} from 'angular';
-import {} from 'angular-ui-router';
-import {app} from './app';
+import {Component} from '@angular/core';
+import {NgIf} from '@angular/common';
 
+@Component({
+   template:   require('./import.html'),
+   directives: [NgIf]
+})
+export class Import {
+   importing = false;
+   error = '';
+   success : boolean;  // undefined initially
+
+}
+
+/*
 const html_import = require('geneaprove/import.html');
 
 app.config(($stateProvider : angular.ui.IStateProvider) => {
@@ -49,3 +60,4 @@ class ImportController {
       }
    }
 }
+*/

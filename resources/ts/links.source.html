@@ -1,0 +1,4 @@
+<span *ngIf='name' style='margin-right:5px' innerHtml='{{name|linky}}'></span>
+<a [routerLink]="['Source', {id:id}]" class='gpLink'>
+   <span *ngIf='id' class='fa fa-book gpLinkSuper' [title]='sourceTitle'>{{id}}</span>
+</a>

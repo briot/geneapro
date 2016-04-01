@@ -1,97 +1,44 @@
-import {} from 'angular';
-import {app} from './app';
-import {IPerson, IGPRootScope, IStyle, IServerPedigreeData,
-   IEvent, IStyleIdToStyle} from './basetypes';
+import {Injectable, EventEmitter} from '@angular/core';
+import {Http, URLSearchParams} from '@angular/http';
+import {Observable} from 'rxjs';
+import {Settings} from './settings.service';
+import {PersonaService} from './persona.service';
+import {IPerson, IStyle, IEvent, IStyleIdToStyle} from './basetypes';
 
 /**
- * A class that stores the pedigree data for a person, and various
- * pieces of information to render it on screen.
- * This information is independent of any specific layout (tree, fanchart,..)
+ * This class provides information about the pedigree for a given person.
+ * Starting from that person, it lists (recursively) the parents and children.
+ * This class is not injectable, and can only be created via a PedigreeService
  */
-
-export class PedigreeService {
+export class PedigreeData {
    // A unique Id used when adding unknown ancestors. These must still have a
    // unique Id, since they might be used in hash tables or associated with
    // SVG elements
    private static uniqueId = -1; 
 
-   id : number;  // id of the main person
-   main : IPerson;   // the main person (decujus) in the tree
-   styles : IStyleIdToStyle = {};  // all the styles to display personas
-   loaded_generations : number = 0; // number of known ancestor gens
-   loaded_descendants : number = 0; // number of known descendants
-   requested_gens : number = 0;
-   requested_desc : number = 0;
-   promise_ : angular.IPromise<PedigreeService>;
+   decujus     : IPerson;  // the root person
+   styles      : IStyleIdToStyle = {}; // The global styles (a person.style references this)
+   generations : number = 0;  // number of ancestors gens to compute
+   descendants : number = 0;  // number of descendant gens to compute
 
-   // Inject the necessary services in the constructor
-   static $inject = ['$http', '$q', '$rootScope'];
-   constructor(public $http      : angular.IHttpService,
-               public $q         : angular.IQService,
-               public $rootScope : IGPRootScope)
+   // Additional details for a person
+   details     : { [id:number]: Observable<string[]>} = {};
+
+   constructor(
+      private personas    : PersonaService,
+      private settings    : Settings,
+      private decujus_id  : number)
    {
    }
 
    /**
-    * Return the id of the current decujus
+    * Whether `this` already contains the information for the given person's
+    * ancestors and descendants
     */
-   decujus() {
-      return this.id;
-   }
-
-   /**
-    * Set the id of the new selected person
-    */
-   select(id : number) {
-      if (id != this.id) {
-         this.$rootScope.decujus = id;
-         this.id = id;
-         this.main = undefined;
-         this.loaded_generations = undefined;
-         this.loaded_descendants = undefined;
-         this.requested_gens = 0;
-         this.requested_desc = 0;
-         this.promise_ = undefined;  // asynchronous loading
-      }
-   }
-
-   /**
-    * Download the pedigree information for that person
-    * @param gens   Number of ancestor generations
-    * @param descendant_gens  Number of descendant generations.
-    * @param year_only  Whether to send full dates or only years.
-    */
-   get(gens : number, descendant_gens : number, year_only : boolean=false) {
-      // Shortcut when we need fewer generations than already loaded
-      if (this.promise_ !== undefined &&
-          gens <= this.requested_gens &&
-          descendant_gens <= this.requested_desc)
-      {
-         return this.promise_;
-      }
-
-      this.requested_gens = Math.max(this.requested_gens, gens);
-      this.requested_desc = Math.max(this.requested_desc, descendant_gens);
-
-      const q = this.$q.defer();
-      this.promise_ = q.promise;
-      this.$http.get('/data/pedigree/' + this.id,
-                {params: {
-                    'gens': gens,
-                    'descendant_gens': descendant_gens,
-                    'year_only': year_only
-                    //'gens_known': this.loaded_generations || -1,
-                    //'desc_known': this.loaded_descendants || -1
-                }}).
-      then(resp => {
-         this.setData_(<IServerPedigreeData> resp.data);
-         q.resolve(this);
-      }, () => {
-         this.loaded_generations = undefined; // will force a full update
-         q.reject();
-      });
-
-      return this.promise_;
+   contains(id : number, generations : number, descendants : number) {
+      return (this.decujus_id == id &&
+              generations <= this.generations &&
+              descendants <= this.descendants);
    }
 
    /**
@@ -101,43 +48,16 @@ export class PedigreeService {
     *    details are already available in this.details.
     */
    getDetails(person : IPerson) {
-      if (person.details === undefined) {
-         person.details = [];  // prevent a second parallel download
-         return this.$http.get('/personaEvents/' + person.id).then(resp => {
-            person.details = <string[]>resp.data;
-         });
+      if (this.details[person.id] === undefined) {
+         this.details[person.id] = this.personas.getDetails(person.id);
       }
    }
 
    /**
-    * Whether this is an unknown person
-    */
-   isUnknown(p : IPerson) : boolean {
-      return p.id < 0;
-   }
-
-   /** Return the name to display for a person */
+    * Return the name to display for a person
+    */ 
    displayName(person : IPerson) {
       return (person.surn || '') + ' ' + (person.givn || ' ');
-   }
-
-   /**
-    * Convert an event to a string that can be displayed.
-    * @param use_date_sort
-    *    Whether to use the date (i.e. a string as entered by the user,
-    *    not parsable) or the sort_date (i.e. a formatted string)
-    */
-   event_to_string(e : IEvent, use_date_sort=false) {
-      if (e) {
-         let s = (use_date_sort ? e.date_sort : e.date) || '';
-         //  Show whether the event has a source
-         if (s && this.$rootScope.settings.sourcedEvents) {
-            s += (e.sources ? ' \u2713' : ' \u2717');
-         }
-         return s;
-      } else {
-         return '';
-      };
    }
 
    /**
@@ -152,133 +72,207 @@ export class PedigreeService {
    }
 
    /**
-    * Add entries for unknown persons
+    * Recursively compute the angles for each person. This is used to
+    * compute colors in some contexts
     */
-   addUnknown(gens : number) {
-      const data : IServerPedigreeData = {
-         decujus: this.main,
-         generations: gens
-      };
-
-      function addParents(indiv : IPerson) {
-         if (indiv.generation < gens) {
-            if (!indiv.parents) {
-               indiv.parents = [null, null];
+   private static setAngle(p : IPerson, sosa : number, maxInGen : number) {
+      const maxNextGen = maxInGen * 2;
+      p.sosa = sosa;
+      p.angle = (sosa - maxInGen) / maxInGen;
+      if (p.parents) {
+         let s = 0;
+         while (s < p.parents.length) {
+            if (p.parents[s]) {
+               PedigreeData.setAngle(p.parents[s], sosa * 2 + s, maxNextGen);
             }
-
-            let father = indiv.parents[0];
-            if (!father) {
-               father = {id: PedigreeService.uniqueId--,
-                         name: undefined,
-                         generation: indiv.generation + 1,
-                         sosa: indiv.sosa * 2};
-               indiv.parents[0] = father;
-            }
-            addParents(father);
-
-            let mother = indiv.parents[1];
-            if (!mother) {
-               mother = {id: PedigreeService.uniqueId--,
-                         name: undefined,
-                         generation: indiv.generation + 1,
-                         sosa: indiv.sosa * 2 + 1};
-               indiv.parents[1] = mother;
-            }
-            addParents(mother);
+            s++;
          }
       }
-      addParents(this.main);
-
-      this.setData_(data);  //  merge with existing data
    }
 
    /**
-    * Remove all unknown persons added via addUnknown
+    * Recursively compute angle data for children generations
+    *  @param indiv  The person.
+    *  @param from   start angle.
+    *  @param to     end angle.
     */
-   removeUnknown() {
-      const _remove = (p : IPerson) => {
-         if (p.parents) {
-            angular.forEach(p.parents, (pa, idx) => {
-               if (pa) {
-                  _remove(pa);
-                  if (this.isUnknown(pa)) {
-                     p.parents[idx] = undefined;
-                  }
-               }
-            });
+   private static setChildrenAngle(p : IPerson, from : number, to : number) {
+      p.angle = from;
+      if (p.children) {
+         const step = (to - from) / p.children.length;
+         for (let c = 0; c < p.children.length; c++) {
+            if (p.children[c]) {
+               p.children[c].sosa = -1;
+               p.children[c].parent_ = p;
+               PedigreeData.setChildrenAngle(
+                  p.children[c], from + c * step, from + (c + 1) * step);
+            }
          }
       }
-      _remove(this.main);
    }
 
    /**
     * Merge the pedigree data we just loaded with the one in memory.
     * This adds a number of attributes to the various personas, so that
     * we can display them with appropriate colors.
-    * This function is called automatically when the data is loaded from
-    * the server.
     */
-   setData_(data : IServerPedigreeData) {
-      this.main = data['decujus']
-      const dt = data['styles'];
-      const dg = data['generations'];
-      const dd = data['descendants'];
+   setData(decujus     : IPerson,
+           styles      : IStyleIdToStyle,
+           generations : number,
+           descendants : number)
+   {
+      // ??? Should merge data instead so that we can load partial data
+      this.decujus = decujus;
+      this.generations = Math.max(generations, this.generations);
+      this.descendants = Math.max(descendants, this.descendants);
 
-     if (this.loaded_generations !== undefined) {
-         this.loaded_generations = Math.max(dg, this.loaded_generations);
-         this.loaded_descendants = Math.max(dd, this.loaded_descendants);
-      } else {
-         this.loaded_generations = dg;
-         this.loaded_descendants = dd;
+      for (let d in styles) {
+         this.styles[d] = styles[d];
       }
 
-      // Merge the information
+      PedigreeData.setAngle(this.decujus, 1, 1);
+      PedigreeData.setChildrenAngle(this.decujus, 0, 1);
+   }
 
-      for (let d in dt) {
-         this.styles[d] = dt[d];
+   /**
+    * Whether this is an unknown person, added via addUknown
+    */
+   isMissing(p : IPerson) : boolean {
+      return p.id < 0;
+   }
+
+   /**
+    * Create a new missing person
+    */
+   private newMissing(generation : number, sosa : number) : IPerson {
+       return {
+          id: PedigreeData.uniqueId--,
+          name: undefined,
+          generation: generation,
+          sosa: sosa};
+   }
+
+   /**
+    * Add entries for missing persons in the pedigree tree.
+    */
+   addMissingPersons() {
+      const addParents = (indiv : IPerson) => {
+         if (indiv.generation >= this.generations) {
+            return;
+         }
+
+         if (!indiv.parents) {
+            indiv.parents = [null, null];
+         }
+
+         let father = indiv.parents[0];
+         if (!father) {
+            father = this.newMissing(indiv.generation + 1, indiv.sosa * 2);
+            indiv.parents[0] = father;
+         }
+         addParents(father);
+
+         let mother = indiv.parents[1];
+         if (!mother) {
+            mother = this.newMissing(indiv.generation + 1, indiv.sosa * 2 + 1);
+            indiv.parents[1] = mother;
+         }
+         addParents(mother);
       }
+      addParents(this.decujus);
+   }
 
-      // Compute the angle for each visible person. This is used to
-      // compute colors in some contexts
-
-      function _setAngle(p : IPerson, sosa : number, maxInGen : number) {
-         const maxNextGen = maxInGen * 2;
-         p.sosa = sosa;
-         p.angle = (sosa - maxInGen) / maxInGen;
+   /**
+    * Remove all unknown persons added via addUnknown
+    */
+   removeMissing() {
+      const _remove = (p : IPerson) => {
          if (p.parents) {
-            let s = 0;
-            while (s < p.parents.length) {
-               if (p.parents[s]) {
-                  _setAngle(p.parents[s], sosa * 2 + s, maxNextGen);
+            p.parents.forEach((pa, idx) => {
+               if (pa) {
+                  _remove(pa);
+                  if (this.isMissing(pa)) {
+                     p.parents[idx] = undefined;
+                  }
                }
-               s++;
-            }
+            });
          }
       }
-      _setAngle(this.main, 1, 1);
+      _remove(this.decujus);
+   }
 
-      /**
-       *  @param indiv  The person.
-       *  @param from   start angle.
-       *  @param to     end angle.
-       */
-      function _doAnglesForChildren(indiv : IPerson, from : number, to : number) {
-         indiv.angle = from;
-         if (indiv.children) {
-            const step = (to - from) / indiv.children.length;
-            for (let c = 0; c < indiv.children.length; c++) {
-               if (indiv.children[c]) {
-                  indiv.children[c].sosa = -1;
-                  indiv.children[c].parent_ = indiv;
-                  _doAnglesForChildren(indiv.children[c],
-                                       from + c * step,
-                                       from + (c + 1) * step);
-               }
-            }
+
+   /**
+    * Convert an event to a string that can be displayed.
+    * @param use_date_sort
+    *    Whether to use the date (i.e. a string as entered by the user,
+    *    not parsable) or the sort_date (i.e. a formatted string)
+    */
+   event_to_string(e : IEvent, use_date_sort=false) {
+      if (e) {
+         let s = (use_date_sort ? e.date_sort : e.date) || '';
+         //  Show whether the event has a source
+         if (s && this.settings.sourcedEvents) {
+            s += (e.sources ? ' \u2713' : ' \u2717');
          }
-      }
-      _doAnglesForChildren(this.main, 0, 1);
+         return s;
+      } else {
+         return '';
+      };
    }
 }
 
-app.service('Pedigree', PedigreeService);
+/**
+ * A class that stores the pedigree data for a person, and various
+ * pieces of information to render it on screen.
+ * This information is independent of any specific layout (tree, fanchart,..)
+ */
+
+@Injectable()
+export class PedigreeService {
+   styles : IStyleIdToStyle = {};  // all the styles to display personas
+   requested_gens : number = 0;
+   requested_desc : number = 0;
+
+   // The current data, which will be changed when another person is set
+   // as root, or additional generations are requested.
+   private data   : PedigreeData;
+
+   constructor(private http     : Http,
+               private personas : PersonaService,
+               private settings : Settings) {
+   }
+
+   /**
+    * Download the pedigree information for that person
+    * @param id     Id of the root person
+    * @param gens   Number of ancestor generations
+    * @param descendant_gens  Number of descendant generations.
+    * @param year_only  Whether to send full dates or only years.
+    */
+   get(id              : number,
+       gens            : number,
+       descendant_gens : number,
+       year_only       : boolean=false) : Observable<PedigreeData>
+  {
+     // Shortcut when we need fewer generations than already loaded
+     if (this.data !== undefined &&
+         this.data.contains (id, gens, descendant_gens))
+     {
+        return Observable.of(this.data);
+     } else {
+        let params = new URLSearchParams();
+        params.set('gens',            gens.toString());
+        params.set('descendant_gens', descendant_gens.toString());
+        params.set('year_only',       year_only.toString());
+        return this.http.get('/data/pedigree/' + id, {search: params})
+           .map(resp => {
+              let r = resp.json();
+              this.data = new PedigreeData(this.personas, this.settings, id);
+              this.data.setData(
+                 r.decujus, r.styles, r.generations, r.descendants);
+              return this.data;
+           });
+     }
+   }
+}

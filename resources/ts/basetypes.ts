@@ -1,13 +1,10 @@
 // Do not use external modules, since otherwise we can no longer use internal
 // modules.
 
-import {} from 'angular';
-import {} from 'angular-ui-router';
-
-export enum layoutScheme {EXPANDED = 0, COMPACT = 1}
-export enum appearance {FLAT = 0, GRADIENT = 1}
-export enum linkStyle {STRAIGHT = 0, ORTHOGONAL = 1, CURVE = 2}
-export enum colorScheme {
+export enum LayoutScheme {EXPANDED = 0, COMPACT = 1}
+export enum Appearance {FLAT = 0, GRADIENT = 1}
+export enum LinkStyle {STRAIGHT = 0, ORTHOGONAL = 1, CURVE = 2}
+export enum ColorScheme {
    RULES = 0,
    //  color of a person's box is computed on the server, depending on the
    //  highlighting rules defined by the user
@@ -40,68 +37,9 @@ export interface IStyle {
    stroke ?: string;
    color  ?: string;
 }
-export interface IFanchartSettings {
-   showMarriages : boolean;  // Whether to show marriage info
-   angle : number; // total angle opening of the layout
-   space : number; // Space between persons on a given generation
-   gens : number;  // Number of generations to show
-   readableNames : boolean;  // Whether to rotate text to make it more readable
-   showMissing : boolean;    // Whether to draw empty sectors for missing persons
-   colorScheme : colorScheme;
-   appearance : appearance;
-}
-export interface IPedigreeSettings {
-   layoutScheme  : layoutScheme;
-   colorScheme   : colorScheme;
-   appearance    : appearance;
-   linkStyle     : linkStyle;
-   gens          : number;  // Number of ancestor generations to display
-   descendant_gens : number; // Number of descendants generations
-   showMarriages   : boolean; // Whether to display marriage info
-   sameSize        : boolean; // Whether to force all boxes to have same size
-                              // Otherwise the size changes for each gen
-   showDetails     : boolean; // Whether to show additional details as we zoom in
-   horizPadding    : number;  // Padding on the sides of each box
-   vertPadding     : number;  // Minimal vertical space between two boxes
-}
-export interface IRadialSettings {
-   gens            : number;
-   colorScheme     : colorScheme;
-   appearance      : appearance;
-   showText        : boolean;  // Whether to display names
-}
-export interface IPersonListSettings {
-   colorScheme : colorScheme;
-   rows : number;  // number of rows to display
-}
-export interface ISourceListSettings {
-   rows : number;  // number of rows to display
-}
-export interface IPlaceListSettings {
-   colorScheme : colorScheme;
-}
-export interface IApplicationSettings {
-   sourcedEvents: boolean,  // whether to show a tick next to sourced events
-   fanchart : IFanchartSettings;
-   personas : IPersonListSettings;
-   sources  : ISourceListSettings;
-   places   : IPlaceListSettings;
-   pedigree : IPedigreeSettings;
-   radial   : IRadialSettings;
-}
 
-export interface IGPRootScope extends angular.IRootScopeService {
-   decujus    : number;   // id of the decujus
-   settings   : IApplicationSettings;
-   pageTitle  ?: string;
-}
 export interface IStyleIdToStyle {
    [id : number] : IStyle;
-}
-export interface ISourcePart {
-   name       : string;
-   value      : string;
-   fromHigher ?: boolean;
 }
 export interface ISource {
    id                 : number;
@@ -190,8 +128,8 @@ export interface IPerson {
    name  : string;   // display name as stored in db
    parents ?: Array<IPerson>;
    children ?: Array<IPerson>;
-   details ?: string[];  // additional data to display for this person
-   style ?: number;      // id of the style
+   styles ?: string;     // inline styles
+   style  ?: number;     // id of the predefined style
    surn ?: string;
    givn ?: string;
    birth ?: IEvent;
@@ -213,10 +151,4 @@ export interface IPerson {
 
    // Fanchart layout  (??? Should be moved elsewhere)
    $expand ?: boolean;   // whether to expand person in fanchart
-}
-export interface IServerPedigreeData {   // AJAX data from server
-   decujus : IPerson;
-   styles ?: IStyleIdToStyle;
-   generations : number;
-   descendants ?: number;
 }

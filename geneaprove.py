@@ -21,7 +21,7 @@ if __name__ == "__main__":
             pass
         execute_from_command_line(["manage.py", "syncdb", "--noinput"])
 
-        f = os.path.join(settings.STATIC_ROOT, 'geneaprove/initial_data.json')
+        f = os.path.join('geneaprove/initial_data.json')
         execute_from_command_line(["manage.py", "loaddata", f])
     
     execute_from_command_line([sys.argv[0], "runserver", "8000"])

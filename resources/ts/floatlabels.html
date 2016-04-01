@@ -1,0 +1,15 @@
+<div class="form-group floatlabel">
+   <input *ngIf='lines==1'
+          class="form-control" [attr.readonly]='readonly?true:null' [id]="labelid" title="{{title}}"
+          [name]='labelid'
+          [class.nonempty]='modelpath!=""'
+          [(ngModel)]='modelpath' (ngModelChange)='modelpathChange.emit($event)' >
+   <textarea *ngIf='lines>1'
+          [rows]='lines'
+          [name]='labelid'
+          class="form-control" [attr.readonly]='readonly?true:null' [id]="labelid" title="{{title}}"
+          [class.nonempty]='modelpath!=""'
+          [(ngModel)]='modelpath' (ngModelChange)='modelpathChange.emit($event)'>
+   </textarea>
+   <label [attr.for]="labelid">{{label}}</label>
+</div>

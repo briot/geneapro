@@ -48,6 +48,9 @@ urlpatterns = [
     url(r'^data/repr/(?P<id>\d+)(?:/(?P<size>\d+))?$',
                                geneaprove.views.representation.view),
 
+    # Fallback to support the path location strategy in URLs
+    url(r'^.*', index, name='index'),
+
     # ... below: not moved to angularJS yet
 
     url(r'^quilts/(\d+)?$', geneaprove.views.graph.quilts_view),

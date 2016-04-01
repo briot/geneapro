@@ -1,6 +1,6 @@
 {
    "compilerOptions": {
-      "target": "es5",
+      "target": "es6",
       "module": "commonjs",
       "removeComments": true,
       "experimentalDecorators": true,
@@ -23,6 +23,6 @@
    "filesGlob": [
       "./resources/ts/*.ts",
       "node_modules/awesome-typescript-loader/lib/runtime.d.ts",
-      "typings/browser.d.ts"
+      "typings/index.d.ts"
    ]
 }

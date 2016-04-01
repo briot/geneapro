@@ -1,5 +1,6 @@
 var webpack = require('webpack');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
+var debugHTML = true;
 
 module.exports = {
    metadata: {
@@ -23,24 +24,20 @@ module.exports = {
       root: 'resources',
 
       alias: {
-         'angular':
-            __dirname + '/node_modules/angular/angular.min.js',
-         'angular-ui-router':
-            __dirname + '/node_modules/angular-ui-router/release/angular-ui-router.min.js',
-         'angular-sanitize':
-            __dirname + '/node_modules/angular-sanitize/angular-sanitize.min.js',
-         'angular-local-storage':
-            __dirname + '/node_modules/angular-local-storage/dist/angular-local-storage.min.js',
-         'angular-upload':
-            __dirname + '/node_modules/angular-upload/angular-upload.min.js',
-         'd3':
-            __dirname + '/node_modules/d3/d3.min.js'
+         //'dummy-es6':
+         //   __dirname + '/node_modules/es6-shim/es6-shim.min.js',
+
+         //'alias-angular2-polyfills':
+         //   __dirname + '/node_modules/angular2/bundles/angular2-polyfills.min.js',
+
+         'alias-d3': __dirname + '/node_modules/d3/d3.min.js',
+         'alias-zonejs': __dirname + '/node_modules/zone.js/dist/zone.min.js'
       }
    },
 
    plugins: [
       new HtmlWebpackPlugin({
-         template: 'resources/geneaprove/index.html',
+         template: 'resources/ts/index.html',
          chunkSortMode: 'auto'
       }),
 
@@ -73,18 +70,23 @@ module.exports = {
    },
 
    module: {
-       noParse: [__dirname + '/node_modules/angular/angular.min.js',
-                 __dirname + '/node_modules/angular-ui-router/release/angular-ui-router.min.js',
-                 __dirname + '/node_modules/angular-sanitize/angular-sanitize.min.js',
-                 __dirname + '/node_modules/angular-local-storage/dist/angular-local-storage.min.js',
-                 __dirname + '/node_modules/angular-upload/angular-upload.min.js',
-                 __dirname + '/node_modules/d3/d3.min.js'],
+       noParse: [__dirname + '/node_modules/d3/d3.min.js',
+                 //__dirname + '/node_modules/es6-shim/es6-shim.min.js',
+                 __dirname + '/node_modules/@angular/core/bundles/core.umd.min.js',
+                 __dirname + '/node_modules/@angular/common/bundles/common.umd.min.js',
+                 //__dirname + '/node_modules/@angular/compiler/bundles/compiler.umd.min.js',
+                 __dirname + '/node_modules/@angular/http/bundles/http.umd.min.js',
+                 __dirname + '/node_modules/@angular/platform-browser-dynamic/bundles/platform-browser-dynamic.umd.min.js',
+                 __dirname + '/node_modules/@angular/platform-browser/bundles/platform-browser.umd.min.js',
+                 //__dirname + '/node_modules/@angular/platform-server/bundles/platform-server.umd.min.js',
+                 __dirname + '/node_modules/@angular/router/bundles/router.umd.min.js',
+                 __dirname + '/node_modules/rxjs/bundles/Rx.min.js',
+                ],
 
        loaders: [
            {test: /\.ts$/,   loader: 'awesome-typescript-loader'},
-       // ??? Missing autoprefixer and cssmin
-           {test: /\.scss$/, loaders: ['style', 'css?sourceMap', 'sass?sourceMap'] },
-           {test: /\.html$/, loader: 'ngtemplate?relativeTo=resources/&module=geneaprove!html',
+           {test: /\.scss$/, loaders: ['style', 'css', 'sass'] },
+           {test: /\.html$/, loader: 'html',
               exclude: [__dirname + '/resources/geneaprove/index.html']},
 
            // fonts for font-awesome
@@ -101,12 +103,12 @@ module.exports = {
                       'node_modules/'],
    },
    htmlLoader: {
-       minimize: true,  // always, to detect errors in the HTML
-       removeComments: true,
-       removeCommentsFromCDATA: true,
-       collapseWhitespace: true,
+       minimize: !debugHTML,  // always, to detect errors in the HTML
+       removeComments: !debugHTML,
+       removeCommentsFromCDATA: !debugHTML,
+       collapseWhitespace: !debugHTML,
        conservativeCollapse: false,
-       removeAttributeQuotes: true,
+       removeAttributeQuotes: false,  // not compatible with Angular2
        useShortDoctype: true,
        keepClosingSlash: true,
    },

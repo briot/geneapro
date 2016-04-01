@@ -21,7 +21,6 @@ class ProfileMiddleware(object):
         if self.__doprofile():
             request.profiler.disable()
             stamp = "%s" % (request.path.replace("/", "__"),)
-            #stamp = "%s-%s" % (request.META['REMOTE_ADDR'], datetime.now())
             request.profiler.dump_stats('/tmp/%s.pro' % stamp)
             print "Dumped profile info in /tmp/%s.pro" % stamp
         return response

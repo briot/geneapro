@@ -66,9 +66,9 @@ svg {
    path.link {
      stroke: #000;
      fill: none;
-     &.link-1 {  // orthogonal
-        shape-rendering: crispEdges;
-     }
+     // &.link-1 {  // orthogonal
+     //    shape-rendering: crispEdges;
+     // }
    }
 
    .axis {

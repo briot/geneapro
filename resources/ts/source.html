@@ -1,0 +1,22 @@
+<div class='row' *ngIf='data'>  <!-- No need to render if we haven't got the data -->
+   <div class='col-md-12'>
+      <div class='panel panel-default'>
+         <div class='panel-heading editable-title' (click)='toggleCitation()'>
+            <span class='fa fa-pencil editable-title' innerHtml='{{initial_full_citation|linky}}'></span>
+         </div>
+         <div class='panel-body' *ngIf='showCitation'>
+            <citation [data]='data'></citation>
+         </div>
+      </div>
+
+      <div class='panel panel-default'>
+         <h4>Media</h4>
+         <div gp-source-media='source' repr='repr'></div>
+      </div>
+
+      <div class='panel panel-default'>
+         <h4>Assertions</h4>
+         <div gp-source-asserts='source' asserts='asserts'></div>
+      </div>
+   </div>
+</div>

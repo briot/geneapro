@@ -10,10 +10,14 @@
   },
   "scripts": {
     "start": "npm install && typings install && webpack -d && ./geneaprove.py",
-    "server": "./geneaprove.py"
+    "AAwatch": "webpack --colors --display-cached --display-reasons --cache -d -w --progress",
+    "watch": "webpack -w ",
+    "dev": "webpack --optimize-minimize --progress",
+    "server": "./geneaprove.py",
+    "typings": "typings install"
   },
   "devDependencies": {
-    "awesome-typescript-loader": "^0.17.0-rc.3",
+    "awesome-typescript-loader": "1.0.0",
     "bootstrap-sass": "^3.3.x",
     "css-loader": "^0.23.1",
     "file-loader": "^0.8.5",
@@ -24,17 +28,25 @@
     "node-sass": "^3.4.2",
     "sass-loader": "^3.2.0",
     "style-loader": "^0.13.1",
-    "typescript": "^1.8.9",
-    "typings": "^0.7.9",
-    "url-loader": "^0.5.7",
-    "webpack": "^1.12.14"
+    "typescript": "1.8.x",
+    "typings": "1.3.x",
+    "url-loader": "0.5.7",
+    "webpack": "1.13.x"
   },
   "dependencies": {
-    "angular": "1.4.x",
-    "angular-sanitize": "1.4.x",
-    "angular-local-storage": "0.1.x",
-    "angular-ui-router": "0.2.13",
-    "angular-upload": "1.0.11",
-    "d3": "3.5.x"
+    "@angular/core": "^2.0.0-rc.4",
+    "@angular/compiler": "^2.0.0-rc.4",
+    "@angular/common": "^2.0.0-rc.4",
+    "@angular/platform-browser": "^2.0.0-rc.4",
+    "@angular/platform-browser-dynamic": "^2.0.0-rc.4",
+    "@angular/http": "^2.0.0-rc.4",
+    "@angular/router": "^3.0.0-beta.2",
+    "@angular/router-deprecated": "^2.0.0-rc.2",
+    "@angular/platform-server": "^2.0.0-rc.4",
+    "d3": "3.5.x",
+    "es6-shim": "0.35.x",
+    "reflect-metadata": "0.1.3",
+    "rxjs": "5.0.0-beta.6",
+    "zone.js": "^0.6.12"
   }
 }

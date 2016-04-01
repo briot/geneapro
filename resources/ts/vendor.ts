@@ -2,9 +2,10 @@
 import '../sass/vendor.scss';  // customized bootstrap
 
 // load dependencies
-import 'angular';
-import 'angular-ui-router';
-import 'angular-sanitize';
-import 'angular-local-storage';
-import 'angular-upload';
-import 'd3';
+import 'alias-d3';
+import 'alias-zonejs';
+import 'reflect-metadata';
+import '@angular/platform-browser';
+import '@angular/core';
+import '@angular/http';
+import '@angular/router';

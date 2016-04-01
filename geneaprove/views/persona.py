@@ -37,14 +37,8 @@ def __add_default_person_attributes(person):
     person.generation = None
 
     n = person.name.split('/', 2)
-    person.given_name = n[0]
-    person.base_given_name = n[0]
-    if len(n) >= 2:
-        person.surname = n[1]
-    else:
-        person.surname = ""
-
-    person.base_surname = person.surname
+    person.givn = n[0]
+    person.surn = n[1] if len(n) >= 2 else ""
 
 
 def extended_personas(
@@ -351,18 +345,18 @@ class PersonaList(JSONView):
             all_sources=None, graph=graph, as_css=True)
 
         all = [p for p in all.itervalues()]
-        all.sort(key=lambda x: x.surname)
+        all.sort(key=lambda x: x.surn)
 
         # Necessary to avoid lots of queries to get extra information
-        all = [{'surname': p.surname,
-                'given_name': p.given_name,
+        all = [{'surn': p.surn,
+                'givn': p.givn,
                 'birth': p.birth,
                 'death': p.death,
                 'id': p.id,
+                'styles': p.styles,
                 'marriage': p.marriage}
                for p in all]
 
-        print "MANU all=", len(all)
         return {
             'persons': all,
         }

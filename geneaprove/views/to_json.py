@@ -189,24 +189,37 @@ class JSONView(View):
         #    print "JSON=", result
         return HttpResponse(result, content_type='application/json')
 
+
     def get(self, request, *args, **kwargs):
-        params = JSONViewParams()
-        params.update(request.GET)
-        if settings.DEBUG:
-            print "=========== %s =============" % (self.__class__, )
-            print "Params: %s" % (params, )
-        return self.__internal(self.get_json, params, *args, **kwargs)
+        try:
+            params = JSONViewParams()
+            params.update(request.GET)
+            if settings.DEBUG:
+                print "=========== %s =============" % (self.__class__, )
+                print "Params: %s" % (params, )
+            return self.__internal(self.get_json, params, *args, **kwargs)
+        except Exception as e:
+            print "Error %s" % e
+            return HttpResponse(to_json({
+                'error': '%s' % e
+            }), content_type='application/json')
     
     def post(self, request, *args, **kwargs):
-        # decode the parameters from the body, since that's where AngularJS
-        # puts them with AJAX requests
-        params = JSONViewParams()
-        params.update(request.POST)
-        if not request.FILES:
-            params.setFromBody(request.body)
-        else:
-            params.setFiles(request.FILES)
-        if settings.DEBUG:
-            print "=========== %s =============" % (self.__class__, )
-            print "Params: %s" % (params, )
-        return self.__internal(self.post_json, params, *args, **kwargs)
+        try:
+            # decode the parameters from the body, since that's where AngularJS
+            # puts them with AJAX requests
+            params = JSONViewParams()
+            params.update(request.POST)
+            if not request.FILES:
+                params.setFromBody(request.body)
+            else:
+                params.setFiles(request.FILES)
+            if settings.DEBUG:
+                print "=========== %s =============" % (self.__class__, )
+                print "Params: %s" % (params, )
+            return self.__internal(self.post_json, params, *args, **kwargs)
+        except Exception as e:
+            print "Error %s" % e
+            return HttpResponse(to_json({
+                'error': '%s' % e
+            }), content_type='application/json')

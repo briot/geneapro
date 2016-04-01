@@ -1,50 +1,32 @@
-import {} from 'angular';
-import {app} from './app';
+import {Component, Input, Output, EventEmitter} from '@angular/core';
+import {Control, CORE_DIRECTIVES, FORM_DIRECTIVES} from '@angular/common';
 
-interface FloatLabelScope extends angular.IScope {
-   id    ?: number;
-   model : string,
-   title : string,
-   label : string,
-   size  ?: number
-}
+var floatlabel_id = 0;
 
 /**
  * A form input with a floating label on top of it.
  * The label plays the role of a placeholder, but is still displayed when
  * the input contains some input.
  */
-app.directive('gpFloatLabel', () => {
-   let id=0;
+@Component({
+   selector: 'floatlabelinput',
+   template: require('./floatlabels.html'),
+   directives: [CORE_DIRECTIVES, FORM_DIRECTIVES]
+})
+export class FloatLabelInput {
+   @Input() label : string;
+   @Input() title : string;
+   @Input() readonly : boolean;
 
-   return {
-      scope: {
-         model: '=',
-         title: '@',
-         label: '@',
-         size: '@'   // number of columns, defaults to 6
-      },
-      replace: true,
-      link: (scope : FloatLabelScope) => {
-         scope.id = id++;
-         scope.size = scope.size || 6;
-      },
-      template: (elem  : angular.IAugmentedJQuery,
-                 attrs : { [name : string]: string }) =>
-      {
-         const type = (
-            attrs['lines']
-            ? 'textarea rows=' + attrs['lines']
-            : 'input type=text');
-         const r = (attrs['readonly']) ? ' readonly' : '';
-         return '<div class="col-md-{{size}} form-group floatlabel">'
-       +    '<' + type + r + ' class="form-control"'
-       +        ' ng-class="{nonempty: model===0 || model.length}"'
-       +        ' ng-model="model"'
-       +        ' id="floatlabel{{id}}"'
-       +        ' title="{{title}}"></' + type + '>'
-       +    '<label for="floatlabel{{id}}">{{label}}</label>'
-       + '</div>';
-      }
-   };
-});
+   // If greater than 1, display a textarea rather than a single line input
+   @Input() lines  : number = 1;
+
+   @Input() modelpath : string;
+   @Output() modelpathChange : EventEmitter<String> = new EventEmitter<String>();
+   
+   labelid  : string;
+
+   constructor() {
+      this.labelid = 'floatlabel' + (floatlabel_id++);
+   }
+}

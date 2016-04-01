@@ -1,31 +1,14 @@
-import {} from 'angular';
-import {} from 'angular-ui-router';
+import {Component, ElementRef, Input, Injectable} from '@angular/core';
+import {Router, RouteParams} from '@angular/router-deprecated';
+import {Control, ControlGroup, CORE_DIRECTIVES, FormBuilder, FORM_DIRECTIVES} from '@angular/common';
 import * as d3 from 'd3';
-import {app} from './app';
-import {IPerson, IRectangle, colorScheme, layoutScheme,
-   IGPRootScope} from './basetypes';
-import {GPd3Service, LayoutInfo} from './gpd3';
-import {PedigreeService} from './pedigree.service';
-import {ContextMenu} from './contextmenu';
-
-const html = require('geneaprove/pedigree.html');
-
-app.config(($stateProvider : angular.ui.IStateProvider) => {
-   $stateProvider.
-   state('pedigree', {
-      url: '/pedigree?id',
-      templateUrl: html,
-
-      // So that when we click on a person, we change the URL (and still had
-      // it to the history), but not reload the controller, since otherwise
-      // any animation in SVG would not occur. See $location.search(...)
-      reloadOnSearch: false,
-      controller: 'pedigreeCtrl',
-      data: {
-         pageTitle: '[Genaprove] Pedigree for person {{id}}'
-      }
-   });
-});
+import {Settings} from './settings.service';
+import {GPd3Service, ScalableSelection, d3Styles, LayoutInfo} from './d3.service';
+import {IPerson, IRectangle, ColorScheme, LayoutScheme} from './basetypes';
+import {PedigreeData, PedigreeService} from './pedigree.service';
+import {Legend} from './legend';
+import {Slider} from './slider';
+import {ContextMenuService, ContextMenu, ContextualItem} from './contextmenu';
 
 interface IPedigreePersonLayout extends LayoutInfo {
    p : IPerson;
@@ -53,12 +36,12 @@ interface IPedigreeLayout extends IRectangle {
    links  : IPedigreePersonPair[];
 }
 
-
 /**
  * This function is a layout algorithm to display the PedigreeData as a
  * tree.
  */
 
+@Injectable()
 class PedigreeLayoutService {
 
    // size of the boxes at generation 1
@@ -71,22 +54,22 @@ class PedigreeLayoutService {
    // Actual height of a line of text at generation 1
    textHeight = 20;
 
-   $inject = ['$rootScope', 'GPd3'];
-   constructor(public $rootScope : IGPRootScope, private GPd3 : GPd3Service) {
+   constructor(private gpd3 : GPd3Service,
+               private settings : Settings) {
    }
 
-   /**
-    * On exit, nodes is an array of all the nodes to display. Such nodes are
-    * the records for the persons (as found in the data parameter), augmented
-    * with layout information. This layout information is:
-    *     - x, y:     topleft corner for the box
-    *     - w, h:     size of the rectangular box
-    *     - fs:       size of the font in the box
-    *     - parentsMarriageX:  position of the label for the parent's marriage
-    *     - parentsMarriageFS: font size for that label
-    */
-   compute(data : PedigreeService) {
-      const settings = this.$rootScope.settings.pedigree;
+   //
+   // On exit, nodes is an array of all the nodes to display. Such nodes are
+   // the records for the persons (as found in the data parameter), augmented
+   // with layout information. This layout information is:
+   //     - x, y:     topleft corner for the box
+   //     - w, h:     size of the rectangular box
+   //     - fs:       size of the font in the box
+   //     - parentsMarriageX:  position of the label for the parent's marriage
+   //     - parentsMarriageFS: font size for that label
+   //
+   compute(data : PedigreeData) {
+      const settings = this.settings.pedigree;
       const same = settings.sameSize;
       const boxWidth = (same ? 200 : 300);
 
@@ -111,11 +94,11 @@ class PedigreeLayoutService {
          links: []
       };
 
-      /** Store display info for a person
-       * @param indiv  The person.
-       * @param y      Her vertical coordinate.
-       * @param h      The size of the box.
-       */
+      // Store display info for a person
+      // @param indiv  The person.
+      // @param y      Her vertical coordinate.
+      // @param h      The size of the box.
+      //
       function setupIndivBox(p : IPerson, y : number, h : number = 0) {
          if (!p) {
             return undefined;
@@ -191,72 +174,78 @@ class PedigreeLayoutService {
       let maxY = 0;
       let main_layout : IPedigreePersonLayout;  // layout for decujus
 
-      switch (settings.layoutScheme) {
-      case layoutScheme.EXPANDED:
-         function doLayoutExpand(gen : number, p : IPerson) {
-            let y : number;
-            if (gen < settings.gens && p.parents) {
-               const fy = doLayoutExpand(gen + 1, p.parents[0]).y;
-               const my = doLayoutExpand(gen + 1, p.parents[1]).y;
-               y = (fy + my + heights[gen + 1] - heights[gen]) / 2;
-            } else {
-               y = maxY + settings.vertPadding;
-            }
-            maxY = Math.max(maxY, y + heights[gen]);
-            return setupIndivBox(p, y);
+      function doLayoutExpand(gen : number, p : IPerson) {
+         let y : number;
+         if (gen < settings.gens && p.parents) {
+            var father = p.parents[0];
+            var mother = p.parents[1];
+            const fy = father ? doLayoutExpand(gen + 1, father).y
+                              : maxY + settings.vertPadding;
+            const my = mother ? doLayoutExpand(gen + 1, mother).y
+                              : maxY + settings.vertPadding;
+            y = (fy + my + heights[gen + 1] - heights[gen]) / 2;
+         } else {
+            y = maxY + settings.vertPadding;
          }
-         main_layout = doLayoutExpand(0, data.main);
+         maxY = Math.max(maxY, y + heights[gen]);
+         return setupIndivBox(p, y);
+      }
+
+      // For the last generation, place each boxes as close as possible.
+      // Then when we add the previous generation, we might move some of
+      // the boxes from the previous generation downward to make space for
+      // persons with no ancestors.
+
+      function doLayoutCompact(indiv : IPerson) {
+         const gen = indiv.generation;
+         let father : IPerson;
+         let mother : IPerson;
+         let y : number;
+         let indiv_layout : IPedigreePersonLayout;
+
+         if (gen < settings.gens) {
+            father = indiv.parents[0];
+            mother = indiv.parents[1];
+         } else {
+            father = mother = undefined;
+         }
+         if (father && mother) {
+            let f = doLayoutCompact(father);
+            let m = doLayoutCompact(mother);
+
+            // center the box on its parents
+            y = (f.y + m.y + heights[gen + 1] - heights[gen]) / 2;
+            const h =
+               (settings.colorScheme == ColorScheme.WHITE) ?
+               m.y + heights[gen + 1] - y : undefined;
+            indiv_layout = setupIndivBox(indiv, y, h);
+
+         } else if (father || mother) {
+            // center on the existing parent
+            const p = (father || mother);
+            doLayoutCompact(p);
+            const m = result.pnodes[p.id];
+            y = m.y + (heights[gen + 1] - heights[gen]) / 2;
+            const h =
+                (settings.colorScheme == ColorScheme.WHITE) ?
+                m.y + heights[gen + 1] - y : undefined;
+            indiv_layout = setupIndivBox(indiv, y, h);
+
+         } else {
+            y = maxY + settings.vertPadding;
+            indiv_layout = setupIndivBox(indiv, y, heights[gen]);
+         }
+         maxY = Math.max(maxY, y + indiv_layout.h);
+         return indiv_layout;
+      }
+
+      switch (settings.layoutScheme) {
+      case LayoutScheme.EXPANDED:
+         main_layout = doLayoutExpand(0, data.decujus);
          break;
 
-      case layoutScheme.COMPACT:
-         // For the last generation, place each boxes as close as possible.
-         // Then when we add the previous generation, we might move some of
-         // the boxes from the previous generation downward to make space for
-         // persons with no ancestors.
-
-         function doLayoutCompact(indiv : IPerson) {
-            const gen = indiv.generation;
-            let father : IPerson;
-            let mother : IPerson;
-            let y : number;
-            let indiv_layout : IPedigreePersonLayout;
-
-            if (gen < settings.gens) {
-               father = indiv.parents[0];
-               mother = indiv.parents[1];
-            } else {
-               father = mother = undefined;
-            }
-            if (father && mother) {
-               let f = doLayoutCompact(father);
-               let m = doLayoutCompact(mother);
-
-               // center the box on its parents
-               y = (f.y + m.y + heights[gen + 1] - heights[gen]) / 2;
-               const h =
-                  (settings.colorScheme == colorScheme.WHITE) ?
-                  m.y + heights[gen + 1] - y : undefined;
-               indiv_layout = setupIndivBox(indiv, y, h);
-
-            } else if (father || mother) {
-               // center on the existing parent
-               const p = (father || mother);
-               doLayoutCompact(p);
-               const m = result.pnodes[p.id];
-               y = m.y + (heights[gen + 1] - heights[gen]) / 2;
-               const h =
-                   (settings.colorScheme == colorScheme.WHITE) ?
-                   m.y + heights[gen + 1] - y : undefined;
-               indiv_layout = setupIndivBox(indiv, y, h);
-
-            } else {
-               y = maxY + settings.vertPadding;
-               indiv_layout = setupIndivBox(indiv, y, heights[gen]);
-            }
-            maxY = Math.max(maxY, y + indiv_layout.h);
-            return indiv_layout;
-         }
-         main_layout = doLayoutCompact(data.main);
+      case LayoutScheme.COMPACT:
+         main_layout = doLayoutCompact(data.decujus);
          break;
       }
 
@@ -296,7 +285,7 @@ class PedigreeLayoutService {
                  heights[gen]) / 2;
 
             // In some modes, we leave as much height as possible to the box
-            const h = (settings.colorScheme == colorScheme.WHITE) ?
+            const h = (settings.colorScheme == ColorScheme.WHITE) ?
                last_parent_layout.y + last_parent_layout.h - y : undefined;
             indiv_layout = setupIndivBox(indiv, y, h);
          }
@@ -308,7 +297,7 @@ class PedigreeLayoutService {
       // computed after parent and children layouts match
       const yAfterParent = main_layout.y;
       let maxChildY = 0;
-      doLayoutChildren(data.main);
+      doLayoutChildren(data.decujus);
 
       // Apply the offset (to the children, since in general we will have more
       // ancestors displayed). At this point, we know the parents extend from
@@ -330,7 +319,7 @@ class PedigreeLayoutService {
       doOffsetChildren(main_layout);
 
       // Compute the links
-      angular.forEach(result.nodes, node => {
+      result.nodes.forEach(node => {
          if (node.p.sosa <= 0) {
             result.links.push([node, result.pnodes[node.p.parent_.id]]);
          } if (node.p.generation < settings.gens && node.p.parents) {
@@ -353,298 +342,294 @@ class PedigreeLayoutService {
    }
 }
 
-app.service('PedigreeLayout', PedigreeLayoutService);
+const durationForExit = 200;  // duration for exit() animation
 
-interface PedigreeControllerScope extends angular.IScope {
-   decujus     : number;
-   contextual  : any;  // data for the contextual menu
-   focusPerson : Function;
-   showPerson  : Function;
-}
+@Component({
+   selector:  'pedigree',
+   template:  '',
+   providers: [PedigreeLayoutService]
+})
+export class Pedigree {
+   @Input() id      : number;
+   private scalable : ScalableSelection;
+   private persons  : d3.selection.Update<IPedigreePersonLayout>;
+   private layout   : IPedigreeLayout;
+   private styles   : d3Styles<IPedigreePersonLayout>;
+   private data     : PedigreeData;
 
-app.controller(
-   'pedigreeCtrl',
-   ($scope       : PedigreeControllerScope,
-    Pedigree     : PedigreeService,
-    $state       : angular.ui.IStateService,
-    $stateParams : angular.ui.IStateParamsService,
-    contextMenu  : ContextMenu,
-    $location    : angular.ILocationService,
-    $rootScope   : IGPRootScope) =>
-{
-   // When the search parameter (id) changes, angularjs-ui-router will not
-   // reload the page and create a new controller, so we monitor these
-   // instead (that's on purpose so that we can have animation in the SVG).
-   // This page might also be loaded without specifying an explicit person, in
-   // which case we must reuse the current decujus.
-   // We need to monitor the location, not the state, to handle Back and
-   // Forward
-   $scope.$on('$locationChangeSuccess', function() {
-      $scope.decujus = $location.search().id || $scope.decujus;
-   });
-   if ($stateParams['id'] !== undefined) {
-       $scope.decujus = +$stateParams['id'];
+   constructor(
+      private element         : ElementRef,
+      private pedigreeService : PedigreeService,
+      private gpd3            : GPd3Service,
+      private layoutService   : PedigreeLayoutService,
+      private contextService  : ContextMenuService,
+      public settings         : Settings)
+   {
    }
 
-   /**
-    * Support for the contextual menu
+   ngOnInit() {
+      this.scalable = this.gpd3.svg(
+         this.element,
+         (currentScale : number) => {  // onzoom
+            // Use a maximal size for text, after which we start
+            // displaying more information. Since we are adding and
+            // removing elements, this makes the zoom slower though
+            if (this.settings.pedigree.showDetails) {
+               this.drawTexts(this.data, currentScale);
+            }
+         });
+
+      this.settings.onChange.subscribe(() => this.ngOnChanges(null));
+   }
+
+   ngOnChanges(changes : any) {
+      // ??? Should also monitor global settings
+      const set = this.settings.pedigree;
+      this.pedigreeService.get(this.id, set.gens, set.descendant_gens)
+         .subscribe((d : PedigreeData) => {
+            this.render(d);
+         });
+   }
+
+   // Return the y coordinate for links to/from the person's box
+   private linkY(p : IPedigreePersonLayout) {
+      if (this.settings.pedigree.colorScheme == ColorScheme.WHITE) {
+         return p.y + p.fs;
+      } else {
+         return p.y + p.h / 2;
+      }
+   }
+
+   render(data : PedigreeData) {
+      this.data = data;
+      const set = this.settings.pedigree;
+      this.scalable.selection.attr('class', 'pedigree color-' + set.colorScheme);
+
+      this.layout = this.layoutService.compute(data);
+
+      // ??? Could we pass this.scalable instead ?
+      this.scalable.setViewBox(this.layout);
+
+      // Draw the lines
+      const drawLinks = this.gpd3.linksDraw(set.linkStyle, p => this.linkY(p));
+      const links = this.scalable.selection.selectAll('path.link')
+         .data(this.layout.links, d => d ? d[0].p.id + '-' + d[1].p.id : '');
+      links.exit()
+         .transition()
+         .duration(durationForExit)
+         .style('opacity', 0)
+         .remove();
+      links.enter().append('path').classed('link', true)
+         .style('opacity', 0)
+      links
+         //  ??? This leaves previous link-* classes
+         .classed('link-' + set.linkStyle, true)
+         .transition()
+         .delay(durationForExit)
+         .style('opacity', 1)
+         .attr('d', drawLinks);
+
+      if (set.colorScheme == ColorScheme.WHITE) {
+         let selflines = '';
+         this.layout.nodes.forEach(node => {
+            selflines += 'M' + node.x + ' ' + this.linkY(node) +
+                         'h' + node.w;
+         });
+         this.scalable.selection
+            .append('path').attr('class', 'link').attr('d', selflines);
+      }
+
+      // Create the box for each person
+      this.persons = this.scalable.selection
+         .selectAll('g.person')
+         .data(this.layout.nodes, d => d.p.id.toString());
+      const decujusbox = this.layout.pnodes[data.decujus.id];
+      this.persons.exit()
+         .transition()
+         .duration(durationForExit)
+         .style('opacity', 0)
+         .remove(); // remove no-longer needed boxes
+      const enter_g = this.persons.enter()          // add new boxes at correct position
+         .append('g')
+         .attr('class', 'person')
+         .attr('transform', `translate(${decujusbox.x},${decujusbox.y})`)
+         .on('contextmenu', (d : IPedigreePersonLayout) => {
+            this.contextService.createMenu(<MouseEvent>d3.event, d.p);
+         });
+      enter_g.append('rect')
+         .attr('width', 0)
+         .attr('height', 0)
+         .attr('rx', '6px')  // rounded rectangle
+         .attr('ry', '6px');
+      enter_g.append('clipPath')
+         .attr('id', d => 'clip' + d.p.id)
+         .append('rect')
+         .attr('rx', '6px')  // rounded rectangle
+         .attr('ry', '6px');
+
+      this.styles = this.gpd3.getStyles(
+         this.scalable.selection, this.layout.nodes, set, data);
+
+      const self = this;
+      this.persons.selectAll('g rect')
+         .each(function(d) {  // must be a function, different 'this'
+            d3.select(this).attr(<any>self.styles.style(d))
+         })
+
+      this.persons
+         .transition()
+         .delay(durationForExit)
+         .attr('transform', d => `translate(${d.x},${d.y})`);
+      this.persons.selectAll('rect')  // including clipPath>rect
+         .transition()
+         .delay(durationForExit)
+         .attr('width', d => d.w)
+         .attr('height', d => d.h);
+
+     this.scalable.applyScale(); // draw texts if showDetails
+     if (!set.showDetails) {  // else it is done as part of the zoom
+        this.drawTexts(data, 1);
+     }
+   }
+
+   /** Prepare the lines of text for each person, depending on the size
+    * allocated for that person. With the newly created text field,
+    * we can then use d3's data() to easily create one <tspan> node
+    * for each child.
     */
-   $scope.$on('contextMenuOpen', function() {
-      $scope.contextual = contextMenu.data;
-      $scope.$apply();  // update contents of the contextual menu
-   });
-   $scope.focusPerson = function() {
-      const id = contextMenu.data.d.id;  // capture since menu will be destroyed
-      $location.search('id', id);
-   };
-   $scope.showPerson = function() {
-      $state.go('person', {id: contextMenu.data.d.id});
-   };
+   drawTexts(data : PedigreeData, currentScale : number) {
+      const set = this.settings.pedigree;
 
-});
+      this.persons.selectAll('text').remove();
 
-interface IPedigreeDirectiveScope extends angular.IScope {
-   decujus : number;
+      this.layout.nodes.forEach(p => {
+         p.text = [];
+         p.absFontSize = Math.min(p.fs, 20 / currentScale);
+         const linesCount = Math.floor(p.h / p.absFontSize);
+         if (linesCount < 1) {
+            return;
+         }
+
+         p.text.push(data.displayName(p.p));
+
+         const birth = data.event_to_string(p.p.birth);
+         const death = data.event_to_string(p.p.death);
+
+         if (!set.showDetails || linesCount < 4) {
+            p.text.push(birth + ' - ' + death);
+         } else {
+            if (birth) {
+               const place = p.p.birth ? p.p.birth.place : '';
+               p.text.push('b: ' + birth + (place ? ' - ' + place : ''));
+            }
+            if (death) {
+               const place = p.p.death ? p.p.death.place : '';
+               p.text.push('d: ' + death + (place ? ' - ' + place : ''));
+            }
+            if (p.text.length <= linesCount) {
+               data.getDetails(p.p);
+               //if (d) {
+               //   d.then(<any>this.scalable.applyScale);
+               //} else {
+               //   p.p.details(t => {
+               //      if (p.text.length < linesCount) {
+               //         p.text.push(t);
+               //      }
+               //   });
+               //}
+            }
+         }
+      });
+
+      // Draw the text
+      const self = this;
+      const tspan = this.persons.append('text')
+         .attr({
+            'clip-path': d => `url(#clip${d.p.id})`,
+            'font-size': d => d.absFontSize})
+         .each(function(d) {
+            d3.select(this).attr(<any>self.styles.text(d));
+         })
+         .selectAll('tspan')
+         .data<string>(d => d.text)
+         .enter()
+         .append('tspan')
+         .attr({
+            class: (d, i) => i == 0 ? 'name' : 'details',
+            'font-size': (d, i) => i == 0 ? '1em' : '0.8em',
+            x: 5})
+         .text(d => d);  // the data is 'd.text'
+      if (set.colorScheme == ColorScheme.WHITE) {
+         tspan.attr('dy', (d, i) => i == 0 ? '0.8em' : i == 1 ? '1.2em' : '1em');
+      } else {
+         tspan.attr('dy', (d, i) => i == 1 ? '1.2em' : '1em');
+      }
+
+      // The marriage date for the parents
+      if (set.showMarriages) {
+         const m = this.scalable.selection.selectAll('text.marriage')
+            .data(this.layout.nodes, d => d.p.id.toString());
+         m.exit().remove();
+         m.enter().append('text')
+            .attr('class', 'marriage')
+            .attr('dy', '0.4em');
+         m.text((d) => data.event_to_string(d.p.marriage))
+            // ??? Commented out because of a bug in zone.js/angular2
+            //   (More tasks executed then were scheduled (sic))
+            //.transition()
+            //.delay(durationForExit)
+            .attr({
+               'font-size': d => d.parentsMarriageFS,
+               x: d => d.parentsMarriageX,
+               y: d => this.linkY(d)});
+      } else {
+         this.scalable.selection.selectAll('text.marriage').remove();
+      }
+   }
 }
 
-app.directive(
-   'gpPedigree',
-   (Pedigree       : PedigreeService,
-    PedigreeLayout : PedigreeLayoutService,
-    $rootScope     : IGPRootScope,
-    GPd3           : GPd3Service,
-    $location      : angular.ILocationService,
-    contextMenu    : ContextMenu) =>
-{
-   return {
-      scope: {
-         decujus: '=gpPedigree'
-      },
-      link: (scope   : IPedigreeDirectiveScope,
-             element : angular.IAugmentedJQuery) =>
-      {
-         const set = $rootScope.settings.pedigree;
+@Component({
+   template: require('./pedigree.html'),
+   directives: [Pedigree, FORM_DIRECTIVES, Legend, CORE_DIRECTIVES,
+                ContextMenu, Slider]
+})
+export class PedigreePage {
+   public id : number;
+   data : PedigreeData;
+   colorScheme : Control;
 
-         // Watch the settings (in case we want to draw differently) and the
-         // decujus (in case we want to display a different person).
+   contextualLinks : ContextualItem[];
 
-         scope.$watch(
-            function() { return [scope.decujus, $rootScope.settings]},
-            function() {
-               Pedigree.select(scope.decujus);
-               Pedigree.get(set.gens, set.descendant_gens).then(
-                  function(data) { render(data)});
-            },
-            true);
+   constructor(
+      public settings         : Settings,
+      private contextService  : ContextMenuService,
+      private router          : Router,
+      routeParams             : RouteParams)
+   {
+      this.colorScheme = new Control(settings.pedigree.colorScheme);
+      this.contextualLinks = [
+         {name: 'Set as reference', func: this.focusPerson.bind(this)},
+         {name: 'Show details',     func: this.showPerson.bind(this)}
+      ];
 
-         let drawTexts = function(scale : number) {};
+      this.id = +routeParams.get('id');
+      this.settings.setTitle('Pedigree for person ' + this.id);
+   }
 
-         const scalable = GPd3.svg(
-            element,
-            function(currentScale) {  // onzoom
-               // Use a maximal size for text, after which we start
-               // displaying more information. Since we are adding and
-               // removing elements, this makes the zoom slower though
-               if (set.showDetails) {
-                  drawTexts(currentScale);
-               }
-            });
-         const group = scalable.selection;
+   changed() {
+      this.settings.reportChange();
+   }
 
-         function linkY_(p : IPedigreePersonLayout) {
-            if (set.colorScheme == colorScheme.WHITE) {
-               return p.y + p.fs;
-            } else {
-               return p.y + p.h / 2;
-            }
-         }
+   focusPerson(data : IPerson, item : ContextualItem) {
+      this.router.navigateByUrl('/pedigree/' + data.id);
+   }
 
-         /**
-          * Assuming the data is fully loaded, draw the graphics
-          * @param {Object}  data    as loaded from the server.
-          */
-         function render(data : PedigreeService) {
-            if (!data) {
-               return;
-            }
+   showPerson(data : IPerson, item : ContextualItem) {
+      this.router.navigateByUrl('/persona/' + data.id);
+   }
 
-            group.attr('class', 'pedigree color-' + set.colorScheme);
-            const layout = PedigreeLayout.compute(data);
-            const styles = GPd3.getStyles(group, layout.nodes, set, data);
+   onBackgroundContextMenu(event : MouseEvent) {
+      this.contextService.createMenu(event, null);
+   }
 
-            GPd3.setViewBox(element, layout);
-
-            const durationForExit = 200;  // duration for exit() animation
-
-            // Draw the lines
-            const drawLinks = GPd3.linksDraw(set.linkStyle, linkY_);
-            const links = group.selectAll('path.link')
-               .data(layout.links, d => d ? d[0].p.id + '-' + d[1].p.id : '');
-            links.exit()
-               .transition()
-               .duration(durationForExit)
-               .style('opacity', 0)
-               .remove();
-            links.enter().append('path').classed('link', true)
-               .style('opacity', 0)
-            links
-               .classed('link-' + set.linkStyle, true)
-               .transition()
-               .delay(durationForExit)
-               .style('opacity', 1)
-               .attr('d', drawLinks);
-
-            if (set.colorScheme == colorScheme.WHITE) {
-               let selflines = '';
-               angular.forEach(layout.nodes, node => {
-                  selflines += 'M' + node.x + ' ' + linkY_(node) +
-                               'h' + node.w;
-               });
-               group.append('path').attr('class', 'link').attr('d', selflines);
-            }
-
-            function contextmenu(d : IPedigreePersonLayout) {
-               contextMenu.create(
-                  '#contextMenu', <MouseEvent>d3.event,
-                  {d: d.p, element: this});
-            }
-
-            // Create the box for each person
-            const persons = group
-               .selectAll('g.person')
-               .data(layout.nodes, d => d.p.id.toString());
-            const decujusbox = layout.pnodes[data.main.id];
-            persons.exit()
-               .transition()
-               .duration(durationForExit)
-               .style('opacity', 0)
-               .remove(); // remove no-longer needed boxes
-            const enter_g = persons.enter()          // add new boxes at correct position
-               .append('g')
-               .attr('class', 'person')
-               .attr('transform', `translate(${decujusbox.x},${decujusbox.y})`)
-               .on('contextmenu', contextmenu);
-            enter_g.append('rect')
-               .attr('width', 0)
-               .attr('height', 0)
-               .attr('rx', '6px')  // rounded rectangle
-               .attr('ry', '6px');
-            enter_g.append('clipPath')
-               .attr('id', d => 'clip' + d.p.id)
-               .append('rect')
-               .attr('rx', '6px')  // rounded rectangle
-               .attr('ry', '6px');
-
-            persons.selectAll('g rect')
-               .each(function(d) {
-                  d3.select(this).attr(<any>styles.style(d))
-               })
-
-            persons
-               .transition()
-               .delay(durationForExit)
-               .attr('transform', d => `translate(${d.x},${d.y})`);
-            persons.selectAll('rect')  // including clipPath>rect
-               .transition()
-               .delay(durationForExit)
-               .attr('width', d => d.w)
-               .attr('height', d => d.h);
-
-            drawTexts = function(currentScale) {
-               // Prepare the lines of text for each person, depending on the size
-               // allocated for that person. With the newly created text field,
-               // we can then use d3's data() to easily create one <tspan> node
-               // for each child.
-
-               persons.selectAll('text').remove();
-
-               angular.forEach(layout.nodes, p => {
-                  p.text = [];
-                  p.absFontSize = Math.min(p.fs, 20 / currentScale);
-                  const linesCount = Math.floor(p.h / p.absFontSize);
-                  if (linesCount < 1) {
-                     return;
-                  }
-
-                  p.text.push(data.displayName(p.p));
-
-                  const birth = data.event_to_string(p.p.birth);
-                  const death = data.event_to_string(p.p.death);
-
-                  if (!set.showDetails || linesCount < 4) {
-                     p.text.push(birth + ' - ' + death);
-                  } else {
-                     if (birth) {
-                        const place = p.p.birth ? p.p.birth.place : '';
-                        p.text.push('b: ' + birth + (place ? ' - ' + place : ''));
-                     }
-                     if (death) {
-                        const place = p.p.death ? p.p.death.place : '';
-                        p.text.push('d: ' + death + (place ? ' - ' + place : ''));
-                     }
-                     if (p.text.length <= linesCount) {
-                        const d = data.getDetails(p.p);
-                        if (d) {
-                           d.then(<any>scalable.applyScale);
-                        } else {
-                           angular.forEach(p.p.details, t => {
-                              if (p.text.length < linesCount) {
-                                 p.text.push(t);
-                              }
-                           });
-                        }
-                     }
-                  }
-               });
-
-               // Draw the text
-               const tspan = persons.append('text')
-                  .attr({
-                     'clip-path': d => `url(#clip${d.p.id})`,
-                     'font-size': d => d.absFontSize})
-                  .each(function(d) {
-                     d3.select(this).attr(<any>styles.text(d));
-                  })
-                  .selectAll('tspan')
-                  .data<string>(d => d.text)
-                  .enter()
-                  .append('tspan')
-                  .attr({
-                     class: (d, i) => i == 0 ? 'name' : 'details',
-                     'font-size': (d, i) => i == 0 ? '1em' : '0.8em',
-                     x: 5})
-                  .text(d => d);  // the data is 'd.text'
-               if (set.colorScheme == colorScheme.WHITE) {
-                  tspan.attr('dy', (d, i) => i == 0 ? '0.8em' : i == 1 ? '1.2em' : '1em');
-               } else {
-                  tspan.attr('dy', (d, i) => i == 1 ? '1.2em' : '1em');
-               }
-
-               // The marriage date for the parents
-               if (set.showMarriages) {
-                  const m = group.selectAll('text.marriage')
-                     .data(layout.nodes, d => d.p.id.toString());
-                  m.exit().remove();
-                  m.enter().append('text')
-                     .attr('class', 'marriage')
-                     .attr('dy', '0.4em');
-                  m.text((d) => data.event_to_string(d.p.marriage))
-                     .transition()
-                     .delay(durationForExit)
-                     .attr({
-                        'font-size': d => d.parentsMarriageFS,
-                        x: d => d.parentsMarriageX,
-                        y: d => linkY_(d)});
-               } else {
-                  group.selectAll('text.marriage').remove();
-               }
-            }
-
-            scalable.applyScale(); // draw texts
-            if (!set.showDetails) {
-               drawTexts(1);
-            }
-         }
-      }
-   };
-});
+}

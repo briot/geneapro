@@ -1,94 +1,90 @@
-import {IGPRootScope} from './basetypes';
-import {app} from './app';
-import {} from 'angular';
+import {Injectable, Component, Input, EventEmitter, ElementRef} from '@angular/core';
+import {CORE_DIRECTIVES} from '@angular/common';
 import * as d3 from 'd3';
 
 /**
  * A service to display a contextual menu
- * Usage is:
- *    app.controler('...', function(contextMenu, $scope) {
- *       element.on('contextmenu', function() {
- *          contextMenu($scope, '#contextMenu', d3.event);
- *       });
- *    }
- * The element matched by the selector should have the class 'contextMenu'.
- * $scope is used to monitor when the page is unloaded.
- * Two signals are emitted ('contextMenuOpen' and 'contextMenuClose'), which
- * you can listen to via   $scope.$on('contextMenuOpen', function(){})
  */
 
-export class ContextMenu {
-   menu : d3.Selection<any> = undefined;
-   element : EventTarget = undefined;
-   data : any = undefined;
+interface ContextualEvent {
+   name  : string;    // either 'open' or 'close'
+   event ?: MouseEvent;
+}
 
-   static _singleton : ContextMenu = undefined;
+export interface ContextualItem {
+   name   : string;     // as displayed in the menu
+   title ?: string;     // for tooltips
+   func   : (data:any,item:ContextualItem)=>any    // called when menu is executed
+}
 
-   static $inject = ['$document', '$rootScope'];
-   constructor(
-      public $document : angular.IDocumentService,
-      public $rootScope : IGPRootScope)
-   {
+@Injectable()
+export class ContextMenuService {
+   onChange = new EventEmitter<ContextualEvent>();
+   private _data : any = undefined;
+
+   hide() {
+      this.onChange.next({name: 'close', event: null});
    }
 
-   private static _onKeyup(event : JQueryKeyEventObject) {
-      if (event.keyCode === 27) {
-         ContextMenu._singleton.destroy();
-         event.preventDefault();
-      }
+   exec(item : ContextualItem) {
+      item.func(this._data, item);
    }
 
-   private static _onClick(event : JQueryMouseEventObject) {
-      // Some browser treat a 'contextmenu' event with a prior 'click'
-      // event.
-      if (event.button !== 2 ||
-          event.target !== ContextMenu._singleton.element)
-      {
-         ContextMenu._singleton.destroy();
-      }
-   }
+   createMenu(event : MouseEvent, data : any) {
+      // Do not end up displaying the contextual menu for parent elements
+      event.stopPropagation(); 
 
-   destroy() {
-      if (this.menu) {
-         // $rootScope.$broadcast('contextMenuClose');
-         this.menu.style('display', 'none');
-         this.menu = undefined;
-         this.data = undefined;
-         this.element = undefined;
-         this.$document.unbind('click', ContextMenu._onClick);
-         this.$document.unbind('keyup', ContextMenu._onKeyup);
-         this.$document.unbind('contextmenu', ContextMenu._onClick);
-      }
-   }
-
-   create(selector : string, event : MouseEvent, data : any) {
-      this.destroy();
-
-      this.data = data;
-      this.element = event.target;
-      this.menu = d3.select(selector);
-      this.menu.style('display', 'block')
-         .style('left', event.pageX + 'px')
-         .style('top', event.pageY + 'px');
+      // Do not propagate right click
       event.preventDefault();
-      event.stopPropagation();
 
-      this.$document.bind('click', ContextMenu._onClick);
-      this.$document.bind('contextmenu', ContextMenu._onClick);
-      this.$document.bind('keyup', ContextMenu._onKeyup);
-      this.$rootScope.$broadcast('contextMenuOpen');
+      this._data = undefined;
+      if (data) {
+         this._data = data;
+         this.onChange.next({name: 'open', event: event});
+      }
    }
 }
 
-//  ??? angular services are already singletons ?
-function ContextMenuService(
-   $document : angular.IDocumentService,
-   $rootScope : IGPRootScope)
-{
-   return ContextMenu._singleton = ( // assignment
-      ContextMenu._singleton
-      || new ContextMenu($document, $rootScope));
-}
-ContextMenuService.$inject = ['$document', '$rootScope'];
+@Component({
+   selector: 'div[context-menu]',
+   template: require('./contextmenu.html'),
+   host: {
+      '(document:click)': 'hideMenu()',
+      '(document:keyup)': 'onKeyUp($event)',
+      'class': 'contextMenu navbar navbar-default'
+   },
+   directives: [CORE_DIRECTIVES]
+})
+export class ContextMenu{
+   @Input('context-menu') items : ContextualItem[];
 
-app.factory('contextMenu', ContextMenuService);
+   constructor(
+      private element : ElementRef,
+      private contextService : ContextMenuService)
+   {
+      contextService.onChange.subscribe((e : ContextualEvent) => {
+         let st = this.element.nativeElement.style;
+         if (e.event && e.name == 'open') {
+            st.display = 'block';
+            st.left = e.event.clientX + 'px';
+            st.top = e.event.clientY + 'px';
+         } else {
+            st.display = 'none';
+         }
+      });
+   }
+
+   exec(it : ContextualItem) {
+      this.contextService.exec(it);
+   }
+
+   onKeyUp(event : KeyboardEvent) {
+      if (event.keyCode === 27) {
+         this.hideMenu();
+      }
+   }
+
+   hideMenu() {
+      this.contextService.hide();
+   }
+}

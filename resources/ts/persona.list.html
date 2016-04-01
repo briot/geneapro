@@ -1,0 +1,56 @@
+<div class='row'>
+
+   <div class='col-md-10 col-lg-9'>
+      <paginate panelTitle='List of persons'>
+         <table class='table'>
+            <thead>
+               <tr>
+                  <th>Surname</th>
+                  <th>Given name</th>
+                  <th>Birth</th>
+                  <th>Death</th>
+                  <th>Marriage</th>
+               </tr>
+            </thead>
+            <tbody>
+               <tr *ngIf='paginate.pagedData==undefined'>
+                  <td colspan='5'>Loading...</td>
+               </tr>
+               <tr *ngFor='let p of paginate.pagedData'>
+                  <td><persona-link [id]='p.id' [name]='p.surn'></persona-link></td>
+                  <td *ngIf='settings.personaList.colorScheme!=4'><span [style]='p.styles'>{{p.givn || '-'}}</span></td>
+                  <td *ngIf='settings.personaList.colorScheme==4'><span>{{p.givn || '-'}}</span></td>
+                  <td>{{p.birth ? p.birth.date : ''}}</td>
+                  <td>{{p.death ? p.death.date : ''}}</td>
+                  <td>{{p.marriage ? p.marriage.date : ''}}</td>
+               </tr>
+            </tbody>
+         </table>
+      </paginate>
+   </div>
+
+   <!-- Sidebar -->
+   <div class='col-md-2 col-lg-3 sidebar'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Settings</div>
+         <div class='panel-body'>
+            <ul class='nav nav-pills nav-stacked'>
+               <li class='config'>
+                  <span>Rows per page</span>
+                  <select [ngFormControl]='rows'>
+                     <option *ngFor='let r of paginate.rows' [value]='r.rows'>{{r.label}}</option>
+                  </select>
+               </li>
+               <li class='config'>
+                  <span>Colors</span>
+                  <select [ngFormControl]='colorScheme'>
+                     <option value='0'>Rules</option>
+                     <option value='4'>No colors</option>
+                  </select>
+                  <gp-legend *ngIf='settings.personaList.colorScheme==0'></gp-legend>
+               </li>
+            </ul>
+         </div>
+      </div>
+   </div>
+</div>

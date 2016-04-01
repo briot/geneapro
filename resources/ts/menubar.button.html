@@ -1,0 +1,5 @@
+<a [routerLink]="comp"
+   title="{{title}}">
+   <i *ngIf='!icon'>{{title}}</i>
+   <i *ngIf='icon' class="fa {{icon}}" style="font-size:1.4em"></i>
+</a>

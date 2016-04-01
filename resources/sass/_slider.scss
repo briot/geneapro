@@ -4,12 +4,13 @@
 
    clear:both;
    position: relative;
+   cursor: pointer;
    &.horizontal {
       margin: 15px ($handleheight/2) 15px ($handleheight/2);
       border-radius: $barheight;
       height: $barheight;
       background: $menubar-color;
-      a {
+      span.handle {
          outline:none;
          position: absolute;
          z-index: 2;
@@ -18,7 +19,7 @@
          // We have to nest a span, so that its center is aligned on the position for a.
          // That way, at 0% the <a> is position on the left of the slider, but the span
          // extends slightly further into the left margin.
-         span.handle {
+         span.round {
             background-color: #fff;
             border: 1px solid #000;
             border-radius: 100%;
@@ -42,7 +43,7 @@
             }
          }
          &.active {
-            span.handle:after {
+            span.round:after {
                background: red;
             }
             .bubble {
