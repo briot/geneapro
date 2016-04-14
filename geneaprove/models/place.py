@@ -61,7 +61,6 @@ class Place_Part(GeneaProveModel):
 
     class Meta:
         """Meta data for the model"""
-        order_with_respect_to = 'place'
         ordering = ('sequence_number', 'name')
         db_table = "place_part"
 

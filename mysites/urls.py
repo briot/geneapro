@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, include, url
+from django.conf.urls import include, url
 from django.conf import settings
 from django.views import static
 import django.views.defaults
@@ -8,21 +8,21 @@ import geneaprove.urls
 # from django.contrib import admin
 # admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = [
     ## Serve static files (images and CSS). This is not recommended for use
     ## in production since this is insecure and inefficient according to the
     ## doc. One trick is commented out below and is to add a new variable
     ## in settings.py
-    (r'^static/(?P<path>.*)$',
+    url(r'^static/(?P<path>.*)$',
      static.serve, {"document_root": settings.STATIC_ROOT}),
 
-	(r'^', include(geneaprove.urls)),
+	 url(r'^', include(geneaprove.urls)),
 
-	#if settings.LOCAL_DEVELOPMENT:
-	#    urlpatterns += patterns("django.views",
-	#        url(r"%s(?P<path>.*)/$" % settings.MEDIA_URL[1:], "static.serve", {
-	#            "document_root": settings.MEDIA_ROOT,
-	#        })
+	 #if settings.LOCAL_DEVELOPMENT:
+	 #    urlpatterns += patterns("django.views",
+	 #        url(r"%s(?P<path>.*)/$" % settings.MEDIA_URL[1:], "static.serve", {
+	 #            "document_root": settings.MEDIA_ROOT,
+	 #        })
 
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs'
     # to INSTALLED_APPS to enable admin documentation:
@@ -30,4 +30,4 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     #(r'^admin/(.*)', admin.site.root),
-)
+]

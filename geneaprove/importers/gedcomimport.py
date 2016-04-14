@@ -306,7 +306,6 @@ class GedcomImporter(object):
     uses roughly the gedcom model.
     """
 
-    @transaction.commit_manually
     def __init__(self, gedcom_name, data):
         """
         From the data contained in a gedcom-like file (see description of
@@ -317,86 +316,80 @@ class GedcomImporter(object):
         if DEBUG:
             print "Start import", time.time()
 
-        try:
-            self._data = data
-            self._researcher = self._create_researcher()
-            prj = self._create_project(self._researcher)
+        self._data = data
+        self._researcher = self._create_researcher()
+        prj = self._create_project(self._researcher)
 
-            self._default_surety = prj.scheme.parts.all()
-            self._default_surety = \
-                self._default_surety[len(self._default_surety) / 2]
+        self._default_surety = prj.scheme.parts.all()
+        self._default_surety = \
+            self._default_surety[len(self._default_surety) / 2]
 
-            self._births = dict()  # Index on gedcom persona id, contains Event
+        self._births = dict()  # Index on gedcom persona id, contains Event
 
-            self._objects = dict()  # Objects that were inserted in this import
-            # to avoid duplicates.  file => Representation
+        self._objects = dict()  # Objects that were inserted in this import
+        # to avoid duplicates.  file => Representation
 
-            self._obje_for_places = dict()
-            # The OBJE created for each place.
-            # This is needed because at least GRAMPS outputs the PLAC for an
-            # event along with all its OBJE (so we have lots of duplicates)
+        self._obje_for_places = dict()
+        # The OBJE created for each place.
+        # This is needed because at least GRAMPS outputs the PLAC for an
+        # event along with all its OBJE (so we have lots of duplicates)
 
-            self._principal = models.Event_Type_Role.objects.get(
-                pk=models.Event_Type_Role.principal)
-            self._birth__father = models.Event_Type_Role.objects.get(
-                pk=models.Event_Type_Role.birth__father)
-            self._birth__mother = models.Event_Type_Role.objects.get(
-                pk=models.Event_Type_Role.birth__mother)
+        self._principal = models.Event_Type_Role.objects.get(
+            pk=models.Event_Type_Role.principal)
+        self._birth__father = models.Event_Type_Role.objects.get(
+            pk=models.Event_Type_Role.birth__father)
+        self._birth__mother = models.Event_Type_Role.objects.get(
+            pk=models.Event_Type_Role.birth__mother)
 
-            self._event_types = dict()
-            self._char_types = dict()
-            self._citation_part_types = dict()
-            self._place_part_types = dict()
-            self._get_all_event_types()
-            self._places = dict()
-            self._repo = dict()
+        self._event_types = dict()
+        self._char_types = dict()
+        self._citation_part_types = dict()
+        self._place_part_types = dict()
+        self._get_all_event_types()
+        self._places = dict()
+        self._repo = dict()
 
-            self._sourcePersona = dict()  # Indexed on (sourceId, gedcom personId)
-            # returns the Persona to use for that source. As a special
-            # case, sourceId is set to NO_SOURCE for those events and
-            # characteristics with no source.
+        self._sourcePersona = dict()  # Indexed on (sourceId, gedcom personId)
+        # returns the Persona to use for that source. As a special
+        # case, sourceId is set to NO_SOURCE for those events and
+        # characteristics with no source.
 
-            self.source_manager = SourceManager(self, gedcom_name, data)
+        self.source_manager = SourceManager(self, gedcom_name, data)
 
-            for r in data.REPO:
-                self._create_repo(r)
-            if DEBUG:
-                print "Done importing repositories"
+        for r in data.REPO:
+            self._create_repo(r)
+        if DEBUG:
+            print "Done importing repositories"
 
-            for s in data.SOUR:
-                self.source_manager.add_SOUR(s)
+        for s in data.SOUR:
+            self.source_manager.add_SOUR(s)
 
-            for index, s in enumerate(data.INDI):
-                self._create_bare_indi(s)
+        for index, s in enumerate(data.INDI):
+            self._create_bare_indi(s)
 
-            max = len(data.INDI)
-            if DEBUG:
-                print "Importing %d indi" % max
-            for index, s in enumerate(data.INDI):
-                self._create_indi(s)
-                if DEBUG and index % 20 == 0:
-                    print "%d / %d (%0.2f %%)" % (
-                        index, max, float(index) / float(max) * 100.0)
-            if DEBUG:
-                print "Done importing indi"
+        max = len(data.INDI)
+        if DEBUG:
+            print "Importing %d indi" % max
+        for index, s in enumerate(data.INDI):
+            self._create_indi(s)
+            if DEBUG and index % 20 == 0:
+                print "%d / %d (%0.2f %%)" % (
+                    index, max, float(index) / float(max) * 100.0)
+        if DEBUG:
+            print "Done importing indi"
 
-            if DEBUG:
-                print "Importing %d families" % (len(data.FAM))
-            for s in data.FAM:
-                self._create_family(s)
-            if DEBUG:
-                print "Done importing families"
+        if DEBUG:
+            print "Importing %d families" % (len(data.FAM))
+        for s in data.FAM:
+            self._create_family(s)
+        if DEBUG:
+            print "Done importing families"
 
-            for k, v in data.for_all_fields():
-                if k not in ("SOUR", "INDI", "FAM", "HEAD", "SUBM",
-                             "TRLR", "ids", "filename"):
-                    self.report_error(
-                        "%s Unhandled FILE.%s" % (location(v), k))
-
-            transaction.commit()
-        except:
-            transaction.rollback()
-            raise
+        for k, v in data.for_all_fields():
+            if k not in ("SOUR", "INDI", "FAM", "HEAD", "SUBM",
+                         "TRLR", "ids", "filename"):
+                self.report_error(
+                    "%s Unhandled FILE.%s" % (location(v), k))
 
     def report_error(self, msg):
         print msg

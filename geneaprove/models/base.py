@@ -29,7 +29,7 @@ class PartialDateField(models.CharField):
     # ??? We should also override form_field, so that we can more easily
     #     create html input fields to edit this field
 
-    __metaclass__ = models.SubfieldBase
+    # __metaclass__ = models.SubfieldBase
 
     def __init__(self, max_length=0, null=True, *args, **kwargs):
         kwargs["null"] = null
