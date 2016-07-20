@@ -1,29 +1,25 @@
-<form #spy2>
-   form={{spy2.className}}
-   <input class='form-control' required name='foo' [(ngModel)]='data.foo' #spy>
-   <div [hidden]='spy.valid || spy.pristine' class='alert alert-danger'>Value is required</div>
-   input={{spy.className}}
-</form>
-<form *ngIf='data' #citationForm='ngForm'>
+<form *ngIf='data' #citationForm='ngForm' (ngSubmit)='save(citationForm.value)'>
    <h4>Citation</h4>
    <div class='row'>
       <div class='col-md-12 form-group floatlabel'>
-         <floatlabelinput [(modelpath)]='data.source.title' [readonly]='data.source.medium!=""' label='Full Citation' [title]='citation?.template?.full'></floatlabelinput>
+         <floatlabelinput [(ngModel)]='data.source.title' name='full' [readonly]='data.source.medium!=""' label='Full Citation' [title]='citation?.template?.full' required #full='ngModel'></floatlabelinput>
+         <div [hidden]='full.valid||full.pristine' class='alert alert-danger'>Must be specified</div>
       </div>
 
       <div class='col-md-12 form-group floatlabel'>
-         <floatlabelinput [(modelpath)]='data.source.abbrev' [readonly]='data.source.medium!=""' label='Short Citation' [title]='citation?.template?.abbrev'></floatlabelinput>
+         <floatlabelinput [(ngModel)]='data.source.abbrev' name='abbrev' [readonly]='data.source.medium!=""' label='Short Citation' [title]='citation?.template?.abbrev'></floatlabelinput>
       </div>
 
       <div class='col-md-12 form-group floatlabel'>
-         <floatlabelinput [(modelpath)]='data.source.biblio' [readonly]='data.source.medium!=""' label='Bibliography Citation' [title]='citation?.template?.biblio'></floatlabelinput>
+         <floatlabelinput [(ngModel)]='data.source.biblio' name='biblio' [readonly]='data.source.medium!=""' label='Bibliography Citation' [title]='citation?.template?.biblio'></floatlabelinput>
       </div>
    </div>
 
    <h4>Citation Details</h4>
    <div class='row'>
       <div class='col-md-12 form-group floatlabel'>
-         <select id='_sourceType'
+         <select
+            name='medium'
             class='form-control nonempty'
             [ngModel]='data.source.medium'
             (ngModelChange)='onMediumChange($event)'
@@ -34,13 +30,12 @@
                <option *ngFor='let opt of optlist' [value]='opt.id'>{{opt.type}}</option>
             </optgroup>
          </select>
-
-         <label>Source Type</label>
       </div>
 
       <div class='col-md-12 form-group' *ngIf='citation'>
          <floatlabelinput *ngFor='let p of citation.fields'
-            [modelpath]='cache[p]' (modelpathChange)='computeCitation(p,$event)'
+            [ngModel]='cache[p]' (ngModelChange)='computeCitation(p,$event)'
+            [name]='p'
             [label]='p'></floatlabelinput>
       </div>
 
@@ -60,8 +55,8 @@
                <source-link [id]='h.id' [name]='h.title' [title]='h.title'></source-link>
             </li>
          </ul>
-         <floatlabelinput [(modelpath)]='data.source.higher_source_id'
-             size=6 
+         <floatlabelinput [(ngModel)]='data.source.higher_source_id'
+             name='hightSource'
              title='Select the source in which this one was found, for instance a specific will inside a will book'
              label='Parent source'></floatlabelinput>
       </div>
@@ -75,7 +70,8 @@
       </div>
       <div class='col-md-12 form-group'>
          <floatlabelinput *ngFor='let p of extra_parts'
-            [modelpath]='p.value' (modelpathChange)='onExtraPartChange(p,$event)'
+            [ngModel]='p.value' (ngModelChange)='onExtraPartChange(p,$event)'
+            [name]='p.name'
             [label]='p.name'></floatlabelinput>
       </div>
    </div>
@@ -85,31 +81,33 @@
    <h4>Research Details</h4>
    <div class='row'>
       <div class='col-md-12 form-group'>
-         <floatlabelinput [(modelpath)]='data.source.subject_date_id'
+         <floatlabelinput [(ngModel)]='data.source.subject_date_id'
               title="The date the source is about. This isn't the date of the source itself."
+              name='subject_date_id'
               label='Subject date'></floatlabelinput>
 
-         <floatlabelinput [(modelpath)]='data.source.subject_place_id'
+         <floatlabelinput [(ngModel)]='data.source.subject_place_id'
               title="The place that the source is about"
+              name='subject_place_id'
               label='Subject place'></floatlabelinput>
 
-         <floatlabelinput [(modelpath)]='data.source.jurisdiction_place_id'
+         <floatlabelinput [(ngModel)]='data.source.jurisdiction_place_id'
               title='Where the source was found'
+              name='jurisdiction_place_id'
               label='Jurisdiction place'></floatlabelinput>
 
          <floatlabelinput
-              modelpath='{{data.source.researcher.name}} (changed on {{data.source.last_change}})'
+              ngModel='{{data.source.researcher.name}} (changed on {{data.source.last_change}})'
               readonly='true'
+              [ngModelOptions]='{standalone:true}'
               label='Researched by'></floatlabelinput>
 
-         <floatlabelinput [(modelpath)]='data.source.comments'
-              label='Notes' lines=5></floatlabelinput>
+         <floatlabelinput [(ngModel)]='data.source.comments'
+              name='comments' label='Notes' lines=5></floatlabelinput>
       </div>
    </div>
 
-   {{citationForm|json}}
-
-   <button class='btn btn-primary center-block'
-      *ngIf='citationForm.dirty || data.source.id==null'
-      (click)='saveParts()'>{{data.source.id==null ? "Create" : "Save"}}</button>
+   <button class='btn btn-primary center-block' type='submit'
+      *ngIf='!citationForm.pristine || data.source.id==null'
+      [disabled]='!citationForm.valid'>{{data.source.id==null ? "Create" : "Save"}}</button>
 </form>

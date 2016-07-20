@@ -39,4 +39,17 @@
       top: 0;
       margin-top: 0;
    }
+
+   /**
+    * Forms.
+    * See https://angular.io/docs/ts/latest/guide/forms.html
+    */
+   input, textarea, select {
+      .ng-valid.ng-dirty & {   // Modified, and still valid
+        border-left: 5px solid #42A948; /* green */
+      }
+      .ng-invalid & {  // Invalid
+        border-left: 5px solid #a94442; /* red */
+      }
+   }
 }

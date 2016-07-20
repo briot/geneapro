@@ -1,5 +1,6 @@
 import {Component, Input} from '@angular/core';
-import {Control, CORE_DIRECTIVES, FORM_DIRECTIVES} from '@angular/common';
+import {CORE_DIRECTIVES} from '@angular/common';
+import {FORM_DIRECTIVES} from '@angular/forms';
 import {Surety} from './surety';
 import {Settings} from './settings.service';
 import {SourceData, SourceService, ModelData, CitationModel, ISourcePart,
@@ -99,5 +100,9 @@ export class Citation {
          this.data.source.abbrev = c.abbrev;
          this.data.source.biblio = c.biblio;
       }
+   }
+
+   save(fields : Object) {
+      console.log("MANU saving ", fields);
    }
 }

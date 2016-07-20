@@ -55,19 +55,3 @@ h2:first-child {
    font-style: italic;
    margin-left: 10px;
 }
-
-/**
- * Forms.
- * This assumes you have injected FORM_DIRECTIVES into the component, so that
- * <input> fields are automatically associated with a FormControl which will
- * set the ng-dirty / ng-pristine / ng-valid / ng-invalid / ng-touched
- * classes.
- * See https://angular.io/docs/ts/latest/guide/forms.html
- */
-.ng-valid[required] {
-  border-left: 5px solid #42A948; /* green */
-}
-
-.ng-invalid {
-  border-left: 5px solid #a94442; /* red */
-}
