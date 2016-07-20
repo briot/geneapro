@@ -18,7 +18,7 @@
                </tr>
                <tr *ngFor='let p of paginate.pagedData'>
                   <td><persona-link [id]='p.id' [name]='p.surn'></persona-link></td>
-                  <td *ngIf='settings.personaList.colorScheme!=4'><span [style]='p.styles'>{{p.givn || '-'}}</span></td>
+                  <td *ngIf='settings.personaList.colorScheme!=4'><span [ngStyle]='p.styles'>{{p.givn || '-'}}</span></td>
                   <td *ngIf='settings.personaList.colorScheme==4'><span>{{p.givn || '-'}}</span></td>
                   <td>{{p.birth ? p.birth.date : ''}}</td>
                   <td>{{p.death ? p.death.date : ''}}</td>
@@ -37,13 +37,13 @@
             <ul class='nav nav-pills nav-stacked'>
                <li class='config'>
                   <span>Rows per page</span>
-                  <select [ngFormControl]='rows'>
+                  <select [ngModel]='settings.personaList.rows' (ngModelChange)='onRowsChange(+$event)'>
                      <option *ngFor='let r of paginate.rows' [value]='r.rows'>{{r.label}}</option>
                   </select>
                </li>
                <li class='config'>
                   <span>Colors</span>
-                  <select [ngFormControl]='colorScheme'>
+                  <select [ngModel]='settings.personaList.colorScheme' (ngModelChange)='onColorSchemeChange(+$event)'>
                      <option value='0'>Rules</option>
                      <option value='4'>No colors</option>
                   </select>

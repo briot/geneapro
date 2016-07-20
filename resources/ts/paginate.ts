@@ -1,5 +1,5 @@
-import {Component, Injectable, Input} from '@angular/core';
-import {Control, CORE_DIRECTIVES, FORM_DIRECTIVES} from '@angular/common';
+import {Component, Injectable, Input, EventEmitter} from '@angular/core';
+import {CORE_DIRECTIVES} from '@angular/common';
 
 /**
  * Return an array with the elements of data that have a field containing
@@ -97,20 +97,26 @@ export class PaginateData {
 @Component({
    selector:   'paginate',
    template:   require('./paginate.html'),
-   directives: [CORE_DIRECTIVES, FORM_DIRECTIVES]
+   directives: [CORE_DIRECTIVES]
 })
 export class Paginate {
    @Input() panelTitle = '';
-   filter       = new Control;
+   filter  : string = '';
+
+   private filterValues : EventEmitter<string> = new EventEmitter<string>();
 
    constructor(
       private paginated : PaginateData)
    {
       //  Subscribe to changes for the filter, but wait until the user has
       //  finished typing.
-      this.filter.valueChanges
+      this.filterValues
          .debounceTime(400)
          .distinctUntilChanged()
          .subscribe((filter : string) => paginated.setFilter(filter));
+   }
+
+   onFilterChange(filter : string) {
+      this.filterValues.emit(filter);
    }
 }

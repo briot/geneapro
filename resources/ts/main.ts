@@ -7,6 +7,7 @@ import {Title} from '@angular/platform-browser';
 import {bootstrap} from '@angular/platform-browser-dynamic';
 import {Component, provide} from '@angular/core';
 import {RouteConfig, ROUTER_DIRECTIVES, ROUTER_PROVIDERS} from '@angular/router-deprecated';
+import {disableDeprecatedForms, provideForms} from '@angular/forms';
 import {APP_BASE_HREF} from '@angular/common';
 import {HTTP_PROVIDERS} from '@angular/http';
 import {Menubar} from './menubar';
@@ -72,4 +73,7 @@ import 'rxjs/add/operator/debounceTime';
 export class MainComponent {
 }
 
-bootstrap(MainComponent)
+bootstrap(MainComponent, [
+   disableDeprecatedForms(),
+   provideForms()
+])

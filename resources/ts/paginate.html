@@ -2,7 +2,8 @@
    <div class='panel-heading'>
       {{panelTitle}}
       <span>
-         <input placeholder="filter" [ngFormControl]="filter" style="float:right; width:250px"/>
+         <input placeholder="filter" [ngModel]='filter' (ngModelChange)='onFilterChange($event)'
+                style="float:right; width:250px"/>
          <span *ngIf='paginated.offsetMax!=0'>{{paginated.offset + 1}} - {{paginated.offsetMax + 1}} / {{paginated.filteredData.length}}</span>
       </span>
    </div>

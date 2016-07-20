@@ -1,6 +1,6 @@
 import {Component, ElementRef, Input, Injectable} from '@angular/core';
 import {Router, RouteParams} from '@angular/router-deprecated';
-import {Control, ControlGroup, CORE_DIRECTIVES, FormBuilder, FORM_DIRECTIVES} from '@angular/common';
+import {CORE_DIRECTIVES} from '@angular/common';
 import * as d3 from 'd3';
 import {Settings} from './settings.service';
 import {GPd3Service, ScalableSelection, d3Styles, LayoutInfo} from './d3.service';
@@ -590,13 +590,11 @@ export class Pedigree {
 
 @Component({
    template: require('./pedigree.html'),
-   directives: [Pedigree, FORM_DIRECTIVES, Legend, CORE_DIRECTIVES,
-                ContextMenu, Slider]
+   directives: [Pedigree, Legend, CORE_DIRECTIVES, ContextMenu, Slider]
 })
 export class PedigreePage {
    public id : number;
    data : PedigreeData;
-   colorScheme : Control;
 
    contextualLinks : ContextualItem[];
 
@@ -606,7 +604,6 @@ export class PedigreePage {
       private router          : Router,
       routeParams             : RouteParams)
    {
-      this.colorScheme = new Control(settings.pedigree.colorScheme);
       this.contextualLinks = [
          {name: 'Set as reference', func: this.focusPerson.bind(this)},
          {name: 'Show details',     func: this.showPerson.bind(this)}

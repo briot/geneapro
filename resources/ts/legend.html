@@ -4,7 +4,7 @@
       <h2>Custom colors</h2>
       <table>
          <tr *ngFor="let r of rules | async">
-            <td style="{{r.css}}">{{r.name}}</td>
+            <td [ngStyle]="r.css">{{r.name}}</td>
          </tr>
       </table>
    </div>

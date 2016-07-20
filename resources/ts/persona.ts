@@ -1,5 +1,6 @@
 import {Component} from '@angular/core';
-import {Control, CORE_DIRECTIVES, FORM_DIRECTIVES} from '@angular/common';
+import {CORE_DIRECTIVES} from '@angular/common';
+import {FORM_DIRECTIVES} from '@angular/forms';
 import {RouteParams} from '@angular/router-deprecated';
 import {PersonaService, PersonaData} from './persona.service';
 import {Surety} from './surety';

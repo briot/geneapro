@@ -1,5 +1,5 @@
 import {Component} from '@angular/core';
-import {Control, CORE_DIRECTIVES, FORM_DIRECTIVES} from '@angular/common';
+import {CORE_DIRECTIVES} from '@angular/common';
 import {RouteParams} from '@angular/router-deprecated';
 import {Surety} from './surety';
 import {Settings} from './settings.service';

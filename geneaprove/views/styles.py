@@ -122,7 +122,7 @@ def style_to_css(style):
        but provides additional methods for conversion in various contexts
     """
 
-    st = []
+    st = {}
     borderWidth = ""
     borderColor = "black"
     borderStyle = "solid"
@@ -138,13 +138,13 @@ def style_to_css(style):
             borderWidth = v
             k = ""
         if k:
-            st.append("%s:%s" % (k, v))
+            st[k] = v
 
     if borderWidth:
-        st.append("border-width:%spx" % borderWidth)
-        st.append("border-color:%s" % borderColor)
-        st.append("border-style:%s" % borderStyle)
-    return ";".join(st)
+        st['border-width'] = '%spx' % borderWidth
+        st['border-color'] = borderColor
+        st['border-style'] = borderStyle
+    return st
 
 
 class ColorScheme(object):

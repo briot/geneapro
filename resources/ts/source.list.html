@@ -28,7 +28,7 @@
             <ul class='nav nav-pills nav-stacked'>
                <li class='config'>
                   <span>Rows per page</span>
-                   <select [ngFormControl]='rows'>
+                   <select [ngModel]='settings.sourceList.rows' (ngModelChange)='onRowsChange(+$event)'>
                      <option *ngFor='let r of paginate.rows' [value]='r.rows'>{{r.label}}</option>
                    </select>
                </li>
