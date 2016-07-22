@@ -1,6 +1,7 @@
 import {Component, Input} from '@angular/core';
 import {CORE_DIRECTIVES} from '@angular/common';
 import {FORM_DIRECTIVES} from '@angular/forms';
+import {Router} from '@angular/router-deprecated';
 import {Surety} from './surety';
 import {Settings} from './settings.service';
 import {SourceData, SourceService, ModelData, CitationModel, ISourcePart,
@@ -38,6 +39,7 @@ export class Citation {
 
    constructor(
       public settings  : Settings,
+      private router: Router,
       private sources  : SourceService)
    {
    }
@@ -52,12 +54,16 @@ export class Citation {
       this.sources.get_all_models().subscribe((d : ModelData) => {
          this.source_types = d.source_types});
 
-      this.sources.get_citation_parts(this.data.source).subscribe(
-         (d : ISourcePart[]) => {
-            this.saved_parts = d;
-            d.forEach(p => this.cache[p.name] = p.value);
-            this.computeExtraParts();
-         });
+      this.sources.get_citation_parts(this.data.source.id).subscribe(
+         d => this._parse_parts(d));
+   }
+
+   private _parse_parts(d : ISourcePart[]) {
+      this.saved_parts = d;
+      d.forEach(p => this.cache[p.name] = p.value);
+
+      // Load the details of the citation template
+      this.onMediumChange(this.data.source.medium);
    }
 
    onMediumChange(medium : string) {
@@ -65,12 +71,15 @@ export class Citation {
       if (!medium) {
          this.citation = undefined;
          this.computeCitation();
+         this.computeExtraParts();
       } else {
          this.sources.get_model_template(medium).subscribe(
             (d : CitationTemplate) => {
                this.citation = d;
-               this.computeExtraParts();
                this.computeCitation();
+
+               // Compute what parts are not in the template
+               this.computeExtraParts();
             });
       }
    }
@@ -81,7 +90,7 @@ export class Citation {
       this.extra_parts = [];
       if (this.citation) {
          this.saved_parts.forEach(p => {
-            if (!(p.name in this.citation.fields)) {
+            if (this.citation.fields.indexOf(p.name) == -1) {
                this.extra_parts.push(p);
             }
          });
@@ -103,6 +112,13 @@ export class Citation {
    }
 
    save(fields : Object) {
-      console.log("MANU saving ", fields);
+      this.sources.save_citation(this.data.source, fields).subscribe(
+         (d : ISourcePart[]) => {
+            this._parse_parts(d);
+            this.router.navigate(['Source', {id: this.data.source.id}]);
+
+            // Unfortunately, there is no way to reset the 'pristine' set of
+            // the form yet.
+         });
    }
 }

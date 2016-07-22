@@ -2,7 +2,7 @@
    <div class='col-md-12'>
       <div class='panel panel-default'>
          <div class='panel-heading editable-title' (click)='toggleCitation()'>
-            <span class='fa fa-pencil editable-title' innerHtml='{{initial_full_citation|linky}}'></span>
+            <span class='fa fa-pencil editable-title' innerHtml='{{data.source.title|linky}}'></span>
          </div>
          <div class='panel-body' *ngIf='showCitation'>
             <citation [data]='data'></citation>

@@ -81,12 +81,12 @@ class SourceView(JSONView):
 class EditSourceCitation(JSONView):
     """
     Perform some changes in the citation parts for a source, and returns a
-    JSON similar to view():
-        {source: ...,  parts: ... }
+    JSON similar to SourceCitation
     """
     def post_json(self, params, id):
         if id == -1:
             src = create_empty_source()
+            src.save()
         else:
             src = models.Source.objects.get(id=id)
 
@@ -136,28 +136,14 @@ class EditSourceCitation(JSONView):
                     type = models.Citation_Part_Type.objects.get(name=key)
                 except models.Citation_Part_Type.DoesNotExist:
                     type = models.Citation_Part_Type.objects.create(name=key)
-                    type.save()
+                    #type.save()
 
-                p = models.Citation_Part(type=type, value=value)
+                p = models.Citation_Part.objects.create(type=type, value=value, source_id=src.id)
                 src.parts.add(p)
-
-        # ??? Citation has already been computed on the client
-        #medium = src.compute_medium()
-        #if medium:
-        #    parts = {k: v[0]   # discard the from_higher information
-        #             for k, v in src.higher_source.get_citations().iteritems()}
-        #    for k, v in params.iteritems():
-        #        parts[k] = v
-
-        #    c = Citations.get_citation(medium).cite(
-        #        parts, unknown_as_text=False)
-        #    src.biblio = c.biblio
-        #    src.title = c.full
-        #    src.abbrev = c.short
 
         src.save()
 
-        return SourceView().get_json(params, id=src.id)
+        return SourceCitation().get_json(params, id=src.id)
 
 
 class SourcesList(JSONView):

@@ -1,7 +1,8 @@
 import {Injectable} from '@angular/core';
-import {Http} from '@angular/http';
+import {Http, Headers, RequestOptions} from '@angular/http';
 import {ISource, IAssertion, IRepr} from './basetypes';
 import {Observable} from 'rxjs';
+import {json_post} from './http_utils';
 
 export interface SourceData {
    source          : ISource,
@@ -143,10 +144,18 @@ export class SourceService {
    /**
     * Retrieve all citation parts for a specific source
     */
-   get_citation_parts(source : ISource) : Observable<ISourcePart[]> {
-      return this.http.get('/data/sources/' + (source.id || -1) + '/parts').map(
+   get_citation_parts(source_id : number) : Observable<ISourcePart[]> {
+      return this.http.get('/data/sources/' + (source_id || -1) + '/parts').map(
          res => res.json().parts);
    }
+
+   /**
+    * Save the source citation
+    */
+   save_citation(source : ISource, fields : Object) : Observable<ISourcePart[]> {
+      return json_post(
+         this.http,
+         '/data/sources/' + (source.id || -1) + '/saveparts',
+         fields).map(res => res.json().parts);
+   }
 }
-
-

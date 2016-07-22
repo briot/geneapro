@@ -23,7 +23,7 @@ const FLOATLABEL_CONTROL_VALUE_ACCESSOR = new Provider(
 })
 export class FloatLabelInput implements ControlValueAccessor {
    @Input() label : string;
-   @Input() title : string;
+   @Input() title : string = "";
    @Input() readonly : boolean;
 
    // If greater than 1, display a textarea rather than a single line input

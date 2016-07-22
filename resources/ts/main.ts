@@ -74,6 +74,7 @@ export class MainComponent {
 }
 
 bootstrap(MainComponent, [
+   // Support for the new forms module
    disableDeprecatedForms(),
-   provideForms()
+   provideForms(),
 ])

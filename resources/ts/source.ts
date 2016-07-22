@@ -30,7 +30,6 @@ export class Source {
       this._sources.get(this.id)
          .subscribe((resp : SourceData) => {
             this.data = resp;
-            this.initial_full_citation = this.data.source.title;
             this.settings.setTitle('Source ' + this.data.source.title);
          });
    }
