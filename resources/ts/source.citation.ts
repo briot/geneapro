@@ -1,19 +1,15 @@
 import {Component, Input} from '@angular/core';
 import {CORE_DIRECTIVES} from '@angular/common';
-import {FORM_DIRECTIVES} from '@angular/forms';
 import {Router} from '@angular/router-deprecated';
-import {Surety} from './surety';
-import {Settings} from './settings.service';
 import {SourceData, SourceService, ModelData, CitationModel, ISourcePart,
         CitationTemplate, ICitation} from './source.service';
 import {FloatLabelInput} from './floatlabels';
-import {Observable} from 'rxjs';
 import {GroupByPipe} from './groupby';
 
 @Component({
    selector: 'citation',
    template: require('./source.citation.html'),
-   directives: [CORE_DIRECTIVES, Surety, FloatLabelInput, FORM_DIRECTIVES],
+   directives: [CORE_DIRECTIVES, FloatLabelInput],
    pipes: [GroupByPipe]
 })
 export class Citation {
@@ -38,7 +34,6 @@ export class Citation {
    cache : {[key:string]:string} = {};
 
    constructor(
-      public settings  : Settings,
       private router: Router,
       private sources  : SourceService)
    {

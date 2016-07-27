@@ -4,7 +4,7 @@
  * A panel that lets users upload file or drag-and-drop them
  */
 
-.download-form {
+.upload-form {
    $bg: rgba(0,0,0,0.1); //#c8dadf
    $bg_on_drag: #EEE; // darken($bg, 10%)
    $fg: #555; // #92b0b3
@@ -52,7 +52,7 @@
    form {
       background: $bg;
    }
-   &.dragover form {
+   &.dragover {
       background: $bg_on_drag;
    }
 

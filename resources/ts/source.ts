@@ -6,10 +6,12 @@ import {Settings} from './settings.service';
 import {Linky, SourceLink, PersonaLink} from './links';
 import {SourceService, SourceData} from './source.service';
 import {Citation} from './source.citation';
+import {SourceMedia} from './source.media';
 
 @Component({
    template: require('./source.html'),
-   directives: [CORE_DIRECTIVES, Surety, SourceLink, PersonaLink, Citation],
+   directives: [CORE_DIRECTIVES, Surety, SourceLink, PersonaLink, Citation,
+                SourceMedia],
    pipes: [Linky]
 })
 export class Source {
@@ -36,5 +38,9 @@ export class Source {
 
    toggleCitation() {
       this.showCitation = ! this.showCitation;
+   }
+
+   onMediaChange(data : SourceData) {
+      this.data = data;
    }
 }

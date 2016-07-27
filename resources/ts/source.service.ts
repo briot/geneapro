@@ -2,13 +2,14 @@ import {Injectable} from '@angular/core';
 import {Http, Headers, RequestOptions} from '@angular/http';
 import {ISource, IAssertion, IRepr} from './basetypes';
 import {Observable} from 'rxjs';
-import {json_post} from './http_utils';
+import {json_post, formdata_post} from './http_utils';
 
 export interface SourceData {
    source          : ISource,
    higher_sources ?: ISource[],
    asserts        ?: IAssertion[],
-   repr           ?: IRepr[]
+   repr           ?: IRepr[],
+   error          ?: string
 }
 
 export interface CitationModel {
@@ -157,5 +158,27 @@ export class SourceService {
          this.http,
          '/data/sources/' + (source.id || -1) + '/saveparts',
          fields).map(res => res.json().parts);
+   }
+
+   /**
+    * Delete a representation of source
+    */
+   delete_repr(source : ISource, repr : IRepr, ondisk : boolean) : Observable<SourceData> {
+      return json_post(
+         this.http,
+         '/data/sources/' + source.id + '/delRepr/' + repr.id,
+         {'ondisk': ondisk}).map(res => res.json());
+   }
+
+   /**
+    * Upload new representations for a source
+    */
+   upload_repr(source : ISource, files : File[]) : Observable<SourceData> {
+      let data = new FormData();
+      files.forEach(f => data.append('file', f));
+      return formdata_post(
+         this.http,
+         '/data/sources/' + source.id + '/addRepr',
+         data).map(res => res.json());
    }
 }

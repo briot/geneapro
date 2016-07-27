@@ -7,7 +7,8 @@ import copy
 import django.db.models.query
 from django.conf import settings
 from django.views.generic import View
-from django.http import HttpResponse, QueryDict
+from django.http import HttpResponse, QueryDict, JsonResponse
+from django.core.serializers.json import DjangoJSONEncoder
 from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.styles import get_place
@@ -55,20 +56,22 @@ class GroupInfo(object):
 # Exporting to JSON
 ###########################################################################
 
-class ModelEncoder(json.JSONEncoder):
+class ModelEncoder(DjangoJSONEncoder):
     """
     Encode an object or a list extracted from our model to a JSON
     representation.
     """
 
-    def __init__(self, custom=None, year_only=False):
+    def __init__(self, custom=None, year_only=False, **kwargs):
         """
         :param custom: a function that gets an object, and returns its JSON
            encoding as a string, or a simple version of the object that should
            be encoded recursively It should return None to fallback to the
            default encoding.
         """
-        super(ModelEncoder, self).__init__(separators=(',', ':'))
+        if 'separators' not in kwargs:
+            kwargs['separators'] = (',', ':')
+        super(ModelEncoder, self).__init__(**kwargs)
         self.year_only = year_only
         self.custom = custom
 
@@ -183,12 +186,8 @@ class JSONView(View):
         # Always convert an "id" parameter to integer
         if 'id' in kwargs:
             kwargs['id'] = int(kwargs['id'])
-
-        result = self.to_json(method(params, *args, **kwargs))
-        #if settings.DEBUG:
-        #    print "JSON=", result
-        return HttpResponse(result, content_type='application/json')
-
+        r = method(params, *args, **kwargs) or {"success": True}
+        return JsonResponse(r, encoder=ModelEncoder)
 
     def get(self, request, *args, **kwargs):
         try:
@@ -200,9 +199,7 @@ class JSONView(View):
             return self.__internal(self.get_json, params, *args, **kwargs)
         except Exception as e:
             print "Error %s" % e
-            return HttpResponse(to_json({
-                'error': '%s' % e
-            }), content_type='application/json')
+            return JsonResponse({'error': '%s' % e})
     
     def post(self, request, *args, **kwargs):
         try:
@@ -220,6 +217,4 @@ class JSONView(View):
             return self.__internal(self.post_json, params, *args, **kwargs)
         except Exception as e:
             print "Error %s" % e
-            return HttpResponse(to_json({
-                'error': '%s' % e
-            }), content_type='application/json')
+            return JsonResponse({'error': '%s' % e})

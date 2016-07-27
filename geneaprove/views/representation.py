@@ -52,7 +52,12 @@ def view(request, id, size=None):
                                  xconstrain=int(size),
                                  yconstrain=int(size))
 
-    response = HttpResponse(open(f).read(), content_type=repr.mime_type)
+    try:
+        bin = open(f).read()
+    except:
+        bin = ''
+
+    response = HttpResponse(bin, content_type=repr.mime_type)
     response['Content-Disposition'] = 'attachment; filename=%s' % (
         os.path.basename(repr.file))
     return response

@@ -173,10 +173,7 @@ class AddSourceRepr(JSONView):
     def post_json(self, params, id):
         source = get_source(id)
 
-        files = params.FILES['file']
-        if not isinstance(files, list):
-            files = [files]
-
+        files = params.FILES.getlist('file')
         dir = os.path.join(settings.MEDIA_ROOT, 'S%s' % id)
         try:
             os.makedirs(dir)
@@ -206,7 +203,7 @@ class AddSourceRepr(JSONView):
                 file=name)
             r.save()
 
-        return True
+        return SourceRepresentations().get_json(None, id=id)
 
 class DelSourceRepr(JSONView):
     """
@@ -224,4 +221,8 @@ class DelSourceRepr(JSONView):
                 error = "Could not delete %s" % (repr.file)
 
         repr.delete()
-        return {"error": error}
+
+        data = SourceRepresentations().get_json(None, id=id)
+        if error:
+            data['error'] = error
+        return data

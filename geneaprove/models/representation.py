@@ -25,7 +25,7 @@ class Representation(GeneaProveModel):
            The URL that should be used to access the media on the disk,
            from a web browser.
         """
-        return '/repr/%s' % (self.id, )
+        return '/data/repr/%s' % (self.id, )
 
     def to_json(self):
         return {
