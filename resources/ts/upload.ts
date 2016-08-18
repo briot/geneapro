@@ -136,14 +136,12 @@ export class UploadTarget {
 @Component({
    selector: 'gp-upload-target-mini',
    template: `
-      <div class="upload-target">
-         <label>
-            <span class="fa fa-download icon"> drop media here</span>
-            <input type=file multiple (change)='onFileAdded($event.target)'/>
-            <span *ngIf="!parent.isUploading" class="btn btn-sm btn-primary fa fa-plus" style="float:none"></span>
-            <span *ngIf="parent.isUploading" class="fa fa-spin fa-spinner"></span>
-         </label>
-      </div>`
+      <label class='upload-target'>
+         <span class="fa fa-download icon"> drop media here</span>
+         <input type=file multiple (change)='onFileAdded($event.target)'/>
+         <span *ngIf="!parent.isUploading" class="fa fa-plus btn btn-sm btn-primary" style="float:none"></span>
+         <span *ngIf="parent.isUploading" class="fa fa-spin fa-spinner"></span>
+      </label>`
 })
 export class UploadTargetMini {
    @Input() parent : UploadForm;

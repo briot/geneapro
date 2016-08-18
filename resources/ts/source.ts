@@ -7,11 +7,12 @@ import {Linky, SourceLink, PersonaLink} from './links';
 import {SourceService, SourceData} from './source.service';
 import {Citation} from './source.citation';
 import {SourceMedia} from './source.media';
+import {SourceAsserts} from './source.asserts';
 
 @Component({
    template: require('./source.html'),
    directives: [CORE_DIRECTIVES, Surety, SourceLink, PersonaLink, Citation,
-                SourceMedia],
+                SourceMedia, SourceAsserts],
    pipes: [Linky]
 })
 export class Source {

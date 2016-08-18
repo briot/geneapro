@@ -99,29 +99,6 @@ export interface IRepr {
 }
 export interface IResearcher {
 }
-export interface IAssertionSubject {
-   event     ?: IEvent;
-   person    ?: IPerson;
-   group     ?: IGroup;
-   role      ?: string;   // for event or group
-   char      ?: ICharacteristic;
-   parts     ?: ICharacteristicPart[];  // for characteristic
-}
-export interface IAssertion {
-   event ?: IEvent;   // ??? should be removed
-   disproved   : boolean;
-   rationale   : string;
-   researcher  : IResearcher;
-   last_change : Date,
-   source_id   : number;
-   surety      : number;  // SuretyScheme
-   p1          : IAssertionSubject;
-   p2          : IAssertionSubject;
-
-   $open    ?: boolean;  // whether to show the details of the event
-   $details ?: any;      // extra details
-   $edited  : boolean;   // whether this is being edited
-}
 export interface IPerson {
    // Information from server
    id    : number;
@@ -135,6 +112,11 @@ export interface IPerson {
    birth ?: IEvent;
    death ?: IEvent;
    marriage ?: IEvent;
+
+   // ??? Used in the template, but exact type undocumented yet
+   all_events ?: any;
+   all_chars  ?: any;
+   all_groups ?: any;
 
    // Computed style  (??? Should be moved elsewhere)
    $fill ?: string;

@@ -323,7 +323,8 @@ class SuretySchemesList(JSONView):
     Return the list of all defined surety schemes
     """
     def get_json(self, params):
-        return [{'id': s.id,
+        return {
+            'schemes': [{'id': s.id,
                     'name': s.name,
                     'description': s.description,
                     'parts': [
@@ -331,7 +332,7 @@ class SuretySchemesList(JSONView):
                          'name': p.name,
                          'description': p.description,
                          'sequence': p.sequence_number} for p in s.parts.all()]
-                } for s in models.Surety_Scheme.objects.all()]
+                } for s in models.Surety_Scheme.objects.all()]}
 
 
 class PersonaList(JSONView):

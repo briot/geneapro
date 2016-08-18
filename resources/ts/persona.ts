@@ -7,7 +7,7 @@ import {Surety} from './surety';
 import {Settings} from './settings.service';
 import {EventService, EventData} from './event.service';
 import {SourceLink, PersonaLink} from './links';
-import {IAssertion} from './basetypes';
+import {Assertion} from './asserts.service';
 import {SortOn, SortBy} from './sort';
 
 @Component({
@@ -36,7 +36,8 @@ export class Persona {
          });
    }
 
-   toggleEventDetails(e : IAssertion) {
+   // ??? Typing is wrong here
+   toggleEventDetails(e : any | Assertion) {
       e.$open = !e.$open;
       if (e.$open && !e.$details) {
          this._events.get(e.event.id)

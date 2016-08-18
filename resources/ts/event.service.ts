@@ -1,6 +1,5 @@
 import {Injectable} from '@angular/core';
 import {Http} from '@angular/http';
-import {IPerson, IAssertion, ISource} from './basetypes';
 import {Observable} from 'rxjs';
 
 // All assertions related to a specific event
@@ -15,7 +14,6 @@ export interface EventData {
       source    : {id : number}
    }
 }
-
 
 @Injectable()
 export class EventService {

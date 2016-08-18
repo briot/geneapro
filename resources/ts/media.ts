@@ -227,6 +227,7 @@ class ZoomImageDirective {
            <source [src]="repr.url" [type]="repr.mime">
            No support for audio files in this browser
         </audio>
+        <p *ngIf='!isimage && !isaudio'>Unknown media type</p>
         <figcaption>
            <span class="mediaName">{{repr.comments}}</span>
            {{repr.file}}<br>
@@ -242,7 +243,10 @@ export class GpMedia {
 
    ngOnChanges() {
       if (this.repr) {
-         this.isimage = this.repr.mime.lastIndexOf('image/', 0) == 0;
+         this.isimage = this.repr.mime.lastIndexOf('image/', 0) == 0 ||
+            this.repr.file.endsWith('.jpg') ||
+            this.repr.file.endsWith('.png') ||
+            this.repr.file.endsWith('.gif');
          this.isaudio = this.repr.mime.lastIndexOf('audio/', 0) == 0;
       }
    }

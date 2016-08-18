@@ -59,7 +59,7 @@ export class SuretyService {
       // share() ensures that all subscribers will receive the same info,
       // downloaded only once.
       this.allSchemes = http.get('/data/suretySchemes')
-         .map(resp => new SuretyList(resp.json()))
+         .map(resp => new SuretyList(resp.json().schemes))
          .share();
    }
 }

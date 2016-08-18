@@ -7,11 +7,16 @@
 *** Change vertical spacing => display broken on Safari
 ** Missing fanchart
 ** Source view
+   Source 165 has plenty of media
 *** Use a markdown editor (npm has one)
 *** Handling error during uploads
 *** Editing comments for representations
+   In particular annotating group photos to identify people
+*** Editing media type (see source 16)
+*** Editing assertions
 ** Import
 *** Use download form
+
 
 
 * Bugs

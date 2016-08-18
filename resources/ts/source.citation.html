@@ -25,8 +25,8 @@
             title='Select the type of source. This will change the details below to those needed for proper citation'>
             <option value=''>Select citation template</option>
 
-            <optgroup [label]="optlist[0].category" *ngFor='let optlist of source_types | groupBy:"category"'>
-               <option *ngFor='let opt of optlist' [value]='opt.id'>{{opt.type}}</option>
+            <optgroup [label]="g.name" *ngFor='let g of source_types | groupBy:"category"'>
+               <option *ngFor='let opt of g' [value]='opt.id'>{{opt.type}}</option>
             </optgroup>
          </select>
       </div>

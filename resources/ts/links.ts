@@ -16,7 +16,7 @@ export class Linky {
 })
 export class PersonaLink {
    @Input() id : number;   //  The id of the person
-   @Input() name : string; //  Default to Id
+   @Input() name : string; //  Defaults to Id
 }
 
 @Component({
@@ -26,7 +26,7 @@ export class PersonaLink {
 })
 export class PlaceLink {
    @Input() id : number;   //  The id of the place
-   @Input() name : string; //  Default to Id
+   @Input() name : string; //  Defaults to Id
 }
 
 @Component({
@@ -37,7 +37,16 @@ export class PlaceLink {
 })
 export class SourceLink {
    @Input() id : number;   //  The id of the place
-   @Input() name : string; //  Default to Id
+   @Input() name : string; //  Defaults to Id
    @Input() sourceTitle : string;
+}
+
+@Component({
+   selector: 'time-link',
+   template: require('./links.time.html'),
+   directives: [CORE_DIRECTIVES, RouterLink],
+})
+export class TimeLink {
+   @Input() on : {date:string, date_sort:string};
 }
 

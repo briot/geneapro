@@ -12,6 +12,12 @@ $assert-border-fg: darken($panel-bg, 10%);
    border-left-style: solid;
    border-left-color: $assert-border-fg;
    //border-image: linear-gradient(to bottom, red 0%, blue 100%) 1 100%;
+
+   .relationship {
+      font-style: italic;
+      font-size: 0.8em;
+      color: #aaa;
+   }
 }
 
 .assertSubject {

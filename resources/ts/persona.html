@@ -148,7 +148,7 @@
              </tr>
           </thead>
           <tbody>
-             <template ngFor let-p [ngForOf]='data.p2p'>
+             <template ngFor let-p [ngForOf]='data.p2p.allAsserts'>
                 <tr *ngIf='p.p1.person.id!=p.p2.person.id' [class.disproved]='p.disproved'>
                    <!-- ??? Should we show sources and researcher -->
                    <td><persona-link [id]='p.p1.person.id' [name]='p.p1.person.name'></persona-link></td>

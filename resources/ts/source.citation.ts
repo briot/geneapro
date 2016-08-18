@@ -1,8 +1,8 @@
 import {Component, Input} from '@angular/core';
 import {CORE_DIRECTIVES} from '@angular/common';
 import {Router} from '@angular/router-deprecated';
-import {SourceData, SourceService, ModelData, CitationModel, ISourcePart,
-        CitationTemplate, ICitation} from './source.service';
+import {SourceData, SourceService, ModelData, CitationModel, ISourcePart} from './source.service';
+import {CitationTemplate, ICitation} from './citation.service';
 import {FloatLabelInput} from './floatlabels';
 import {GroupByPipe} from './groupby';
 

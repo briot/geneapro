@@ -1,12 +1,18 @@
 import {Injectable} from '@angular/core';
 import {Http} from '@angular/http';
-import {IPerson, IAssertion, ISource} from './basetypes';
+import {IPerson, ISource} from './basetypes';
 import {Observable} from 'rxjs';
+import {AssertionList, IAssertionFromServer} from './asserts.service';
 
+export interface PersonaDataFromServer {
+   person  : IPerson,
+   sources : { [id: number]: ISource},
+   p2p     : IAssertionFromServer[] // person-to-person ("same as" relationship)
+}
 export interface PersonaData {
    person  : IPerson,
    sources : { [id: number]: ISource},
-   p2p     : IAssertion[]   // person-to-person ("same as relationship)
+   p2p     : AssertionList   // person-to-person ("same as" relationship)
 }
 
 @Injectable()
@@ -27,7 +33,13 @@ export class PersonaService {
     */
    get(id : number) : Observable<PersonaData> {
       return this.http.get('/data/persona/' + id)
-         .map(res => res.json());
+         .map(res => {
+            const j : PersonaDataFromServer = res.json();
+            return {
+               person  : j.person,
+               sources : j.sources,
+               p2p     : AssertionList.buildFromServer(j.p2p)}
+         });
    }
 
    /**
