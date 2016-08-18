@@ -8,7 +8,7 @@
      </h2>
      <div class='panel panel-default'>
         <h4>Characteristics</h4>
-        <table id="attrs" class="table table-condensed" [sortOn]='data.person.all_chars' sortName='personChar'>
+        <table id="attrs" class="table table-condensed" [sortOn]='data.p2c.allAsserts' sortName='personChar'>
           <thead>
              <tr>
                 <th [sortBy]='getCharName' [isdefault]='true'>Type</th>
@@ -19,23 +19,23 @@
              </tr>
           </thead>
           <tbody>
-             <tr *ngFor='let c of data.person.all_chars'>
-                <td class="type">{{c.char.name}}
-                   <source-link [id]='c.assertion.source_id' [sourceTitle]='data.sources[c.assertion.source_id].title'></source-link>
+             <tr *ngFor='let c of data.p2c.allAsserts'>
+                <td class="type">{{c.p2.char.name}}
+                   <source-link [id]='c.source_id' [sourceTitle]='data.sources[c.source_id].title'></source-link>
                 </td>
 
-                <td *ngIf='c.parts.length == 1'>
-                   {{c.parts[0].value}}
+                <td *ngIf='c.p2.parts.length == 1'>
+                   {{c.p2.parts[0].value}}
                 </td>
-                <td *ngIf='c.parts.length > 1'>
-                   <span *ngFor='let p of c.parts'>
+                <td *ngIf='c.p2.parts.length > 1'>
+                   <span *ngFor='let p of c.p2.parts'>
                       <span class="char">{{p.name}}</span>: {{p.value}}<br>
                    </span>
                 </td>
         
-                <td class="date">{{c.char.date || ''}}</td>
-                <td class="place">{{c.char.place?.name || ''}}</td>
-                <td><surety [part]='c.assertion?.surety'></surety></td>
+                <td class="date">{{c.p2.char.date || ''}}</td>
+                <td class="place">{{c.p2.char.place?.name || ''}}</td>
+                <td><surety [part]='c.surety'></surety></td>
               </tr>
            </tbody>
         </table>
@@ -43,7 +43,7 @@
 
      <div class='panel panel-default'>
         <h4>Events</h4>
-        <table id="events" class="table table-hover table-condensed" [sortOn]='data.person.all_events' sortName='personEvents'>
+        <table id="events" class="table table-hover table-condensed" [sortOn]='data.p2e.allAsserts' sortName='personEvents'>
           <thead>
              <tr>
                 <th [sortBy]='getEventTypeName'>Type</th>
@@ -54,19 +54,19 @@
              </tr>
           </thead>
           <tbody>
-             <template ngFor let-e [ngForOf]="data.person.all_events">
-                <tr [class.disproved]='e.assertion.disproved' [class.open]='e.$open' class='hasRowDetails' (click)='toggleEventDetails(e)'>
+             <template ngFor let-e [ngForOf]="data.p2e.allAsserts">
+                <tr [class.disproved]='e.disproved' [class.open]='e.$open' class='hasRowDetails' (click)='toggleEventDetails(e)'>
                    <td class="type">
-                      {{e.event.type.name}}
-                      <span *ngIf='e.role != "principal"' class='role'>(as {{e.role || ''}})</span>
-                      <source-link [id]='e.assertion.source_id' [sourceTitle]='data.sources[e.assertion.source_id].title'></source-link>
+                      {{e.p2.event.type.name}}
+                      <span *ngIf='e.p2.role != "principal"' class='role'>(as {{e.p2.role || ''}})</span>
+                      <source-link [id]='e.source_id' [sourceTitle]='data.sources[e.source_id].title'></source-link>
                    </td>
                    <td>
-                      {{ e.role == 'principal' ? '' : e.event.name }}
+                      {{ e.p2.role == 'principal' ? '' : e.p2.name }}
                    </td>
-                   <td class="date">{{e.event.date || ''}}</td>
-                   <td class="place">{{e.event.place?.name || ''}}</td>
-                   <td><surety [part]='e.assertion.surety'></surety></td>
+                   <td class="date">{{e.p2.event.date || ''}}</td>
+                   <td class="place">{{e.p2.event.place?.name || ''}}</td>
+                   <td><surety [part]='e.surety'></surety></td>
                 </tr>
                 <tr class='rowDetails' [hidden]='!e.$open'>
                    <td class='extra' colspan='10'>
@@ -106,23 +106,24 @@
 
      <div class='panel panel-default'>
         <h4>Groups</h4>
-        <table id="events" class="table table-condensed" [sortOn]='data.person.all_groups' sortName='personGroups'>
+        <table id="events" class="table table-condensed" [sortOn]='data.p2g.allAsserts' sortName='personGroups'>
           <thead>
              <tr>
-                <th [sortBy]='getGroupName'>Name</th>
+                <th [sortBy]='getGroupName'>Group</th>
                 <th [sortBy]='getGroupDate' sorter='date' [isdefault]='true'>Date</th>
                 <th [sortBy]='getGroupPlaceName'>Place</th>
                 <th>Surety</th>
              </tr>
           </thead>
           <tbody>
-             <tr *ngFor='let g of data.person.all_groups'>
-                <td>{{g.group.name}} ({{g.group.role || ''}})
-                   <source-link [id]='g.assertion.source_id' [sourceTitle]='sources[g.assertion.source_id].title'></source-link>
+             <tr *ngFor='let g of data.p2g.allAsserts'>
+                <td>{{g.p2.gr.name}} (<i>as</i> {{g.p2.role || ''}})
+                   <source-link [id]='g.source_id' [sourceTitle]='data.sources[g.source_id].title'></source-link>
                 </td>
-                <td class="date">{{g.group.date || ''}}</td>
-                <td class="place">{{g.group.place || ''}}</td>
-                <td><surety [part]='g.assertion.surety'></surety></td>
+                <td class="date">{{g.p2.gr.date || ''}}</td>
+                <td class="place">{{g.p2.gr.place || ''}}</td>
+                <td><surety [part]='g.surety'></surety></td>
+
              </tr>
           </tbody>
         </table>

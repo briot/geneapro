@@ -6,6 +6,15 @@
    This is documented as an Angular2 bug on Safari.
 *** Change vertical spacing => display broken on Safari
 ** Missing fanchart
+
+** Persona page
+*** Speed up sending data
+  For all assertions, the "p1" field is superfluous and is always the
+  person. Not used in javascript.
+*** For persona 16, we have one Birth event with multiple sources
+  Only one of these sources is shown as hyper link for the even, we need to
+  expend to see the others.
+
 ** Source view
    Source 165 has plenty of media
 *** Use a markdown editor (npm has one)
@@ -14,8 +23,18 @@
    In particular annotating group photos to identify people
 *** Editing media type (see source 16)
 *** Editing assertions
+*** Error in /source/199
+
 ** Import
 *** Use download form
+
+** Groups
+*** Creating a dummy group:
+   insert into "group" values (1, 8, NULL, "passengers on a famous boat", "1850-01-01", "All passengers on the boat that went to United Kingdom", "1850-01-01");
+   insert into "assertion" values (9999, 0, 0, NULL, "because I think so", 0, "2016-01-01");
+   insert into group_type_role values (1, 8, "one passenger", 1);
+   insert into "p2g" values (9999, 1408, 1, 1);    --  persona 1408
+
 
 
 

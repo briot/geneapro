@@ -54,12 +54,16 @@ export abstract class AssertSubject {
     * Build a subject from the server's response
     */
    static buildFromServer(s : IAssertionSubjectFromServer) : AssertSubject {
-      if (s.person) {
+      if (!s) {
+         return null;
+      } else if (s.person) {
          return new AssertSubjectPerson(s.person);
       } else if (s.event) {
          return new AssertSubjectEvent(s.event, s.role);
       } else if (s.group) {
          return new AssertSubjectGroup(s.group, s.role);
+      } else if (s.char) {
+         return new AssertSubjectChar(s.char, s.parts);
       }
    }
 }
@@ -100,11 +104,6 @@ export class AssertSubjectChar extends AssertSubject {
    }
 }
 
-// type AssertSubject = AssertSubjectPerson |
-//                      AssertSubjectEvent |
-//                      AssertSubjectGroup |
-//                      AssertSubjectChar;
-
 /**
  * Various user-defined type guards.
  * They make the user of AssertSubject more convenient, since we can then
@@ -130,15 +129,15 @@ function isChar(s : AssertSubject) : s is AssertSubjectChar {
  * One specific assertion
  */
 
-export class Assertion {
+export class GenericAssertion<sub1 extends AssertSubject, sub2 extends AssertSubject> {
    disproved   : boolean;
    rationale   : string;
    researcher  : IResearcher;
    last_change : Date;
    source_id   : number;
    surety      : number;  // SuretyScheme
-   p1          : AssertSubject;
-   p2          : AssertSubject;
+   p1          : sub1;
+   p2          : sub2;
 
    $open    : boolean = false;  // whether to show the details of the event
    $details : any;      // extra details
@@ -147,19 +146,23 @@ export class Assertion {
    /**
     * Convert a server's response
     */
-   static buildFromServer(assert : IAssertionFromServer) {
-      let r = new Assertion;
-      r.disproved = assert.disproved;
-      r.rationale = assert.rationale;
-      r.researcher = assert.researcher;
-      r.last_change = assert.last_change;
-      r.source_id = assert.source_id;
-      r.surety = assert.surety;
-      r.p1 = AssertSubject.buildFromServer(assert.p1);
-      r.p2 = AssertSubject.buildFromServer(assert.p2);
-      return r;
+   constructor(assert : IAssertionFromServer) {
+      this.disproved = assert.disproved;
+      this.rationale = assert.rationale;
+      this.researcher = assert.researcher;
+      this.last_change = assert.last_change;
+      this.source_id = assert.source_id;
+      this.surety = assert.surety;
+      this.p1 = <sub1> AssertSubject.buildFromServer(assert.p1);
+      this.p2 = <sub2> AssertSubject.buildFromServer(assert.p2);
    }
 }
+
+export type Assertion = GenericAssertion<AssertSubject, AssertSubject>;
+export type P2E = GenericAssertion<AssertSubjectPerson, AssertSubjectEvent>;
+export type P2C = GenericAssertion<AssertSubjectPerson, AssertSubjectChar>;
+export type P2G = GenericAssertion<AssertSubjectPerson, AssertSubjectGroup>;
+export type P2P = GenericAssertion<AssertSubjectPerson, AssertSubjectPerson>;
 
 /***************************************************************************
  * This class represents a list of assertions (as read from the server)
@@ -180,7 +183,9 @@ export class AssertionList {
       let seenE : { [id : number]: boolean } = {};
       let seenG : { [id : number]: boolean } = {};
       const addSubject = (s : AssertSubject) => {
-         if (isPerson(s)) {
+         if (!s) {
+            // do nothing
+         } else if (isPerson(s)) {
             if (!seenP[s.person.id]) {
                seenP[s.person.id] = true;
                this.allPersons.push(s);
@@ -210,7 +215,7 @@ export class AssertionList {
    static buildFromServer(asserts : IAssertionFromServer[]) {
       let allAsserts : Assertion[] = [];
       asserts.forEach(assert => {
-         allAsserts.push(Assertion.buildFromServer(assert));
+         allAsserts.push(new GenericAssertion(assert));
       });
       return new AssertionList(allAsserts);
    }

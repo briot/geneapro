@@ -113,11 +113,6 @@ export interface IPerson {
    death ?: IEvent;
    marriage ?: IEvent;
 
-   // ??? Used in the template, but exact type undocumented yet
-   all_events ?: any;
-   all_chars  ?: any;
-   all_groups ?: any;
-
    // Computed style  (??? Should be moved elsewhere)
    $fill ?: string;
    $fillGradient ?: boolean;  // whether to use gradient when filling

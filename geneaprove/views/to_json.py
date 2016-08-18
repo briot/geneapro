@@ -14,44 +14,6 @@ from geneaprove.utils.date import DateRange
 from geneaprove.views.styles import get_place
 
 
-############################################################
-# Building information for json export
-############################################################
-
-class EventInfo(object):
-    __slots__ = ['event', 'role', 'assertion']
-    def __init__(self, event, role, assertion):
-        # "event" has fields like "sources", "place", "Date"
-        #   where "Date" is a geneaprove.utils.DateRange object and should not
-        #   be used for display
-        self.event = event
-        self.role = role
-        self.assertion = assertion
-
-
-class CharInfo(object):
-    __slots__ = ['char', 'parts', 'assertion']
-    def __init__(self, char, parts, assertion):
-        self.char = char
-        self.parts = parts
-        self.assertion = assertion
-
-
-class CharPartInfo(object):
-    __slots__ = ['name', 'value']
-    def __init__(self, name, value):
-        self.name = name
-        self.value = value
-
-
-class GroupInfo(object):
-    __slots__ = ['group', 'assertion']
-    def __init__(self, group, assertion):
-        # "group" has fields like "source",...
-        self.group = group
-        self.assertion = assertion
-
-
 ###########################################################################
 # Exporting to JSON
 ###########################################################################
@@ -94,26 +56,6 @@ class ModelEncoder(DjangoJSONEncoder):
 
         elif isinstance(obj, django.db.models.query.QuerySet):
             return list(obj)
-
-        elif isinstance(obj, GroupInfo):
-            return dict(
-                group=obj.group,
-                assertion=obj.assertion)
-
-        elif isinstance(obj, CharInfo):
-            return dict(
-                char=obj.char,
-                parts=obj.parts,
-                assertion=obj.assertion)
-
-        elif isinstance(obj, CharPartInfo):
-            return dict(name=obj.name, value=obj.value)
-
-        elif isinstance(obj, EventInfo):
-            return dict(
-                event=obj.event,
-                role=obj.role,
-                assertion=obj.assertion)
 
         elif isinstance(obj, set):
             return list(obj)

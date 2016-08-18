@@ -6,8 +6,7 @@ from django.db.models import Min
 from django.utils.translation import ugettext as _
 from geneaprove import models
 from geneaprove.utils.date import DateRange
-from geneaprove.views.to_json import \
-        CharInfo, CharPartInfo, GroupInfo, EventInfo, JSONView
+from geneaprove.views.to_json import JSONView
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import graph
 from geneaprove.views.styles import Styles
@@ -28,12 +27,6 @@ def __add_default_person_attributes(person):
     person.birth = None
     person.death = None
     person.marriage = None
-    # All events of the person {evt_id -> EventInfo}
-    person.all_events = dict()
-    person.all_chars = dict()  # Characteristics of the person (id -> CharInfo)
-    # Groups the person belongs to (id -> GroupInfo)
-    person.all_groups = dict()
-
     person.generation = None
 
     n = person.name.split('/', 2)
@@ -42,7 +35,8 @@ def __add_default_person_attributes(person):
 
 
 def extended_personas(
-    nodes, styles, graph, event_types=None, schemes=None,
+    nodes, styles, graph, p2e=None, event_types=None, schemes=None,
+    p2c=None, p2g=None,
     all_sources=None, as_css=False, query_groups=True):
     """
     Compute the events for the various persons in `nodes` (all all persons in
@@ -58,8 +52,11 @@ def extended_personas(
        :param dict all_sources: either a dictionary, or None. If specified, it
           will be filled with  "sourceId -> models.Source" objects
        :param as_css:
-           True to get the styles as a CSS string rather than a python dict
+          True to get the styles as a CSS string rather than a python dict
        :param event_types: restricts the types of events that are retrieved
+       :param dict p2e: All person-to-event assertions
+       :param dict p2c: All persona-to-characteristic assertions
+       :param dict p2g: All persona-to-group assertions
        :return: a list of persons:
           * persons is a dictionary of Persona instances, indexed on persona_id
 
@@ -122,8 +119,6 @@ def extended_personas(
         for p in nodes:
             all_ids.update(p.ids)
 
-    all_events = dict()
-
     # All query the 'principal' for each events, so that we can provide
     # that information graphically.
     for p in sql_in(events, "person", all_ids):
@@ -135,8 +130,9 @@ def extended_personas(
         # ??? A person could be involved multiple times in the same
         # event, under multiple roles. Here we are only preserving the
         # last occurrence
-        person.all_events[e.id] = EventInfo(
-            event=e, role=roles[p.role_id], assertion=p)
+        if p2e is not None:
+            # ??? Should we reset p.p1, since this is always the same
+            p2e[e.id] = p
 
         if all_sources is not None:
             all_sources.setdefault(p.source_id, {})
@@ -176,11 +172,11 @@ def extended_personas(
         for gr in sql_in(groups, "person", all_ids):
             p_node = graph.node_from_id(gr.person_id)
             person = persons[p_node.main_id]
-            person.all_groups[gr.group_id] = GroupInfo(
-                group=gr.group, assertion=gr)
+
+            if p2g is not None:
+                p2g[gr.group_id] = gr
             if all_sources is not None:
                 all_sources.setdefault(gr.source_id, {})
-            gr.group.role = gr.role
 
             if schemes is not None:
                 schemes.add(gr.surety.scheme_id)
@@ -189,7 +185,7 @@ def extended_personas(
     # Get all characteristics of these personas
     #########
 
-    p2c = dict()  # characteristic_id -> person
+    c2p = dict()  # characteristic_id -> person
     all_p2c = models.P2C.objects.select_related(
         'characteristic', 'characteristic__place')
 
@@ -197,7 +193,7 @@ def extended_personas(
         c = p.characteristic
         p_node = graph.node_from_id(p.person_id)
         person = persons[p_node.main_id]
-        p2c[c.id] = person
+        c2p[c.id] = person
 
         if all_sources is not None:
             all_sources.setdefault(p.source_id, {})
@@ -207,10 +203,10 @@ def extended_personas(
         if schemes is not None:
             schemes.add(p.surety.scheme_id)
 
-        person.all_chars[c.id] = CharInfo(
-            char=c,
-            assertion=p,
-            parts=[])
+        if p2c is not None:
+            # ??? Should we reset p.person, since this is always the same
+            # ??? but can't set it to None in the model
+            p2c[c.id] = p
 
         if compute_parts and c.place:
             places[c.place_id] = c.place
@@ -218,10 +214,8 @@ def extended_personas(
     chars = models.Characteristic_Part.objects.select_related(
         'type', 'characteristic', 'characteristic__place')
 
-    for part in sql_in(chars, "characteristic", nodes and p2c.keys()):
-        person = p2c[part.characteristic_id]
-        ch = person.all_chars[part.characteristic_id]
-        ch.parts.append(CharPartInfo(name=part.type.name, value=part.name))
+    for part in sql_in(chars, "characteristic", nodes and c2p.keys()):
+        person = c2p[part.characteristic_id]
 
         if part.type_id == models.Characteristic_Part_Type.sex:
             person.sex = part.name
@@ -278,8 +272,15 @@ class PersonaView(JSONView):
         graph.update_if_needed()
 
         all_sources = {}
+        p2e = {}
+        p2c = {}
+        p2g = {}
+
         p = extended_personas(
             nodes=set([graph.node_from_id(id)]),
+            p2e=p2e,
+            p2c=p2c,
+            p2g=p2g,
             all_sources=all_sources,
             styles=None, as_css=True, graph=graph, schemes=None)
 
@@ -293,14 +294,13 @@ class PersonaView(JSONView):
 
         decujus = p[node.main_id]
 
-        decujus.all_chars = decujus.all_chars.values()
-        decujus.all_events = decujus.all_events.values()
-        decujus.all_groups = decujus.all_groups.values()
-
         return {
             "person": decujus,
             "sources": all_sources,
+            "p2c": p2c.values(),
+            "p2e": p2e.values(),
             "p2p": assertions,
+            "p2g": p2g.values()
         }
 
 
@@ -340,6 +340,7 @@ class PersonaList(JSONView):
     def get_json(self, params):
         graph.update_if_needed()
         styles = Styles(style_rules, graph=graph, decujus=1)  # ??? Why "1"
+
         all = extended_personas(
             nodes=None, styles=styles,
             event_types=event_types_for_pedigree,

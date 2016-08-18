@@ -7,7 +7,7 @@ import {Surety} from './surety';
 import {Settings} from './settings.service';
 import {EventService, EventData} from './event.service';
 import {SourceLink, PersonaLink} from './links';
-import {Assertion} from './asserts.service';
+import {Assertion, P2G, P2E, P2C, AssertSubjectEvent, AssertSubjectGroup, AssertSubjectChar} from './asserts.service';
 import {SortOn, SortBy} from './sort';
 
 @Component({
@@ -25,6 +25,9 @@ export class Persona {
       private _personas : PersonaService)
    {
       this.id = +routeParams.get('id');
+
+      // Change menubar so that links relate to this person
+      settings.decujus = this.id;
    }
 
    ngOnInit() {
@@ -36,24 +39,25 @@ export class Persona {
          });
    }
 
-   // ??? Typing is wrong here
-   toggleEventDetails(e : any | Assertion) {
+   toggleEventDetails(e : P2E) {
       e.$open = !e.$open;
       if (e.$open && !e.$details) {
-         this._events.get(e.event.id)
+         this._events.get(e.p2.event.id)
             .subscribe((resp : EventData) => e.$details = resp);
       }
    };
 
    /** Support for the sorter */
-   getCharName(p : any) {return p.char.name }
-   getCharDate(p : any) {return p.char.date_sort }
-   getCharPlaceName(p : any) {return p.char.place && p.char.place.name }
-   getEventTypeName(e : any) {return e.event.type.name}
-   getEventName(e : any) {return e.event.name}
-   getEventDate(e : any) {return e.event.date_sort}
-   getEventPlaceName(e : any) {return e.event.place && e.event.place.name}
-   getGroupName(g : any) {return g.group.name}
-   getGroupDate(g : any) {return g.group.date_sort}
-   getGroupPlaceName(g : any) {return g.group.place && g.group.place.name}
+   getCharName(p : P2C) {return p.p2.char.name }
+   getCharDate(p : P2C) {return p.p2.char.date_sort }
+   getCharPlaceName(p : P2C) { return p.p2.char.place && p.p2.char.place.name }
+
+   getEventTypeName(e : P2E) {return e.p2.event.type.name}
+   getEventName(e : P2E) {return e.p2.event.name}
+   getEventDate(e : P2E) {return e.p2.event.date_sort}
+   getEventPlaceName(e : P2E) { return e.p2.event.place && e.p2.event.place.name}
+
+   getGroupName(g : P2G) {return g.p2.gr.name}
+   getGroupDate(g : P2G) {return g.p2.gr.date_sort}
+   getGroupPlaceName(g : P2G) {return g.p2.gr.place && g.p2.gr.place.name}
 }
