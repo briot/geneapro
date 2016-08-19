@@ -3,6 +3,7 @@
 * Port to Angular2
 ** BUGS
 *** Confusion between "givn" and "given_name" and "surn"/"surname" in persona.py
+*** Middle-click does not work on toolbar buttons
 
 ** Pedigree View
 *** Select Show Details, and then Back => not refreshed

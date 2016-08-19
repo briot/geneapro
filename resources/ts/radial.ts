@@ -25,7 +25,7 @@ interface RadialLayout extends LayoutInfo {
    selector:  'radial',
    template:  '',
 })
-export class Radial {
+class Radial {
    @Input() id      : number;
    private scalable : ScalableSelection;
    private data     : PedigreeData;
@@ -40,15 +40,11 @@ export class Radial {
    }
 
    ngOnInit() {
-      this.scalable = this.gpd3.svg(
-         this.element,
-         (currentScale : number) => {  // onzoom
-      });
-
-      this.settings.onChange.subscribe(() => this.ngOnChanges(null));
+      this.scalable = this.gpd3.svg(this.element);
+      this.settings.onChange.subscribe(() => this.ngOnChanges());
    }
 
-   ngOnChanges(changes : any) {
+   ngOnChanges() {
       const set = this.settings.radial;
 
       this.pedigreeService.get(

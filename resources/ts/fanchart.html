@@ -1,0 +1,72 @@
+<div class='row'>
+
+   <div class='col-md-10 col-lg-9 panel'>
+      <fanchart class='graph' [id]='id' (contextmenu)='onBackgroundContextMenu($event)'></fanchart>
+   </div>
+
+   <div class='col-md-2 col-lg-3 sidebar'>
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Fanchart</div>
+         <div class='panel-body'>
+            <ul class='nav nav-pills nav-stacked'>
+               <li class='config'>
+                  <span>Ancestors</span>
+                  <slider [(value)]='settings.fanchart.gens' min='1' max='30' (valueChange)='changed()'></slider>
+               </li>
+               <li class='config'>
+                  <span>Sourced events</span>
+                  <input type="checkbox" [(ngModel)]='settings.sourcedEvents' (ngModelChange)='changed()'/>
+               </li>
+               <li class='config'>
+                  <span>Marriages</span>
+                  <input type="checkbox" [(ngModel)]='settings.fanchart.showMarriages' (ngModelChange)='changed()'/>
+               </li>
+               <li class='config'>
+                  <span>Show missing persons</span>
+                  <input type="checkbox" [(ngModel)]='settings.fanchart.showMissing' (ngModelChange)='changed()'/>
+               </li>
+            </ul>
+         </div>
+      </div>
+
+      <div class='panel panel-default'>
+         <div class='panel-heading'>Display</div>
+         <div class='panel-body'>
+            <ul class='nav nav-pills nav-stacked'>
+               <li class='config'>
+                  <span>Size</span>
+                  <slider [(value)]='settings.fanchart.angle' min='90' max='360' (valueChange)='changed()'></slider>
+               </li>
+               <li class='config'>
+                  <span>Space between couples</span>
+                  <slider [(value)]='settings.fanchart.space' min='0' max='100' (valueChange)='changed()'></slider>
+               </li>
+               <li class='config'>
+                  <span>Rotate text</span>
+                  <input type="checkbox" [(ngModel)]='settings.fanchart.readableNames' (ngModelChange)='changed()'/>
+               </li>
+               <li class='config'>
+                  <span>Colors</span>
+                  <select [(ngModel)]='settings.fanchart.colorScheme' (ngModelChange)='changed()'>
+                    <option value="0">Rules</option>
+                    <option value="1">Pedigree</option>
+                    <option value="2">Generation</option>
+                    <option value="4">No fill</option>
+                    <option value="5">Quartile</option>
+                  </select>
+                  <gp-legend *ngIf='settings.fanchart.colorScheme==0'></gp-legend>
+               </li>
+               <li class='config'>
+                  <span>Appearance</span>
+                  <select [(ngModel)]='settings.fanchart.appearance' (ngModelChange)='changed()'>
+                     <option value="0">Flat</option>
+                     <option value="1">Gradient</option>
+                  </select>
+               </li>
+            </ul>
+         </div>
+      </div>
+   </div>
+
+   <div [context-menu]='contextualLinks'></div>
+</div>

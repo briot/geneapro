@@ -156,6 +156,10 @@ export class Settings implements SettingsData {
       r.colorScheme = +r.colorScheme;
       r.appearance  = +r.appearance;
 
+      let f = this.fanchart;
+      f.colorScheme = +f.colorScheme;
+      f.appearance  = +f.appearance;
+
       this._storage.set('settings', this);
       this.onChange.next({});
    }

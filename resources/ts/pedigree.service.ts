@@ -154,6 +154,7 @@ export class PedigreeData {
 
    /**
     * Add entries for missing persons in the pedigree tree.
+    * ??? Should we pass the number of generations
     */
    addMissingPersons() {
       const addParents = (indiv : IPerson) => {
@@ -183,7 +184,7 @@ export class PedigreeData {
    }
 
    /**
-    * Remove all unknown persons added via addUnknown
+    * Remove all unknown persons
     */
    removeMissing() {
       const _remove = (p : IPerson) => {
@@ -274,5 +275,14 @@ export class PedigreeService {
               return this.data;
            });
      }
+   }
+
+   /**
+    * The current decuju
+    */
+   decujus() : IPerson {
+      if (this.data) {
+         return this.data.decujus;
+      }
    }
 }

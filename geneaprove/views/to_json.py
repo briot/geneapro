@@ -129,7 +129,11 @@ class JSONView(View):
         if 'id' in kwargs:
             kwargs['id'] = int(kwargs['id'])
         r = method(params, *args, **kwargs) or {"success": True}
-        return JsonResponse(r, encoder=ModelEncoder)
+
+        # Can't use JsonResponse since we want our own converter
+        result = self.to_json(r)
+        return HttpResponse(result, content_type='application/json')
+        #return JsonResponse(r, encoder=ModelEncoder)
 
     def get(self, request, *args, **kwargs):
         try:
