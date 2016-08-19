@@ -35,17 +35,16 @@ class PedigreeData(JSONView):
         styles = Styles(style_rules, graph, decujus=decujus.main_id)
 
         distance = dict()
-        ancestors = graph.people_in_tree(
-            id=decujus.main_id, maxdepthAncestors=max_levels - 1,
-            maxdepthDescendants=0, distance=distance)
-        ancestors = [a for a in ancestors if distance[a] >= last_gen_known]
-
-        descendants = graph.people_in_tree(
-            id=decujus.main_id, maxdepthAncestors=0,
-            distance=distance, maxdepthDescendants=maxdepthDescendants)
-        descendants = [
-            a for a in descendants
-            if a != decujus and distance[a] >= last_descendant_known]
+        people = graph.people_in_tree(
+            id=decujus.main_id,
+            maxdepthAncestors=max_levels - 1,
+            maxdepthDescendants=maxdepthDescendants,
+            distance=distance)
+        ancestors = [a for a in people
+                     if distance[a] >= 0 and distance[a] >= last_gen_known]
+        descendants = [a for a in people
+                       if a != decujus and distance[a] < 0
+                       and distance[a] <= -last_descendant_known]
 
         sosa_tree = dict()
         marriage = dict()

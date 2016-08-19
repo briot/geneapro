@@ -464,7 +464,7 @@ class GeneaGraph(Digraph):
           descendants of the spouses of id.
         :param distance: if specified, it must be a dict(), which will
           associate the ancestor or descendant node with its distance (in
-          generations) from id.
+          generations) from id. Distance will be negative for descendants.
         :return: a set of nodes
 
         """
@@ -483,14 +483,18 @@ class GeneaGraph(Digraph):
 
         to_match = set(self.breadth_first_search(
             roots=ids,
-            maxdepth=maxdepthAncestors,
-            distance=distance,
-            edgeiter=self.in_parent_edges))
-        to_match.update(self.breadth_first_search(
-            roots=ids,
             maxdepth=maxdepthDescendants,
             distance=distance,
             edgeiter=self.out_children_edges))
+        if distance is not None:
+            for (id, dist) in distance.iteritems():
+                distance[id] = -dist
+
+        to_match.update(self.breadth_first_search(
+            roots=ids,
+            maxdepth=maxdepthAncestors,
+            distance=distance,
+            edgeiter=self.in_parent_edges))
         return to_match
 
 

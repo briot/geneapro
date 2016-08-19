@@ -1,0 +1,15 @@
+<div class='panel panel-default'>
+   <h4>Lifespan age distribution</h4>
+   <div style='height: 150px' #thesvg></div>
+      <div class='row generationsLegend' *ngIf='data'>
+      <div class='col-md-4 col-sm-6'>
+         <span [style.background]='colors(0)'>&nbsp;</span>Males
+      </div>
+      <div class='col-md-4 col-sm-6'>
+         <span [style.background]='colors(1)'>&nbsp;</span>Females
+      </div>
+      <div class='col-md-4 col-sm-6'>
+         <span [style.background]='colors(2)'>&nbsp;</span>Unknown
+      </div>
+   </div>
+</div>

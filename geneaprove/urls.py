@@ -9,7 +9,7 @@ from geneaprove.views.persona import \
 import geneaprove.views.places
 import geneaprove.views.representation
 import geneaprove.views.rules
-import geneaprove.views.stats
+from geneaprove.views.stats import StatsView
 from geneaprove.views.sources import \
         SourceView, SourceCitation, EditSourceCitation, \
         CitationModels, CitationModel, SourcesList, \
@@ -40,7 +40,7 @@ urlpatterns = [
     url(r'^data/suretySchemes$',               SuretySchemesList.as_view()),
     url(r'^data/event/(\d+)$',    geneaprove.views.events.view),
     url(r'^data/legend$',         geneaprove.views.rules.getLegend),
-    url(r'^data/stats$',          geneaprove.views.stats.view),
+    url(r'^data/stats/(?P<id>\d+)$',           StatsView.as_view()),
     url(r'^data/import$',              geneaprove.views.importers.import_gedcom),
     url(r'^data/citationModel/(?P<model_id>.+)$', CitationModel.as_view()),
     url(r'^data/citationModels$',           CitationModels.as_view()),

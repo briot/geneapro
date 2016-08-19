@@ -1,0 +1,36 @@
+<div class='row' id='stats'>
+   <div class='col-md-12'>
+      <div class='panel panel-default'>
+         <h4>Statistics (direct ancestors and descendants of
+            <persona-link [id]='data?.decujus' [name]='data?.decujus_name'></persona-link>
+            only)
+         </h4>
+         <div *ngIf='data'>
+            Total number of persons in the database: {{data.total_persons}}<br>
+            Number of persons in the tree (ancestors and descendants): {{data.total_ancestors}}<br>
+            Number of persons in father's tree: {{data.total_father}}<br>
+            Number of persons in mother's tree: {{data.total_mother}}<br>
+         </div>
+
+         <!--
+         For whole population, for males only, for females only
+         Includes population count, average, deviance, min, max, 
+         Age at first marriage:
+         Age at first child:
+         Age at last child:
+         Age at death:
+         #Name tags:
+         #Birth group tags:
+         #Death group tags:
+         #Marriage group tags:
+         #Divorce group tags:
+         #Child tags:
+         Sons:
+         Daughters:
+         -->
+      </div>
+
+      <stats-generations></stats-generations>
+      <stats-lifespan></stats-lifespan>
+   </div>
+</div>
