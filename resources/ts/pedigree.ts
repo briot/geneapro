@@ -610,6 +610,7 @@ export class PedigreePage {
       ];
 
       this.id = +routeParams.get('id');
+      settings.decujus = this.id;
       this.settings.setTitle('Pedigree for person ' + this.id);
    }
 

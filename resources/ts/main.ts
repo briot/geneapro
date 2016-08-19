@@ -36,6 +36,8 @@ import {EventService} from './event.service';
 import {PedigreePage} from './pedigree';
 import {PedigreeService} from './pedigree.service';
 
+import {RadialPage} from './radial';
+
 import {ContextMenuService} from './contextmenu';
 
 import 'rxjs/add/observable/of';
@@ -69,6 +71,7 @@ import 'rxjs/add/operator/debounceTime';
    {path: '/source/list',  name: 'SourceList',  component: SourceList},
    {path: '/source/:id',   name: 'Source',      component: Source},
    {path: '/pedigree/:id', name: 'Pedigree',    component: PedigreePage},
+   {path: '/radial/:id',   name: 'Radial',      component: RadialPage},
 ])
 export class MainComponent {
 }

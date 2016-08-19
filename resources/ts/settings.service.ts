@@ -88,6 +88,10 @@ export class Settings {
       p.horizPadding = +p.horizPadding;
       p.vertPadding  = +p.vertPadding;
 
+      let r = this.radial;
+      r.colorScheme = +r.colorScheme;
+      r.appearance  = +r.appearance;
+
       this.onChange.next({});
    }
 }
