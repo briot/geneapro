@@ -1,4 +1,4 @@
-<div class='col-md-12'>
+<div class='col-md-12 import'>
    <h2>Importing data into GeneaProve</h2>
 
    <p>
@@ -12,15 +12,11 @@
    file, which GeneaProve can then import to get you started.
    </p>
 
-   <div ng-file-import='Import GEDCOM' ng-model='ctrl.importFileName'
-        style='margin-top: 20px'>
-   </div>
+   <form gp-upload-form url='/data/import' (onupload)='onUpload($event)' #form='UploadForm'>
+     <gp-upload-target [parent]='form'></gp-upload-target>
+   </form>
 
-   <div *ngIf='importing'>
-      Importing your data. This might take a while.
-   </div>
-
-   <p class='ctrl.error' *ngIf='success==false'>
+   <p class='error' *ngIf='success==false'>
       GeneaProve could not import your file.
       <br>
       This is either because your file does

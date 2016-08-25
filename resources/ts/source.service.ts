@@ -112,16 +112,4 @@ export class SourceService {
          '/data/sources/' + source.id + '/delRepr/' + repr.id,
          {'ondisk': ondisk}).map(res => res.json());
    }
-
-   /**
-    * Upload new representations for a source
-    */
-   upload_repr(source : ISource, files : File[]) : Observable<SourceData> {
-      let data = new FormData();
-      files.forEach(f => data.append('file', f));
-      return formdata_post(
-         this.http,
-         '/data/sources/' + source.id + '/addRepr',
-         data).map(res => res.json());
-   }
 }

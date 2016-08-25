@@ -3,7 +3,8 @@
       <h3 class='panel-title pull-left' style="padding-top: 7.5px">Media</h3>
 
       <!-- Adding new images -->
-      <form role='group' gp-upload-form [source]='data.source' (onupload)='onUpload($event)' #form='UploadForm'>
+      <form role='group' gp-upload-form url='/data/sources/{{data.source.id}}/addRepr'
+           (onupload)='onUpload($event)' #form='UploadForm'>
          <gp-upload-target-mini [parent]='form'></gp-upload-target-mini>
       </form>
 
@@ -31,7 +32,8 @@
       <!-- Image representation or Adding new media -->
       <!-- The whole area is a drop target for adding new media -->
       
-      <form role='group' gp-upload-form [source]='data.source' (onupload)='onUpload($event)' #form='UploadForm'>
+      <form role='group' gp-upload-form url='/data/sources/{{data.source.id}}/addRepr'
+         (onupload)='onUpload($event)' #form='UploadForm'>
          <gp-upload-target *ngIf='data.repr.length==0' [parent]='form'></gp-upload-target>
          <gp-media [repr]='data.repr[current]' *ngIf='data.repr.length!=0'></gp-media>
       </form>

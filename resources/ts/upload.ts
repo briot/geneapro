@@ -2,18 +2,8 @@
 import {Component, Injectable, Directive, Input, Output, EventEmitter} from '@angular/core';
 import {ElementRef} from '@angular/core';
 import {Observable} from 'rxjs';
-import {ISource} from './basetypes';
-import {SourceService, SourceData} from './source.service';
-
-@Injectable()
-class UploadService {
-
-   constructor(public sources : SourceService) {
-   }
-
-}
-
-
+import {formdata_post} from './http_utils';
+import {Http} from '@angular/http';
 
 @Directive({
    selector: 'form[gp-upload-form]',
@@ -30,17 +20,17 @@ class UploadService {
 
 })
 export class UploadForm {
-   @Input() source : ISource;
    @Input() mini : boolean;
-   @Output() onupload : EventEmitter<SourceData>;
+   @Output() onupload : EventEmitter<any>;
+   @Input() url : string;   // mandatory
 
    autosubmit  : boolean = true;
    dragover    : boolean = false;
    files       : File[]= [];
    isUploading : boolean = false;
 
-   constructor(public sources : SourceService) {
-      this.onupload = new EventEmitter<SourceData>();
+   constructor(private http   : Http) {
+      this.onupload = new EventEmitter<any>();
    }
 
    onStopPropagation(e : Event) {
@@ -74,9 +64,12 @@ export class UploadForm {
    send() {
       if (!this.isUploading && this.files.length != 0) {
          this.isUploading = true;
+
          // ??? In case of error, we should still reset isUploading
-         this.sources.upload_repr(this.source, this.files).subscribe(
-            (d : SourceData) => {
+         let data = new FormData();
+         this.files.forEach(f => data.append('file', f));
+         formdata_post(this.http, this.url, data).map(res => res.json()).subscribe(
+            (d : any) => {
                this.isUploading = false;
                this.files = [];
                this.onupload.emit(d);

@@ -1,20 +1,19 @@
-
-from django.shortcuts import redirect
-from django.http import HttpResponse
 from geneaprove.importers.gedcomimport import GedcomFileImporter
 from geneaprove.views.graph import graph
-from geneaprove.views.to_json import to_json
-import json
+from geneaprove.views.to_json import JSONView
 
+class GedcomImport(JSONView):
 
-def import_gedcom(request):
-    # params = json.loads(request.body)  # parse angularJS JSON parameters
-    try:
-        data = request.FILES['file']
-        success, errors = GedcomFileImporter().parse(data)
+    def post_json(self, params):
+        files = params.FILES.getlist('file')
+        errors = []
+        success = True
+
+        for f in files:
+            suc, err= GedcomFileImporter().parse(f)
+            if err:
+                errors.append(err)
+            success = success or suc
+
         graph.mark_as_invalid()   # Will need a refresh
-        resp = {'error': errors, 'success': success}
-    except KeyError:
-        resp = {'error': 'No file specified', 'success': False}
-
-    return HttpResponse(to_json(resp), content_type='application/json')
+        return {'error': "\n\n".join(errors), 'success': success}

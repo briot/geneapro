@@ -17,7 +17,7 @@ from geneaprove.views.sources import \
 import geneaprove.views.events
 import geneaprove.views.merge
 import geneaprove.views.graph
-import geneaprove.views.importers
+from geneaprove.views.importers import GedcomImport
 
 def index(request):
     c = {}
@@ -41,7 +41,7 @@ urlpatterns = [
     url(r'^data/event/(\d+)$',    geneaprove.views.events.view),
     url(r'^data/legend$',         geneaprove.views.rules.getLegend),
     url(r'^data/stats/(?P<id>\d+)$',           StatsView.as_view()),
-    url(r'^data/import$',              geneaprove.views.importers.import_gedcom),
+    url(r'^data/import$',                      GedcomImport.as_view()),
     url(r'^data/citationModel/(?P<model_id>.+)$', CitationModel.as_view()),
     url(r'^data/citationModels$',           CitationModels.as_view()),
     url(r'^data/settings',                  GlobalSettings.as_view()),
