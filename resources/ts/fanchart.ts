@@ -348,7 +348,7 @@ class Fanchart {
 
       const layout   : IFanLayout = this.layoutService.compute(data);
 
-      const group = this.scalable.selection.append('g');
+      const group = this.scalable.selection;
 
       // Generation at which we stop displaying names
       const textThreshold = 8;
@@ -507,9 +507,8 @@ class Fanchart {
             class: 'name',
             fill: 'none',
             id: (d : IPersonFanLayout) => `text${d.p.id}`});
-      persons.select('path.name')   // enter+update
-         .transition()
-         .duration(ANIMATION_DURATION)
+      persons
+         .select('path.name')   // enter+update
          .attr('d', arcText);
       setText(p, '-0.5em', 'name', (d : IPersonFanLayout) => d.p.surn);
       setText(p, '0.5em', 'name', (d : IPersonFanLayout) => d.p.givn);
@@ -661,7 +660,6 @@ export class FanchartPage {
       }
 
       data.p.$expand = !data.p.$expand;
-      console.log("MANU expand=", data.p.$expand);
       data.render();
    }
 
