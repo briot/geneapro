@@ -1,0 +1,36 @@
+<% var section implementation %>
+
+<% block style %>
+<% endblock style %>
+
+<% block container %>
+<h2>Related work</h2>
+
+<p>
+Other people have started developing genealogical software on the web.
+</p>
+
+<p>
+None of them are too far advanced, and not all of them have published sources
+unfortunately. Developing a full software is a huge undertaking, and most of us are
+mostly doing that to experiment with a few aspects, but we keep using other software
+to maintain our own data.
+</p>
+<p>
+I personally like Gramps on the desktop, but I find the data entry tedious with too
+many popup windows all the time. This is one of the things I would like to modify
+</p>
+
+<ul>
+ <li><a href="http://itsabodybuildingblog.com/2008/05/16/genealogy-in-the-time-of-web-2-0">Genealogy in Web 2.0</a>
+ <li><a href="http://www.beyondproject.org">Beyond</a><br>
+   Apparently investigating collaborative technology. Their blog has a lot of pointers to other interesting ideas around the net
+ <li><a href="http://simile.mit.edu/timeline">Timeline</a><br>
+   An AJAX widget for displaying timelines dynamically.
+ <li><a href="http://www.familysearchlabs.org/">Family Search Labe</a><br>
+   Various ideas for genealogical software, for instance an interactive family tree.
+ <li><a href="http://bcdef.org/?page_id=19">FamilyWheel</a><br>
+   Genealogical data viewer based on a fanchart (instead of a pedigree tree in general)
+</ul>
+
+<% endblock container %>

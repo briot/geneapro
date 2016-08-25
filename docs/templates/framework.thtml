@@ -1,0 +1,118 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<title>Geneapro @ GitHub</title>
+	<style type="text/css">
+body {margin:0; background-color: white; font-family: "Arial"; color: #000000}
+  
+#head {background-color:#39414A; padding:0 0 0 30px; margin:0; height:90px;
+       background-image: -moz-linear-gradient(top, #39414A, #777); 
+       background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #39414A),color-stop(1, #777)); 
+       background-image: linear-gradient(top, #39414A, #777);
+       filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#39414A', EndColorStr='#777'); }
+
+#head > a {text-decoration:none; display:block;
+         font-size:3.8em; color: #ec8d05; font-style:italic;
+         text-shadow: black 3px 3px 7px;}
+#head .phrase{font-size:1.1em; color:white; font-style:italic;
+   margin:-15px 0 0 65px; text-shadow: black 1px 1px 2px}
+#head .download {float: right; margin-right:100px}
+
+#sidebar {width:200px; float:left; height:100%}
+
+#sidebar h2 {margin:5px 0 0 5px; padding:3px; color:white;
+             font-weight:normal; font-size:1em;
+             border:1px solid #39414A;
+             width:187px; /* 187 = #sidebar'width - h2'margin-left - h2'padding-left
+                                   - h2'padding-right */
+             background:#777}
+#sidebar h2.selected {background:#39414A}
+#sidebar h2 a {text-decoration:none; color:white; white-space:nowrap;
+   display:inline-block; width:100%}
+#sidebar h2:hover,
+#sidebar li:hover {background:#ec8d05}
+#sidebar h2:after {position:absolute; margin-left:-10px; color:white;
+    content:"\00BB"} /* see http://www.evotech.net/articles/testjsentities.html */
+
+#sidebar ul {list-style:none; margin:8px 0 10px 20px; padding:0}
+#sidebar li {width:100%}
+#sidebar li a {text-decoration:none; color:black; white-space:nowrap; width:100%;
+   display:inline-block}
+#sidebar li a:before {content:"\00BB"; padding-right:5px}
+
+#container {margin: 0 0 0 220px;  /* 210= #sidebar'width + 20 */
+            max-width: 700px}
+#container h2 {border-bottom:1px solid black}
+
+#container img {max-width:200px; max-height:200px; margin-left:15px}
+         <% styles %>
+	</style>
+</head>
+
+<body>
+  <a href="http://github.com/briot/geneapro"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+
+  <div id="head">
+     <div class="download">
+       <a href="http://github.com/briot/geneapro/zipball/master">
+          <img border="0" width="90"
+               src="https://github.com/images/modules/download/zip.png"></a>
+       <a href="http://github.com/briot/geneapro/tarball/master">
+          <img border="0" width="90"
+               src="https://github.com/images/modules/download/tar.png"></a>
+    </div>
+    <a href="http://github.com/briot/geneapro">G&eacute;n&eacute;apro</a>
+    <div class="phrase">Evidence your genealogy</div>
+   </div>
+
+  <div id="sidebar">
+     <% if file index.thtml %>
+        <h2 class="selected"><a href="index.html">Home</a></h2>
+     <% else %>
+        <h2><a href="index.html">Home</a></h2>
+     <% endif %>
+
+     <% ifvar section features %>
+        <h2 class="selected"><a href="features.html">Features</a></h2>
+        <ul>
+          <li><a href="gedcom.html">Gedcom</a></li>
+          <li><a href="reports.html">Reports</a></li>
+          <li><a href="highlighting.html">People highlighting</a></li>
+        </ul>
+     <% else %>
+        <h2><a href="features.html">Features</a></h2>
+     <% endif %>
+
+     <% if file screenshots.thtml %>
+        <h2 class="selected"><a href="screenshots.html">Screenshots</a></h2>
+     <% else %>
+        <h2><a href="screenshots.html">Screenshots</a></h2>
+     <% endif %>
+
+     <% if file download.thtml %>
+        <h2 class="selected"><a href="download.html">Download</a></h2>
+     <% else %>
+        <h2><a href="download.html">Download</a></h2>
+     <% endif %>
+
+     <% ifvar section implementation %>
+        <h2 class="selected"><a href="impl.html">Implementation</a></h2>
+        <ul>
+           <li><a href="python.html">Python</a></li>
+           <li><a href="django.html">Django</a></li>
+           <li><a href="gentech.html">Gentech</a></li>
+           <li><a href="jquery.html">jQuery</a></li>
+           <li><a href="links.html">Related work</a></li>
+        </ul>
+     <% else %>
+        <h2><a href="impl.html">Implementation</a></h2>
+     <% endif %>
+  </div>
+  
+  <div id="container">
+     <% container %>
+  </div>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<title>Geneaprove @ GitHub</title>
+	<style type="text/css">
+body {margin:0; background-color: white; font-family: "Arial"; color: #000000}
+  
+#head {background-color:#39414A; padding:0 0 0 30px; margin:0; height:90px;
+       background-image: -moz-linear-gradient(top, #39414A, #777); 
+       background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #39414A),color-stop(1, #777)); 
+       background-image: linear-gradient(top, #39414A, #777);
+       filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#39414A', EndColorStr='#777'); }
+
+#head > a {text-decoration:none; display:block;
+         font-size:3.8em; color: #ec8d05; font-style:italic;
+         text-shadow: black 3px 3px 7px;}
+#head .phrase{font-size:1.1em; color:white; font-style:italic;
+   margin:-15px 0 0 65px; text-shadow: black 1px 1px 2px}
+#head .download {float: right; margin-right:100px}
+
+#sidebar {width:200px; position:absolute; height:100%}
+
+#sidebar h2 {margin:5px 0 0 5px; padding:3px; color:white;
+             font-weight:normal; font-size:1em;
+             border:1px solid #39414A;
+             width:187px; /* 187 = #sidebar'width - h2'margin-left - h2'padding-left
+                                   - h2'padding-right */
+             background:#777}
+#sidebar h2.selected {background:#39414A}
+#sidebar h2 a {text-decoration:none; color:white; white-space:nowrap;
+   display:inline-block; width:100%}
+#sidebar h2:hover,
+#sidebar li:hover {background:#ec8d05}
+#sidebar h2:after {position:absolute; margin-left:-10px; color:white;
+    content:"\00BB"} /* see http://www.evotech.net/articles/testjsentities.html */
+
+#sidebar ul {list-style:none; margin:8px 0 10px 20px; padding:0}
+#sidebar li {width:100%; clear:both}
+#sidebar li a {text-decoration:none; color:black; white-space:nowrap; width:100%;
+   display:inline-block}
+#sidebar li a:before {content:"\00BB"; padding-right:5px}
+
+#container {margin: 0 0 0 220px;  /* 210= #sidebar'width + 20 */
+            max-width: 700px}
+#container h2 {border-bottom:1px solid black}
+
+#container img {max-width:200px; max-height:200px; margin-left:15px}
+         #container li {min-height:210px} /* height of pictures is 200px*/
+
+#container p, #container li {clear: both}
+#container li { margin-top: 40px; padding-top: 20px; border-top: 1px solid #777 }
+#container li li { border-top: 0; margin-top: 20px}
+
+.images { position: absolute; left: 940px }
+.images a { float: left }
+
+	</style>
+</head>
+
+<body>
+  <a href="http://github.com/briot/geneapro"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+
+  <div id="head">
+     <div class="download">
+       <a href="http://github.com/briot/geneapro/zipball/master">
+          <img border="0" width="90"
+               src="https://github.com/images/modules/download/zip.png"></a>
+       <a href="http://github.com/briot/geneapro/tarball/master">
+          <img border="0" width="90"
+               src="https://github.com/images/modules/download/tar.png"></a>
+    </div>
+    <a href="http://github.com/briot/geneapro">G&eacute;n&eacute;aprove</a>
+    <div class="phrase">Evidence your genealogy</div>
+   </div>
+
+  <div id="sidebar">
+        <h2><a href="index.html">Home</a></h2>
+        <h2 class="selected"><a href="features.html">Features</a></h2>
+        <ul>
+          <li><a href="gedcom.html">Gedcom</a></li>
+          <li><a href="reports.html">Reports</a></li>
+          <li><a href="highlighting.html">People highlighting</a></li>
+        </ul>
+        <h2><a href="download.html">Download</a></h2>
+        <h2><a href="impl.html">Implementation</a></h2>
+  </div>
+  
+  <div id="container">
+     <h2>Reports</h2>
+
+     <p>
+All genealogical software include <b>reports</b>. These are views into
+your genealogical tree, showing various aspects.
+</p>
+
+<p>
+<i>Geneaprove</i> currently only includes a limited number of views. These are
+
+<ul>
+  <li>A <b>Pedigree view</b>
+      <p>
+      Given a person (often called the <i>decujus</i>), the pedigree shows a
+      tree of all its ancestors up to a number of generations.
+      </p>
+      <p>
+      Geneaprove lets you configure the number of generations, and is comfortable
+      showing all of them if you want. On my own genealogical tree, I have
+      people up to the 21st generation (not all correctly verified yet!), and
+      I can view the whole tree in my web browser in under a second, including
+      time to download the data.
+      </p>
+      <p>
+      Geneaprove will also show you the children of the <i>decujus</i>, to
+      ease navigation.
+      </p>
+      <p>
+      The pedigree view is fully zoomable, and will display more information
+      as you zoom in.
+      </p>
+      <p>
+      Clicking on any person in the tree will make that person the new
+      decujus, and show his/her own tree.
+      </p>
+      </p>
+      <p>Double-clicking on a person leads you to the Person view</p>
+      <p>
+      Since sources as so important in geneaprove, it will add a check mark
+      next to all dates and places for which at least one source is available.
+      </p>
+      <p>
+      The pedigree, like the fanchart, can be displayed with multiple color
+      schemes:
+      <ul>
+         <li>
+             <span class='images'>
+                <a href="screenshots/pedigree4.png"><img src="screenshots/pedigree4.png"></a>
+             </span>
+             One is based on rules provided by the user, where the styling
+             used for each person (background, text color, font,...) can be
+             configured by creating <a href="highlighting.html">Highlighting
+             rules</a>.
+         </li>
+         <li>
+             <span class='images'>
+                <a href="screenshots/pedigree3.png"><img src="screenshots/pedigree3.png"></a>
+             </span>
+             The second one will highlight based on the location of the
+             person in the pedigree tree (generation and sosa number).
+         </li>
+         <li>
+             <span class='images'>
+                <a href="screenshots/pedigree5.png"><img src="screenshots/pedigree5.png"></a>
+             </span>
+             The third highlights purely based on the generation of the
+             person.
+         </li>
+         <li>
+             <span class='images'>
+                <a href="screenshots/pedigree6.png"><img src="screenshots/pedigree6.png"></a>
+             </span>
+             The fourth does not draw any box, but is able to use more space
+             to display details on the person.
+         </li>
+         <li>
+             <span class='images'>
+                <a href="screenshots/pedigree7.png"><img src="screenshots/pedigree7.png"></a>
+             </span>
+             The fifth uses one color for each of the grand-parents.
+         </li>
+      </ul>
+      </p>
+
+      <p>
+      There are also several layout algorithms:
+      <ul>
+         <li>
+             <span class='images'>
+                <a href="screenshots/pedigree_expanded.png"><img src="screenshots/pedigree_expanded.png"></a>
+             </span>
+             One reserves space for all persons in the tree, even if that person
+             is not known yet. It occupies more space, but might make it easier
+             to follow a branch at a glance.
+         </li>
+         <li>
+             <span class='images'>
+                <a href="screenshots/pedigree_compact.png"><img src="screenshots/pedigree_compact.png"></a>
+             </span>
+             The second one is the compact mode, where unknown persons do not
+             occupy any place on the screen.
+         </li>
+      </ul>
+      </p>
+      <p>
+         <span class='images'>
+            <a href="screenshots/pedigree_not_same_size.png"><img src="screenshots/pedigree_not_same_size.png"></a>
+         </span>
+         In addition, you can configure whether all boxes should occupy the same
+         space, or whether later generations are displayed smaller (thus leading to
+         a better overview of the tree, and you can zoom in to see the details).
+      </p>
+
+      <p>
+      <span class='images'>
+         <a href="screenshots/pedigree_descendants.png"><img src="screenshots/pedigree_descendants.png"></a>
+      </span>
+      Finally, the pedigree can display both ancestors and descendants, up to as
+      many generations as you want. The web client will only download the
+      information it does not already have, to speed things up.
+      </p>
+      </li>
+
+      <li>
+      A <b>Fan chart</b>
+      <span class='images'>
+         <a href="screenshots/fanchart1.png"><img src="screenshots/fanchart1.png"></a>
+         <a href="screenshots/fanchart2.png"><img src="screenshots/fanchart2.png"></a>
+         <a href="screenshots/fanchart3.png"><img src="screenshots/fanchart3.png"></a>
+         <a href="screenshots/fanchart4.png"><img src="screenshots/fanchart4.png"></a>
+      </span>
+      <p>
+      Instead of displaying the ancestors as a tree, this report will
+      show them in a circle. This is less frequently used, but is a much more
+      compact way to see lots of generations in a single view.
+      </p>
+      <p>
+      The same highlighting rules apply in the fanchart, although as seen in the
+      screenshots it is also possible to use different color schemes, based for
+      instance on the location of the person in the fanchart. This last
+      colorscheme is less useful to investigate your data, but much nicer to
+      print.
+      </p>
+      </li>
+
+  <li><b>Quilts</b> view
+      <span class='images'>
+         <a href="quilts.png"><img src="quilts.png"></a>
+      </span>
+      <p>
+      Quilts view have been introduced a few years ago by Aviz Research, and are a
+      great way to see a lot of people interactively. See the
+      <a href="http://www.aviz.fr/geneaquilts/">original paper</a>. Geneaprove does not
+      provide the full functionality yet.
+      </li>
+
+  <li>A <b>statistics</b> view
+      <span class='images'>
+         <a href="stats1.png"><img src="stats1.png"></a>
+      </span>
+      <p>
+      This page shows the number of persons in your tree (not the total
+      number in the database, which very often is irrelevant because people
+      include information for person whose name seem to match, just in case
+      it is useful later).
+      </p>
+      <p>
+      For each generation, it is able to display the earliest birth date and
+      latest known death date. These are often useful to detect inconsistencies
+      in the database.
+      </p>
+   </li>
+
+   <li>A <b>Person</b> view
+      <span class='images'>
+         <a href="screenshots/person3.png"><img src="screenshots/person3.png"></a>
+      </span>
+      This view summarizes all knowns characteristics of a person, and all
+      events to which she was part (either as the principal, or in any other
+      role). When sources are available for these conclusions, hyper-links to
+      the source view
+      are displayed. This allows you to quickly see which conclusions need
+      further sources.
+      <p>
+      It also shows the various persona that are linked together to represent
+      a real world person, and will allow you to break these links when they
+      are no longer valid. 
+      <p>
+      For each event or characteristic, the surety level of the assertion is
+      displayed as a star ration. These schemes can be customized at will,
+      so you can adapt to whatever your own conventions are.
+      <p>
+   </li>
+
+   <li>A <b>List of persons</b> view
+      <span class='images'>
+         <a href="screenshots/persons3.png"><img src="screenshots/persons3.png"></a>
+      </span>
+      <p>
+      This view lists all known persons in the database. The table can be
+      sorted on any of the columns, or can be filtered to see a subset of
+      the persons. Clicking on a person will lead you to the Person view.
+      </p>
+   </li>
+
+   <li>A <b>Source</b> view
+      <span class='images'>
+         <a href="source1.png"><img src="source1.png"></a>
+         <a href="source2.png"><img src="source2.png"></a>
+      </span>
+      This view describes a source. It shows all representations (images)
+      associated with the source. Each representation can be scrolled and
+      zoomed. It is also possible to perform a few basic transformations
+      on the images (convert to black-and-white,...) hopefully to make
+      them more readable.<br>
+      In addition, the details of the source (name, repository,...) are
+      displayed.</br>
+      Finally, it shows all facts and assertions that were deducted from
+      this source. There are few genealogical software that show this,
+      although this is a very convenient way to see in one glance whether
+      all information was extracted from that source, or whether you might
+      have missed some part of it when you analyzed it.
+   </li>
+     
+</ul>
+
+<p>
+The long term goal is to make creating such reports easier (at least when
+dealing with exporting such reports). A good inspiration is
+<a href="http://lifelines.sourceforge.net/">LifeLines</a>. Although a
+text based tool (and which cannot import my Gedcom file :-(), it is known
+for its good scriptability. One of its drawback is that the scripting
+language was designed 20 years ago, and is very low-level. Thanks to python,
+we can have a much more user-friendly language.
+</p>
+<p>
+Geneaprove will need to include a high-level API (ie hiding the database
+model), and then we can have reports exporting <b>Books</b>, <b>Trees</b>,
+<b>List of people</b>,...
+</p>
+
+
+
+  </div>
+</body>
+</html>

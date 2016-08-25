@@ -1,0 +1,146 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<title>Geneaprove @ GitHub</title>
+	<style type="text/css">
+body {margin:0; background-color: white; font-family: "Arial"; color: #000000}
+  
+#head {background-color:#39414A; padding:0 0 0 30px; margin:0; height:90px;
+       background-image: -moz-linear-gradient(top, #39414A, #777); 
+       background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, #39414A),color-stop(1, #777)); 
+       background-image: linear-gradient(top, #39414A, #777);
+       filter: progid:DXImageTransform.Microsoft.gradient(startColorStr='#39414A', EndColorStr='#777'); }
+
+#head > a {text-decoration:none; display:block;
+         font-size:3.8em; color: #ec8d05; font-style:italic;
+         text-shadow: black 3px 3px 7px;}
+#head .phrase{font-size:1.1em; color:white; font-style:italic;
+   margin:-15px 0 0 65px; text-shadow: black 1px 1px 2px}
+#head .download {float: right; margin-right:100px}
+
+#sidebar {width:200px; float:left; height:100%}
+
+#sidebar h2 {margin:5px 0 0 5px; padding:3px; color:white;
+             font-weight:normal; font-size:1em;
+             border:1px solid #39414A;
+             width:187px; /* 187 = #sidebar'width - h2'margin-left - h2'padding-left
+                                   - h2'padding-right */
+             background:#777}
+#sidebar h2.selected {background:#39414A}
+#sidebar h2 a {text-decoration:none; color:white; white-space:nowrap;
+   display:inline-block; width:100%}
+#sidebar h2:hover,
+#sidebar li:hover {background:#ec8d05}
+#sidebar h2:after {position:absolute; margin-left:-10px; color:white;
+    content:"\00BB"} /* see http://www.evotech.net/articles/testjsentities.html */
+
+#sidebar ul {list-style:none; margin:8px 0 10px 20px; padding:0}
+#sidebar li {width:100%}
+#sidebar li a {text-decoration:none; color:black; white-space:nowrap; width:100%;
+   display:inline-block}
+#sidebar li a:before {content:"\00BB"; padding-right:5px}
+
+#container {margin: 0 0 0 220px;  /* 210= #sidebar'width + 20 */
+            max-width: 700px}
+#container h2 {border-bottom:1px solid black}
+
+#container img {max-width:200px; max-height:200px; margin-left:15px}
+         
+	</style>
+</head>
+
+<body>
+  <a href="http://github.com/briot/geneapro"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+
+  <div id="head">
+     <div class="download">
+       <a href="http://github.com/briot/geneapro/zipball/master">
+          <img border="0" width="90"
+               src="https://github.com/images/modules/download/zip.png"></a>
+       <a href="http://github.com/briot/geneapro/tarball/master">
+          <img border="0" width="90"
+               src="https://github.com/images/modules/download/tar.png"></a>
+    </div>
+    <a href="http://github.com/briot/geneapro">G&eacute;n&eacute;aprove</a>
+    <div class="phrase">Evidence your genealogy</div>
+   </div>
+
+  <div id="sidebar">
+        <h2 class="selected"><a href="index.html">Home</a></h2>
+        <h2><a href="features.html">Features</a></h2>
+        <h2><a href="download.html">Download</a></h2>
+        <h2><a href="impl.html">Implementation</a></h2>
+  </div>
+  
+  <div id="container">
+     
+<p>
+<b>Geneaprove</b> is a web-based genealogical software.
+</p>
+
+<p>
+As opposed to most genealogical software out there, it is based on the
+<a href="http://www.ngsgenealogy.org/cs/GenTech_Projects">GenTech</a>
+data model, designed by a group of experts.
+</p>
+
+<p>
+This model is based on the concept of <b>assertions</b> (positive or negative).
+Every time you find a source of information, you extract and record
+a number of facts from it (<i>"The person X was born on that date,
+her mother was Y"</i>). You can
+then match the persons mentioned in those documents with those already
+in your database, making assertions (<i>"The person X must be the same as
+P, already in my database, because of such and such reason"</i>).
+As a result, you can record any number of information for each person in
+your database (multiple birth dates, when there are ambiguities for instance).
+</p>
+
+<p>
+The traditional behavior with other genealogical applications is to then
+delete one of those birth dates if you find extra information that makes you
+think it was wrong. But not with Geneaprove. Instead, you would simply
+transform that into a <b>negative assertion</b> (<i>"Person X cannot be born at
+that date because..."</i>). Geneaprove will no longer show you that date by
+default, but the information is still there. That way, when you find
+another reference to a person with the same name and that date, you know
+that can't be the right date.
+</p>
+
+<p>
+So far, the above scenario is partially supported in Geneaprove: it supports
+negative assertions, but will not currently let you edit the database (you
+can only import existing information from some other software through a
+<a href="gedcom.html">GEDCOM</a> file.
+</p>
+
+<p>
+But this is coming soon!
+</p>
+
+<h2>Install</h2>
+
+Check the README file, which contains the most up-to-date information on how
+to get started with geneaprove. Here is an executive summary:
+
+<p>
+Change settings.py if appropriate to reflect the database engine and name you wish to use.
+</p>
+<p>
+Run <tt>geneaprove.py</tt>, which creates an empty database and starts the server.
+You can import your existing GEDCOM data directly by connecting to
+<a href="http://127.0.0.1:8000">this server</a> with a web browser.
+</p>
+
+<h2>License</h2>
+<p>GPL 2</p>
+
+<h2>Authors</h2>
+<p>Emmanuel Briot (briot.emmanuel at gmail dot com)</p>
+
+
+  </div>
+</body>
+</html>

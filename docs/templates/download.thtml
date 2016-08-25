@@ -1,0 +1,37 @@
+<% block container %>
+<p>
+This is open-source software (and free).
+</p>
+
+<p>
+You can download it from <a href="https://github.com/briot/geneapro">Github</a>,
+or by clicking on the links at the top of the page
+</p>
+
+<p>
+Do not forget to let me know if you are using Geneapro, this is always
+great motivation!
+</p>
+
+<h2>Installing on Windows</h2>
+
+This application depends on several external tools that you will need to
+install first. We plan on making things easier ultimately, but for now you'll
+have to install each of these individually.
+
+<ol>
+  <li><a href="http://python.org/download/">Download</a> and install
+      the Windows python installer for your machine (either 32 bits or
+      64 bits).</li>
+  <li><a href="http://sqlite.org/download.html">Download</a> and install
+      the precompiled Sqlite for Windows. I think you only need the DLL
+      version, not the shell command line.</li>
+  <li><a href="http://www.djangoproject.com/download/">Download</a> and
+      install the latest official release of Django. You will need 7-zip
+      or Winzip to unpack the archive, and then you will need to run the
+      python command listed on the download page.</li>
+  <li>Finally, once these are working, you can download Geneapro and
+      launch it.</li>
+</ol>
+
+<% endblock container %>

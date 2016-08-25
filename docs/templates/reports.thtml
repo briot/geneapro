@@ -1,0 +1,165 @@
+<% var section features %>
+
+<% block styles %>
+#container li {min-height:210px} /* height of pictures is 200px*/
+<% endblock styles %>
+
+<% block container %>
+<h2>Reports</h2>
+
+<p>
+All genealogical software include <b>reports</b>. These are views into
+your genealogical tree, showing various aspects.
+</p>
+
+<p>
+<i>Geneapro</i> currently only includes a limited number of views. These are
+
+<ul>
+  <li>A <b>Pedigree view</b>
+      <a href="pedigree1.png" style="float:right">
+         <img src="pedigree1.png">
+      </a>
+      <a href="pedigree2.png" style="clear:right; float:right">
+         <img src="pedigree2.png">
+      </a>
+      <p>
+      Given a person (often called the <i>decujus</i>), the pedigree shows a
+      tree of all its ancestors up to a number of generations.
+      </p>
+      <p>
+      Geneapro lets you configure the number of generations, and is comfortable
+      showing all of them if you want. On my own genealogical tree, I have
+      people up to the 21st generation (not all correctly verified yet!), and
+      I can view the whole tree in my web browser, although that's sometimes
+      a bit slow. But displaying 8 or 9 generations is no problem.
+      </p>
+      <p>
+      Geneapro will also show you the children of the <i>decujus</i>.
+      </p>
+      <p>
+      Clicking on any person in the tree will make that person the new
+      decujus, and show his/her own tree.
+      </p>
+      <p>
+      There are currently two implementations of the pedigree view. One is
+      based on <abbr>SVG</abbr>, and is slower. It will soon be discarded.
+      The second one is based on the HTML5 canvas, and works correctly in
+      all modern browsers (Chrome, Firefox and Opera). Hasn't been tested on
+      Internet Explorer 9.
+      </p>
+      <p>
+      Since sources as so important in geneapro, it will add a check mark
+      next to all dates and places for which at least one source is available.
+      </p>
+      <p>
+      The styling used for each person (background color, text color, font,...)
+      can be configured by creating <a href="highlighting.html">Highlighting
+      rules</a>.
+      </p>
+      <p>Double-clicking on a person leads you to the Person view</p>
+      </li>
+
+  <li>A <b>Fan chart</b>
+      <a href="fanchart1.png" style="float:right">
+         <img src="fanchart1.png">
+      </a>
+      <p>
+      Instead of displaying the decujus ancestors as a tree, this report will
+      show them in a circle. This is less frequently used, but is a much more
+      compact way to see lots of generations in a single view.
+      </p>
+      <p>
+      The same highlighting rules apply in the fanchart.
+      </p>
+      </li>
+
+  <li>A <b>statistics</b> view
+      <a href="stats1.png" style="float:right">
+         <img src="stats1.png">
+      </a>
+      <p>
+      This page shows the number of persons in your tree (not the total
+      number in the database, which very often is irrelevant because people
+      include information for person whose name seem to match, just in case
+      it is useful later).
+      </p>
+      <p>
+      For each generation, it is able to display the earliest birth date and
+      latest known death date. These are often useful to detect inconsistencies
+      in the database.
+      </p>
+   </li>
+
+   <li>A <b>Person</b> view
+      <a href="person1.png" style="float:right">
+         <img src="person1.png">
+      </a>
+      This view summarizes all knowns characteristics of a person, and all
+      events to which she was part (either as the principal, or in any other
+      role). When sources are available for these conclusions, hyper-links to
+      the source view
+      are displayed. This allows you to quickly see which conclusions need
+      further sources.
+      <p>
+      It allow shows the various persona that are linked together to represent
+      a real world person, and will allow you to break these links when they
+      are no longer valid. 
+      <p>
+      For each event or characteristic, the surety level of the assertion is
+      displayed as a star ration. Note in this screenshot that the Birth
+      event has a different surety scheme (these can be customized at will,
+      so you can adapt to whatever your own conventions are). In the case of
+      the birth, there is for instance only a single possible value for
+      surety schemes (not very interesting...).
+   </li>
+
+   <li>A <b>List of persons</b> view
+      <a href="persons1.png" style="float:right">
+         <img src="persons1.png">
+      </a>
+      This view lists all known persons in the database. The table can be
+      sorted on any of the columns, or can be filtered to see a subset of
+      the persons. Clicking on a person will lead you to the Person view.
+   </li>
+
+   <li>A <b>Source</b> view
+      <a href="source1.png" style="float:right">
+         <img src="source1.png">
+      </a>
+      <a href="source2.png" style="float:right">
+         <img src="source2.png">
+      </a>
+      This view describes a source. It shows all representations (images)
+      associated with the source. Each representation can be scrolled and
+      zoomed. It is also possible to perform a few basic transformations
+      on the images (convert to black-and-white,...) hopefully to make
+      them more readable.<br>
+      In addition, the details of the source (name, repository,...) are
+      displayed.</br>
+      Finally, it shows all facts and assertions that were deducted from
+      this source. There are few genealogical software that show this,
+      although this is a very convenient way to see in one glance whether
+      all information was extracted from that source, or whether you might
+      have missed some part of it when you analyzed it.
+   </li>
+     
+</ul>
+
+<p>
+The long term goal is to make creating such reports easier (at least when
+dealing with exporting such reports). A good inspiration is
+<a href="http://lifelines.sourceforge.net/">LifeLines</a>. Although a
+text based tool (and which cannot import my Gedcom file :-(), it is known
+for its good scriptability. One of its drawback is that the scripting
+language was designed 20 years ago, and is very low-level. Thanks to python,
+we can have a much more user-friendly language.
+</p>
+<p>
+Geneapro will need to include a high-level API (ie hiding the database
+model), and then we can have reports exporting <b>Books</b>, <b>Trees</b>,
+<b>List of people</b>,...
+</p>
+
+
+<% endblock container %>
