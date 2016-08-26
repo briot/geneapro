@@ -8,7 +8,7 @@ from django.template import RequestContext
 from django.utils.translation import ugettext as _
 from django.http import HttpResponse
 from geneaprove import models
-from geneaprove.views.to_json import to_json
+from geneaprove.views.to_json import to_json, JSONView
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.styles import Styles
 from geneaprove.views.queries import sql_in
@@ -443,12 +443,12 @@ class GeneaGraph(Digraph):
         result = []
         for lay in range(0, len(layers)):
             result.append(
-                [(n.main_id, n.name.encode("utf-8"), n.sex)
+                [{"id": n.main_id, "name": n.name.encode("utf-8"), "sex":n.sex}
                  for n in layers[lay]])
 
         # for index, l in enumerate(result):
         #    print "MANU layer[%d] = %s" % (index, sorted([p[0] for p in l]))
-        return {"persons": to_json(result, year_only=True),
+        return {"persons": result,
                 "families": families}
 
     def people_in_tree(self, id, maxdepthAncestors=-1,
@@ -505,44 +505,42 @@ class GeneaGraph(Digraph):
 
 graph = GeneaGraph()
 
+class QuiltsView(JSONView):
 
-def quilts_view(request, decujus=None):
-    """
-    :request_param decujus_tree:
-        If True, only the persons in the decujus' tree are displayed,
-        otherwise the whole contents of the datatabase is displayed.
-    """
+    def get_json(self, params, id):
+        """
+        :request_param decujus_tree:
+            If True, only the persons in the decujus' tree are displayed,
+            otherwise the whole contents of the datatabase is displayed.
+        """
 
-    decujus = int(decujus) if decujus is not None else 1
-    decujus_tree = request.GET.get("decujus_tree", "true").lower() == "true"
+        decujus = int(id) if id is not None else 1
+        decujus_tree = params.get("decujus_tree", "true").lower() == "true"
 
-    # ??? Should lock the graph until the view has been generated
+        # ??? Should lock the graph until the view has been generated
 
-    graph.update_if_needed()
-    if len(graph) == 0:
-        return render_to_response(
-            'geneaprove/firsttime.html',
-            context_instance=RequestContext(request))
+        graph.update_if_needed()
+        if len(graph) == 0:
+            return render_to_response(
+                'geneaprove/firsttime.html',
+                context_instance=RequestContext(request))
 
-    subset = None
+        subset = None
 
-    if decujus_tree:
-        subset = graph.people_in_tree(
-            id=decujus, maxdepthAncestors=-1, maxdepthDescendants=-1,
-            spouses_tree=True)
+        if decujus_tree:
+            subset = graph.people_in_tree(
+                id=decujus, maxdepthAncestors=-1, maxdepthDescendants=-1,
+                spouses_tree=True)
 
-    #graph.export(file("graph.pickle", "w"))
-    #graph.write_graphviz(file("graph.dot", "wb"))
-    # graph.write_graphviz(file("genea.dot", "w"),
-    #                 edgeiter=g.out_children_edges)
+        #graph.export(file("graph.pickle", "w"))
+        #graph.write_graphviz(file("graph.dot", "wb"))
+        # graph.write_graphviz(file("genea.dot", "w"),
+        #                 edgeiter=g.out_children_edges)
 
-    data = graph.json(subset)
-
-    return render_to_response(
-        'geneaprove/quilts.html',
-        {"persons": data["persons"],
-         "families": data["families"],
-         "decujus_tree": decujus_tree,
-         "decujus_name": "",
-         "decujus": decujus},
-        context_instance=RequestContext(request))
+        data = graph.json(subset)
+        return {
+            "persons": data["persons"],
+            "families": data["families"],
+            "decujus_tree": decujus_tree,
+            "decujus_name": "",
+            "decujus": decujus}

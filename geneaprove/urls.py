@@ -14,6 +14,7 @@ from geneaprove.views.sources import \
         SourceView, SourceCitation, EditSourceCitation, \
         CitationModels, CitationModel, SourcesList, \
         SourceRepresentations, AddSourceRepr, DelSourceRepr
+from geneaprove.views.graph import QuiltsView
 import geneaprove.views.events
 import geneaprove.views.merge
 import geneaprove.views.graph
@@ -43,16 +44,16 @@ urlpatterns = [
     url(r'^data/stats/(?P<id>\d+)$',           StatsView.as_view()),
     url(r'^data/import$',                      GedcomImport.as_view()),
     url(r'^data/citationModel/(?P<model_id>.+)$', CitationModel.as_view()),
-    url(r'^data/citationModels$',           CitationModels.as_view()),
-    url(r'^data/settings',                  GlobalSettings.as_view()),
+    url(r'^data/citationModels$',              CitationModels.as_view()),
+    url(r'^data/settings',                     GlobalSettings.as_view()),
     url(r'^data/repr/(?P<id>\d+)(?:/(?P<size>\d+))?$',
                                geneaprove.views.representation.view),
+    url(r'^data/quilts/(?P<id>\d+)$',          QuiltsView.as_view()),
 
     # Fallback to support the path location strategy in URLs
     url(r'^.*', index, name='index'),
 
     # ... below: not moved to angularJS yet
 
-    url(r'^quilts/(\d+)?$', geneaprove.views.graph.quilts_view),
     url(r'^merge$',         geneaprove.views.merge.view),
 ] 

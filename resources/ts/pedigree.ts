@@ -386,9 +386,7 @@ export class Pedigree {
       // ??? Should also monitor global settings
       const set = this.settings.pedigree;
       this.pedigreeService.get(this.id, set.gens, set.descendant_gens)
-         .subscribe((d : PedigreeData) => {
-            this.render(d);
-         });
+         .subscribe((d : PedigreeData) => this.render(d));
    }
 
    // Return the y coordinate for links to/from the person's box

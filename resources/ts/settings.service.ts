@@ -58,6 +58,11 @@ interface FanchartSettings {
    showMarriages: boolean; // Whether to show marriage info
 };
 
+interface QuiltsSettings {
+   collapsed : boolean;
+   whole     : boolean;
+};
+
 interface SettingsData {
    decujus : number;  // Id of selected person
 
@@ -70,6 +75,7 @@ interface SettingsData {
    pedigree    : PedigreeSettings;
    radial      : RadialSettings;
    fanchart    : FanchartSettings;
+   quilts      : QuiltsSettings;
 }
 
 @Injectable()
@@ -84,6 +90,7 @@ export class Settings implements SettingsData {
    pedigree      : PedigreeSettings;
    radial        : RadialSettings;
    fanchart      : FanchartSettings;
+   quilts        : QuiltsSettings;
 
    constructor(public title : Title,
                private _storage : LocalStorage)
@@ -120,6 +127,9 @@ export class Settings implements SettingsData {
          angle: 200,
          space: 0,
          showMarriages: false};
+      this.quilts = tmp.quilts || {
+         collapsed: false,
+         whole: false};
       this.reportChange();
    }
 
@@ -135,7 +145,8 @@ export class Settings implements SettingsData {
          placeList:     this.placeList,
          pedigree:      this.pedigree,
          radial:        this.radial,
-         fanchart:      this.fanchart
+         fanchart:      this.fanchart,
+         quilts:        this.quilts
       };
    }
 

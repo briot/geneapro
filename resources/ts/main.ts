@@ -40,6 +40,9 @@ import {RadialPage} from './radial';
 import {StatsPage} from './stats';
 import {FanchartPage} from './fanchart';
 
+import {QuiltsPage} from './quilts';
+import {QuiltsService} from './quilts.service';
+
 import {ContextMenuService} from './contextmenu';
 
 import 'rxjs/add/observable/of';
@@ -59,7 +62,7 @@ import 'rxjs/add/operator/debounceTime';
 
                 Title, Settings, PersonaService, LegendService,
                 PlaceService, SourceService, SuretyService, EventService,
-                ContextMenuService,
+                ContextMenuService, QuiltsService,
                 PedigreeService, LocalStorage, GPd3Service, HTTP_PROVIDERS],
    directives: [ROUTER_DIRECTIVES, Menubar]
 })
@@ -75,7 +78,8 @@ import 'rxjs/add/operator/debounceTime';
    {path: '/pedigree/:id', name: 'Pedigree',    component: PedigreePage},
    {path: '/radial/:id',   name: 'Radial',      component: RadialPage},
    {path: '/stats/:id',    name: 'Stats',       component: StatsPage},
-   {path: '/fanchart/:id', name: 'Fanchart',    component: FanchartPage}
+   {path: '/fanchart/:id', name: 'Fanchart',    component: FanchartPage},
+   {path: '/quilts/:id',   name: 'Quilts',      component: QuiltsPage}
 ])
 export class MainComponent {
 }

@@ -29,6 +29,12 @@
 *** Editing assertions
 *** Error in /source/199
 
+** Quilts
+*** Only show selected people
+*** Show whole database
+*** Bug: color highlighting horizontally sometimes extends to wrong column
+*** Should use more relative coordinates to simplify the code
+
 ** Import
 *** Use download form
 

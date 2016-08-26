@@ -63,6 +63,25 @@ svg {
       font-size: smaller;
       fill: #555;
    }
+
+   .quilts {
+      g.layer {
+         rect {
+            fill: white;
+            stroke: #444;
+         }
+         text {  // The name of persons
+            cursor: pointer;
+         }
+      }
+      rect.separator {
+         fill: gray;
+      }
+      path.line {  // horizontal or vertical lines
+         stroke: #444;
+      }
+   }
+
    path.link {
      stroke: #000;
      fill: none;
