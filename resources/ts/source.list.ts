@@ -1,14 +1,11 @@
 import {Component} from '@angular/core';
-import {CORE_DIRECTIVES} from '@angular/common';
 import {SourceService} from './source.service';
-import {PaginateData, Paginate} from './paginate';
+import {PaginateData} from './paginate';
 import {Settings} from './settings.service';
-import {SourceLink} from './links';
 
 @Component({
    template: require('./source.list.html'),
    providers: [PaginateData],
-   directives: [CORE_DIRECTIVES, Paginate, SourceLink]
 })
 export class SourceList {
 

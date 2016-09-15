@@ -1,18 +1,8 @@
-import {Component, Input, Pipe} from '@angular/core';
-import {CORE_DIRECTIVES} from '@angular/common';
-import {RouterLink} from '@angular/router-deprecated';
-
-@Pipe({name: 'linky', pure: true})
-export class Linky {
-   transform(str : string) {
-      return str && str.replace(/(https?:\/\/[a-zA-Z0-9:_+.]+)/, '<a href="$1">$1</a>');
-   }
-}
+import {Component, Input} from '@angular/core';
 
 @Component({
    selector: 'persona-link',
-   template: require('./links.persona.html'),
-   directives: [CORE_DIRECTIVES, RouterLink]
+   template: require('./links.persona.html')
 })
 export class PersonaLink {
    @Input() id : number;   //  The id of the person
@@ -21,8 +11,7 @@ export class PersonaLink {
 
 @Component({
    selector: 'place-link',
-   template: require('./links.place.html'),
-   directives: [CORE_DIRECTIVES, RouterLink]
+   template: require('./links.place.html')
 })
 export class PlaceLink {
    @Input() id : number;   //  The id of the place
@@ -31,9 +20,7 @@ export class PlaceLink {
 
 @Component({
    selector: 'source-link',
-   template: require('./links.source.html'),
-   directives: [CORE_DIRECTIVES, RouterLink],
-   pipes:      [Linky]
+   template: require('./links.source.html')
 })
 export class SourceLink {
    @Input() id : number;   //  The id of the place
@@ -43,8 +30,7 @@ export class SourceLink {
 
 @Component({
    selector: 'time-link',
-   template: require('./links.time.html'),
-   directives: [CORE_DIRECTIVES, RouterLink],
+   template: require('./links.time.html')
 })
 export class TimeLink {
    @Input() on : {date:string, date_sort:string};

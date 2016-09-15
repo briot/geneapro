@@ -1,16 +1,11 @@
 import {Component, Input} from '@angular/core';
-import {CORE_DIRECTIVES} from '@angular/common';
-import {Router} from '@angular/router-deprecated';
+import {Router} from '@angular/router';
 import {SourceData, SourceService, ModelData, CitationModel, ISourcePart} from './source.service';
 import {CitationTemplate, ICitation} from './citation.service';
-import {FloatLabelInput} from './floatlabels';
-import {GroupByPipe} from './groupby';
 
 @Component({
    selector: 'citation',
-   template: require('./source.citation.html'),
-   directives: [CORE_DIRECTIVES, FloatLabelInput],
-   pipes: [GroupByPipe]
+   template: require('./source.citation.html')
 })
 export class Citation {
    @Input() data : SourceData;

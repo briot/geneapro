@@ -39,12 +39,12 @@
       </form>
       
       <modal [buttons]="['Cancel','Delete on Disk','Keep File']">
-         <modal-title>Delete a media ?</modal-title>
-         <modal-body>
+         <div class='modal-title'>Delete a media ?</div>
+         <div class='modal-body'>
             <p>This will remove the following media as a representation of the source.</p>
-            <p>{{data.repr[current].file}}</p>
+            <p>{{data.repr[current]?.file}}</p>
             <small>The file can be either kept on the disk, for later reuse, or deleted.</small>
-         </modal-body>
+         </div>
       </modal>
    </div>
 </div>

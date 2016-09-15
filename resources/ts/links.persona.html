@@ -1,4 +1,4 @@
-<a [routerLink]="['Persona', {id: id}]" class="gpLink">
+<a [routerLink]="['/persona', id]" class="gpLink">
    <span *ngIf='name'>{{name}}</span>
    <span *ngIf='id' class="fa fa-book gpLinkSuper">{{id}}</span>
 </a>

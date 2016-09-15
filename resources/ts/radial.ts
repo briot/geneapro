@@ -1,14 +1,11 @@
 import {Component, ElementRef, Input, Injectable} from '@angular/core';
-import {Router, RouteParams} from '@angular/router-deprecated';
-import {CORE_DIRECTIVES} from '@angular/common';
+import {Router, ActivatedRoute, Params} from '@angular/router';
 import * as d3 from 'd3';
 import {Settings} from './settings.service';
 import {GPd3Service, ScalableSelection, d3Styles, LayoutInfo} from './d3.service';
 import {IPerson, IRectangle, ColorScheme, LayoutScheme} from './basetypes';
 import {PedigreeData, PedigreeService} from './pedigree.service';
-import {Legend} from './legend';
-import {Slider} from './slider';
-import {ContextMenuService, ContextMenu, ContextualItem} from './contextmenu';
+import {ContextMenuService, ContextualItem} from './contextmenu';
 
 interface RadialLayout extends LayoutInfo {
    p        : IPerson;
@@ -25,7 +22,7 @@ interface RadialLayout extends LayoutInfo {
    selector:  'radial',
    template:  '',
 })
-class Radial {
+export class Radial {
    @Input() id      : number;
    private scalable : ScalableSelection;
    private data     : PedigreeData;
@@ -147,8 +144,7 @@ class Radial {
 }
 
 @Component({
-   template: require('./radial.html'),
-   directives: [Radial, Legend, CORE_DIRECTIVES, ContextMenu, Slider]
+   template: require('./radial.html')
 })
 export class RadialPage {
    public id : number;
@@ -159,16 +155,21 @@ export class RadialPage {
       public settings         : Settings,
       private contextService  : ContextMenuService,
       private router          : Router,
-      routeParams             : RouteParams)
+      private route           : ActivatedRoute)
    {
       this.contextualLinks = [
          {name: 'Set as reference', func: this.focusPerson.bind(this)},
          {name: 'Show details',     func: this.showPerson.bind(this)}
       ];
+   }
 
-      this.id = +routeParams.get('id');
-      settings.decujus = this.id;
-      this.settings.setTitle('Radial Tree for person ' + this.id);
+   ngOnInit() {
+      // Subscribe to changes in the parameters
+      this.route.params.forEach((p : Params) => {
+         this.id = +p['id'];
+         this.settings.decujus = this.id;
+         this.settings.setTitle('Radial Tree for person ' + this.id);
+      });
    }
 
    changed() {

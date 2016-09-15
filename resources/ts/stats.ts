@@ -1,29 +1,29 @@
 import {Component} from '@angular/core';
 import * as d3 from 'd3';
 import {StatsData, StatsService} from './stats.service';
-import {StatsGenerations} from './stats.generations';
-import {StatsLifespan} from './stats.lifespan';
-import {RouteParams} from '@angular/router-deprecated';
-import {PersonaLink} from './links';
+import {ActivatedRoute, Params} from '@angular/router';
 import {Settings} from './settings.service';
 
 @Component({
-   template: require('./stats.html'),
-   directives: [StatsGenerations, StatsLifespan, PersonaLink],
-   providers: [StatsService]
+   template: require('./stats.html')
 })
 export class StatsPage {
 
    id : number;
    data : StatsData;
 
-   constructor(routeParams  : RouteParams,
-               settings     : Settings,
-               stats        : StatsService) {
-      this.id = +routeParams.get('id');
-      settings.decujus = this.id;
-      stats.setDecujus(this.id);
-      stats.get().subscribe(data => this.data = data);
+   constructor(private route    : ActivatedRoute,
+               private settings : Settings,
+               private stats    : StatsService)
+   {
+   }
 
+   ngOnInit() {
+      this.route.params.forEach((p : Params) => {
+         this.id = +p['id'];
+         this.settings.decujus = this.id;
+         this.stats.setDecujus(this.id);
+      });
+      this.stats.get().subscribe(data => this.data = data);
    }
 }

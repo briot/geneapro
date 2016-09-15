@@ -2,8 +2,10 @@
  * An image that can be manipulated scroll, zoom, ...)
  */
 
-import {Component, Directive, Injectable, Input, Renderer, ElementRef} from '@angular/core';
+import {NgModule, Component, Directive, Injectable, Input,
+        Renderer, ElementRef} from '@angular/core';
 import {IRepr} from './basetypes';
+import {SharedModule} from './shared.module';
 
 @Injectable()
 export class ZoomImage {
@@ -234,9 +236,8 @@ class ZoomImageDirective {
            mime: {{repr.mime}}<br>Id: {{repr.id}}
         </figcaption>
      </figure>`,
-   directives: [ZoomImageDirective]
 })
-export class GpMedia {
+class GpMedia {
    @Input() repr  : IRepr;
    isimage        : boolean;
    isaudio        : boolean;
@@ -251,3 +252,11 @@ export class GpMedia {
       }
    }
 }
+
+@NgModule({
+   imports: [SharedModule],
+   declarations: [ZoomImageDirective, GpMedia],
+   exports: [ZoomImageDirective, GpMedia],
+   providers: [ZoomImage],
+})
+export class MediaModule {}

@@ -1,9 +1,10 @@
 
-import {Component, Injectable, Directive, Input, Output, EventEmitter} from '@angular/core';
+import {NgModule, Component, Injectable, Directive, Input, Output, EventEmitter} from '@angular/core';
 import {ElementRef} from '@angular/core';
 import {Observable} from 'rxjs';
 import {formdata_post} from './http_utils';
 import {Http} from '@angular/http';
+import {SharedModule} from './shared.module';
 
 @Directive({
    selector: 'form[gp-upload-form]',
@@ -19,7 +20,7 @@ import {Http} from '@angular/http';
           '(drop)': 'onDrop($event)'}
 
 })
-export class UploadForm {
+class UploadForm {
    @Input() mini : boolean;
    @Output() onupload : EventEmitter<any>;
    @Input() url : string;   // mandatory
@@ -103,7 +104,7 @@ export class UploadForm {
          <div *ngIf="parent.isUploading" class="fa fa-spin fa-spinner"></div>
       </div>`
 })
-export class UploadTarget {
+class UploadTarget {
    @Input() parent : UploadForm;
 
    ngOnInit() {
@@ -136,7 +137,7 @@ export class UploadTarget {
          <span *ngIf="parent.isUploading" class="fa fa-spin fa-spinner"></span>
       </label>`
 })
-export class UploadTargetMini {
+class UploadTargetMini {
    @Input() parent : UploadForm;
 
    ngOnInit() {
@@ -150,3 +151,11 @@ export class UploadTargetMini {
       this.parent.send();
    }
 }
+
+const decl = [UploadTarget, UploadForm, UploadTargetMini];
+@NgModule({
+   imports: [SharedModule],
+   declarations: decl,
+   exports: decl,
+})
+export class UploadModule {}

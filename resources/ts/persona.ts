@@ -1,42 +1,39 @@
 import {Component} from '@angular/core';
-import {CORE_DIRECTIVES} from '@angular/common';
-import {FORM_DIRECTIVES} from '@angular/forms';
-import {RouteParams} from '@angular/router-deprecated';
+import {ActivatedRoute, Params} from '@angular/router';
 import {PersonaService, PersonaData} from './persona.service';
-import {Surety} from './surety';
 import {Settings} from './settings.service';
 import {EventService, EventData} from './event.service';
-import {SourceLink, PersonaLink} from './links';
 import {Assertion, P2G, P2E, P2C, AssertSubjectEvent, AssertSubjectGroup, AssertSubjectChar} from './asserts.service';
-import {SortOn, SortBy} from './sort';
 
 @Component({
    template:   require('./persona.html'),
-   directives: [CORE_DIRECTIVES, Surety, SourceLink, PersonaLink, SortOn, SortBy]
 })
 export class Persona {
    id   : number;
    data : PersonaData;
 
    constructor(
-      routeParams       : RouteParams,
+      public route      : ActivatedRoute,
       public settings   : Settings,
       private _events   : EventService,
       private _personas : PersonaService)
    {
-      this.id = +routeParams.get('id');
-
-      // Change menubar so that links relate to this person
-      settings.decujus = this.id;
    }
 
    ngOnInit() {
-      this.settings.setTitle('Person ' + this.id);
-      this._personas.get(this.id)
-         .subscribe((resp : PersonaData) => {
-            this.data = resp;
-            this.settings.setTitle('Person ' + resp.person.givn + ' ' + resp.person.surn);
-         });
+      this.route.params.forEach((p : Params) => {
+         this.id = +p['id'];
+
+         // Change menubar so that links relate to this person
+         this.settings.decujus = this.id;
+
+         this.settings.setTitle('Person ' + this.id);
+         this._personas.get(this.id)
+            .subscribe((resp : PersonaData) => {
+               this.data = resp;
+               this.settings.setTitle('Person ' + resp.person.givn + ' ' + resp.person.surn);
+            });
+      });
    }
 
    toggleEventDetails(e : P2E) {

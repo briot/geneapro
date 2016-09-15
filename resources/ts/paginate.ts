@@ -1,5 +1,4 @@
 import {Component, Injectable, Input, EventEmitter} from '@angular/core';
-import {CORE_DIRECTIVES} from '@angular/common';
 
 /**
  * Return an array with the elements of data that have a field containing
@@ -96,8 +95,7 @@ export class PaginateData {
 
 @Component({
    selector:   'paginate',
-   template:   require('./paginate.html'),
-   directives: [CORE_DIRECTIVES]
+   template:   require('./paginate.html')
 })
 export class Paginate {
    @Input() panelTitle = '';

@@ -1,5 +1,4 @@
 import {Injectable, Component, Input, EventEmitter, ElementRef} from '@angular/core';
-import {CORE_DIRECTIVES} from '@angular/common';
 import * as d3 from 'd3';
 
 /**
@@ -52,8 +51,7 @@ export class ContextMenuService {
       '(document:click)': 'hideMenu()',
       '(document:keyup)': 'onKeyUp($event)',
       'class': 'contextMenu navbar navbar-default'
-   },
-   directives: [CORE_DIRECTIVES]
+   }
 })
 export class ContextMenu{
    @Input('context-menu') items : ContextualItem[];

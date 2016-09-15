@@ -1,11 +1,8 @@
 import {Component} from '@angular/core';
-import {CORE_DIRECTIVES} from '@angular/common';
 import {Settings} from './settings.service';
 import {ColorScheme} from './basetypes';
-import {PaginateData, Paginate} from './paginate';
+import {PaginateData} from './paginate';
 import {PersonaService} from './persona.service';
-import {PersonaLink} from './links';
-import {Legend} from './legend';
 
 /**
  * This component must be encapsulated in a <paginate> directive
@@ -13,10 +10,8 @@ import {Legend} from './legend';
 @Component({
    template: require('./persona.list.html'),
    providers: [PaginateData],   // local to this component
-   directives: [CORE_DIRECTIVES, Paginate, PersonaLink, Legend]
 })
 export class PersonaList {
-
 
    constructor(
       public settings   : Settings,

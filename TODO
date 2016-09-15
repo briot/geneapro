@@ -262,6 +262,7 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 * Maps
 ** https://ingenealogie.wordpress.com/2014/04/06/carte-didentite-du-systeme-aluze-charrecey/
 ** https://desaieuxetdeshommes.wordpress.com/2014/12/16/identifier-les-migrations-de-ses-ancetres/
+** http://genealogysstar.blogspot.fr/2016/08/the-impressive-new-myheritagecom.html
 
 * dates
 ** From W. Berry:
@@ -337,11 +338,21 @@ http://www.wolframalpha.com/input/?i=great+grand+mother%27s+niece
 * Django
 ** Class-based views
    http://ccbv.co.uk
+** Export to Excel
+   https://simpleisbetterthancomplex.com/tutorial/2016/07/29/how-to-export-to-excel.html
+** Refer to the current value in the database
+   https://simpleisbetterthancomplex.com/tips/2016/08/23/django-tip-13-f-expressions.html
+** Custom query sets
+   https://simpleisbetterthancomplex.com/tips/2016/08/16/django-tip-11-custom-manager-with-chainable-querysets.html
 
 * CSS
 ** http://learnlayout.com
 ** Optimize for large screen display
    https://css-tricks.com/optimizing-large-scale-displays/
+
+* Angular
+** Ahead-of-time compilation
+   http://blog.mgechev.com/2016/08/14/ahead-of-time-compilation-angular-offline-precompilation/
 
 * GUI
 ** The toplevel menubar sections should match the genealogical process (collect, analyze,...)

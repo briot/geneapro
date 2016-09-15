@@ -1,16 +1,11 @@
 import {Component, Input, Output, EventEmitter} from '@angular/core';
-import {CORE_DIRECTIVES} from '@angular/common';
-import {FORM_DIRECTIVES} from '@angular/forms';
 import {SourceData, SourceService, ModelData} from './source.service';
-import {ZoomImage, GpMedia} from './media';
-import {UploadForm, UploadTarget, UploadTargetMini} from './upload';
-import {Modal, ModalService} from './modal';
+import {ModalService} from './modal';
+import {ZoomImage} from './media';
 
 @Component({
    selector: 'gp-source-media',
    template: require('./source.media.html'),
-   directives: [GpMedia, UploadTargetMini, UploadTarget, UploadForm, Modal],
-   providers: [ZoomImage, ModalService]
 })
 export class SourceMedia {
   @Input() data : SourceData;

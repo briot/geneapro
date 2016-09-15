@@ -1,14 +1,11 @@
 import {Component, ElementRef, Input, Injectable} from '@angular/core';
-import {Router, RouteParams} from '@angular/router-deprecated';
-import {CORE_DIRECTIVES} from '@angular/common';
+import {Router, ActivatedRoute, Params} from '@angular/router';
 import * as d3 from 'd3';
 import {Settings} from './settings.service';
 import {GPd3Service, ANIMATION_DURATION, ScalableSelection, d3Styles, LayoutInfo} from './d3.service';
 import {IPerson, IRectangle, ColorScheme, LayoutScheme} from './basetypes';
 import {PedigreeData, PedigreeService} from './pedigree.service';
-import {Legend} from './legend';
-import {Slider} from './slider';
-import {ContextMenuService, ContextMenu, ContextualItem} from './contextmenu';
+import {ContextMenuService, ContextualItem} from './contextmenu';
 
 const HALF_PI = Math.PI / 2;
 const TWO_PI = Math.PI * 2;
@@ -90,7 +87,7 @@ function standardAngle(angle : number) : number {
  *        fs:                   text sizes
  */
 @Injectable()
-class FanchartLayoutService {
+export class FanchartLayoutService {
 
    rowHeight = 60;                // height for a generation
    rowHeightAfterThreshold = 100; // row height after genThreshold
@@ -293,10 +290,9 @@ interface ContextualData {
 
 @Component({
    selector:  'fanchart',
-   template:  '',
-   providers: [FanchartLayoutService]
+   template:  ''
 })
-class Fanchart {
+export class Fanchart {
    @Input() id      : number;
    private scalable : ScalableSelection;
    private data     : PedigreeData;
@@ -309,14 +305,15 @@ class Fanchart {
       private contextService  : ContextMenuService,
       private gpd3            : GPd3Service)
    {
-   }
-
-   ngOnInit() {
-      this.scalable = this.gpd3.svg(this.element);
       this.settings.onChange.subscribe(() => this.ngOnChanges());
    }
 
    ngOnChanges() {
+      // Called before ngOnInit, so might not have scalable
+      if (!this.scalable) {
+         this.scalable = this.gpd3.svg(this.element);
+      }
+
       const set = this.settings.fanchart;
       this.pedigreeService.get(this.id, set.gens, 1, true /* year_only */)
          .subscribe((d : PedigreeData) => {
@@ -602,8 +599,7 @@ class Fanchart {
 }
 
 @Component({
-   template: require('./fanchart.html'),
-   directives: [Fanchart, Legend, CORE_DIRECTIVES, ContextMenu, Slider]
+   template: require('./fanchart.html')
 })
 export class FanchartPage {
    public id : number;
@@ -615,20 +611,22 @@ export class FanchartPage {
       private contextService  : ContextMenuService,
       private pedigreeService : PedigreeService,
       private router          : Router,
-      routeParams             : RouteParams)
+      private route           : ActivatedRoute)
    {
       this.contextualLinks = [
          {name: 'Set as reference', func: this.focusPerson.bind(this)},
-
-         // ??? Not for children
          {name: 'Expand/Unexpand',  func: this.expandPerson.bind(this)},
-
          {name: 'Show details',     func: this.showPerson.bind(this)}
       ];
+   }
 
-      this.id = +routeParams.get('id');
-      settings.decujus = this.id;
-      this.settings.setTitle('Fanchart for person ' + this.id);
+   ngOnInit() {
+      // Subscribe to changes in the parameters
+      this.route.params.forEach((p : Params) => {
+         this.id = +p['id'];
+         this.settings.decujus = this.id;
+         this.settings.setTitle('Fanchart for person ' + this.id);
+      });
    }
 
    changed() {

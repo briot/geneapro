@@ -12,7 +12,6 @@
       "noImplicitAny": true,
       "allowUnreachableCode": false,
       "noFallthroughCasesInSwitch": true,
-      "noImplicitReturn": true,
       "newLine": "LF"
    },
    "exclude": [
@@ -24,5 +23,8 @@
       "./resources/ts/*.ts",
       "node_modules/awesome-typescript-loader/lib/runtime.d.ts",
       "typings/index.d.ts"
-   ]
+   ],
+   "angularCompilerOptions": {
+      "genDir": "./static/ngfactory"
+  }
 }

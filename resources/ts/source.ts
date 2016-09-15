@@ -1,19 +1,10 @@
 import {Component} from '@angular/core';
-import {CORE_DIRECTIVES} from '@angular/common';
-import {RouteParams} from '@angular/router-deprecated';
-import {Surety} from './surety';
+import {ActivatedRoute, Params} from '@angular/router';
 import {Settings} from './settings.service';
-import {Linky, SourceLink, PersonaLink} from './links';
 import {SourceService, SourceData} from './source.service';
-import {Citation} from './source.citation';
-import {SourceMedia} from './source.media';
-import {SourceAsserts} from './source.asserts';
 
 @Component({
    template: require('./source.html'),
-   directives: [CORE_DIRECTIVES, Surety, SourceLink, PersonaLink, Citation,
-                SourceMedia, SourceAsserts],
-   pipes: [Linky]
 })
 export class Source {
    id : number;
@@ -22,19 +13,21 @@ export class Source {
    showCitation : boolean;
 
    constructor(
-      routeParams      : RouteParams,
+      private route    : ActivatedRoute,
       public settings  : Settings,
       private _sources : SourceService)
    {
-      this.id = +routeParams.get('id');
    }
 
    ngOnInit() {
-      this._sources.get(this.id)
-         .subscribe((resp : SourceData) => {
-            this.data = resp;
-            this.settings.setTitle('Source ' + this.data.source.title);
-         });
+      this.route.params.forEach((p : Params) => {
+         this.id = +p['id'];
+         this._sources.get(this.id)
+            .subscribe((resp : SourceData) => {
+               this.data = resp;
+               this.settings.setTitle('Source ' + this.data.source.title);
+            });
+      });
    }
 
    toggleCitation() {

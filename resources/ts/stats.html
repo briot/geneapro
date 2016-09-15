@@ -1,11 +1,11 @@
 <div class='row' id='stats'>
    <div class='col-md-12'>
-      <div class='panel panel-default'>
+      <div class='panel panel-default' *ngIf='data'>
          <h4>Statistics (direct ancestors and descendants of
-            <persona-link [id]='data?.decujus' [name]='data?.decujus_name'></persona-link>
+            <persona-link [id]='data.decujus' [name]='data.decujus_name'></persona-link>
             only)
          </h4>
-         <div *ngIf='data'>
+         <div>
             Total number of persons in the database: {{data.total_persons}}<br>
             Number of persons in the tree (ancestors and descendants): {{data.total_ancestors}}<br>
             Number of persons in father's tree: {{data.total_father}}<br>

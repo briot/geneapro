@@ -1,11 +1,9 @@
 import {Component, Input} from '@angular/core';
 import {SourceData} from './source.service';
-import {Asserts} from './asserts';
 
 @Component({
    selector: 'gp-source-asserts',
-   template: require('./source.asserts.html'),
-   directives: [Asserts]
+   template: require('./source.asserts.html')
 })
 export class SourceAsserts {
    @Input() data : SourceData;

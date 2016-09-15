@@ -4,7 +4,6 @@
  */
 
 import {Component, Input, Injectable} from '@angular/core';
-import {CORE_DIRECTIVES} from '@angular/common';
 import {Http} from '@angular/http';
 import {Observable} from 'rxjs';
 
@@ -70,7 +69,6 @@ export class SuretyService {
 @Component({
    selector:   'surety',
    template:   require('./surety.html'),
-   directives: [CORE_DIRECTIVES]
 })
 export class Surety {
    @Input() part   : number;   // the id of a specific part

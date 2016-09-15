@@ -4,22 +4,16 @@
  * the input contains some input.
  */
 
-import {Component, Provider, forwardRef, Input, Output} from '@angular/core';
+import {NgModule, Component, Provider, forwardRef, Input, Output} from '@angular/core';
 import {ControlValueAccessor, NG_VALUE_ACCESSOR, } from '@angular/forms';
-import {CORE_DIRECTIVES} from '@angular/common';
+import {SharedModule} from './shared.module';
 
 var floatlabel_id = 0;
-
 const noop = () => {};
-const FLOATLABEL_CONTROL_VALUE_ACCESSOR = new Provider(
-   NG_VALUE_ACCESSOR,
-   {useExisting: forwardRef(() => FloatLabelInput), multi: true});
 
 @Component({
    selector: 'floatlabelinput[formControl],floatlabelinput[ngModel]',
    template: require('./floatlabels.html'),
-   directives: [CORE_DIRECTIVES],
-   providers: [FLOATLABEL_CONTROL_VALUE_ACCESSOR]
 })
 export class FloatLabelInput implements ControlValueAccessor {
    @Input() label : string;
@@ -60,3 +54,15 @@ export class FloatLabelInput implements ControlValueAccessor {
       this._onChangeCallback(value);
    }
 }
+
+//const FLOATLABEL_CONTROL_VALUE_ACCESSOR = new Provider(
+//   NG_VALUE_ACCESSOR,
+//   {useExisting: forwardRef(() => FloatLabelInput), multi: true});
+
+@NgModule({
+//   providers: [FLOATLABEL_CONTROL_VALUE_ACCESSOR],
+   imports: [SharedModule],
+   declarations: [FloatLabelInput],
+   exports: [FloatLabelInput],
+})
+export class FloatLabelModule {}

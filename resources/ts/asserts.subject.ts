@@ -1,15 +1,9 @@
 import {Component, Input} from '@angular/core';
-import {GroupByPipe} from './groupby';
-import {AssertionList, Assertion, AssertSubject, AssertSubjectPerson,
-        AssertSubjectGroup, AssertSubjectEvent,
-        AssertSubjectChar} from './asserts.service';
-import {PersonaLink, PlaceLink, SourceLink, TimeLink} from './links';
+import {AssertionList, Assertion, AssertSubject} from './asserts.service';
 
 @Component({
    selector: 'assert-subject',
    template: require('./asserts.subject.html'),
-   directives: [PersonaLink, PlaceLink, SourceLink, TimeLink],
-   pipes: [GroupByPipe]
 })
 export class AssertSubjectDirective {
    @Input('assertion') assert  : Assertion;
@@ -23,7 +17,6 @@ export class AssertSubjectDirective {
    }
 
    onKindChanged(event : any) {
-      console.log("kind changed to ", event);
    }
 
    /**

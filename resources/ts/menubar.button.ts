@@ -3,14 +3,11 @@
  */
 
 import {Component, Input} from '@angular/core';
-import {NgIf} from '@angular/common';
-import {RouterLink} from '@angular/router-deprecated';
 import {Settings} from './settings.service';
 
 @Component({
    selector:   'li[menuButton]',
-   template:   require('./menubar.button.html'),
-   directives: [RouterLink, NgIf]
+   template:   require('./menubar.button.html')
 })
 export class MenuButton {
    @Input() comp = '';  // The target component

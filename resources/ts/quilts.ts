@@ -1,9 +1,9 @@
 import {Component, ElementRef, Input, Injectable} from '@angular/core';
-import {Router, RouteParams} from '@angular/router-deprecated';
+import {Router, ActivatedRoute, Params} from '@angular/router';
 import * as d3 from 'd3';
 import {Settings} from './settings.service';
 import {GPd3Service, ScalableSelection, d3Styles, LayoutInfo} from './d3.service';
-import {ContextMenuService, ContextMenu, ContextualItem} from './contextmenu';
+import {ContextMenuService, ContextualItem} from './contextmenu';
 import {QuiltsService, QuiltsData, F_HEIGHT, FamilyInfo, FamilyInfoLayer,
         PersonLayout, LINE_SPACING, MARGIN, PersonInfo} from './quilts.service';
 
@@ -248,7 +248,7 @@ export class Quilts {
                          'height': info.y - info.minParentY
                       });
              }
-          }
+          });
        }
    }
 }
@@ -256,7 +256,6 @@ export class Quilts {
 
 @Component({
    template: require('./quilts.html'),
-   directives: [Quilts, ContextMenu]
 })
 export class QuiltsPage {
    public id : number;
@@ -266,13 +265,18 @@ export class QuiltsPage {
       public settings        : Settings,
       private contextService : ContextMenuService,
       private router         : Router,
-      routeParams            : RouteParams)
+      private route          : ActivatedRoute)
    {
-      this.contextualLinks = [
-      ];
-      this.id = +routeParams.get('id');
-      settings.decujus = this.id;
-      this.settings.setTitle('Quilts for person ' + this.id);
+      this.contextualLinks = [];
+   }
+
+   ngOnInit() {
+      // Subscribe to changes in the parameters
+      this.route.params.forEach((p : Params) => {
+         this.id = +p['id'];
+         this.settings.decujus = this.id;
+         this.settings.setTitle('Quilts for person ' + this.id);
+      });
    }
 
    changed() {

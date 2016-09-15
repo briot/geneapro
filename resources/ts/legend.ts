@@ -1,7 +1,6 @@
 import {Component, Injectable} from '@angular/core';
 import {Observable} from 'rxjs';
-import {CORE_DIRECTIVES} from '@angular/common';
-import {Http, HTTP_PROVIDERS} from '@angular/http';
+import {Http} from '@angular/http';
 
 type RuleList = {name : string; css : string}[];
 interface RulesRes {
@@ -19,8 +18,7 @@ export class LegendService {
 
 @Component({
    selector: 'gp-legend',
-   template: require('./legend.html'),
-   directives: [CORE_DIRECTIVES]
+   template: require('./legend.html')
 })
 export class Legend {
    show  : boolean = false;

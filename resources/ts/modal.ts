@@ -27,10 +27,10 @@ export class ModalService {
             <div class='modal-content'>
                <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal">&times;</button>
-                  <h4><ng-content select='modal-title'></ng-content></h4>
+                  <h4><ng-content select='.modal-title'></ng-content></h4>
                </div>
                <div class="modal-body">
-                  <ng-content select='modal-body'></ng-content>
+                  <ng-content select='.modal-body'></ng-content>
                </div>
                <div class="modal-footer">
                   <button *ngFor='let b of buttons; let last=last'

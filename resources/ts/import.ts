@@ -1,6 +1,4 @@
 import {Component} from '@angular/core';
-import {NgIf} from '@angular/common';
-import {UploadForm, UploadTarget} from './upload';
 
 interface ImportFromServer {
    success : boolean;
@@ -9,7 +7,6 @@ interface ImportFromServer {
 
 @Component({
    template:   require('./import.html'),
-   directives: [NgIf, UploadTarget, UploadForm]
 })
 export class Import {
    error = '';
@@ -20,5 +17,4 @@ export class Import {
       this.error = result.error;
       this.success = result.success;
    }
-
 }

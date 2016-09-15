@@ -1,10 +1,8 @@
 import {Component} from '@angular/core';
 import {Settings} from './settings.service';
-import {RouterLink} from '@angular/router-deprecated';
 
 @Component({
-   template: require('./dashboard.html'),
-   directives: [RouterLink]
+   template: require('./dashboard.html')
 })
 export class Dashboard {
    constructor(settings : Settings) {
