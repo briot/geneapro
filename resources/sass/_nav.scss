@@ -11,6 +11,18 @@
    }
 }
 
+.navbar-settings {
+   margin-top: -$navbar-margin-bottom;
+   background-color: lighten($navbar-default-bg, 5%);
+}
+
+.route-button.is-active {
+   background-color: lighten($navbar-default-bg, 5%);
+   &:hover, &:focus, &:active {
+      background-color: lighten($navbar-default-bg, 5%) !important;
+   }
+}
+
 /**
  * Navbar
  */
@@ -27,8 +39,18 @@
    }
 }
 
-@media (max-width: $grid-float-breakpoint) {
+@media (max-width: 900px) {
    .hide-if-small {
       display: none !important;
+   }
+}
+
+.config-nav {
+   display: block;
+   margin: 0 10px;
+   font-size: 0.9em;
+   > input {
+      color: black;
+      text-align: center;
    }
 }

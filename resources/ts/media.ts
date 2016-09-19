@@ -168,6 +168,7 @@ class ZoomImageDirective {
       public image : ZoomImage,
       private render : Renderer)
    {
+      // ??? Should we use d3.behavior.zoom to handle zoom ?
       this.canvas = element.nativeElement;
       image.setCanvas(this.canvas);
 

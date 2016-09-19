@@ -1,7 +1,10 @@
 @import "variables";
 svg {
    width: 100%;
-   height: 100vh;
+
+   // line-height-computed= margin-bottom for the enclosing panel
+   $settings-navbar-height: $navbar-height + 40px;
+   height: calc(100vh - #{$navbar-height} - #{$navbar-margin-bottom} - #{$line-height-computed} - #{$settings-navbar-height});
 
    text {
       user-select: none;

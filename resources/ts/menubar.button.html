@@ -1,4 +1,4 @@
-<a [routerLink]="comp"
+<a [routerLink]="comp" [routerLinkActive]="['is-active']" class='route-button'
    title="{{title}}">
    <i *ngIf='!icon'>{{title}}</i>
    <i *ngIf='icon' class="fa {{icon}}" style="font-size:1.4em"></i>

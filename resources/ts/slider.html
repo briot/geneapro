@@ -1,12 +1,20 @@
-<div class="ui-slider horizontal" (click)='setvalue($event)' >
-   <span>{{min}}</span>
-   <span class="right">{{max}}</span>
-   <span
-         class='handle'
-         [style.left]='percent + "%"'
-         (mousedown)='mousedown($event)'
-         [class.active]='dragging'>
-      <span class="round"></span>
-      <span class="bubble">{{value}}</span>
+<div class='ui-slider'>
+   <span class='ui-slider-label' *ngIf='label' >{{label}}</span>
+   <span class='ui-slider-tracks' (click)='setvalue($event)'>
+      <span class='horizontal'>
+         <span
+               class='ui-slider-handle'
+               (mousedown)='mousedown($event)'
+               [class.active]='dragging'>
+            <span class="round"
+               [style.transform]='"translateX(" + (percent*sliderSize.width) + "px)"'
+            ></span>
+         </span>
+      </span>
+      <span class='horizontal ui-slider-fill'
+            [style.width]='(percent * sliderSize.width) + "px"'
+         >
+      </span>
    </span>
+   <span class="ui-slider-value">{{value}}</span>
 </div>

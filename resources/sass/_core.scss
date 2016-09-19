@@ -1,5 +1,9 @@
 @import "variables";
 
+html, body {
+   height: 100vh;
+}
+
 /**
  * First <h2> in a block should not have a top margin (aligning name of person
  * on the person page
