@@ -1,7 +1,0 @@
-{
-  "name": "geneaprove",
-  "version": false,
-  "dependencies": {
-    "d3": "registry:npm/d3#3.0.0+20160627165201"
-  }
-}

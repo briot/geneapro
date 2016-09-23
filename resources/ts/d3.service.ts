@@ -183,10 +183,6 @@ export class GPd3Service {
                     'V' + target[1] + 'H' + target[0];
             }
          :   // GP.linkStyle.CURVE
-            // For this to compile, typings/modules/d3/index.d.ts must be
-            // modified so that calling a Diagonal takes an optional index,
-            // as per the documentation:
-            // interface Diagonal { (d:Link, i?:number): string }
             d3.svg.diagonal<Link, Node>()
               .projection(link_project)
               .source(link_source)

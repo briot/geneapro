@@ -15,14 +15,11 @@
       "newLine": "LF"
    },
    "exclude": [
-      "node_modules",
-      "typings/main.d.ts",
-      "typings/main"
+      "node_modules"
    ],
    "filesGlob": [
       "./resources/ts/*.ts",
-      "node_modules/awesome-typescript-loader/lib/runtime.d.ts",
-      "typings/index.d.ts"
+      "node_modules/awesome-typescript-loader/lib/runtime.d.ts"
    ],
    "angularCompilerOptions": {
       "genDir": "./static/ngfactory"
