@@ -12,8 +12,12 @@
 }
 
 .navbar-settings {
+   padding-top: 5px;
    margin-top: -$navbar-margin-bottom;
    background-color: lighten($navbar-default-bg, 5%);
+   border-width: 0 0 1px 0;
+   border-color: $navbar-default-border;
+   min-height: 2em;
 }
 
 .route-button.is-active {
@@ -21,21 +25,39 @@
    &:hover, &:focus, &:active {
       background-color: lighten($navbar-default-bg, 5%) !important;
    }
+
+   &.hasSettings {
+      @media (min-width: $grid-float-breakpoint) {
+         // Hide the bottom border of the navbar for this button, to
+         // link it to the settings navbar
+         position: relative;
+         top: 2px;  // move towards bottom to hide the border
+         padding-top: $navbar-padding-vertical - 2px; // move text up to keep alignment
+         line-height: $line-height-computed + 2px;
+
+         border-width: 1px 1px 0 1px;
+         border-style: solid;
+         border-color: $navbar-default-border;
+      }
+   }
 }
 
 /**
  * Navbar
  */
-.navbar-collapse {
-   @media (max-width: 768px) {
+@media (max-width: 768px) {
+   .navbar-collapse {
       .navbar-nav > li {
          font-size: 0.6em;
          display: inline;
       }
-
+   
       .navbar-nav > li > a {
          display: inline;
       }
+   }
+   .navbar {
+      min-height: 0;
    }
 }
 

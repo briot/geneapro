@@ -13,6 +13,7 @@ export class MenuButton {
    @Input() comp = '';  // The target component
    @Input() title = '';
    @Input() icon = '';
+   @Input() hasSettings = true;
 
    constructor(public settings : Settings) {}
 }

@@ -1,47 +1,37 @@
-<div class='row'>
-
-   <div class='col-md-10 col-lg-9 panel'>
-      <radial class='graph' [id]='id' (AAcontextmenu)='onBackgroundContextMenu($event)'></radial>
-   </div>
-
-   <div class='col-md-2 col-lg-3 sidebar'>
-      <div class='panel panel-default'>
-         <div class='panel-heading'>Radial</div>
-         <div class='panel-body'>
-            <ul class='nav nav-pills nav-stacked'>
-               <li class='config'>
-                  <span>Generations</span>
-                  <slider [(value)]='settings.radial.gens' min='-20' max='20' (valueChange)='changed()'></slider>
-               </li>
-            </ul>
+<nav class='navbar navbar-settings'>
+   <ul class='nav navbar-nav'>
+      <li class='group hide-if-small'>Radial</li>
+      <li class='config-nav'>
+         <label>Generations</label>
+         <slider [(value)]='settings.radial.gens' min='-20' max='20' (valueChange)='changed()'></slider>
+      </li>
+      <li class='group hide-if-small'>Display</li>
+      <li class='config-nav'>
+         <div>
+            <label>Colors</label>
+            <select [(ngModel)]='settings.radial.colorScheme' (ngModelChange)='changed()'>
+               <option value="0">Rules</option>
+               <option value="1">Pedigree</option>
+               <option value="2">Generation</option>
+               <option value="3">Invisible</option>
+               <option value="4">Plain</option>
+               <option value="5">Quartile</option>
+            </select>
+            <gp-legend *ngIf='settings.radial.colorScheme==0'></gp-legend>
          </div>
-      </div>
-
-      <div class='panel panel-default'>
-         <div class='panel-heading'>Display</div>
-         <div class='panel-body'>
-            <ul class='nav nav-pills nav-stacked'>
-               <li class='config'>
-                  <span>Colors</span>
-                  <select [(ngModel)]='settings.radial.colorScheme' (ngModelChange)='changed()'>
-                     <option value="0">Rules</option>
-                     <option value="1">Pedigree</option>
-                     <option value="2">Generation</option>
-                     <option value="3">Invisible</option>
-                     <option value="4">Plain</option>
-                     <option value="5">Quartile</option>
-                  </select>
-                  <gp-legend *ngIf='settings.radial.colorScheme==0'></gp-legend>
-               </li>
-               <li class='config'>
-                  <span>Show text</span>
-                  <input type='checkbox' [(ngModel)]='settings.radial.showText' (ngModelChange)='changed()'/>
-               </li>
-            </ul>
+         <div>
+            <input type='checkbox' [(ngModel)]='settings.radial.showText' (ngModelChange)='changed()'/>
+            <label>Show text</label>
          </div>
+      </li>
+   </ul>
+</nav>
+
+<div class='container-fluid'>
+   <div class='row'>
+      <div class='col-md-10 col-lg-9 panel'>
+         <radial class='graph' [id]='id' (AAcontextmenu)='onBackgroundContextMenu($event)'></radial>
       </div>
+      <div [context-menu]='contextualLinks'></div>
    </div>
-
-   <div [context-menu]='contextualLinks'></div>
-
 </div>

@@ -1,10 +1,10 @@
-<nav class='navbar navbar-default navbar-settings'>
+<nav class='navbar navbar-settings'>
    <ul class='nav navbar-nav'>
       <li class='group hide-if-small'>Pedigree</li>
       <li class='config-nav'>
          <label>Generations</label>
-         <slider id='ancestors' class='ui-slider-60' label='Parents' [(value)]='settings.pedigree.gens' min='1' max='20' (valueChange)='changed()'></slider>
-         <slider id='desc' class='ui-slider-60' label='Children' [(value)]='settings.pedigree.descendant_gens' min='1' max='20' (valueChange)='changed()'></slider>
+         <slider class='ui-slider-60' label='Parents' [(value)]='settings.pedigree.gens' min='1' max='20' (valueChange)='changed()'></slider>
+         <slider class='ui-slider-60' label='Children' [(value)]='settings.pedigree.descendant_gens' min='1' max='20' (valueChange)='changed()'></slider>
       </li>
       <li class='config-nav'>
          <div>
@@ -33,6 +33,7 @@
                <option value="3">No box</option>
                <option value="5">Quartile</option>
              </select>
+             <gp-legend *ngIf='settings.pedigree.colorScheme==0'></gp-legend>
           </div>
           <div>
              <label for='appearance'>Appearance</label>

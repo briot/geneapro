@@ -11,3 +11,5 @@ $panel-border-radius: 10px;
 $panel-default-heading-bg: $navbar-default-bg;
 $panel-footer-bg: lighten($navbar-default-bg, 5%);
 $panel-default-border: $navbar-default-bg;
+
+@import "bootstrap/variables.scss";

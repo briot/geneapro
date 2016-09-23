@@ -1,26 +1,22 @@
-<div class='row'>
+<nav class='navbar navbar-settings'>
+   <ul class='nav navbar-nav'>
+      <li class='group hide-if-small'>Quilts</li>
+      <li class='config-nav'>
+         <input type='checkbox' title='Show selected persons only' [(ngModel)]='settings.quilts.collapsed' (ngModelChange)='changed()'/>
+         <label>Selected persons only</label>
+      </li>
+      <li class='config-nav'>
+         <input type='checkbox' title='Show all persons in database, not just in the tree of the selected person' [(ngModel)]='settings.quilts.whole' (ngModelChange)='changed()'/>
+         <label>Whole database</label>
+      </li>
+   </ul>
+</nav>
 
-   <div class='col-md-10 col-lg-9 panel'>
-      <quilts class='graph' [id]='id' (AAcontextmenu)='onBackgroundContextMenu($event)'></quilts>
-   </div>
-
-    <div class='col-md-2 col-lg-3 sidebar'>
-      <div class='panel panel-default'>
-         <div class='panel-heading'>Quilts</div>
-         <div class='panel-body'>
-            <ul class='nav nav-pills nav-stacked'>
-               <li class='config'>
-                  <span>Collapsed</span>
-                  <input type='checkbox' title='Show selected persons only' [(ngModel)]='settings.quilts.collapsed' (ngModelChange)='changed()'/>
-               </li>
-               <li class='config'>
-                  <span>Whole database</span>
-                  <input type='checkbox' title='Show all persons in database, not just in the tree of the selected person' [(ngModel)]='settings.quilts.whole' (ngModelChange)='changed()'/>
-               </li>
-            </ul>
-         </div>
+<div class='container-fluid'>
+   <div class='row'>
+      <div class='col-md-10 col-lg-9 panel'>
+         <quilts class='graph' [id]='id' (AAcontextmenu)='onBackgroundContextMenu($event)'></quilts>
       </div>
+      <div [context-menu]='contextualLinks'></div>
    </div>
-
-   <div [context-menu]='contextualLinks'></div>
 </div>
