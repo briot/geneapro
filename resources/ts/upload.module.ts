@@ -20,7 +20,7 @@ import {SharedModule} from './shared.module';
           '(drop)': 'onDrop($event)'}
 
 })
-class UploadForm {
+export class UploadForm {
    @Input() mini : boolean;
    @Output() onupload : EventEmitter<any>;
    @Input() url : string;   // mandatory
@@ -104,7 +104,7 @@ class UploadForm {
          <div *ngIf="parent.isUploading" class="fa fa-spin fa-spinner"></div>
       </div>`
 })
-class UploadTarget {
+export class UploadTarget {
    @Input() parent : UploadForm;
 
    ngOnInit() {
@@ -113,12 +113,14 @@ class UploadTarget {
 
    // Files added via the "Browse" dialog (drag-and-drop is handled by the form)
    onFileAdded(input : HTMLInputElement) {
-      for (let f = 0; f < input.files.length; f++) {
-         this.parent.files.push(input.files[f]);
-      }
+      if (input.files) {
+         for (let f = 0; f < input.files.length; f++) {
+            this.parent.files.push(input.files[f]);
+         }
 
-      // Send immediately since we have a single <input> anyway
-      this.parent.send();
+         // Send immediately since we have a single <input> anyway
+         this.parent.send();
+      }
    }
 }
 
@@ -137,7 +139,7 @@ class UploadTarget {
          <span *ngIf="parent.isUploading" class="fa fa-spin fa-spinner"></span>
       </label>`
 })
-class UploadTargetMini {
+export class UploadTargetMini {
    @Input() parent : UploadForm;
 
    ngOnInit() {
@@ -145,17 +147,18 @@ class UploadTargetMini {
    }
 
    onFileAdded(input : HTMLInputElement) {
-      for (let f = 0; f < input.files.length; f++) {
-         this.parent.files.push(input.files[f]);
+      if (input.files) {
+         for (let f = 0; f < input.files.length; f++) {
+            this.parent.files.push(input.files[f]);
+         }
+         this.parent.send();
       }
-      this.parent.send();
    }
 }
 
-const decl = [UploadTarget, UploadForm, UploadTargetMini];
 @NgModule({
    imports: [SharedModule],
-   declarations: decl,
-   exports: decl,
+   declarations: [UploadTarget, UploadForm, UploadTargetMini],
+   exports: [UploadTarget, UploadForm, UploadTargetMini]
 })
 export class UploadModule {}

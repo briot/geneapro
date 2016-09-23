@@ -1,6 +1,6 @@
 {
    "compilerOptions": {
-      "target": "es6",
+      "target": "es5",
       "module": "commonjs",
       "removeComments": true,
       "experimentalDecorators": true,
@@ -12,14 +12,19 @@
       "noImplicitAny": true,
       "allowUnreachableCode": false,
       "noFallthroughCasesInSwitch": true,
+
+      "strictNullChecks": false,
+
       "newLine": "LF"
    },
-   "exclude": [
-      "node_modules"
+   "files": [
+      "./resources/ts/main.ts"
    ],
-   "filesGlob": [
-      "./resources/ts/*.ts",
-      "node_modules/awesome-typescript-loader/lib/runtime.d.ts"
+   "typeRoots": [
+      "../node_modules/@types"
+   ],
+   "types": [
+      "core-js"
    ],
    "angularCompilerOptions": {
       "genDir": "./static/ngfactory"

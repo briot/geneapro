@@ -104,7 +104,7 @@ export class Paginate {
    private filterValues : EventEmitter<string> = new EventEmitter<string>();
 
    constructor(
-      private paginated : PaginateData)
+      public paginated : PaginateData)
    {
       //  Subscribe to changes for the filter, but wait until the user has
       //  finished typing.

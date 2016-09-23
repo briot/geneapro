@@ -12,7 +12,7 @@ export class AssertSubjectDirective {
 
    sub        : AssertSubject;
 
-   ngOnChanges() {
+   ngOnChanges(changes : any) {
       this.sub = (this.subjectNum == 1 ? this.assert.p1 : this.assert.p2);
    }
 

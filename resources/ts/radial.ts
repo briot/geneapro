@@ -38,10 +38,10 @@ export class Radial {
 
    ngOnInit() {
       this.scalable = this.gpd3.svg(this.element);
-      this.settings.onChange.subscribe(() => this.ngOnChanges());
+      this.settings.onChange.subscribe(() => this.ngOnChanges(null));
    }
 
-   ngOnChanges() {
+   ngOnChanges(changes : any) {
       const set = this.settings.radial;
 
       this.pedigreeService.get(

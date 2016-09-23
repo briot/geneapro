@@ -12,7 +12,7 @@ interface SuretySchemePart {
    name        : string,
    description : string,
    sequence    : number /* sequence number */
-   scheme      ?: number;  /* SuretyScheme id */
+   scheme      : number;  /* SuretyScheme id, set in SuretyList constructor */
 }
 interface SuretyScheme {
    id          : number,

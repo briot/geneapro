@@ -362,10 +362,10 @@ export class Pedigree {
       private contextService  : ContextMenuService,
       public settings         : Settings)
    {
-      this.settings.onChange.subscribe(() => this.ngOnChanges());
+      this.settings.onChange.subscribe(() => this.ngOnChanges(null));
    }
 
-   ngOnChanges() {
+   ngOnChanges(changes : any) {
       if (!this.scalable) {
          this.scalable = this.gpd3.svg(
             this.element,

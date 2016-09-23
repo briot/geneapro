@@ -158,7 +158,7 @@ export class ZoomImage {
           '(mousedown)': 'onMouseDown($event)',
           'title': 'alt-wheel to zoom in or out'},
 })
-class ZoomImageDirective {
+export class ZoomImageDirective {
    @Input('zoomImage') url : string;
 
    canvas : HTMLCanvasElement;
@@ -179,7 +179,7 @@ class ZoomImageDirective {
       };
    }
 
-   ngOnChanges() {
+   ngOnChanges(changes : any) {
       this.canvas.width = this.canvas.offsetWidth;
       this.canvas.height = this.canvas.offsetHeight;
       this.image.setUrl(this.url);
@@ -238,12 +238,12 @@ class ZoomImageDirective {
         </figcaption>
      </figure>`,
 })
-class GpMedia {
+export class GpMedia {
    @Input() repr  : IRepr;
    isimage        : boolean;
    isaudio        : boolean;
 
-   ngOnChanges() {
+   ngOnChanges(changes : any) {
       if (this.repr) {
          this.isimage = this.repr.mime.lastIndexOf('image/', 0) == 0 ||
             this.repr.file.endsWith('.jpg') ||

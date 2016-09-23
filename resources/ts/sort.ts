@@ -36,8 +36,8 @@ interface sortLocalStorage {
    inputs:   ['data : sortOn', 'name : sortName']
 })
 export class SortOn {
-   private name : string;            // name in local storage
-   private data : any[];             // The table to sort
+   public name : string;            // name in local storage
+   public data : any[];             // The table to sort
    private _columns : SortBy[] = []; // The various sort columns
    current : SortBy;        // Current sort column
 
@@ -143,7 +143,7 @@ export class SortBy {
 
    idx : number;  // To store in local storage (index in parent's list of columns)
 
-   constructor(private sortOn : SortOn) {
+   constructor(public sortOn : SortOn) {
       sortOn.addColumn(this);
    }
 

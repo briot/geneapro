@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@types/d3": "",
+    "@types/core-js": "",
     "awesome-typescript-loader": "1.0.0",
     "bootstrap-sass": "^3.3.x",
     "css-loader": "^0.23.1",

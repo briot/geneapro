@@ -18,26 +18,29 @@ import {ModalModule} from './modal.module';
 import {SortOn, SortBy} from './sort';
 import {Paginate} from './paginate';
 
-const decl = [
-   PersonaLink, PlaceLink, SourceLink, TimeLink,
-   GroupByPipe,
-   AssertSubjectDirective,
-   ContextMenu,
-   Slider,
-   Legend,
-   Surety,
-   Linky,
-   Paginate,
-   SortOn, SortBy];
-
-const modules = [
-   BrowserModule, FormsModule, RouterModule, ModalModule,
-   HttpModule
-];
-
 @NgModule({
-   imports:      modules,
-   declarations: decl,
-   exports:      [].concat(modules, decl),
+   declarations:      [
+      PersonaLink, PlaceLink, SourceLink, TimeLink,
+      GroupByPipe,
+      AssertSubjectDirective,
+      ContextMenu,
+      Slider,
+      Legend,
+      Surety,
+      Linky,
+      Paginate,
+      SortOn, SortBy],
+   imports: [BrowserModule, FormsModule, RouterModule, ModalModule, HttpModule],
+   exports: [BrowserModule, FormsModule, RouterModule, ModalModule, HttpModule,
+      PersonaLink, PlaceLink, SourceLink, TimeLink,
+      GroupByPipe,
+      AssertSubjectDirective,
+      ContextMenu,
+      Slider,
+      Legend,
+      Surety,
+      Linky,
+      Paginate,
+      SortOn, SortBy]
 })
 export class SharedModule {}

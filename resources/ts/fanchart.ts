@@ -305,10 +305,10 @@ export class Fanchart {
       private contextService  : ContextMenuService,
       private gpd3            : GPd3Service)
    {
-      this.settings.onChange.subscribe(() => this.ngOnChanges());
+      this.settings.onChange.subscribe(() => this.ngOnChanges(null));
    }
 
-   ngOnChanges() {
+   ngOnChanges(changes : any) {
       // Called before ngOnInit, so might not have scalable
       if (!this.scalable) {
          this.scalable = this.gpd3.svg(this.element);
@@ -641,20 +641,23 @@ export class FanchartPage {
       this.router.navigateByUrl('/persona/' + data.p.id);
    }
 
+   /**
+    * Reset the expanded status for a person and its ancestors
+    */
+   private _resetPersonExpansion(p : IPerson, data : ContextualData) {
+      p.parents.forEach(pa => {
+         if (pa) {
+            this._resetPersonExpansion(pa, data);
+            if (pa == data.p) {
+               p.parents.forEach(pa2 => pa2.$expand = false);
+            }
+         }
+      });
+   }
+
    expandPerson(data : ContextualData, item : ContextualItem) {
       if (!data.p.$expand) {
-         // The partner (wife/husband) cannot also be expanded
-         function _reset(p : IPerson) {
-            p.parents.forEach(pa => {
-               if (pa) {
-                  _reset(pa);
-                  if (pa == data.p) {
-                     p.parents.forEach(pa2 => pa2.$expand = false);
-                  }
-               }
-            });
-         }
-         _reset(this.pedigreeService.decujus());
+         this._resetPersonExpansion(this.pedigreeService.decujus(), data);
       }
 
       data.p.$expand = !data.p.$expand;

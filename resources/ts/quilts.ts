@@ -26,10 +26,10 @@ export class Quilts {
 
    ngOnInit() {
       this.scalable = this.gpd3.svg(this.element);
-      this.settings.onChange.subscribe(() => this.ngOnChanges());
+      this.settings.onChange.subscribe(() => this.ngOnChanges(null));
    }
 
-   ngOnChanges() {
+   ngOnChanges(changes : any) {
       const set = this.settings.quilts;
       this.quiltsService.get(this.id, !set.whole).subscribe(d => this.render(d));
    }
