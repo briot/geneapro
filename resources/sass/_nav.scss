@@ -12,12 +12,17 @@
 }
 
 .navbar-settings {
-   padding-top: 5px;
    margin-top: -$navbar-margin-bottom;
    background-color: lighten($navbar-default-bg, 5%);
    border-width: 0 0 1px 0;
    border-color: $navbar-default-border;
    min-height: 2em;
+
+   h2 {
+      font-size: 1.2em;
+      text-align: center;
+      margin-bottom: 5px;
+   }
 }
 
 .route-button.is-active {

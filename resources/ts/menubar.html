@@ -9,7 +9,7 @@
       <div class='navbar-collapse'>
          <ul class='nav navbar-nav'>
             <li class='group hide-if-small'>File</li>
-            <li menuButton comp="/import" title="Import" icon="fa-folder-open" [hasSettings]="false"></li>
+            <li menuButton comp="/import" title="Import" icon="fa-folder-open"></li>
 
             <li class='group hide-if-small'>Lists</li>
             <li menuButton comp="/persona/list" title="All persons" icon="fa-users" hasSettings="1"></li>
@@ -17,12 +17,12 @@
             <li menuButton comp="/source/list"  title="All sources" icon="fa-book" hasSettings="1"></li>
 
             <li class='group hide-if-small'>Reports</li>
-            <li menuButton [comp]="['/persona', settings.decujus]" title="Details" icon="fa-user" hasSettings="1"></li>
+            <li menuButton [comp]="['/persona', settings.decujus]" title="Details" icon="fa-user"></li>
             <li menuButton [comp]="['/pedigree', settings.decujus]" title="Pedigree" icon="fa-sitemap" hasSettings="1"></li>
             <li menuButton [comp]="['/fanchart', settings.decujus]" title="Fanchart" icon="fa-wifi" hasSettings="1"></li>
             <li menuButton [comp]="['/radial', settings.decujus]" title="Radial" icon="fa-asterisk" hasSettings="1"></li>
             <li menuButton [comp]="['/quilts', settings.decujus]" title="Quilts" icon="fa-server" hasSettings="1"></li>
-            <li menuButton [comp]="['/stats', settings.decujus]" title="Stats" icon="fa-pie-chart" [hasSettings]="false"></li>
+            <li menuButton [comp]="['/stats', settings.decujus]" title="Stats" icon="fa-pie-chart"></li>
          </ul>
          <ul class='nav navbar-nav navbar-right hide-if-small'>
             <li>
