@@ -15,7 +15,7 @@ import {SharedModule} from './shared.module';
           '(dragstart)': 'onStopPropagation($event)',
           '(dragover)': 'onDragEnter($event)',
           '(dragenter)': 'onDragEnter($event)',
-          '(dragsend)': 'onDragLeave($event)',
+          '(dragend)': 'onDragLeave($event)',
           '(dragleave)': 'onDragLeave($event)',
           '(drop)': 'onDrop($event)'}
 
