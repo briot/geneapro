@@ -22,15 +22,14 @@ export class Quilts {
       private quiltsService : QuiltsService,
       public settings       : Settings)
    {
-   }
-
-   ngOnInit() {
-      this.scalable = this.gpd3.svg(this.element);
       this.settings.onChange.subscribe(() => this.ngOnChanges(null));
    }
 
    ngOnChanges(changes : any) {
       const set = this.settings.quilts;
+      if (!this.scalable) {
+         this.scalable = this.gpd3.svg(this.element);
+      }
       this.quiltsService.get(this.id, !set.whole).subscribe(d => this.render(d));
    }
 

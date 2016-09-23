@@ -34,15 +34,15 @@ export class Radial {
       private contextService  : ContextMenuService,
       private gpd3            : GPd3Service)
    {
-   }
-
-   ngOnInit() {
-      this.scalable = this.gpd3.svg(this.element);
       this.settings.onChange.subscribe(() => this.ngOnChanges(null));
    }
 
    ngOnChanges(changes : any) {
       const set = this.settings.radial;
+
+      if (!this.scalable) {
+         this.scalable = this.gpd3.svg(this.element);
+      }
 
       this.pedigreeService.get(
          this.id,
