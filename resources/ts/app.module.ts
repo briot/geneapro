@@ -1,6 +1,3 @@
-// Declares require()
-/// <reference path="../../node_modules/awesome-typescript-loader/lib/runtime.d.ts" />
-/// <reference path="../../node_modules/@types/core-js/index.d.ts"/>
 import '../sass/geneaprove.scss';
 import 'rxjs/add/observable/of';
 import 'rxjs/add/operator/map';

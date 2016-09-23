@@ -3,7 +3,7 @@ import {SourceData} from './source.service';
 
 @Component({
    selector: 'gp-source-asserts',
-   template: require('./source.asserts.html')
+   templateUrl: './source.asserts.html'
 })
 export class SourceAsserts {
    @Input() data : SourceData;

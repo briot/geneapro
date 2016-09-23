@@ -8,7 +8,7 @@ import {PersonaService} from './persona.service';
  * This component must be encapsulated in a <paginate> directive
  */
 @Component({
-   template: require('./persona.list.html'),
+   templateUrl: './persona.list.html',
    providers: [PaginateData],   // local to this component
 })
 export class PersonaList {

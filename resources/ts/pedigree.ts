@@ -583,7 +583,7 @@ export class Pedigree {
 }
 
 @Component({
-   template: require('./pedigree.html')
+   templateUrl: './pedigree.html'
 })
 export class PedigreePage {
    public id : number;

@@ -5,7 +5,7 @@ import {CitationTemplate, ICitation} from './citation.service';
 
 @Component({
    selector: 'citation',
-   template: require('./source.citation.html')
+   templateUrl: './source.citation.html'
 })
 export class Citation {
    @Input() data : SourceData;

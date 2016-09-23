@@ -4,7 +4,7 @@ import {StatsData, StatsService} from './stats.service';
 
 @Component({
    selector: 'stats-generations',
-   template: require('./stats.generations.html'),
+   templateUrl: './stats.generations.html',
 })
 export class StatsGenerations {
    @ViewChild('thesvg') svgelement: ElementRef;

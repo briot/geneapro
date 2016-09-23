@@ -1,7 +1,8 @@
 {
    "compilerOptions": {
       "target": "es5",
-      "module": "commonjs",
+      "module": "es2015",
+      "moduleResolution": "node",
       "removeComments": true,
       "experimentalDecorators": true,
       "emitDecoratorMetadata": true,
@@ -15,15 +16,15 @@
 
       "strictNullChecks": false,
 
-      "newLine": "LF"
+      "newLine": "LF",
+      "outDir": "resources/js"
    },
    "files": [
-      "./resources/ts/main.ts"
+      "./resources/ts/app.module.ts",
+      "./resources/ts/main.aot.ts"
    ],
    "angularCompilerOptions": {
-      "genDir": "./static/ngfactory"
-   },
-   "awesomeTypescriptLoaderOptions": {
-    "useWebpackText": true // Allows other loaders to be chained to awesome-typescript-loader. 
-   }
+      "genDir": "./resources/aot",
+      "skipMetadataEmit" : true
+  }
 }

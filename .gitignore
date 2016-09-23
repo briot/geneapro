@@ -3,7 +3,8 @@ geneaprove.sqlite
 node_modules/
 static/
 upload/
-typings/
+resources/js
+resources/aot
 manu/
 geneaprove/utils/citations/tmp.txt
 *.pyc

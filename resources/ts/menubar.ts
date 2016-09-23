@@ -3,7 +3,7 @@ import {Settings} from './settings.service';
 
 @Component({
    selector: 'menu-bar',
-   template: require('./menubar.html')
+   templateUrl: './menubar.html'
 })
 export class Menubar {
    constructor(public settings : Settings) {}

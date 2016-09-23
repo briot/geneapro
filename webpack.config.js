@@ -64,7 +64,10 @@ module.exports = {
 
    module: {
       loaders: [
-         {test: /\.ts$/,   loader: 'awesome-typescript-loader'},
+         {test: /\.ts$/,   loaders: ['awesome-typescript-loader',
+
+                                     // replace templateUrl and styleUrl
+                                     'angular2-template-loader']},
          {test: /\.scss$/, loaders: ['style', 'css', 'sass'] },
          {test: /\.html$/, loader: 'html',
             exclude: [__dirname + '/resources/geneaprove/index.html']},

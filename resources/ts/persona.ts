@@ -6,7 +6,7 @@ import {EventService, EventData} from './event.service';
 import {Assertion, P2G, P2E, P2C, AssertSubjectEvent, AssertSubjectGroup, AssertSubjectChar} from './asserts.service';
 
 @Component({
-   template:   require('./persona.html'),
+   templateUrl:  './persona.html',
 })
 export class Persona {
    id   : number;

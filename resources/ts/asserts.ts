@@ -3,7 +3,7 @@ import {AssertionList} from './asserts.service';
 
 @Component({
    selector: 'gp-asserts',
-   template: require('./asserts.html')
+   templateUrl: './asserts.html'
 })
 export class Asserts {
    @Input() asserts : AssertionList;

@@ -7,7 +7,7 @@ import {PlaceService} from './place.service';
  * This component must be encapsulated in a <paginate> directive
  */
 @Component({
-   template: require('./place.list.html'),
+   templateUrl: './place.list.html',
    providers: [PaginateData],   // local to this component
 })
 export class PlaceList {

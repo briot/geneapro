@@ -5,7 +5,7 @@ import {ZoomImage} from './media';
 
 @Component({
    selector: 'gp-source-media',
-   template: require('./source.media.html'),
+   templateUrl: './source.media.html',
 })
 export class SourceMedia {
   @Input() data : SourceData;

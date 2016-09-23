@@ -7,7 +7,7 @@ import {Settings} from './settings.service';
 
 @Component({
    selector:   'li[menuButton]',
-   template:   require('./menubar.button.html')
+   templateUrl:   './menubar.button.html'
 })
 export class MenuButton {
    @Input() comp = '';  // The target component

@@ -68,7 +68,7 @@ export class SuretyService {
  */
 @Component({
    selector:   'surety',
-   template:   require('./surety.html'),
+   templateUrl: './surety.html',
 })
 export class Surety {
    @Input() part   : number;   // the id of a specific part

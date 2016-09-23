@@ -1,7 +1,9 @@
+import os
 from django.conf import settings
 from django.conf.urls import url
 from django.shortcuts import render_to_response
 from django.template.context_processors import csrf
+import django.views
 from geneaprove.views.pedigree import PedigreeData
 import geneaprove.views.persona
 from geneaprove.views.persona import \
@@ -24,6 +26,15 @@ def index(request):
     c = {}
     c.update(csrf(request))
     return render_to_response('index.html', c)
+
+def static(request):
+    # Special case to handle the templateUrl attributes when we have
+    # not used webpack to package them up
+    p = os.path.join(os.getcwd(), 'resources/ts', request.path[1:])
+    if os.path.isfile(p):
+        return django.views.static.serve(request, p, document_root='/')
+    else:
+        return index(request)
 
 urlpatterns = [
     url(r'^$', index, name='index'),
@@ -51,7 +62,7 @@ urlpatterns = [
     url(r'^data/quilts/(?P<id>\d+)$',          QuiltsView.as_view()),
 
     # Fallback to support the path location strategy in URLs
-    url(r'^.*', index, name='index'),
+    url(r'^.*', static, name='index'),
 
     # ... below: not moved to angularJS yet
 

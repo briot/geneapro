@@ -599,7 +599,7 @@ export class Fanchart {
 }
 
 @Component({
-   template: require('./fanchart.html')
+   templateUrl: './fanchart.html'
 })
 export class FanchartPage {
    public id : number;

@@ -5,7 +5,7 @@ import {ActivatedRoute, Params} from '@angular/router';
 import {Settings} from './settings.service';
 
 @Component({
-   template: require('./stats.html')
+   templateUrl: './stats.html'
 })
 export class StatsPage {
 

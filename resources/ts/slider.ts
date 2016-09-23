@@ -6,7 +6,7 @@ import {Component, Input, Output, EventEmitter, ElementRef} from '@angular/core'
 
 @Component({
    selector: 'slider',
-   template: require('./slider.html'),
+   templateUrl: './slider.html',
    host: {
       '(window:resize)': 'onResize()'
    }

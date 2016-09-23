@@ -6,7 +6,7 @@ interface ImportFromServer {
 }
 
 @Component({
-   template:   require('./import.html'),
+   templateUrl: './import.html',
 })
 export class Import {
    error = '';

@@ -95,7 +95,7 @@ export class PaginateData {
 
 @Component({
    selector:   'paginate',
-   template:   require('./paginate.html')
+   templateUrl: './paginate.html'
 })
 export class Paginate {
    @Input() panelTitle = '';

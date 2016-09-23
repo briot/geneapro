@@ -13,7 +13,7 @@ const noop = () => {};
 
 @Component({
    selector: 'floatlabelinput[formControl],floatlabelinput[ngModel]',
-   template: require('./floatlabels.html'),
+   templateUrl: './floatlabels.html',
 })
 export class FloatLabelInput implements ControlValueAccessor {
    @Input() label : string;

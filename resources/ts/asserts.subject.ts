@@ -3,7 +3,7 @@ import {AssertionList, Assertion, AssertSubject} from './asserts.service';
 
 @Component({
    selector: 'assert-subject',
-   template: require('./asserts.subject.html'),
+   templateUrl: './asserts.subject.html',
 })
 export class AssertSubjectDirective {
    @Input('assertion') assert  : Assertion;

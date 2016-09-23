@@ -46,7 +46,7 @@ export class ContextMenuService {
 
 @Component({
    selector: 'div[context-menu]',
-   template: require('./contextmenu.html'),
+   templateUrl: './contextmenu.html',
    host: {
       '(document:click)': 'hideMenu()',
       '(document:keyup)': 'onKeyUp($event)',

@@ -144,7 +144,7 @@ export class Radial {
 }
 
 @Component({
-   template: require('./radial.html')
+   templateUrl: './radial.html'
 })
 export class RadialPage {
    public id : number;

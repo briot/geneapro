@@ -18,7 +18,7 @@ export class LegendService {
 
 @Component({
    selector: 'gp-legend',
-   template: require('./legend.html')
+   templateUrl: './legend.html'
 })
 export class Legend {
    show  : boolean = false;

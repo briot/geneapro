@@ -4,7 +4,7 @@ import {Settings} from './settings.service';
 import {SourceService, SourceData} from './source.service';
 
 @Component({
-   template: require('./source.html'),
+   templateUrl: './source.html',
 })
 export class Source {
    id : number;

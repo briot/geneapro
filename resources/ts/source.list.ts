@@ -4,7 +4,7 @@ import {PaginateData} from './paginate';
 import {Settings} from './settings.service';
 
 @Component({
-   template: require('./source.list.html'),
+   templateUrl: './source.list.html',
    providers: [PaginateData],
 })
 export class SourceList {

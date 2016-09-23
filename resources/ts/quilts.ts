@@ -255,7 +255,7 @@ export class Quilts {
 
 
 @Component({
-   template: require('./quilts.html'),
+   templateUrl: './quilts.html',
 })
 export class QuiltsPage {
    public id : number;
