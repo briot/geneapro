@@ -312,6 +312,8 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    http://www.oldmapsonline.org/#bbox=-2.25731,47.420731,-2.032776,47.530723&q=&datefrom=1000&dateto=1745
 ** Gallica
    http://www.aupresdenosracines.com/2016/05/64-ressources-de-gallica-pour-completer-votre-genealogie.html
+** Caption tool
+   http://www.zdnet.com/article/whats-in-that-photo-google-open-sources-caption-tool-in-tensorflow-that-can-tell-you/
 
 * Existing code
 ** gedcom parsers
@@ -344,11 +346,15 @@ http://www.wolframalpha.com/input/?i=great+grand+mother%27s+niece
    https://simpleisbetterthancomplex.com/tips/2016/08/23/django-tip-13-f-expressions.html
 ** Custom query sets
    https://simpleisbetterthancomplex.com/tips/2016/08/16/django-tip-11-custom-manager-with-chainable-querysets.html
+** Password confirmation view
+   https://simpleisbetterthancomplex.com/tutorial/2016/08/15/how-to-create-a-password-confirmation-view.html
 
 * CSS
 ** http://learnlayout.com
 ** Optimize for large screen display
    https://css-tricks.com/optimizing-large-scale-displays/
+** Designing cards
+   https://uxdesign.cc/design-better-cards-c0d12ab581c4#.ca78ucet9
 
 * Angular
 ** Ahead-of-time compilation
@@ -357,6 +363,8 @@ http://www.wolframalpha.com/input/?i=great+grand+mother%27s+niece
 * GUI
 ** The toplevel menubar sections should match the genealogical process (collect, analyze,...)
 ** Use consistent black-and-white icons
+** Toolbar
+   http://codepen.io/chriscoyier/pen/FAbpm
 
 * Handling of names
 ** http://www.w3.org/International/questions/qa-personal-names

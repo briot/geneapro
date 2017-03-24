@@ -151,7 +151,9 @@ class SourcesList(JSONView):
     View the list of all sources
     """
     def get_json(self, params):
-        return models.Source.objects.order_by('abbrev', 'title')
+        return models.Source.objects.order_by(
+            'abbrev', 'title').select_related(
+            'researcher', 'subject_place', 'jurisdiction_place')
 
 
 class SourceRepresentations(JSONView):
