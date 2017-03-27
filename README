@@ -8,6 +8,7 @@ Q. What do I need to install first ?
        python-pil  (image library for python)
        django >= 1.9.4
        sqlite >= 3.6
+       nodejs >= 6.9.0
        npm >= 2.6.1
 
    We know that things will not work as well with older versions, and the
