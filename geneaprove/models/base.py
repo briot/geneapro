@@ -19,38 +19,32 @@ class GeneaProveModel(models.Model):
 
 
 class PartialDateField(models.CharField):
-    """
-    A new type of field: this stores a date/time or date range exactly
-    as was entered by the user (that is it fundamentally behaves as a
-    text field). However, whenever it is modified, it also modifies another
-    field in the model with a standard date/time which can be used for
-    sorting purposes
-    """
-    # ??? We should also override form_field, so that we can more easily
-    #     create html input fields to edit this field
 
-    # __metaclass__ = models.SubfieldBase
+    description = """Partial date/time or date range.
+Syntax is to store this exactly as entered by the user, but modify another
+existing field of the model to include a parsed version of that date, that
+can be used for storing."""
 
-    def __init__(self, max_length=0, null=True, *args, **kwargs):
-        kwargs["null"] = null
-        super(PartialDateField, self).__init__(
-            max_length=100, *args, **kwargs)
+    def __init__(self, base_date_field, *args, **kwargs):
+        assert(isinstance(base_date_field, str))
 
-    def contribute_to_class(self, cls, name):
-        """Add the partialDateField to a class, as well as a second field
-           used for sorting purposes"""
-        sortfield = models.CharField('used to sort', null=True, max_length=100)
-        self._sortfield = name + "_sort"
-        cls.add_to_class(self._sortfield, sortfield)
-        super(PartialDateField, self).contribute_to_class(cls, name)
+        kwargs['max_length'] = 100
+        self._base_date_field = base_date_field
+        super(PartialDateField, self).__init__(*args, **kwargs)
 
     def pre_save(self, model_instance, add):
         """Update the value of the sort field based on the contents of self"""
         val = super(PartialDateField, self).pre_save(model_instance, add)
         if val:
             sort = date.DateRange("%s" % val).sort_date()
-            setattr(model_instance, self._sortfield, sort)
+            setattr(self, self._base_date_field, sort)
         return val
+
+    def deconstruct(self):
+        name, path, args, kwargs = super(PartialDateField, self).deconstruct()
+        del kwargs["max_length"]
+        kwargs['base_date_field'] = self._base_date_field
+        return name, path, args, kwargs
 
 
 class Part_Type(GeneaProveModel):

@@ -269,6 +269,7 @@ class SourceManager(object):
                                 last_change=sour[1].last_change)
                             self.sources[new_id] = nested_source
                             nested_source.comments += self.importer._get_note(s)
+                            nested_source.save()
 
                         for k, v in parts:
                             try:
@@ -278,9 +279,8 @@ class SourceManager(object):
                                 type = models.Citation_Part_Type.objects.create(
                                     name=k.title(), gedcom=k)
                             p = models.Citation_Part(type=type, value=v)
-                            nested_source.parts.add(p)
+                            nested_source.parts.add(p, bulk=False)
 
-                    nested_source.save()
                     self.__add_OBJE_to_source(
                         nested_source, getattr(s, "OBJE", None))
 
@@ -814,6 +814,9 @@ class GedcomImporter(object):
 
                     elif k == "DATE":
                         pass  # handled above
+
+                    elif k == "TYPE" and key == "NAME":
+                        pass  # handled
 
                     else:
                         self.report_error("%s Unhandled %s.%s" % (

@@ -39,7 +39,8 @@ class Group(GeneaProveModel):
     type = models.ForeignKey(Group_Type)
     place = models.ForeignKey(Place, null=True)
     name = models.CharField(max_length=200)
-    date = PartialDateField()
+    date_sort = models.DateTimeField(null=True)
+    date = PartialDateField("date_sort", null=True)
     criteria = models.TextField(
         null=True,
         help_text="The criteria for admission in a group. For instance, one"

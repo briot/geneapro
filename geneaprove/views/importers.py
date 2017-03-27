@@ -13,7 +13,7 @@ class GedcomImport(JSONView):
             suc, err= GedcomFileImporter().parse(f)
             if err:
                 errors.append(err)
-            success = success or suc
+            success = success and suc
 
         graph.mark_as_invalid()   # Will need a refresh
         return {'error': "\n\n".join(errors), 'success': success}

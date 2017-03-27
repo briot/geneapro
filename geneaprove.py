@@ -19,7 +19,14 @@ if __name__ == "__main__":
             os.makedirs(os.path.dirname(db))
         except OSError:
             pass
-        execute_from_command_line(["manage.py", "syncdb", "--noinput"])
+
+        # Apply all migrations to get the most up-to-date database.
+        # Migrations are created with:
+        #    ./manage.py makemigrations geneaprove
+        # (possibly after changing the schema in geneaprove/models/)
+        execute_from_command_line(["manage.py", "migrate"])
+        #execute_from_command_line(
+        #    ["manage.py", "migrate", "geneaprove", "zero"])
 
         f = os.path.join('geneaprove/initial_data.json')
         execute_from_command_line(["manage.py", "loaddata", f])

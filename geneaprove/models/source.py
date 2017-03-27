@@ -35,7 +35,10 @@ class Source(GeneaProveModel):
         " and their activities in Georgia. Georgia is the subject"
         + " place, whereas NC is the jurisdiction place")
     researcher = models.ForeignKey(Researcher, null=False)
+    subject_date_sort = models.DateTimeField(null=True)
     subject_date = PartialDateField(
+        "subject_date_sort",
+        null=True,
         help_text="the date of the subject. Note that the dates might be"
         + " different for the various levels of source (a range of"
         + " dates for a book, and a specific date for an extract for"

@@ -59,7 +59,10 @@ class Event(GeneaProveModel):
     type = models.ForeignKey(Event_Type)
     place = models.ForeignKey(Place, null=True)
     name = models.CharField(max_length=100)
+    date_sort = models.DateTimeField(null=True)
     date = PartialDateField(
+        "date_sort",
+        null=True,
         help_text="The date of the event, as found in the original source."
         + " This date is internally parsed into date_sort"
         + " which is used for sorting purposes")

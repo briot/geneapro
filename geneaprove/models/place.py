@@ -12,7 +12,8 @@ class Place(GeneaProveModel):
     The actual info for a place is defined in terms of Place_Part
     """
 
-    date = PartialDateField()
+    date_sort = models.DateTimeField(null=True)
+    date = PartialDateField("date_sort", null=True)
     parent_place = models.ForeignKey(
         'self', null=True,
         help_text="The parent place, that contains this one")

@@ -31,7 +31,8 @@ class Characteristic(GeneaProveModel):
             + " its parts only if there is one of the latter, so we store"
             + " it here""")
     place = models.ForeignKey(Place, null=True)
-    date = PartialDateField(null=True)
+    date_sort = models.DateTimeField(null=True)
+    date = PartialDateField("date_sort", null=True)
 
     class Meta:
         """Meta data for the model"""
