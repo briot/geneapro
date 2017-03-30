@@ -1,34 +1,20 @@
 {
-   "compilerOptions": {
-      "target": "es6",
-      "module": "commonjs",
-      "removeComments": true,
-      "experimentalDecorators": true,
-      "emitDecoratorMetadata": true,
-      "sourceMap": true,
-      "inlineSourceMap": false,
-      "preserveConstEnums": false,
-      "noEmitOnError": false,
-      "noImplicitAny": true,
-      "allowUnreachableCode": false,
-      "noFallthroughCasesInSwitch": true,
-
-      "importHelpers": true,  // share all helps from tslib
-      //"lib": ["es2015.core",    //  when target=="es5"
-      //        "es2015.promise",
-      //        "es2015.symbol"],
-
-      "strictNullChecks": false,
-
-      "newLine": "LF"
-   },
-   "files": [
-      "./resources/ts/main.ts"
-   ],
-   "angularCompilerOptions": {
-      "genDir": "./static/ngfactory"
-   },
-   "awesomeTypescriptLoaderOptions": {
-    "useWebpackText": true // Allows other loaders to be chained to awesome-typescript-loader. 
-   }
+  "compileOnSave": false,
+  "compilerOptions": {
+    "outDir": "./dist/out-tsc",
+    "baseUrl": "src",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "target": "es5",
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "lib": [
+      "es2016",
+      "dom"
+    ]
+  }
 }
