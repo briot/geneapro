@@ -31,7 +31,7 @@ class StatsView(JSONView):
 
         allpeople = graph.people_in_tree(id=decujus.main_id, distance=distance)
         persons = extended_personas(
-            nodes=allpeople, styles=None, event_types=event_types_for_pedigree,
+            nodes=allpeople, styles=None, event_types=event_types_for_pedigree(),
             graph=graph)
 
         f = graph.fathers(decujus.main_id)
@@ -99,7 +99,7 @@ class StatsView(JSONView):
         for a in range(0, 120, 5):
             ages.append([a, 0, 0, 0])  # date_range, males, females, unknown
 
-        for p in persons.itervalues():
+        for p in persons.values():
             if p.birth and p.birth.Date and p.death and p.death.Date:
                 age = p.death.Date.years_since(p.birth.Date)
                 if age is not None:

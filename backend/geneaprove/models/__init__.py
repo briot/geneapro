@@ -23,7 +23,7 @@ from .repository import Repository, Repository_Type
 from .researcher import Researcher
 from .source import Source, Citation_Part_Type, Citation_Part
 from .surety import Surety_Scheme, Surety_Scheme_Part
-from .base import GeneaProveModel, PartialDateField, Part_Type
+from .base import GeneaProveModel, Part_Type
 
 
 class Config(GeneaProveModel):
@@ -58,7 +58,7 @@ class Project (GeneaProveModel):
                                    help_text="The client for which the project is undertaken. In general"
                                    + " this will be the researched himself")
 
-    def __unicode__(self):
+    def __str__(self):
         return "name=" + self.name
 
     class Meta:

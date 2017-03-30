@@ -1,6 +1,6 @@
 from django.db import models
 from .place import Place
-from .base import GeneaProveModel, PartialDateField, Part_Type
+from .base import GeneaProveModel, compute_sort_date, Part_Type, lazy_lookup
 from geneaprove.utils.date import DateRange
 
 
@@ -8,11 +8,9 @@ class Characteristic_Part_Type(Part_Type):
 
     is_name_part = models.BooleanField(default=False)
 
-    # Some hard-coded values for efficiency. Ideally, we should look these
-    # from the database. The problem is if the database gets translated
-    sex = 1
-    given_name = 6
-    surname = 7
+    PK_sex = lazy_lookup(gedcom='SEX')
+    PK_given_name = lazy_lookup(gedcom='GIVN')
+    PK_surname = lazy_lookup(gedcom='SURN')
 
     class Meta:
         """Meta data for the model"""
@@ -31,12 +29,20 @@ class Characteristic(GeneaProveModel):
             + " its parts only if there is one of the latter, so we store"
             + " it here""")
     place = models.ForeignKey(Place, null=True)
-    date_sort = models.DateTimeField(null=True)
-    date = PartialDateField("date_sort", null=True)
+    date = models.CharField(
+        max_length=100, null=True,
+        help_text="Date as read in the original source")
+    date_sort = models.CharField(
+        null=True, max_length=100,
+        help_text="Date, parsed automatically")
 
     class Meta:
         """Meta data for the model"""
         db_table = "characteristic"
+
+    def save(self, **kwargs):
+        self.date_sort = compute_sort_date(self.date)
+        super(Characteristic, self).save(**kwargs)
 
     def to_json(self):
         return {
@@ -64,5 +70,5 @@ class Characteristic_Part(GeneaProveModel):
         ordering = ("sequence_number", "name")
         db_table = "characteristic_part"
 
-    def __unicode__(self):
+    def __str__(self):
         return self.type.name + "=" + self.name

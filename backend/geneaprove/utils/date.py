@@ -187,9 +187,9 @@ def to_roman_literal(val):
         else:
             return unit + ten
 
-    return proc (val / 1000, ten="MMMMMMMMMM", five="MMMMM", unit="M") \
-        + proc ((val % 1000) / 100, ten="M", five="D", unit="C") \
-        + proc ((val % 100) / 10, ten="C", five="L", unit="X") \
+    return proc(val // 1000, ten="MMMMMMMMMM", five="MMMMM", unit="M") \
+        + proc((val % 1000) // 100, ten="M", five="D", unit="C") \
+        + proc((val % 100) // 10, ten="C", five="L", unit="X") \
         + proc(val % 10, ten="X", five="V", unit="I")
 
 
@@ -319,8 +319,8 @@ class Calendar (object):
             return text[:m.start(0)] + text[m.end(0):]
         return None
 
-    def __unicode__(self):
-        """Convert to a unicode string"""
+    def __str__(self):
+        """Convert to a string"""
         return ""
 
     def parse(self, txt):
@@ -409,12 +409,12 @@ class CalendarGregorian (Calendar):
         else:
             # Julian day for Feb 29th, -4800 in gregorian cal.
             feb_29_4800 = 32045
-            a = (14 - m) / 12
+            a = (14 - m) // 12
             y2 = y + 4800 - a
             m2 = m + 12 * a - 3
-            d += (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4 - y2 / 100 + y2 / 400\
+            d += (153 * m2 + 2) // 5 + 365 * y2 + y2 // 4 - y2 // 100 + y2 // 400 \
                 - feb_29_4800
-            return (d, year != None, month != None, day != None, self)
+            return (d, year is not None, month is not None, day != None, self)
 
     @staticmethod
     def today():
@@ -428,19 +428,19 @@ class CalendarGregorian (Calendar):
         # Algorithm from wikipedia "julian day"
         days_per_four_years = 1461  # julian days per four year period
         j = julian_day + 32044
-        g = j / 146097
+        g = j // 146097
         dg = j % 146097
-        c = (dg / 36524 + 1) * 3 / 4
+        c = (dg // 36524 + 1) * 3 // 4
         dc = dg - c * 36524
-        b = dc / days_per_four_years
+        b = dc // days_per_four_years
         db = dc % days_per_four_years
-        a = (db / 365 + 1) * 3 / 4
+        a = (db // 365 + 1) * 3 // 4
         da = db - a * 365
         y = g * 400 + c * 100 + b * 4 + a
-        m = (da * 5 + 308) / 153 - 2
-        d = da - (m + 4) * 153 / 5 + 122
+        m = (da * 5 + 308) // 153 - 2
+        d = da - (m + 4) * 153 // 5 + 122
 
-        return (y - 4800 + (m + 2) / 12, (m + 2) % 12 + 1, d + 1)
+        return (y - 4800 + (m + 2) // 12, (m + 2) % 12 + 1, d + 1)
 
 
 class CalendarFrench (Calendar):
@@ -461,7 +461,7 @@ class CalendarFrench (Calendar):
             ("|".join([k for k in self._month_names.keys() if k != ""]),
              re.IGNORECASE)
 
-    def __unicode__(self):
+    def __str__(self):
         # Do not return the name of the calendar when we spell out the month
         # name in date_str(), since there is no ambiguity in this case
         # return "French Republican"
@@ -486,7 +486,7 @@ class CalendarFrench (Calendar):
             m = month or 1
             d = day or 1
             sep_21_1792 = 2375839
-            return (sep_21_1792 + (y - 1) * 365 + y / 4 + m * 30 - 30 + d,
+            return (sep_21_1792 + (y - 1) * 365 + y // 4 + m * 30 - 30 + d,
                     year != None, month != None, day != None, self)
         else:
             return (0, False, False, False, self)
@@ -498,9 +498,9 @@ class CalendarFrench (Calendar):
         epoch = 2375474
         days_per_month = 30
         tmp = (julian_day - epoch) * 4 - 1
-        y = tmp / days_per_four_years
-        day_of_year = (tmp % days_per_four_years) / 4
-        m = day_of_year / days_per_month + 1
+        y = tmp // days_per_four_years
+        day_of_year = (tmp % days_per_four_years) // 4
+        m = day_of_year // days_per_month + 1
         d = day_of_year % days_per_month + 1
 
         return (y, m, d)
@@ -515,7 +515,7 @@ class CalendarFrench (Calendar):
             return to_roman_literal(y)
 
         if day_known:
-            output = unicode(d) + " "
+            output = str(d) + " "
 
         if month_known:
             if m == 13:
@@ -538,7 +538,7 @@ class CalendarJulian (Calendar):
         Calendar.__init__(self, "\\b(JU|J|Julian|OS)\\b|@#DJULIAN@")
         self._month_names = MONTH_NAMES
 
-    def __unicode__(self):
+    def __str__(self):
         return u"Julian"
 
     def from_components(self, year=None, month=None, day=None):
@@ -549,24 +549,24 @@ class CalendarJulian (Calendar):
         d = day or 1
 
         feb_29_4800 = 32083  # Julian day number for Feb 29th, -4800
-        a = (14 - m) / 12
+        a = (14 - m) // 12
         y2 = y + 4800 - a
         m2 = m + 12 * a - 3
-        return ((d + (153 * m2 + 2) / 5 + 365 * y2 + y2 / 4) - feb_29_4800,
+        return ((d + (153 * m2 + 2) // 5 + 365 * y2 + y2 // 4) - feb_29_4800,
                 year != None, month != None, day != None, self)
 
     def components(self, julian_day):
         """See inherited doc"""
         days_per_four_years = 1461  # julian days per four year period
         j = julian_day + 32083
-        b = j / days_per_four_years
+        b = j // days_per_four_years
         db = j % days_per_four_years
-        a = (db / 365 + 1) * 3 / 4
+        a = (db // 365 + 1) * 3 // 4
         da = db - a * 365
         y = b * 4 + a
-        m = (da * 5 + 308) / 153 - 2
-        return (y - 4800 + (m + 2) / 12, (m + 2) % 12 + 1,
-                da - (m + 4) * 153 / 5 + 122)
+        m = (da * 5 + 308) // 153 - 2
+        return (y - 4800 + (m + 2) // 12, (m + 2) % 12 + 1,
+                da - (m + 4) * 153 // 5 + 122)
 
 # The list of predefined calendars
 KNOWN_CALENDARS = [CalendarJulian(), CalendarFrench(), CalendarGregorian()]
@@ -741,9 +741,9 @@ class _Date(object):
             self.calendar = r.calendar
 
     def __repr__(self):
-        return self.__unicode__()
+        return self.__str__()
 
-    def __unicode__(self):
+    def __str__(self):
         """Display the date, using either the parsed date, or if it could not be
            parsed the date as was entered by the user. The calendar used is the
            one parsed from the initial string"""
@@ -784,7 +784,7 @@ class _Date(object):
         """
 
         if original and self.text:
-            return unicode(self.text)
+            return str(self.text)
 
         else:
             cal = calendar or self.calendar
@@ -801,7 +801,7 @@ class _Date(object):
                 year_only=year_only)
 
             if not year_only and self.seconds != None:
-                result += " " + unicode(self.seconds)
+                result += " " + str(self.seconds)
 
             if self.type == DATE_AFTER:
                 result += "/"
@@ -809,7 +809,7 @@ class _Date(object):
             if self.precision == PRECISION_ESTIMATED:
                 result += " ?"
 
-            cal = unicode(cal)
+            cal = str(cal)
             if cal:
                 result += " (" + cal + ")"
 
@@ -868,7 +868,7 @@ class _Date(object):
             m = (y1 - y2) * 12 + m1 - m2  # Total months difference
             if d1 != d2:
                 m -= 1
-            years = m / 12
+            years = m // 12
             months = m % 12
 
             d = date + TimeDelta(years=years, months=months)
@@ -983,14 +983,14 @@ class DateRange(object):
 
     def display(self, calendar=None, year_only=False, original=False):
         if original and self.text:
-            return unicode(self.text)
+            return str(self.text)
 
         if self.ends[0] is None:
             d2 = self.ends[1].display(
                 calendar=calendar, year_only=year_only, original=original)
             if self.ends[1] is not None:
                 return u"to %s" % d2
-            return unicode(self.text)
+            return str(self.text)
 
         d1 = self.ends[0].display(
             calendar=calendar, year_only=year_only, original=original)

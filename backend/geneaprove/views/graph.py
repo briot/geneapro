@@ -9,7 +9,6 @@ from django.utils.translation import ugettext as _
 from django.http import HttpResponse
 from geneaprove import models
 from geneaprove.views.to_json import to_json, JSONView
-from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.styles import Styles
 from geneaprove.views.queries import sql_in
 import datetime
@@ -166,23 +165,23 @@ class GeneaGraph(Digraph):
         # Relationship between person through events
 
         p2e = models.P2E.objects.filter(
-            event__type__in=(models.Event_Type.birth, ),
+            event__type__in=(models.Event_Type.PK_birth, ),
             disproved=False,
-            role__in=(models.Event_Type_Role.principal,
-                      models.Event_Type_Role.birth__father,
-                      models.Event_Type_Role.birth__mother))
+            role__in=(models.Event_Type_Role.PK_principal,
+                      models.Event_Type_Role.PK_birth__father,
+                      models.Event_Type_Role.PK_birth__mother))
         events = dict()  # id -> (child, father, mother)
 
         for p in p2e.values_list('person', 'event', 'role'):
             t = events.get(p[1], (None, None, None))
-            if p[2] == models.Event_Type_Role.principal:
+            if p[2] == models.Event_Type_Role.PK_principal:
                 events[p[1]] = (p[0] or t[0], t[1], t[2])
-            elif p[2] == models.Event_Type_Role.birth__father:
+            elif p[2] == models.Event_Type_Role.PK_birth__father:
                 events[p[1]] = (t[0], p[0] or t[1], t[2])
-            elif p[2] == models.Event_Type_Role.birth__mother:
+            elif p[2] == models.Event_Type_Role.PK_birth__mother:
                 events[p[1]] = (t[0], t[1], p[0] or t[2])
 
-        for e in events.itervalues():
+        for e in events.values():
             if e[0] is not None and e[1] is not None:
                 self.add_edge(P2P_Link(
                     fromP=self.node_from_id(e[1]),
@@ -221,7 +220,7 @@ class GeneaGraph(Digraph):
                 models.Characteristic_Part, "type"),
             "cp_char": models.sql_field_name(
                 models.Characteristic_Part, "characteristic"),
-            "val": models.Characteristic_Part_Type.sex}
+            "val": models.Characteristic_Part_Type.PK_sex}
 
         for c in models.Characteristic_Part.objects.raw(query):
             self.node_from_id(c.person).sex = c.name
@@ -375,7 +374,7 @@ class GeneaGraph(Digraph):
 
             byLayer = dict()   # Contains list of families for each layer
 
-            for family in tmp.itervalues():
+            for family in tmp.values():
                 rightMostLayer = min(
                     layers_by_id[p] for p in family if p is not None)
                 byLayer.setdefault(rightMostLayer + 1, []).append(family)
@@ -389,8 +388,8 @@ class GeneaGraph(Digraph):
             # Sort the families within each layer. If one of the parents is in
             # another layer, we want that marriage to appear first.
 
-            mi = min(byLayer.iterkeys())
-            ma = max(byLayer.iterkeys())
+            mi = min(byLayer.keys())
+            ma = max(byLayer.keys())
 
             result = []
             for lay in range(mi, ma + 1):
@@ -404,8 +403,8 @@ class GeneaGraph(Digraph):
 
                 # Pass the ids of the family members, not the nodes
                 result.append(
-                    [map(lambda node: min(node.ids) if node else -1,
-                         family)
+                    [list(map(lambda node: min(node.ids) if node else -1,
+                         family))
                      for family in r])
 
             return result
@@ -428,26 +427,19 @@ class GeneaGraph(Digraph):
         layers_by_id = tmp.rank_minimize_dummy_vertices()
 
         layers = tmp.get_layers(layers_by_id=layers_by_id)
-        print "MANU layers=%s" % (layers, )
 
         # Organize the nodes within layers
         tmp.sort_nodes_within_layers(layers)
-        print "MANU sorted layers=%s" % (layers, )
 
         # Compute the families
         families = __compute_families(tmp, layers, layers_by_id)
-        print "MANU sorted families=%s" % (families, )
-
-        print "MANU graph=%s" % tmp
 
         result = []
         for lay in range(0, len(layers)):
             result.append(
-                [{"id": n.main_id, "name": n.name.encode("utf-8"), "sex":n.sex}
+                [{"id": n.main_id, "name": n.name, "sex":n.sex}
                  for n in layers[lay]])
 
-        # for index, l in enumerate(result):
-        #    print "MANU layer[%d] = %s" % (index, sorted([p[0] for p in l]))
         return {"persons": result,
                 "families": families}
 
@@ -487,7 +479,7 @@ class GeneaGraph(Digraph):
             distance=distance,
             edgeiter=self.out_children_edges))
         if distance is not None:
-            for (id, dist) in distance.iteritems():
+            for (id, dist) in distance.items():
                 distance[id] = -dist
 
         to_match.update(self.breadth_first_search(

@@ -2,7 +2,7 @@ from django.db import models
 import django.utils.timezone
 import datetime
 
-from .base import GeneaProveModel, PartialDateField, Part_Type
+from .base import GeneaProveModel, compute_sort_date, Part_Type
 from .place import Place
 from .repository import Repository, Repository_Type
 from .researcher import Researcher
@@ -35,17 +35,17 @@ class Source(GeneaProveModel):
         " and their activities in Georgia. Georgia is the subject"
         + " place, whereas NC is the jurisdiction place")
     researcher = models.ForeignKey(Researcher, null=False)
-    subject_date_sort = models.DateTimeField(null=True)
-    subject_date = PartialDateField(
-        "subject_date_sort",
-        null=True,
+    subject_date = models.CharField(
+        max_length=100, null=True,
         help_text="the date of the subject. Note that the dates might be"
         + " different for the various levels of source (a range of"
         + " dates for a book, and a specific date for an extract for"
         + " instance). This field contains the date as found in the"
         + " original document. subject_date_sort stores the actual"
         + " computed from subject_date, for sorting purposes")
-
+    subject_date_sort = models.CharField(
+        max_length=100, null=True,
+        help_text="Date parsed automatically")
     medium = models.TextField(
         null=True,
         help_text="""The type of the source, used to construct the citation.
@@ -126,7 +126,7 @@ documents the citation styles.""")
         if self.higher_source:
             result = {
                 k: (v, True)
-                for k, v in self.higher_source.get_citations().iteritems()}
+                for k, v in self.higher_source.get_citations().items()}
         else:
             result = {}
 
@@ -142,7 +142,7 @@ documents the citation styles.""")
         """
         parts = self.get_citations()
         return sorted({'name': k, 'value': v[0], 'fromHigher': v[1]}
-                      for k, v in parts.iteritems())
+                      for k, v in parts.items())
 
     def get_representations(self):
         """
@@ -158,9 +158,10 @@ documents the citation styles.""")
            The first element is the direct parent, the last is the top-most
            source.
         """
-        if self.higher_source:
-            return [self.higher_source].extend(
-                self.higher_source.get_higher_sources())
+        if self.higher_source is not None:
+            a = [self.higher_source]
+            a.extend(self.higher_source.get_higher_sources())
+            return a
         return []
 
 

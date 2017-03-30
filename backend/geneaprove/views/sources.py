@@ -99,7 +99,7 @@ class EditSourceCitation(JSONView):
         else:
             parts = None
 
-        for key, value in params.iteritems():
+        for key, value in params.items():
             if key in ('csrfmiddlewaretoken', 'sourceId'):
                 continue
             elif key == 'medium':

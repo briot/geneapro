@@ -1,6 +1,6 @@
 from django.db import models
 from .place import Place
-from .base import GeneaProveModel, PartialDateField, Part_Type
+from .base import GeneaProveModel, compute_sort_date, Part_Type
 
 
 class Group_Type(Part_Type):
@@ -39,8 +39,12 @@ class Group(GeneaProveModel):
     type = models.ForeignKey(Group_Type)
     place = models.ForeignKey(Place, null=True)
     name = models.CharField(max_length=200)
-    date_sort = models.DateTimeField(null=True)
-    date = PartialDateField("date_sort", null=True)
+    date = models.CharField(
+        max_length=100, null=True,
+        help_text="Date, as found in original source")
+    date_sort = models.CharField(
+        max_length=100, null=True,
+        help_text="Date, parsed automatically")
     criteria = models.TextField(
         null=True,
         help_text="The criteria for admission in a group. For instance, one"
@@ -52,3 +56,7 @@ class Group(GeneaProveModel):
     class Meta:
         """Meta data for the model"""
         db_table = "group"
+
+    def save(self, **kwargs):
+        self.date_sort = compute_sort_date(self.date)
+        super(Group, self).save(**kwargs)

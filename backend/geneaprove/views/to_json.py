@@ -136,31 +136,21 @@ class JSONView(View):
         #return JsonResponse(r, encoder=ModelEncoder)
 
     def get(self, request, *args, **kwargs):
-        try:
-            params = JSONViewParams()
-            params.update(request.GET)
-            if settings.DEBUG:
-                print "=========== %s =============" % (self.__class__, )
-                print "Params: %s" % (params, )
-            return self.__internal(self.get_json, params, *args, **kwargs)
-        except Exception as e:
-            print "Error %s" % e
-            return JsonResponse({'error': '%s' % e})
+        params = JSONViewParams()
+        params.update(request.GET)
+        if settings.DEBUG:
+            print("   %s.get() => %s" % (self.__class__, params))
+        return self.__internal(self.get_json, params, *args, **kwargs)
     
     def post(self, request, *args, **kwargs):
-        try:
-            # decode the parameters from the body, since that's where AngularJS
-            # puts them with AJAX requests
-            params = JSONViewParams()
-            params.update(request.POST)
-            if not request.FILES:
-                params.setFromBody(request.body)
-            else:
-                params.setFiles(request.FILES)
-            if settings.DEBUG:
-                print "=========== %s =============" % (self.__class__, )
-                print "Params: %s" % (params, )
-            return self.__internal(self.post_json, params, *args, **kwargs)
-        except Exception as e:
-            print "Error %s" % e
-            return JsonResponse({'error': '%s' % e})
+        # decode the parameters from the body, since that's where AngularJS
+        # puts them with AJAX requests
+        params = JSONViewParams()
+        params.update(request.POST)
+        if not request.FILES:
+            params.setFromBody(request.body)
+        else:
+            params.setFiles(request.FILES)
+        if settings.DEBUG:
+            print("   %s.post() => %s" % (self.__class__, params))
+        return self.__internal(self.post_json, params, *args, **kwargs)

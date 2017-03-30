@@ -44,11 +44,11 @@ def sql_in(objects, field_in, ids, or_q=None):
     else:
         field_in += "__in"   # Django syntax for SQL's IN operator
         for subids in sql_split(ids):
-            base_q = apply(Q, [], {field_in: subids})
+            kwargs = {field_in: subids}
+            base_q = Q(*(), **kwargs)
             if or_q is not None:
                 query = objects.filter(base_q | or_q)
             else:
                 query = objects.filter(base_q)
-            #query = apply(objects.filter, [], {field_in:subids})
             for obj in query:
                 yield obj

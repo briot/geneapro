@@ -15,7 +15,7 @@ class Surety_Scheme(GeneaProveModel):
     name = models.CharField(max_length=100)
     description = models.TextField(null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:
@@ -33,7 +33,7 @@ class Surety_Scheme_Part(GeneaProveModel):
     description = models.TextField(null=True, blank=True)
     sequence_number = models.IntegerField(default=1)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:

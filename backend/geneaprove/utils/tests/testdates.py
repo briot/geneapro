@@ -177,9 +177,7 @@ class DateTestCase (unittest.TestCase):
                          < date.DateRange("1894-06-20"))
         self.assertTrue(date.DateRange("1896-11-20")
                         > date.DateRange("1894-06-20"))
-        self.assertEqual(cmp(date.DateRange("1896-11-20"),
-                             date.DateRange("1894-06-20")),
-                         1)
+        self.assertTrue(date.DateRange("1896-11-20") > date.DateRange("1894-06-20"))
 
         # An example from the GEDC manual. A period (an event occurs during
         # an extended period of time) whose start and end are ranges (event

@@ -37,6 +37,8 @@
 
 ** Import
 *** Use download form
+*** Do not mark the gedcom file as a source, but with a special mark so that
+   we can also undo an import.
 
 ** Groups
 *** Creating a dummy group:

@@ -1,5 +1,5 @@
 from django.db import models
-from .base import GeneaProveModel, PartialDateField, Part_Type
+from .base import GeneaProveModel, compute_sort_date, Part_Type
 
 
 class Place(GeneaProveModel):
@@ -12,26 +12,35 @@ class Place(GeneaProveModel):
     The actual info for a place is defined in terms of Place_Part
     """
 
-    date_sort = models.DateTimeField(null=True)
-    date = PartialDateField("date_sort", null=True)
+    date = models.CharField(
+        max_length=100, null=True,
+        help_text="Date as found in original source")
+    date_sort = models.CharField(
+        max_length=100, null=True,
+        help_text="Date parsed automatically")
+
     parent_place = models.ForeignKey(
         'self', null=True,
         help_text="The parent place, that contains this one")
     name = models.CharField(
         max_length=100, help_text="Short description of the place")
 
-    def __unicode__(self):
+    def __str__(self):
         parts = self.parts.all()
         name = ",".join([p.name for p in parts])
         if self.parent_place:
-            return unicode(self.name) + " " + unicode(self.parent_place) + name
+            return str(self.name) + " " + str(self.parent_place) + name
         else:
-            return unicode(self.name) + " " + name
+            return str(self.name) + " " + name
 
     class Meta:
         """Meta data for the model"""
         ordering = ("date_sort",)
         db_table = "place"
+
+    def save(self, **kwargs):
+        self.date_sort = compute_sort_date(self.date)
+        super(Place, self).save(**kwargs)
 
 
 class Place_Part_Type(Part_Type):
@@ -65,6 +74,6 @@ class Place_Part(GeneaProveModel):
         ordering = ('sequence_number', 'name')
         db_table = "place_part"
 
-    def __unicode__(self):
-        return unicode(self.type) + "=" + self.name
+    def __str__(self):
+        return str(self.type) + "=" + self.name
 

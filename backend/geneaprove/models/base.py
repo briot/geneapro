@@ -8,7 +8,7 @@ class GeneaProveModel(models.Model):
            this returns the dictionary of the class without the attributes
            starting with _"""
         result = {}
-        for key, value in self.__dict__.iteritems():
+        for key, value in self.__dict__.items():
             if key[0] != '_':
                 result[key] = value
         return result
@@ -18,34 +18,43 @@ class GeneaProveModel(models.Model):
         abstract = True
 
 
-class PartialDateField(models.CharField):
+def compute_sort_date(partial_date):
+    """
+    Given a date as read in a source, parse it to an approximatin that
+    can be used for sorting purposes.
+    """
+    return (None
+            if partial_date is None
+            else date.DateRange(partial_date).sort_date())
 
-    description = """Partial date/time or date range.
-Syntax is to store this exactly as entered by the user, but modify another
-existing field of the model to include a parsed version of that date, that
-can be used for storing."""
 
-    def __init__(self, base_date_field, *args, **kwargs):
-        assert(isinstance(base_date_field, str))
+##########
+# Lookup #
+##########
 
-        kwargs['max_length'] = 100
-        self._base_date_field = base_date_field
-        super(PartialDateField, self).__init__(*args, **kwargs)
+class _LookupDescriptor(object):
+    def __init__(self, kwargs):
+        self.kwargs = kwargs
+        self._cached = None
 
-    def pre_save(self, model_instance, add):
-        """Update the value of the sort field based on the contents of self"""
-        val = super(PartialDateField, self).pre_save(model_instance, add)
-        if val:
-            sort = date.DateRange("%s" % val).sort_date()
-            setattr(self, self._base_date_field, sort)
-        return val
+    def __get__(self, obj, klass=None):
+        if self._cached is None:
+            if klass is None:
+                klass = type(obj)
+            self._cached = klass.objects.get(**self.kwargs).pk
+        return self._cached
 
-    def deconstruct(self):
-        name, path, args, kwargs = super(PartialDateField, self).deconstruct()
-        del kwargs["max_length"]
-        kwargs['base_date_field'] = self._base_date_field
-        return name, path, args, kwargs
 
+def lazy_lookup(**kwargs):
+    """
+    A value that will be looked up lazily the first time it is read.
+    """
+    return _LookupDescriptor(kwargs)
+
+
+#############
+# Part_Type #
+#############
 
 class Part_Type(GeneaProveModel):
     """
@@ -65,7 +74,7 @@ class Part_Type(GeneaProveModel):
         ordering = ("name",)
         db_table = "part_type"
 
-    def __unicode__(self):
+    def __str__(self):
         if self.gedcom:
             return self.name + " (gedcom: " + self.gedcom + ")"
         else:

@@ -9,7 +9,7 @@
       <!-- A person -->
       <div *ngSwitchCase='1'>
          <span *ngIf='subjectNum==2' class='relationship'>is same as</span>
-         <persona-link [id]='sub.person.id' [name]='sub.person.name'></persona-link>
+         <persona-link [id]='sub.person?.id' [name]='sub.person.name'></persona-link>
       </div>
    
       <!-- An event -->
@@ -21,7 +21,7 @@
                <span class='relationship'>on</span>
                <time-link [on]="sub.event"></time-link>
                <span class='relationship'>in</span>
-               <place-link [id]='sub.event.place.id' [name]='sub.event.place.name'></place-link>
+               <place-link [id]='sub.event.place?.id' [name]='sub.event.place.name'></place-link>
             )
          </div>
          <div>
@@ -47,7 +47,7 @@
             <span class='relationship'>on</span>
             <time-link [on]="sub.char"></time-link>
          </div>
-         <div>
+         <div *ngIf='sub.char.place'>
             <span class='relationship'>in</span>
             <place-link [id]='sub.char.place.id' [name]='sub.char.place.name'></place-link>
          </div>
@@ -63,7 +63,7 @@
          </div>
          <div>
             <span class='relationship'>in</span>
-            <place-link [id]='sub.gr.place.id' [name]='sub.gr.place.name'></place-link>
+            <place-link [id]='sub.gr.place?.id' [name]='sub.gr.place.name'></place-link>
          </div>
       </div>
    

@@ -13,7 +13,7 @@ class Researcher(GeneaProveModel):
         help_text="Contact information for this researcher, like email"
            + " or postal addresses,...")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:

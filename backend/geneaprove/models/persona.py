@@ -15,7 +15,7 @@ class Persona(GeneaProveModel):
     description = models.TextField(null=True)
     last_change = models.DateTimeField(default=django.utils.timezone.now)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:

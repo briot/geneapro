@@ -20,7 +20,7 @@ def process(line):
 
 out = file("evidence_style.py", "w")
 
-out.write("from style import Citation_Style\n")
+out.write("from .style import Citation_Style\n")
 out.write("evidence_style = {\n")
 
 line = 0

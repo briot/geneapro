@@ -1,10 +1,10 @@
 from django.db import models
 from .place import Place
-from .base import GeneaProveModel, PartialDateField, Part_Type
+from .base import GeneaProveModel, Part_Type, compute_sort_date, lazy_lookup
 from geneaprove.utils.date import DateRange
 
 
-class Event_Type (Part_Type):
+class Event_Type(Part_Type):
     """
     The type of events
     """
@@ -13,11 +13,9 @@ class Event_Type (Part_Type):
         """Meta data for the model"""
         db_table = "event_type"
 
-    # Some hard-coded values for efficiency. Ideally, we should look these
-    # from the database. The problem is if the database gets translated
-    birth = 1
-    marriage = 3
-    death = 4
+    PK_birth = lazy_lookup(gedcom='BIRT')
+    PK_marriage = lazy_lookup(gedcom='MARR')
+    PK_death = lazy_lookup(gedcom='DEAT')
 
 
 class Event_Type_Role(GeneaProveModel):
@@ -36,17 +34,15 @@ class Event_Type_Role(GeneaProveModel):
         """Meta data for the model"""
         db_table = "event_type_role"
 
-    def __unicode__(self):
+    def __str__(self):
         if self.type:
-            return unicode(self.id) + ": " + self.type.name + " => " + self.name
+            return str(self.id) + ": " + self.type.name + " => " + self.name
         else:
-            return unicode(self.id) + ": * =>" + self.name
+            return str(self.id) + ": * =>" + self.name
 
-    # Some hard-coded values for efficiency. Ideally, we should look these
-    # from the database. The problem is if the database gets translated
-    principal = 5
-    birth__father = 6
-    birth__mother = 7
+    PK_principal = lazy_lookup(name='principal')
+    PK_birth__father = lazy_lookup(name='father', type__gedcom='BIRT')
+    PK_birth__mother = lazy_lookup(name='mother', type__gedcom='BIRT')
 
 
 class Event(GeneaProveModel):
@@ -59,19 +55,22 @@ class Event(GeneaProveModel):
     type = models.ForeignKey(Event_Type)
     place = models.ForeignKey(Place, null=True)
     name = models.CharField(max_length=100)
-    date_sort = models.DateTimeField(null=True)
-    date = PartialDateField(
-        "date_sort",
-        null=True,
-        help_text="The date of the event, as found in the original source."
-        + " This date is internally parsed into date_sort"
-        + " which is used for sorting purposes")
+    date = models.CharField(
+        max_length=100, null=True,
+        help_text="Date of the event, as found in original source")
+    date_sort = models.CharField(
+        max_length=100, null=True,
+        help_text="Date of the event, parsed automatically")
 
     class Meta:
         """Meta data for the model"""
         db_table = "event"
 
-    def __unicode__(self):
+    def save(self, **kwargs):
+        self.date_sort = compute_sort_date(self.date)
+        super(Event, self).save(**kwargs)
+
+    def __str__(self):
         d = self.date
         date = " (on " + d + ")" if d else ""
         return self.name + date

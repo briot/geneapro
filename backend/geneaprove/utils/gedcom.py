@@ -426,25 +426,25 @@ class Invalid_Gedcom(Exception):
     def __init__(self, msg):
         self.msg = msg
 
-    def __unicode__(self):
-        return unicode(self.msg)
+    def __str__(self):
+        return str(self.msg)
 
     def __str__(self):
         return self.msg
 
 
-class GedcomString(unicode):
+class GedcomString(str):
 
     """A string that also stores a location in a file"""
 
     # Overriding __init__ seems problematic here. We can't add new
-    # parameters ("line=0" for instance), and calling unicode.__init__
+    # parameters ("line=0" for instance), and calling str.__init__
     # shows a warning that "object.__init__ doesn't take any argument".
     # So we just use GedcomString as a small wrapper, to which we manually
     # add .line field
 
     def __add__(self, value):
-        r = GedcomString(unicode(self) + value)
+        r = GedcomString(str(self) + value)
         r._line = getattr(self, "line", "???")
         return r
 
@@ -485,9 +485,9 @@ class _Lexical(object):
         self.encoding = 'iso_8859_1'
         self.prefetch = self._parse_next_line()  # Prefetched line, parsed
 
-    def to_unicode(self, value):
-        """Converts value to a unicode string"""
-        if isinstance(value, unicode):
+    def to_str(self, value):
+        """Converts value to a string"""
+        if isinstance(value, str):
             r = GedcomString(value)
         else:
             if self.encoding == "heredis-ansi":
@@ -498,10 +498,6 @@ class _Lexical(object):
             else:
                 r = GedcomString(value.decode(self.encoding, "replace"))
 
-        # print type(value), value, " => "
-        # print "    ", [ord(c) for c in r]
-        # print "    ", r.encode("utf-8")
-        # print "    ", [ord(c) for c in r.encode("utf-8")]
         r._setLine(self.line)
         return r
 
@@ -512,7 +508,7 @@ class _Lexical(object):
         self.line += 1
 
         # Leading whitespace must be ignored in gedcom files
-        line = self.file.readline().lstrip().rstrip('\n')
+        line = self.to_str(self.file.readline()).lstrip().rstrip('\n')
         if not line:
             return None
 
@@ -522,10 +518,6 @@ class _Lexical(object):
 
         # The standard limits the length of lines, but some software ignore
         # that, like Reunion on OSX for instance (#20)
-
-        #if len(line) > 255:
-        #    print "%s Line is too long (%d characters)" % (
-        #        self.get_location(), len(line))
 
         g = LINE_RE.match(line)
         if not g:
@@ -544,13 +536,13 @@ class _Lexical(object):
                     self.get_location(1))
 
         r = (int(g.group("level")), g.group("tag"), g.group("xref_id"),
-             self.to_unicode(g.group("value") or u""))
+             self.to_str(g.group("value") or u""))
 
         if DEBUG:
-            print "%04d: %s" % (self.line, r)
+            print("%04d: %s" % (self.line, r))
 
         if PROGRESS and self.line % 1000 == 0:
-            print "Gedcom: line %d" % (self.line, )
+            print("Gedcom: line %d" % (self.line, ))
 
         if r[0] == 1 and r[1] == "CHAR":
             if r[3] == "ANSEL":
@@ -569,7 +561,7 @@ class _Lexical(object):
         """Return the current parser location
            This is intended for error messages
         """
-        return self.file.name + ":" + unicode(self.line + offset - 1)
+        return self.file.name + ":" + str(self.line + offset - 1)
 
     def readline(self, skip_to_level=-1):
         """
@@ -657,7 +649,7 @@ class GedcomRecord(object):
         self.value = GedcomString("")
         self._line = "???"  # Line where this record started
 
-        for key, val in args.iteritems():
+        for key, val in args.items():
             self.__dict__[key] = val
 
     def _xref_to(self, xref, gedcom):
@@ -719,7 +711,7 @@ class GedcomRecord(object):
         """A generator that returns each field of self (ignoring null
            fields), as read from GEDCOM
         """
-        for key, val in self.__dict__.iteritems():
+        for key, val in self.__dict__.items():
             if val is None or val == []:
                 pass   # Nothing to do, field is unset
             elif key == "value":
@@ -799,7 +791,7 @@ class _GedcomParser(object):
             names = c[0]
             type = c[3]
 
-            if isinstance(names, basestring):
+            if isinstance(names, str):
                 names = [c[0]]
 
             n = names[0]
@@ -817,7 +809,7 @@ class _GedcomParser(object):
                 if type is None:
                     is_xref = XREF_PURE
                     handler = None
-                elif isinstance(type, basestring):
+                elif isinstance(type, str):
                     is_xref = XREF_OR_INLINE
 
                     # xref_to must be a superset of type
@@ -842,7 +834,7 @@ class _GedcomParser(object):
                     handler = None
                     result = None
 
-                elif isinstance(type, basestring):
+                elif isinstance(type, str):
                     # ref to one of the toplevel nodes
                     handler = all_parsers.get(type)
                     if handler is None:
@@ -963,14 +955,14 @@ class _GedcomParser(object):
                         "%s Too many occurrences (%d) of %s (max %d)" %
                         (lexical.get_location(), p[1] + 1, tag, len(val)))
 
-        except KeyError, e:
+        except KeyError as e:
             raise Invalid_Gedcom(
                 "%s Invalid tag %s inside %s" %
                 (lexical.get_location(), tag, self.name))
 
         # Check we have reach the minimal number of occurrences
 
-        for tag, p in self.parsers.iteritems():
+        for tag, p in self.parsers.items():
             val = result.__dict__[tag]
             if p[0] != 0 and (val is None or val == ()):
                 raise Invalid_Gedcom(
@@ -1045,7 +1037,8 @@ class Gedcom(object):
                compatible with file.
         """
         if isinstance(filename, str):
-            filename = file(filename, "U")
+            # Do not assume a specific encoding
+            filename = open(filename, "U", encoding='latin-1')
 
         result = self.parser.parse(_Lexical(filename))
         result.__filename = filename

@@ -1,4 +1,4 @@
-from style import Citation_Style
+from .style import Citation_Style
 evidence_style = {
 
    'ESM93': Citation_Style(

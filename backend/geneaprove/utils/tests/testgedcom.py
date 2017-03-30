@@ -25,12 +25,13 @@ class GedcomTestCase (unittest.TestCase):
             # Universal newline
             self.parsers.parse(filename)
             error = error + "OK\n"
-        except gedcom.Invalid_Gedcom, e:
+        except gedcom.Invalid_Gedcom as e:
             error = error + e.msg + "\n"
 
         expected_name = os.path.splitext(filename)[0] + ".out"
         try:
-            expected = file(expected_name).read()
+            # Do not guess the encoding
+            expected = open(expected_name, encoding='latin-1').read()
         except IOError:
             expected = "OK\n"
         out = error.replace(self.dir, "<dir>")

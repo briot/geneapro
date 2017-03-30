@@ -49,7 +49,7 @@ class Citation_Style(object):
             for part in source.parts.select_related('type__name').all():
                 subst[part.type.name] = part.value
         elif isinstance(source, dict):
-            for k, v in source.iteritems():
+            for k, v in source.items():
                 if v != '':
                     subst[k] = v
         else:

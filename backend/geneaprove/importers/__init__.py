@@ -66,4 +66,4 @@ class Importer (object):
 
     def error(self, message):
         """Report an error to the user"""
-        print message
+        print(message)

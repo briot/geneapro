@@ -8,7 +8,6 @@ from django.template import RequestContext
 from django.utils.translation import ugettext as _
 from django.http import HttpResponse
 from geneaprove import models
-from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.styles import Styles
 from geneaprove.views.graph import graph
 from geneaprove.views.queries import sql_in
@@ -34,7 +33,7 @@ def compare(p1, p2):
     # For each similar event with the same date, increase score
 
     a1_events = dict()
-    for a1 in p1.all_events.itervalues():
+    for a1 in p1.all_events.values():
         r = (a1.event.type, a1.role)
         a1_events[r] = a1_events.get(r, []) + [a1.event]
 
@@ -42,7 +41,7 @@ def compare(p1, p2):
     place_score = 0   # If at least two events occurred in same place.
     # This help separate people from different cities
 
-    for a2 in p2.all_events.itervalues():
+    for a2 in p2.all_events.values():
         evt_score = 0   # best score for this event
         evt_debug = ""
         evt_evt = None
@@ -97,12 +96,12 @@ def compare(p1, p2):
     # For UID properties, the score increase is worth more
 
     a1_chars = dict()
-    for a1 in p1.all_chars.itervalues():
+    for a1 in p1.all_chars.values():
         r = a1.char.name   # a1.char is a Characteristic: name, place, date
         # a1.parts is a part: type, name
         a1_chars[r] = a1_chars.get(r, []) + [a1]
 
-    for a2 in p2.all_chars.itervalues():
+    for a2 in p2.all_chars.values():
         r = a2.char.name
         if r in a1_chars:
             for att in a1_chars[r]:
@@ -153,9 +152,7 @@ def find_candidate(graph):
                    graph.node_from_id(p6)]),
         styles=None, same=same, query_groups=False)
     for p in [(p1, p2), (p2, p1), (p3, p4), (p5, p6), (p6, p5)]:
-        print persons[p[0]].name, persons[p[1]].name
         score = compare(persons[p[0]], persons[p[1]])
-        print "  => ", score
 
     # Get all persons from the database with a guess at their lifespan.
     # If we know the birth date, lifespan starts there, otherwise it starts
@@ -177,7 +174,7 @@ def find_candidate(graph):
     births = []
     delta = datetime.timedelta(days=maximum_lifespan * 365)
 
-    for p in persons.itervalues():
+    for p in persons.values():
         birth = death = None
 
         if p.birth is not None:
@@ -186,7 +183,7 @@ def find_candidate(graph):
             death = p.death.date_sort
         if birth is None or death is None:
             h = [a.event.date_sort
-                 for a in p.all_events.itervalues()
+                 for a in p.all_events.values()
                  if a.event.date_sort is not None]
             if h:
                 h.sort()
@@ -221,17 +218,17 @@ def find_candidate(graph):
                 comparisons += 1
                 score = compare(a, person)
                 if score >= 150:
-                    print "%d Might be the same: %d %s and %d %s, score=%d %d" % (
+                    print("%d Might be the same: %d %s and %d %s, score=%d %d" % (
                         date.year, person.id, person.name, a.id, a.name, score,
-                        compare(person, a))
+                        compare(person, a)))
                     same += 1
 
         alive.append(person)
 
     # Maximum comparisons (n^2) would be: 83_302_129
     # Actual comparisons with this algo:  14_635_289
-    print "Number of comparisons: ", comparisons
-    print "Possible merges: ", same
+    print("Number of comparisons: ", comparisons)
+    print("Possible merges: ", same)
 
 
 def view(request):
@@ -239,4 +236,4 @@ def view(request):
         graph.update_if_needed()
         find_candidate(graph=graph)
     except Exception(e):
-        print "Terminated ", e
+        print("Terminated ", e)

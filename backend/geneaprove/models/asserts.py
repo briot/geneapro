@@ -119,12 +119,12 @@ class P2E(Assertion):
     event = models.ForeignKey(Event, related_name="actors")
     role = models.ForeignKey(Event_Type_Role, null=True)
 
-    def __unicode__(self):
+    def __str__(self):
         if self.role:
             role = " (as " + self.role.name + ")"
         else:
             role = ""
-        return unicode(self.person) + " " + unicode(self.event) + role
+        return str(self.person) + " " + str(self.event) + role
 
     class Meta:
         """Meta data for the model"""

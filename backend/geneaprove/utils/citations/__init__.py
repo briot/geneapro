@@ -1,5 +1,5 @@
-import evidence_style
-import style
+from . import evidence_style
+from . import style
 from geneaprove import models
 
 
@@ -25,6 +25,6 @@ class Citations(object):
         Return the list of all known source types.
         """
         d = [{'id': key, 'type': t.type, 'category': t.category}
-             for key, t in Citations.style_guide.iteritems()]
+             for key, t in Citations.style_guide.items()]
         return sorted(d, key=lambda e: (e['category'], e['type']))
 

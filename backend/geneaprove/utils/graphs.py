@@ -66,6 +66,12 @@ class Digraph(object):
     def __repr__(self):
         return "<graph %s>" % (" ".join(sorted("%s" % (e, ) for e in self.edges())))
 
+    def is_empty(self):
+        """
+        True if there are no nodes in self
+        """
+        return len(self.outedges) == 0
+
     def isleaf(self, node):
         """
         Whether the given node is a leaf node (no out edges).
@@ -682,14 +688,14 @@ class Digraph(object):
             for e in self.edges():
                 s = __get_slack(ranks, e)
                 if s < 0:
-                    print "Invalid edge: %s, ranks=%d %d slack=%d" % (
-                        e, ranks[e[0]], ranks[e[1]], s)
+                    print("Invalid edge: %s, ranks=%d %d slack=%d" % (
+                        e, ranks[e[0]], ranks[e[1]], s))
                     raise Exception("Invalid edge: %s, ranks=%d %d" % (
                         e, ranks[e[0]], ranks[e[1]]))
                 elif s > 0:
-                    print "Edge %s has slack: %s" % (e, s)
+                    print("Edge %s has slack: %s" % (e, s))
                 slack += s
-            print "Total slack: %d" % slack
+            print("Total slack: %d" % slack)
 
         def ranking_from_tree(tree):
             """
@@ -911,7 +917,6 @@ class Digraph(object):
             if leave_edge is None:
                 return ranks
 
-            print "MANU cut point is leave=%s enter=%s" % (leave_edge, enter_edge)
             tree.remove_edge(leave_edge)
             tree.add_edge(enter_edge)
             removed_edges.add(enter_edge)

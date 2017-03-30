@@ -2,6 +2,7 @@ from geneaprove.importers.gedcomimport import GedcomFileImporter
 from geneaprove.views.graph import graph
 from geneaprove.views.to_json import JSONView
 
+
 class GedcomImport(JSONView):
 
     def post_json(self, params):

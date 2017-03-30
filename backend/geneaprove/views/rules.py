@@ -11,7 +11,7 @@ from geneaprove.views.to_json import to_json
 
 
 def getLegend(request):
-    all_rules = geneaprove.views.custom_highlight.style_rules
+    all_rules = geneaprove.views.custom_highlight.style_rules()
     rules = []
     for name, type, tests, style in all_rules:
         rules.append({'name': name, 'css': style_to_css(style)})

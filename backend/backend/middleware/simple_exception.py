@@ -1,55 +1,51 @@
-##
-## See http://www.djangosnippets.org/snippets/650/
-## When debugging AJAX with Firebug, if a response is 500, it is a pain
-## to have to view the entire source of the pretty exception page. This is
-## a simple middleware that just returns the exception without any markup.
-## You can add this anywhere in your python path and then put it in you
-## settings file. It will only unprettify your exceptions when there is a
-## XMLHttpRequest header
-
 from django.conf import settings
 from django.http import HttpResponseServerError
 from django.db   import connection
 from django.core.management import color
 import time
 
-style = color.color_style ()
 
-class AJAXSimpleExceptionResponse:
-    def process_request(self, request):
-        self.start = time.clock ()
+class AJAXSimpleExceptionResponse(object):
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.style = color.color_style ()
+
+    def __call__(self, request):
+
+        # Code to be executed before the view
+        start = time.clock ()
         self.has_exception = False
 
-    def process_response(self, request, response):
-        if settings.DEBUG and len (connection.queries) != 0:
-           end = time.clock ()
+        response = self.get_response(request)
+
+        # Code to be executed after the view
+        if settings.DEBUG and len(connection.queries):
+           end = time.clock()
            total = 0.0
 
-           for r, q in enumerate (connection.queries):
-              if not 'duration' in q:  # created by django toolbar
-                 q['duration'] = ''
-
+           for r, q in enumerate(connection.queries):
               if 'time' in q:   # default
-                 total += float (q['time'])
-              else:  # with django toolbar
-                 total += float (q['duration'])
+                 total += float(q['time'])
+              elif 'duration' in q:  # with django toolbar
+                 total += float(q['duration'])
+
+              # print(self.style.SQL_COLTYPE("%s" % q['sql']))
 
            if self.has_exception:
-              print "Exception raised"
+               format = self.style.ERROR_OUTPUT
+           else:
+               format = self.style.SQL_COLTYPE
 
-           print style.SQL_COLTYPE (
-              "Number of queries: %d" % len (connection.queries))
-           print style.SQL_COLTYPE (
-              "Total queries time: %fs" % total)
-           print style.SQL_COLTYPE (
-              "Total time: %fs" % (end - self.start))
+           print(format(
+               "Total time: %fs  /  queries time (%s queries): %fs" % (
+                   end - start, len(connection.queries), total)))
 
         return response
 
     def process_exception(self, request, exception):
         if settings.DEBUG:
+            self.has_exception = True
             if request.is_ajax():
-                self.has_exception = True
                 import sys, traceback
                 (exc_type, exc_info, tb) = sys.exc_info()
                 response = "%s\n" % exc_type.__name__
@@ -57,8 +53,4 @@ class AJAXSimpleExceptionResponse:
                 response += "TRACEBACK:\n"
                 for tb in traceback.format_tb(tb):
                     response += "%s\n" % tb
-                print response
-                return HttpResponseServerError(response)
-        else:
-            super(AJAXSimpleExceptionResponse, self).process_exception(
-               request, exception)
+                print(response)

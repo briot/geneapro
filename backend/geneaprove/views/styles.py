@@ -74,9 +74,20 @@ def alive(person):
     # before the first child's birth date (recursively). But that becomes
     # more expensive to compute
 
-    return not person.death \
-        and (not person.birth
-             or DateRange.today().years_since(person.birth.Date) <= max_age)
+    if person.death is not None:
+        return False
+    elif person.birth is None:
+        # Might be alive. We could look at other events to guess at the
+        # timeframe
+        return True
+    else:
+        d = DateRange.today().years_since(person.birth.Date)
+        if d is None:
+            # Could not compute elapsed time (likely because birth has no know
+            # year
+            return True
+        else:
+            return d <= max_age
 
 
 def get_place(event, part):
@@ -127,7 +138,7 @@ def style_to_css(style):
     borderColor = "black"
     borderStyle = "solid"
 
-    for k, v in style.iteritems():
+    for k, v in style.items():
         if k == "fill":
             k = "background"
         elif k == "stroke":
@@ -176,7 +187,7 @@ class ColorScheme(object):
     def all_styles(self):
         """The list of all styles needed to render the tree"""
         result = []
-        for s in sorted(self._all_styles.itervalues()):
+        for s in sorted(self._all_styles.values()):
             result.insert(s[0], s[1])
         return result
 
@@ -256,7 +267,7 @@ class Styles(ColorScheme):
 
                 self.rules.append((rule_type, tests, rule_style))
             else:
-                print "Unknown rule tag in the style rules: %s" % r
+              print("Unknown rule tag in the style rules: %s" % r)
 
         self.no_match = [0] * len(self.rules)
 
@@ -302,7 +313,7 @@ class Styles(ColorScheme):
                     elif t[0] == "date":
                         value = e.Date
                     else:
-                        print "Error, invalid field: " + t[0]
+                        print("Error, invalid field: " + t[0])
                         continue
 
                     if value is None \
@@ -381,10 +392,20 @@ class Styles(ColorScheme):
                     else:
                         value = None
 
-                    if value is None \
-                            or not t[1](exp=t[2], value=value):
+                    if value is None:
                         match = False
                         break
+                    elif isinstance(value, int):
+                        if not t[1](exp=int(t[2]), value=value):
+                            match = False
+                            break
+                    elif isinstance(value, str):
+                        if not t[1](exp=str(t[2]), value=value):
+                            match = False
+                            break
+                    else:
+                        print("Unknown type in rule")
+
                 if match:
                     self._merge(styles, r[2])
                     hashes += tmp_hash

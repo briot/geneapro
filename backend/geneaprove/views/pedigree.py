@@ -32,7 +32,7 @@ class PedigreeData(JSONView):
         self.year_only = params.get('year_only', '') == 'true'
 
         decujus = graph.node_from_id(id)
-        styles = Styles(style_rules, graph, decujus=decujus.main_id)
+        styles = Styles(style_rules(), graph, decujus=decujus.main_id)
 
         distance = dict()
         people = graph.people_in_tree(
@@ -55,7 +55,7 @@ class PedigreeData(JSONView):
         if all_person_nodes:
             persons = extended_personas(
                 all_person_nodes, styles,
-                event_types=event_types_for_pedigree, graph=graph)
+                event_types=event_types_for_pedigree(), graph=graph)
 
         def add_parents(p):
             p.generation = distance[graph.node_from_id(p.id)]
@@ -78,7 +78,7 @@ class PedigreeData(JSONView):
                        node)
                       for node in graph.children(p.id)]
             sorted.sort(
-                key=lambda c: c[0].birth.Date if c[0] and c[0].birth else None)
+                key=lambda c: c[0].birth.Date if c[0] and c[0].birth else '')
             for c in sorted:
                 if c[0]:
                     c[0].generation = -gen # distance[c[1]]

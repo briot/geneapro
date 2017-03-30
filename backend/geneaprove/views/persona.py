@@ -13,10 +13,10 @@ from geneaprove.views.styles import Styles
 from geneaprove.views.queries import sql_in
 
 
-event_types_for_pedigree = (
-    models.Event_Type.birth,
-    models.Event_Type.death,
-    models.Event_Type.marriage)
+def event_types_for_pedigree():
+    return (models.Event_Type.PK_birth,
+            models.Event_Type.PK_death,
+            models.Event_Type.PK_marriage)
 
 
 def __add_default_person_attributes(person):
@@ -32,6 +32,17 @@ def __add_default_person_attributes(person):
     n = person.name.split('/', 2)
     person.givn = n[0]
     person.surn = n[1] if len(n) >= 2 else ""
+
+
+def more_recent(obj1, obj2):
+    """
+    Compare the date_sort field of two objects
+    """
+    if obj1.date_sort is None:
+        return False
+    if obj2.date_sort is None:
+        return True
+    return obj1.date_sort > obj2.date_sort
 
 
 def extended_personas(
@@ -137,6 +148,8 @@ def extended_personas(
         if all_sources is not None:
             all_sources.setdefault(p.source_id, {})
 
+        # ??? Could we take advantage of the e.date_sort string, instead
+        # of reparsing the DateRange ?
         e.Date = e.date and DateRange(e.date)
 
         if schemes is not None:
@@ -149,18 +162,16 @@ def extended_personas(
             styles.process(person, p.role_id, e)
 
         if not p.disproved \
-           and p.role_id == models.Event_Type_Role.principal:
+           and p.role_id == models.Event_Type_Role.PK_principal:
             if not e.Date:
                 pass
-            elif e.type_id == models.Event_Type.birth:
-                if person.birth is None \
-                   or person.birth.date_sort > e.date_sort:
+            elif e.type_id == models.Event_Type.PK_birth:
+                if person.birth is None or more_recent(person.birth, e):
                     person.birth = e
-            elif e.type_id == models.Event_Type.death:
-                if person.death is None \
-                   or person.death.date_sort < e.date_sort:
+            elif e.type_id == models.Event_Type.PK_death:
+                if person.death is None or more_recent(person.death, e):
                     person.death = e
-            elif e.type_id == models.Event_Type.marriage:
+            elif e.type_id == models.Event_Type.PK_marriage:
                 person.marriage = e
 
     #########
@@ -217,11 +228,11 @@ def extended_personas(
     for part in sql_in(chars, "characteristic", nodes and c2p.keys()):
         person = c2p[part.characteristic_id]
 
-        if part.type_id == models.Characteristic_Part_Type.sex:
+        if part.type_id == models.Characteristic_Part_Type.PK_sex:
             person.sex = part.name
-        elif part.type_id == models.Characteristic_Part_Type.given_name:
+        elif part.type_id == models.Characteristic_Part_Type.PK_given_name:
             person.given_name = part.name
-        elif part.type_id == models.Characteristic_Part_Type.surname:
+        elif part.type_id == models.Characteristic_Part_Type.PK_surname:
             person.surname = part.name
 
     ########
@@ -259,7 +270,7 @@ def extended_personas(
     ##########
 
     if styles:
-        for p in persons.itervalues():
+        for p in persons.values():
             styles.compute(p, as_css=as_css)
 
     return persons
@@ -297,10 +308,10 @@ class PersonaView(JSONView):
         return {
             "person": decujus,
             "sources": all_sources,
-            "p2c": p2c.values(),
-            "p2e": p2e.values(),
+            "p2c": list(p2c.values()),
+            "p2e": list(p2e.values()),
             "p2p": assertions,
-            "p2g": p2g.values()
+            "p2g": list(p2g.values())
         }
 
 
@@ -339,14 +350,17 @@ class PersonaList(JSONView):
     """View the list of all personas"""
     def get_json(self, params):
         graph.update_if_needed()
-        styles = Styles(style_rules, graph=graph, decujus=1)  # ??? Why "1"
+        if graph.is_empty():
+            all = {}
+        else:
+            styles = Styles(style_rules(), graph=graph, decujus=1)  # ??? Why "1"
 
-        all = extended_personas(
-            nodes=None, styles=styles,
-            event_types=event_types_for_pedigree,
-            all_sources=None, graph=graph, as_css=True)
+            all = extended_personas(
+                nodes=None, styles=styles,
+                event_types=event_types_for_pedigree(),
+                all_sources=None, graph=graph, as_css=True)
 
-        all = [p for p in all.itervalues()]
+        all = [p for p in all.values()]
         all.sort(key=lambda x: x.surn)
 
         # Necessary to avoid lots of queries to get extra information

@@ -101,7 +101,7 @@ class SourceManager(object):
             subject_place=None,
             jurisdiction_place_id=None,
             researcher=self.importer._researcher,
-            subject_date=gedcom_date,
+            subject_date=str(gedcom_date),
             medium="",
             title=gedcom_name,
             abbrev=gedcom_name,
@@ -214,7 +214,7 @@ class SourceManager(object):
         :return: [(source_id, models.Source)] or [None]
         """
 
-        if not isinstance(data, unicode) and getattr(data, "SOUR", None):
+        if not isinstance(data, str) and getattr(data, "SOUR", None):
             all_sources = []
 
             for s in data.SOUR:
@@ -314,15 +314,15 @@ class GedcomImporter(object):
         """
 
         if DEBUG:
-            print "Start import", time.time()
+            print("Start import", time.time())
 
         self._data = data
         self._researcher = self._create_researcher()
         prj = self._create_project(self._researcher)
 
-        self._default_surety = prj.scheme.parts.all()
+        self._default_surety = list(prj.scheme.parts.all())
         self._default_surety = \
-            self._default_surety[len(self._default_surety) / 2]
+            self._default_surety[int(len(self._default_surety) / 2)]
 
         self._births = dict()  # Index on gedcom persona id, contains Event
 
@@ -335,11 +335,11 @@ class GedcomImporter(object):
         # event along with all its OBJE (so we have lots of duplicates)
 
         self._principal = models.Event_Type_Role.objects.get(
-            pk=models.Event_Type_Role.principal)
+            pk=models.Event_Type_Role.PK_principal)
         self._birth__father = models.Event_Type_Role.objects.get(
-            pk=models.Event_Type_Role.birth__father)
+            pk=models.Event_Type_Role.PK_birth__father)
         self._birth__mother = models.Event_Type_Role.objects.get(
-            pk=models.Event_Type_Role.birth__mother)
+            pk=models.Event_Type_Role.PK_birth__mother)
 
         self._event_types = dict()
         self._char_types = dict()
@@ -359,7 +359,7 @@ class GedcomImporter(object):
         for r in data.REPO:
             self._create_repo(r)
         if DEBUG:
-            print "Done importing repositories"
+            print("Done importing repositories")
 
         for s in data.SOUR:
             self.source_manager.add_SOUR(s)
@@ -369,21 +369,21 @@ class GedcomImporter(object):
 
         max = len(data.INDI)
         if DEBUG:
-            print "Importing %d indi" % max
+            print("Importing %d indi" % max)
         for index, s in enumerate(data.INDI):
             self._create_indi(s)
             if DEBUG and index % 20 == 0:
-                print "%d / %d (%0.2f %%)" % (
-                    index, max, float(index) / float(max) * 100.0)
+                print("%d / %d (%0.2f %%)" % (
+                    index, max, float(index) / float(max) * 100.0))
         if DEBUG:
-            print "Done importing indi"
+            print("Done importing indi")
 
         if DEBUG:
-            print "Importing %d families" % (len(data.FAM))
+            print("Importing %d families" % (len(data.FAM)))
         for s in data.FAM:
             self._create_family(s)
         if DEBUG:
-            print "Done importing families"
+            print("Done importing families")
 
         for k, v in data.for_all_fields():
             if k not in ("SOUR", "INDI", "FAM", "HEAD", "SUBM",
@@ -392,7 +392,7 @@ class GedcomImporter(object):
                     "%s Unhandled FILE.%s" % (location(v), k))
 
     def report_error(self, msg):
-        print msg
+        print(msg)
 
     def _get_all_event_types(self):
         """Create a local cache for Event_Type"""
@@ -408,7 +408,7 @@ class GedcomImporter(object):
                 self._char_types[c.gedcom] = c
 
         self._char_types['_MIDL'] = \
-            models.Characteristic_Part_Type.objects.get(id=40)
+            models.Characteristic_Part_Type.objects.get(gedcom='_MIDL')
         # Handled specially in _create_characteristic
         self._char_types['NAME'] = True
 
@@ -484,7 +484,7 @@ class GedcomImporter(object):
         if data is None:
             return None
 
-        if isinstance(data, unicode):
+        if isinstance(data, str):
             self.report_error('Ignore OBJE reference: %s' % data)
             return
 
@@ -1034,9 +1034,9 @@ class GedcomImporter(object):
                         indi=indi, field=field, data=v, CHAN=data.CHAN)
 
             elif field.startswith("_") \
-                    and (isinstance(value, basestring)
+                    and (isinstance(value, str)
                          or (isinstance(value, list)
-                             and isinstance(value[0], basestring))):
+                             and isinstance(value[0], str))):
                 # A GEDCOM extension by an application.
                 # If this is a simple string value, assume this is a characteristic.
                 # Create the corresponding type in the database, and import the
@@ -1179,10 +1179,12 @@ class GedcomFileImporter(geneaprove.importers.Importer):
         try:
             parsed = Gedcom().parse(filename)
 
-            if isinstance(filename, unicode):
+            if isinstance(filename, str):
                 name = filename
-            else:
+            elif hasattr(filename, 'name'):
                 name = filename.name
+            else:
+                name = 'uploaded'
 
             gedcom_name = (
                 'GEDCOM "%s", %s, exported from %s,'
@@ -1199,8 +1201,8 @@ class GedcomFileImporter(geneaprove.importers.Importer):
             parser = GedcomImporterCumulate(gedcom_name, parsed)
             return (True, "\n".join(parser.errors))
 
-        except Invalid_Gedcom, e:
+        except Invalid_Gedcom as e:
             return (False, e.msg)
-        except Exception, e:
-            print "Unexpected Exception", e
-            return (False, traceback.print_exc(e))
+        except Exception as e:
+            print("Unexpected Exception", e)
+            return (False, traceback.print_exc())
