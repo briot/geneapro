@@ -1,1 +1,4 @@
-from .utils.tests import *
+"""
+Support for unit tests
+"""
+from .utils.tests import *    # pylint: disable=wildcard-import

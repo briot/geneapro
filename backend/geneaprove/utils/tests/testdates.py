@@ -3,8 +3,6 @@ unittest-based framework for testing units in GeneaProve.utils
 """
 
 import unittest
-import os
-import os.path
 from .. import date
 
 JAN_1_2008 = 2454467
@@ -27,15 +25,14 @@ JAN_15_UNDEFINED = 260104
 MAY_1_UNDEFINED = 260211
 
 
-class DateTestCase (unittest.TestCase):
-
+class DateTestCase(unittest.TestCase):
     """tests for date.py"""
 
     def _assert_delta(self, expected, fromDate, toDate):
         delta = toDate - fromDate
-        self.assertTrue(expected.years == delta.years
-                        and expected.months == delta.months
-                        and expected.days == delta.days,
+        self.assertTrue(expected.years == delta.years and
+                        expected.months == delta.months and
+                        expected.days == delta.days,
                         "Expected '%s', got '%s' for '%s - %s'" %
                         (expected, delta, toDate, fromDate))
 
@@ -45,8 +42,9 @@ class DateTestCase (unittest.TestCase):
         error = ""
 
         def cmp_end(d, exp):
+            # pylint: disable=protected-access
             if isinstance(d, date._Date) or d.ends[1] is None:
-                if type(exp) == tuple:
+                if isinstance(exp, tuple):
                     return "expected a range, got %s" % d
                 elif isinstance(d, date._Date):
                     if d.date != exp:
@@ -54,7 +52,7 @@ class DateTestCase (unittest.TestCase):
                 elif d.ends[0].date != exp:
                     return "%s != %s" % (d.ends[0].date, exp)
             else:
-                if type(exp) != tuple:
+                if isinstance(exp, tuple):
                     return "expected a simple date, got %s" % d
                 return cmp_end(d.ends[0], exp[0]) \
                     or cmp_end(d.ends[1], exp[1])
@@ -63,7 +61,7 @@ class DateTestCase (unittest.TestCase):
         if not d.ends[0] and not d.ends[1]:
             error = "Could not parse date"
         elif expected and d.display(original=False) != expected:
-            error =  "[" + d.display(original=False) \
+            error = "[" + d.display(original=False) \
                 + "]\n  != [" + expected + "]"
         elif day is not None:
             error = cmp_end(d, day)
@@ -173,11 +171,12 @@ class DateTestCase (unittest.TestCase):
         self._assert_date("1583-01-01 - 3 years", JAN_1_1581_JU,
                           "1580-01-01 (Julian)")
 
-        self.assertFalse(date.DateRange("1896-11-20")
-                         < date.DateRange("1894-06-20"))
-        self.assertTrue(date.DateRange("1896-11-20")
-                        > date.DateRange("1894-06-20"))
-        self.assertTrue(date.DateRange("1896-11-20") > date.DateRange("1894-06-20"))
+        self.assertFalse(
+            date.DateRange("1896-11-20") < date.DateRange("1894-06-20"))
+        self.assertTrue(
+            date.DateRange("1896-11-20") > date.DateRange("1894-06-20"))
+        self.assertTrue(date.DateRange("1896-11-20") >
+                        date.DateRange("1894-06-20"))
 
         # An example from the GEDC manual. A period (an event occurs during
         # an extended period of time) whose start and end are ranges (event

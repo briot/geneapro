@@ -3,6 +3,7 @@ from django.db import models
 from .base import GeneaProveModel
 from .place import Place
 
+
 class Repository_Type (GeneaProveModel):
     """
     The various kinds of repositories

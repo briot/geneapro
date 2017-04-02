@@ -1,12 +1,12 @@
+from geneaprove import models
 from . import evidence_style
 from . import style
-from geneaprove import models
 
 
 class Citations(object):
     # The chosen style of citations
     style_guide = evidence_style.evidence_style
-    
+
     @staticmethod
     def get_citation(type):
         """
@@ -18,7 +18,7 @@ class Citations(object):
             return style.No_Citation_Style
         else:
             return c
-    
+
     @staticmethod
     def source_types():
         """
@@ -27,4 +27,3 @@ class Citations(object):
         d = [{'id': key, 'type': t.type, 'category': t.category}
              for key, t in Citations.style_guide.items()]
         return sorted(d, key=lambda e: (e['category'], e['type']))
-

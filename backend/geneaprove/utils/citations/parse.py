@@ -5,21 +5,20 @@ This file parses the output of
 """
 
 from string import Template
-import re
 
-f = file("esm_templates.txt")
+
+def process(at_line):
+    """Extract the citation from the given line"""
+    return contents[at_line].replace("[", "{") \
+        .replace("]", "}") \
+        .replace("'", "\\'") \
+        .title()
+
+
+f = open("esm_templates.txt")
 contents = f.read().replace("\r", "").splitlines()
 
-def process(line):
-    """Extract the citation from the given line"""
-    return contents[line].replace("[", "{") \
-            .replace("]", "}") \
-            .replace("'", "\\'") \
-            .title()
-
-
-out = file("evidence_style.py", "w")
-
+out = open("evidence_style.py", "w")
 out.write("from .style import Citation_Style\n")
 out.write("evidence_style = {\n")
 
@@ -31,7 +30,7 @@ while line < len(contents):
         descr = contents[line]
         line += 1
 
-        biblio = process(line) # list or bibliographic style
+        biblio = process(line)  # list or bibliographic style
         line += 1
 
         # Full or full footnote or endnote style. This is the style to use in
@@ -39,7 +38,8 @@ while line < len(contents):
         full = process(line)
         line += 1
 
-        # Short footnote or endnote style for subsequent citations of a reference.
+        # Short footnote or endnote style for subsequent citations of a
+        # reference.
         short = process(line)
         line += 1
 
@@ -53,7 +53,8 @@ while line < len(contents):
                      short=short)
 
         out.write("\n")
-        out.write(Template("   '$identifier': Citation_Style(\n").substitute(subst))
+        out.write(
+            Template("   '$identifier': Citation_Style(\n").substitute(subst))
         out.write(Template("       category='$category',\n").substitute(subst))
         out.write(Template("       type='$title',\n").substitute(subst))
         out.write(Template("       biblio='$biblio',\n").substitute(subst))

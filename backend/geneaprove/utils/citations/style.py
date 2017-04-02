@@ -1,6 +1,9 @@
-from geneaprove import models
-from string import Template
+"""
+Support for citation styles
+"""
+
 import re
+from geneaprove import models
 
 
 class Citation_Style(object):
@@ -32,7 +35,7 @@ class Citation_Style(object):
         Compute the citation for a source. This function does not use the
         computed name from the database, but recompute its from the citation
         parts.
-    
+
         :param source: a models.Source or a dictionary of (key,value) for the
            citation parts.
         :return: a Source_Citation.
@@ -67,7 +70,7 @@ class Citation_Style(object):
 
         # Otherwise, only take those parts that are necessary
         else:
-            r = re.compile("\$\{([^}]+)\}")
+            r = re.compile(r"\$\{([^}]+)\}")
             return Source_Citation(
                 r.sub(__repl, self.biblio),
                 r.sub(__repl, self.full),
@@ -78,7 +81,7 @@ class Citation_Style(object):
            citation.
         """
         parts = set()
-        r = re.compile("\$\{([^}]+)\}")
+        r = re.compile(r"\$\{([^}]+)\}")
 
         for word in r.findall(self.biblio):
             parts.add(word)
@@ -106,5 +109,3 @@ class Source_Citation(object):
         return {'biblio': self.biblio,
                 'full': self.full,
                 'short': self.short}
-
-

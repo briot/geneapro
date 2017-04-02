@@ -76,4 +76,3 @@ class Place_Part(GeneaProveModel):
 
     def __str__(self):
         return str(self.type) + "=" + self.name
-

@@ -1,6 +1,7 @@
 from django.db import models
 from geneaprove.utils import date
 
+
 class GeneaProveModel(models.Model):
 
     def to_json(self):

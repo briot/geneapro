@@ -31,6 +31,8 @@ can be any of "color" (text color), "fill" (background color),
 "font-weight", "stroke" (border color)...
 """
 
+from geneaprove.utils.date import DateRange
+
 RULE_EVENT = 0
 RULE_ATTR = 1
 
@@ -60,8 +62,6 @@ __all__ = ["alive", "get_place",
            "RULE_IS_NOT", "RULE_GREATER", "RULE_GREATER_EQUAL",
            "RULE_SMALLER", "RULE_SMALLER_EQUAL", "RULE_AFTER",
            "RULE_ON", "RULE_CONTAINS_NOT_INSENSITIVE"]
-
-from geneaprove.utils.date import DateRange
 
 max_age = 110
 # maximum age before we consider a person to be dead
@@ -95,15 +95,15 @@ def get_place(event, part):
        event occurred.
        PART is one of "name", "country",...
     """
-    try:
-        if event.place:
-            if part == "name":
-                return event.place.name
-            else:
-                return event.place.parts.get(part, "")
+    if event.place:
+        if part == "name":
+            return event.place.name
         else:
-            return None
-    except:
+            try:
+                return event.place.parts.get(part, "")
+            except ValueError:
+                return None
+    else:
         return None
 
 
@@ -159,9 +159,9 @@ def style_to_css(style):
 
 
 class ColorScheme(object):
-
-    """A class that computes the color for a person, based on the angle and
-       distance from the decujus.
+    """
+    A class that computes the color for a person, based on the angle and
+    distance from the decujus.
     """
 
     def __init__(self):
@@ -173,12 +173,24 @@ class ColorScheme(object):
         pass
 
     def need_place_parts(self):
+        """
+        Whether we need to know places to compute proper colors,
+        depending on the user rules.
+        """
         return False   # color is independent of places
 
     def process(self, person, role, e):
+        """
+        Take into account an event, as seen from a specific person, to
+        later compute colors.
+        """
         pass   # color is independent of events
 
     def compute(self, person, as_css=False):
+        """
+        Compute the color to use for a person, given events previously
+        seen in `process`.
+        """
         if as_css:
             person.styles = "color:black"
         else:
@@ -213,10 +225,14 @@ class Styles(ColorScheme):
         self.counts = [None] * len(rules)  # the "count" rules: (test, value)
         self._need_place_parts = False
 
+        self.cache = None
+        # will be reset for each person in the tree, to take into account the
+        # list of events for that person.
+
         self.styles_count = 0
 
         for index, r in enumerate(rules):
-            rule_name, rule_type, rule_tests, rule_style = r
+            _, rule_type, rule_tests, rule_style = r
 
             if rule_type in (RULE_EVENT, RULE_ATTR):
                 tests = []
@@ -227,20 +243,29 @@ class Styles(ColorScheme):
                         continue
                     elif t[0] == "ancestor" and rule_type == RULE_ATTR:
                         ancestors = graph.people_in_tree(
-                            id=t[2], maxdepthAncestors=-1, maxdepthDescendants=0)
+                            id=t[2],
+                            maxdepthAncestors=-1,
+                            maxdepthDescendants=0)
                         tests.append((t[0], [a.main_id for a in ancestors]))
                         continue
                     elif t[0] == "descendant" and rule_type == RULE_ATTR:
                         descendants = graph.people_in_tree(
-                            id=t[2], maxdepthAncestors=0, maxdepthDescendants=-1)
+                            id=t[2],
+                            maxdepthAncestors=0,
+                            maxdepthDescendants=-1)
                         tests.append((t[0], [a.main_id for a in descendants]))
                         continue
                     elif t[0] == "IMPLEX" and rule_type == RULE_ATTR:
-                        # ??? We used to preprocess the tree to know how many times
-                        # an id occurred in the tree, but the graph no longer
-                        # provides that info
+                        # ??? We used to preprocess the tree to know how many
+                        # times an id occurred in the tree, but the graph no
+                        # longer provides that info
 
                         def build_implex(counts, id):
+                            """
+                            Store in `counts` the persons that appear in the
+                            tree to compute whether a person occurs multiple
+                            times.
+                            """
                             counts[id] = counts.get(id, 0) + 1
                             fathers = graph.fathers(id)
                             if fathers:
@@ -267,7 +292,7 @@ class Styles(ColorScheme):
 
                 self.rules.append((rule_type, tests, rule_style))
             else:
-              print("Unknown rule tag in the style rules: %s" % r)
+                print("Unknown rule tag in the style rules: %s" % r)
 
         self.no_match = [0] * len(self.rules)
 
@@ -334,10 +359,11 @@ class Styles(ColorScheme):
                 styles[a] = style[a]
 
     def compute(self, person, as_css=False):
-        """Sets person.styles to contain the list of styles for that person.
-           Nothing is computing if the style is already known.
-           if AS_CSS is True, person.styles is set to a valid CSS style, rather
-           than an index into all_styles
+        """
+        Sets person.styles to contain the list of styles for that person.
+        Nothing is computing if the style is already known.
+        if AS_CSS is True, person.styles is set to a valid CSS style, rather
+        than an index into all_styles.
         """
 
         styles = {}
@@ -426,9 +452,9 @@ class Styles(ColorScheme):
 
         # Default background value
 
-        if not "fill" in styles:
+        if "fill" not in styles:
             styles["fill"] = "none"
-        if not "stroke" in styles:
+        if "stroke" not in styles:
             styles["stroke"] = "black"
 
         s = self._all_styles.get(hashes, None)

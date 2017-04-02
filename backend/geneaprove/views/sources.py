@@ -4,13 +4,13 @@ Source-related views
 
 import os
 from django.conf import settings
-from django.http import HttpResponse
 from geneaprove.views.to_json import JSONView
 from geneaprove import models
 from geneaprove.utils.citations import Citations
 
 
 def get_source(id):
+    # pylint: disable=redefined-builtin
     """
     Get source information for a single source.
     This also gets information for related fields like repositories
@@ -34,7 +34,9 @@ class CitationModel(JSONView):
     """
     Return the citation model for a given id
     """
+
     def get_json(self, params, model_id):
+        # pylint: disable=arguments-differ
         citation = Citations.get_citation(model_id)
         return {
             'biblio': citation.biblio,
@@ -47,6 +49,7 @@ class CitationModels(JSONView):
     """
     Return the list of all known citation models
     """
+
     def get_json(self, params):
         return {
             'repository_types': models.Repository_Type.objects.all(),
@@ -58,7 +61,10 @@ class SourceCitation(JSONView):
     """
     Return the citation parts for a source
     """
+
     def get_json(self, params, id):
+        # pylint: disable=arguments-differ
+        # pylint: disable=redefined-builtin
         return {
             'parts': get_source(id).get_citations_as_list()
         }
@@ -68,7 +74,10 @@ class SourceView(JSONView):
     """
     View a specific source by id
     """
+
     def get_json(self, params, id):
+        # pylint: disable=arguments-differ
+        # pylint: disable=redefined-builtin
         source = get_source(id)
         return {
             'source':  source,
@@ -83,9 +92,12 @@ class EditSourceCitation(JSONView):
     Perform some changes in the citation parts for a source, and returns a
     JSON similar to SourceCitation
     """
+
     def post_json(self, params, id):
+        # pylint: disable=arguments-differ
+        # pylint: disable=redefined-builtin
         if id == -1:
-            src = create_empty_source()
+            src = get_source(id=-1)
             src.save()
         else:
             src = models.Source.objects.get(id=id)
@@ -106,7 +118,11 @@ class EditSourceCitation(JSONView):
                 # Only set the medium if different from the parent. Otherwise,
                 # leave it null, so that changing the parent also changes the
                 # lower level sources
-                if src.higher_source is None or src.higher_source.medium != value:
+
+                # ??? bug in pylint
+                # pylint: disable=no-member
+                if src.higher_source is None \
+                   or src.higher_source.medium != value:
                     src.medium = value
                 else:
                     src.medium = None
@@ -125,7 +141,7 @@ class EditSourceCitation(JSONView):
                 # src.subject_place = value
             elif key == 'jurisdiction_place':
                 pass
-                #src.jurisdiction_place = value
+                # src.jurisdiction_place = value
             elif key == 'higher_source_id':
                 src.higher_source_id = int(value)
             elif key[0] == '_':
@@ -136,9 +152,9 @@ class EditSourceCitation(JSONView):
                     type = models.Citation_Part_Type.objects.get(name=key)
                 except models.Citation_Part_Type.DoesNotExist:
                     type = models.Citation_Part_Type.objects.create(name=key)
-                    #type.save()
 
-                p = models.Citation_Part.objects.create(type=type, value=value, source_id=src.id)
+                p = models.Citation_Part.objects.create(
+                    type=type, value=value, source_id=src.id)
                 src.parts.add(p)
 
         src.save()
@@ -150,17 +166,21 @@ class SourcesList(JSONView):
     """
     View the list of all sources
     """
+
     def get_json(self, params):
         return models.Source.objects.order_by(
             'abbrev', 'title').select_related(
-            'researcher', 'subject_place', 'jurisdiction_place')
+                'researcher', 'subject_place', 'jurisdiction_place')
 
 
 class SourceRepresentations(JSONView):
     """
     Return the list of representations for a source
     """
+
     def get_json(self, params, id):
+        # pylint: disable=arguments-differ
+        # pylint: disable=redefined-builtin
         source = get_source(id)
         return {
             'source':  source,
@@ -172,10 +192,13 @@ class AddSourceRepr(JSONView):
     """
     Adding a new representation to a source.
     """
+
     def post_json(self, params, id):
+        # pylint: disable=arguments-differ
+        # pylint: disable=redefined-builtin
         source = get_source(id)
 
-        files = params.FILES.getlist('file')
+        files = params.files.getlist('file')
         dir = os.path.join(settings.MEDIA_ROOT, 'S%s' % id)
         try:
             os.makedirs(dir)
@@ -194,10 +217,9 @@ class AddSourceRepr(JSONView):
                     name = '%s_%s%s' % (name[0:name.rfind('_')], index, ext)
                 index += 1
 
-            w = open(name, "w")
-            for c in f.chunks():
-                w.write(c)
-            w.close
+            with open(name, "w") as w:
+                for c in f.chunks():
+                    w.write(c)
 
             r = models.Representation.objects.create(
                 source=source,
@@ -207,11 +229,15 @@ class AddSourceRepr(JSONView):
 
         return SourceRepresentations().get_json(None, id=id)
 
+
 class DelSourceRepr(JSONView):
     """
     Deleting a representation from a source
     """
+
     def post_json(self, params, id, repr_id):
+        # pylint: disable=arguments-differ
+        # pylint: disable=redefined-builtin
         ondisk = params.get('ondisk', False)
 
         error = ""
@@ -219,7 +245,7 @@ class DelSourceRepr(JSONView):
         if ondisk:
             try:
                 os.unlink(repr.file)
-            except:
+            except IOError:
                 error = "Could not delete %s" % (repr.file)
 
         repr.delete()

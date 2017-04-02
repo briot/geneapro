@@ -20,7 +20,7 @@ try:
     # If not, we still want to use this module standalone
     from django.utils.translation import ugettext as _
     _("foo")
-except:
+except ImportError:
     def _(txt):
         return txt
 
@@ -45,7 +45,7 @@ RE_YEARS = _("y|years?|ans?")    # When adding delta
 RE_BEFORE = _("before|bef|avant")
 RE_AFTER = _("after|aft|apres")
 RE_ABOUT = _("about|abt\\.?|circa|ca|environ|env")
-RE_EST = _("estimated|est\.?|cal")  # "cal" is used for "calculated" in gramps
+RE_EST = _(r"estimated|est\.?|cal")  # "cal" is used for "calculated" in gramps
 DEFAULT_DDMM_FORMAT = _("mm/dd/yyyy")  # or "mm/dd/yyy" depending on locale
 
 # Month names should be all lower cases
@@ -82,7 +82,7 @@ FRENCH_MONTHS = [
     ("frimaire", "frim"),
     ("nivose", "nivo"),
     ("pluviose", "pluv"),
-    ("ventose",  "vent"),
+    ("ventose", "vent"),
     ("germinal", "germ"),
     ("floreal", "flor"),
     ("prairial", "prai"),
@@ -93,47 +93,51 @@ FRENCH_MONTHS = [
 
 # No translation below
 
-FROM_TEXT = "(" + RE_FROM + ")\s+(.+)"
-FROM_RE = re.compile("^\s*" + FROM_TEXT, re.IGNORECASE)
+IGNORECASE = re.IGNORECASE    # pylint: disable=no-member
 
-TO_TEXT = "(" + RE_TO + ")\s+(.+)"
-TO_RE = re.compile("^\s*" + TO_TEXT, re.IGNORECASE)
+FROM_TEXT = "(" + RE_FROM + r")\s+(.+)"
+FROM_RE = re.compile(r"^\s*" + FROM_TEXT, IGNORECASE)
+
+TO_TEXT = "(" + RE_TO + r")\s+(.+)"
+TO_RE = re.compile(r"^\s*" + TO_TEXT, IGNORECASE)
 
 PERIOD_RE = re.compile(
-    "^" + FROM_TEXT + "\s+" + TO_TEXT + "\s*$", re.IGNORECASE)
-BETWEEN_RE = re.compile("^\s*(" + RE_BETWEEN + ")\s+(.+)\s+(" +
-                        RE_AND + ")\s+(.*)\s*$", re.IGNORECASE)
-TIME_RE = re.compile("\s*(\d?\d):(\d?\d)(:(\d?\d))?(am|pm)?")
+    "^" + FROM_TEXT + r"\s+" + TO_TEXT + r"\s*$", IGNORECASE)
+BETWEEN_RE = re.compile(r"^\s*(" + RE_BETWEEN + r")\s+(.+)\s+(" +
+                        RE_AND + r")\s+(.*)\s*$", IGNORECASE)
+TIME_RE = re.compile(r"\s*(\d?\d):(\d?\d)(:(\d?\d))?(am|pm)?")
 
-DELTA_YEARS = "(\d+)\s*(?:" + RE_YEARS + ")"
-DELTA_MONTHS = "(\d+)\s*(?:" + RE_MONTHS + ")"
-DELTA_DAYS = "(\d+)\s*(?:" + RE_DAYS + ")"
-DELTA_RE = ("(?:" + DELTA_YEARS + ")?"
-            + "\s*(?:" + DELTA_MONTHS + ")?"
-            + "\s*(?:" + DELTA_DAYS + ")?")
-ADD_RE = re.compile("\s*([-+])?\s*" + DELTA_RE + "\s*$", re.IGNORECASE)
+DELTA_YEARS = r"(\d+)\s*(?:" + RE_YEARS + ")"
+DELTA_MONTHS = r"(\d+)\s*(?:" + RE_MONTHS + ")"
+DELTA_DAYS = r"(\d+)\s*(?:" + RE_DAYS + ")"
+DELTA_RE = ("(?:" + DELTA_YEARS + ")?" +
+            r"\s*(?:" + DELTA_MONTHS + ")?" +
+            r"\s*(?:" + DELTA_DAYS + ")?")
+ADD_RE = re.compile(r"\s*([-+])?\s*" + DELTA_RE + r"\s*$", IGNORECASE)
 # Recognizes a delta:  $1=>sign $2=>years  $3=>months,  $4=>days
 
-YEAR_RE = "(\d{1,4}|(?:an\s+)?[MDCXVI]+)"
+YEAR_RE = r"(\d{1,4}|(?:an\s+)?[MDCXVI]+)"
 
-OPTDAY = "(\d?\d|\?*)"  # day (one or two digits), or any number of "?"
+OPTDAY = r"(\d?\d|\?*)"  # day (one or two digits), or any number of "?"
 
-YYYYMMDD_RE = re.compile("^\s*" + YEAR_RE + "[-/]" + OPTDAY + "[-/]" + OPTDAY + "$",
-                         re.IGNORECASE)
-ISO_RE = re.compile("^\s*" + YEAR_RE + "(\d{2})(\d{2})$", re.IGNORECASE)
-DDMMYYYY_RE = re.compile("^\s*(\d\d)[/-](\d\d)[/-]" + YEAR_RE + "$",
-                         re.IGNORECASE)
-SPELLED_OUT_RE = re.compile("^\s*(?:(\d\d?)\s+)?([a-z]+),?\s*" + YEAR_RE + "$",
-                            re.IGNORECASE)
-SPELLED_OUT2_RE = re.compile("^\s*(\w+)\s+(\d\d?),?\s*" + YEAR_RE + "$",
-                             re.IGNORECASE)
-YYYYMM_RE = re.compile("^\s*" + YEAR_RE + "([-/](\d\d?))?$", re.IGNORECASE)
-DDMM_RE = re.compile("^\s*(\d{2})[-/](\d{2})$")
+YYYYMMDD_RE = re.compile(
+    r"^\s*" + YEAR_RE + "[-/]" + OPTDAY + "[-/]" + OPTDAY + "$", IGNORECASE)
+ISO_RE = re.compile(r"^\s*" + YEAR_RE + r"(\d{2})(\d{2})$", IGNORECASE)
+DDMMYYYY_RE = re.compile(r"^\s*(\d\d)[/-](\d\d)[/-]" + YEAR_RE + "$",
+                         IGNORECASE)
+SPELLED_OUT_RE = re.compile(
+    r"^\s*(?:(\d\d?)\s+)?([a-z]+),?\s*" + YEAR_RE + "$",
+    IGNORECASE)
+SPELLED_OUT2_RE = re.compile(
+    r"^\s*(\w+)\s+(\d\d?),?\s*" + YEAR_RE + "$",
+    IGNORECASE)
+YYYYMM_RE = re.compile(r"^\s*" + YEAR_RE + r"([-/](\d\d?))?$", IGNORECASE)
+DDMM_RE = re.compile(r"^\s*(\d{2})[-/](\d{2})$")
 
-BEFORE_RE = re.compile("(<|" + RE_BEFORE + "|[^\d]/(\\d))", re.IGNORECASE)
-AFTER_RE = re.compile("(>|" + RE_AFTER + "|(\\d)/[^\d])", re.IGNORECASE)
-ABOUT_RE = re.compile("\s*(\\b(?:" + RE_ABOUT + ")|~)\s*", re.IGNORECASE)
-EST_RE = re.compile("\s*((?:" + RE_EST + ")\s*|\?\s*$)", re.IGNORECASE)
+BEFORE_RE = re.compile("(<|" + RE_BEFORE + r"|[^\d]/(\\d))", IGNORECASE)
+AFTER_RE = re.compile("(>|" + RE_AFTER + r"|(\\d)/[^\d])", IGNORECASE)
+ABOUT_RE = re.compile(r"\s*(\\b(?:" + RE_ABOUT + r")|~)\s*", IGNORECASE)
+EST_RE = re.compile(r"\s*((?:" + RE_EST + r")\s*|\?\s*$)", IGNORECASE)
 
 SPAN_FROM = 1
 SPAN_BETWEEN = 2
@@ -200,7 +204,7 @@ def __get_year(text):
     else:
         # In the french calendar, the date is often spelled with
         #  "25 fructidor an X", where "an" means "year"
-        text = re.sub("an\s*", "", text)
+        text = re.sub(r"an\s*", "", text)
         return from_roman_literal(text)
 
 
@@ -210,7 +214,7 @@ def as_int(d):
     """
     try:
         return int(d)
-    except:
+    except ValueError:
         return 0
 
 
@@ -257,7 +261,8 @@ def get_ymd(txt, months):
             day = int(m.group(1))
         except TypeError:
             day = 1
-        return (__get_year(m.group(3)), month, day, True, month_specified, True)
+        return (__get_year(m.group(3)), month, day, True,
+                month_specified, True)
 
     m = SPELLED_OUT2_RE.search(txt)
     if m:
@@ -297,13 +302,13 @@ def get_ymd(txt, months):
 ########################
 
 
-class Calendar (object):
+class Calendar(object):
 
     """Abstract base class for all types of calendars we support"""
 
-    def __init__(self, suffixes, prefixes=None):
-        self.__re = re.compile \
-            ('\\s*\\(?(' + suffixes + ')\\)?\\s*', re.IGNORECASE)
+    def __init__(self, suffixes):
+        self.__re = re.compile(
+            '\\s*\\(?(' + suffixes + ')\\)?\\s*', IGNORECASE)
         self._month_names = MONTH_NAMES
 
     def is_a(self, text):
@@ -330,8 +335,8 @@ class Calendar (object):
            formats as possible for completeness.
            None should be returned if the date could not be parsed.
            This returns a tuple containing
-              (julian_day_number, year_specified, month_specified, day_specified,
-               calendar)
+           (julian_day_number, year_specified, month_specified, day_specified,
+            calendar)
         """
         year, month, day, yk, mk, dk = get_ymd(txt, self._month_names)
         if not yk:
@@ -349,8 +354,8 @@ class Calendar (object):
         """Given an expanded (possibly partial) date, return the same result
            as parse.
            This returns a tuple containing
-              (julian_day_number, year_specified, month_specified, day_specified,
-               calendar)
+           (julian_day_number, year_specified, month_specified, day_specified,
+            calendar)
         """
         raise NotImplementedError
 
@@ -385,7 +390,7 @@ class Calendar (object):
         return formt % {"year": year, "month": month, "day": day}
 
 
-class CalendarGregorian (Calendar):
+class CalendarGregorian(Calendar):
 
     """The gregorian calendar, first created in 1582 but adopted sometimes
        much later in some countries
@@ -412,9 +417,10 @@ class CalendarGregorian (Calendar):
             a = (14 - m) // 12
             y2 = y + 4800 - a
             m2 = m + 12 * a - 3
-            d += (153 * m2 + 2) // 5 + 365 * y2 + y2 // 4 - y2 // 100 + y2 // 400 \
-                - feb_29_4800
-            return (d, year is not None, month is not None, day != None, self)
+            d += (153 * m2 + 2) // 5 + 365 * y2 + y2 // 4 - y2 // 100 + \
+                y2 // 400 - feb_29_4800
+            return (d, year is not None, month is not None,
+                    day is not None, self)
 
     @staticmethod
     def today():
@@ -443,7 +449,7 @@ class CalendarGregorian (Calendar):
         return (y - 4800 + (m + 2) // 12, (m + 2) % 12 + 1, d + 1)
 
 
-class CalendarFrench (Calendar):
+class CalendarFrench(Calendar):
 
     """The french revolutionary calendar, which was only used during a few
        years during the french revolution.
@@ -457,9 +463,9 @@ class CalendarFrench (Calendar):
             for m in f:
                 self._month_names[m] = index + 1
 
-        self.__months_re = re.compile\
-            ("|".join([k for k in self._month_names.keys() if k != ""]),
-             re.IGNORECASE)
+        self.__months_re = re.compile(
+            "|".join([k for k in self._month_names.keys() if k != ""]),
+            IGNORECASE)
 
     def __str__(self):
         # Do not return the name of the calendar when we spell out the month
@@ -487,7 +493,7 @@ class CalendarFrench (Calendar):
             d = day or 1
             sep_21_1792 = 2375839
             return (sep_21_1792 + (y - 1) * 365 + y // 4 + m * 30 - 30 + d,
-                    year != None, month != None, day != None, self)
+                    year is not None, month is not None, day is not None, self)
         else:
             return (0, False, False, False, self)
 
@@ -529,7 +535,7 @@ class CalendarFrench (Calendar):
         return output
 
 
-class CalendarJulian (Calendar):
+class CalendarJulian(Calendar):
 
     """The julian calendar (in use before the gregorian calendar)"""
 
@@ -553,7 +559,7 @@ class CalendarJulian (Calendar):
         y2 = y + 4800 - a
         m2 = m + 12 * a - 3
         return ((d + (153 * m2 + 2) // 5 + 365 * y2 + y2 // 4) - feb_29_4800,
-                year != None, month != None, day != None, self)
+                year is not None, month is not None, day is not None, self)
 
     def components(self, julian_day):
         """See inherited doc"""
@@ -567,6 +573,7 @@ class CalendarJulian (Calendar):
         m = (da * 5 + 308) // 153 - 2
         return (y - 4800 + (m + 2) // 12, (m + 2) % 12 + 1,
                 da - (m + 4) * 153 // 5 + 122)
+
 
 # The list of predefined calendars
 KNOWN_CALENDARS = [CalendarJulian(), CalendarFrench(), CalendarGregorian()]
@@ -800,7 +807,7 @@ class _Date(object):
                 self.date, self.year_known, self.month_known, self.day_known,
                 year_only=year_only)
 
-            if not year_only and self.seconds != None:
+            if not year_only and self.seconds is not None:
                 result += " " + str(self.seconds)
 
             if self.type == DATE_AFTER:
@@ -826,7 +833,7 @@ class _Date(object):
         if self.month_known and delta.months:
             m += delta.months
             julian = self.calendar.from_components(y, m, d)[0]
-            (y2, m2, d2) = self.calendar.components(julian)
+            (_, m2, d2) = self.calendar.components(julian)
 
             if m2 != (m - 1) % 12 + 1:
                 if delta.months > 0:
@@ -899,18 +906,20 @@ class _Date(object):
 ##################
 
 class DateRange(object):
-
-    """This class represents a date or a range of date, as read from the
-       user. Such dates might be incomplete or unprecise. The text entered
-       by the user is meant to be kept forever, this class provides an
-       interpretation of the text more suitable for machin use
+    """
+    This class represents a date or a range of date, as read from the
+    user. Such dates might be incomplete or unprecise. The text entered
+    by the user is meant to be kept forever, this class provides an
+    interpretation of the text more suitable for machin use
     """
 
     def __init__(self, text):
-        """Represents a potentially partial and potentially unprecise date
-           or date range, in a specific calendar. calendar should be an instance
-           of a derived class of Calendar. If unspecified, the Date class
-           will attempt to autodetect it"""
+        """
+        Represents a potentially partial and potentially unprecise date
+        or date range, in a specific calendar. calendar should be an instance
+        of a derived class of Calendar. If unspecified, the Date class
+        will attempt to autodetect it.
+        """
 
         self.text = text.strip()  # Date as the user entered it
         self.ends = [None, None]  # The two ends of the range. These are
@@ -954,7 +963,7 @@ class DateRange(object):
             return result
 
         else:
-            assert(isinstance(date, DateRange))
+            assert isinstance(date, DateRange)
             if self.ends[0] is None or date.ends[0] is None:
                 return None
             return self.ends[0] - date.ends[0]
@@ -982,6 +991,11 @@ class DateRange(object):
         return self.display()
 
     def display(self, calendar=None, year_only=False, original=False):
+        """
+        Convert to a string
+        :param bool year_only: only display the date.
+        """
+
         if original and self.text:
             return str(self.text)
 
@@ -1031,7 +1045,7 @@ class DateRange(object):
 
     def __add__(self, delta):
         """Add a delta to a date range"""
-        assert(isinstance(delta, TimeDelta))
+        assert isinstance(delta, TimeDelta)
         d1 = self.ends[0] + delta
         if self.ends[1]:
             d2 = self.ends[1] + delta

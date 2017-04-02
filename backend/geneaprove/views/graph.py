@@ -3,15 +3,8 @@ Handles merging of personas.
 """
 
 
-from django.shortcuts import render_to_response
-from django.template import RequestContext
-from django.utils.translation import ugettext as _
-from django.http import HttpResponse
 from geneaprove import models
-from geneaprove.views.to_json import to_json, JSONView
-from geneaprove.views.styles import Styles
-from geneaprove.views.queries import sql_in
-import datetime
+from geneaprove.views.to_json import JSONView
 from geneaprove.utils.graphs import Digraph
 
 
@@ -53,8 +46,10 @@ class Persona_node(object):
         # return "%s-%s" % (self.main_id, self.name.encode("utf-8"))
         return "%s" % (self.main_id, )
 
-    def _graphlabel(self):
-        return "%s-%s" % (",".join("%s" % p for p in sorted(self.ids)), self.name)
+    def graphviz_label(self):
+        return "%s-%s" % (
+            ",".join("%s" % p for p in sorted(self.ids)),
+            self.name)
 
 
 class P2P_Link(object):
@@ -81,7 +76,7 @@ class P2P_Link(object):
     def __repr__(self):
         return "%s-%s->%s" % (self.fromP, self.kind, self.toP)
 
-    def _graphlabel(self):
+    def graphviz_label(self):
         return ""
 
 
@@ -204,9 +199,7 @@ class GeneaGraph(Digraph):
         #     WHERE p2c.characteristic=characteristic_part.characteristic
         #       AND characteristic_part.type = 1
 
-        query = ("SELECT %(cp_id)s, %(cp_name)s, %(p2c_person)s AS person"
-                 " FROM %(p2c)s, %(cp)s"
-                 " WHERE %(cp_type)s=%(val)d AND %(p2c_char)s=%(cp_char)s") % {
+        raw = {
             "p2c": models.sql_table_name(models.P2C),
             "cp":  models.sql_table_name(models.Characteristic_Part),
             "p2c_person": models.sql_field_name(models.P2C, "person"),
@@ -220,7 +213,13 @@ class GeneaGraph(Digraph):
                 models.Characteristic_Part, "type"),
             "cp_char": models.sql_field_name(
                 models.Characteristic_Part, "characteristic"),
-            "val": models.Characteristic_Part_Type.PK_sex}
+            "val": models.Characteristic_Part_Type.PK_sex
+        }
+
+        query = (
+            "SELECT %(cp_id)s, %(cp_name)s, %(p2c_person)s AS person"
+            " FROM %(p2c)s, %(cp)s"
+            " WHERE %(cp_type)s=%(val)d AND %(p2c_char)s=%(cp_char)s") % raw
 
         for c in models.Characteristic_Part.objects.raw(query):
             self.node_from_id(c.person).sex = c.name
@@ -340,17 +339,18 @@ class GeneaGraph(Digraph):
 
             Sort the families, so that they are organized by layer. A family is
             associated with its right-most layer (in general to the left of the
-            layer that contains the children). Within each layer, the families are
-            sorted in the order in which they should be displayed in the matrix --
-            so for instance the first family should involve the first person of the
-            layer to limit crossings of links.
+            layer that contains the children). Within each layer, the families
+            are sorted in the order in which they should be displayed in the
+            matrix -- so for instance the first family should involve the first
+            person of the layer to limit crossings of links.
 
             :param graph:
                 a subset of the original graph, which only includes the nodes
                 we are interested in, and only the parent/child relations.
             :param layers:
-                A list of list of persons, indicating the persons at each layer.
-                For instance:   [[person_at_gen0], [person_at_gen1, ...], ...]
+                A list of list of persons, indicating the persons at each
+                layer. For instance:
+                    [[person_at_gen0], [person_at_gen1, ...], ...]
             :param layers_by_id:
                 for each person, its layer.
             :return: a list of list of tuples (father,mother,child1,child2,...)
@@ -404,7 +404,7 @@ class GeneaGraph(Digraph):
                 # Pass the ids of the family members, not the nodes
                 result.append(
                     [list(map(lambda node: min(node.ids) if node else -1,
-                         family))
+                              family))
                      for family in r])
 
             return result
@@ -416,14 +416,13 @@ class GeneaGraph(Digraph):
         tmp = Digraph()
         for e in self.edges():
             if e.kind in (P2P_Link.KIND_MOTHER, P2P_Link.KIND_FATHER) and \
-               e[0] in (subset or self) and \
-               e[1] in (subset or self):
+               (e[0] in subset or self) and \
+               (e[1] in subset or self):
 
                 tmp.add_edge(e)
 
         # Then organize nodes into layers
 
-        #layers_by_id = tmp.rank_longest_path()
         layers_by_id = tmp.rank_minimize_dummy_vertices()
 
         layers = tmp.get_layers(layers_by_id=layers_by_id)
@@ -437,7 +436,7 @@ class GeneaGraph(Digraph):
         result = []
         for lay in range(0, len(layers)):
             result.append(
-                [{"id": n.main_id, "name": n.name, "sex":n.sex}
+                [{"id": n.main_id, "name": n.name, "sex": n.sex}
                  for n in layers[lay]])
 
         return {"persons": result,
@@ -495,7 +494,8 @@ class GeneaGraph(Digraph):
 # that modify the database reset the graph. We also need to make sure that
 # a single thread at a time is using the graph at the same time.
 
-graph = GeneaGraph()
+global_graph = GeneaGraph()
+
 
 class QuiltsView(JSONView):
 
@@ -511,25 +511,18 @@ class QuiltsView(JSONView):
 
         # ??? Should lock the graph until the view has been generated
 
-        graph.update_if_needed()
-        if len(graph) == 0:
-            return render_to_response(
-                'geneaprove/firsttime.html',
-                context_instance=RequestContext(request))
+        global_graph.update_if_needed()
+        if len(global_graph) == 0:
+            return {}
 
         subset = None
 
         if decujus_tree:
-            subset = graph.people_in_tree(
+            subset = global_graph.people_in_tree(
                 id=decujus, maxdepthAncestors=-1, maxdepthDescendants=-1,
                 spouses_tree=True)
 
-        #graph.export(file("graph.pickle", "w"))
-        #graph.write_graphviz(file("graph.dot", "wb"))
-        # graph.write_graphviz(file("genea.dot", "w"),
-        #                 edgeiter=g.out_children_edges)
-
-        data = graph.json(subset)
+        data = global_graph.json(subset)
         return {
             "persons": data["persons"],
             "families": data["families"],

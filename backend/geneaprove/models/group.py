@@ -48,10 +48,10 @@ class Group(GeneaProveModel):
     criteria = models.TextField(
         null=True,
         help_text="The criteria for admission in a group. For instance, one"
-        + " group might be all neighbors listed in a particular"
-        + " document, and another group might be a similar group"
-        + " listed in another document, or same document at a"
-        + " different time")
+        " group might be all neighbors listed in a particular"
+        " document, and another group might be a similar group"
+        " listed in another document, or same document at a"
+        " different time")
 
     class Meta:
         """Meta data for the model"""

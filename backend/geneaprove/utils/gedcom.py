@@ -31,7 +31,7 @@ This parser is reasonably fast, and will parse the ITIS.ged file in 3:08 min
 try:
     from django.utils.translation import ugetNone as _
     _("foo")
-except:
+except ImportError:
     def _(txt):
         return txt
 
@@ -43,9 +43,9 @@ __all__ = ["Gedcom", "GedcomFile", "GedcomIndi", "GedcomFam", "GedcomRecord",
            "Invalid_Gedcom", "GedcomString"]
 
 POINTER_STRING = "(?:[^@]*)"
-OPTIONAL_XREF_ID = "(?:(?P<xref_id>@\w" + POINTER_STRING + "@)\s)?"
-LINE_RE = re.compile('^(?P<level>\d+)\s' + OPTIONAL_XREF_ID
-                     + '(?P<tag>\w+)' + '(?:\s(?P<value>.*))?')
+OPTIONAL_XREF_ID = r"(?:(?P<xref_id>@\w" + POINTER_STRING + r"@)\s)?"
+LINE_RE = re.compile(r'^(?P<level>\d+)\s' + OPTIONAL_XREF_ID +
+                     r'(?P<tag>\w+)' + r'(?:\s(?P<value>.*))?')
 unlimited = 100000
 
 DEBUG = False
@@ -102,339 +102,320 @@ _GRAMMAR = dict(
           ("_EVDEF", 0, unlimited, "_EVDEF"),  # ??? RootsMagic
           ("TRLR", 1, 1,         None)),
 
-    CHAN = (("DATE", 1, 1,         # Change date
-             (("TIME", 0, 1, None),)),
-            ("NOTE", 0, unlimited, None)),  # note structure
+    CHAN=(("DATE", 1, 1,         # Change date
+           (("TIME", 0, 1, None),)),
+          ("NOTE", 0, unlimited, None)),  # note structure
 
-    OBJE = (("FORM", 1, 1,         None),  # Multimedia format
-            ("TITL", 0, 1,         None),  # Descriptive title
-            ("FILE", 0, 1,         None),  # Multimedia file reference
-            ("NOTE", 0, unlimited, None),  # Note on multimedia object
-            ("BLOB", 1, 1,         None),
-            ("OBJE:XREF(OBJE)", 0, 1, None),
-            ("REFN", 0, unlimited,
-             (("TYPE", 0, 1, None),)),
-            ("RIN",  0, 1,         None),
-            ("CHAN", 0, 1,         "CHAN"),
-            ),
+    OBJE=(("FORM", 1, 1,         None),  # Multimedia format
+          ("TITL", 0, 1,         None),  # Descriptive title
+          ("FILE", 0, 1,         None),  # Multimedia file reference
+          ("NOTE", 0, unlimited, None),  # Note on multimedia object
+          ("BLOB", 1, 1,         None),
+          ("OBJE:XREF(OBJE)", 0, 1, None),
+          ("REFN", 0, unlimited,
+           (("TYPE", 0, 1, None),)),
+          ("RIN",  0, 1,         None),
+          ("CHAN", 0, 1,         "CHAN"),),
 
-    _ASSOC = (("RELA", 0, 1,         None),  # ??? Geneatique 20210
-              ("TYPE", 0, 1,         None),
-              ("NOTE", 0, unlimited, None),
-              ("SOUR", 0, unlimited, "SOURCE_CITATION")),
-
-    MULTIMEDIA_LINK =
-    (("FORM", 0, 1, None),   # ??? Optional for Geneatique 2010
-     # but mandatory in standard
-     ("TITL", 0, 1, None),
-     ("FILE", 1, 1, None),
-     ("_TYPE", 0, 1, None),  # ??? RootsMagic extension
-     ("_SCBK", 0, 1, None),  # ??? RootsMagic extension
-     ("_PRIM", 0, 1, None),  # ??? RootsMagic extension
-     ("NOTE", 0, unlimited, None)),
-
-    SOURCE_CITATION =
-    (("TEXT", 0, unlimited, None),      # Text from source
-     ("NOTE", 0, unlimited, None),      # Note on source
-     ("PAGE", 0, 1,         None),      # Where within source
-     ("EVEN", 0, 1,                    # Event type cited from
-      (("ROLE", 0, 1,     None),)),   # Role in event
-     ("DATA", 0, 1,
-      (("DATE", 0, 1,     None),      # Entry recording date
-       ("TEXT", 0, unlimited, None))),  # Text from source
-     ("QUAY", 0, 1,         None),      # Certainty assessment
-     ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-     ("NOTE", 0, unlimited, None),
-     ("_QUAL", 0, 1, None),  # ??? RootsMagic extension
-     ("_INFO", 0, 1, None),  # ??? RootsMagic extension
-     ("_TMPLT", 0, 1, "_TMPLT")),  # ??? RootsMagic extension
-
-    _TMPLT =  # ??? RootsMagic only
-    (("TID", 0, 1, None),
-     ("FIELD", 0, unlimited,
-      (("NAME", 0, unlimited, None),
-       ("VALUE", 0, unlimited, None),
-       )),
-     ),
-
-    _EVDEF =  # ??? RootsMagic only   # eg./  "BIRT"
-    (("TYPE", 0, 1, None),    # eg./  "P"
-     ("TITL", 0, 1, None),   # eg./  "Birth"
-     ("ABBR",  0, 1, None),   # eg./  "Birth"
-     # eg./ [person] was born< [Date]>< [PlaceDetails]>< [Place]>.
-     ("SENT",  0, 1, None),
-     ("PLAC",  0, 1, None),   # eg./ "Y"
-     ("DATE",  0, 1, None),   # eg./ "Y"
-     ("DESC",  0, 1, None),   # eg./ "N"
-     ),
-
-    ADDR = (("ADR1", 0, 1, None),  # Address line 1
-            ("ADR2", 0, 1, None),  # Address line 2
-            ("CITY", 0, 1, None),  # Address city
-            ("STAE", 0, 1, None),  # Address state
-            ("POST", 0, 1, None),  # Address postal code
-            ("CTRY", 0, 1, None),  # Address country
-            ("NOTE", 0, unlimited, None)),  # ??? RootsMagic extension
-
-    SOUR = (("DATA", 0, 1,
-             (("EVEN", 0, unlimited,  # Event recorded
-               (("DATE", 0, 1, None),       # Date period
-                ("PLAC", 0, 1, "PLAC"))),   # Source jurisdiction place
-              ("AGNC", 0, 1,         None),   # Responsible agency
-                 ("NOTE", 0, unlimited, None))),  # Note on data
-            ("AUTH", 0, 1, None),  # Source originator
-            ("TITL", 0, 1, None),  # Source descriptive title
-            ("ABBR", 0, 1, None),  # Source filed by entry
-            ("PUBL", 0, 1, None),  # Source publication facts
-            ("TEXT", 0, 1, None),  # Text from source
-            ("REPO", 0, 1,  # Source repository citation
-             (("NOTE", 0, unlimited, None),  # Note on repository
-              ("CALN", 0, unlimited,  # Source call number
-               (("MEDI", 0, 1, None),  # Source media type
-                )))),
-            ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-            ("NOTE", 0, unlimited, None),  # Note on source
-            ("REFN", 0, unlimited,  # User reference number
-             (("TYPE", 0, 1, None),)),  # User reference type
-            ("RIN", 0, 1, None),        # Automated record id
-            ("CHAN", 0, 1,        # Change date
-             (("DATE", 1, 1,  # Change date
-               (("TIME", 0, 1, None),  # Time value
-                )),
-              ("NOTE", 0, unlimited, None),  # Note on change date
-              )),
-            ("_SUBQ", 0, 1, None),  # ??? RootsMagic
-            ("_BIBL", 0, 1, None),  # ??? RootsMagic
-            ("_TMPLT", 0, 1, "_TMPLT"),  # ??? RootsMagic extension
-            ),
-
-    PLAC = (("FORM", 0, 1,         None),  # Place hierarchy
-            ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-            ("NOTE", 0, unlimited, None),
-            ("MAP",  0, 1,                 # ??? Gramps addition
-             (("LATI", 1, 1,     None),
-              ("LONG", 1, 1,     None))),
-            ),
-
-    INDI = (("RESN", 0, 1,         None),    # Restriction notice
-            ("NAME", 0, unlimited, "NAME"),
-            ("SEX",  0, 1,         None),    # Sex value
-            ("_UID", 0, unlimited, None),    # ??? RootsMagic extension
-            (("BIRT", "CHR"), 0, unlimited,
-             EVENT_DETAILS
-             + (("FAMC:XREF(FAM)", 0, 1, None),)),  # Child to family link
-            ("ADOP", 0, unlimited,
-             EVENT_DETAILS
-             + (("FAMC:XREF(FAM)", 0, 1,
-                 (("ADOP", 0, 1, None),)  # Adopted by which parent
-                 ),)
-             ),
-            (("DEAT", "BURI", "CREM",
-              "BAPM", "BARM", "BASM", "BLES",
-              "CHRA", "CONF", "FCOM", "ORDN", "NATU",
-              "EMIG", "IMMI", "CENS", "PROB", "WILL",
-              "GRAD", "RETI", "EVEN",
-              "CAST",  # Cast name
-              "DSCR",  # Physical description
-              "EDUC",  # Scholastic achievement
-              "IDNO",  # National Id number
-              "NATI",  # National or tribal origin
-              "NCHI",  # Count of children
-              "NMR",   # Count of marriages
-              "OCCU",  # Occupation
-              "PROP",  # Possessions
-              "RELI",  # Religious affiliation
-              "RESI",  # Residence
-              "SSN",   # Social security number
-              "TITL"),  # Nobility type title
-             0, unlimited,  # Individual attributes
-             EVENT_DETAILS),
-
-            (("BAPL", "CONL", "ENDL"), 0, unlimited,
-             ((("STAT", "DATE", "TEMP", "PLAC"), 0, 1, None),
-              ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-              ("NOTE", 0, unlimited, None))),
-
-            ("SLGC", 0, unlimited,
-             ((("STAT", "DATE", "TEMP", "PLAC"), 0, 1, None),
-              ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-              ("FAMC:XREF(FAM)", 1, 1, None),
-              ("NOTE", 0, unlimited, None))),
-
-            ("FAMC:XREF(FAM)", 0, unlimited,    # Child to family link
-             (("PEDI", 0, unlimited, None),  # pedigree linkage type
-              ("NOTE", 0, unlimited, None))),
-            ("FAMS", 0, unlimited, None),  # Spouse to family link
-            ("SUBM:XREF(SUBM)", 0, unlimited, None),  # Submitter pointer
-            ("ASSO", 0, unlimited,
-             (("RELA", 1, 1,         None),  # Relation_is descriptor
-              ("NOTE", 0, unlimited, None),
-              ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
-            ("RELATION", 0, unlimited,  # ??? Geneatique 2010
-             (("ASSO", 0, unlimited, "_ASSOC"),)),  # ??? Geneatique 2010
-
-            ("ALIA:XREF(INDI)", 0, unlimited, None),
-            ("ANCI:XREF(SUBM)", 0, unlimited, None),
-            ("DESI:XREF(SUBM)", 0, unlimited, None),
-            ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-            ("IMAGE", 0, unlimited,  # ??? Geneatique 2010
-             (("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-              ("NOTE", 0, unlimited, None))),
-            ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-            ("NOTE", 0, unlimited, None),
-            ("RFN",  0, 1,         None),  # Permanent record file number
-            ("AFN",  0, 1,         None),  # Ancestral file number
-            ("REFN", 0, unlimited,  # User reference number
-             (("TYPE", 0, 1, None),  # User reference type
-              )),
-            ("RIN",  0, 1,         None),  # Automated record Id
-            ("CHAN", 0, unlimited,         "CHAN"),  # Change date
-            # ??? CHAN unlimited in geneatique 2010, but standard stays
-            # 1 occurrence max
-            ("SIGN", 0, 1,         None),  # ??? Geneatique 2010
-            ("FACT", 0, unlimited,  # ??? gramps extension
-             (("TYPE", 1, 1,         None),  # type of fact ??? gramps
-              ("NOTE", 0, unlimited, None),
-              ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
-            ("_CHV", 0, 1, None),  # ??? Geneatique 2010
-            ("_DEG", 0, unlimited,   # ??? gramps extensions for diplomas
-             (("TYPE", 1, 1, None),
-              ("DATE", 0, 1, None))
-             ),
-            ("_MILT", 0, unlimited,  # ??? gramps extension for military
-             (("TYPE", 1, 1,         None),
-              ("DATE", 1, 1,         None),
-              ("NOTE", 0, unlimited, None),
-              ("ADDR", 0, 1,         "ADDR"),
-              ("PLAC", 0, 1,         "PLAC"),
-              ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
-            ),
-
-    REPO = (("NAME", 0, 1,         None),   # Name of repository
-            ("WWW",  0, unlimited, None),   # ??? Gramps extension
-            ("ADDR", 0, 1,         "ADDR"),  # Address of repository
-            ("PHON", 0, 3,         None),
-            ("NOTE", 0, unlimited, None),   # Repository notes
-            ("REFN", 0, unlimited,          # User reference number
-             (("TYPE", 0, 1, None),)),    # User reference type
-            ("RIN", 0, 1, None),            # Automated record id
-            ("CHAN", 0, 1, "CHAN")),
-
-    EVENT_FOR_INDI =
-    EVENT_DETAILS
-    + (("HUSB", 0, 1, (("AGE", 1, 1, None),)),  # Age at event
-       ("WIFE", 0, 1, (("AGE", 1, 1, None),))),  # Age at event
-
-    FAM = ((("ANUL", "CENS", "DIV", "DIVF",
-             "ENGA", "MARR", "MARB", "MARC",
-             "MARL", "MARS",
-             "EVEN"), 0, unlimited, "EVENT_FOR_INDI"),
-           ("_UID", 0, 1, None),   # Reunion on OSX
-           ("HUSB:XREF(INDI)", 0, 1,         None),
-           ("WIFE:XREF(INDI)", 0, 1,         None),
-           ("CHIL:XREF(INDI)", 0, unlimited, None),  # xref to children
-           ("NCHI", 0, 1,         None),  # count of children
-           ("SUBM:XREF(SUBM)", 0, unlimited, None),  # xref to SUBM
-
-           ("SLGS", 0, unlimited,  # LDS spouse sealing
-            (("STAT", 0, 1, None),  # Spouse sealing Date status
-             ("DATE", 0, 1, None),  # Date LDS ordinance
-             ("TEMP", 0, 1, None),  # Templace code
-             ("PLAC", 0, 1, None),  # Place living ordinance
-             ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-                ("NOTE", 0, unlimited, None))),
-
-           ("SOUR", 0, unlimited, "SOURCE_CITATION"),  # source
-           ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-           ("NOTE", 0, unlimited, None),
-           ("REFN", 0, unlimited,  # User reference number
-            (("TYPE", 0, 1, None),)),  # User reference type
-           ("RIN", 0, 1, None),      # Automated record id
-           ("CHAN", 0, 1,         "CHAN")),    # Change date
-
-    SUBM = (("NAME", 1, 1,         "NAME"),  # Submitter name
-            ("ADDR", 0, 1,         "ADDR"),  # Current address of submitter
-            ("EMAIL", 0, 1,        None),   # ??? Heredis extension
-            ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-            ("LANG", 0, 3,         None),   # Language preference
-            ("RFN",  0, 1,         None),   # Submitter registered rfn
-            ("RIN",  0, 1,         None),   # Automated record id
-            ("PHON", 0, 3,         None),
-            ("CHAN", 0, 1,         "CHAN")),  # Change date
-
-    SUBN = (("SUBM:XREF(SUBM)",  0, 1,    None),
-            ("FAMF",  0, 1,         None),   # Name of family file
-            ("TEMP",  0, 1,         None),   # Temple code
-            ("ANCE",  0, 1,         None),   # Generations of ancestors
-            ("DESC",  0, 1,         None),   # Generations of descendants
-            ("ORDI",  0, 1,         None),   # Ordinance process flag
-            ("RIN",   0, 1,         None)),  # Automated record id
-
-    NOTE = (("SOUR", 0, unlimited, "SOURCE_CITATION"),
-            ("REFN", 0, unlimited,
-             (("TYPE", 0, 1, None),)),
-            ("RIN",  0, 1, None),
-            ("CHAN", 0, 1, "CHAN")),
-
-    HEAD = (("SOUR", 1, 1,  # Approved system id
-             (("VERS", 0, 1, None),  # Version number
-              ("NAME", 0, 1, None),  # Name of product
-                 ("CORP", 0, 1,  # Name of business
-                  (("ADDR", 0, 1, "ADDR"),
-                   ("_ADDR", 0, 1, "ADDR"),  # ??? Geneatique 2010
-                   ("WWW", 0, 1, None),  # ??? RootsMagic extension
-                   ("WEB", 0, 1, None),  # ??? Heredis extension
-                   ("PHON", 0, 3, None))),
-                 ("DATA", 0, 1,  # Name of source data
-                  (("DATE", 0, 1, None),  # Publication date
-                   ("COPR", 0, 1, None))),  # Copyright source data
-              )),
-            ("DEST", 0, 1, None),       # Receiving system name
-            ("DATE", 0, 1,        # Transmission date
-             (("TIME", 0, 1, None),)),  # Time value
-            ("SUBM:XREF(SUBM)", 0, 1, None),  # Xref to SUBM
-            # Gedcom says minimum is 1, but RootsMagic provides none
-            ("SUBN:XREF(SUBN)", 0, 1, None),  # Xref to SUBN
-            ("FILE", 0, 1, None),       # File name
-            ("COPR", 0, 1, None),       # Copyright Gedcom file
-            ("GEDC", 1, 1,
-             (("VERS", 1, 1, None),   # Version number
-              ("FORM", 1, 1, None))),  # Gedcom form
-            ("CHAR", 1, 1,       # Character set
-             (("VERS", 0, 1, None),)),  # Version number
-            ("LANG", 0, 1, None),       # Language of text
-            ("PLAC", 0, 1,
-             (("FORM", 1, 1, None),)),  # Place hierarchy
-            ("_HME", 0, 1, None),        # ??? Extension from gedcom torture
-            ("NOTE", 0, 1, None)),       # Gedcom content description
-
-    NAME = (("NPFX", 0, 1,         None),  # Name piece prefix
+    _ASSOC=(("RELA", 0, 1,         None),  # ??? Geneatique 20210
             ("TYPE", 0, 1,         None),
-            ("GIVN", 0, 1,         None),  # Name piece given
-            ("NICK", 0, 1,         None),  # Name piece nickname
-            ("SPFX", 0, 1,         None),  # Name piece surname prefix
-            ("SURN", 0, 1,         None),  # Name piece surname
-            ("NSFX", 0, 1,         None),  # Name piece suffix
-            ("POST", 0, 1,         None),  # ??? Geneatique 2010
-            ("CITY", 0, 1,         None),  # ??? Geneatique 2010
+            ("NOTE", 0, unlimited, None),
+            ("SOUR", 0, unlimited, "SOURCE_CITATION")),
+
+    MULTIMEDIA_LINK=(("FORM", 0, 1, None),   # ??? Optional for Geneatique 2010
+                     # but mandatory in standard
+                     ("TITL", 0, 1, None),
+                     ("FILE", 1, 1, None),
+                     ("_TYPE", 0, 1, None),  # ??? RootsMagic extension
+                     ("_SCBK", 0, 1, None),  # ??? RootsMagic extension
+                     ("_PRIM", 0, 1, None),  # ??? RootsMagic extension
+                     ("NOTE", 0, unlimited, None)),
+
+    SOURCE_CITATION=(("TEXT", 0, unlimited, None),      # Text from source
+                     ("NOTE", 0, unlimited, None),      # Note on source
+                     ("PAGE", 0, 1,         None),      # Where within source
+                     ("EVEN", 0, 1,                    # Event type cited from
+                      (("ROLE", 0, 1,     None),)),   # Role in event
+                     ("DATA", 0, 1,
+                      (("DATE", 0, 1,     None),      # Entry recording date
+                       ("TEXT", 0, unlimited, None))),  # Text from source
+                     ("QUAY", 0, 1,         None),      # Certainty assessment
+                     ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
+                     ("NOTE", 0, unlimited, None),
+                     ("_QUAL", 0, 1, None),  # ??? RootsMagic extension
+                     ("_INFO", 0, 1, None),  # ??? RootsMagic extension
+                     ("_TMPLT", 0, 1, "_TMPLT")),  # ??? RootsMagic extension
+
+    _TMPLT=(  # ??? RootsMagic only
+        ("TID", 0, 1, None),
+        ("FIELD", 0, unlimited,
+         (("NAME", 0, unlimited, None),
+          ("VALUE", 0, unlimited, None),)),),
+
+    _EVDEF=(  # ??? RootsMagic only   # eg./  "BIRT"
+        ("TYPE", 0, 1, None),    # eg./  "P"
+        ("TITL", 0, 1, None),   # eg./  "Birth"
+        ("ABBR",  0, 1, None),
+        # eg./  "Birth"
+        # eg./ [person] was born< [Date]>< [PlaceDetails]>< [Place]>.
+        ("SENT",  0, 1, None),
+        ("PLAC",  0, 1, None),   # eg./ "Y"
+        ("DATE",  0, 1, None),   # eg./ "Y"
+        ("DESC",  0, 1, None),   # eg./ "N"
+        ),
+
+    ADDR=(("ADR1", 0, 1, None),  # Address line 1
+          ("ADR2", 0, 1, None),  # Address line 2
+          ("CITY", 0, 1, None),  # Address city
+          ("STAE", 0, 1, None),  # Address state
+          ("POST", 0, 1, None),  # Address postal code
+          ("CTRY", 0, 1, None),  # Address country
+          ("NOTE", 0, unlimited, None)),  # ??? RootsMagic extension
+
+    SOUR=(("DATA", 0, 1,
+           (("EVEN", 0, unlimited,  # Event recorded
+             (("DATE", 0, 1, None),       # Date period
+              ("PLAC", 0, 1, "PLAC"))),   # Source jurisdiction place
+            ("AGNC", 0, 1,         None),   # Responsible agency
+            ("NOTE", 0, unlimited, None))),  # Note on data
+          ("AUTH", 0, 1, None),  # Source originator
+          ("TITL", 0, 1, None),  # Source descriptive title
+          ("ABBR", 0, 1, None),  # Source filed by entry
+          ("PUBL", 0, 1, None),  # Source publication facts
+          ("TEXT", 0, 1, None),  # Text from source
+          ("REPO", 0, 1,  # Source repository citation
+           (("NOTE", 0, unlimited, None),  # Note on repository
+            ("CALN", 0, unlimited,  # Source call number
+             (("MEDI", 0, 1, None),)))),  # Source media type
+          ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
+          ("NOTE", 0, unlimited, None),  # Note on source
+          ("REFN", 0, unlimited,  # User reference number
+           (("TYPE", 0, 1, None),)),  # User reference type
+          ("RIN", 0, 1, None),        # Automated record id
+          ("CHAN", 0, 1,        # Change date
+           (("DATE", 1, 1,  # Change date
+             (("TIME", 0, 1, None),)),  # Time value
+            ("NOTE", 0, unlimited, None),)),  # Note on change date
+          ("_SUBQ", 0, 1, None),  # ??? RootsMagic
+          ("_BIBL", 0, 1, None),  # ??? RootsMagic
+          ("_TMPLT", 0, 1, "_TMPLT")),  # ??? RootsMagic extension
+
+    PLAC=(("FORM", 0, 1,         None),  # Place hierarchy
+          ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+          ("NOTE", 0, unlimited, None),
+          ("MAP",  0, 1,                 # ??? Gramps addition
+           (("LATI", 1, 1,     None),
+            ("LONG", 1, 1,     None))),),
+
+    INDI=(("RESN", 0, 1,         None),    # Restriction notice
+          ("NAME", 0, unlimited, "NAME"),
+          ("SEX",  0, 1,         None),    # Sex value
+          ("_UID", 0, unlimited, None),    # ??? RootsMagic extension
+          (("BIRT", "CHR"), 0, unlimited,
+           EVENT_DETAILS +
+           (("FAMC:XREF(FAM)", 0, 1, None),)),  # Child to family link
+          ("ADOP", 0, unlimited,
+           EVENT_DETAILS +
+           (("FAMC:XREF(FAM)", 0, 1,
+             (("ADOP", 0, 1, None),)),)),  # Adopted by which parent
+          (("DEAT", "BURI", "CREM",
+            "BAPM", "BARM", "BASM", "BLES",
+            "CHRA", "CONF", "FCOM", "ORDN", "NATU",
+            "EMIG", "IMMI", "CENS", "PROB", "WILL",
+            "GRAD", "RETI", "EVEN",
+            "CAST",  # Cast name
+            "DSCR",  # Physical description
+            "EDUC",  # Scholastic achievement
+            "IDNO",  # National Id number
+            "NATI",  # National or tribal origin
+            "NCHI",  # Count of children
+            "NMR",   # Count of marriages
+            "OCCU",  # Occupation
+            "PROP",  # Possessions
+            "RELI",  # Religious affiliation
+            "RESI",  # Residence
+            "SSN",   # Social security number
+            "TITL"),  # Nobility type title
+           0, unlimited,  # Individual attributes
+           EVENT_DETAILS),
+
+          (("BAPL", "CONL", "ENDL"), 0, unlimited,
+           ((("STAT", "DATE", "TEMP", "PLAC"), 0, 1, None),
             ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-            ("NOTE", 0, unlimited, None)))
+            ("NOTE", 0, unlimited, None))),
+
+          ("SLGC", 0, unlimited,
+           ((("STAT", "DATE", "TEMP", "PLAC"), 0, 1, None),
+            ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+            ("FAMC:XREF(FAM)", 1, 1, None),
+            ("NOTE", 0, unlimited, None))),
+
+          ("FAMC:XREF(FAM)", 0, unlimited,    # Child to family link
+           (("PEDI", 0, unlimited, None),  # pedigree linkage type
+            ("NOTE", 0, unlimited, None))),
+          ("FAMS", 0, unlimited, None),  # Spouse to family link
+          ("SUBM:XREF(SUBM)", 0, unlimited, None),  # Submitter pointer
+          ("ASSO", 0, unlimited,
+           (("RELA", 1, 1,         None),  # Relation_is descriptor
+            ("NOTE", 0, unlimited, None),
+            ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
+          ("RELATION", 0, unlimited,  # ??? Geneatique 2010
+           (("ASSO", 0, unlimited, "_ASSOC"),)),  # ??? Geneatique 2010
+
+          ("ALIA:XREF(INDI)", 0, unlimited, None),
+          ("ANCI:XREF(SUBM)", 0, unlimited, None),
+          ("DESI:XREF(SUBM)", 0, unlimited, None),
+          ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+          ("IMAGE", 0, unlimited,  # ??? Geneatique 2010
+           (("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
+            ("NOTE", 0, unlimited, None))),
+          ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
+          ("NOTE", 0, unlimited, None),
+          ("RFN",  0, 1,         None),  # Permanent record file number
+          ("AFN",  0, 1,         None),  # Ancestral file number
+          ("REFN", 0, unlimited,  # User reference number
+           (("TYPE", 0, 1, None),)),  # User reference type
+          ("RIN",  0, 1,         None),  # Automated record Id
+          ("CHAN", 0, unlimited,         "CHAN"),  # Change date
+          # ??? CHAN unlimited in geneatique 2010, but standard stays
+          # 1 occurrence max
+          ("SIGN", 0, 1,         None),  # ??? Geneatique 2010
+          ("FACT", 0, unlimited,  # ??? gramps extension
+           (("TYPE", 1, 1,         None),  # type of fact ??? gramps
+            ("NOTE", 0, unlimited, None),
+            ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
+          ("_CHV", 0, 1, None),  # ??? Geneatique 2010
+          ("_DEG", 0, unlimited,   # ??? gramps extensions for diplomas
+           (("TYPE", 1, 1, None),
+            ("DATE", 0, 1, None))),
+          ("_MILT", 0, unlimited,  # ??? gramps extension for military
+           (("TYPE", 1, 1,         None),
+            ("DATE", 1, 1,         None),
+            ("NOTE", 0, unlimited, None),
+            ("ADDR", 0, 1,         "ADDR"),
+            ("PLAC", 0, 1,         "PLAC"),
+            ("SOUR", 0, unlimited, "SOURCE_CITATION")))),
+
+    REPO=(("NAME", 0, 1,         None),   # Name of repository
+          ("WWW",  0, unlimited, None),   # ??? Gramps extension
+          ("ADDR", 0, 1,         "ADDR"),  # Address of repository
+          ("PHON", 0, 3,         None),
+          ("NOTE", 0, unlimited, None),   # Repository notes
+          ("REFN", 0, unlimited,          # User reference number
+           (("TYPE", 0, 1, None),)),    # User reference type
+          ("RIN", 0, 1, None),            # Automated record id
+          ("CHAN", 0, 1, "CHAN")),
+
+    EVENT_FOR_INDI=EVENT_DETAILS + (
+        ("HUSB", 0, 1, (("AGE", 1, 1, None),)),  # Age at event
+        ("WIFE", 0, 1, (("AGE", 1, 1, None),))),  # Age at event
+
+    FAM=((("ANUL", "CENS", "DIV", "DIVF",
+           "ENGA", "MARR", "MARB", "MARC",
+           "MARL", "MARS",
+           "EVEN"), 0, unlimited, "EVENT_FOR_INDI"),
+         ("_UID", 0, 1, None),   # Reunion on OSX
+         ("HUSB:XREF(INDI)", 0, 1,         None),
+         ("WIFE:XREF(INDI)", 0, 1,         None),
+         ("CHIL:XREF(INDI)", 0, unlimited, None),  # xref to children
+         ("NCHI", 0, 1,         None),  # count of children
+         ("SUBM:XREF(SUBM)", 0, unlimited, None),  # xref to SUBM
+
+         ("SLGS", 0, unlimited,  # LDS spouse sealing
+          (("STAT", 0, 1, None),  # Spouse sealing Date status
+           ("DATE", 0, 1, None),  # Date LDS ordinance
+           ("TEMP", 0, 1, None),  # Templace code
+           ("PLAC", 0, 1, None),  # Place living ordinance
+           ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+           ("NOTE", 0, unlimited, None))),
+
+         ("SOUR", 0, unlimited, "SOURCE_CITATION"),  # source
+         ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
+         ("NOTE", 0, unlimited, None),
+         ("REFN", 0, unlimited,  # User reference number
+          (("TYPE", 0, 1, None),)),  # User reference type
+         ("RIN", 0, 1, None),      # Automated record id
+         ("CHAN", 0, 1,         "CHAN")),    # Change date
+
+    SUBM=(("NAME", 1, 1,         "NAME"),  # Submitter name
+          ("ADDR", 0, 1,         "ADDR"),  # Current address of submitter
+          ("EMAIL", 0, 1,        None),   # ??? Heredis extension
+          ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
+          ("LANG", 0, 3,         None),   # Language preference
+          ("RFN",  0, 1,         None),   # Submitter registered rfn
+          ("RIN",  0, 1,         None),   # Automated record id
+          ("PHON", 0, 3,         None),
+          ("CHAN", 0, 1,         "CHAN")),  # Change date
+
+    SUBN=(("SUBM:XREF(SUBM)",  0, 1,    None),
+          ("FAMF",  0, 1,         None),   # Name of family file
+          ("TEMP",  0, 1,         None),   # Temple code
+          ("ANCE",  0, 1,         None),   # Generations of ancestors
+          ("DESC",  0, 1,         None),   # Generations of descendants
+          ("ORDI",  0, 1,         None),   # Ordinance process flag
+          ("RIN",   0, 1,         None)),  # Automated record id
+
+    NOTE=(("SOUR", 0, unlimited, "SOURCE_CITATION"),
+          ("REFN", 0, unlimited,
+           (("TYPE", 0, 1, None),)),
+          ("RIN",  0, 1, None),
+          ("CHAN", 0, 1, "CHAN")),
+
+    HEAD=(("SOUR", 1, 1,  # Approved system id
+           (("VERS", 0, 1, None),  # Version number
+            ("NAME", 0, 1, None),  # Name of product
+            ("CORP", 0, 1,  # Name of business
+             (("ADDR", 0, 1, "ADDR"),
+              ("_ADDR", 0, 1, "ADDR"),  # ??? Geneatique 2010
+              ("WWW", 0, 1, None),  # ??? RootsMagic extension
+              ("WEB", 0, 1, None),  # ??? Heredis extension
+              ("PHON", 0, 3, None))),
+            ("DATA", 0, 1,  # Name of source data
+             (("DATE", 0, 1, None),  # Publication date
+              ("COPR", 0, 1, None))))),  # Copyright source data
+          ("DEST", 0, 1, None),       # Receiving system name
+          ("DATE", 0, 1,        # Transmission date
+           (("TIME", 0, 1, None),)),  # Time value
+          ("SUBM:XREF(SUBM)", 0, 1, None),  # Xref to SUBM
+          # Gedcom says minimum is 1, but RootsMagic provides none
+          ("SUBN:XREF(SUBN)", 0, 1, None),  # Xref to SUBN
+          ("FILE", 0, 1, None),       # File name
+          ("COPR", 0, 1, None),       # Copyright Gedcom file
+          ("GEDC", 1, 1,
+           (("VERS", 1, 1, None),   # Version number
+            ("FORM", 1, 1, None))),  # Gedcom form
+          ("CHAR", 1, 1,       # Character set
+           (("VERS", 0, 1, None),)),  # Version number
+          ("LANG", 0, 1, None),       # Language of text
+          ("PLAC", 0, 1,
+           (("FORM", 1, 1, None),)),  # Place hierarchy
+          ("_HME", 0, 1, None),        # ??? Extension from gedcom torture
+          ("NOTE", 0, 1, None)),       # Gedcom content description
+
+    NAME=(("NPFX", 0, 1,         None),  # Name piece prefix
+          ("TYPE", 0, 1,         None),
+          ("GIVN", 0, 1,         None),  # Name piece given
+          ("NICK", 0, 1,         None),  # Name piece nickname
+          ("SPFX", 0, 1,         None),  # Name piece surname prefix
+          ("SURN", 0, 1,         None),  # Name piece surname
+          ("NSFX", 0, 1,         None),  # Name piece suffix
+          ("POST", 0, 1,         None),  # ??? Geneatique 2010
+          ("CITY", 0, 1,         None),  # ??? Geneatique 2010
+          ("SOUR", 0, unlimited, "SOURCE_CITATION"),
+          ("NOTE", 0, unlimited, None)))
 
 
 class Invalid_Gedcom(Exception):
 
     def __init__(self, msg):
+        super(Invalid_Gedcom, self).__init__(self)
         self.msg = msg
 
     def __str__(self):
         return str(self.msg)
 
-    def __str__(self):
-        return self.msg
-
 
 class GedcomString(str):
-
     """A string that also stores a location in a file"""
 
     # Overriding __init__ seems problematic here. We can't add new
@@ -445,15 +426,15 @@ class GedcomString(str):
 
     def __add__(self, value):
         r = GedcomString(str(self) + value)
-        r._line = getattr(self, "line", "???")
+        setattr(r, "_line", getattr(self, "line", "???"))
         return r
 
-    def _setLine(self, line):
+    def setLine(self, line):
         """
-           LINES is the list of GEDCOM lines that were used in creating the value.
-           LINES can either be a single integer or a list of integers
+        LINES is the list of GEDCOM lines that were used in creating the value.
+        LINES can either be a single integer or a list of integers
         """
-        self._line = line
+        setattr(self, "_line", line)
 
     def location(self):
         """A string showing the location where SELF was defined"""
@@ -498,7 +479,7 @@ class _Lexical(object):
             else:
                 r = GedcomString(value.decode(self.encoding, "replace"))
 
-        r._setLine(self.line)
+        r.setLine(self.line)
         return r
 
     def _parse_next_line(self):
@@ -527,7 +508,9 @@ class _Lexical(object):
                     self.get_location(1))
             else:
                 raise Invalid_Gedcom(
-                    "%s Invalid line format: '%s'" % (self.get_location(1), line))
+                    "%s Invalid line format: '%s'" % (
+                        self.get_location(1),
+                        line))
 
         if self.line == 1:
             if g.group("level") != "0" or g.group("tag") != "HEAD":
@@ -648,26 +631,29 @@ class GedcomRecord(object):
         """
         self.value = GedcomString("")
         self._line = "???"  # Line where this record started
+        self._all = None
+        self._gedcom = None
+        self.xref = None
 
         for key, val in args.items():
             self.__dict__[key] = val
 
-    def _xref_to(self, xref, gedcom):
+    def xref_to(self, xref, gedcom):
         """Indicates that the record contains no real data, but is an xref
            to some other record. Accessing the attributes of the record
            automatically dereference the xref, so this is mostly transparent
            to users
         """
 
-        # We'll need to lookup the attribute in the derefed object.
-        # Using __getattribute__ would be called for all attributes, including
-        # internal ones like __dict__, and is thus less efficient.
-        # However, __getattr__ will only be called if the attribute is not in
-        # the dictionary, so we remove the keys that are delegated.
-        #
-        # Note: it might too early to lookup the object in the gedcom file, since
-        # it might not have been parsed already. So we'll have to do it in
-        # __getattr__ if not available yet
+        # We'll need to lookup the attribute in the derefed object.  Using
+        # __getattribute__ would be called for all attributes, including
+        # internal ones like __dict__, and is thus less efficient.  However,
+        # __getattr__ will only be called if the attribute is not in the
+        # dictionary, so we remove the keys that are delegated.
+
+        # Note: it might too early to lookup the object in the gedcom file,
+        # since it might not have been parsed already. So we'll have to do it
+        # in __getattr__ if not available yet
 
         obj = gedcom.obj_from_id(xref)
         if obj:
@@ -703,7 +689,7 @@ class GedcomRecord(object):
 
         return object.__getattribute__(self, name)
 
-    def _setLine(self, line):
+    def setLine(self, line):
         """Set the line at which SELF started"""
         self._line = line
 
@@ -738,8 +724,8 @@ class GedcomRecord(object):
                 for v2 in val:
                     yield key, v2, level
                     if isinstance(v2, GedcomRecord):
-                        for k, v, lev in v2.for_all_fields_recursive(level + 1):
-                            yield k, v, lev
+                        for k, v, l in v2.for_all_fields_recursive(level + 1):
+                            yield k, v, l
             else:
                 yield key, val, level
 
@@ -815,8 +801,8 @@ class _GedcomParser(object):
                     # xref_to must be a superset of type
                     handler = all_parsers.get(type)
                     if handler is None:
-                        handler = _GedcomParser(type, _GRAMMAR[type], all_parsers,
-                                                register=type)
+                        handler = _GedcomParser(
+                            type, _GRAMMAR[type], all_parsers, register=type)
 
                 else:
                     is_xref = XREF_AND_INLINE
@@ -838,8 +824,8 @@ class _GedcomParser(object):
                     # ref to one of the toplevel nodes
                     handler = all_parsers.get(type)
                     if handler is None:
-                        handler = _GedcomParser(type, _GRAMMAR[type], all_parsers,
-                                                register=type)
+                        handler = _GedcomParser(
+                            type, _GRAMMAR[type], all_parsers, register=type)
                     result = handler.result
 
                 else:  # An inline list of nodes
@@ -847,12 +833,12 @@ class _GedcomParser(object):
                         self.name + ":" + n, type, all_parsers)
                     result = handler.result
 
-                # HANDLER points to the parser for the children, and is null for
-                # pure text nodes or pure xref. It will be set if we are expecting
-                # an inline record, or either an xref or an inline record. In both
-                # cases it has the ability to parse the inline record.
-                # IS_XREF is null if the node can be a pointer to a record
-                # result.
+                # HANDLER points to the parser for the children, and is null
+                # for pure text nodes or pure xref. It will be set if we are
+                # expecting an inline record, or either an xref or an inline
+                # record. In both cases it has the ability to parse the inline
+                # record.  IS_XREF is null if the node can be a pointer to a
+                # record result.
 
             for n in names:
                 self.parsers[n] = (c[1],  # min occurrences
@@ -876,7 +862,7 @@ class _GedcomParser(object):
 
         if line:  # When parsing ROOT, there is no prefetch
             # Store the line for error msg
-            result._setLine(line[_Lexical.LINE])
+            result.setLine(line[_Lexical.LINE])
 
             if line[_Lexical.VALUE]:
                 result.value = line[_Lexical.VALUE]
@@ -912,7 +898,7 @@ class _GedcomParser(object):
                         res = copy.copy(p[4])
                         line = lexical.readline()
 
-                    res._xref_to(value, gedcomFile)
+                    res.xref_to(value, gedcomFile)
 
                 # inline record
                 elif p[2] and xref in (XREF_NONE, XREF_OR_INLINE):
@@ -922,7 +908,9 @@ class _GedcomParser(object):
 
                 elif xref != XREF_NONE:  # we should have had an xref
                     raise Invalid_Gedcom(
-                        "%s Expecting an xref for %s" % (lexical.get_location(), tag))
+                        "%s Expecting an xref for %s" % (
+                            lexical.get_location(),
+                            tag))
 
                 else:  # A string, but not an xref (handled above)
                     res = value
@@ -1040,12 +1028,8 @@ class Gedcom(object):
             # Do not assume a specific encoding
             filename = open(filename, "U", encoding='latin-1')
 
-        result = self.parser.parse(_Lexical(filename))
-        result.__filename = filename
-        return result
+        return self.parser.parse(_Lexical(filename))
 
-    def get_filename(self):
-        return self.__filename
 
 if __name__ == '__main__':
     Gedcom().parse(sys.argv[1])

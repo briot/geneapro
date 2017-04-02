@@ -3,17 +3,10 @@ Handles merging of personas.
 """
 
 
-from django.shortcuts import render_to_response
-from django.template import RequestContext
-from django.utils.translation import ugettext as _
-from django.http import HttpResponse
-from geneaprove import models
-from geneaprove.views.styles import Styles
-from geneaprove.views.graph import graph
-from geneaprove.views.queries import sql_in
-from geneaprove.views.persona import extended_personas
 import heapq
 import datetime
+from geneaprove.views.graph import global_graph
+from geneaprove.views.persona import extended_personas
 
 
 # Maximum number of years in a typical lifespan, when we have to guess
@@ -59,7 +52,7 @@ def compare(p1, p2):
                 if ev.date_sort is None and a2.event.date_sort is None:
                     tmp_score += 5  # Both dates unknown
                     tmp_debug += " [Both dates unknown]"
-                elif (ev.date_sort is None or a2.event.date_sort is None):
+                elif ev.date_sort is None or a2.event.date_sort is None:
                     tmp_score += 5  # Only one is unknown, might have been set
                     # somewhere else
                     tmp_debug += " [One date unknown]"
@@ -73,11 +66,6 @@ def compare(p1, p2):
                         # modif, import cycle)
                         tmp_score += 20
                         tmp_debug += " [Same date]"
-
-                # elif abs(ev.date_sort - a2.event.date_sort) < one_year:
-                    # ??? Perhaps just if places are known and the same ?
-                    # tmp_score += 10 # Close dates
-                    #tmp_debug += " [Close %s %s]" % (ev.date_sort, a2.event.date_sort)
 
                 if ev.place is not None and ev.place == a2.event.place:
                     place_score = 20  # At least same place once
@@ -133,7 +121,7 @@ def compare(p1, p2):
     return score
 
 
-def find_candidate(graph):
+def find_candidate():
     """Find all candidate personas for a merge"""
 
     p1 = 7843  # Emmanuel Briot
@@ -144,13 +132,14 @@ def find_candidate(graph):
     p6 = 7842
 
     persons = extended_personas(
-        nodes=set([graph.node_from_id(p1),
-                   graph.node_from_id(p2),
-                   graph.node_from_id(p3),
-                   graph.node_from_id(p4),
-                   graph.node_from_id(p5),
-                   graph.node_from_id(p6)]),
-        styles=None, same=same, query_groups=False)
+        graph=global_graph,
+        nodes=set([global_graph.node_from_id(p1),
+                   global_graph.node_from_id(p2),
+                   global_graph.node_from_id(p3),
+                   global_graph.node_from_id(p4),
+                   global_graph.node_from_id(p5),
+                   global_graph.node_from_id(p6)]),
+        styles=None, query_groups=False)
     for p in [(p1, p2), (p2, p1), (p3, p4), (p5, p6), (p6, p5)]:
         score = compare(persons[p[0]], persons[p[1]])
 
@@ -167,7 +156,7 @@ def find_candidate(graph):
     #   number of queries:6   total queries time:0.26s   total time:26.21s
 
     persons = extended_personas(
-        nodes=None, styles=None, graph=graph, query_groups=False)
+        nodes=None, styles=None, graph=global_graph, query_groups=False)
 
     # A temporary structure ordered by the first date in lifespan
 
@@ -218,9 +207,10 @@ def find_candidate(graph):
                 comparisons += 1
                 score = compare(a, person)
                 if score >= 150:
-                    print("%d Might be the same: %d %s and %d %s, score=%d %d" % (
-                        date.year, person.id, person.name, a.id, a.name, score,
-                        compare(person, a)))
+                    print(
+                        "%d Might be the same: %d %s and %d %s, score=%d %d" %
+                        (date.year, person.id, person.name, a.id, a.name,
+                         score, compare(person, a)))
                     same += 1
 
         alive.append(person)
@@ -232,8 +222,5 @@ def find_candidate(graph):
 
 
 def view(request):
-    try:
-        graph.update_if_needed()
-        find_candidate(graph=graph)
-    except Exception(e):
-        print("Terminated ", e)
+    global_graph.update_if_needed()
+    find_candidate()

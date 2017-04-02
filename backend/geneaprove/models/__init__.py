@@ -13,7 +13,7 @@ from django.db import models, connection
 import django.utils.timezone
 from .asserts import Assertion, P2P, P2C, P2E, P2G, Assertion_Assertion
 from .characteristic import Characteristic_Part_Type, \
-                            Characteristic, Characteristic_Part
+    Characteristic, Characteristic_Part
 from .event import Event_Type, Event_Type_Role, Event
 from .group import Group_Type, Group_Type_Role, Group
 from .persona import Persona
@@ -34,7 +34,7 @@ class Config(GeneaProveModel):
     schema_version = models.IntegerField(
         editable=False, default=1,
         help_text="Version number of this database. Used to detect what"
-        + " updates need to be performed")
+        " updates need to be performed")
 
     class Meta:
         """Meta data for the model"""
@@ -54,9 +54,10 @@ class Project (GeneaProveModel):
     name = models.CharField(max_length=100)
     description = models.TextField(null=True)
     scheme = models.ForeignKey(Surety_Scheme, default=1)
-    client_data = models.TextField(null=True,
-                                   help_text="The client for which the project is undertaken. In general"
-                                   + " this will be the researched himself")
+    client_data = models.TextField(
+        null=True,
+        help_text="The client for which the project is undertaken. In general"
+        " this will be the researched himself")
 
     def __str__(self):
         return "name=" + self.name
@@ -76,8 +77,9 @@ class Researcher_Project (GeneaProveModel):
 
     researcher = models.ForeignKey(Researcher, null=False)
     project = models.ForeignKey(Project)
-    role = models.TextField(null=True,
-                            help_text="Role that the researcher plays for that project")
+    role = models.TextField(
+        null=True,
+        help_text="Role that the researcher plays for that project")
 
     class Meta:
 
@@ -120,11 +122,13 @@ class Activity (GeneaProveModel):
     researcher = models.ForeignKey(Researcher, null=True)
     scheduled_date = models.DateField(null=True)
     completed_date = models.DateField(null=True)
-    is_admin = models.BooleanField(default=False,
-                                   help_text="True if this is an administrative task (see matching"
-                                   + " table), or False if this is a search to perform")
-    status = models.TextField(null=True,
-                              help_text="Could be either completed, on hold,...")
+    is_admin = models.BooleanField(
+        default=False,
+        help_text="True if this is an administrative task (see matching"
+        " table), or False if this is a search to perform")
+    status = models.TextField(
+        null=True,
+        help_text="Could be either completed, on hold,...")
     description = models.TextField(null=True)
     priority = models.IntegerField(default=0)
     comments = models.TextField(null=True)
@@ -164,16 +168,15 @@ class Search (GeneaProveModel):
     """
 
     activity = models.ForeignKey(Activity, null=True)
-    source = models.ForeignKey(Source, null=True,
-                               help_text="The source in which the search was conducted. It could"
-                               +
-                               " be null if this was a general search in a repository for"
-                               + " instance")
+    source = models.ForeignKey(
+        Source, null=True,
+        help_text="The source in which the search was conducted. It could"
+        " be null if this was a general search in a repository for"
+        " instance")
     repository = models.ForeignKey(Repository)
     searched_for = models.TextField(null=True)
 
     class Meta:
-
         """Meta data for the model"""
         db_table = "search"
 
@@ -210,6 +213,7 @@ def sql_field_name(cls, field_name):
         f = cls._meta.get_field(field_name)
     return "%s.%s" % (
         sql_table_name(cls), connection.ops.quote_name(f.column))
+
 
 all_fields = {
     'char_part.name': sql_field_name(Characteristic_Part, "name"),

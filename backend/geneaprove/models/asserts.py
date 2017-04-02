@@ -7,7 +7,7 @@ from .group import Group, Group_Type_Role
 from .persona import Persona
 from .researcher import Researcher
 from .source import Source
-from .surety import Surety_Scheme, Surety_Scheme_Part
+from .surety import Surety_Scheme_Part
 
 
 class Assertion(GeneaProveModel):
@@ -40,9 +40,9 @@ class Assertion(GeneaProveModel):
     source = models.ForeignKey(
         Source, null=True,
         help_text="An assertion comes from no more than one source. It can"
-            + " also come from one or more other assertions through the"
-            + " assertion_assertion table, in which case source_id is"
-            + " null")
+        " also come from one or more other assertions through the"
+        " assertion_assertion table, in which case source_id is"
+        " null")
     rationale = models.TextField(
         null=True,
         help_text="Explains why the assertion (deduction, comments,...)")
@@ -112,6 +112,7 @@ class P2C(Assertion):
         res['p2'] = {'char': self.characteristic, 'parts': parts}
         return res
 
+
 class P2E(Assertion):
     """Persona-to-Event assertions"""
 
@@ -152,7 +153,6 @@ class P2G(Assertion):
         res['p1'] = {'person': self.person}
         res['p2'] = {'group': self.group, 'role': self.role.name}
         return res
-
 
 
 # class E2C(Assertion):

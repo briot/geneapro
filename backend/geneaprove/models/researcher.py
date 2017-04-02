@@ -11,7 +11,7 @@ class Researcher(GeneaProveModel):
     comment = models.TextField(
         null=True,
         help_text="Contact information for this researcher, like email"
-           + " or postal addresses,...")
+        " or postal addresses,...")
 
     def __str__(self):
         return self.name

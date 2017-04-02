@@ -1,15 +1,13 @@
 from django.db import models
 import django.utils.timezone
-import datetime
 
-from .base import GeneaProveModel, compute_sort_date, Part_Type
+from .base import GeneaProveModel, Part_Type
 from .place import Place
-from .repository import Repository, Repository_Type
+from .repository import Repository
 from .researcher import Researcher
 
 
 class Source(GeneaProveModel):
-
     """
     A collection of data useful for genealogical research, such as a book,
     a compiled genealogy, an electronic database,... Generally, a
@@ -31,18 +29,17 @@ class Source(GeneaProveModel):
         Place, null=True,
         related_name="jurisdiction_for",
         help_text="Example: a record in North Carolina describes a person"
-        +
         " and their activities in Georgia. Georgia is the subject"
-        + " place, whereas NC is the jurisdiction place")
+        " place, whereas NC is the jurisdiction place")
     researcher = models.ForeignKey(Researcher, null=False)
     subject_date = models.CharField(
         max_length=100, null=True,
-        help_text="the date of the subject. Note that the dates might be"
-        + " different for the various levels of source (a range of"
-        + " dates for a book, and a specific date for an extract for"
-        + " instance). This field contains the date as found in the"
-        + " original document. subject_date_sort stores the actual"
-        + " computed from subject_date, for sorting purposes")
+        help_text="the date of the subject. Note that the dates might be" +
+        " different for the various levels of source (a range of" +
+        " dates for a book, and a specific date for an extract for" +
+        " instance). This field contains the date as found in the" +
+        " original document. subject_date_sort stores the actual" +
+        " computed from subject_date, for sorting purposes")
     subject_date_sort = models.CharField(
         max_length=100, null=True,
         help_text="Date parsed automatically")
@@ -95,6 +92,8 @@ documents the citation styles.""")
         if self.medium:
             return self.medium
         elif self.higher_source:
+            # ??? bug in pylint
+            # pylint: disable=no-member
             return self.higher_source.compute_medium()
         else:
             return ""
@@ -122,8 +121,11 @@ documents the citation styles.""")
            `from_higher` is true when the part comes from a higher-level
            source and was not overridden.
         """
-    
+
         if self.higher_source:
+            # ??? bug in pylint
+            # pylint: disable=no-member
+
             result = {
                 k: (v, True)
                 for k, v in self.higher_source.get_citations().items()}
@@ -160,6 +162,9 @@ documents the citation styles.""")
         """
         if self.higher_source is not None:
             a = [self.higher_source]
+
+            # ??? bug in pylint
+            # pylint: disable=no-member
             a.extend(self.higher_source.get_higher_sources())
             return a
         return []
@@ -187,4 +192,3 @@ class Citation_Part(GeneaProveModel):
     class Meta:
         """Meta data for the model"""
         db_table = "citation_part"
-

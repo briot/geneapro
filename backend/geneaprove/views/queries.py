@@ -1,3 +1,7 @@
+"""
+Support for writing custom SQL queries
+"""
+
 from django.db.models import Q
 
 

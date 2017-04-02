@@ -78,8 +78,7 @@ else
    fi
 fi
 
-pip install django
-pip install pillow
+pip install django pillow pylint pylint-django pep8 autopep8
 
 # The actual layout of the sources was created with:
 #     django-admin startproject backend

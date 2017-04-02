@@ -2,11 +2,11 @@
 Representation-related views
 """
 
+import urllib
+import os
 from django.conf import settings
 from django.http import HttpResponse
 from geneaprove import models
-import urllib
-import os
 
 
 def create_resized_image(image_name, original_location,
@@ -18,7 +18,7 @@ def create_resized_image(image_name, original_location,
     they will default to 200px each. Returns the path to the image.
     Adapted from http://djangosnippets.org/snippets/53/
     """
-    from PIL import Image, ImageOps
+    from PIL import Image
 
     # Ensure a resized image doesn't already exist in the default
     # MEDIA_ROOT/images/resized
@@ -32,7 +32,7 @@ def create_resized_image(image_name, original_location,
     name = '%s/%s' % (dir, image_name)
 
     if not os.path.exists(name):
-        unsized_image = urllib.urlretrieve(str(original_location))
+        unsized_image = urllib.request.urlretrieve(str(original_location))
         unsized_image = Image.open(unsized_image[0])
         unsized_image = unsized_image.convert("RGB")
         unsized_image.thumbnail((xconstrain, yconstrain), Image.ANTIALIAS)
@@ -43,6 +43,7 @@ def create_resized_image(image_name, original_location,
 
 def view(request, id, size=None):
     """Return a specific representation"""
+    # pylint: disable=unused-argument
 
     repr = models.Representation.objects.get(id=id)
     f = repr.file
@@ -54,7 +55,7 @@ def view(request, id, size=None):
 
     try:
         bin = open(f).read()
-    except:
+    except FileNotFoundError:
         bin = ''
 
     response = HttpResponse(bin, content_type=repr.mime_type)

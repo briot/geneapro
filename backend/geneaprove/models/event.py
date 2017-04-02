@@ -1,7 +1,7 @@
 from django.db import models
+from geneaprove.utils.date import DateRange
 from .place import Place
 from .base import GeneaProveModel, Part_Type, compute_sort_date, lazy_lookup
-from geneaprove.utils.date import DateRange
 
 
 class Event_Type(Part_Type):
@@ -27,7 +27,7 @@ class Event_Type_Role(GeneaProveModel):
     type = models.ForeignKey(
         Event_Type, null=True, blank=True,
         help_text="The event type for which the role is defined. If unset,"
-        + " this applies to all events")
+        " this applies to all events")
     name = models.CharField(max_length=50)
 
     class Meta:
@@ -78,10 +78,12 @@ class Event(GeneaProveModel):
     def to_json(self):
         # Convert the date sort to a datetime, so that we can then send either
         # only the year or the full date to clients
+        d = self.date_sort
         return {
             "id": self.id,
             "name": self.name,
             "type": self.type,
             "place": self.place,
             "date": self.date,
-            "date_sort": None if not self.date_sort else DateRange(self.date_sort)}
+            "date_sort": None if not d else DateRange(d)
+        }

@@ -1,4 +1,4 @@
-"""
+r"""
 This package provides a graph datastructure and algorithms to manipulate it.
 It is independent of geneaprove itself.
 
@@ -34,15 +34,14 @@ Examples of use:
 import pickle
 import sys
 import subprocess
-import heapq
 
 
 class Digraph(object):
-
-    """A directed graph.
-       Nodes can be of any hashable type (string, instances,...).
-       Edges can be of any type so that  edge[0] and edge[1] are the two
-       ends of the edge (deriving from tuple would achieve this purpose).
+    """
+    A directed graph.
+    Nodes can be of any hashable type (string, instances,...).
+    Edges can be of any type so that  edge[0] and edge[1] are the two
+    ends of the edge (deriving from tuple would achieve this purpose).
     """
 
     def __init__(self, nodes=None, edges=None):
@@ -64,7 +63,9 @@ class Digraph(object):
         return len(self.outedges)
 
     def __repr__(self):
-        return "<graph %s>" % (" ".join(sorted("%s" % (e, ) for e in self.edges())))
+        return "<graph %s>" % (
+            " ".join(
+                sorted("%s" % (e, ) for e in self.edges())))
 
     def is_empty(self):
         """
@@ -193,23 +194,17 @@ class Digraph(object):
     ###############
     # Sorting
     # The following functions provide support for sorting nodes and edges.
-    # By default, they check if the node or edge has a _graphsortkey function.
+    # By default, they check if the node or edge has a graphsortkey function.
     # Its result is used for the sorting. If the function doesn't exist, they
     # fallback on using the standard comparison functions for the types.
     # These can be overridden for the graph itself, which might be more
     # convenient that forcing the use of specific types for nodes and edges.
     ###############
 
-    def _node_sortkey(self, node):
-        try:
-            return node._graphsortkey()
-        except AttributeError:
-            return edge
-
     def _edge_sortkey(self, edge):
-        try:
-            return edge._graphsortkey()
-        except AttributeError:
+        if hasattr(edge, "graphsortkey"):
+            return edge.graphsortkey()
+        else:
             return edge
 
     ###############
@@ -357,7 +352,8 @@ class Digraph(object):
         else:
             # Here as well we want to preserve the user's sort, and topological
             # is going to reverse the final list.
-            roots = reversed(list(roots))
+            roots = list(roots)
+            roots.reverse()
 
         if outedgesiter is None:
             outedgesiter = self.out_edges
@@ -411,7 +407,8 @@ class Digraph(object):
         else:
             # Here as well we want to preserve the user's sort, and topological
             # is going to reverse the final list.
-            roots = reversed(list(roots))
+            roots = list(roots)
+            roots.reverse()
 
         if outedgesiter is None:
             outedgesiter = self.out_edges
@@ -545,11 +542,11 @@ class Digraph(object):
     def node_label(self, node):
         """
         Returns a label to represent the node in a graph.
-        The default is to use the edge's _graphlabel function if it exists,
+        The default is to use the edge's graphviz_label function if it exists,
         and otherwise the edge's __str__ function.
         """
         try:
-            return node._graphlabel()
+            return node.graphviz_label()
         except AttributeError:
             return "%s" % node
 
@@ -557,10 +554,10 @@ class Digraph(object):
         """
         Returns the properties (for graphviz) to use for this edge.
         Returning None hides the edge.
-        By default, it uses the edge's _graphlabel function if it exists.
+        By default, it uses the edge's graphviz_label function if it exists.
         """
         try:
-            return edge._graphlabel()
+            return edge.graphviz_label()
         except AttributeError:
             return ""
 
@@ -659,7 +656,8 @@ class Digraph(object):
                 layers[n] = 0
             elif n not in layers:
                 candidates = [
-                    layers[e[1]] + preferred_length(e) for e in self.out_edges(n)]
+                    layers[e[1]] + preferred_length(e)
+                    for e in self.out_edges(n)]
                 layers[n] = max(candidates) if candidates else 1
         return layers
 
@@ -858,7 +856,7 @@ class Digraph(object):
                 else:
                     lowHEAD, limHEAD, _ = data[e[1]]
                     for n in tree:
-                        if not (lowHEAD <= data[n][1] <= limHEAD):
+                        if not lowHEAD <= data[n][1] <= limHEAD:
                             HEAD.add(n)
 
                 cut = 0
@@ -883,14 +881,16 @@ class Digraph(object):
                 min_slack_value = len(self)
                 for h in leave_HEAD:
                     for tmp in self.out_edges(h):
-                        if tmp not in removed_edges and tmp[1] not in leave_HEAD:
+                        if tmp not in removed_edges and \
+                           tmp[1] not in leave_HEAD:
 
                             s = __get_slack(ranks, tmp)
                             if s < min_slack_value:
                                 min_slack_value = s
                                 enter_edge = tmp
                     for tmp in self.in_edges(h):
-                        if tmp not in removed_edges and tmp[0] not in leave_HEAD:
+                        if tmp not in removed_edges and \
+                           tmp[0] not in leave_HEAD:
                             s = __get_slack(ranks, tmp)
                             if s < min_slack_value:
                                 min_slack_value = s
@@ -899,15 +899,6 @@ class Digraph(object):
             return (leave_edge, enter_edge)
 
         tree, ranks = build_feasible_tree()
-
-        #self = Digraph()
-        # self.add_edges([(0,1), (1,2), (2,3), (3,7), (4,6), (5,6), (6,7),
-        #                (0,4), (0,5)])
-        #tree = Digraph()
-        #tree.add_edges([(0,1), (1,2), (2,3), (3,7), (4,6), (5,6), (6,7)])
-        #ranks = {7:0, 6:1, 3:1, 4:2, 5:2, 2:2, 1:3, 0:4}
-        #outedgesiter = self.out_edges
-        #inedgesiter = self.in_edges
 
         removed_edges.update(tree.edges())  # Can't enter edges already in tree
 
@@ -924,19 +915,6 @@ class Digraph(object):
             ranks = ranking_from_tree(tree)
 
         return ranks
-
-    def add_dummy_nodes(self, layers):
-        r = set()
-        for e in self.edges():
-            prev = e[0]
-            if layers[e[0]] - layers[e[1]] > 1:
-                for r in range(layers[e[0]] + 1, layers[e[1]] + 1):
-                    d = DummyNode()
-                    self.add_edge((prev, d))
-                    prev = d
-                r.add(e)
-        for e in r:
-            self.remove_edge(e)
 
     def get_layers(self, layers_by_id):
         """
@@ -958,7 +936,7 @@ class Digraph(object):
             tmp.setdefault(layers_by_id[n], []).append(n)
 
         result = []
-        for lay in sorted(tmp.keys()):
+        for lay in sorted(tmp):
             result.append(tmp[lay])
         return result
 
@@ -989,8 +967,8 @@ class Digraph(object):
             # children appear first in the list.
             weights = {}
             for n in layer1:
-                total = 0
                 count = 1
+                total = 0
                 for index2, n2 in enumerate(layer2):
                     if self.has_edge(n, n2, outedgesiter=self.out_edges):
                         total += index2 + 1

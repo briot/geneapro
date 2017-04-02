@@ -2,12 +2,9 @@
 Event-related views
 """
 
-from django.shortcuts import render_to_response
 from django.http import HttpResponse
-from django.template import RequestContext
 from geneaprove import models
 from geneaprove.views.queries import sql_in
-from collections import namedtuple
 from geneaprove.views.to_json import to_json
 
 
@@ -16,7 +13,7 @@ def extended_events(ids):
         - "p2e": a list of instances of P2E for this event
     """
 
-    assert(isinstance(ids, list))
+    assert isinstance(ids, list)
 
     events = dict()  # id -> ExtendedEvent
     p2e = models.P2E.objects.select_related()

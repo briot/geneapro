@@ -4,7 +4,8 @@ Provides a gedcom importer
 
 from django.utils.translation import ugettext as _
 import django.utils.timezone
-from geneaprove.utils.gedcom import Gedcom, Invalid_Gedcom, GedcomRecord, GedcomString
+from geneaprove.utils.gedcom import Gedcom, Invalid_Gedcom, \
+        GedcomRecord, GedcomString
 from geneaprove import models
 from django.db import transaction, connection
 import geneaprove.importers
@@ -44,6 +45,7 @@ def as_list(obj):
     else:
         return [obj]
 
+
 def location(obj):
     """Return the location (in the gedcom file) of obj"""
 
@@ -51,6 +53,7 @@ def location(obj):
         return as_list(obj)[0].location()
     except AttributeError:
         return "???"
+
 
 def parse_gedcom_date(data_date):
     """
@@ -94,7 +97,7 @@ class SourceManager(object):
         self.importer = importer
         self.sources = {}  # sourceId => models.Source
         self.refs = {}    # sourceId => [GedcomRecord] for refs to that source
-          
+
         gedcom_date = parse_gedcom_date(whole_file.HEAD.DATE)
         self.__source_for_gedcom = models.Source.objects.create(
             higher_source_id=None,
@@ -154,7 +157,7 @@ class SourceManager(object):
                                 location(v), ))
                     else:
                         caln = v[0].value
-                        source_type =  (v[0].MEDI or '').lower()
+                        source_type = (v[0].MEDI or '').lower()
                 else:
                     self.importer.report_error(
                         "%s Unhandled REPO.%s" % (location(v), k))
@@ -185,7 +188,8 @@ class SourceManager(object):
             title=title,
             abbrev=getattr(sour, "ABBR", "") or title,
             biblio=title,
-            last_change=self.importer._create_CHAN(getattr(sour, "CHAN", None)),
+            last_change=self.importer._create_CHAN(
+                getattr(sour, "CHAN", None)),
             comments='')
 
         self.__add_OBJE_to_source(src, sour.OBJE)
@@ -268,17 +272,18 @@ class SourceManager(object):
                                 comments="",
                                 last_change=sour[1].last_change)
                             self.sources[new_id] = nested_source
-                            nested_source.comments += self.importer._get_note(s)
+                            nested_source.comments += self.importer._get_note(
+                                s)
                             nested_source.save()
 
                         for k, v in parts:
                             try:
-                                type = models.Citation_Part_Type.objects.get(
+                                typ = models.Citation_Part_Type.objects.get(
                                     gedcom=k)
                             except:
-                                type = models.Citation_Part_Type.objects.create(
+                                typ = models.Citation_Part_Type.objects.create(
                                     name=k.title(), gedcom=k)
-                            p = models.Citation_Part(type=type, value=v)
+                            p = models.Citation_Part(type=typ, value=v)
                             nested_source.parts.add(p, bulk=False)
 
                     self.__add_OBJE_to_source(
@@ -416,7 +421,9 @@ class GedcomImporter(object):
             if p.gedcom:
                 self._place_part_types[p.gedcom] = p
 
-        for p in models.Citation_Part_Type.objects.exclude(gedcom__isnull=True):
+        cit_part_types = models.Citation_Part_Type.objects.exclude(
+            gedcom__isnull=True)
+        for p in cit_part_types:
             self._citation_part_types[p.gedcom] = p
 
     def _create_CHAN(self, data):
@@ -553,8 +560,8 @@ class GedcomImporter(object):
         # Now add the children.
         # If there is an explicit BIRT event for the child, this was already
         # fully handled in _create_indi, so we do nothing more here. But if
-        # there is no known BIRT even, we still need to associate the child with
-        # its parents.
+        # there is no known BIRT even, we still need to associate the child
+        # with its parents.
 
         for c in data.CHIL:
             # Associate parents with the child's birth event. This does not
@@ -563,7 +570,8 @@ class GedcomImporter(object):
             if self._births.get(c.id, None) is None:
                 self._create_event(
                     indi=[
-                        (self._sourcePersona[(NO_SOURCE, c.id)], self._principal),
+                        (self._sourcePersona[(
+                            NO_SOURCE, c.id)], self._principal),
                         (husb, self._birth__father),
                         (wife, self._birth__mother)],
                     field="BIRT", data=c, CHAN=data.CHAN)
@@ -619,10 +627,10 @@ class GedcomImporter(object):
             self._places[long_name] = p  # For reuse
 
             if data.MAP:
-                pp = models.Place_Part.objects.create(place=p,
-                                                      type=self._place_part_types[
-                                                          'MAP'], name=data.MAP.LATI
-                                                      + ' ' + data.MAP.LONG)
+                pp = models.Place_Part.objects.create(
+                    place=p,
+                    type=self._place_part_types['MAP'],
+                    name=data.MAP.LATI + ' ' + data.MAP.LONG)
 
             if addr:
                 for key, val in addr.for_all_fields():
@@ -632,8 +640,8 @@ class GedcomImporter(object):
                             self.report_error(
                                 'Unknown place part: ' + key)
                         else:
-                            pp = models.Place_Part.objects.create(place=p,
-                                                                  type=part, name=val)
+                            pp = models.Place_Part.objects.create(
+                                place=p, type=part, name=val)
 
         # ??? Unhandled attributes of PLAC: FORM, SOURCE and NOTE
         # FORM would in fact tell us how to split the name to get its
@@ -770,8 +778,8 @@ class GedcomImporter(object):
             # characteristics like "SEX", this will in fact be the only part.
 
             if typ:
-                models.Characteristic_Part.objects.create(characteristic=c,
-                                                          type=typ, name=str_value)
+                models.Characteristic_Part.objects.create(
+                    characteristic=c, type=typ, name=str_value)
 
             # We might have other characteristic part, most notably for names.
 
@@ -798,7 +806,8 @@ class GedcomImporter(object):
 
                                 for m in n[1:]:
                                     if m:
-                                        models.Characteristic_Part.objects.create(
+                                        ob = models.Characteristic_Part.objects
+                                        ob.create(
                                             characteristic=c,
                                             type=self._char_types['_MIDL'],
                                             name=m)
@@ -847,7 +856,8 @@ class GedcomImporter(object):
                             OBJE=obje),
                         subject_place=place)
                 else:
-                    self.report_error("%s Unhandled OBJE" % (location(data.OBJE)))
+                    self.report_error("%s Unhandled OBJE" %
+                                      (location(data.OBJE)))
 
     def _create_event(self, indi, field, data, CHAN=None):
         """Create a new event, associated with INDI by way of one or more
@@ -925,8 +935,9 @@ class GedcomImporter(object):
         if not evt:
             place = self._create_place(data)
             self._create_obje_for_place(data, place, CHAN)  # processes OBJE
-            evt = models.Event.objects.create(type=event_type, place=place,
-                                              name=name, date=getattr(data, "DATE", None))
+            evt = models.Event.objects.create(
+                type=event_type, place=place,
+                name=name, date=getattr(data, "DATE", None))
 
             if event_type.gedcom == 'BIRT':
                 self._births[principal._gedcom_id] = evt
@@ -1033,14 +1044,13 @@ class GedcomImporter(object):
                     self._create_event(
                         indi=indi, field=field, data=v, CHAN=data.CHAN)
 
-            elif field.startswith("_") \
-                    and (isinstance(value, str)
-                         or (isinstance(value, list)
-                             and isinstance(value[0], str))):
-                # A GEDCOM extension by an application.
-                # If this is a simple string value, assume this is a characteristic.
-                # Create the corresponding type in the database, and import the
-                # field
+            elif field.startswith("_") and \
+                    (isinstance(value, str) or
+                     (isinstance(value, list) and
+                      isinstance(value[0], str))):
+                # A GEDCOM extension by an application.  If this is a simple
+                # string value, assume this is a characteristic.  Create the
+                # corresponding type in the database, and import the field
 
                 typ = models.Characteristic_Part_Type.objects.create(
                     is_name_part=False,
@@ -1064,7 +1074,7 @@ class GedcomImporter(object):
                     value=GedcomRecord(
                         value='',
                         SOUR=[GedcomRecord(
-                            TITL="Media for %s" % indi.name,  # used both for object and source
+                            TITL="Media for %s" % indi.name,
                             CHAN=None,
                             OBJE=value)]),
                     indi=indi)
@@ -1078,13 +1088,17 @@ class GedcomImporter(object):
     def _create_project(self, researcher):
         """Register the project in the database"""
 
-        filename = getattr(self._data.HEAD, "FILE", "") or self._data.get_filename()
-        p = models.Project.objects.create(name='Gedcom import',
-                                          description='Import from ' +
-                                          filename,
-                                          scheme=models.Surety_Scheme.objects.get(id=1))
-        models.Researcher_Project.objects.create(researcher=researcher,
-                                                 project=p, role='Generated GEDCOM file')
+        filename = getattr(self._data.HEAD, "FILE", "") or \
+            self._data.get_filename()
+        p = models.Project.objects.create(
+            name='Gedcom import',
+            description='Import from ' +
+            filename,
+            scheme=models.Surety_Scheme.objects.get(id=1))
+        models.Researcher_Project.objects.create(
+            researcher=researcher,
+            project=p,
+            role='Generated GEDCOM file')
         return p
 
     @staticmethod
@@ -1109,10 +1123,10 @@ class GedcomImporter(object):
             if data.CTRY:
                 addr += data.CTRY + '\n'
 
-         # Gramps sets this when the address is not provided
+            # Gramps sets this when the address is not provided
             addr = addr.replace('Not Provided', '')
 
-         # Cleanup empty lines
+            # Cleanup empty lines
             return re.sub('^\n+', '', re.sub('\n+', '\n', addr))
         else:
 
@@ -1126,9 +1140,9 @@ class GedcomImporter(object):
 
         subm = self._data.HEAD.SUBM
         if subm:
-            return models.Researcher.objects.create(name=subm.NAME.value
-                                                    or 'unknown',
-                                                    comment=GedcomImporter._addr_to_string(subm.ADDR))
+            return models.Researcher.objects.create(
+                name=subm.NAME.value or 'unknown',
+                comment=GedcomImporter._addr_to_string(subm.ADDR))
         else:
             return models.Researcher.objects.create(name='unknown', comment='')
 
@@ -1153,15 +1167,14 @@ class GedcomImporterCumulate(GedcomImporter):
 ##################################
 
 class GedcomFileImporter(geneaprove.importers.Importer):
-
     """Register a new importer in geneaprove: imports GEDCOM files"""
 
     class Meta:
-
         """see inherited documentation"""
         displayName = _('GEDCOM')
-        description = _('Imports a standard GEDCOM file, which most genealogy'
-                        + ' software can export to')
+        description = _(
+            'Imports a standard GEDCOM file, which most genealogy' +
+            ' software can export to')
 
     def __init__(self):
         self._parser = None  # The gedcom parser
@@ -1187,16 +1200,16 @@ class GedcomFileImporter(geneaprove.importers.Importer):
                 name = 'uploaded'
 
             gedcom_name = (
-                'GEDCOM "%s", %s, exported from %s,'
-                + ' created on %s, imported on %s') % (
-                os.path.basename(name),
-                parsed.HEAD.SUBM.NAME.value,
-                parsed.HEAD.SOUR.value,
-                parse_gedcom_date(parsed.HEAD.DATE).strftime(
-                    "%Y-%m-%d %H:%M:%S %Z"),
-                datetime.datetime.now(
-                    django.utils.timezone.get_default_timezone()).strftime(
-                    "%Y-%m-%d %H:%M:%S %Z"))
+                'GEDCOM "%s", %s, exported from %s,' +
+                ' created on %s, imported on %s') % (
+                    os.path.basename(name),
+                    parsed.HEAD.SUBM.NAME.value,
+                    parsed.HEAD.SOUR.value,
+                    parse_gedcom_date(parsed.HEAD.DATE).strftime(
+                        "%Y-%m-%d %H:%M:%S %Z"),
+                    datetime.datetime.now(
+                        django.utils.timezone.get_default_timezone()).strftime(
+                            "%Y-%m-%d %H:%M:%S %Z"))
 
             parser = GedcomImporterCumulate(gedcom_name, parsed)
             return (True, "\n".join(parser.errors))

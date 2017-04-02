@@ -3,8 +3,8 @@
 Dummy file to test graph layout
 """
 
-import graphs
 import sys
+import geneaprove.utils.graphs as graphs
 
 links = [(1, 3), (2, 3), (3, 7),
          (4, 5), (5, 6), (6, 7),
@@ -15,9 +15,7 @@ links = [("a", "b"), ("b", "c"), ("c", "d"),
          ("d", "h"), ("a", "e"), ("a", "f"),
 
          ("a", "i"),
-         ("c", "i", 0),  # same layer
-         ]
-print links
+         ("c", "i", 0)]  # same layer
 
 g = graphs.Digraph(edges=links)
 
@@ -32,7 +30,7 @@ def check(ranks):
     """
     Verify whether the proposed layers are feasible.
     """
-    print "Ranks: ", ranks
+    print("Ranks: ", ranks)
 
     previous = None
     for r in sorted(ranks, key=lambda k: ranks[k]):
@@ -48,10 +46,11 @@ def check(ranks):
     for n in links:
         slack = ranks[n[1]] - ranks[n[0]] - preferred_length(n)
         if slack < 0:
-            print "Error in link ", n
+            print("Error in link ", n)
         total += slack
 
-    print "Total slack for tree: ", total
+    print("Total slack for tree: ", total)
+
 
 check(g.rank_longest_path(preferred_length=preferred_length))
 check(g.rank_minimize_dummy_vertices(preferred_length=preferred_length))

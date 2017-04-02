@@ -1,7 +1,7 @@
 from django.db import models
+from geneaprove.utils.date import DateRange
 from .place import Place
 from .base import GeneaProveModel, compute_sort_date, Part_Type, lazy_lookup
-from geneaprove.utils.date import DateRange
 
 
 class Characteristic_Part_Type(Part_Type):
@@ -26,8 +26,8 @@ class Characteristic(GeneaProveModel):
 
     name = models.TextField(
         help_text="Name of the characteristic. This could be guessed from"
-            + " its parts only if there is one of the latter, so we store"
-            + " it here""")
+        " its parts only if there is one of the latter, so we store"
+        " it here""")
     place = models.ForeignKey(Place, null=True)
     date = models.CharField(
         max_length=100, null=True,
@@ -45,11 +45,12 @@ class Characteristic(GeneaProveModel):
         super(Characteristic, self).save(**kwargs)
 
     def to_json(self):
+        d = self.date_sort
         return {
             "name": self.name,
             "sources": list(self.sources if hasattr(self, 'sources') else []),
             "date": self.date,
-            "date_sort": None if not self.date_sort else DateRange(self.date_sort),
+            "date_sort": None if not d else DateRange(d),
             "place": self.place}
 
 

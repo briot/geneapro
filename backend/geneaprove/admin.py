@@ -1,3 +1,6 @@
+"""
+Support for the /admin view
+"""
 from django.contrib import admin
 from django.apps import apps
 

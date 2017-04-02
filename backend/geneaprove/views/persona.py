@@ -3,25 +3,30 @@ Various views related to displaying the pedgree of a person graphically
 """
 
 from django.db.models import Min
-from django.utils.translation import ugettext as _
 from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.to_json import JSONView
 from geneaprove.views.custom_highlight import style_rules
-from geneaprove.views.graph import graph
+from geneaprove.views.graph import global_graph
 from geneaprove.views.styles import Styles
 from geneaprove.views.queries import sql_in
 
 
 def event_types_for_pedigree():
+    """
+    List of events that impact the display of the pedigree
+    """
+
     return (models.Event_Type.PK_birth,
             models.Event_Type.PK_death,
             models.Event_Type.PK_marriage)
 
 
 def __add_default_person_attributes(person):
-    """Add the default computed attributes for the person.
-       PERSON is an instance of Persona"""
+    """
+    Add the default computed attributes for the person.
+    PERSON is an instance of Persona.
+    """
 
     person.sex = "?"
     person.birth = None
@@ -46,9 +51,9 @@ def more_recent(obj1, obj2):
 
 
 def extended_personas(
-    nodes, styles, graph, p2e=None, event_types=None, schemes=None,
-    p2c=None, p2g=None,
-    all_sources=None, as_css=False, query_groups=True):
+        nodes, styles, graph, p2e=None, event_types=None, schemes=None,
+        p2c=None, p2g=None,
+        all_sources=None, as_css=False, query_groups=True):
     """
     Compute the events for the various persons in `nodes` (all all persons in
     the database if None)
@@ -88,7 +93,7 @@ def extended_personas(
     roles = dict()  # role_id  -> name
     places = dict()  # place_id -> place
 
-    assert(schemes is None or isinstance(schemes, set))
+    assert schemes is None or isinstance(schemes, set)
 
     if styles:
         styles.start()
@@ -225,7 +230,7 @@ def extended_personas(
     chars = models.Characteristic_Part.objects.select_related(
         'type', 'characteristic', 'characteristic__place')
 
-    for part in sql_in(chars, "characteristic", nodes and c2p.keys()):
+    for part in sql_in(chars, "characteristic", nodes and c2p):
         person = c2p[part.characteristic_id]
 
         if part.type_id == models.Characteristic_Part_Type.PK_sex:
@@ -247,7 +252,7 @@ def extended_personas(
 
         for p in sql_in(models.Place_Part.objects
                         .order_by('place').select_related('type'),
-                        "place", places.keys()):
+                        "place", places):
 
             # ??? We should also check the parent place to gets its own parts
             if p.place_id != prev_place:
@@ -280,7 +285,7 @@ class PersonaView(JSONView):
     """Display all details known about persona ID"""
 
     def get_json(self, params, id):
-        graph.update_if_needed()
+        global_graph.update_if_needed()
 
         all_sources = {}
         p2e = {}
@@ -288,17 +293,14 @@ class PersonaView(JSONView):
         p2g = {}
 
         p = extended_personas(
-            nodes=set([graph.node_from_id(id)]),
+            nodes=set([global_graph.node_from_id(id)]),
             p2e=p2e,
             p2c=p2c,
             p2g=p2g,
             all_sources=all_sources,
-            styles=None, as_css=True, graph=graph, schemes=None)
+            styles=None, as_css=True, graph=global_graph, schemes=None)
 
-        query = models.P2P.objects.filter(
-            type=models.P2P.sameAs)
-
-        node = graph.node_from_id(id)
+        node = global_graph.node_from_id(id)
         assertions = list(models.P2P.objects.filter(
             type=models.P2P.sameAs,
             person1__in=node.ids.union(node.different)))
@@ -322,6 +324,7 @@ class GlobalSettings(JSONView):
       id of the person to show when the user connects initially.
       It returns -1 if the database is currently empty.
     """
+
     def get_json(self, params):
         p = models.Persona.objects.aggregate(Min('id'))
         return {
@@ -333,32 +336,36 @@ class SuretySchemesList(JSONView):
     """
     Return the list of all defined surety schemes
     """
+
     def get_json(self, params):
         return {
-            'schemes': [{'id': s.id,
-                    'name': s.name,
-                    'description': s.description,
-                    'parts': [
-                        {'id': p.id,
-                         'name': p.name,
-                         'description': p.description,
-                         'sequence': p.sequence_number} for p in s.parts.all()]
-                } for s in models.Surety_Scheme.objects.all()]}
+            'schemes': [
+                {'id': s.id,
+                 'name': s.name,
+                 'description': s.description,
+                 'parts': [
+                     {'id': p.id,
+                      'name': p.name,
+                      'description': p.description,
+                      'sequence': p.sequence_number}
+                     for p in s.parts.all()
+                 ]} for s in models.Surety_Scheme.objects.all()]}
 
 
 class PersonaList(JSONView):
     """View the list of all personas"""
-    def get_json(self, params):
-        graph.update_if_needed()
-        if graph.is_empty():
+
+    def get_json(self, params, decujus=1):
+        global_graph.update_if_needed()
+        if global_graph.is_empty():
             all = {}
         else:
-            styles = Styles(style_rules(), graph=graph, decujus=1)  # ??? Why "1"
+            styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
 
             all = extended_personas(
                 nodes=None, styles=styles,
                 event_types=event_types_for_pedigree(),
-                all_sources=None, graph=graph, as_css=True)
+                all_sources=None, graph=global_graph, as_css=True)
 
         all = [p for p in all.values()]
         all.sort(key=lambda x: x.surn)

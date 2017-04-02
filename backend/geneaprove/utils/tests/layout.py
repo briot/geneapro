@@ -1,8 +1,12 @@
 #!/usr/bin/env python
-import graphs
+import geneaprove.utils.graphs as graphs
 
 # Tests the various layout algorithms, see the example in
-# ttp://www.google.fr/url?sa=t&rct=j&q=&esrc=s&source=web&cd=2&cad=rja&ved=0CEIQFjAB&url=http%3A%2F%2Fsydney.edu.au%2Fengineering%2Fit%2F~visual%2Fcomp4048%2Fslides03.ppt&ei=3JQKUdnWAYOJtAb6roCwBg&usg=AFQjCNE4FJlFlXOVvpneNmgMDYbGv3TN2Q&sig2=2PTvTgkx3fhzwDmYxCBiTA&bvm=bv.41642243,d.Yms
+# http://www.google.fr/url?sa=t&rct=j&q=&esrc=s&source=web&cd=2&cad=rja&\
+# ved=0CEIQFjAB&url=http%3A%2F%2Fsydney.edu.au%2Fengineering%2Fit%\
+# 2F~visual%2Fcomp4048%2Fslides03.ppt&ei=3JQKUdnWAYOJtAb6roCwBg&\
+# usg=AFQjCNE4FJlFlXOVvpneNmgMDYbGv3TN2Q&sig2=2PTvTgkx3fhzwDmYxCBiTA&\
+# bvm=bv.41642243,d.Yms
 
 links = [(18, 5), (9, 18), (15, 6), (9, 6), (4, 9),
          (19, 17), (17, 6), (17, 7), (20, 7), (13, 20),
@@ -13,22 +17,23 @@ links = [(18, 5), (9, 18), (15, 6), (9, 6), (4, 9),
 g = graphs.Digraph(edges=links)
 
 
-def compare(algo, expected, result):
-    if len(expected) != len(result):
-        print "%s: Incorrect number of layers: expected=%d, got=%d" % (
-            algo, len(expected), len(result))
-        print "%s: result=%s" % (algo, result)
+def compare(algo, expect, actual):
+    if len(expect) != len(actual):
+        print("%s: Incorrect number of layers: expected=%d, got=%d" % (
+            algo, len(expected), len(actual)))
+        print("%s: result=%s" % (algo, actual))
 
-    for layer in range(0, len(expected)):
-        if sorted(expected[layer]) != sorted(result[layer]):
-            print "%s: Incorrect layer %s:" % (algo, layer)
-            print "  expected=%s" % sorted(expected[layer])
-            print "  result  =%s" % sorted(result[layer])
+    for layer in range(0, len(expect)):
+        if sorted(expect[layer]) != sorted(actual[layer]):
+            print("%s: Incorrect layer %s:" % (algo, layer))
+            print("  expected=%s" % sorted(expect[layer]))
+            print("  result  =%s" % sorted(actual[layer]))
 
 # Longest path layering
 # This algorithm does not optimize the length of the paths. For instance,
 # node 14 should be just one layer below 8, not at the bottom.
 # The resulting layout is wider than needed.
+
 
 layers = g.rank_longest_path()
 result = g.get_layers(layers)

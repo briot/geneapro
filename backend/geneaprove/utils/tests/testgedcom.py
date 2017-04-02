@@ -8,7 +8,7 @@ import os.path
 from .. import gedcom
 
 
-class GedcomTestCase (unittest.TestCase):
+class GedcomTestCase(unittest.TestCase):
 
     """Tests for gedcom.py"""
 

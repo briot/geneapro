@@ -3,7 +3,11 @@ Various views related to displaying the pedgree of a person graphically
 """
 
 from geneaprove import models
-from geneaprove.views.styles import *
+from geneaprove.views.styles import RULE_ATTR, RULE_EVENT, RULE_IN, RULE_IS, \
+    RULE_IS_NOT, RULE_CONTAINS_NOT_INSENSITIVE, RULE_GREATER, \
+    RULE_SMALLER, RULE_CONTAINS_INSENSITIVE, RULE_BEFORE, \
+    RULE_SMALLER_EQUAL, RULE_IS_INSENSITIVE
+
 
 def style_rules():
     return [
@@ -14,24 +18,24 @@ def style_rules():
 
         ("Born or dead in La Baussaine before 1862",
          RULE_EVENT,
-         [("type",  RULE_IN,         (models.Event_Type.PK_birth,
-                                      models.Event_Type.PK_death)),
+         [("type", RULE_IN,
+           (models.Event_Type.PK_birth, models.Event_Type.PK_death)),
           ("place.name", RULE_CONTAINS_INSENSITIVE, "baussaine"),
-          ("role",  RULE_IS,         models.Event_Type_Role.PK_principal),
-          ("date",  RULE_BEFORE,     "1862")],
+          ("role", RULE_IS, models.Event_Type_Role.PK_principal),
+          ("date", RULE_BEFORE, "1862")],
          {"color": "rgb(200,0,0)", "stroke": "black"}),
 
         ("Died younger than 60",
          RULE_EVENT,
          [("type", RULE_IS, models.Event_Type.PK_death),
           ("role", RULE_IS, models.Event_Type_Role.PK_principal),
-          ("age",  RULE_SMALLER_EQUAL, 60)],
+          ("age", RULE_SMALLER_EQUAL, 60)],
          {"color": "blue"}),
 
         ("Person's age today is more than 80, and is alive",
          RULE_ATTR,
-         [("age",   RULE_GREATER, 80),
-          ("ALIVE", RULE_IS,      "Y")],
+         [("age", RULE_GREATER, 80),
+          ("ALIVE", RULE_IS, "Y")],
          {"color": "orange"}),
 
         ("Foreign people in different color",
@@ -44,8 +48,8 @@ def style_rules():
 
         ("Person's with more than one marriage",
          RULE_EVENT,
-         [("type",  RULE_IS, models.Event_Type.PK_marriage),
-          ("role",  RULE_IS, models.Event_Type_Role.PK_principal),
+         [("type", RULE_IS, models.Event_Type.PK_marriage),
+          ("role", RULE_IS, models.Event_Type_Role.PK_principal),
           ("count", RULE_GREATER, 1)],
          {"fill": "rgb(0,155,0)"}),
 
@@ -54,14 +58,14 @@ def style_rules():
          [("type", RULE_IS, models.Event_Type.PK_birth),
           ("role", RULE_IN, (models.Event_Type_Role.PK_birth__father,
                              models.Event_Type_Role.PK_birth__mother)),
-          ("age",  RULE_SMALLER, 17)],
+          ("age", RULE_SMALLER, 17)],
          {"fill": "red"}),
 
         ("PROBLEM: Persons too old at death",
          RULE_EVENT,
          [("type", RULE_IS, models.Event_Type.PK_death),
           ("role", RULE_IS, models.Event_Type_Role.PK_principal),
-          ("age",  RULE_GREATER, 110)],
+          ("age", RULE_GREATER, 110)],
          {"fill": "red"}),
 
         ("If the person appears multiple time in the current tree",
