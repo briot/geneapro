@@ -89,6 +89,13 @@ pip install django pillow pylint pylint-django pep8 autopep8
 # Create database #
 ###################
 
+(
+   cd backend
+   dir=`./manage.py showconf | grep dir= | cut -d= -f2`
+   mkdir -p "$dir"
+   ./manage.py migrate
+)
+
 #########################################
 # Generate the sources and start server #
 #########################################

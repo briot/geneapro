@@ -4,35 +4,36 @@ This README is organized as a FAQ, hopefully this will make it more readable.
 Q. What do I need to install first ?
 
    Compiling and running geneaprove requires the following packages:
-       python 2.6 or 2.7
-       python-pil  (image library for python)
-       django >= 1.9.4
+       python 3.6
+       django >= 1.10.x
        sqlite >= 3.6
-       nodejs >= 6.9.0
-       npm >= 2.6.1
+       nodejs >= 7.7.3
+       npm >= 4.2.0
+       tmux
 
    We know that things will not work as well with older versions, and the
    current priority of the project is to implement new features rather than
    support obsolete versions of these tools.
 
-   You need to run the following commands:
-       npm start
-
    The only database backend that has been tested so far is sqlite, although
    Django is such that it might work with other backends.
 
-Q. How do I setup the application ?
-
-   You need to edit the file mysites/settings.py to point to the database
-   you wish to use.
-
 Q. How do I start the server ?
 
-   Type
-       npm run server
-   to create an empty database (if none exists yet) and start the server.
+   Run the following:
 
-   Then open a web browser and connect to
+       sh ./setup.sh
+
+   This command will download required nodejs and python dependencies (which
+   might take a while the first time), and then start split the window into
+   several parts: one makes sure the server is running, another that the
+   resources needed by the web browser are compiled.
+
+   This command also creates an empty database if none exists yet.
+
+   Once the second window shows that all web resources have been compiled,
+   open a web browser and connect to:
+
       http://127.0.0.1:8000/
 
    Tested web browers include Safari, Firefox and Chrome.
