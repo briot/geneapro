@@ -1,4 +1,4 @@
-<form *ngIf='data' #citationForm='ngForm' (ngSubmit)='save(citationForm.value)'>
+<form *ngIf='data' #citationForm='ngForm' (submit)='save(citationForm.value)'>
    <div class='row'>
       <div class='col-md-12 form-group floatlabel'>
          <floatlabelinput [(ngModel)]='data.source.title' name='title' [readonly]='data.source.medium!=""' label='Full Citation' [title]='citation?.template?.full' required #full='ngModel'></floatlabelinput>
