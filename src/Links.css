@@ -1,0 +1,9 @@
+.personaLink:after {
+}
+
+.sourceLink span {
+   font-size: 0.7em;
+   font-style: italic;
+   vertical-align: super;
+   margin-left: -5px;
+}

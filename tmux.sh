@@ -5,7 +5,7 @@ tmux bind X confirm-before kill-session
 
 # Setup a window to compile files
 tmux new-window -t $SESSION:1 -n 'geneaprove' "source python_env/bin/activate; cd backend; ./manage.py runserver"
-tmux split-window 'npm run watch'
+tmux split-window 'yarn run start'
 
 tmux split-window 
 tmux send-keys "source python_env/bin/activate; clear; echo 'Cb-X to kill the session'" C-m

@@ -1,0 +1,37 @@
+.Fanchart {
+   width: 100%;
+   height: calc(100vh - 0px);
+   background: white;
+}
+
+.Fanchart .name {
+   font-size: 10px;
+   color: black;
+   text-overflow: ellipsis;
+   user-select: none;
+}
+
+.Fanchart .details {
+   fill: #555;
+   font-size: 8px;
+   color: black;
+   text-overflow: ellipsis;
+   user-select: none;
+}
+
+.Fanchart .marriage {
+   font-size: 8px;
+   color: black;
+   text-overflow: ellipsis;
+   user-select: none;
+}
+
+.Fanchart .child {
+   fill: none;
+   stroke: black;
+   font-size: 10px;
+}
+.Fanchart .child text {
+   fill: black;
+   stroke: none;
+}

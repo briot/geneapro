@@ -1,0 +1,19 @@
+.PersonaList {
+}
+
+.PersonaList .lifespan {
+   color: #999;
+   float: right;
+}
+.PersonaList .name {
+   color: inherit;
+}
+.PersonaList .lifespan span {
+   display: inline-block;
+   width: 30px;
+}
+.PersonaList .id {
+   color: #999;
+   font-style: italic;
+   font-size: 0.8em;
+}

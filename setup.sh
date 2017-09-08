@@ -2,25 +2,18 @@
 
 # Which python interpreter to use (need python 3)
 # Only needed when no virtualenv has been setup yet
-PYTHON=${PYTHON:-python}
+PYTHON=${PYTHON:-python3.6}
 
 VIRTUALENV=${VIRTUALENV:-virtualenv}
 NODE=${NODE:-node}
-NPM=${NPM:-npm}
 
 ######################
 # Check requirements #
 ######################
 
-${NODE} -v 2>/dev/null | grep v7.7 >/dev/null
+${NODE} -v 2>/dev/null | grep v7.10.1 >/dev/null
 if [ $? != 0 ]; then
-   echo "nodejs 7.7 not found"
-   exit 1
-fi
-
-${NPM} -v 2>/dev/null | fgrep 4.2. >/dev/null
-if [ $? != 0 ]; then
-   echo "npm 4.2 not found"
+   echo "nodejs 7.10.1 not found"
    exit 1
 fi
 
@@ -28,23 +21,7 @@ fi
 # Front-end development #
 #########################
 
-# package.json has already been created. It was created with the following
-# steps:
-#
-#   In a new directory:
-#      mkdir angular-cli
-#      cd angular-cli
-#      npm install @angular/cli@latested
-#      export PATH=`pwd`/node_modules/.bin:$PATH
-#
-#   In another directory (but not a subdirectory of the above):
-#      mkdir geneaprove
-#      cd geneaprove
-#      ng new --style=sass geneaprove
-
-# Now make sure we have all required node modules
-
-${NPM} install
+yarn install
 
 ########################
 # Back-end development #

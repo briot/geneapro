@@ -1,0 +1,76 @@
+.Persona {
+   max-width: 1100px;
+}
+
+.Persona table {
+   table-layout: fixed;
+   border-spacing: 0;
+   width: 100%;
+}
+
+.Persona td {
+   padding-bottom: 10px;
+}
+
+.Persona .pagetitle {
+   background: #cdcdcd;
+   font-size: 1.4em;
+   line-height: 1.6em;
+   white-space: nowrap;
+   color: #4d4d4d;
+   font-family: serif;
+}
+
+.Persona .pageContent {
+   background: #ececec;
+}
+
+.Persona .date {
+   width: 60px;
+   border-right: 2px solid black;
+   padding-right: 10px;
+   font-size: 0.8em;
+   text-align: right;
+   vertical-align: top;
+   position: relative;
+}
+
+.Persona .age {
+   color: #999;
+   display: block;
+}
+
+.Persona .date i {
+   position: absolute;
+   top: 0;
+   right: -11px;
+   font-size: 1.1em;
+}
+
+.Persona .date + td {
+   padding-left: 20px;
+}
+
+.Persona .fullDate {
+   font-weight: bold;
+   font-size: 0.9em;
+   margin-right: 30px;
+}
+
+.Persona .place {
+   font-style: italic;
+}
+
+.Persona .type {
+   font-weight: bold;
+   margin-right: 5px;
+}
+
+.Persona .role {
+   color: #999;
+   margin-right: 15px;
+}
+
+.Persona .rationale {
+   padding-left: 30px;
+}

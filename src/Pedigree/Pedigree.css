@@ -1,0 +1,21 @@
+.Pedigree {
+   width: 100%;
+   height: calc(100vh - 0px);
+   background: white;
+}
+
+.Pedigree .name {
+   font-weight: bold;
+   fill: black;
+}
+.Pedigree .details {
+   fill: #555;
+}
+.Pedigree text,
+.Pedigree tspan {
+   line-height: 1em;
+}
+.Pedigree .link {
+   stroke: #000;
+   fill: none;
+}

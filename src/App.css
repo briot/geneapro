@@ -1,0 +1,25 @@
+
+.App {
+}
+
+.Side .settings small {
+   display: block;
+   margin-left: 20px;
+}
+
+.Side .settings .active small {
+   display: none;
+}
+
+/* Workaround bug in semantic-ui: an icon 'list' results in extra
+ * indentation.
+ * https://github.com/Semantic-Org/Semantic-UI/issues/5499
+ */
+.ui.list i.icon.list,
+.ui.list i.icon.image+.content {
+   padding-left: 0;
+}
+
+.ui.header {
+   color: rgb(100,100,100);
+}

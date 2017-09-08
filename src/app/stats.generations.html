@@ -1,9 +1,0 @@
-<div class='panel panel-default'>
-   <h4>Generations timespan (oldest birth - latest death)</h4>
-   <div style='height: 350px' #thesvg></div>
-   <div class='row generationsLegend' *ngIf='data'>
-      <div *ngFor='let gen of data.ranges' class='col-md-4 col-sm-6'>
-         <span [style.background]='colors(gen[0])'>&nbsp;</span>{{gen[3]}}
-      </div>
-   </div>
-</div>

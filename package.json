@@ -1,57 +1,38 @@
 {
   "name": "geneaprove",
   "version": "0.1.0",
-  "license": "GPL-3.0",
-  "description": "Prove your genealogy",
-  "private": "true",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build --deploy-url /static/",
-    "test": "ng test",
-    "lint": "ng lint",
-    "e2e": "ng e2e",
-
-    "watch": "ng build --watch --deploy-url /static/",
-    "aot": "ng build --prod --aot --deploy-url /static/"
-  },
   "private": true,
   "dependencies": {
-    "@angular/common": "^4.0.0",
-    "@angular/compiler": "^4.0.0",
-    "@angular/core": "^4.0.0",
-    "@angular/forms": "^4.0.0",
-    "@angular/http": "^4.0.0",
-    "@angular/platform-browser": "^4.0.0",
-    "@angular/platform-browser-dynamic": "^4.0.0",
-    "@angular/router": "^4.0.0",
-    "core-js": "^2.4.1",
-    "rxjs": "^5.1.0",
-    "zone.js": "^0.8.4",
-
-    "d3": "3.5.x",
-    "font-awesome": "",
-    "bootstrap-sass": "3.3.x"
+    "@types/d3": "^4.10.0",
+    "@types/fixed-data-table": "^0.6.32",
+    "@types/jest": "^20.0.5",
+    "@types/node": "^8.0.19",
+    "@types/react": "^16.0.0",
+    "@types/react-dom": "^15.5.1",
+    "@types/react-redux": "^5.0.4",
+    "@types/react-router-dom": "^4.0.7",
+    "@types/redux-logger": "^3.0.0",
+    "d3": "^4.10.0",
+    "fixed-data-table": "^0.6.4",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
+    "react-redux": "^5.0.6",
+    "react-router-dom": "^4.1.2",
+    "react-scripts-ts": "2.5.0",
+    "redux": "^3.7.2",
+    "redux-logger": "^3.0.6",
+    "redux-persist": "^4.8.3",
+    "redux-saga": "^0.15.6",
+    "redux-typescript-actions": "^1.3.0",
+    "semantic-ui-css": "^2.2.11",
+    "semantic-ui-react": "^0.71.3"
   },
-  "devDependencies": {
-    "@angular/cli": "1.0.0",
-    "@angular/compiler-cli": "^4.0.0",
-    "@types/jasmine": "2.5.38",
-    "@types/node": "~6.0.60",
-    "codelyzer": "~2.0.0",
-    "jasmine-core": "~2.5.2",
-    "jasmine-spec-reporter": "~3.2.0",
-    "karma": "~1.4.1",
-    "karma-chrome-launcher": "~2.0.0",
-    "karma-cli": "~1.0.1",
-    "karma-jasmine": "~1.1.0",
-    "karma-jasmine-html-reporter": "^0.2.2",
-    "karma-coverage-istanbul-reporter": "^0.2.0",
-    "protractor": "~5.1.0",
-    "ts-node": "~2.0.0",
-    "tslint": "~4.5.0",
-    "typescript": "~2.2.0",
-
-    "@types/d3": "3.x"
-  }
+  "devDependencies": {},
+  "scripts": {
+    "start": "react-scripts-ts start",
+    "build": "react-scripts-ts build",
+    "test": "react-scripts-ts test --env=jsdom",
+    "eject": "react-scripts-ts eject"
+  },
+  "proxy": "http://localhost:8000"
 }

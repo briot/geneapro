@@ -1,0 +1,8 @@
+.Logo {
+   font-style: italic;
+}
+
+.Logo > .tagline {
+   color: #5e5e5e;
+   font-size: .8em;
+}
