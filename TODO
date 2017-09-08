@@ -9,7 +9,8 @@
 *** Select Show Details, and then Back => not refreshed
    This is documented as an Angular2 bug on Safari.
 *** Change vertical spacing => display broken on Safari
-** Missing fanchart
+** See the following for fan colors suggestions
+   https://gedtree.com/
 
 ** Persona page
 *** Speed up sending data
