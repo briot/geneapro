@@ -75,7 +75,7 @@ def to_json(obj, custom=None, year_only=True):
        be encoded recursively It should return None to fallback to the default
        encoding.
     """
-    return ModelEncoder(year_only=year_only, custom=custom).encode(obj)
+    return ModelEncoder(year_only=year_only, custom=custom, indent=3).encode(obj)
 
 
 class JSONViewParams(QueryDict):

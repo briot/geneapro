@@ -70,12 +70,13 @@ class PedigreeData(JSONView):
             fathers = global_graph.fathers(p.id)
             mothers = global_graph.mothers(p.id)
             p.parents = [
-                None if not fathers else persons.get(fathers[0].main_id, None),
-                None if not mothers else persons.get(mothers[0].main_id, None)]
+                None if not fathers else fathers[0].main_id,
+                None if not mothers else mothers[0].main_id]
 
-            for pa in p.parents:
-                if pa:
-                    add_parents(pa)
+            if fathers and fathers[0].main_id in persons:
+                add_parents(persons[fathers[0].main_id])
+            if mothers and mothers[0].main_id in persons:
+                add_parents(persons[mothers[0].main_id])
 
         def add_children(p, gen):
             p.children = []
@@ -88,16 +89,18 @@ class PedigreeData(JSONView):
             for c in sorted:
                 if c[0]:
                     c[0].generation = -gen  # distance[c[1]]
-                    p.children.append(c[0])
+                    p.children.append(c[0].id)
                     if gen < maxdepthDescendants:
                         add_children(c[0], gen + 1)
 
         main = persons[decujus.main_id]
         add_parents(main)
         add_children(main, gen=1)
+        main = persons[decujus.main_id]
         return {'generations': max_levels,
                 'descendants': maxdepthDescendants,
-                'decujus':     main,
+                'decujus':     decujus.main_id,
+                'persons':     persons,
                 'styles':      styles.all_styles()}
 
     def to_json(self, value):
