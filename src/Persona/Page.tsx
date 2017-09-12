@@ -2,8 +2,8 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Accordion, Icon, Loader, Rating, Segment } from 'semantic-ui-react';
-import { Person, addToHistory, EventAndRole, Characteristic,
-         CharacteristicPart } from '../Store/Person';
+import { Person, EventAndRole, Characteristic, CharacteristicPart } from '../Store/Person';
+import { addToHistory } from '../Store/History';
 import { Place } from '../Store/Event';
 import { AppState, GPDispatch } from '../Store/State';
 import { fetchPersonDetails, fetchEventDetails } from '../Store/Sagas';
@@ -305,7 +305,7 @@ function Persona(props: PersonaProps) {
 
 interface PersonaPageProps {
    id: number;
-   person: Person;
+   person: Person|undefined;
    events: GenealogyEventSet;
    dispatch: GPDispatch;
 }
@@ -356,7 +356,7 @@ const PersonaPage = connect(
    (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
       id: Number(ownProps.match.params.id),
       events: state.events,
-      person: state.persons[Number(ownProps.match.params.id)],
+      person: state.persons[Number(ownProps.match.params.id)] as Person|undefined,
    }),
    (dispatch: GPDispatch) => ({
       dispatch,

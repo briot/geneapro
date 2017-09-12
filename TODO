@@ -126,6 +126,9 @@ http://bl.ocks.org/MoritzStefaner/1377729
 ** Timestamp
 http://www.cotrino.com/lifespan/
 
+** Lifelines
+*** http://www.aupresdenosracines.com/2017/04/pourquoi-utiliser-une-ligne-de-vie-en-genealogie.html
+
 ** Dynamic "infinite" expansion
 See "Interactive Visualization of Genealogical Graphs"
 http://www.youtube.com/watch?v=fZ1GXZ0hJPY
@@ -288,6 +291,46 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
   necessarily needed, although of course it would be better to handle this
   correctly.
 
+* Stats
+** http://timforsythe.com/blog/once-more-please-this-time-with-pizzazz/
+** See https://www.geneanet.org/blog/post/2017/07/les-statistiques-illustrees-3?utm_source=geneanet&utm_medium=e-mail&utm_campaign=SITE_fr_lettre-hebdo-a17s31&xtor=EREC-191-29141%5Bfr_lettre_hebdo_a17s31%5D-20170802-%5Blien9%5D-%401-20170802082617
+   Ascendants d'un individu:
+     - Nombre d'ancetres par generation, avec ou sans implexe
+     - Dix noms les plus courants
+     - Dix prenoms les plus courants
+     - Dix professions les plus courantes  (doughnut chart)
+   Descendants d'un individu:
+     - Repartition homme/femme
+     - Dix noms les plus courants
+     - Dix prenoms les plus courants
+     - Dix professions les plus courantes
+   Totalite de l'arbre:
+     - 100 dernieres naissances
+     - 100 dernieres unions
+     - 100 derniers deces
+     - Esperance de vie: les 100 plus ages encore vivants
+     - 100 ayant vecu le plus longtemps
+     - pyramide des ages
+     - frequence des noms et prenoms
+     - Statistiques sur les personnes :
+        * Noms les plus courants
+        * Prénoms les plus courants
+        * Âge moyen au décès
+        * Professions les plus courantes
+        * Répartition des naissances par mois
+        * Âge des parents lors des naissances (moyenne)
+        * Fréquence des signes du Zodiaque
+        * Influence de la lune sur les naissances
+     - Statistiques sur les familles :
+        * Moyenne d’âge à la première union
+        * Répartition des unions par jour de la semaine
+        * Répartition des unions par mois
+        * Durée moyenne d’une union
+        * Nombre moyen d’enfants par union
+        * Temps écoulé entre deux naissances (moyenne)
+        * Différence d’âge entre le premier et le dernier enfant d’un couple (moyenne)
+        * Différence d’âge entre conjoints (moyenne)
+
 * web
 ** timeline
   http://www.chronozoomproject.org/
@@ -302,8 +345,6 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    http://timforsythe.com/blog/introducing-splatter-the-gedcom-population-distribution-heatmap/
 ** Calendars
    http://books.google.fr/books/about/Calendrical_Calculations.html?id=DPbx0-qgXu0C&redir_esc=y
-** Stats
-   http://timforsythe.com/blog/once-more-please-this-time-with-pizzazz/
 ** US Census
    http://factfinder2.census.gov/faces/tableservices/jsf/pages/productview.xhtml?pid=ACS_12_1YR_DP02&prodType=table
    Nationalities: http://factfinder2.census.gov/faces/tableservices/jsf/pages/productview.xhtml?pid=ACS_12_3YR_B04001&prodType=table
@@ -317,6 +358,8 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    http://www.aupresdenosracines.com/2016/05/64-ressources-de-gallica-pour-completer-votre-genealogie.html
 ** Caption tool
    http://www.zdnet.com/article/whats-in-that-photo-google-open-sources-caption-tool-in-tensorflow-that-can-tell-you/
+** Matrices cadastrales
+   http://www.aupresdenosracines.com/2017/04/3-raisons-dutiliser-les-matrices-cadastrales.html
 
 * Existing code
 ** gedcom parsers
@@ -335,12 +378,13 @@ http://blog.eogn.com/eastmans_online_genealogy/2013/05/macfamilytree-7-and-mobil
 http://www.macg.co/logiciels/2015/03/ohmigene-perd-son-createur-et-cherche-un-repreneur-87999
 https://kinpoint.com/tour/get-started
 http://www.wolframalpha.com/input/?i=great+grand+mother%27s+niece
-   
+
 * Replace icons with fonts
   http://fortawesome.github.com/Font-Awesome/
   This can also be used to replace the star plugin, see the above page
 
 * Django
+** Look at PeeWee for the ORM
 ** Class-based views
    http://ccbv.co.uk
 ** Export to Excel
@@ -351,6 +395,8 @@ http://www.wolframalpha.com/input/?i=great+grand+mother%27s+niece
    https://simpleisbetterthancomplex.com/tips/2016/08/16/django-tip-11-custom-manager-with-chainable-querysets.html
 ** Password confirmation view
    https://simpleisbetterthancomplex.com/tutorial/2016/08/15/how-to-create-a-password-confirmation-view.html
+** Custom fields
+https://blogs.gnome.org/danni/2017/05/19/postgresql-date-ranges-in-django-forms/
 
 * CSS
 ** http://learnlayout.com
@@ -358,6 +404,10 @@ http://www.wolframalpha.com/input/?i=great+grand+mother%27s+niece
    https://css-tricks.com/optimizing-large-scale-displays/
 ** Designing cards
    https://uxdesign.cc/design-better-cards-c0d12ab581c4#.ca78ucet9
+** Cards
+   http://labs.jensimmons.com/2017/01-009.html
+** Grid
+   https://tympanus.net/codrops/css_reference/grid/
 
 * Angular
 ** Ahead-of-time compilation

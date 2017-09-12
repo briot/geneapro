@@ -1,9 +1,11 @@
 import * as Redux from 'redux';
 import { isType } from 'redux-typescript-actions';
-import { Person, addToHistory, HistoryItem, HistoryKind } from '../Store/Person';
+import { Person } from '../Store/Person';
+import { addToHistory, HistoryItem, HistoryKind } from '../Store/History';
 import { fetchPedigree, fetchPersonDetails, fetchPersons,
-         fetchEventDetails } from '../Store/Sagas';
+         fetchEventDetails, fetchSourceDetails } from '../Store/Sagas';
 import { GenealogyEventSet, addEvents } from '../Store/Event';
+import { Source, SourceSet } from '../Store/Source';
 import { EventDetails } from '../Server/Event';
 import { DetailsResult } from '../Server/Person';
 
@@ -86,6 +88,27 @@ export function eventsReducer(
 }
 
 /**
+ * Reducer for sources
+ */
+export function sourcesReducer(
+   state: SourceSet = {},
+   action: Redux.Action
+) {
+   if (isType(action, fetchSourceDetails.done)) {
+      const result = {...state};
+      const source = action.payload.result as Source;
+      if (source.id in result) {
+         result[source.id] = {...result[source.id], ...source};
+      } else {
+         result[source.id] = source;
+      }
+      return result;
+   }
+
+   return state;
+}
+
+/**
  * Reducer for history
  */
 export function historyReducer(
@@ -94,22 +117,33 @@ export function historyReducer(
 ) {
    if (isType(action, addToHistory)) {
       const MAX_HISTORY_SIZE = 15;
+      let item: HistoryItem;
+
       const p = action.payload.person;
+      const s = action.payload.source;
       if (p) {
-         const idx = state.findIndex((h: HistoryItem) => h.id === p.id);
-         const item: HistoryItem = {
+         item = {
             id: p.id,
             display: p.surn.toUpperCase() + ' ' + p.givn + ' (' + p.id + ')',
-            kind: HistoryKind.PERSON};
-         if (idx >= 0) {
-            return [item]
-               .concat(state.slice(0, idx))
-               .concat(state.slice(idx + 1));
-         } else {
-            return [item].concat(state.slice(0, MAX_HISTORY_SIZE));
-         }
+            kind: HistoryKind.PERSON,
+         };
+      } else if (s) {
+         item = {
+            id: s.id,
+            display: s.abbrev,
+            kind: HistoryKind.SOURCE,
+         };
       } else {
          return state;
+      }
+
+      const idx = state.findIndex((h: HistoryItem) => h.id === item.id);
+      if (idx >= 0) {
+         return [item]
+            .concat(state.slice(0, idx))
+            .concat(state.slice(idx + 1));
+      } else {
+         return [item].concat(state.slice(0, MAX_HISTORY_SIZE));
       }
 
    } else {

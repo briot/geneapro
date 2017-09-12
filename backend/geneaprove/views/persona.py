@@ -135,7 +135,7 @@ def extended_personas(
         for p in nodes:
             all_ids.update(p.ids)
 
-    # All query the 'principal' for each events, so that we can provide
+    # Also query the 'principal' for each events, so that we can provide
     # that information graphically.
     for p in sql_in(events, "person", all_ids):
         e = p.event
@@ -306,6 +306,12 @@ class PersonaView(JSONView):
             person1__in=node.ids.union(node.different)))
 
         decujus = p[node.main_id]
+
+        # ??? All those assertions are sending the same p1 field which is
+        # the person, and is useless in this context.
+        # ??? Persons and events should be sent as a separate field, and
+        # referenced by any from assertions. This would make it easier to
+        # store in React, and would save on the amount of data we send.
 
         return {
             "person": decujus,

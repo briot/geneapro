@@ -2,7 +2,9 @@ import * as Redux from 'redux';
 import { REHYDRATE } from 'redux-persist/constants';
 import { FanchartSettings } from '../Store/Fanchart';
 import { PedigreeSettings } from '../Store/Pedigree';
-import { PersonSet, HistoryItem } from '../Store/Person';
+import { PersonSet } from '../Store/Person';
+import { SourceSet } from '../Store/Source';
+import { HistoryItem } from '../Store/History';
 import { actionCreator } from '../Store/Actions';
 import { GenealogyEventSet } from '../Store/Event';
 
@@ -11,6 +13,7 @@ export interface AppState {
    fanchart: FanchartSettings;
    persons: PersonSet;        // details for all persons
    events: GenealogyEventSet; // all known events
+   sources: SourceSet;
    history: HistoryItem[];    // id of persons recently visited
 }
 

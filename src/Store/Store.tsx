@@ -4,7 +4,8 @@ import { persistStore, autoRehydrate } from 'redux-persist';
 import { AppState, GPStore } from '../Store/State';
 import { fanchartReducer } from '../Store/Fanchart';
 import { pedigreeReducer } from '../Store/Pedigree';
-import { personsReducer, historyReducer, eventsReducer } from '../Store/Reducers';
+import { personsReducer, historyReducer, eventsReducer,
+         sourcesReducer } from '../Store/Reducers';
 import { rootSaga } from '../Store/Sagas';
 
 export const rootReducer = Redux.combineReducers<AppState>({
@@ -13,6 +14,7 @@ export const rootReducer = Redux.combineReducers<AppState>({
    persons: personsReducer,
    history: historyReducer,
    events: eventsReducer,
+   sources: sourcesReducer,
 });
 
 // Use generators as reducers

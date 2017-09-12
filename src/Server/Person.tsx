@@ -58,17 +58,19 @@ interface JSONCharPart {
    value: string;
 }
 
+export interface JSONResearcher {
+   id: number;
+   name: string;
+   comment: string;
+}
+
 export interface JSONAssertion {
    disproved: boolean;
    rationale: string;
    last_change: string;
    source_id: number;
    surety: number;
-   researcher: {
-      id: number;
-      name: string;
-      comment: string;
-   };
+   researcher: JSONResearcher;
 }
 
 interface P2E extends JSONAssertion {

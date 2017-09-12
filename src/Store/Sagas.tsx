@@ -3,6 +3,8 @@ import { fetchPedigreeFromServer } from '../Server/Pedigree';
 import { fetchPersonsFromServer, fetchPersonDetailsFromServer,
          DetailsResult } from '../Server/Person';
 import { fetchEventFromServer, EventDetails } from '../Server/Event';
+import { fetchSourceDetailsFromServer } from '../Server/Source';
+import { Source } from '../Store/Source';
 import { AppState } from '../Store/State';
 import { Person, PersonSet } from '../Store/Person';
 import { allSagas, createAsyncAction } from '../Store/Actions';
@@ -76,6 +78,23 @@ function* _fetchEventDetails(p: fetchEventDetailsParams) {
 }
 export const fetchEventDetails = createAsyncAction(
    'DATA/EVENT', _fetchEventDetails, _hasEventDetails);
+
+/**
+ * Async Action: fetch details for one source
+ */
+
+export type fetchSourceDetailsParams = {
+   id: number;
+};
+function _hasSourceDetails(p: fetchSourceDetailsParams, state: AppState) {
+   return false;
+}
+function* _fetchSourceDetails(p: fetchSourceDetailsParams) {
+   const res: Source = yield call(fetchSourceDetailsFromServer, p.id);
+   return res;
+}
+export const fetchSourceDetails = createAsyncAction(
+   'DATA/SOURCE', _fetchSourceDetails, _hasSourceDetails);
 
 /**
  * Internal

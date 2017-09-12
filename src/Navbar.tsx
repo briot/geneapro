@@ -15,7 +15,7 @@ class Logo extends React.PureComponent<{}, {}> {
 }
 
 interface NavbarProps {
-   decujus: number;
+   decujus?: number;
 }
 
 export default class Navbar extends React.PureComponent<NavbarProps, {}> {

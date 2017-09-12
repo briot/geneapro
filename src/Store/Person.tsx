@@ -1,4 +1,3 @@
-import { actionCreator } from '../Store/Actions';
 import { Place, GenealogyEvent } from '../Store/Event';
 
 export interface EventAndRole {
@@ -53,21 +52,3 @@ export interface PersonSet {
   // means that we might be downloading information multiple times if we
   // do not already know about the id, of course.
 }
-
-export enum HistoryKind {
-   PERSON = 0,
-   PLACE = 1,
-}
-
-export interface HistoryItem {
-   id: number;
-   display: string;
-   kind: HistoryKind;
-}
-
-/**
- * Action: add a person to the history of visited persons
- */
-export const addToHistory = actionCreator<{
-   person?: Person;
-}>('DATA/HISTORY');

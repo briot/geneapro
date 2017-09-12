@@ -6,7 +6,7 @@ import SideNav from './SideNav';
 interface PageProps {
    leftSide?: JSX.Element[] | JSX.Element;
    main: JSX.Element;
-   decujus: number;
+   decujus?: number;
 }
 const Page = (props: PageProps) => {
    // put the first column in second position, so that on mobile it goes

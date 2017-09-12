@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Header, List } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 import { AppState } from './Store/State';
-import { HistoryItem, HistoryKind } from './Store/Person';
+import { HistoryItem, HistoryKind } from './Store/History';
 import { urlPersona } from './Links';
 import Panel from './Panel';
 import './SideNav.css';
@@ -47,7 +47,7 @@ class SideNavCategory extends React.PureComponent<SideNavCategoryProps, {}> {
 }
 
 interface SideNavProps {
-   decujus: number;
+   decujus?: number;
    history: HistoryItem[];
 }
 
@@ -57,11 +57,17 @@ class SideNavConnected extends React.PureComponent<SideNavProps, {}> {
          ({id, display, kind}: HistoryItem) => (
             <SideNavItem
                key={kind + ' ' + id}
-               icon={kind === HistoryKind.PERSON ? 'user' : 'globe'}
+               icon={kind === HistoryKind.PERSON ? 'user' :
+                     kind === HistoryKind.PLACE ? 'globe' :
+                     kind === HistoryKind.SOURCE ? 'book' :
+                     ''}
                label={display}
                to={urlPersona(id)}
             />
          ));
+
+      const decujus: string = this.props.decujus === undefined ?
+         '' : this.props.decujus.toString();
 
       return (
          <Panel className="SideNav">
@@ -78,7 +84,7 @@ class SideNavConnected extends React.PureComponent<SideNavProps, {}> {
                <SideNavItem
                    icon="users"
                    label="All persons"
-                   to={'/persona/list/' + this.props.decujus}
+                   to={'/persona/list/' + decujus}
                />
                <SideNavItem icon="globe" label="All places" disabled={true} to="/place/list" />
                <SideNavItem icon="book" label="All sources" disabled={true} to="/source/list" />
@@ -88,12 +94,14 @@ class SideNavConnected extends React.PureComponent<SideNavProps, {}> {
                <SideNavItem
                    icon="sitemap"
                    label="Pedigree"
-                   to={'/pedigree/' + this.props.decujus}
+                   disabled={this.props.decujus === undefined}
+                   to={'/pedigree/' + decujus}
                />
                <SideNavItem
                    icon="wifi"
                    label="Fan chart"
-                   to={'/fanchart/' + this.props.decujus}
+                   disabled={this.props.decujus === undefined}
+                   to={'/fanchart/' + decujus}
                />
                <SideNavItem icon="asterisk" label="Radial chart" disabled={true} to="/radial" />
                <SideNavItem icon="server" label="Quilts" disabled={true} to="/quilts" />
