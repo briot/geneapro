@@ -4,7 +4,7 @@ import { Header, List } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 import { AppState } from './Store/State';
 import { HistoryItem, HistoryKind } from './Store/History';
-import { urlPersona } from './Links';
+import { urlPersona, urlSource, urlPlace } from './Links';
 import Panel from './Panel';
 import './SideNav.css';
 
@@ -62,7 +62,10 @@ class SideNavConnected extends React.PureComponent<SideNavProps, {}> {
                      kind === HistoryKind.SOURCE ? 'book' :
                      ''}
                label={display}
-               to={urlPersona(id)}
+               to={kind === HistoryKind.PERSON ? urlPersona(id) :
+                   kind === HistoryKind.PLACE ? urlPlace(id) :
+                   kind === HistoryKind.SOURCE ? urlSource(id) :
+                  '#' }
             />
          ));
 

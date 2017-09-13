@@ -49,3 +49,11 @@ export function SourceLink(props: SourceLinkProps) {
       </Link>
    );
 }
+
+/**
+ * Place links
+ */
+
+export function urlPlace(id: number) {
+   return '/place/' + id;
+}
