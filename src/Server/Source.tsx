@@ -20,8 +20,8 @@ interface JSONSource {
    last_change: string;
    medium: string;
    researcher: JSONResearcher;
-   subject_date?: {};
-   subject_place?: {};
+   subject_date?: string;
+   subject_place?: string;
 }
 
 interface JSONResult {
@@ -42,6 +42,7 @@ export function* fetchSourceDetailsFromServer(id: number) {
       title: data.source.title,
       abbrev: data.source.abbrev,
       biblio: data.source.abbrev,
+      medium: '',
    };
    return r;
 }

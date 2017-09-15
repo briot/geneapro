@@ -7,6 +7,7 @@ import { addToHistory } from '../Store/History';
 import { fetchSourceDetails } from '../Store/Sagas';
 import { Source } from '../Store/Source';
 import Page from '../Page';
+import SourceDetails from '../Source/Source';
 
 interface SourcePageProps {
    id: number;
@@ -34,7 +35,9 @@ class SourcePageConnected extends React.PureComponent<SourcePageProps> {
          <Page
             decujus={undefined}
             main={ s ?
-               <div>{s.title}</div> :
+               <SourceDetails
+                   source={s}
+               /> :
                <Loader active={true} size="large">Loading</Loader>
             }
          />

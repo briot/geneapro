@@ -1,0 +1,16 @@
+.Source {
+   max-width: 1100px;
+}
+
+.Source .pageTitle {
+   background: #cdcdcd;
+   font-size: 1.4em;
+   line-height: 1.6em;
+   white-space: nowrap;
+   color: #4d4d4d;
+   font-family: serif;
+}
+
+.Source .pageContent {
+   background: #ececec;
+}
