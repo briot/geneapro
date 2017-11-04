@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
-import { Card, Header, Icon, Image, Statistic } from 'semantic-ui-react';
+import { Card, Header, Icon, Image, SemanticICONS, Statistic } from 'semantic-ui-react';
 import Page from './Page';
 
 const DEFAULT_DECUJUS = 1;
@@ -62,7 +62,7 @@ class PlaceCard extends React.PureComponent<PlaceCardProps, {}> {
 interface StatCardProps {
    value: string;
    label: string;
-   icon?: string;
+   icon?: SemanticICONS;
 }
 
 class StatCard extends React.PureComponent<StatCardProps, {}> {

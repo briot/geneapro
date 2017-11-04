@@ -1,5 +1,8 @@
 # for Emacs: -*- mode: org; mode: flyspell; fill-column: 79 -*-
 
+* Upgrading environment
+** yarn add react-scripts-ts@2.8.0
+
 * Port to Angular2
 ** BUGS
 *** Confusion between "givn" and "given_name" and "surn"/"surname" in persona.py
@@ -47,9 +50,6 @@
    insert into "assertion" values (9999, 0, 0, NULL, "because I think so", 0, "2016-01-01");
    insert into group_type_role values (1, 8, "one passenger", 1);
    insert into "p2g" values (9999, 1408, 1, 1);    --  persona 1408
-
-
-
 
 * Bugs
 ** Source page
@@ -360,6 +360,8 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    http://www.zdnet.com/article/whats-in-that-photo-google-open-sources-caption-tool-in-tensorflow-that-can-tell-you/
 ** Matrices cadastrales
    http://www.aupresdenosracines.com/2017/04/3-raisons-dutiliser-les-matrices-cadastrales.html
+** export to Latex
+   See https://ctan.org/pkg/genealogytree
 
 * Existing code
 ** gedcom parsers

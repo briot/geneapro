@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Accordion, Form, Header, Icon } from 'semantic-ui-react';
+import { Accordion, Form, Header } from 'semantic-ui-react';
 import Panel from '../Panel';
 import { FanchartSettings } from '../Store/Fanchart';
 import { ColorSchemeNames } from '../Store/Pedigree';
@@ -11,21 +11,25 @@ interface FanchartSideProps {
 }
 
 export default function FanchartSide(props: FanchartSideProps) {
-   return (
-      <Panel className="settings">
-         <Header as="h5">Settings</Header>
-         <Accordion styled={true} exclusive={false} fluid={true}>
-            <Accordion.Title key="generations">
-               <Icon name="dropdown" />
-               Generations
-               <small>
-                  ancestors: {props.settings.ancestors}
-                  {props.settings.showMissingPersons ? ', show missing persons' : ''}
-                  {props.settings.showSourcedEvents ? ', sourced events' : ''}
-                  {props.settings.showMarriages ? ', show marriages' : ''}
-               </small>
-            </Accordion.Title>
-            <Accordion.Content>
+   const panels = [
+      {
+         title: {
+            key: 'generations',
+            content: (
+               <span>
+                  Generations
+                  <small>
+                     ancestors: {props.settings.ancestors}
+                     {props.settings.showMissingPersons ? ', show missing persons' : ''}
+                     {props.settings.showSourcedEvents ? ', sourced events' : ''}
+                     {props.settings.showMarriages ? ', show marriages' : ''}
+                  </small>
+               </span>
+            )
+         },
+         content: {
+            key: 'generationsC',
+            content: (
                <Form size="tiny">
                   <SliderField
                      defaultValue={props.settings.ancestors}
@@ -58,26 +62,34 @@ export default function FanchartSide(props: FanchartSideProps) {
                   />
 
                </Form>
-            </Accordion.Content>
-
-            <Accordion.Title key="theme">
-               <Icon name="dropdown" />
-               Theme
-               <small>
-                  colors: {ColorSchemeNames[props.settings.colors]},&nbsp;
-                  separators: {ColorSchemeNames[props.settings.sepColors]},&nbsp;
-                  angle: {props.settings.fullAngle},&nbsp;
-                  padding: {props.settings.anglePad}
-               </small>
-               <small>
-                  text threshold: {props.settings.straightTextThreshold}
-                  {props.settings.readableText ? ', text kept readable' : ''}
-               </small>
-               <small>
-                  {props.settings.gapBetweenGens ? 'gap between generations' : ''}
-               </small>
-            </Accordion.Title>
-            <Accordion.Content>
+            )
+         }
+      },
+      {
+         title: {
+            key: 'theme',
+            content: (
+               <span>
+                  Theme
+                  <small>
+                     colors: {ColorSchemeNames[props.settings.colors]},&nbsp;
+                     separators: {ColorSchemeNames[props.settings.sepColors]},&nbsp;
+                     angle: {props.settings.fullAngle},&nbsp;
+                     padding: {props.settings.anglePad}
+                  </small>
+                  <small>
+                     text threshold: {props.settings.straightTextThreshold}
+                     {props.settings.readableText ? ', text kept readable' : ''}
+                  </small>
+                  <small>
+                     {props.settings.gapBetweenGens ? 'gap between generations' : ''}
+                  </small>
+               </span>
+            )
+         },
+         content: {
+            key: 'themeC',
+            content: (
                <Form size="tiny">
                   <SelectField
                      defaultValue={props.settings.colors}
@@ -136,8 +148,16 @@ export default function FanchartSide(props: FanchartSideProps) {
                      onChange={props.onChange}
                   />
                </Form>
-            </Accordion.Content>
-         </Accordion>
+            )
+         }
+      }
+   ];
+
+   
+   return (
+      <Panel className="settings">
+         <Header as="h5">Settings</Header>
+         <Accordion styled={true} exclusive={false} fluid={true} panels={panels} />
       </Panel>
    );
 }

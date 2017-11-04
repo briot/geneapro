@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Header, List } from 'semantic-ui-react';
+import { Header, List, SemanticICONS } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 import { AppState } from './Store/State';
 import { HistoryItem, HistoryKind } from './Store/History';
@@ -9,7 +9,7 @@ import Panel from './Panel';
 import './SideNav.css';
 
 interface SideNavItemProps {
-   icon?: string;
+   icon?: SemanticICONS;
    label: React.ReactNode;
    disabled?: boolean;
    to?: string;
@@ -60,7 +60,7 @@ class SideNavConnected extends React.PureComponent<SideNavProps, {}> {
                icon={kind === HistoryKind.PERSON ? 'user' :
                      kind === HistoryKind.PLACE ? 'globe' :
                      kind === HistoryKind.SOURCE ? 'book' :
-                     ''}
+                     undefined}
                label={display}
                to={kind === HistoryKind.PERSON ? urlPersona(id) :
                    kind === HistoryKind.PLACE ? urlPlace(id) :

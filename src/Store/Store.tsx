@@ -3,7 +3,7 @@ import createSagaMiddleware from 'redux-saga';
 import { persistStore, autoRehydrate } from 'redux-persist';
 import { AppState, GPStore } from '../Store/State';
 import { fanchartReducer } from '../Store/Fanchart';
-import { pedigreeReducer } from '../Store/Pedigree';
+import { pedigreeReducer } from '../Store/PedigreeReducer';
 import { personsReducer, historyReducer, eventsReducer,
          sourcesReducer } from '../Store/Reducers';
 import { rootSaga } from '../Store/Sagas';

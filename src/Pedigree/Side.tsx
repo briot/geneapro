@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Accordion, Form, Header, Icon } from 'semantic-ui-react';
+import { Accordion, Form, Header } from 'semantic-ui-react';
 import Panel from '../Panel';
 import { LayoutSchemeNames, LinkStyleNames, ColorSchemeNames,
          PedigreeSettings } from '../Store/Pedigree';
@@ -11,22 +11,25 @@ interface PedigreeSideProps {
 }
 
 export default function PedigreeSide(props: PedigreeSideProps) {
-   return (
-      <Panel className="settings">
-         <Header as="h5">Settings</Header>
-         <Accordion styled={true} exclusive={false} fluid={true}>
-
-            <Accordion.Title key="generations">
-               <Icon name="dropdown" />
-               Generations
-               <small>
-                  ancestors: {props.settings.ancestors},&nbsp;
-                  descendants: {props.settings.descendants}
-                  {props.settings.showMarriages ? ', marriages ' : ''}
-                  {props.settings.showSourcedEvents ? ', sourced events' : ''}
-               </small>
-            </Accordion.Title>
-            <Accordion.Content>
+   const panels = [
+      {
+         title: {
+            key: 'generations',
+            content: (
+               <span>
+                  Generations
+                  <small>
+                     ancestors: {props.settings.ancestors},&nbsp;
+                     descendants: {props.settings.descendants}
+                     {props.settings.showMarriages ? ', marriages ' : ''}
+                     {props.settings.showSourcedEvents ? ', sourced events' : ''}
+                  </small>
+               </span>
+            )
+         },
+         content: {
+            key: 'generationsContent',
+            content: (
                <Form size="tiny">
                   <SliderField
                      defaultValue={props.settings.ancestors}
@@ -60,21 +63,29 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      onChange={props.onChange}
                   />
                </Form>
-            </Accordion.Content>
-
-            <Accordion.Title key="theme">
-               <Icon name="dropdown" />
-               Theme
-               <small>
-                  layout: {LayoutSchemeNames[props.settings.layout]},&nbsp;
-                  links: {LinkStyleNames[props.settings.links]}
-               </small>
-               <small>
-                  size: {props.settings.sameSize ? 'constant' : 'decreasing'},&nbsp;
-                  colors: {ColorSchemeNames[props.settings.colors]}
-               </small>
-            </Accordion.Title>
-            <Accordion.Content>
+            )
+         }
+      },
+      {
+         title: {
+            key: 'theme',
+            content: (
+               <span>
+                  Theme
+                  <small>
+                     layout: {LayoutSchemeNames[props.settings.layout]},&nbsp;
+                     links: {LinkStyleNames[props.settings.links]}
+                  </small>
+                  <small>
+                     size: {props.settings.sameSize ? 'constant' : 'decreasing'},&nbsp;
+                     colors: {ColorSchemeNames[props.settings.colors]}
+                  </small>
+               </span>
+            )
+         },
+         content: {
+            key: 'themeContent',
+            content: (
                <Form size="tiny">
                   <SelectField
                      defaultValue={props.settings.layout}
@@ -125,8 +136,16 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      onChange={props.onChange}
                   />
                </Form>
-            </Accordion.Content>
-         </Accordion>
+            )
+         }
+      }
+      
+   ];
+
+   return (
+      <Panel className="settings">
+         <Header as="h5">Settings</Header>
+         <Accordion styled={true} exclusive={false} fluid={true} panels={panels} />
       </Panel>
    );
 }
