@@ -153,7 +153,6 @@ export default function FanchartSide(props: FanchartSideProps) {
       }
    ];
 
-   
    return (
       <Panel className="settings">
          <Header as="h5">Settings</Header>

@@ -1,0 +1,41 @@
+.uploadForm {
+   background: rgba(0,0,0,0.08);
+   width: 400px;
+   margin: 0 auto;
+}
+
+/* Large form */
+.uploadForm .maxi {
+   text-align: center;
+   padding: 30px 20px 10px 20px;
+   outline: 2px dashed #AAA;
+   outline-offset: -5px;
+}
+.uploadForm .maxi .icon {
+   color: #555;
+   font-size: 3em;
+}
+.uploadForm .maxi label {
+   display: inline-block;
+   width: 100%;
+}
+
+/* Hide the input, but still display it so that it works */
+.uploadForm input[type=file] {
+   width: 0.1px;
+   height: 0.1px;
+   opacity: 0;
+   overflow: hidden;
+   position: absolute;
+   z-index: -1;
+}
+
+.uploadForm label {
+   cursor: pointer;
+}
+
+.uploadForm .files {
+   text-align: center;
+   padding: 0;
+   list-style: none;
+}

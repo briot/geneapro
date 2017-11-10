@@ -34,6 +34,12 @@ def index(request):
     return render_to_response('index.html', c)
 
 
+def send_csrf(request):
+    c = {}
+    c.update(csrf(request))
+    return render_to_response('csrf.html', c)
+
+
 def static(request):
     """
     Send static resources (CSS, javascript,...)
@@ -73,6 +79,9 @@ urlpatterns = [
     url(r'^data/repr/(?P<id>\d+)(?:/(?P<size>\d+))?$',
         geneaprove.views.representation.view),
     url(r'^data/quilts/(?P<id>\d+)$', QuiltsView.as_view()),
+
+    # Getting the CSRF token
+    url(r'^data/csrf', send_csrf),
 
     # Fallback to support the path location strategy in URLs
     url(r'^.*', static, name='index'),

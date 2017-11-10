@@ -1,0 +1,12 @@
+.info {
+   font-style: italic;
+   font-size: 0.8em;
+}
+.success,
+.error {
+   font-size: 1.8em;
+   margin-top: 10px;
+}
+.output {
+   font-family: monospace;
+}

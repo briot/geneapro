@@ -11,6 +11,7 @@ import PedigreePage from './Pedigree/Page';
 import PersonaList from './PersonaList';
 import PersonaPage from './Persona/Page';
 import SourcePage from './Source/Page';
+import ImportPage from './Import/Page';
 
 class MainAppState {
    rehydrated: boolean;
@@ -42,6 +43,7 @@ export default class App extends React.PureComponent<{}, MainAppState> {
                   <Route path="/fanchart/:decujus(\\d+)" component={FanchartPage} />
                   <Route path="/persona/:id(\\d+)" component={PersonaPage} />
                   <Route path="/source/:id(\\d+)" component={SourcePage} />
+                  <Route path="/import/:decujus(\\d+)" component={ImportPage} />
                </div>
             </BrowserRouter>
          </Provider>

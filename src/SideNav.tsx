@@ -15,7 +15,7 @@ interface SideNavItemProps {
    to?: string;
 }
 
-class SideNavItem extends React.PureComponent<SideNavItemProps, {}> {
+class SideNavItem extends React.PureComponent<SideNavItemProps> {
    render() {
       const style = {color: 'inherit'};
       const link =
@@ -38,7 +38,7 @@ interface SideNavCategoryProps {
    label: React.ReactNode;
 }
 
-class SideNavCategory extends React.PureComponent<SideNavCategoryProps, {}> {
+class SideNavCategory extends React.PureComponent<SideNavCategoryProps> {
    render() {
       return (
          <Header size="small" sub={true}>{this.props.label}</Header>
@@ -51,7 +51,7 @@ interface SideNavProps {
    history: HistoryItem[];
 }
 
-class SideNavConnected extends React.PureComponent<SideNavProps, {}> {
+class SideNavConnected extends React.PureComponent<SideNavProps> {
    render(): JSX.Element {
       const hist: JSX.Element[] = this.props.history.map(
          ({id, display, kind}: HistoryItem) => (
@@ -74,14 +74,18 @@ class SideNavConnected extends React.PureComponent<SideNavProps, {}> {
 
       return (
          <Panel className="SideNav">
-            <Header as="h5">Navigation</Header>
             <List>
+               <SideNavCategory label="Navigation" />
                <SideNavItem
                    icon="dashboard"
                    label="Dashboard"
                    to={'/' + this.props.decujus}
                />
-               <SideNavItem icon="folder open" label="Import Gedcom" disabled={true} to="/import"/>
+               <SideNavItem
+                  icon="folder open"
+                  label="Import Gedcom"
+                  to={'/import/' + this.props.decujus}
+               />
 
                <SideNavCategory label="Lists" />
                <SideNavItem

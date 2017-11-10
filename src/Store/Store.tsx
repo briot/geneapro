@@ -7,6 +7,7 @@ import { pedigreeReducer } from '../Store/PedigreeReducer';
 import { personsReducer, historyReducer, eventsReducer,
          sourcesReducer } from '../Store/Reducers';
 import { rootSaga } from '../Store/Sagas';
+import { csrfReducer } from '../Store/Csrf';
 
 export const rootReducer = Redux.combineReducers<AppState>({
    pedigree: pedigreeReducer,
@@ -15,6 +16,7 @@ export const rootReducer = Redux.combineReducers<AppState>({
    history: historyReducer,
    events: eventsReducer,
    sources: sourcesReducer,
+   csrf: csrfReducer,
 });
 
 // Use generators as reducers

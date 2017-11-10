@@ -60,7 +60,8 @@ GENEAPROVE_STATIC_ROOT = os.path.realpath(
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [GENEAPROVE_STATIC_ROOT],
+        'DIRS': [GENEAPROVE_STATIC_ROOT,
+                 os.path.realpath(os.path.join(BASE_DIR, 'geneaprove', 'views'))],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

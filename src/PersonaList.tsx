@@ -36,6 +36,7 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
    componentWillReceiveProps(nextProps: PersonaListProps) {
       if (nextProps.persons !== this.props.persons) {
          this.setState((s: PersonaListState) => ({
+            ...s,
             persons: this.computePersons(nextProps.persons, s.filter),
          }));
       }
