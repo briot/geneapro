@@ -59,7 +59,7 @@ urlpatterns = [
     url(r'^data/pedigree/(?P<id>\d+)$', PedigreeData.as_view()),
     url(r'^data/persona/list$', PersonaList.as_view()),
     url(r'^data/persona/(?P<id>\d+)$', PersonaView.as_view()),
-    url(r'^data/places$', geneaprove.views.places.view_list),
+    url(r'^data/places/list$', geneaprove.views.places.view_list),
     url(r'^data/sources/list$', SourcesList.as_view()),
     url(r'^data/sources/(?P<id>-?\d+)$', SourceView.as_view()),
     url(r'^data/sources/(?P<id>-?\d+)/saveparts$',

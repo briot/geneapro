@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from 'semantic-ui-react';
+import { Place } from './Store/Place';
 import './Links.css';
 
 /**
@@ -56,4 +57,18 @@ export function SourceLink(props: SourceLinkProps) {
 
 export function urlPlace(id: number) {
    return '/place/' + id;
+}
+
+interface PlaceLinkProps {
+   place: Place;
+   className?: string;
+}
+
+export function PlaceLink(props: PlaceLinkProps) {
+   return (
+      <Link to={urlPlace(props.place.id)} className={props.className + ' placeLink'}>
+         <Icon name="globe" />
+         {props.place.name}
+      </Link>
+   );
 }

@@ -1,0 +1,19 @@
+.PlaceList {
+}
+
+.PlaceList .lifespan {
+   color: #999;
+   float: right;
+}
+.PlaceList .name {
+   color: inherit;
+}
+.PlaceList .lifespan span {
+   display: inline-block;
+   width: 30px;
+}
+.PlaceList .id {
+   color: #999;
+   font-style: italic;
+   font-size: 0.8em;
+}

@@ -3,6 +3,7 @@ import { fetchPedigreeFromServer } from '../Server/Pedigree';
 import { fetchPersonsFromServer, fetchPersonDetailsFromServer,
          FetchPersonsResult, DetailsResult } from '../Server/Person';
 import { fetchEventFromServer, EventDetails } from '../Server/Event';
+import { fetchPlacesFromServer, FetchPlacesResult } from '../Server/Place';
 import { fetchSourceDetailsFromServer } from '../Server/Source';
 import { Source } from '../Store/Source';
 import { AppState } from '../Store/State';
@@ -34,6 +35,18 @@ function* _fetchPedigree(p: fetchPedigreeParams) {
 }
 export const fetchPedigree = createAsyncAction<fetchPedigreeParams, fetchPedigreeResult>(
    'DATA/PEDIGREE', _fetchPedigree, _hasPedigree);
+
+/**
+ * Async Action: fetch all places from the server
+ */
+
+export type fetchPlacesParams = {};
+function* _fetchPlaces() {
+   const places = yield call(fetchPlacesFromServer);
+   return places;
+}
+export const fetchPlaces = createAsyncAction<fetchPlacesParams, FetchPlacesResult>(
+   'DATA/PLACES', _fetchPlaces);
 
 /**
  * Async Action: fetch all persons from the server

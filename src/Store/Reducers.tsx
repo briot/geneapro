@@ -3,12 +3,14 @@ import { isType } from 'redux-typescript-actions';
 import { Person } from '../Store/Person';
 import { addToHistory, HistoryItem, HistoryKind } from '../Store/History';
 import { fetchPedigree, fetchPedigreeResult, fetchPersonDetails, fetchPersons,
-         fetchEventDetails, fetchSourceDetails } from '../Store/Sagas';
+         fetchEventDetails, fetchSourceDetails,
+         fetchPlaces } from '../Store/Sagas';
 import { GenealogyEventSet, addEvents } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { Source, SourceSet } from '../Store/Source';
 import { EventDetails } from '../Server/Event';
 import { DetailsResult, FetchPersonsResult } from '../Server/Person';
+import { FetchPlacesResult } from '../Server/Place';
 
 /**
  * Reducer for persons
@@ -105,6 +107,9 @@ export function placesReducer(
 ) {
    if (isType(action, fetchPersonDetails.done)) {
       const {places} = action.payload.result as DetailsResult;
+      return {...state, ...places};
+   } else if (isType(action, fetchPlaces.done)) {
+      const {places} = action.payload.result as FetchPlacesResult;
       return {...state, ...places};
    }
    return state;

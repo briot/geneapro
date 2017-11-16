@@ -1,6 +1,7 @@
 import { BasePerson, Person, PersonSet, EventAndRole, Characteristic } from '../Store/Person';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
+import { JSONPlace } from '../Server/Place';
 
 export interface JSONPerson {
    id: number;
@@ -77,11 +78,6 @@ interface JSONEventType {
    id: number;
    name: string;  // "birth"
    gedcom: string;
-}
-
-interface JSONPlace {
-   id: number;
-   name: string;
 }
 
 interface JSONEvent {
