@@ -3,11 +3,15 @@ import { Link } from 'react-router-dom';
 import { Style, styleToString } from '../style';
 import { Person } from '../Store/Person';
 import { PedigreeSettings } from '../Store/Pedigree';
+import { GenealogyEventSet } from '../Store/Event';
+import { PlaceSet } from '../Store/Place';
 import { PersonLayout } from '../Pedigree/types';
 import EventText from './Event';
 
 interface PedigreeBoxProps {
    person: Person|undefined;
+   allEvents: GenealogyEventSet;
+   allPlaces: PlaceSet;
    layout: PersonLayout;
    style: PedigreeSettings;
 }
@@ -19,21 +23,23 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
 
    const details: JSX.Element[] = [];
    if (p) {
-      if (p.birth) {
+      if (p.birthEventId && p.birthEventId in props.allEvents) {
          details.push(
             <EventText
-               event={p.birth}
+               event={props.allEvents[p.birthEventId]}
                showSources={props.style.showSourcedEvents}
+               allPlaces={props.allPlaces}
                key="birth"
                prefix="b"
             />);
       }
-      if (p.death) {
+      if (p.deathEventId && p.deathEventId in props.allEvents) {
          details.push(
             <EventText
-               event={p.death}
+               event={props.allEvents[p.deathEventId]}
                key="death"
                showSources={props.style.showSourcedEvents}
+               allPlaces={props.allPlaces}
                prefix="d"
             />);
       }

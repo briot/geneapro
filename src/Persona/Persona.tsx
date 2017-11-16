@@ -14,7 +14,7 @@ interface Item {
 
 interface PersonaProps {
    person: Person;
-   events: GenealogyEventSet;
+   allEvents: GenealogyEventSet;
    onShowEventDetails?: (id: number) => void;
 }
 
@@ -22,15 +22,17 @@ export default function Persona(props: PersonaProps) {
    const p: Person = props.person;
 
    let items: (Item|undefined)[] = [];
-   const birthDate: number|undefined = p.birth && p.birth.date_sort ?
-      Number(p.birth.date_sort.substring(0, 4)) :
+
+   const birthEvent = p.birthEventId ? props.allEvents[p.birthEventId] : undefined;
+   const birthDate: number|undefined = birthEvent && birthEvent.date_sort ?
+      Number(birthEvent.date_sort.substring(0, 4)) :
       undefined;
 
    if (p.events) {
       items = items.concat(
          p.events.map(
             (evRole: EventAndRole) => {
-               const ev = props.events[evRole.eventId];
+               const ev = props.allEvents[evRole.eventId];
                if (ev) {
                   return {date_sort: ev.date_sort,
                           id: 'event' + ev.id,

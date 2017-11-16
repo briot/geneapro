@@ -7,11 +7,13 @@ import { SourceSet } from '../Store/Source';
 import { HistoryItem } from '../Store/History';
 import { actionCreator } from '../Store/Actions';
 import { GenealogyEventSet } from '../Store/Event';
+import { PlaceSet } from '../Store/Place';
 
 export interface AppState {
    pedigree: PedigreeSettings;
    fanchart: FanchartSettings;
    persons: PersonSet;        // details for all persons
+   places: PlaceSet;          // details for all places
    events: GenealogyEventSet; // all known events
    sources: SourceSet;
    history: HistoryItem[];    // id of persons recently visited

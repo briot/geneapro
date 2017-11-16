@@ -1,8 +1,59 @@
-import { BasePerson, Person, EventAndRole, Characteristic } from '../Store/Person';
+import { BasePerson, Person, PersonSet, EventAndRole, Characteristic } from '../Store/Person';
 import { GenealogyEventSet } from '../Store/Event';
+import { PlaceSet } from '../Store/Place';
 
-interface JSONPersons {
-   persons: BasePerson[];
+export interface JSONPerson {
+   id: number;
+   givn: string;
+   surn: string;
+   sex: string;
+   generation: number;
+   parents: (number|null)[];
+   children: (number|null)[];
+   style: number;
+   birth: JSONEvent;
+   marriage: JSONEvent;
+   death: JSONEvent;
+}
+
+export interface JSONPersons {
+   persons: JSONPerson[];
+}
+
+export interface FetchPersonsResult {
+   persons: PersonSet;
+   events: GenealogyEventSet;
+}
+
+export function jsonPersonToPerson(json: JSONPersons): FetchPersonsResult {
+   let persons: PersonSet = {};
+   let events: GenealogyEventSet = {};
+   for (const pid of Object.keys(json.persons)) {
+      const jp: JSONPerson = json.persons[pid];
+      persons[pid] = {
+         id: jp.id,
+         givn: jp.givn,
+         surn: jp.surn,
+         birthEventId: jp.birth ? jp.birth.id : undefined,
+         deathEventId: jp.death ? jp.death.id : undefined,
+         marriageEventId: jp.marriage ? jp.marriage.id : undefined,
+         knownAncestors: 0,
+         knownDescendants: 0,
+         parents: jp.parents,
+         children: jp.children,
+      };
+
+      if (jp.birth) {
+         events[jp.birth.id] = jp.birth;
+      }
+      if (jp.death) {
+         events[jp.death.id] = jp.death;
+      }
+      if (jp.marriage) {
+         events[jp.marriage.id] = jp.marriage;
+      }
+   }
+   return {persons, events};
 }
 
 export function* fetchPersonsFromServer() {
@@ -12,10 +63,10 @@ export function* fetchPersonsFromServer() {
    }
 
    const data: JSONPersons = yield resp.json();
-   return data.persons;
+   return jsonPersonToPerson(data);
 }
 
-interface JSONPerson {
+interface JSONPersonForAssertion {
    id: number;
    name: string;
    description: string;
@@ -74,24 +125,24 @@ export interface JSONAssertion {
 }
 
 interface P2E extends JSONAssertion {
-   p1: {person: JSONPerson};
+   p1: {person: JSONPersonForAssertion};
    p2: {role: string;
         event: JSONEvent};
 }
 
 interface P2C extends JSONAssertion {
-   p1: {person: JSONPerson};
+   p1: {person: JSONPersonForAssertion};
    p2: {char: JSONCharacteristic;
         parts: JSONCharPart[]};
 }
 
 interface P2P extends JSONAssertion {
-   p1: {person: JSONPerson};
-   p2: {person: JSONPerson};
+   p1: {person: JSONPersonForAssertion};
+   p2: {person: JSONPersonForAssertion};
 }
 
 interface P2G extends JSONAssertion {
-   p1: {person: JSONPerson};
+   p1: {person: JSONPersonForAssertion};
 }
 
 interface JSONPersonDetails {
@@ -106,6 +157,7 @@ interface JSONPersonDetails {
 export interface DetailsResult {
    events: GenealogyEventSet; // All events seen in the result
    person: Person;
+   places: PlaceSet;
 }
 
 export function* fetchPersonDetailsFromServer(id: number) {
@@ -116,27 +168,49 @@ export function* fetchPersonDetailsFromServer(id: number) {
    const data: JSONPersonDetails = yield resp.json();
    const pEvents: EventAndRole[] = [];
    const events: GenealogyEventSet = {};
+   const places: PlaceSet = {};
    const chars: Characteristic[] = [];
 
    for (const e of data.p2e) {
-      events[e.p2.event.id] = e.p2.event;
+      let placeId: number|undefined;
+      const ev: JSONEvent = e.p2.event;
+      if (ev.place) {
+         placeId = ev.place.id;
+         places[placeId] = ev.place;
+      }
+      events[ev.id] = {
+         id: ev.id,
+         date: ev.date,
+         date_sort: ev.date_sort,
+         name: ev.name,
+         placeId: placeId,
+         type: ev.type,
+      };
       pEvents.push({
          role: e.p2.role,
          eventId: e.p2.event.id});
    }
 
    for (const c of data.p2c) {
+      const p: JSONPlace|undefined = c.p2.char.place;
+      if (p) {
+         places[p.id] = {
+            id: p.id,
+            name: p.name
+         };
+      }
       chars.push({
          date: c.p2.char.date,
          date_sort: c.p2.char.date_sort,
          name: c.p2.char.name,
-         place: c.p2.char.place,
+         placeId: p ? p.id : undefined,
          parts: c.p2.parts,
       });
    }
 
    const r: DetailsResult = {
       person: {...data.person, events: pEvents, chars: chars},
+      places: places,
       events: events,
    };
    return r;

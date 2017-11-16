@@ -4,6 +4,7 @@ import { path } from 'd3-path';
 import { Link } from 'react-router-dom';
 import { Person, PersonSet } from '../Store/Person';
 import { FanchartSettings } from '../Store/Fanchart';
+import { GenealogyEventSet } from '../Store/Event';
 import { PersonLayout, PersonLayouts } from '../Fanchart/types';
 import { Style, styleToString } from '../style';
 import ScalableSVG from '../SVG.Scalable';
@@ -14,6 +15,7 @@ import './Fanchart.css';
 interface FanchartProps {
    settings: FanchartSettings;
    layouts: PersonLayouts;
+   allEvents: GenealogyEventSet;
    persons: PersonSet;
    decujus: number;
 }
@@ -35,6 +37,7 @@ export function Fanchart(props: FanchartProps) {
          <FanchartBox
             person={p}
             layout={pl}
+            allEvents={props.allEvents}
             settings={props.settings}
             key={pl.id}
          />
@@ -198,6 +201,7 @@ interface FanchartBoxProps {
    person: Person|undefined;
    layout: PersonLayout;
    settings: FanchartSettings;
+   allEvents: GenealogyEventSet;
 }
 
 export function FanchartBox(props: FanchartBoxProps) {
@@ -239,12 +243,14 @@ export function FanchartBox(props: FanchartBoxProps) {
       );
 
       const birth = event_to_string(
-         props.person.birth,
+         props.person.birthEventId ?
+            props.allEvents[props.person.birthEventId] : undefined,
          props.settings.showSourcedEvents /* showSources */,
          true /* useDateSort */,
          true /* yearOnly */);
       const death = event_to_string(
-         props.person.death,
+         props.person.deathEventId ?
+            props.allEvents[props.person.deathEventId] : undefined,
          props.settings.showSourcedEvents /* showSources */,
          true /* useDateSort */,
          true /* yearOnly */);

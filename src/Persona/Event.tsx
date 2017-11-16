@@ -36,7 +36,7 @@ export default class PersonaEvent extends React.PureComponent<PersonaEventProps,
          <Box
             color="green"
             date={this.props.event.date}
-            place={this.props.event.place}
+            placeId={this.props.event.placeId}
             title={
                <div>
                   <span className="type">

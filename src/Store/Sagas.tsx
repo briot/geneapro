@@ -1,14 +1,14 @@
 import { all, call, put } from 'redux-saga/effects';
 import { fetchPedigreeFromServer } from '../Server/Pedigree';
 import { fetchPersonsFromServer, fetchPersonDetailsFromServer,
-         DetailsResult } from '../Server/Person';
+         FetchPersonsResult, DetailsResult } from '../Server/Person';
 import { fetchEventFromServer, EventDetails } from '../Server/Event';
 import { fetchSourceDetailsFromServer } from '../Server/Source';
 import { Source } from '../Store/Source';
 import { AppState } from '../Store/State';
-import { Person, PersonSet } from '../Store/Person';
+import { PersonSet } from '../Store/Person';
 import { allSagas, createAsyncAction } from '../Store/Actions';
-import { addEvents } from '../Store/Event';
+import { addEvents, GenealogyEventSet } from '../Store/Event';
 
 /**
  * Async Action: fetch ancestors data from the server
@@ -19,6 +19,10 @@ export type fetchPedigreeParams = {
    ancestors: number,
    descendants: number
 };
+export type fetchPedigreeResult = {
+   persons: PersonSet;
+   events: GenealogyEventSet;
+};
 function _hasPedigree(p: fetchPedigreeParams, state: AppState) {
    return (p.decujus in state.persons &&
            state.persons[p.decujus].knownAncestors >= p.ancestors &&
@@ -28,7 +32,7 @@ function* _fetchPedigree(p: fetchPedigreeParams) {
    const persons = yield call(fetchPedigreeFromServer, p.decujus, p.ancestors, p.descendants);
    return persons;
 }
-export const fetchPedigree = createAsyncAction<fetchPedigreeParams, PersonSet>(
+export const fetchPedigree = createAsyncAction<fetchPedigreeParams, fetchPedigreeResult>(
    'DATA/PEDIGREE', _fetchPedigree, _hasPedigree);
 
 /**
@@ -40,7 +44,7 @@ function* _fetchPersons() {
    const persons = yield call(fetchPersonsFromServer);
    return persons;
 }
-export const fetchPersons = createAsyncAction<fetchPersonsParams, Person[]>(
+export const fetchPersons = createAsyncAction<fetchPersonsParams, FetchPersonsResult>(
    'DATA/PERSONS', _fetchPersons);
 
 /**

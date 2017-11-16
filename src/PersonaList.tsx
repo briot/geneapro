@@ -6,6 +6,7 @@ import Page from './Page';
 import { AppState, GPDispatch } from './Store/State';
 import { Input, Segment } from 'semantic-ui-react';
 import { Person, PersonSet } from './Store/Person';
+import { GenealogyEventSet } from './Store/Event';
 import { PersonaLink } from './Links';
 import { Table, CellProps, Column, Cell } from 'fixed-data-table';
 import { event_to_string } from './Store/Event';
@@ -16,6 +17,7 @@ import './PersonaList.css';
 interface PersonaListProps {
    decujus: number;
    persons: PersonSet;
+   allEvents: GenealogyEventSet;
    dispatch: GPDispatch;
 }
 
@@ -110,8 +112,16 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
                              header={<Cell>Surname</Cell>}
                              cell={({rowIndex, ...props}: CellProps) => {
                                 const p: Person = persons[rowIndex as number];
-                                const b: string = event_to_string(p.birth, false, true);
-                                const d: string = event_to_string(p.death, false, true);
+                                const b: string = event_to_string(
+                                   p.birthEventId ?
+                                      this.props.allEvents[p.birthEventId] :
+                                      undefined,
+                                   false, true);
+                                const d: string = event_to_string(
+                                   p.deathEventId ?
+                                      this.props.allEvents[p.deathEventId] :
+                                      undefined,
+                                   false, true);
                                 return (
                                    <Cell {...props}>
                                       <PersonaLink
@@ -163,6 +173,7 @@ interface PropsFromRoute {
 const PersonaList = connect(
    (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
       persons: state.persons,
+      allEvents: state.events,
       decujus: Number(ownProps.match.params.decujus),
    }),
    (dispatch: GPDispatch) => ({

@@ -2,12 +2,13 @@ import * as Redux from 'redux';
 import { isType } from 'redux-typescript-actions';
 import { Person } from '../Store/Person';
 import { addToHistory, HistoryItem, HistoryKind } from '../Store/History';
-import { fetchPedigree, fetchPersonDetails, fetchPersons,
+import { fetchPedigree, fetchPedigreeResult, fetchPersonDetails, fetchPersons,
          fetchEventDetails, fetchSourceDetails } from '../Store/Sagas';
 import { GenealogyEventSet, addEvents } from '../Store/Event';
+import { PlaceSet } from '../Store/Place';
 import { Source, SourceSet } from '../Store/Source';
 import { EventDetails } from '../Server/Event';
-import { DetailsResult } from '../Server/Person';
+import { DetailsResult, FetchPersonsResult } from '../Server/Person';
 
 /**
  * Reducer for persons
@@ -18,14 +19,14 @@ export function personsReducer(
 ) {
    if (isType(action, fetchPedigree.done)) {
       let persons = {...state};
-      const diff: {[id: number]: Person} = action.payload.result;
-      for (let idstr of Object.keys(diff)) {
+      const diff: fetchPedigreeResult = action.payload.result;
+      for (let idstr of Object.keys(diff.persons)) {
          const id = Number(idstr);
          // Should merge with care ???
          persons[id] = {knownAncestors: 0,   // default
                         knownDescendants: 0, // default
                         ...persons[id],      // preserve existing info
-                        ...diff[id]          // override with new info
+                        ...diff.persons[id]          // override with new info
                        };
          if (action.payload.params.decujus === id) {
             persons[id].knownAncestors = action.payload.params.ancestors;
@@ -35,13 +36,8 @@ export function personsReducer(
       return persons;
 
    } else if (isType(action, fetchPersons.done)) {
-      let persons = {...state};
-      for (const p of action.payload.result) {
-         persons[p.id] = p;
-         persons[p.id].knownAncestors = 0;
-         persons[p.id].knownDescendants = 0;
-      }
-      return persons;
+      const data = action.payload.result as FetchPersonsResult;
+      return {...state, ...data.persons};
 
    } else if (isType(action, fetchPersonDetails.done)) {
       const data: DetailsResult = action.payload.result as DetailsResult;
@@ -69,6 +65,11 @@ export function eventsReducer(
 ) {
    if (isType(action, addEvents)) {
       return {...state, ...action.payload.events};
+
+   } else if (isType(action, fetchPersons.done)) {
+      const data = action.payload.result as FetchPersonsResult;
+      return {...state, ...data.events};
+
    } else if (isType(action, fetchEventDetails.done)) {
       const result = {...state};
       const {id, persons} = action.payload.result as EventDetails;
@@ -82,8 +83,30 @@ export function eventsReducer(
          };
       }
       return result;
+
+   } else if (isType(action, fetchPedigree.done)) {
+      const {events} = action.payload.result as fetchPedigreeResult;
+      return {...state, ...events};
+
+   } else if (isType(action, fetchPersonDetails.done)) {
+      const {events} = action.payload.result as DetailsResult;
+      return {...state, ...events};
    }
 
+   return state;
+}
+
+/**
+ * Reducer for places
+ */
+export function placesReducer(
+   state: PlaceSet = {},
+   action: Redux.Action
+) {
+   if (isType(action, fetchPersonDetails.done)) {
+      const {places} = action.payload.result as DetailsResult;
+      return {...state, ...places};
+   }
    return state;
 }
 

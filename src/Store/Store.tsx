@@ -5,7 +5,7 @@ import { AppState, GPStore } from '../Store/State';
 import { fanchartReducer } from '../Store/Fanchart';
 import { pedigreeReducer } from '../Store/PedigreeReducer';
 import { personsReducer, historyReducer, eventsReducer,
-         sourcesReducer } from '../Store/Reducers';
+         sourcesReducer, placesReducer } from '../Store/Reducers';
 import { rootSaga } from '../Store/Sagas';
 import { csrfReducer } from '../Store/Csrf';
 
@@ -16,6 +16,7 @@ export const rootReducer = Redux.combineReducers<AppState>({
    history: historyReducer,
    events: eventsReducer,
    sources: sourcesReducer,
+   places: placesReducer,
    csrf: csrfReducer,
 });
 

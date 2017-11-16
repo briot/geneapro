@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { Person } from '../Store/Person';
 import { PedigreeSettings } from '../Store/Pedigree';
+import { GenealogyEventSet } from '../Store/Event';
+import { PlaceSet } from '../Store/Place';
 import PedigreeBox from './Box';
 import { PersonLayout, PersonLayouts, Sizing } from '../Pedigree/types';
 import PedigreeLink from '../Pedigree/Link';
@@ -10,6 +12,8 @@ import './Pedigree.css';
 interface PedigreeProps {
    settings: PedigreeSettings;
    layouts: PersonLayouts;
+   allEvents: GenealogyEventSet;
+   allPlaces: PlaceSet;
    sizing: Sizing;
    persons: {[id: number]: Person};
    decujus: number;
@@ -45,6 +49,8 @@ export default function Pedigree(props: PedigreeProps) {
             <PedigreeBox
                person={p}
                layout={pl}
+               allEvents={props.allEvents}
+               allPlaces={props.allPlaces}
                style={props.settings}
                key={pl.id}
             />

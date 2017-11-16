@@ -1,10 +1,5 @@
 import { actionCreator } from '../Store/Actions';
 
-export interface Place {
-   id: number;
-   name: string;
-}
-
 interface EventType {
    id: number;
    name: string;    // e.g. "birth"
@@ -26,7 +21,7 @@ export interface GenealogyEvent {
    name: string;
    date?: string;
    date_sort?: string;  // computed from date, computer-friendly
-   place?: Place;
+   placeId?: number;    // points to a place in the state
    sources?: number[];  // ??? Incorrect type
    type?: EventType;
 

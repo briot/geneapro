@@ -11,7 +11,7 @@ export default function PersonaCharacteristic(props: PersonaCharacteristicProps)
       <Box
          color="blue"
          date={props.char.date}
-         place={props.char.place}
+         placeId={props.char.placeId}
          title={
             <span className="type">
                {props.char.name}

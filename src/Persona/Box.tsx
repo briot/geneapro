@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { Rating, Segment } from 'semantic-ui-react';
-import { Place } from '../Store/Event';
+import { PlaceName } from '../Place';
 
 interface BoxProps {
    color: 'red'|'blue'|'green';
    date?: string;
-   place?: Place;
+   placeId?: number;  // points to a Place in the store
    title: JSX.Element;
    content: JSX.Element;
 }
@@ -26,10 +26,7 @@ export default function Box(props: BoxProps) {
                <span className="fullDate">{props.date}</span> :
                null
             }
-            {props.place ?
-               <span className="place">{props.place.name}</span> :
-               null
-            }
+            <PlaceName id={props.placeId} />
          </div>
          <div>
             {props.content}

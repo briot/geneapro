@@ -3,6 +3,8 @@ import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
 import { PersonSet } from '../Store/Person';
+import { GenealogyEventSet } from '../Store/Event';
+import { PlaceSet } from '../Store/Place';
 import { addToHistory } from '../Store/History';
 import { PedigreeSettings, changePedigreeSettings } from '../Store/Pedigree';
 import { fetchPedigree } from '../Store/Sagas';
@@ -14,6 +16,8 @@ import PedigreeSide from '../Pedigree/Side';
 interface PedigreePageConnectedProps {
    settings: PedigreeSettings;
    persons: PersonSet;
+   allEvents: GenealogyEventSet;
+   allPlaces: PlaceSet;
    onChange: (diff: Partial<PedigreeSettings>) => void;
    dispatch: GPDispatch;
    decujus: number;
@@ -68,6 +72,8 @@ class PedigreePageConnected extends React.PureComponent<PedigreePageConnectedPro
             <PedigreeLayout
                settings={this.props.settings}
                persons={this.props.persons}
+               allEvents={this.props.allEvents}
+               allPlaces={this.props.allPlaces}
                decujus={decujus}
             />
          );
@@ -95,6 +101,8 @@ const PedigreePage = connect(
    (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
       settings: state.pedigree,
       persons: state.persons,
+      allEvents: state.events,
+      allPlaces: state.places,
       decujus: Number(ownProps.match.params.decujus),
    }),
    (dispatch: GPDispatch) => ({

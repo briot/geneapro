@@ -2,6 +2,8 @@ import * as React from 'react';
 import { Person } from '../Store/Person';
 import { event_to_string } from '../Store/Event';
 import { LayoutScheme, PedigreeSettings, isTopDown } from '../Store/Pedigree';
+import { GenealogyEventSet } from '../Store/Event';
+import { PlaceSet } from '../Store/Place';
 import Pedigree from './Pedigree';
 import { PersonLayout, PersonLayouts, Sizing } from '../Pedigree/types';
 
@@ -211,6 +213,8 @@ class ExpandedLayout extends CompactLayout {
 interface PedigreeLayoutProps {
    settings: PedigreeSettings;
    persons: { [id: number]: Person};
+   allEvents: GenealogyEventSet;
+   allPlaces: PlaceSet;
    decujus: number;
 }
 
@@ -343,19 +347,23 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
                   (father.x + father.w + mother.x) / 2 :
                   lay.x + lay.w / 2);
 
-               if (f && f.marriage) {
+               if (f && f.marriageEventId) {
                   lay.parentsMarriage = {
                      x: middle,
                      y: father.y - sizing.padding(father.generation - 1) / 3,
-                     text: event_to_string(f.marriage, this.props.settings.showSourcedEvents),
+                     text: event_to_string(
+                        this.props.allEvents[f.marriageEventId],
+                        this.props.settings.showSourcedEvents),
                      fs: father.fs,
                      alignX: 'middle',
                   };
-               } else if (m && m.marriage) {
+               } else if (m && m.marriageEventId) {
                   lay.parentsMarriage = {
                      x: middle,
                      y: mother.y - sizing.padding(mother.generation - 1) / 3,
-                     text: event_to_string(m.marriage, this.props.settings.showSourcedEvents),
+                     text: event_to_string(
+                        this.props.allEvents[m.marriageEventId],
+                        this.props.settings.showSourcedEvents),
                      fs: mother.fs,
                      alignX: 'middle',
                   };
@@ -366,18 +374,20 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
                   (father.y + father.h + mother.y) / 2 :
                   lay.y + lay.h / 2);
 
-               if (f && f.marriage) {
+               if (f && f.marriageEventId) {
                   lay.parentsMarriage = {
                      x: father.x - sizing.padding(father.generation) / 3,
                      y: middle,
-                     text: event_to_string(f.marriage),
+                     text: event_to_string(
+                        this.props.allEvents[f.marriageEventId]),
                      fs: father.fs,
                   };
-               } else if (m && m.marriage) {
+               } else if (m && m.marriageEventId) {
                   lay.parentsMarriage = {
                      x: mother.x - sizing.padding(mother.generation) / 3,
                      y: middle,
-                     text: event_to_string(m.marriage),
+                     text: event_to_string(
+                        this.props.allEvents[m.marriageEventId]),
                      fs: mother.fs,
                   };
                }
@@ -389,6 +399,8 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
          <Pedigree
             settings={this.props.settings}
             persons={this.props.persons}
+            allEvents={this.props.allEvents}
+            allPlaces={this.props.allPlaces}
             decujus={decujus}
             sizing={sizing}
             layouts={layout}

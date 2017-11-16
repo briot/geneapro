@@ -1,5 +1,3 @@
-import { Place, GenealogyEvent } from '../Store/Event';
-
 export interface EventAndRole {
    role: string;
    eventId: number;  // points to a GenealogyEvent in the state
@@ -14,7 +12,7 @@ export interface Characteristic {
    date?: string;
    date_sort?: string;
    name: string;
-   place?: Place;
+   placeId?: number;  // points to a Place in the state
    parts: CharacteristicPart[];
 }
 
@@ -23,9 +21,9 @@ export interface BasePerson {
    id: number;
    givn: string;
    surn: string;
-   birth?: GenealogyEvent;
-   death?: GenealogyEvent;
-   marriage?: GenealogyEvent;
+   birthEventId?: number;    // points to a GenealogyEvent in the state
+   deathEventId?: number;    // points to a GenealogyEvent in the state
+   marriageEventId?: number; // points to a GenealogyEvent in the state
 
    knownAncestors: number;     // number of known ancestors generations in store
    knownDescendants: number;   // number of known descendants gens in store

@@ -1,13 +1,14 @@
 import * as React from 'react';
 import { Person, PersonSet } from '../Store/Person';
 import { FanchartSettings } from '../Store/Fanchart';
-import { event_to_string } from '../Store/Event';
+import { event_to_string, GenealogyEventSet } from '../Store/Event';
 import { PersonLayout, PersonLayouts } from '../Fanchart/types';
 import { Fanchart } from '../Fanchart/Fanchart';
 
 interface FanchartLayoutProps {
    decujus: number;
    persons: PersonSet;
+   allEvents: GenealogyEventSet;
    settings: FanchartSettings;
 }
 
@@ -80,10 +81,10 @@ export default class FanchartLayout extends React.PureComponent<FanchartLayoutPr
                for (const pa of parents) {
                   if (pa) {
                      const pe = this.props.persons[pa];
-                     if (pe && pe.marriage) {
+                     if (pe && pe.marriageEventId) {
                         lay.parentsMarriage = {
                            text: event_to_string(
-                              pe.marriage,
+                              this.props.allEvents[pe.marriageEventId],
                               this.props.settings.showSourcedEvents,
                               true /* useDateSort */)
                         };
@@ -135,6 +136,7 @@ export default class FanchartLayout extends React.PureComponent<FanchartLayoutPr
             layouts={layouts}
             settings={this.props.settings}
             persons={this.props.persons}
+            allEvents={this.props.allEvents}
             decujus={this.props.decujus}
          />
       );
