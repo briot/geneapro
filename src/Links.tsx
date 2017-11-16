@@ -39,6 +39,7 @@ export function urlSource(id: number) {
 
 interface SourceLinkProps {
    id: number;
+   name?: string;
    className?: string;
 }
 
@@ -46,7 +47,11 @@ export function SourceLink(props: SourceLinkProps) {
    return (
       <Link to={urlSource(props.id)} className={props.className + ' sourceLink'}>
          <Icon name="book" />
-         <span>{props.id}</span>
+         <span className="id">{props.id}</span>
+         {props.name ?
+            <span className="title">{props.name}</span> :
+            null
+         }
       </Link>
    );
 }

@@ -3,13 +3,14 @@ import { isType } from 'redux-typescript-actions';
 import { Person } from '../Store/Person';
 import { addToHistory, HistoryItem, HistoryKind } from '../Store/History';
 import { fetchPedigree, fetchPedigreeResult, fetchPersonDetails, fetchPersons,
-         fetchEventDetails, fetchSourceDetails,
+         fetchEventDetails, fetchSourceDetails, fetchSources,
          fetchPlaces } from '../Store/Sagas';
 import { GenealogyEventSet, addEvents } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { Source, SourceSet } from '../Store/Source';
 import { EventDetails } from '../Server/Event';
 import { DetailsResult, FetchPersonsResult } from '../Server/Person';
+import { FetchSourcesResult } from '../Server/Source';
 import { FetchPlacesResult } from '../Server/Place';
 
 /**
@@ -131,6 +132,10 @@ export function sourcesReducer(
          result[source.id] = source;
       }
       return result;
+
+   } else if (isType(action, fetchSources.done)) {
+      const data = action.payload.result as FetchSourcesResult;
+      return {...state, ...data.sources};
    }
 
    return state;

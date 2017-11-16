@@ -1,9 +1,15 @@
 .personaLink:after {
 }
 
-.sourceLink span {
+.sourceLink .id {
    font-size: 0.7em;
    font-style: italic;
    vertical-align: super;
    margin-left: -5px;
+   display: inline-block;
+   width: 1em;
+}
+.sourceLink .title {
+   margin-left: 15px;
+   color: black;
 }

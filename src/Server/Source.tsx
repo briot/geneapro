@@ -1,4 +1,4 @@
-import { Source } from '../Store/Source';
+import { Source, SourceSet } from '../Store/Source';
 import { JSONAssertion, JSONResearcher } from '../Server/Person';
 
 // Representation of sources (media)
@@ -45,4 +45,17 @@ export function* fetchSourceDetailsFromServer(id: number) {
       medium: '',
    };
    return r;
+}
+
+export interface FetchSourcesResult {
+   sources: SourceSet;
+}
+
+export function* fetchSourcesFromServer() {
+   const resp: Response = yield window.fetch('/data/sources/list');
+   if (resp.status !== 200) {
+      throw new Error('Server returned an error');
+   }
+   const data: JSONSource[] = yield resp.json();
+   return {sources: data};
 }

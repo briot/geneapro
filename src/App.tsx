@@ -10,6 +10,7 @@ import FanchartPage from './Fanchart/Page';
 import PedigreePage from './Pedigree/Page';
 import PersonaList from './PersonaList';
 import PlaceList from './PlaceList';
+import SourceList from './SourceList';
 import PersonaPage from './Persona/Page';
 import SourcePage from './Source/Page';
 import ImportPage from './Import/Page';
@@ -41,6 +42,7 @@ export default class App extends React.PureComponent<{}, MainAppState> {
                   <Route path="/:decujus?" exact={true} component={DashboardPage} />
                   <Route path="/persona/list/:decujus(\\d+)" component={PersonaList} />
                   <Route path="/place/list/:decujus(\\d+)" component={PlaceList} />
+                  <Route path="/source/list/:decujus(\\d+)" component={SourceList} />
                   <Route path="/pedigree/:decujus(\\d+)" component={PedigreePage} />
                   <Route path="/fanchart/:decujus(\\d+)" component={FanchartPage} />
                   <Route path="/persona/:id(\\d+)" component={PersonaPage} />

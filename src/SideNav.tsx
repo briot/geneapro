@@ -98,7 +98,11 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
                    label="All places"
                    to={'/place/list/' + decujus}
                />
-               <SideNavItem icon="book" label="All sources" disabled={true} to="/source/list" />
+               <SideNavItem
+                   icon="book"
+                   label="All sources"
+                   to={'/source/list/' + decujus}
+               />
                <SideNavItem icon="image" label="Media Manager" disabled={true} to="/media"/>
 
                <SideNavCategory label="Views" />

@@ -5,53 +5,53 @@ import 'fixed-data-table/dist/fixed-data-table.css';
 import Page from './Page';
 import { AppState, GPDispatch } from './Store/State';
 import { Input, Segment } from 'semantic-ui-react';
-import { Place, PlaceSet } from './Store/Place';
-import { PlaceLink } from './Links';
+import { Source, SourceSet } from './Store/Source';
+import { SourceLink } from './Links';
 import { Table, CellProps, Column, Cell } from 'fixed-data-table';
-import { fetchPlaces } from './Store/Sagas';
+import { fetchSources } from './Store/Sagas';
 
-interface PlaceListProps {
+interface SourceListProps {
    decujus: number;
-   allPlaces: PlaceSet;
+   allSources: SourceSet;
    dispatch: GPDispatch;
 }
 
-interface PlaceListState {
+interface SourceListState {
    filter?: string;
-   places: Place[];
+   sources: Source[];
 }
 
-class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListState> {
+class SourceListConnected extends React.PureComponent<SourceListProps, SourceListState> {
    constructor() {
       super();
       this.state = {
          filter: '',
-         places: [],
+         sources: [],
       };
    }
 
-   componentWillReceiveProps(nextProps: PlaceListProps) {
-      if (nextProps.allPlaces !== this.props.allPlaces) {
-         this.setState((s: PlaceListState) => ({
+   componentWillReceiveProps(nextProps: SourceListProps) {
+      if (nextProps.allSources !== this.props.allSources) {
+         this.setState((s: SourceListState) => ({
             ...s,
-            places: this.computePlaces(nextProps.allPlaces, s.filter),
+            sources: this.computeSources(nextProps.allSources, s.filter),
          }));
       }
    }
 
    componentWillMount() {
-      this.props.dispatch(fetchPlaces.request({}));
+      this.props.dispatch(fetchSources.request({}));
    }
 
-   computePlaces(set: PlaceSet, filter?: string): Place[] {
+   computeSources(set: SourceSet, filter?: string): Source[] {
       let list = Object.entries(set)
          .map(
-            ([key, val]: [string, Place]) => val).sort(
-            (p1: Place, p2: Place) => p1.name.localeCompare(p2.name));
+            ([key, val]: [string, Source]) => val).sort(
+            (p1: Source, p2: Source) => p1.title.localeCompare(p2.title));
 
       if (filter) {
          list = list.filter(
-            (p: Place) => p.name.toLowerCase().indexOf(filter) >= 0
+            (p: Source) => p.title.toLowerCase().indexOf(filter) >= 0
          );
       }
 
@@ -61,28 +61,28 @@ class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListSt
    filterChange = (e: React.FormEvent<HTMLElement>, val: {value: string}) => {
       this.setState({
          filter: val.value,
-         places: this.computePlaces(this.props.allPlaces, val.value),
+         sources: this.computeSources(this.props.allSources, val.value),
       });
    }
 
    render() {
       const width = 900;
-      document.title = 'List of places';
+      document.title = 'List of sources';
 
-      const places = this.state.places;
+      const sources = this.state.sources;
 
       return (
          <Page
             decujus={this.props.decujus}
             main={
-               <div className="PlaceList">
+               <div className="SourceList">
                   <Segment
                      style={{width: width}}
                      color="blue"
                      attached={true}
                   >
                      <span>
-                        {places.length} / {Object.keys(this.props.allPlaces).length} Places
+                        {sources.length} / {Object.keys(this.props.allSources).length} Sources
                      </span>
                      <Input
                         icon="search"
@@ -93,7 +93,7 @@ class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListSt
                   </Segment>
                   <Table
                      rowHeight={30}
-                     rowsCount={places.length}
+                     rowsCount={sources.length}
                      width={width}
                      height={600}
                      footerHeight={0}
@@ -102,10 +102,13 @@ class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListSt
                      <Column
                              header={<Cell>Name</Cell>}
                              cell={({rowIndex, ...props}: CellProps) => {
-                                const p: Place = places[rowIndex as number];
+                                const p: Source = sources[rowIndex as number];
                                 return (
                                    <Cell {...props}>
-                                      <PlaceLink place={p} />
+                                      <SourceLink
+                                          id={p.id}
+                                          name={p.title}
+                                      />
                                    </Cell>
                                 );
                              }}
@@ -124,13 +127,13 @@ interface PropsFromRoute {
    decujus: string;
 }
 
-const PlaceList = connect(
+const SourceList = connect(
    (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
-      allPlaces: state.places,
+      allSources: state.sources,
       decujus: Number(ownProps.match.params.decujus),
    }),
    (dispatch: GPDispatch) => ({
       dispatch
    }),
-)(PlaceListConnected);
-export default PlaceList;
+)(SourceListConnected);
+export default SourceList;

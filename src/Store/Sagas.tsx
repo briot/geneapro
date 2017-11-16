@@ -4,7 +4,8 @@ import { fetchPersonsFromServer, fetchPersonDetailsFromServer,
          FetchPersonsResult, DetailsResult } from '../Server/Person';
 import { fetchEventFromServer, EventDetails } from '../Server/Event';
 import { fetchPlacesFromServer, FetchPlacesResult } from '../Server/Place';
-import { fetchSourceDetailsFromServer } from '../Server/Source';
+import { fetchSourcesFromServer, FetchSourcesResult,
+         fetchSourceDetailsFromServer } from '../Server/Source';
 import { Source } from '../Store/Source';
 import { AppState } from '../Store/State';
 import { PersonSet } from '../Store/Person';
@@ -47,6 +48,18 @@ function* _fetchPlaces() {
 }
 export const fetchPlaces = createAsyncAction<fetchPlacesParams, FetchPlacesResult>(
    'DATA/PLACES', _fetchPlaces);
+
+/**
+ * Async Action: fetch all sources from the server
+ */
+
+export type fetchSourcesParams = {};
+function* _fetchSources() {
+   const sources = yield call(fetchSourcesFromServer);
+   return sources;
+}
+export const fetchSources = createAsyncAction<fetchSourcesParams, FetchSourcesResult>(
+   'DATA/SOURCES', _fetchSources);
 
 /**
  * Async Action: fetch all persons from the server
