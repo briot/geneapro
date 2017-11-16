@@ -15,6 +15,18 @@ export interface HistoryItem {
 }
 
 /**
+ * Return the ID of the last visited person
+ */
+export function lastVisitedPerson(hist: HistoryItem[]): number|undefined {
+   for (const h of hist) {
+      if (h.kind === HistoryKind.PERSON) {
+         return h.id;
+      }
+   }
+   return undefined;
+}
+
+/**
  * Action: add an element to the history of visited persons
  */
 export const addToHistory = actionCreator<{

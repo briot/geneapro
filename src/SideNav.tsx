@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Header, List, SemanticICONS } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 import { AppState } from './Store/State';
-import { HistoryItem, HistoryKind } from './Store/History';
+import { HistoryItem, HistoryKind, lastVisitedPerson } from './Store/History';
 import { urlPersona, urlSource, urlPlace } from './Links';
 import Panel from './Panel';
 import './SideNav.css';
@@ -69,8 +69,11 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
             />
          ));
 
-      const decujus: string = this.props.decujus === undefined ?
-         '' : this.props.decujus.toString();
+      const lastVisited = lastVisitedPerson(this.props.history);
+      const decujus: string = this.props.decujus !== undefined ?
+         this.props.decujus.toString() :
+         lastVisited !== undefined ? lastVisited.toString() :
+         '';
 
       return (
          <Panel className="SideNav">
@@ -79,29 +82,29 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
                <SideNavItem
                    icon="dashboard"
                    label="Dashboard"
-                   to={'/' + this.props.decujus}
+                   to={'/' + decujus}
                />
                <SideNavItem
                   icon="folder open"
                   label="Import Gedcom"
-                  to={'/import/' + this.props.decujus}
+                  to="/import"
                />
 
                <SideNavCategory label="Lists" />
                <SideNavItem
                    icon="users"
                    label="All persons"
-                   to={'/persona/list/' + decujus}
+                   to="/persona/list/"
                />
                <SideNavItem
                    icon="globe"
                    label="All places"
-                   to={'/place/list/' + decujus}
+                   to="/place/list/"
                />
                <SideNavItem
                    icon="book"
                    label="All sources"
-                   to={'/source/list/' + decujus}
+                   to="/source/list/"
                />
                <SideNavItem icon="image" label="Media Manager" disabled={true} to="/media"/>
 

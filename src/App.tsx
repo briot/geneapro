@@ -40,14 +40,14 @@ export default class App extends React.PureComponent<{}, MainAppState> {
             <BrowserRouter>
                <div>
                   <Route path="/:decujus?" exact={true} component={DashboardPage} />
-                  <Route path="/persona/list/:decujus(\\d+)" component={PersonaList} />
-                  <Route path="/place/list/:decujus(\\d+)" component={PlaceList} />
-                  <Route path="/source/list/:decujus(\\d+)" component={SourceList} />
+                  <Route path="/persona/list" component={PersonaList} />
+                  <Route path="/place/list" component={PlaceList} />
+                  <Route path="/source/list" component={SourceList} />
                   <Route path="/pedigree/:decujus(\\d+)" component={PedigreePage} />
                   <Route path="/fanchart/:decujus(\\d+)" component={FanchartPage} />
                   <Route path="/persona/:id(\\d+)" component={PersonaPage} />
                   <Route path="/source/:id(\\d+)" component={SourcePage} />
-                  <Route path="/import/:decujus(\\d+)" component={ImportPage} />
+                  <Route path="/import" component={ImportPage} />
                </div>
             </BrowserRouter>
          </Provider>

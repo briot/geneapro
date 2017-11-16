@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
 import { connect } from 'react-redux';
 import 'fixed-data-table/dist/fixed-data-table.css';
 import Page from './Page';
@@ -15,7 +14,6 @@ import { fetchPersons } from './Store/Sagas';
 import './PersonaList.css';
 
 interface PersonaListProps {
-   decujus: number;
    persons: PersonSet;
    allEvents: GenealogyEventSet;
    dispatch: GPDispatch;
@@ -82,7 +80,6 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
 
       return (
          <Page
-            decujus={this.props.decujus}
             main={
                <div className="PersonaList">
                   <Segment
@@ -166,15 +163,10 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
    }
 }
 
-interface PropsFromRoute {
-   decujus: string;
-}
-
 const PersonaList = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+   (state: AppState) => ({
       persons: state.persons,
       allEvents: state.events,
-      decujus: Number(ownProps.match.params.decujus),
    }),
    (dispatch: GPDispatch) => ({
       dispatch

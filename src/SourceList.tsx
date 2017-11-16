@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
 import { connect } from 'react-redux';
 import 'fixed-data-table/dist/fixed-data-table.css';
 import Page from './Page';
@@ -11,7 +10,6 @@ import { Table, CellProps, Column, Cell } from 'fixed-data-table';
 import { fetchSources } from './Store/Sagas';
 
 interface SourceListProps {
-   decujus: number;
    allSources: SourceSet;
    dispatch: GPDispatch;
 }
@@ -73,7 +71,6 @@ class SourceListConnected extends React.PureComponent<SourceListProps, SourceLis
 
       return (
          <Page
-            decujus={this.props.decujus}
             main={
                <div className="SourceList">
                   <Segment
@@ -123,14 +120,9 @@ class SourceListConnected extends React.PureComponent<SourceListProps, SourceLis
    }
 }
 
-interface PropsFromRoute {
-   decujus: string;
-}
-
 const SourceList = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+   (state: AppState) => ({
       allSources: state.sources,
-      decujus: Number(ownProps.match.params.decujus),
    }),
    (dispatch: GPDispatch) => ({
       dispatch

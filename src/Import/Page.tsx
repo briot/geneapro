@@ -1,8 +1,6 @@
 import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
 import { connect } from 'react-redux';
-import { AppState, GPDispatch } from '../Store/State';
-import { PersonSet } from '../Store/Person';
+import { AppState } from '../Store/State';
 import Page from '../Page';
 import { UploadForm } from './Upload';
 import { importGEDCOM } from '../Server/Import';
@@ -10,9 +8,6 @@ import { importGEDCOM } from '../Server/Import';
 import './Page.css';
 
 interface ImportPageProps {
-   decujus: number;
-   persons: PersonSet;
-   dispatch: GPDispatch;
    csrf_token: string;
 }
 
@@ -93,24 +88,14 @@ class ImportPageConnected extends React.PureComponent<ImportPageProps, ImportPag
                   />
                   {error}
                </div>}
-            decujus={this.props.decujus}
          />
       );
    }
 }
 
-interface PropsFromRoute {
-   decujus: string;
-}
-
 const ImportPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
-      persons: state.persons,
+   (state: AppState) => ({
       csrf_token: state.csrf,
-      decujus: Number(ownProps.match.params.decujus),
-   }),
-   (dispatch: GPDispatch) => ({
-      dispatch
    }),
 )(ImportPageConnected);
 
