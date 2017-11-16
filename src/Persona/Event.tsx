@@ -54,12 +54,15 @@ export default class PersonaEvent extends React.PureComponent<PersonaEventProps,
                   fluid={true}
                >
                   <Accordion.Title
+                     active={this.state.showDetails}
                      onClick={this.onTitleClick}
                   >
                      <Icon name="dropdown" />
                      {this.props.event.name}
                   </Accordion.Title>
-                  <Accordion.Content>
+                  <Accordion.Content
+                     active={this.state.showDetails}
+                  >
                      <PersonaEventDetails event={this.props.event} />
                   </Accordion.Content>
                </Accordion>}
