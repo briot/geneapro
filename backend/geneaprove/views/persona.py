@@ -236,9 +236,9 @@ def extended_personas(
         if part.type_id == models.Characteristic_Part_Type.PK_sex:
             person.sex = part.name
         elif part.type_id == models.Characteristic_Part_Type.PK_given_name:
-            person.given_name = part.name
+            person.givn = part.name
         elif part.type_id == models.Characteristic_Part_Type.PK_surname:
-            person.surname = part.name
+            person.surn = part.name
 
     ########
     # Compute place parts once, to limit the number of queries

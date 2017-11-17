@@ -121,7 +121,12 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
                    disabled={this.props.decujus === undefined}
                    to={'/fanchart/' + decujus}
                />
-               <SideNavItem icon="asterisk" label="Radial chart" disabled={true} to="/radial" />
+               <SideNavItem
+                   icon="asterisk"
+                   label="Radial chart"
+                   disabled={this.props.decujus === undefined}
+                   to={'/radial/' + decujus}
+               />
                <SideNavItem icon="server" label="Quilts" disabled={true} to="/quilts" />
                <SideNavItem icon="pie chart" label="Stats" disabled={true} to="/stats" />
                <SideNavItem icon="calendar times" label="Timeline" disabled={true} to="/timeline" />

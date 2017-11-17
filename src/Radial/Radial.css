@@ -1,0 +1,10 @@
+.Radial {
+   width: 100%;
+   height: calc(100vh);
+   background: white;
+}
+
+.Radial .link {
+   fill: none;
+   stroke: #000;
+}

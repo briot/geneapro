@@ -124,8 +124,8 @@ class PedigreeData(JSONView):
 
                 return {
                     'id':   obj.id,
-                    'givn': obj.given_name,
-                    'surn': obj.surname,
+                    'givn': obj.givn,
+                    'surn': obj.surn,
                     'sex':  obj.sex,
                     'generation': obj.generation,
                     'parents':

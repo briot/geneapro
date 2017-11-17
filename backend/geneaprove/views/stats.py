@@ -123,6 +123,6 @@ class StatsView(JSONView):
             "ages":            ages,
             "decujus":         decujus.main_id,
             "decujus_name":  "%s %s" % (
-                persons[decujus.main_id].given_name,
-                persons[decujus.main_id].surname)
+                persons[decujus.main_id].givn,
+                persons[decujus.main_id].surn)
         }

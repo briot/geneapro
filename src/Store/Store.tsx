@@ -4,6 +4,7 @@ import { persistStore, autoRehydrate } from 'redux-persist';
 import { AppState, GPStore } from '../Store/State';
 import { fanchartReducer } from '../Store/Fanchart';
 import { pedigreeReducer } from '../Store/PedigreeReducer';
+import { radialReducer } from '../Store/RadialReducer';
 import { personsReducer, historyReducer, eventsReducer,
          sourcesReducer, placesReducer } from '../Store/Reducers';
 import { rootSaga } from '../Store/Sagas';
@@ -12,6 +13,7 @@ import { csrfReducer } from '../Store/Csrf';
 export const rootReducer = Redux.combineReducers<AppState>({
    pedigree: pedigreeReducer,
    fanchart: fanchartReducer,
+   radial: radialReducer,
    persons: personsReducer,
    history: historyReducer,
    events: eventsReducer,
@@ -56,7 +58,7 @@ export function setPersist(whenDone: () => void) {
       store,
       {
          // ??? Should not save pedigree.loading
-         whitelist: ['pedigree', 'fanchart', 'history'],
+         whitelist: ['pedigree', 'fanchart', 'radial', 'history'],
       },
       whenDone
    );

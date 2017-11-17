@@ -2,6 +2,7 @@ import * as Redux from 'redux';
 import { REHYDRATE } from 'redux-persist/constants';
 import { FanchartSettings } from '../Store/Fanchart';
 import { PedigreeSettings } from '../Store/Pedigree';
+import { RadialSettings } from '../Store/Radial';
 import { PersonSet } from '../Store/Person';
 import { SourceSet } from '../Store/Source';
 import { HistoryItem } from '../Store/History';
@@ -12,6 +13,7 @@ import { PlaceSet } from '../Store/Place';
 export interface AppState {
    pedigree: PedigreeSettings;
    fanchart: FanchartSettings;
+   radial: RadialSettings;
    persons: PersonSet;        // details for all persons
    places: PlaceSet;          // details for all places
    events: GenealogyEventSet; // all known events
