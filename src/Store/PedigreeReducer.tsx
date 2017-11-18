@@ -10,7 +10,8 @@ import { PedigreeSettings, LayoutScheme, ColorScheme, LinkStyle,
  */
 export function pedigreeReducer(
    state: PedigreeSettings = {
-      layout: LayoutScheme.COMPACT_LEFT_RIGHT,
+      showUnknown: false,
+      layout: LayoutScheme.LEFT_RIGHT,
       links: LinkStyle.CURVE,
       sameSize: false,
       colors: ColorScheme.PEDIGREE,

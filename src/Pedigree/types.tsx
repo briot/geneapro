@@ -1,4 +1,5 @@
 import { BasePersonLayout } from '../style';
+import { PedigreeSettings, LayoutScheme, isVertical } from '../Store/Pedigree';
 
 export interface PersonLayout extends BasePersonLayout {
    id: number;  // id of the person (negative if dummy box)
@@ -34,18 +35,38 @@ export abstract class Sizing {
    // x coordinate for boxes in left-to-right mode, or y coordinate
 
    private dummyId: number = 0;
-   private topDown: boolean;
+   private vertical: boolean;
 
-   init(ancestors: number, descendants: number, horizSpacing: number,
-        topDown: boolean) {
-      this.topDown = topDown;
+   init(settings: PedigreeSettings) {
+      this.vertical = isVertical(settings);
       this.start = [];
       let l = 0;
-      for (let gen = -descendants; gen <= ancestors + 1; gen++) {
-         this.start[gen] = l;
-         l += topDown ?
-            this.boxHeight(gen) + this.padding(gen) :
-            this.boxWidth(gen) + this.padding(gen);
+
+      switch (settings.layout) {
+         case LayoutScheme.TOP_DOWN:
+            for (let gen = -settings.descendants; gen <= settings.ancestors + 1; gen++) {
+               this.start[gen] = l;
+               l += this.boxHeight(gen) + this.padding(gen);
+            }
+            break;
+         case LayoutScheme.BOTTOM_UP:
+            for (let gen = settings.ancestors + 1; gen >= -settings.descendants; gen--) {
+               this.start[gen] = l;
+               l += this.boxHeight(gen) + this.padding(gen);
+            }
+            break;
+         case LayoutScheme.LEFT_RIGHT:
+            for (let gen = -settings.descendants; gen <= settings.ancestors + 1; gen++) {
+               this.start[gen] = l;
+               l += this.boxWidth(gen) + this.padding(gen);
+            }
+            break;
+        default:
+            for (let gen = settings.ancestors + 1; gen >= -settings.descendants; gen--) {
+               this.start[gen] = l;
+               l += this.boxWidth(gen) + this.padding(gen);
+            }
+            break;
       }
    }
 
@@ -55,8 +76,8 @@ export abstract class Sizing {
    createXLayout(generation: number, sosa: number, angle: number, id?: number): PersonLayout {
       return {
          id: id || --this.dummyId,
-         x: this.topDown ? NaN : this.start[generation],
-         y: this.topDown ? this.start[generation] : NaN,
+         x: this.vertical ? NaN : this.start[generation],
+         y: this.vertical ? this.start[generation] : NaN,
          maxY: NaN,  // computed later
          w: this.boxWidth(generation),
          h: this.boxHeight(generation),

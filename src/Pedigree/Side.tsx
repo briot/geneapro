@@ -73,6 +73,7 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                <span>
                   Theme
                   <small>
+                     {props.settings.showUnknown ? 'Expanded' : 'Compact'},&nbsp;
                      layout: {LayoutSchemeNames[props.settings.layout]},&nbsp;
                      links: {LinkStyleNames[props.settings.links]}
                   </small>
@@ -126,6 +127,13 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      fieldName="vertPadding"
                      min={0}
                      max={30}
+                     onChange={props.onChange}
+                  />
+
+                  <CheckboxField
+                     defaultChecked={props.settings.showUnknown}
+                     label="Show boxes for unknown persons"
+                     fieldName="showUnknown"
                      onChange={props.onChange}
                   />
 

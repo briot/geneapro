@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Person } from '../Store/Person';
 import { event_to_string } from '../Store/Event';
-import { LayoutScheme, PedigreeSettings, isTopDown } from '../Store/Pedigree';
+import { PedigreeSettings, isVertical } from '../Store/Pedigree';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import Pedigree from './Pedigree';
@@ -14,10 +14,9 @@ const maxFontSize: number = 20;
 class SameSize extends Sizing {
    private horizSpacing: number;
 
-   init(ancestors: number, descendants: number, horizSpacing: number,
-        topDown: boolean) {
-      this.horizSpacing = horizSpacing;
-      super.init(ancestors, descendants, horizSpacing, topDown);
+   init(settings: PedigreeSettings) {
+      this.horizSpacing = settings.horizSpacing;
+      super.init(settings);
    }
 
    boxWidth() { return 200; }
@@ -39,8 +38,7 @@ class ProportionalSize extends Sizing {
    private readonly baseBoxWidth = 200;
    private readonly baseRadius = 6;
 
-   init(ancestors: number, descendants: number, horizSpacing: number,
-        topDown: boolean) {
+   init(settings: PedigreeSettings) {
       // Maximum generation for which we apply ratios. Later generations will
       // all have the same size.
       // Keep reducing until we reach 10% of the original size
@@ -49,9 +47,9 @@ class ProportionalSize extends Sizing {
       this.heights = [this.baseBoxHeight];
       this.fs = [this.baseTextHeight];
       this.widths = [this.baseBoxWidth];
-      this.paddings = [horizSpacing];
+      this.paddings = [settings.horizSpacing];
 
-      const maxgen = Math.max(ancestors, descendants);
+      const maxgen = Math.max(settings.ancestors, settings.descendants);
       let fs = this.fs[0];
 
       for (let gen = 1; gen <= maxgen + 1; gen++) {
@@ -69,7 +67,7 @@ class ProportionalSize extends Sizing {
          }
       }
 
-      super.init(ancestors, descendants, horizSpacing, topDown);
+      super.init(settings);
    }
 
    boxWidth(generation: number): number {
@@ -171,7 +169,7 @@ class CompactLayout implements PedigreeLayoutAlgo {
          maxY = Math.max(maxY, p.x + p.w + this.settings.vertPadding);
       };
 
-      if (isTopDown(this.settings)) {
+      if (isVertical(this.settings)) {
          recurseTopDown(layouts[decujus], 0);
       } else {
          recurseLeftRight(layouts[decujus], 0);
@@ -286,15 +284,12 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
          new ProportionalSize();
       const getParents = (p: PersonLayout) => p.parents;
       const parentsLayoutAlgo: PedigreeLayoutAlgo =
-         (this.props.settings.layout === LayoutScheme.EXPANDED_LEFT_RIGHT ||
-          this.props.settings.layout === LayoutScheme.EXPANDED_TOP_DOWN) ?
+         this.props.settings.showUnknown ?
             new ExpandedLayout(sizing, this.props.settings, getParents) :
             new CompactLayout(this.props.settings, getParents, 1);
-      const topDown: boolean = isTopDown(this.props.settings);
+      const vertical = isVertical(this.props.settings);
 
-      sizing.init(
-         this.props.settings.ancestors, this.props.settings.descendants,
-         this.props.settings.horizSpacing, topDown);
+      sizing.init(this.props.settings);
 
       const layout: PersonLayouts = this.initLayout(sizing);
 
@@ -303,7 +298,7 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
 
       // Layout the children: this will also move decujus to center it on the
       // children. We'll compensate that offset afterwards.
-      const afterParent: number = topDown ?
+      const afterParent: number = vertical ?
          layout[decujus].x :
          layout[decujus].y;
 
@@ -316,11 +311,11 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
 
       // Now move all children so that decujus is still centered on its
       // parents
-      const offset = topDown ?
+      const offset = vertical ?
          afterParent - layout[decujus].x :
          afterParent - layout[decujus].y;
       const adjustChildren = (p: PersonLayout) => {
-         if (topDown) {
+         if (vertical) {
             p.x += offset;
          } else {
             p.y += offset;
@@ -342,7 +337,7 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
             const f = father ? this.props.persons[father.id] : undefined;
             const m = mother ? this.props.persons[mother.id] : undefined;
             let middle: number;
-            if (topDown) {
+            if (vertical) {
                middle = (mother && father ?
                   (father.x + father.w + mother.x) / 2 :
                   lay.x + lay.w / 2);

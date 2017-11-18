@@ -1,16 +1,16 @@
 import { actionCreator } from '../Store/Actions';
 
 export enum LayoutScheme {
-   COMPACT_LEFT_RIGHT = 0,
-   COMPACT_TOP_DOWN = 1,
-   EXPANDED_LEFT_RIGHT = 2,
-   EXPANDED_TOP_DOWN = 3
+   LEFT_RIGHT = 0,
+   RIGHT_LEFT = 1,
+   TOP_DOWN = 2,
+   BOTTOM_UP = 3,
 }
 export const LayoutSchemeNames: {[id: number]: string} = {};
-LayoutSchemeNames[LayoutScheme.COMPACT_LEFT_RIGHT] = 'Compact (left-to-right)';
-LayoutSchemeNames[LayoutScheme.COMPACT_TOP_DOWN] = 'Compact (top-down)';
-LayoutSchemeNames[LayoutScheme.EXPANDED_LEFT_RIGHT] = 'Expanded (left-to-right)';
-LayoutSchemeNames[LayoutScheme.EXPANDED_TOP_DOWN] = 'Expanded (top-down)';
+LayoutSchemeNames[LayoutScheme.LEFT_RIGHT] = 'left-to-right';
+LayoutSchemeNames[LayoutScheme.RIGHT_LEFT] = 'right-to-left';
+LayoutSchemeNames[LayoutScheme.TOP_DOWN] = 'top-down';
+LayoutSchemeNames[LayoutScheme.BOTTOM_UP] = 'bottom-up';
 
 export enum LinkStyle {
    STRAIGHT = 0,
@@ -37,6 +37,7 @@ ColorSchemeNames[ColorScheme.QUARTILE] = 'Quartile';
 ColorSchemeNames[ColorScheme.NO_BOX] = 'No Box';
 
 export interface PedigreeSettings {
+   showUnknown: boolean;
    layout: LayoutScheme;
    links: LinkStyle;
    sameSize: boolean;
@@ -54,9 +55,10 @@ export interface PedigreeSettings {
 /**
  * Whether the layout is left-to-right or top-down
  */
-export function isTopDown(settings: PedigreeSettings) {
-   return settings.layout === LayoutScheme.COMPACT_TOP_DOWN ||
-      settings.layout === LayoutScheme.EXPANDED_TOP_DOWN;
+
+export function isVertical(settings: PedigreeSettings) {
+   return settings.layout === LayoutScheme.BOTTOM_UP ||
+      settings.layout === LayoutScheme.TOP_DOWN;
 }
 
 /**
