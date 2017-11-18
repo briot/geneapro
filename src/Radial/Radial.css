@@ -8,3 +8,12 @@
    fill: none;
    stroke: #000;
 }
+
+.Radial text {
+   display: none;
+}
+.Radial.visibleNames text,
+.Radial .node:hover text {
+   display: inline;
+}
+

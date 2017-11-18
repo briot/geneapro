@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as d3Hierarchy from 'd3-hierarchy';
 import * as d3Shape from 'd3-shape';
+import { Link } from 'react-router-dom';
 import { RadialSettings } from '../Store/Radial';
 import { Person } from '../Store/Person';
 import ScalableSVG from '../SVG.Scalable';
@@ -83,28 +84,35 @@ export default function Radial(props: RadialProps) {
 
    const circles = Object.values(coords).map(
       (node: d3Hierarchy.HierarchyPointNode<RadialLayout>) => (
-         <g
-            className="node"
+         <Link
+            to={node.data.p ? '/radial/' + node.data.p.id : '#'}
             key={node.data.p.id}
-            transform={`rotate(${node.x * 180 / Math.PI - 90})translate(${node.y})`}
          >
-            <circle
-               r={circleSize}
-               key={node.data.p.id}
-               {...styleToString(Style.forPerson(props.settings.colors, node.data))}
-            />
-            {
-               props.settings.showText ? (
+            <g
+               className="node"
+               transform={`rotate(${node.x * 180 / Math.PI - 90})translate(${node.y})`}
+            >
+               <circle
+                  r={circleSize}
+                  key={node.data.p.id}
+                  {...styleToString(Style.forPerson(props.settings.colors, node.data))}
+               />
+               {
                   <text
                      dy=".31em"
                      textAnchor={node.x < Math.PI ? 'start' : 'end'}
                      transform={node.x < Math.PI ? 'translate(8)' : 'rotate(180)translate(-8)'}
                   >
-                     {node.data.p.surn}
+                     {
+                        props.settings.showText ?
+                           node.data.p.surn :
+                           node.data.p.surn + ' ' + node.data.p.givn
+                     }
                   </text>
-               ) : null
-            }
-         </g>)
+               }
+            </g>
+         </Link>
+      )
    );
 
    const radialLink = d3Shape.linkRadial<d3Hierarchy.HierarchyPointLink<RadialLayout>,
@@ -125,7 +133,7 @@ export default function Radial(props: RadialProps) {
    const defs = null;
 
    return (
-      <ScalableSVG className="Radial">
+      <ScalableSVG className={'Radial ' + (props.settings.showText ? 'visibleNames' : '')}>
          <defs>
             {defs}
          </defs>
