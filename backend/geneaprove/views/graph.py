@@ -9,7 +9,6 @@ from geneaprove.utils.graphs import Digraph
 
 
 class Persona_node(object):
-
     """A persona from the genealogy"""
 
     def __init__(self, ids, name, different):
@@ -53,7 +52,6 @@ class Persona_node(object):
 
 
 class P2P_Link(object):
-
     """A link between two personas"""
 
     KIND_FATHER = 0   # from is FATHER of to
@@ -416,14 +414,15 @@ class GeneaGraph(Digraph):
         tmp = Digraph()
         for e in self.edges():
             if e.kind in (P2P_Link.KIND_MOTHER, P2P_Link.KIND_FATHER) and \
-               (e[0] in subset or self) and \
-               (e[1] in subset or self):
+               (e[0] in subset) and \
+               (e[1] in subset):
 
                 tmp.add_edge(e)
 
         # Then organize nodes into layers
 
-        layers_by_id = tmp.rank_minimize_dummy_vertices()
+        # layers_by_id = tmp.rank_minimize_dummy_vertices()
+        layers_by_id = tmp.rank_longest_path()
 
         layers = tmp.get_layers(layers_by_id=layers_by_id)
 
@@ -515,7 +514,7 @@ class QuiltsView(JSONView):
         if len(global_graph) == 0:
             return {}
 
-        subset = None
+        subset = None   # set[int]  => what persons to look at
 
         if decujus_tree:
             subset = global_graph.people_in_tree(
@@ -526,6 +525,6 @@ class QuiltsView(JSONView):
         return {
             "persons": data["persons"],
             "families": data["families"],
-            "decujus_tree": decujus_tree,
+            "decujusOnly": decujus_tree,
             "decujus_name": "",
             "decujus": decujus}

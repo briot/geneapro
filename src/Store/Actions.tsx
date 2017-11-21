@@ -50,6 +50,7 @@ export function createAsyncAction<Params, Result>(
             result: res
          }));
       } catch (e) {
+         window.console.error('Unexpected exception ', e);
          yield put(actions.failed({
             params: action.payload,
             error: e

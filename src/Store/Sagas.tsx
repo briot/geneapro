@@ -6,6 +6,7 @@ import { fetchEventFromServer, EventDetails } from '../Server/Event';
 import { fetchPlacesFromServer, FetchPlacesResult } from '../Server/Place';
 import { fetchSourcesFromServer, FetchSourcesResult,
          fetchSourceDetailsFromServer } from '../Server/Source';
+import { fetchQuiltsFromServer } from '../Server/Quilts';
 import { Source } from '../Store/Source';
 import { AppState } from '../Store/State';
 import { PersonSet } from '../Store/Person';
@@ -31,11 +32,26 @@ function _hasPedigree(p: fetchPedigreeParams, state: AppState) {
            state.persons[p.decujus].knownDescendants >= p.descendants);
 }
 function* _fetchPedigree(p: fetchPedigreeParams) {
-   const persons = yield call(fetchPedigreeFromServer, p.decujus, p.ancestors, p.descendants);
-   return persons;
+   return yield call(fetchPedigreeFromServer, p.decujus, p.ancestors, p.descendants);
 }
 export const fetchPedigree = createAsyncAction<fetchPedigreeParams, fetchPedigreeResult>(
    'DATA/PEDIGREE', _fetchPedigree, _hasPedigree);
+
+/**
+ * Async Action: fetch quilts data from the server
+ */
+
+export type fetchQuiltsParams = {
+   decujus: number,
+   decujusOnly: boolean;
+};
+export type fetchQuiltsResult = {
+};
+function* _fetchQuilts(p: fetchQuiltsParams) {
+   return yield call(fetchQuiltsFromServer, p.decujus, p.decujusOnly);
+}
+export const fetchQuilts = createAsyncAction<fetchQuiltsParams, fetchQuiltsResult>(
+   'DATA/QUILTS', _fetchQuilts);
 
 /**
  * Async Action: fetch all places from the server

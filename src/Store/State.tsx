@@ -3,17 +3,23 @@ import { REHYDRATE } from 'redux-persist/constants';
 import { FanchartSettings } from '../Store/Fanchart';
 import { PedigreeSettings } from '../Store/Pedigree';
 import { RadialSettings } from '../Store/Radial';
+import { QuiltsSettings } from '../Store/Quilts';
 import { PersonSet } from '../Store/Person';
 import { SourceSet } from '../Store/Source';
 import { HistoryItem } from '../Store/History';
 import { actionCreator } from '../Store/Actions';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
+import { QuiltsResult } from '../Server/Quilts';
 
 export interface AppState {
    pedigree: PedigreeSettings;
    fanchart: FanchartSettings;
    radial: RadialSettings;
+   quilts: QuiltsSettings;
+   quiltsLayout: {
+      layout?: QuiltsResult,
+   };
    persons: PersonSet;        // details for all persons
    places: PlaceSet;          // details for all places
    events: GenealogyEventSet; // all known events

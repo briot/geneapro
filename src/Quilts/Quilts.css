@@ -1,0 +1,21 @@
+.Quilts {
+   width: 100%;
+   height: calc(100vh);
+   background: white;
+}
+
+.Quilts .layer rect {
+   fill: none;
+   stroke: #444;
+}
+.Quilts .layer text {  /* Name of persons */
+   cursor: pointer;
+}
+
+.Quilts rect.separator {
+   fill: #CCC;  /* gray area between marriages and chlidren */
+}
+
+.Quilts path.line { /* horizontal or vertical lines */
+   stroke: #AAA;
+}

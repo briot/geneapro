@@ -15,6 +15,7 @@ import PersonaPage from './Persona/Page';
 import SourcePage from './Source/Page';
 import ImportPage from './Import/Page';
 import RadialPage from './Radial/Page';
+import QuiltsPage from './Quilts/Page';
 
 class MainAppState {
    rehydrated: boolean;
@@ -47,6 +48,7 @@ export default class App extends React.PureComponent<{}, MainAppState> {
                   <Route path="/pedigree/:decujus(\\d+)" component={PedigreePage} />
                   <Route path="/fanchart/:decujus(\\d+)" component={FanchartPage} />
                   <Route path="/radial/:decujus(\\d+)" component={RadialPage} />
+                  <Route path="/quilts/:decujus(\\d+)" component={QuiltsPage} />
                   <Route path="/persona/:id(\\d+)" component={PersonaPage} />
                   <Route path="/source/:id(\\d+)" component={SourcePage} />
                   <Route path="/import" component={ImportPage} />
