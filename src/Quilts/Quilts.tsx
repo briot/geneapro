@@ -12,9 +12,13 @@ interface QuiltsProps {
 }
 
 export default function Quilts(props: QuiltsProps) {
+   if (props.settings.loading) {
+      return <span>Loading</span>;
+   }
+
    const layout: QuiltsResult|undefined = props.layout;
    if (layout === undefined) {
-      return <span>Loading</span>;
+      return <span>No data in database</span>;
    }
 
    const layers = layout.layers.slice(0, props.settings.ancestors + 1);

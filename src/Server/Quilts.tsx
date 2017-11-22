@@ -262,7 +262,11 @@ export function* fetchQuiltsFromServer(decujus: number, decujusOnly: boolean) {
    const data: JSONQuilts = yield resp.json();
    const filtered: boolean = false;
    const selected: {[id: number]: boolean} = {};
-   return new QuiltsResult(
-      data,
-      (p: JSONQuiltsPerson) => !filtered || selected[p.id]);
+   if (!data.persons) {
+      return undefined;
+   } else {
+      return new QuiltsResult(
+         data,
+         (p: JSONQuiltsPerson) => !filtered || selected[p.id]);
+   }
 }
