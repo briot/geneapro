@@ -2,6 +2,7 @@
 The URLs supported by geneaprove
 """
 import os
+import logging
 from django.conf.urls import url
 from django.shortcuts import render_to_response
 from django.template.context_processors import csrf
@@ -23,6 +24,7 @@ import geneaprove.views.events
 import geneaprove.views.merge
 import geneaprove.views.graph
 from geneaprove.views.importers import GedcomImport
+import sys
 
 
 def index(request):
@@ -35,6 +37,7 @@ def index(request):
 
 
 def send_csrf(request):
+    logging.getLogger('geneaprove').info("Sending csrf")
     c = {}
     c.update(csrf(request))
     return render_to_response('csrf.html', c)

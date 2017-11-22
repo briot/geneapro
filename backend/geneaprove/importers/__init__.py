@@ -12,6 +12,9 @@ need to convert from a Gedcom model to our own model.
 """
 
 from django.utils.translation import ugettext as _
+import logging
+
+logger = logging.getLogger('geneaprove.importers')
 
 
 class ImporterMetaClass(type):
@@ -60,4 +63,4 @@ class Importer(object):
     def error(self, message):
         # pylint: disable=no-self-use
         """Report an error to the user"""
-        print(message)
+        logger.error(message)

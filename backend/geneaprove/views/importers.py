@@ -1,6 +1,9 @@
 from geneaprove.importers.gedcomimport import GedcomFileImporter
 from geneaprove.views.graph import global_graph
 from geneaprove.views.to_json import JSONView
+import logging
+
+logger = logging.getLogger('geneaprove.importers')
 
 
 class GedcomImport(JSONView):

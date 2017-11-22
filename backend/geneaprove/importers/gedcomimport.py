@@ -11,9 +11,12 @@ from django.db import transaction, connection
 import geneaprove.importers
 import re
 import datetime
+import logging
 import traceback
 import time
 import os
+
+logger = logging.getLogger('geneaprove.importers')
 
 # If true, the given name read from gedcom is split (on spaces) into
 # a given name and one or more middle names. This might not be appropriate
@@ -319,7 +322,7 @@ class GedcomImporter(object):
         """
 
         if DEBUG:
-            print("Start import", time.time())
+            logger.info("Start import")
 
         self._data = data
         self._researcher = self._create_researcher()
@@ -364,7 +367,7 @@ class GedcomImporter(object):
         for r in data.REPO:
             self._create_repo(r)
         if DEBUG:
-            print("Done importing repositories")
+            logger.info("Done importing repositories")
 
         for s in data.SOUR:
             self.source_manager.add_SOUR(s)
@@ -374,21 +377,21 @@ class GedcomImporter(object):
 
         max = len(data.INDI)
         if DEBUG:
-            print("Importing %d indi" % max)
+            logger.info("Importing %d indi" % max)
         for index, s in enumerate(data.INDI):
             self._create_indi(s)
             if DEBUG and index % 20 == 0:
-                print("%d / %d (%0.2f %%)" % (
+                logger.info("%d / %d (%0.2f %%)" % (
                     index, max, float(index) / float(max) * 100.0))
         if DEBUG:
-            print("Done importing indi")
+            logger.info("Done importing indi")
 
         if DEBUG:
-            print("Importing %d families" % (len(data.FAM)))
+            logger.info("Importing %d families" % (len(data.FAM)))
         for s in data.FAM:
             self._create_family(s)
         if DEBUG:
-            print("Done importing families")
+            logger.info("Done importing families")
 
         for k, v in data.for_all_fields():
             if k not in ("SOUR", "INDI", "FAM", "HEAD", "SUBM",
@@ -397,7 +400,7 @@ class GedcomImporter(object):
                     "%s Unhandled FILE.%s" % (location(v), k))
 
     def report_error(self, msg):
-        print(msg)
+        logger.info(msg)
 
     def _get_all_event_types(self):
         """Create a local cache for Event_Type"""
@@ -550,7 +553,7 @@ class GedcomImporter(object):
 
         if found == 0:
             family_built = GedcomRecord()
-            family_built._setLine(data._line)
+            family_built.setLine(data._line)
             self._create_event(
                 [(husb, self._principal), (wife, self._principal)],
                 "MARR",
@@ -1203,7 +1206,7 @@ class GedcomFileImporter(geneaprove.importers.Importer):
                 'GEDCOM "%s", %s, exported from %s,' +
                 ' created on %s, imported on %s') % (
                     os.path.basename(name),
-                    parsed.HEAD.SUBM.NAME.value,
+                    parsed.HEAD.SUBM.NAME.value if parsed.HEAD.SUBM else 'unknown',
                     parsed.HEAD.SOUR.value,
                     parse_gedcom_date(parsed.HEAD.DATE).strftime(
                         "%Y-%m-%d %H:%M:%S %Z"),
@@ -1215,7 +1218,9 @@ class GedcomFileImporter(geneaprove.importers.Importer):
             return (True, "\n".join(parser.errors))
 
         except Invalid_Gedcom as e:
+            logger.error("Exception while parsing GEDCOM:\n%s" % (e, ))
             return (False, e.msg)
         except Exception as e:
-            print("Unexpected Exception", e)
-            return (False, traceback.print_exc())
+            logger.error("Unexpected Exception during parsing %s"
+                         % traceback.format_exc())
+            return (False, traceback.format_exc())

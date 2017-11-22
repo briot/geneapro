@@ -35,9 +35,13 @@ except ImportError:
     def _(txt):
         return txt
 
+import logging
 import re
 import sys
 import copy
+
+
+logger = logging.getLogger('geneaprove.gedcom')
 
 __all__ = ["Gedcom", "GedcomFile", "GedcomIndi", "GedcomFam", "GedcomRecord",
            "Invalid_Gedcom", "GedcomString"]
@@ -472,8 +476,8 @@ class _Lexical(object):
             r = GedcomString(value)
         else:
             if self.encoding == "heredis-ansi":
-                value = value.replace(chr(135), chr(225))  # a-acute
-                value = value.replace(chr(141), chr(231))  # c-cedilla
+                value = value.replace(bytes([135]), bytes([225]))  # a-acute
+                value = value.replace(bytes([141]), bytes([231]))  # c-cedilla
                 r = GedcomString(value.decode('iso-8859-1', "replace"))
 
             else:
@@ -492,6 +496,9 @@ class _Lexical(object):
         line = self.to_str(self.file.readline()).lstrip().rstrip('\n')
         if not line:
             return None
+
+        # Ignore trailing \r, for Windows files
+        line = line.rstrip('\r')
 
         if self.line == 1 and line[0:3] == "\xEF\xBB\xBF":
             self.encoding = 'utf-8'
@@ -522,10 +529,10 @@ class _Lexical(object):
              self.to_str(g.group("value") or u""))
 
         if DEBUG:
-            print("%04d: %s" % (self.line, r))
+            logger.debug("%04d: %s" % (self.line, r))
 
         if PROGRESS and self.line % 1000 == 0:
-            print("Gedcom: line %d" % (self.line, ))
+            logger.info("Gedcom: line %d" % (self.line, ))
 
         if r[0] == 1 and r[1] == "CHAR":
             if r[3] == "ANSEL":
@@ -537,6 +544,9 @@ class _Lexical(object):
                 self.encoding = "utf-16"
             else:
                 self.encoding = r[3]
+
+            if DEBUG:
+                logger.debug('set encoding=%s' % (self.encoding, ))
 
         return r
 
@@ -631,7 +641,6 @@ class GedcomRecord(object):
         """
         self.value = GedcomString("")
         self._line = "???"  # Line where this record started
-        self._all = None
         self._gedcom = None
         self.xref = None
 
@@ -730,7 +739,7 @@ class GedcomRecord(object):
                 yield key, val, level
 
     def __str__(self):
-        return "gedcomRecord(%s)" % self.value
+        return "GedcomRecord(%s)" % self.value
 
     def location(self):
         """A string showing the location where SELF was defined"""
@@ -853,6 +862,9 @@ class _GedcomParser(object):
                     self.result.__dict__[n] = None
                 else:           # A single record
                     self.result.__dict__[n] = None
+
+    def __str__(self):
+        return 'GedcomParser(name=%s)' % self.name
 
     def parse(self, lexical, gedcomFile=None, indent="   "):
         # We don't do a deepcopy here, but instead we replace lists the first
