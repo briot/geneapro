@@ -41,7 +41,7 @@ export default class App extends React.PureComponent<{}, MainAppState> {
          <Provider store={store}>
             <BrowserRouter>
                <div>
-                  <Route path="/:decujus?" exact={true} component={DashboardPage} />
+                  <Route path="/:decujus(\\d+)?" exact={true} component={DashboardPage} />
                   <Route path="/persona/list" component={PersonaList} />
                   <Route path="/place/list" component={PlaceList} />
                   <Route path="/source/list" component={SourceList} />
