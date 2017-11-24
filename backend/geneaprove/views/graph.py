@@ -6,6 +6,11 @@ Handles merging of personas.
 from geneaprove import models
 from geneaprove.views.to_json import JSONView
 from geneaprove.utils.graphs import Digraph
+from grandalf.graphs import Vertex,Edge,Graph
+from grandalf.layouts import SugiyamaLayout
+import logging
+
+logger = logging.getLogger('geneaprove.graph')
 
 
 class Persona_node(object):
@@ -43,7 +48,7 @@ class Persona_node(object):
 
     def __repr__(self):
         # return "%s-%s" % (self.main_id, self.name.encode("utf-8"))
-        return "%s" % (self.main_id, )
+        return "Node(%s)" % (self.main_id, )
 
     def graphviz_label(self):
         return "%s-%s" % (
@@ -158,44 +163,89 @@ class GeneaGraph(Digraph):
         # Relationship between person through events
 
         p2e = models.P2E.objects.filter(
-            event__type__in=(models.Event_Type.PK_birth, ),
+            event__type__in=(models.Event_Type.PK_birth,
+                             models.Event_Type.PK_marriage,
+                            ),
             disproved=False,
             role__in=(models.Event_Type_Role.PK_principal,
                       models.Event_Type_Role.PK_birth__father,
                       models.Event_Type_Role.PK_birth__mother))
-        events = dict()  # id -> (child, father, mother)
 
-        for p in p2e.values_list('person', 'event', 'role'):
-            t = events.get(p[1], (None, None, None))
-            if p[2] == models.Event_Type_Role.PK_principal:
-                events[p[1]] = (p[0] or t[0], t[1], t[2])
-            elif p[2] == models.Event_Type_Role.PK_birth__father:
-                events[p[1]] = (t[0], p[0] or t[1], t[2])
-            elif p[2] == models.Event_Type_Role.PK_birth__mother:
-                events[p[1]] = (t[0], t[1], p[0] or t[2])
+        class ShortEvent(object):
+            @staticmethod
+            def from_kind(kind):
+                if kind == models.Event_Type.PK_birth:
+                    return ShortEventBirth()
+                elif kind == models.Event_Type.PK_marriage:
+                    return ShortEventMarriage()
+                else:
+                    raise Exception("Can't handle event kind %s" % kind)
+
+        class ShortEventBirth(ShortEvent):
+            child = None
+            father = None
+            mother = None
+
+            def add_event(self, person, role):
+                if role == models.Event_Type_Role.PK_principal:
+                    self.child = person
+                elif role == models.Event_Type_Role.PK_birth__father:
+                    self.father = person
+                elif role == models.Event_Type_Role.PK_birth__mother:
+                    self.mother = person
+                else:
+                    raise Exception("Unknown role for birth %s" % role)
+
+            def add_links(self, graph):
+                if self.child and self.father:
+                    graph.add_edge(P2P_Link(
+                        fromP=graph.node_from_id(self.father),
+                        toP=graph.node_from_id(self.child),
+                        kind=P2P_Link.KIND_FATHER))
+
+                if self.child and self.mother:
+                    graph.add_edge(P2P_Link(
+                        fromP=graph.node_from_id(self.mother),
+                        toP=graph.node_from_id(self.child),
+                        kind=P2P_Link.KIND_MOTHER))
+
+                if self.father and self.mother:
+                    # ??? Should this be bidirectional link
+                    graph.add_edge(P2P_Link(
+                        fromP=graph.node_from_id(self.father),
+                        toP=graph.node_from_id(self.mother),
+                        kind=P2P_Link.KIND_SPOUSE))
+
+        class ShortEventMarriage(ShortEvent):
+            person1 = None
+            person2 = None
+
+            def add_event(self, person, role):
+                if role == models.Event_Type_Role.PK_principal:
+                    if self.person1 is None:
+                        self.person1 = person
+                    else:
+                        self.person2 = person
+                else:
+                    raise Exception("Unknown role for marriage %s" % role)
+
+            def add_links(self, graph):
+                if self.person1 and self.person2:
+                    # ??? Should this be bidirectional link
+                    graph.add_edge(P2P_Link(
+                        fromP=graph.node_from_id(self.person1),
+                        toP=graph.node_from_id(self.person2),
+                        kind=P2P_Link.KIND_SPOUSE))
+
+
+        events = dict()  # id -> ShortEvent
+
+        for p in p2e.values_list('person', 'event', 'role', 'event__type_id'):
+            t = events.setdefault(p[1], ShortEvent.from_kind(kind=p[3]))
+            t.add_event(person=p[0], role=p[2])
 
         for e in events.values():
-            if e[0] is not None and e[1] is not None:
-                self.add_edge(P2P_Link(
-                    fromP=self.node_from_id(e[1]),
-                    toP=self.node_from_id(e[0]),
-                    kind=P2P_Link.KIND_FATHER))
-            if e[0] is not None and e[2] is not None:
-                self.add_edge(P2P_Link(
-                    fromP=self.node_from_id(e[2]),
-                    toP=self.node_from_id(e[0]),
-                    kind=P2P_Link.KIND_MOTHER))
-            if e[1] is not None and e[2] is not None:
-                self.add_edge(P2P_Link(
-                    fromP=self.node_from_id(e[1]),
-                    toP=self.node_from_id(e[2]),
-                    kind=P2P_Link.KIND_SPOUSE))
-
-        # Sex of the persons
-        #    SELECT p2c.person, characteristic_part.name
-        #      FROM p2c, characteristic_part
-        #     WHERE p2c.characteristic=characteristic_part.characteristic
-        #       AND characteristic_part.type = 1
+            e.add_links(graph=self)
 
         raw = {
             "p2c": models.sql_table_name(models.P2C),
@@ -323,15 +373,48 @@ class GeneaGraph(Digraph):
         """
         Return a json structure that can be sent to the GUI.
 
-        :param id: an integer
-            If specified, only the persons related to id will be displayed.
-
-        :param maxdepth: an integer or -1
-            The maximum number of generations before and after id to look at.
-            This is ignored if id is unspecified.
+        :param set[PersonaNode] subset: which persons to take into account
         """
 
-        def __compute_families(graph, layers, layers_by_id):
+        def __build_families():
+            """
+            Return a list of families found in the subset of self.
+            :rtype list[list[id]]:  [parent1,parent2,child1.child2,...]
+            """
+
+            tmp = {}  # indexed on (father, mother)
+            for n in self:
+                if not subset or n in subset:
+                    father = mother = None
+
+                    for e in self.in_edges(n):
+                        if e.kind == P2P_Link.KIND_FATHER:
+                            father = e[0].main_id
+                        elif e.kind == P2P_Link.KIND_MOTHER:
+                            mother = e[0].main_id
+                        elif e.kind == P2P_Link.KIND_SPOUSE:
+                            n2 = e[0].main_id
+                            if not subset or n2 in subset:
+                                tmp.setdefault((n2, n.main_id), [n2, n.main_id])
+                        else:
+                            raise Exception("Unknown edge in graph: %s" % e.kind)
+
+                    # Filter events irrelevant to our subset of the graph
+                    if subset:
+                        if father and father not in subset:
+                            father = None
+                        if mother and mother not in subset:
+                            mother = None
+
+                    if father or mother:
+                        t = tmp.setdefault((father, mother), [father, mother])
+                        if n:
+                            t.append(n.main_id)
+
+            logger.info('__build_families=%s' % list(tmp.values()))
+            return list(tmp.values())
+
+        def __compute_families(graph, families, layers, layers_by_id):
             """
             Compute the list of families that include nodes from tmp.
 
@@ -354,25 +437,9 @@ class GeneaGraph(Digraph):
             :return: a list of list of tuples (father,mother,child1,child2,...)
             """
 
-            tmp = dict()  # families: (father,mother,child1,child2,...)
-            # indexed on (father, mother)
-
-            for n in graph:
-                father = mother = None
-
-                for e in graph.in_edges(n):
-                    if e.kind == P2P_Link.KIND_FATHER:
-                        father = e[0]
-                    else:
-                        mother = e[0]
-
-                if father is not None or mother is not None:
-                    tmp.setdefault(
-                        (father, mother), [mother, father]).append(n)
-
             byLayer = dict()   # Contains list of families for each layer
 
-            for family in tmp.values():
+            for family in families:
                 rightMostLayer = min(
                     layers_by_id[p] for p in family if p is not None)
                 byLayer.setdefault(rightMostLayer + 1, []).append(family)
@@ -401,7 +468,7 @@ class GeneaGraph(Digraph):
 
                 # Pass the ids of the family members, not the nodes
                 result.append(
-                    [list(map(lambda node: min(node.ids) if node else -1,
+                    [list(map(lambda node: node if node else -1,
                               family))
                      for family in r])
 
@@ -414,10 +481,85 @@ class GeneaGraph(Digraph):
         tmp = Digraph()
         for e in self.edges():
             if e.kind in (P2P_Link.KIND_MOTHER, P2P_Link.KIND_FATHER) and \
-               (e[0] in subset) and \
-               (e[1] in subset):
+               (subset is None or (
+                  (e[0] in subset) and \
+                  (e[1] in subset))):
 
                 tmp.add_edge(e)
+
+        families = __build_families()
+
+        # Using an external library for layout
+
+        if True:
+            subset2 = [n.main_id for n in subset] if subset else None
+            Vmap = {v.main_id: Vertex(v)
+                    for v in self
+                    if subset2 is None or not v.ids.isdisjoint(subset2)}
+            V = [v for v in Vmap.values()]
+            E = [Edge(Vmap[e[0].main_id], Vmap[e[1].main_id])
+                 for e in self.edges()
+                 if e.kind in (P2P_Link.KIND_MOTHER, P2P_Link.KIND_FATHER) and \
+                    (e[0].main_id in Vmap) and
+                    (e[1].main_id in Vmap)
+                ]
+            g = Graph(V, E)
+
+            for v in V:
+                logger.info('%s [label="%s"];' % (v.data.main_id, v.data.name))
+            for e in E:
+                if e.v[0].data.main_id == 22:
+                    logger.info('%s -> %s;' % (e.v[0].data.main_id, e.v[1].data.main_id))
+                if e.v[1].data.main_id == 22:
+                    logger.info('%s -> %s;' % (e.v[0].data.main_id, e.v[1].data.main_id))
+
+            for e in self.edges():
+                if e[0].main_id == 22 or e[1].main_id == 22:
+                    logger.info("%s" % e)
+
+            class defaultview(object):
+                w = 10
+                h = 10
+            for v in V:
+                v.view = defaultview()
+
+            persons = []
+            persons_to_layer = {}
+
+            for core in g.C:
+               sug = SugiyamaLayout(core)
+               sug.init_all(optimize=True, cons=False)
+               sug.draw()
+               sug.layers.reverse()
+
+               for layerIndex, layer in enumerate(sug.layers):
+                   if layerIndex not in persons:
+                       persons.extend([[]] * (layerIndex + 1 - len(persons)))
+                   persons[layerIndex].extend(
+                       {"sex": node.data.sex, "name": node.data.name, "id": node.data.main_id}
+                        for node in layer
+                        if hasattr(node, "data")   # ignore dummy vertices
+                   )
+
+                   for node in layer:
+                       if hasattr(node, "data"):
+                           persons_to_layer[node.data.main_id] = layerIndex
+
+            families_by_layer = {}
+            for f in families:
+                l = min(persons_to_layer[id] for id in f if id is not None)
+                families_by_layer.setdefault(l, []).append(f)
+
+            flatten_families = [
+                families_by_layer.get(layerIndex, [])
+                for layerIndex, layer in enumerate(sug.layers)
+            ]
+
+            return {
+                "persons": persons,
+                "families": flatten_families
+            }
+
 
         # Then organize nodes into layers
 
@@ -430,7 +572,9 @@ class GeneaGraph(Digraph):
         tmp.sort_nodes_within_layers(layers)
 
         # Compute the families
-        families = __compute_families(tmp, layers, layers_by_id)
+        layers_by_id = {
+            key.main_id: node for key, node in layers_by_id.items()}
+        families = __compute_families(tmp, families, layers, layers_by_id)
 
         result = []
         for lay in range(0, len(layers)):

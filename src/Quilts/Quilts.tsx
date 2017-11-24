@@ -59,12 +59,18 @@ export default function Quilts(props: QuiltsProps) {
 
       // Horizontal lines
 
-      layer.persons.forEach(p => {
-         d += `M${last ? layer.left : p.topMinX} ${p.topY}H${p.topMaxX}`;
+      layer.persons.forEach((p, pIndex) => {
+         if (pIndex === 0) {
+            d += `M${last ? layer.left : p.minX} ${p.topY}H${p.maxX}`;
+         } else {
+            const x = Math.min(p.minX, layer.persons[pIndex - 1].minX);
+            const maxX = Math.max(p.maxX, layer.persons[pIndex - 1].maxX);
+            d += `M${last ? layer.left : x} ${p.topY}H${maxX}`;
+         }
       });
       const lastP = layer.persons[layer.persons.length - 1];
       if (lastP) {
-         d += `M${last ? layer.left : lastP.bottomMinX} ${lastP.bottomY}H${lastP.bottomMaxX}`;
+         d += `M${last ? layer.left : lastP.minX} ${lastP.bottomY}H${lastP.maxX}`;
       }
 
       // Vertical lines

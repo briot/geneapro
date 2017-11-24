@@ -25,27 +25,11 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
    componentWillMount() {
       // ??? This sets 'loading=true' in the state, but this.props do not
       // reflect that yet...
-      this.props.dispatch(fetchQuilts.request({
-         decujus: this.props.decujus,
-         decujusOnly: true,
-      }));
-
-      this.props.dispatch(addToHistory({
-         person: this.props.allPersons[this.props.decujus],
-      }));
+      this.load();
    }
 
    componentDidUpdate(oldProps: QuiltsPageConnectedProps) {
-      if (this.props.decujus !== oldProps.decujus) {
-         this.props.dispatch(fetchQuilts.request({
-            decujus: this.props.decujus,
-            decujusOnly: true,
-         }));
-      }
-
-      this.props.dispatch(addToHistory({
-         person: this.props.allPersons[this.props.decujus],
-      }));
+      this.load(oldProps.decujus);
    }
 
    render() {
@@ -82,6 +66,20 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
          />
       );
    }
+
+   private load(old?: number) {
+      if (this.props.decujus !== old) {
+         this.props.dispatch(fetchQuilts.request({
+            decujus: this.props.decujus,
+            decujusOnly: false,
+         }));
+      }
+
+      this.props.dispatch(addToHistory({
+         person: this.props.allPersons[this.props.decujus],
+      }));
+   }
+
 }
 
 interface PropsFromRoute {

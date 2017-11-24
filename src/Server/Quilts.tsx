@@ -1,6 +1,6 @@
 export const LINE_SPACING = 16;
 export const MARGIN = 0;
-export const F_HEIGHT = 16;  // height of the row with "F" (families)
+export const F_HEIGHT = 26;  // height of the row with "F" (families)
 
 interface JSONQuiltsPerson {
    id: number;
@@ -23,10 +23,8 @@ export interface QuiltsPersonLayout {
    //                     X__| name        | |
    //                        +-------------+ |
    //                                        X____
-   topMinX: number;
-   topMaxX: number;
-   bottomMinX: number;
-   bottomMaxX: number;
+   minX: number;
+   maxX: number;
    topY: number;
    bottomY: number;
 
@@ -92,10 +90,8 @@ export class QuiltsResult {
                      person: p,
                      layer: layerIndex,
                      index: index,
-                     topMinX: NaN,
-                     topMaxX: NaN,
-                     bottomMinX: NaN,
-                     bottomMaxX: NaN,
+                     minX: NaN,
+                     maxX: NaN,
                      topY: NaN,
                      bottomY: NaN,
                      children: [],
@@ -133,7 +129,7 @@ export class QuiltsResult {
    private computeWidth(txt: string) {
       // ??? Needs improvement
       // With the canvas, we were using ctx.measureText(txt).width
-      return txt.length * 8;
+      return Math.max((txt.length + 1) * 8, 100);
    }
 
    /**
@@ -172,8 +168,8 @@ export class QuiltsResult {
             p.bottomY = index === l.persons.length - 1 ?
                l.top + l.height :
                l.top + (index + 1) * LINE_SPACING + MARGIN;
-            p.topMinX = p.bottomMinX = l.left;
-            p.topMaxX = p.bottomMaxX = l.right;
+            p.minX = l.left;
+            p.maxX = l.right;
          });
       }
    }
@@ -182,7 +178,7 @@ export class QuiltsResult {
     * Compute the extent for horizontal lines
     */
    private computeXYranges() {
-      this.layers.forEach((layer: Layer, layerIndex: number) => {
+      this.layers.slice(0, -1).forEach((layer: Layer, layerIndex: number) => {
          // First pass: Compute the minimal extent for the vertical lines
 
          layer.families.forEach((fam: Family, famIndex: number) => {
@@ -208,37 +204,41 @@ export class QuiltsResult {
                fam.leftMaxY = fam.rightMaxY;
             }
          });
+      });
 
-         // Third pass: compute the X range for horizontal lines, which must
-         // extend to the furthest vertical line on the corresponding Y.
+      // Third pass: the horizontal line extend to the right-most child
+
+      this.layers.slice(0, -1).forEach((layer: Layer, layerIndex: number) => {
+         layer.families.forEach((fam: Family) => {
+            fam.persons.forEach((p: QuiltsPersonLayout, pIndex: number) => {
+               if (pIndex < 2) { // a parent
+                  p.maxX = Math.max(p.maxX, fam.left + LINE_SPACING);
+               }
+            });
+         });
+
+         // Fourth pass: compute the X range for horizontal lines, which must
+         // extend to the furthest vertical line on the corresponding Y, but
+         // only up to the previous and next layers.
 
          layer.persons.forEach(p => {
             for (const fam of layer.families) {
                if (fam.leftMaxY >= p.bottomY) {
-                  p.bottomMinX = Math.min(p.bottomMinX, fam.left);
-               }
-               if (fam.leftMaxY >= p.topY) {
-                  p.topMinX = Math.min(p.topMinX, fam.left);
+                  p.minX = Math.min(p.minX, fam.left);
                }
             }
 
             if (layerIndex > 0) {
                const childFams = this.layers[layerIndex - 1].families;
                for (const fam of childFams) {
-                  if (fam.leftMinY <= p.bottomY) {
-                     p.bottomMaxX = Math.max(p.bottomMaxX, fam.left);
-                  }
                   if (fam.leftMinY <= p.topY) {
-                     p.topMaxX = Math.max(p.topMaxX, fam.left);
+                     p.maxX = Math.max(p.maxX, fam.left);
                   }
                }
                const lastFam = childFams[childFams.length - 1];
                if (lastFam) {
-                  if (lastFam.rightMinY <= p.bottomY) {
-                     p.bottomMaxX = Math.max(p.bottomMaxX, lastFam.left + LINE_SPACING);
-                  }
                   if (lastFam.rightMinY <= p.topY) {
-                     p.topMaxX = Math.max(p.topMaxX, lastFam.left + LINE_SPACING);
+                     p.maxX = Math.max(p.maxX, lastFam.left + LINE_SPACING);
                   }
                }
             }
