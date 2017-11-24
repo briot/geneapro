@@ -414,66 +414,6 @@ class GeneaGraph(Digraph):
             logger.info('__build_families=%s' % list(tmp.values()))
             return list(tmp.values())
 
-        def __compute_families(graph, families, layers, layers_by_id):
-            """
-            Compute the list of families that include nodes from tmp.
-
-            Sort the families, so that they are organized by layer. A family is
-            associated with its right-most layer (in general to the left of the
-            layer that contains the children). Within each layer, the families
-            are sorted in the order in which they should be displayed in the
-            matrix -- so for instance the first family should involve the first
-            person of the layer to limit crossings of links.
-
-            :param graph:
-                a subset of the original graph, which only includes the nodes
-                we are interested in, and only the parent/child relations.
-            :param layers:
-                A list of list of persons, indicating the persons at each
-                layer. For instance:
-                    [[person_at_gen0], [person_at_gen1, ...], ...]
-            :param layers_by_id:
-                for each person, its layer.
-            :return: a list of list of tuples (father,mother,child1,child2,...)
-            """
-
-            byLayer = dict()   # Contains list of families for each layer
-
-            for family in families:
-                rightMostLayer = min(
-                    layers_by_id[p] for p in family if p is not None)
-                byLayer.setdefault(rightMostLayer + 1, []).append(family)
-
-            # ??? Should be computed independently
-            indexInLayer = dict()
-            for layer in layers:
-                for index, node in enumerate(layer):
-                    indexInLayer[node] = index
-
-            # Sort the families within each layer. If one of the parents is in
-            # another layer, we want that marriage to appear first.
-
-            mi = min(byLayer.keys())
-            ma = max(byLayer.keys())
-
-            result = []
-            for lay in range(mi, ma + 1):
-                r = byLayer.get(lay, [])
-                r.sort(
-                    key=lambda family:
-                    (-max(layers_by_id[family[0]] if family[0] else 0,
-                          layers_by_id[family[1]] if family[1] else 0),
-                     min(indexInLayer.get(family[0], -1),
-                         indexInLayer.get(family[1], -1))))
-
-                # Pass the ids of the family members, not the nodes
-                result.append(
-                    [list(map(lambda node: node if node else -1,
-                              family))
-                     for family in r])
-
-            return result
-
         # Prepare a temporary graph: it is used to subset the list of nodes
         # to those specified in argument, and the list of edges to the
         # parent/child relationships
@@ -491,99 +431,66 @@ class GeneaGraph(Digraph):
 
         # Using an external library for layout
 
-        if True:
-            subset2 = [n.main_id for n in subset] if subset else None
-            Vmap = {v.main_id: Vertex(v)
-                    for v in self
-                    if subset2 is None or not v.ids.isdisjoint(subset2)}
-            V = [v for v in Vmap.values()]
-            E = [Edge(Vmap[e[0].main_id], Vmap[e[1].main_id])
-                 for e in self.edges()
-                 if e.kind in (P2P_Link.KIND_MOTHER, P2P_Link.KIND_FATHER) and \
-                    (e[0].main_id in Vmap) and
-                    (e[1].main_id in Vmap)
-                ]
-            g = Graph(V, E)
-
-            for v in V:
-                logger.info('%s [label="%s"];' % (v.data.main_id, v.data.name))
-            for e in E:
-                if e.v[0].data.main_id == 22:
-                    logger.info('%s -> %s;' % (e.v[0].data.main_id, e.v[1].data.main_id))
-                if e.v[1].data.main_id == 22:
-                    logger.info('%s -> %s;' % (e.v[0].data.main_id, e.v[1].data.main_id))
-
-            for e in self.edges():
-                if e[0].main_id == 22 or e[1].main_id == 22:
-                    logger.info("%s" % e)
-
-            class defaultview(object):
-                w = 10
-                h = 10
-            for v in V:
-                v.view = defaultview()
-
-            persons = []
-            persons_to_layer = {}
-
-            for core in g.C:
-               sug = SugiyamaLayout(core)
-               sug.init_all(optimize=True, cons=False)
-               sug.draw()
-               sug.layers.reverse()
-
-               for layerIndex, layer in enumerate(sug.layers):
-                   if layerIndex not in persons:
-                       persons.extend([[]] * (layerIndex + 1 - len(persons)))
-                   persons[layerIndex].extend(
-                       {"sex": node.data.sex, "name": node.data.name, "id": node.data.main_id}
-                        for node in layer
-                        if hasattr(node, "data")   # ignore dummy vertices
-                   )
-
-                   for node in layer:
-                       if hasattr(node, "data"):
-                           persons_to_layer[node.data.main_id] = layerIndex
-
-            families_by_layer = {}
-            for f in families:
-                l = min(persons_to_layer[id] for id in f if id is not None)
-                families_by_layer.setdefault(l, []).append(f)
-
-            flatten_families = [
-                families_by_layer.get(layerIndex, [])
-                for layerIndex, layer in enumerate(sug.layers)
+        subset2 = [n.main_id for n in subset] if subset else None
+        Vmap = {v.main_id: Vertex(v)
+                for v in self
+                if subset2 is None or not v.ids.isdisjoint(subset2)}
+        V = [v for v in Vmap.values()]
+        E = [Edge(Vmap[e[0].main_id], Vmap[e[1].main_id])
+             for e in self.edges()
+             if e.kind in (P2P_Link.KIND_MOTHER, P2P_Link.KIND_FATHER) and \
+                (e[0].main_id in Vmap) and
+                (e[1].main_id in Vmap)
             ]
+        g = Graph(V, E)
 
-            return {
-                "persons": persons,
-                "families": flatten_families
-            }
+        # for v in V:
+        #     logger.info('%s [label="%s"];' % (v.data.main_id, v.data.name))
+        # for e in E:
+        #     logger.info('%s -> %s;' % (e.v[0].data.main_id, e.v[1].data.main_id))
 
+        class defaultview(object):
+            w = 10
+            h = 10
+        for v in V:
+            v.view = defaultview()
 
-        # Then organize nodes into layers
+        persons = []
+        persons_to_layer = {}
 
-        # layers_by_id = tmp.rank_minimize_dummy_vertices()
-        layers_by_id = tmp.rank_longest_path()
+        for core in g.C:
+           sug = SugiyamaLayout(core)
+           sug.init_all(optimize=True, cons=False)
+           sug.draw()
+           sug.layers.reverse()
 
-        layers = tmp.get_layers(layers_by_id=layers_by_id)
+           for layerIndex, layer in enumerate(sug.layers):
+               if layerIndex not in persons:
+                   persons.extend([[]] * (layerIndex + 1 - len(persons)))
+               persons[layerIndex].extend(
+                   {"sex": node.data.sex, "name": node.data.name, "id": node.data.main_id}
+                    for node in layer
+                    if hasattr(node, "data")   # ignore dummy vertices
+               )
 
-        # Organize the nodes within layers
-        tmp.sort_nodes_within_layers(layers)
+               for node in layer:
+                   if hasattr(node, "data"):
+                       persons_to_layer[node.data.main_id] = layerIndex
 
-        # Compute the families
-        layers_by_id = {
-            key.main_id: node for key, node in layers_by_id.items()}
-        families = __compute_families(tmp, families, layers, layers_by_id)
+        families_by_layer = {}
+        for f in families:
+            l = min(persons_to_layer[id] for id in f if id is not None)
+            families_by_layer.setdefault(l, []).append(f)
 
-        result = []
-        for lay in range(0, len(layers)):
-            result.append(
-                [{"id": n.main_id, "name": n.name, "sex": n.sex}
-                 for n in layers[lay]])
+        flatten_families = [
+            families_by_layer.get(layerIndex, [])
+            for layerIndex, layer in enumerate(sug.layers)
+        ]
 
-        return {"persons": result,
-                "families": families}
+        return {
+            "persons": persons,
+            "families": flatten_families
+        }
 
     def people_in_tree(self, id, maxdepthAncestors=-1,
                        maxdepthDescendants=-1, spouses_tree=False,
