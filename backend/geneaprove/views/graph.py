@@ -480,6 +480,9 @@ class GeneaGraph(Digraph):
         families_by_layer = {}
         for f in families:
             l = min(persons_to_layer[id] for id in f if id is not None)
+            # If there are no children
+            if len(f) <= 2:
+                l -= 1
             families_by_layer.setdefault(l, []).append(f)
 
         flatten_families = [

@@ -1,6 +1,6 @@
 export const LINE_SPACING = 16;
 export const MARGIN = 0;
-export const F_HEIGHT = 26;  // height of the row with "F" (families)
+export const F_HEIGHT = 16;  // height of the row with "F" (families)
 
 interface JSONQuiltsPerson {
    id: number;
@@ -28,10 +28,8 @@ export interface QuiltsPersonLayout {
    topY: number;
    bottomY: number;
 
-   // id of ancestors or descendants. Caching such lists make the selection
-   // faster.
-   children: number[];
-   parents:  number[];
+   childFamilies: Family[];  // all families where this person is a child
+   parentFamilies: Family[]; // all families where this person is a parent
 }
 
 // A family: parents + all children
@@ -94,8 +92,8 @@ export class QuiltsResult {
                      maxX: NaN,
                      topY: NaN,
                      bottomY: NaN,
-                     children: [],
-                     parents: [],
+                     childFamilies: [],
+                     parentFamilies: [],
                   };
                   return l;
                }),
@@ -119,8 +117,33 @@ export class QuiltsResult {
             );
       });
 
+      this.layers.forEach(layer => {
+         layer.families.reverse();
+      });
+
       this.computeSizeAndPos();
       this.computeXYranges();
+
+      // Compute related persons
+      this.layers.forEach(layer => {
+         layer.families.forEach(fam => {
+            const father = fam.persons[0];
+            if (father) {
+               father.parentFamilies.push(fam);
+            }
+
+            const mother = fam.persons[1];
+            if (mother) {
+               mother.parentFamilies.push(fam);
+            }
+
+            fam.persons.slice(2).forEach(p => {
+               if (p) {
+                  p.childFamilies.push(fam);
+               }
+            });
+         });
+      });
    }
 
    /**

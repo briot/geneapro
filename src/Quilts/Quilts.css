@@ -16,6 +16,6 @@
    fill: #CCC;  /* gray area between marriages and chlidren */
 }
 
-.Quilts path.line { /* horizontal or vertical lines */
+.Quilts .line { /* horizontal or vertical lines */
    stroke: #AAA;
 }

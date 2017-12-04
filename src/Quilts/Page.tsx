@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
 import { PersonSet } from '../Store/Person';
-import { addToHistory } from '../Store/History';
 import { QuiltsSettings, changeQuiltsSettings } from '../Store/Quilts';
 import { fetchQuilts } from '../Store/Sagas';
 import { AppState, GPDispatch } from '../Store/State';
@@ -74,10 +73,6 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
             decujusOnly: false,
          }));
       }
-
-      this.props.dispatch(addToHistory({
-         person: this.props.allPersons[this.props.decujus],
-      }));
    }
 
 }
