@@ -12,6 +12,7 @@ export function quiltsReducer(
    state: QuiltsSettings = {
       ancestors: 60,
       loading: false,
+      decujusTreeOnly: true,
    },
    action: Redux.Action
 ) {

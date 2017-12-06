@@ -117,10 +117,6 @@ export class QuiltsResult {
             );
       });
 
-      this.layers.forEach(layer => {
-         layer.families.reverse();
-      });
-
       this.computeSizeAndPos();
       this.computeXYranges();
 
@@ -233,8 +229,8 @@ export class QuiltsResult {
 
       this.layers.slice(0, -1).forEach((layer: Layer, layerIndex: number) => {
          layer.families.forEach((fam: Family) => {
-            fam.persons.forEach((p: QuiltsPersonLayout, pIndex: number) => {
-               if (pIndex < 2) { // a parent
+            fam.persons.forEach((p: QuiltsPersonLayout|undefined, pIndex: number) => {
+               if (p && pIndex < 2) { // a parent
                   p.maxX = Math.max(p.maxX, fam.left + LINE_SPACING);
                }
             });

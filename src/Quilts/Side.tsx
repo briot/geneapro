@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Accordion, Form, Header } from 'semantic-ui-react';
 import Panel from '../Panel';
 import { QuiltsSettings } from '../Store/Quilts';
-import { SliderField } from '../Forms';
+import { CheckboxField, SliderField } from '../Forms';
 
 interface QuiltsSideProps {
    settings: QuiltsSettings;
@@ -18,7 +18,8 @@ export default function QuiltsSide(props: QuiltsSideProps) {
                <span>
                   Theme
                   <small>
-                  ancestors: {props.settings.ancestors}
+                  ancestors: {props.settings.ancestors},&nbsp;
+                  restrict: {props.settings.decujusTreeOnly ? 'yes' : 'no'}
                   </small>
                </span>
             )
@@ -33,6 +34,13 @@ export default function QuiltsSide(props: QuiltsSideProps) {
                      fieldName="ancestors"
                      min={1}
                      max={60}
+                     onChange={props.onChange}
+                  />
+
+                  <CheckboxField
+                     defaultChecked={props.settings.decujusTreeOnly}
+                     label="Restrict to tree"
+                     fieldName="decujusTreeOnly"
                      onChange={props.onChange}
                   />
                </Form>

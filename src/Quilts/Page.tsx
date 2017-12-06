@@ -28,7 +28,9 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
    }
 
    componentWillReceiveProps(nextProps: QuiltsPageConnectedProps) {
-      if (this.props.decujus !== nextProps.decujus) {
+      if (this.props.decujus !== nextProps.decujus ||
+          this.props.settings.decujusTreeOnly !== nextProps.settings.decujusTreeOnly
+      ) {
          this.calculateProps(nextProps);
       }
    }
@@ -71,7 +73,7 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
    private calculateProps(props: QuiltsPageConnectedProps) {
       props.dispatch(fetchQuilts.request({
          decujus: props.decujus,
-         decujusOnly: false,
+         decujusOnly: props.settings.decujusTreeOnly,
       }));
    }
 

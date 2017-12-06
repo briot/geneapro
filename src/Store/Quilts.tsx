@@ -3,6 +3,9 @@ import { actionCreator } from '../Store/Actions';
 export interface QuiltsSettings {
    ancestors: number;
    loading: boolean;
+
+   decujusTreeOnly: boolean;
+   // Whether to only display persons in the decuju's tree
 }
 
 /**

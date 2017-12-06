@@ -389,9 +389,9 @@ class GeneaGraph(Digraph):
 
                     for e in self.in_edges(n):
                         if e.kind == P2P_Link.KIND_FATHER:
-                            father = e[0].main_id
+                            father = e[0]
                         elif e.kind == P2P_Link.KIND_MOTHER:
-                            mother = e[0].main_id
+                            mother = e[0]
                         elif e.kind == P2P_Link.KIND_SPOUSE:
                             n2 = e[0].main_id
                             if not subset or n2 in subset:
@@ -402,16 +402,22 @@ class GeneaGraph(Digraph):
                     # Filter events irrelevant to our subset of the graph
                     if subset:
                         if father and father not in subset:
+                            logger.debug('Cancel father')
                             father = None
                         if mother and mother not in subset:
+                            logger.debug('Cancel mother')
                             mother = None
+
+                    if father:
+                        father = father.main_id
+                    if mother:
+                        mother = mother.main_id
 
                     if father or mother:
                         t = tmp.setdefault((father, mother), [father, mother])
                         if n:
                             t.append(n.main_id)
 
-            logger.info('__build_families=%s' % list(tmp.values()))
             return list(tmp.values())
 
         # Prepare a temporary graph: it is used to subset the list of nodes
@@ -428,6 +434,7 @@ class GeneaGraph(Digraph):
                 tmp.add_edge(e)
 
         families = __build_families()
+        logger.debug('%s families' % (len(families), ))
 
         # Using an external library for layout
 
@@ -457,6 +464,8 @@ class GeneaGraph(Digraph):
 
         persons = []
         persons_to_layer = {}
+
+        logger.debug('%s components in graph' % (len(g.C), ))
 
         for core in g.C:
            sug = SugiyamaLayout(core)
