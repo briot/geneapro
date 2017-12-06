@@ -143,7 +143,11 @@ class CompactLayout implements PedigreeLayoutAlgo {
             p.maxY = p.y + p.h;
          }
 
-         maxY = Math.max(maxY, p.y + p.h + this.settings.vertPadding);
+         maxY = Math.max(
+            maxY,
+            p.y + p.h + Math.max(
+               this.settings.showMarriages ? p.fs : 0,
+               this.settings.vertPadding));
       };
 
       const recurseTopDown = (p: PersonLayout, gen: number) => {
@@ -166,7 +170,11 @@ class CompactLayout implements PedigreeLayoutAlgo {
          }
 
          p.maxY = p.y;
-         maxY = Math.max(maxY, p.x + p.w + this.settings.vertPadding);
+         maxY = Math.max(
+            maxY,
+            p.x + p.w + Math.max(
+               this.settings.showMarriages ? p.fs : 0,
+               this.settings.vertPadding));
       };
 
       if (isVertical(this.settings)) {
