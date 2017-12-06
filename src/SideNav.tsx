@@ -133,7 +133,11 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
                    disabled={this.props.decujus === undefined}
                    to={'/quilts/' + decujus}
                />
-               <SideNavItem icon="pie chart" label="Stats" disabled={true} to="/stats" />
+               <SideNavItem
+                   icon="pie chart"
+                   label="Stats"
+                   to={'/stats/' + decujus}
+               />
                <SideNavItem icon="calendar times" label="Timeline" disabled={true} to="/timeline" />
                <SideNavItem icon="list ul" label="Ancestor Tree" disabled={true} to="/ancestortree" />
                <SideNavItem icon="address book outline" label="Family Dictionary" disabled={true} to="/familyDict" />

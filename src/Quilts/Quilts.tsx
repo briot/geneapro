@@ -7,8 +7,6 @@ import { QuiltsResult, Layer, LINE_SPACING, MARGIN, F_HEIGHT,
 import ScalableSVG from '../SVG.Scalable';
 import './Quilts.css';
 
-// const black = d3Color.rgb(0, 0, 0);
-// const transparent = d3Color.rgb(0, 0, 0, 0);
 const allColors = d3Scale.schemeCategory10.map((c: string) => d3Color.rgb(c));
 
 interface QuiltsProps {

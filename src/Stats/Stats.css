@@ -1,0 +1,33 @@
+.Stats.card.fluid {
+   max-width: 1100px;
+}
+
+.Stats .generationsLegend {
+   text-size: 0.8em;
+   display: flex;
+   flex-wrap: wrap;
+}
+
+.Stats .generationsLegend > div {
+   width: 33%;
+}
+
+.Stats .grid path {
+   stroke-width: 0
+}
+
+.Stats .grid .tick {
+   fill: none;
+   shape-rendering: crispEdges;
+}
+
+.Stats .grid line {
+   stroke: #ccc;
+}
+
+.Stats .generationsLegend span {
+   display: inline-block;
+   margin: 2px;
+   width: 20px;
+   height: 10px;
+}
