@@ -11,6 +11,9 @@
 
 .Radial text {
    display: none;
+   font-size: 6px;
+   font-family: sans;
+   text-overflow: ellipsis;
 }
 .Radial.visibleNames text,
 .Radial .node:hover text {
