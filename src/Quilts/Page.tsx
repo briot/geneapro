@@ -24,11 +24,13 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
    componentWillMount() {
       // ??? This sets 'loading=true' in the state, but this.props do not
       // reflect that yet...
-      this.load();
+      this.calculateProps(this.props);
    }
 
-   componentDidUpdate(oldProps: QuiltsPageConnectedProps) {
-      this.load(oldProps.decujus);
+   componentWillReceiveProps(nextProps: QuiltsPageConnectedProps) {
+      if (this.props.decujus !== nextProps.decujus) {
+         this.calculateProps(nextProps);
+      }
    }
 
    render() {
@@ -66,13 +68,11 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
       );
    }
 
-   private load(old?: number) {
-      if (this.props.decujus !== old) {
-         this.props.dispatch(fetchQuilts.request({
-            decujus: this.props.decujus,
-            decujusOnly: false,
-         }));
-      }
+   private calculateProps(props: QuiltsPageConnectedProps) {
+      props.dispatch(fetchQuilts.request({
+         decujus: props.decujus,
+         decujusOnly: false,
+      }));
    }
 
 }

@@ -17,15 +17,18 @@ interface SourcePageProps {
 
 class SourcePageConnected extends React.PureComponent<SourcePageProps> {
    componentWillMount() {
-      this.props.dispatch(addToHistory({source: this.props.source}));
-      this.props.dispatch(fetchSourceDetails.request({id: this.props.id}));
+      this.calculateData(this.props);
    }
 
-   componentDidUpdate(oldProps: SourcePageProps) {
-      this.props.dispatch(addToHistory({source: this.props.source}));
-      if (oldProps.id !== this.props.id) {
-         this.props.dispatch(fetchSourceDetails.request({id: this.props.id}));
+   componentWillReceiveProps(nextProps: SourcePageProps) {
+      if (nextProps.id !== this.props.id) {
+         this.calculateData(nextProps);
       }
+   }
+
+   calculateData(props: SourcePageProps) {
+      props.dispatch(addToHistory({source: props.source}));
+      props.dispatch(fetchSourceDetails.request({id: props.id}));
    }
 
    render() {

@@ -23,28 +23,24 @@ interface FanchartPageConnectedProps {
 
 class FanchartPageConnected extends React.PureComponent<FanchartPageConnectedProps, {}> {
    componentDidMount() {
-      this.props.dispatch(fetchPedigree.request({
-         decujus: this.props.decujus,
-         ancestors: this.props.settings.ancestors,
+      this.calculateData(this.props);
+   }
+
+   componentWillReceiveProps(nextProps: FanchartPageConnectedProps) {
+      if (this.props.decujus !== nextProps.decujus ||
+          this.props.settings.ancestors !== nextProps.settings.ancestors) {
+         this.calculateData(nextProps);
+      }
+   }
+
+   calculateData(props: FanchartPageConnectedProps) {
+      props.dispatch(fetchPedigree.request({
+         decujus: props.decujus,
+         ancestors: props.settings.ancestors,
          descendants: 1,
       }));
 
-      this.props.dispatch(
-         addToHistory({person: this.props.persons[this.props.decujus]}));
-   }
-
-   componentDidUpdate(oldProps: FanchartPageConnectedProps) {
-      if (this.props.decujus !== oldProps.decujus ||
-          this.props.settings.ancestors !== oldProps.settings.ancestors) {
-         this.props.dispatch(fetchPedigree.request({
-            decujus: this.props.decujus,
-            ancestors: this.props.settings.ancestors,
-            descendants: 1,
-         }));
-      }
-
-      this.props.dispatch(
-         addToHistory({person: this.props.persons[this.props.decujus]}));
+      props.dispatch(addToHistory({person: props.persons[props.decujus]}));
    }
 
    render() {

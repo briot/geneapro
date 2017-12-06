@@ -19,15 +19,18 @@ interface PersonaPageProps {
 
 class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
    componentWillMount() {
-      this.props.dispatch(addToHistory({person: this.props.person}));
-      this.props.dispatch(fetchPersonDetails.request({id: this.props.id}));
+      this.calculateData(this.props);
    }
 
-   componentDidUpdate(oldProps: PersonaPageProps) {
-      this.props.dispatch(addToHistory({person: this.props.person}));
-      if (oldProps.id !== this.props.id) {
-         this.props.dispatch(fetchPersonDetails.request({id: this.props.id}));
+   componentWillReceiveProps(nextProps: PersonaPageProps) {
+      if (nextProps.id !== this.props.id) {
+         this.calculateData(nextProps);
       }
+   }
+
+   calculateData(props: PersonaPageProps) {
+      props.dispatch(addToHistory({person: props.person}));
+      props.dispatch(fetchPersonDetails.request({id: props.id}));
    }
 
    onShowEventDetails = (id: number) => {

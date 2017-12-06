@@ -21,28 +21,24 @@ interface RadialPageConnectedProps {
 
 class RadialPageConnected extends React.PureComponent<RadialPageConnectedProps, {}> {
    componentDidMount() {
-      this.props.dispatch(fetchPedigree.request({
-         decujus: this.props.decujus,
-         ancestors: Math.max(0, this.props.settings.generations),
-         descendants: Math.abs(Math.min(0, this.props.settings.generations)),
-      }));
-
-      this.props.dispatch(
-         addToHistory({person: this.props.persons[this.props.decujus]}));
+      this.calculateData(this.props);
    }
 
-   componentDidUpdate(oldProps: RadialPageConnectedProps) {
-      if (this.props.decujus !== oldProps.decujus ||
-          this.props.settings.generations !== oldProps.settings.generations) {
-         this.props.dispatch(fetchPedigree.request({
-            decujus: this.props.decujus,
-            ancestors: Math.max(0, this.props.settings.generations),
-            descendants: Math.abs(Math.min(0, this.props.settings.generations)),
-         }));
+   componentWillReceiveProps(nextProps: RadialPageConnectedProps) {
+      if (this.props.decujus !== nextProps.decujus ||
+          this.props.settings.generations !== nextProps.settings.generations) {
+         this.calculateData(nextProps);
       }
+   }
 
-      this.props.dispatch(
-         addToHistory({person: this.props.persons[this.props.decujus]}));
+   calculateData(props: RadialPageConnectedProps) {
+      props.dispatch(fetchPedigree.request({
+         decujus: props.decujus,
+         ancestors: Math.max(0, props.settings.generations),
+         descendants: Math.abs(Math.min(0, props.settings.generations)),
+      }));
+
+      props.dispatch(addToHistory({person: props.persons[props.decujus]}));
    }
 
    render() {
