@@ -135,7 +135,11 @@ export function sourcesReducer(
 
    } else if (isType(action, fetchSources.done)) {
       const data = action.payload.result as FetchSourcesResult;
-      return {...state, ...data.sources};
+      const result = {...state};
+      for (const s of Object.values(data.sources)) {
+         result[s.id] = s;
+      }
+      return result;
    }
 
    return state;
