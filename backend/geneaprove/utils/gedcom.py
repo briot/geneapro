@@ -348,6 +348,7 @@ _GRAMMAR = dict(
           ("LANG", 0, 3,         None),   # Language preference
           ("RFN",  0, 1,         None),   # Submitter registered rfn
           ("RIN",  0, 1,         None),   # Automated record id
+          ("WWW",  0, 1,         None),   # Gedcom 5.5.1
           ("PHON", 0, 3,         None),
           ("CHAN", 0, 1,         "CHAN")),  # Change date
 
@@ -364,6 +365,17 @@ _GRAMMAR = dict(
            (("TYPE", 0, 1, None),)),
           ("RIN",  0, 1, None),
           ("CHAN", 0, 1, "CHAN")),
+
+    # statistics: number of tags of each type
+    # https://www.tamurajones.net/GEDCOM_STS.xhtml
+    _STS=(("INDI", 0, 1, None),
+          ("FAM",  0, 1, None),
+          ("REPO", 0, 1, None),
+          ("SOUR", 0, 1, None),
+          ("NOTE", 0, 1, None),
+          ("SUBM", 0, 1, None),
+          ("OBJE", 0, 1, None),
+          ("_LOC", 0, 1, None)),
 
     HEAD=(("SOUR", 1, 1,  # Approved system id
            (("VERS", 0, 1, None),  # Version number
@@ -391,6 +403,7 @@ _GRAMMAR = dict(
           ("CHAR", 1, 1,       # Character set
            (("VERS", 0, 1, None),)),  # Version number
           ("LANG", 0, 1, None),       # Language of text
+          ("_STS", 0, 1, "_STS"),   # statistics
           ("PLAC", 0, 1,
            (("FORM", 1, 1, None),)),  # Place hierarchy
           ("_HME", 0, 1, None),        # ??? Extension from gedcom torture
