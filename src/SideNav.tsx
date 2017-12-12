@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Header, List, SemanticICONS } from 'semantic-ui-react';
+import { Button, Header, List, SemanticICONS } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 import { AppState } from './Store/State';
 import { HistoryItem, HistoryKind, lastVisitedPerson } from './Store/History';
@@ -78,6 +78,13 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
       return (
          <Panel className="SideNav">
             <List>
+               <List.Item>
+                  <List.Content>
+                     <Link to="/source/-1">
+                        <Button primary={true} size="mini" icon="add" content="source"/>
+                     </Link>
+                  </List.Content>
+               </List.Item>
                <SideNavCategory label="Navigation" />
                <SideNavItem
                    icon="dashboard"

@@ -51,7 +51,7 @@ export default class App extends React.PureComponent<{}, MainAppState> {
                   <Route path="/radial/:decujus(\\d+)" component={RadialPage} />
                   <Route path="/quilts/:decujus(\\d+)" component={QuiltsPage} />
                   <Route path="/persona/:id(\\d+)" component={PersonaPage} />
-                  <Route path="/source/:id(\\d+)" component={SourcePage} />
+                  <Route path="/source/:id(-?\\d+)" component={SourcePage} />
                   <Route path="/import" component={ImportPage} />
                   <Route path="/stats/:decujus(\\d+)" component={StatsPage} />
                </div>

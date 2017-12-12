@@ -1,64 +1,281 @@
 import * as React from 'react';
 import { Dropdown, Form, Header } from 'semantic-ui-react';
-import { Source } from '../Store/Source';
+import { Source, createNewSource } from '../Store/Source';
+import { CitationModel, fetchCitationModelsFromServer,
+         fetchModelTemplateFromServer } from '../Server/Citation';
+import CitationTemplate from '../Store/CitationTemplate';
+
+const CUSTOM = 'custom';
+
+interface CitationPart {
+   value: string;
+   inTemplate: boolean;
+}
+
+type CitationParts = {[key: string]: CitationPart};
+
+/***********************************************************************
+ * InputOrLabel
+ ***********************************************************************/
+
+interface InputOrLabelProps {
+   template?: CitationTemplate;   // field is readonly if this is undefined
+   value: string;
+   label: string;
+   required?: boolean;
+   onChange?: (e: React.FormEvent<HTMLElement>, data: {value: string}) => void;
+}
+
+function InputOrLabel(props: InputOrLabelProps) {
+   return !props.template ? (
+      <Form.Input
+         label={props.label}
+         onChange={props.onChange}
+         required={props.required}
+         defaultValue={props.value}
+      />
+   ) : (
+      <Form.Field>
+         <label>{props.label}</label>
+         <span style={{marginLeft: '15px'}}>
+            {
+               props.template.html(props.value)
+            }
+         </span>
+      </Form.Field>
+   );
+}
+
+/***********************************************************************
+ * ExtraDetails
+ ***********************************************************************/
+
+function ExtraDetails(props: {parts: CitationParts}) {
+   const toDiscard: [string, CitationPart][] = Object.entries(props.parts)
+      .filter(value => !value[1].inTemplate && value[1].value)
+      .sort((a, b) => a[0].localeCompare(b[0]));
+
+   if (toDiscard.length === 0) {
+      return null;
+   }
+
+   return (
+      <div>
+         <Header dividing={true}>Extra details</Header>
+         <p>
+            The following information is stored in the database, but not
+            needed for the citation templates (perhaps imported from GEDCOM).
+            It will be discarded when you save.
+         </p>
+         {
+            toDiscard.map((value: [string, CitationPart]) => (
+               <Form.Input
+                  key={value[0]}
+                  label={value[0]}
+                  disabled={true}
+                  defaultValue={value[1].value}
+               />)
+            )
+         }
+      </div>
+   );
+}
+
+/***********************************************************************
+ * HighLevelSource
+ ***********************************************************************/
+
+function HighLevelSource() {
+   // <Header dividing={true}>Higher-level sources</Header>
+   return null;
+}
+
+/***********************************************************************
+ * Citation
+ ***********************************************************************/
 
 interface CitationProps {
-   source: Source;
+   source: Source|undefined;
+   onTitleChanged?: (html: JSX.Element|JSX.Element[]) => void;
 }
 
 interface CitationState {
    source: Source;  // modified state
+   models: CitationModel[];
+   template?: CitationTemplate;
+   parts: CitationParts; //  ??? Aren't these part of the source already ?
 }
 
-const CUSTOM = 'custom';
-
 export default class SourceCitation extends React.PureComponent<CitationProps, CitationState> {
+
+   manualTitle: string;
+   manualAbbrev: string;
+   manualBiblio: string;
+   // manual citations entered by the user (or original citation).
+   // These are used in case the user goes back to a CUSTOM model
 
    constructor(props: CitationProps) {
       super(props);
       this.state = {
-         source: {...props.source,
-                  medium: props.source.medium || CUSTOM},
+         models: [],
+         parts: {},
+         source: createNewSource(CUSTOM),  // updated in componentWillMount
       };
    }
 
-   mediumChange = (e: React.FormEvent<HTMLElement>, data: {value: string}) => {
-      this.setState((old: CitationState) => ({
-         source: {...old.source, medium: data.value || CUSTOM}
-      }));
+   async componentWillMount() {
+      let s = await fetchCitationModelsFromServer();
+      s.source_types.sort((a, b) => a.type.localeCompare(b.type));
+      this.setState({models: s.source_types,
+                     source: this._updateSource(this.props)});
    }
 
-   commentsChange = (e: React.FormEvent<HTMLElement>, data: {value: string}) => {
-      this.setState((old: CitationState) => ({
-         source: {...old.source, comments: data.value},
-      }));
+   componentWillReceiveProps(nextProps: CitationProps) {
+      if (!this.props.source) {
+         if (nextProps.source) {
+            this.setState({source: this._updateSource(nextProps)});
+         }
+      } else if (!nextProps.source) {
+         if (this.props.source) {
+            this.setState({source: this._updateSource(nextProps)});
+         }
+      } else if (this.props.source.id !== nextProps.source.id) {
+         this.setState({source: this._updateSource(nextProps)});
+      }
    }
 
-   jurisdictionPlaceChange = (e: React.FormEvent<HTMLElement>, data: {value: string}) => {
-      this.setState((old: CitationState) => ({
-         source: {...old.source, jurisdiction_place: data.value},
-      }));
+   /**
+    * Take into account a change in the original source. Return the
+    * update to be performed on this.state
+    */
+   _updateSource(props: CitationProps): Source {
+      if (!props.source) {
+         let source = createNewSource(CUSTOM);
+         this.manualTitle = 'Unnamed';
+         this.manualAbbrev = '';
+         this.manualBiblio = '';
+         this.fetchModel(source, CUSTOM);
+         return source;
+      } else {
+         this.manualTitle = props.source.title;
+         this.manualAbbrev = props.source.abbrev;
+         this.manualBiblio = props.source.biblio;
+         const newMedium = props.source.medium || CUSTOM;
+         this.fetchModel(props.source, newMedium);
+         return {...props.source, medium: newMedium};
+      }
    }
 
-   subjectPlaceChange = (e: React.FormEvent<HTMLElement>, data: {value: string}) => {
-      this.setState((old: CitationState) => ({
-         source: {...old.source, subject_place: data.value},
-      }));
+   /**
+    * Recompute the title/abbrev/biblio citation based on template and parts
+    */
+   recomputeCitation(templates: undefined|CitationTemplate, parts: CitationParts) {
+      let title = this.manualTitle;
+      let abbrev = this.manualAbbrev;
+      let biblio = this.manualBiblio;
+
+      if (templates !== undefined) {
+         let simple: {[key: string]: string} = {};
+         Object.entries(parts).forEach(e => {
+            simple[e[0]] = e[1].value;
+         });
+
+         templates.setParts(simple);
+         title = templates.full;
+         abbrev = templates.abbrev;
+         biblio = templates.biblio;
+
+         if (this.props.onTitleChanged) {
+            this.props.onTitleChanged(templates.html(title));
+         }
+      } else {
+         if (this.props.onTitleChanged) {
+            this.props.onTitleChanged(<span>{title}</span>);
+         }
+      }
+
+      return {title: title, abbrev: abbrev, biblio: biblio};
    }
 
-   subjectDateChange = (e: React.FormEvent<HTMLElement>, data: {value: string}) => {
-      this.setState((old: CitationState) => ({
-         source: {...old.source, subject_date: data.value},
-      }));
+   fetchModel(source: Source, model: string) {
+      let newParts:  CitationParts = {};
+      Object.entries(this.state.parts).forEach(p => {
+         newParts[p[0]] = {value: p[1].value, inTemplate: false};
+      });
+
+      if (model === CUSTOM) {
+         this.setState({template: undefined,
+                        parts: newParts,
+                        source: {...source, 
+                                 medium: model,
+                                 ...this.recomputeCitation(undefined, {})}});
+      } else {
+         fetchModelTemplateFromServer(model).then(
+            d => {
+               const parts = d.getParts();
+               parts.forEach(key => {
+                  newParts[key] = {value: newParts[key] ? newParts[key].value : '',
+                                   inTemplate: true};
+               });
+               this.setState({template: d,
+                              parts: newParts,
+                              source: {...source,
+                                       medium: model,
+                                       ...this.recomputeCitation(d, newParts)}});
+            }
+         );
+      }
+   }
+
+   setPart = (key: string, value: string) => {
+      const p = {...this.state.parts, [key]: {...this.state.parts[key], value: value}};
+      this.setState({
+         ...this.state,
+         parts: p,
+         source: {...this.state.source,
+                  ...this.recomputeCitation(this.state.template, p)}});
+   }
+
+   mediumChange = (e: React.SyntheticEvent<HTMLInputElement>, data: {value: string}) => {
+      this.fetchModel(this.state.source, data.value || CUSTOM);
+   }
+
+   commentsChange = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+      this.setState({source: {...this.state.source, comments: e.currentTarget.value}});
+   }
+
+   titleChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+      this.manualTitle = e.currentTarget.value;
+
+      if (this.props.onTitleChanged) {
+         this.props.onTitleChanged(<span>{this.manualTitle}</span>);
+      }
+      this.setState({source: {...this.state.source, title: this.manualTitle}});
+   }
+
+   abbrevChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+      this.manualAbbrev = e.currentTarget.value;
+      this.setState({source: {...this.state.source, abbrev: this.manualAbbrev}});
+   }
+
+   biblioChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+      this.manualBiblio = e.currentTarget.value;
+      this.setState({source: {...this.state.source, biblio: this.manualBiblio}});
+   }
+
+   jurisdictionPlaceChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+      this.setState({source: {...this.state.source, jurisdiction_place: e.currentTarget.value}});
+   }
+
+   subjectPlaceChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+      this.setState({source: {...this.state.source, subject_place: e.currentTarget.value}});
+   }
+
+   subjectDateChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+      this.setState({source: {...this.state.source, subject_date: e.currentTarget.value}});
    }
 
    render() {
-      const mediums = [
-         {value: CUSTOM,      text: 'Custom citation (no template)'},
-         {value: 'book',      text: 'Book'},
-         {value: 'interview', text: 'Interview'},
-      ];
-
       return (
          <Form size="small">
             <Header dividing={true}>Citation details</Header>
@@ -71,40 +288,60 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
                   search={true}
                   fluid={true}
                   selection={true}
-                  scrolling={true}
-                  options={mediums}
+                  placeholder="Template for citation"
                   title={'Select the type of the source. This will change the' +
                          ' details below to those needed for proper citation'}
+                  options={
+                     [{value: CUSTOM, text: 'Custom citation (no template)'}].concat(
+                        this.state.models.map(m => ({
+                           text: m.type,
+                           value: m.id,
+                        }))
+                  )}
                />
             </Form.Field>
-   
-            <Form.Input
+
+            <InputOrLabel
+               template={this.state.template}
+               value={this.state.source.title}
+               onChange={this.titleChange}
+               required={true}
                label="Full citation"
-               required={true}
-               disabled={this.state.source.medium === CUSTOM}
-               defaultValue={this.state.source.title}
             />
-            <Form.Input
+
+            <InputOrLabel
+               template={this.state.template}
+               value={this.state.source.abbrev}
+               onChange={this.abbrevChange}
+               required={true}
                label="Short citation"
-               required={true}
-               disabled={this.state.source.medium === CUSTOM}
-               defaultValue={this.state.source.abbrev}
             />
-            <Form.Input
+
+            <InputOrLabel
+               template={this.state.template}
+               value={this.state.source.biblio}
+               onChange={this.biblioChange}
+               required={true}
                label="Bibliography citation"
-               required={true}
-               disabled={this.state.source.medium === CUSTOM}
-               defaultValue={this.state.source.biblio}
             />
-   
-            <Header dividing={true}>Higher-level sources</Header>
-   
-            <Header dividing={true}>Extra details</Header>
-            <p>
-               The following information is stored in the database, but not
-               needed for the citation templates (perhaps imported from GEDCOM).
-            </p>
-   
+
+            {
+               Object.entries(this.state.parts).sort((a, b) => a[0].localeCompare(b[0])).map(
+                  value => (
+                     value[1].inTemplate ? (
+                        <Form.Input
+                           key={value[0]}
+                           label={value[0]}
+                           defaultValue={value[1].value}
+                           onChange={e => this.setPart(value[0], e.currentTarget.value)}
+                        />) : null
+                  )
+               )
+            }
+
+            <ExtraDetails parts={this.state.parts} />
+            <HighLevelSource />
+    
             <Header dividing={true}>Research details</Header>
             <Form.Group widths="equal">
                <Form.Input

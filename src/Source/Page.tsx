@@ -18,26 +18,29 @@ interface SourcePageProps {
 class SourcePageConnected extends React.PureComponent<SourcePageProps> {
    componentWillMount() {
       this.calculateData(this.props);
+      this.props.dispatch(addToHistory({source: this.props.source}));
    }
 
    componentWillReceiveProps(nextProps: SourcePageProps) {
       if (nextProps.id !== this.props.id) {
          this.calculateData(nextProps);
       }
+      nextProps.dispatch(addToHistory({source: nextProps.source}));
    }
 
    calculateData(props: SourcePageProps) {
-      props.dispatch(addToHistory({source: props.source}));
-      props.dispatch(fetchSourceDetails.request({id: props.id}));
+      if (props.id >= 0) {
+         props.dispatch(fetchSourceDetails.request({id: props.id}));
+      }
    }
 
    render() {
       const s = this.props.source;
-      document.title = s ?  s.abbrev : 'Source';
+      document.title = s ?  s.abbrev : 'New Source';
       return (
          <Page
             decujus={undefined}
-            main={ s ?
+            main={ (s || this.props.id < 0) ?
                <SourceDetails
                    source={s}
                /> :
