@@ -50,3 +50,20 @@ export interface PersonSet {
   // means that we might be downloading information multiple times if we
   // do not already know about the id, of course.
 }
+
+/**
+ * Create an empty person record that only contains the id.
+ */
+export function personPlaceholder(id: number) {
+   return {id: id,
+           givn: '',
+           surn: '',
+   };
+}
+
+/**
+ * Return the display name for the person
+ */
+export function personDisplay(p?: Person) {
+   return p ? `${p.surn.toUpperCase()} ${p.givn} (${p.id})` : '';
+}

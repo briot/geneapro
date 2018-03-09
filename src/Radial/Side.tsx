@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Accordion, Form, Header } from 'semantic-ui-react';
-import Panel from '../Panel';
+import { Accordion, Form } from 'semantic-ui-react';
 import { RadialSettings } from '../Store/Radial';
 import { ColorSchemeNames } from '../Store/Pedigree';
 import { SliderField, CheckboxField, SelectField } from '../Forms';
@@ -88,9 +87,6 @@ export default function RadialSide(props: RadialSideProps) {
       },
    ];
    return (
-      <Panel className="settings">
-         <Header as="h5">Settings</Header>
-         <Accordion styled={true} exclusive={false} fluid={true} panels={panels} />
-      </Panel>
+      <Accordion styled={true} exclusive={false} fluid={true} panels={panels} />
    );
 }

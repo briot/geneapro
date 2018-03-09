@@ -12,6 +12,7 @@ import { EventDetails } from '../Server/Event';
 import { DetailsResult, FetchPersonsResult } from '../Server/Person';
 import { FetchSourcesResult } from '../Server/Source';
 import { FetchPlacesResult } from '../Server/Place';
+import { fetchQuilts } from '../Store/Sagas';
 
 /**
  * Reducer for persons
@@ -41,6 +42,12 @@ export function personsReducer(
    } else if (isType(action, fetchPersons.done)) {
       const data = action.payload.result as FetchPersonsResult;
       return {...state, ...data.persons};
+
+   } else if (isType(action, fetchQuilts.done)) {
+      // Update decujus info, so that the name is correctly displayed in side
+      // panel
+      window.console.log('MANU should change quilts JSON result so that we can'
+                         + 'easily access persons data by id');
 
    } else if (isType(action, fetchPersonDetails.done)) {
       const data: DetailsResult = action.payload.result as DetailsResult;

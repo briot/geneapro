@@ -42,18 +42,18 @@ export default class App extends React.PureComponent<{}, MainAppState> {
          <Provider store={store}>
             <BrowserRouter>
                <div>
-                  <Route path="/:decujus(\\d+)?" exact={true} component={DashboardPage} />
+                  <Route path="/:decujusId(\\d+)?" exact={true} component={DashboardPage} />
                   <Route path="/persona/list" component={PersonaList} />
                   <Route path="/place/list" component={PlaceList} />
                   <Route path="/source/list" component={SourceList} />
-                  <Route path="/pedigree/:decujus(\\d+)" component={PedigreePage} />
-                  <Route path="/fanchart/:decujus(\\d+)" component={FanchartPage} />
-                  <Route path="/radial/:decujus(\\d+)" component={RadialPage} />
-                  <Route path="/quilts/:decujus(\\d+)" component={QuiltsPage} />
+                  <Route path="/pedigree/:decujusId(\\d+)" component={PedigreePage} />
+                  <Route path="/fanchart/:decujusId(\\d+)" component={FanchartPage} />
+                  <Route path="/radial/:decujusId(\\d+)" component={RadialPage} />
+                  <Route path="/quilts/:decujusId(\\d+)" component={QuiltsPage} />
                   <Route path="/persona/:id(\\d+)" component={PersonaPage} />
                   <Route path="/source/:id(-?\\d+)" component={SourcePage} />
                   <Route path="/import" component={ImportPage} />
-                  <Route path="/stats/:decujus(\\d+)" component={StatsPage} />
+                  <Route path="/stats/:decujusId(\\d+)" component={StatsPage} />
                </div>
             </BrowserRouter>
          </Provider>

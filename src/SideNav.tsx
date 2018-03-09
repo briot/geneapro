@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Button, Header, List, SemanticICONS } from 'semantic-ui-react';
+import { Header, List, SemanticICONS } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
 import { AppState } from './Store/State';
+import { Person, PersonSet, personDisplay } from './Store/Person';
 import { HistoryItem, HistoryKind, lastVisitedPerson } from './Store/History';
 import { urlPersona, urlSource, urlPlace } from './Links';
 import Panel from './Panel';
@@ -15,12 +16,13 @@ interface SideNavItemProps {
    to?: string;
 }
 
+const LINK_STYLE = {color: 'inherit'};
+
 class SideNavItem extends React.PureComponent<SideNavItemProps> {
    render() {
-      const style = {color: 'inherit'};
       const link =
          this.props.to ?
-         <Link to={this.props.to} style={style}>{this.props.label}</Link> :
+         <Link to={this.props.to} style={LINK_STYLE}>{this.props.label}</Link> :
          this.props.label;
 
       return (
@@ -36,19 +38,25 @@ class SideNavItem extends React.PureComponent<SideNavItemProps> {
 
 interface SideNavCategoryProps {
    label: React.ReactNode;
+   linkTo?: string;
 }
 
-class SideNavCategory extends React.PureComponent<SideNavCategoryProps> {
-   render() {
-      return (
-         <Header size="small" sub={true}>{this.props.label}</Header>
-      );
-   }
+function SideNavCategory(props: SideNavCategoryProps) {
+   return (
+      props.linkTo ? (
+         <Header size="small" sub={true}>
+            <Link to={props.linkTo} style={LINK_STYLE}>{props.label}</Link>
+         </Header>
+      ) : (
+         <Header size="small" sub={true}>{props.label}</Header>
+      )
+   );
 }
 
 interface SideNavProps {
-   decujus?: number;
+   decujus?: Person;
    history: HistoryItem[];
+   persons: PersonSet;
 }
 
 class SideNavConnected extends React.PureComponent<SideNavProps> {
@@ -61,7 +69,8 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
                      kind === HistoryKind.PLACE ? 'globe' :
                      kind === HistoryKind.SOURCE ? 'book' :
                      undefined}
-               label={display}
+               label={kind === HistoryKind.PERSON ? personDisplay(this.props.persons[id]) || display :
+                      display}
                to={kind === HistoryKind.PERSON ? urlPersona(id) :
                    kind === HistoryKind.PLACE ? urlPlace(id) :
                    kind === HistoryKind.SOURCE ? urlSource(id) :
@@ -70,26 +79,19 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
          ));
 
       const lastVisited = lastVisitedPerson(this.props.history);
-      const decujus: string = this.props.decujus !== undefined ?
-         this.props.decujus.toString() :
+      const decujusStr: string = this.props.decujus !== undefined ?
+         this.props.decujus.id.toString() :
          lastVisited !== undefined ? lastVisited.toString() :
          '';
 
       return (
          <Panel className="SideNav">
             <List>
-               <List.Item>
-                  <List.Content>
-                     <Link to="/source/-1">
-                        <Button primary={true} size="mini" icon="add" content="source"/>
-                     </Link>
-                  </List.Content>
-               </List.Item>
-               <SideNavCategory label="Navigation" />
+               <SideNavCategory label="Views" />
                <SideNavItem
                    icon="dashboard"
                    label="Dashboard"
-                   to={'/' + decujus}
+                   to={'/' + decujusStr}
                />
                <SideNavItem
                   icon="folder open"
@@ -97,7 +99,6 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
                   to="/import"
                />
 
-               <SideNavCategory label="Lists" />
                <SideNavItem
                    icon="users"
                    label="All persons"
@@ -110,46 +111,55 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
                />
                <SideNavItem
                    icon="book"
-                   label="All sources / Bibliography"
+                   label="Bibliography"
                    to="/source/list/"
                />
                <SideNavItem icon="image" label="Media Manager" disabled={true} to="/media"/>
 
-               <SideNavCategory label="Views" />
-               <SideNavItem
-                   icon="sitemap"
-                   label="Pedigree"
-                   disabled={this.props.decujus === undefined}
-                   to={'/pedigree/' + decujus}
-               />
-               <SideNavItem
-                   icon="wifi"
-                   label="Fan chart"
-                   disabled={this.props.decujus === undefined}
-                   to={'/fanchart/' + decujus}
-               />
-               <SideNavItem
-                   icon="asterisk"
-                   label="Radial chart"
-                   disabled={this.props.decujus === undefined}
-                   to={'/radial/' + decujus}
-               />
-               <SideNavItem
-                   icon="server"
-                   label="Quilts"
-                   disabled={this.props.decujus === undefined}
-                   to={'/quilts/' + decujus}
-               />
                <SideNavItem
                    icon="pie chart"
                    label="Stats"
-                   to={'/stats/' + decujus}
+                   to={'/stats/' + decujusStr}
                />
                <SideNavItem icon="calendar times" label="Timeline" disabled={true} to="/timeline" />
                <SideNavItem icon="list ul" label="Ancestor Tree" disabled={true} to="/ancestortree" />
                <SideNavItem icon="address book outline" label="Family Dictionary" disabled={true} to="/familyDict" />
 
-               <SideNavCategory label="Details" />
+               {
+                  this.props.decujus !== undefined && [
+                     <SideNavCategory
+                        key="category"
+                        label={personDisplay(this.props.decujus)}
+                        linkTo={urlPersona(this.props.decujus.id)}
+                     />,
+                     <SideNavItem
+                         key="pedigree"
+                         icon="sitemap"
+                         label="Pedigree"
+                         to={'/pedigree/' + decujusStr}
+                     />,
+                     <SideNavItem
+                         key="fanchart"
+                         icon="wifi"
+                         label="Fan chart"
+                         to={'/fanchart/' + decujusStr}
+                     />,
+                     <SideNavItem
+                         key="asterisk"
+                         icon="asterisk"
+                         label="Radial chart"
+                         to={'/radial/' + decujusStr}
+                     />,
+                     <SideNavItem
+                         key="quilts"
+                         icon="server"
+                         label="Quilts"
+                         to={'/quilts/' + decujusStr}
+                     />
+                  ]
+               }
+
+               <SideNavCategory label="History" />
                {hist}
             </List>
          </Panel>
@@ -160,6 +170,7 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
 const SideNav = connect(
    (state: AppState) => ({
       history: state.history,
+      persons: state.persons,
    })
 )(SideNavConnected);
 

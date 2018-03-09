@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
-import { PersonSet } from '../Store/Person';
+import { Person, personDisplay, personPlaceholder, PersonSet } from '../Store/Person';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { addToHistory } from '../Store/History';
@@ -20,7 +20,7 @@ interface PedigreePageConnectedProps {
    allPlaces: PlaceSet;
    onChange: (diff: Partial<PedigreeSettings>) => void;
    dispatch: GPDispatch;
-   decujus: number;
+   decujus: Person;
 }
 
 class PedigreePageConnected extends React.PureComponent<PedigreePageConnectedProps, {}> {
@@ -29,7 +29,7 @@ class PedigreePageConnected extends React.PureComponent<PedigreePageConnectedPro
    }
 
    componentWillReceiveProps(nextProps: PedigreePageConnectedProps) {
-      if (this.props.decujus !== nextProps.decujus ||
+      if (this.props.decujus.id !== nextProps.decujus.id ||
           this.props.settings.ancestors !== nextProps.settings.ancestors ||
           this.props.settings.descendants !== nextProps.settings.descendants
       ) {
@@ -39,20 +39,18 @@ class PedigreePageConnected extends React.PureComponent<PedigreePageConnectedPro
 
    calculateData(props: PedigreePageConnectedProps) {
       props.dispatch(fetchPedigree.request({
-         decujus: props.decujus,
+         decujus: props.decujus.id,
          ancestors: props.settings.ancestors,
          descendants: props.settings.descendants,
       }));
 
-      props.dispatch(addToHistory({person: props.persons[props.decujus]}));
+      props.dispatch(addToHistory({person: props.decujus}));
    }
 
    render() {
       const decujus = this.props.decujus;
-      const p = this.props.persons[decujus];
-      if (p) {
-         document.title = 'Pedigree for ' +
-            p.surn.toUpperCase() + ' ' + p.givn + ' (' + p.id + ')';
+      if (decujus) {
+         document.title = 'Pedigree for ' + personDisplay(decujus);
       }
 
       // ??? Initially, we have no data and yet loading=false
@@ -66,7 +64,7 @@ class PedigreePageConnected extends React.PureComponent<PedigreePageConnectedPro
                persons={this.props.persons}
                allEvents={this.props.allEvents}
                allPlaces={this.props.allPlaces}
-               decujus={decujus}
+               decujus={decujus.id}
             />
          );
 
@@ -86,17 +84,20 @@ class PedigreePageConnected extends React.PureComponent<PedigreePageConnectedPro
 }
 
 interface PropsFromRoute {
-   decujus: string;
+   decujusId: string;
 }
  
 const PedigreePage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
-      settings: state.pedigree,
-      persons: state.persons,
-      allEvents: state.events,
-      allPlaces: state.places,
-      decujus: Number(ownProps.match.params.decujus),
-   }),
+   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => {
+      const id = Number(ownProps.match.params.decujusId);
+      return {
+         settings: state.pedigree,
+         persons: state.persons,
+         allEvents: state.events,
+         allPlaces: state.places,
+         decujus: state.persons[id] || personPlaceholder(id),
+      };
+   },
    (dispatch: GPDispatch) => ({
       dispatch,
       onChange: (diff: Partial<PedigreeSettings>) => {

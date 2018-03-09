@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
-import { PersonSet } from '../Store/Person';
+import { Person, PersonSet, personDisplay, personPlaceholder } from '../Store/Person';
 import { QuiltsSettings, changeQuiltsSettings } from '../Store/Quilts';
 import { fetchQuilts } from '../Store/Sagas';
 import { AppState, GPDispatch } from '../Store/State';
@@ -17,7 +17,7 @@ interface QuiltsPageConnectedProps {
    onChange: (diff: Partial<QuiltsSettings>) => void;
    layout: QuiltsResult|undefined;
    dispatch: GPDispatch;
-   decujus: number;
+   decujus: Person;
 }
 
 class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, {}> {
@@ -28,7 +28,7 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
    }
 
    componentWillReceiveProps(nextProps: QuiltsPageConnectedProps) {
-      if (this.props.decujus !== nextProps.decujus ||
+      if (this.props.decujus.id !== nextProps.decujus.id ||
           this.props.settings.decujusTreeOnly !== nextProps.settings.decujusTreeOnly
       ) {
          this.calculateProps(nextProps);
@@ -37,10 +37,8 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
 
    render() {
       const decujus = this.props.decujus;
-      const p = this.props.allPersons[decujus];
-      if (p) {
-         document.title = 'Quilts for ' +
-            p.surn.toUpperCase() + ' ' + p.givn + ' (' + p.id + ')';
+      if (decujus) {
+         document.title = 'Quilts for ' + personDisplay(decujus);
       }
 
       // ??? Initially, we have no data and yet loading=false
@@ -52,7 +50,7 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
             <Quilts
                settings={this.props.settings}
                layout={this.props.layout}
-               decujus={decujus}
+               decujus={decujus.id}
             />
          );
 
@@ -72,7 +70,7 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
 
    private calculateProps(props: QuiltsPageConnectedProps) {
       props.dispatch(fetchQuilts.request({
-         decujus: props.decujus,
+         decujus: props.decujus.id,
          decujusOnly: props.settings.decujusTreeOnly,
       }));
    }
@@ -80,16 +78,19 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
 }
 
 interface PropsFromRoute {
-   decujus: string;
+   decujusId: string;
 }
  
 const QuiltsPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
-      settings: state.quilts,
-      layout: state.quiltsLayout ? state.quiltsLayout.layout : undefined,
-      allPersons: state.persons,
-      decujus: Number(ownProps.match.params.decujus),
-   }),
+   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => {
+      const id = Number(ownProps.match.params.decujusId);
+      return {
+         settings: state.quilts,
+         layout: state.quiltsLayout ? state.quiltsLayout.layout : undefined,
+         allPersons: state.persons,
+         decujus: state.persons[id] || personPlaceholder(id),
+      };
+   },
    (dispatch: GPDispatch) => ({
       dispatch,
       onChange: (diff: Partial<QuiltsSettings>) => {

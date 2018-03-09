@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Accordion, Form, Header } from 'semantic-ui-react';
-import Panel from '../Panel';
+import { Accordion, Form } from 'semantic-ui-react';
 import { QuiltsSettings } from '../Store/Quilts';
 import { CheckboxField, SliderField } from '../Forms';
 
@@ -51,9 +50,6 @@ export default function QuiltsSide(props: QuiltsSideProps) {
    ];
 
    return (
-      <Panel className="settings">
-         <Header as="h5">Settings</Header>
-         <Accordion styled={true} exclusive={false} fluid={true} panels={panels} />
-      </Panel>
+      <Accordion styled={true} exclusive={false} fluid={true} panels={panels} />
    );
 }

@@ -1,4 +1,7 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
+import { AppState } from './Store/State';
+import { Person, personPlaceholder } from './Store/Person';
 import { RouteComponentProps } from 'react-router';
 import { Card, Header, Icon, Image, SemanticICONS, Statistic } from 'semantic-ui-react';
 import Page from './Page';
@@ -109,15 +112,26 @@ class Dashboard extends React.PureComponent<{}, {}> {
    }
 }
 
-interface PropsFromRoute {
-   decujus?: string;
+interface DashboardProps {
+   decujus?: Person;
 }
 
-interface DashboardProps extends RouteComponentProps<PropsFromRoute> {
-}
-
-const DashboardPage = (props: DashboardProps) => {
+const DashboardPageConnected = (props: DashboardProps) => {
    document.title = 'Dashboard';
-   return <Page main={<Dashboard/>} decujus={Number(props.match.params.decujus) || DEFAULT_DECUJUS}/>;
+   return <Page main={<Dashboard/>} decujus={props.decujus} />;
 };
+
+interface PropsFromRoute {
+   decujusId?: string;
+}
+
+const DashboardPage = connect(
+   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => {
+      const id = Number(ownProps.match.params.decujusId) || DEFAULT_DECUJUS;
+      return {
+         decujus: state.persons[id] || personPlaceholder(id),
+      };
+   },
+)(DashboardPageConnected);
+
 export default DashboardPage;
