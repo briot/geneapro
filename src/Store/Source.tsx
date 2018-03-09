@@ -21,7 +21,7 @@ export function createNewSource(medium: string): Source {
    return {
       id: -1,
       medium: medium,
-      title: 'Unnamed',
+      title: '',
       abbrev: '',
       biblio: '',
    };

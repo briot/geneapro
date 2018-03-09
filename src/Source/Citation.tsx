@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Dropdown, Form, Header } from 'semantic-ui-react';
+import { Button, Dropdown, Form, Header } from 'semantic-ui-react';
 import { Source, createNewSource } from '../Store/Source';
 import { CitationModel, fetchCitationModelsFromServer,
          fetchModelTemplateFromServer } from '../Server/Citation';
@@ -23,17 +23,28 @@ interface InputOrLabelProps {
    value: string;
    label: string;
    required?: boolean;
+   rows?: number;
    onChange?: (e: React.FormEvent<HTMLElement>, data: {value: string}) => void;
 }
 
 function InputOrLabel(props: InputOrLabelProps) {
    return !props.template ? (
-      <Form.Input
-         label={props.label}
-         onChange={props.onChange}
-         required={props.required}
-         defaultValue={props.value}
-      />
+      props.rows !== undefined && props.rows > 0 ? (
+         <Form.TextArea
+            label={props.label}
+            onChange={props.onChange}
+            required={props.required}
+            rows={props.rows}
+            value={props.value}
+         />
+      ) : (
+         <Form.Input
+            label={props.label}
+            onChange={props.onChange}
+            required={props.required}
+            value={props.value}
+         />
+      )
    ) : (
       <Form.Field>
          <label>{props.label}</label>
@@ -104,6 +115,7 @@ interface CitationState {
    models: CitationModel[];
    template?: CitationTemplate;
    parts: CitationParts; //  ??? Aren't these part of the source already ?
+   modified: boolean;
 }
 
 export default class SourceCitation extends React.PureComponent<CitationProps, CitationState> {
@@ -117,6 +129,7 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
    constructor(props: CitationProps) {
       super(props);
       this.state = {
+         modified: false,
          models: [],
          parts: {},
          source: createNewSource(CUSTOM),  // updated in componentWillMount
@@ -144,6 +157,19 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
       }
    }
 
+   reset = () => {
+      const source = this.props.source ?
+         {...this.props.source} :
+         createNewSource(CUSTOM);
+
+      this.manualTitle = source.title || '';
+      this.manualAbbrev = source.abbrev || '';
+      this.manualBiblio = source.biblio || '';
+
+      this.setState({modified: false});
+      this.fetchModel(source, source.medium || CUSTOM, {});
+   }
+
    /**
     * Take into account a change in the original source. Return the
     * update to be performed on this.state
@@ -151,17 +177,17 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
    _updateSource(props: CitationProps): Source {
       if (!props.source) {
          let source = createNewSource(CUSTOM);
-         this.manualTitle = 'Unnamed';
+         this.manualTitle = '';
          this.manualAbbrev = '';
          this.manualBiblio = '';
-         this.fetchModel(source, CUSTOM);
+         this.fetchModel(source, CUSTOM, this.state.parts);
          return source;
       } else {
          this.manualTitle = props.source.title;
          this.manualAbbrev = props.source.abbrev;
          this.manualBiblio = props.source.biblio;
          const newMedium = props.source.medium || CUSTOM;
-         this.fetchModel(props.source, newMedium);
+         this.fetchModel(props.source, newMedium, this.state.parts);
          return {...props.source, medium: newMedium};
       }
    }
@@ -197,9 +223,9 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
       return {title: title, abbrev: abbrev, biblio: biblio};
    }
 
-   fetchModel(source: Source, model: string) {
+   fetchModel(source: Source, model: string, oldParts: CitationParts) {
       let newParts:  CitationParts = {};
-      Object.entries(this.state.parts).forEach(p => {
+      Object.entries(oldParts).forEach(p => {
          newParts[p[0]] = {value: p[1].value, inTemplate: false};
       });
 
@@ -232,16 +258,19 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
       this.setState({
          ...this.state,
          parts: p,
+         modified: true,
          source: {...this.state.source,
                   ...this.recomputeCitation(this.state.template, p)}});
    }
 
    mediumChange = (e: React.SyntheticEvent<HTMLInputElement>, data: {value: string}) => {
-      this.fetchModel(this.state.source, data.value || CUSTOM);
+      this.setState({modified: true});
+      this.fetchModel(this.state.source, data.value || CUSTOM, this.state.parts);
    }
 
    commentsChange = (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
-      this.setState({source: {...this.state.source, comments: e.currentTarget.value}});
+      this.setState({source: {...this.state.source, comments: e.currentTarget.value},
+                     modified: true});
    }
 
    titleChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
@@ -250,29 +279,35 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
       if (this.props.onTitleChanged) {
          this.props.onTitleChanged(<span>{this.manualTitle}</span>);
       }
-      this.setState({source: {...this.state.source, title: this.manualTitle}});
+      this.setState({source: {...this.state.source, title: this.manualTitle},
+                     modified: true});
    }
 
    abbrevChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
       this.manualAbbrev = e.currentTarget.value;
-      this.setState({source: {...this.state.source, abbrev: this.manualAbbrev}});
+      this.setState({source: {...this.state.source, abbrev: this.manualAbbrev},
+                     modified: true});
    }
 
    biblioChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
       this.manualBiblio = e.currentTarget.value;
-      this.setState({source: {...this.state.source, biblio: this.manualBiblio}});
+      this.setState({source: {...this.state.source, biblio: this.manualBiblio},
+                     modified: true});
    }
 
    jurisdictionPlaceChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
-      this.setState({source: {...this.state.source, jurisdiction_place: e.currentTarget.value}});
+      this.setState({source: {...this.state.source, jurisdiction_place: e.currentTarget.value},
+                     modified: true});
    }
 
    subjectPlaceChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
-      this.setState({source: {...this.state.source, subject_place: e.currentTarget.value}});
+      this.setState({source: {...this.state.source, subject_place: e.currentTarget.value},
+                     modified: true});
    }
 
    subjectDateChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
-      this.setState({source: {...this.state.source, subject_date: e.currentTarget.value}});
+      this.setState({source: {...this.state.source, subject_date: e.currentTarget.value},
+                     modified: true});
    }
 
    render() {
@@ -283,7 +318,7 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
             <Form.Field>
                <label>Template</label>
                <Dropdown
-                  defaultValue={this.state.source.medium}
+                  value={this.state.source.medium || CUSTOM}
                   onChange={this.mediumChange}
                   search={true}
                   fluid={true}
@@ -306,6 +341,7 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
                value={this.state.source.title}
                onChange={this.titleChange}
                required={true}
+               rows={3}
                label="Full citation"
             />
 
@@ -314,6 +350,7 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
                value={this.state.source.abbrev}
                onChange={this.abbrevChange}
                required={true}
+               rows={3}
                label="Short citation"
             />
 
@@ -322,6 +359,7 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
                value={this.state.source.biblio}
                onChange={this.biblioChange}
                required={true}
+               rows={3}
                label="Bibliography citation"
             />
 
@@ -332,7 +370,7 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
                         <Form.Input
                            key={value[0]}
                            label={value[0]}
-                           defaultValue={value[1].value}
+                           value={value[1].value || ''}
                            onChange={e => this.setPart(value[0], e.currentTarget.value)}
                         />) : null
                   )
@@ -347,21 +385,21 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
                <Form.Input
                   label="Subject date"
                   placeholder="What date is this about ?"
-                  defaultValue={this.state.source.subject_date}
+                  value={this.state.source.subject_date || ''}
                   onChange={this.subjectDateChange}
                   title="The date the source is about. This isn't the date of the source itself"
                />
                <Form.Input
                   label="Subject place"
                   placeholder="What place is this about ?"
-                  defaultValue={this.state.source.subject_place}
+                  value={this.state.source.subject_place || ''}
                   onChange={this.subjectPlaceChange}
                   title="The place the source is about"
                />
                <Form.Input
                   label="Jurisdiction place"
                   placeholder="Where did you find it ?"
-                  defaultValue={this.state.source.jurisdiction_place}
+                  value={this.state.source.jurisdiction_place || ''}
                   onChange={this.jurisdictionPlaceChange}
                   title="Where the source was found"
                />
@@ -374,9 +412,21 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
    
             <Form.TextArea
                label="Comments"
-               defaultValue={this.state.source.comments}
+               value={this.state.source.comments || ''}
                onChange={this.commentsChange}
             />
+
+            {
+               this.state.modified && (
+                  <div style={{height: '30px'}}>
+                     <Button.Group floated="right">
+                        <Button onClick={this.reset}>Reset</Button>
+                        <Button.Or/>
+                        <Button primary={true}>Save</Button>
+                     </Button.Group>
+                  </div>
+               )
+            }
          </Form>
       );
    }

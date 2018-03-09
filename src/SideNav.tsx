@@ -110,7 +110,7 @@ class SideNavConnected extends React.PureComponent<SideNavProps> {
                />
                <SideNavItem
                    icon="book"
-                   label="All sources"
+                   label="All sources / Bibliography"
                    to="/source/list/"
                />
                <SideNavItem icon="image" label="Media Manager" disabled={true} to="/media"/>

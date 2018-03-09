@@ -9,4 +9,5 @@
 }
 .output {
    font-family: monospace;
+   white-space: pre-line;
 }
