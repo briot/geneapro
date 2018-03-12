@@ -1193,7 +1193,9 @@ class GedcomFileImporter(geneaprove.importers.Importer):
         """
 
         try:
+            logger.info('Start parsing %s' % filename)
             parsed = Gedcom().parse(filename)
+            logger.info('Done parsing %s' % filename)
 
             if isinstance(filename, str):
                 name = filename
@@ -1215,6 +1217,7 @@ class GedcomFileImporter(geneaprove.importers.Importer):
                             "%Y-%m-%d %H:%M:%S %Z"))
 
             parser = GedcomImporterCumulate(gedcom_name, parsed)
+            logger.info('Done analyzing %s' % filename)
             return (True, "\n".join(parser.errors))
 
         except Invalid_Gedcom as e:

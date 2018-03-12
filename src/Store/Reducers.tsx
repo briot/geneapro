@@ -1,6 +1,6 @@
 import * as Redux from 'redux';
 import { isType } from 'redux-typescript-actions';
-import { Person } from '../Store/Person';
+import { personDisplay, Person } from '../Store/Person';
 import { addToHistory, HistoryItem, HistoryKind } from '../Store/History';
 import { fetchPedigree, fetchPedigreeResult, fetchPersonDetails, fetchPersons,
          fetchEventDetails, fetchSourceDetails, fetchSources,
@@ -46,8 +46,12 @@ export function personsReducer(
    } else if (isType(action, fetchQuilts.done)) {
       // Update decujus info, so that the name is correctly displayed in side
       // panel
-      window.console.log('MANU should change quilts JSON result so that we can'
-                         + 'easily access persons data by id');
+      const ps = action.payload.result.persons;
+      let persons = {...state};
+      for (let id of Object.keys(ps)) {
+         persons[id] = {...persons[id], ...ps[id]};
+      }
+      return persons;
 
    } else if (isType(action, fetchPersonDetails.done)) {
       const data: DetailsResult = action.payload.result as DetailsResult;
@@ -168,7 +172,7 @@ export function historyReducer(
       if (p) {
          item = {
             id: p.id,
-            display: p.surn.toUpperCase() + ' ' + p.givn + ' (' + p.id + ')',
+            display: personDisplay(p),
             kind: HistoryKind.PERSON,
          };
       } else if (s) {

@@ -7,6 +7,7 @@ import { QuiltsSettings, changeQuiltsSettings } from '../Store/Quilts';
 import { fetchQuilts } from '../Store/Sagas';
 import { AppState, GPDispatch } from '../Store/State';
 import { QuiltsResult } from '../Server/Quilts';
+import { addToHistory } from '../Store/History';
 import Page from '../Page';
 import Quilts from '../Quilts/Quilts';
 import QuiltsSide from '../Quilts/Side';
@@ -73,6 +74,7 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
          decujus: props.decujus.id,
          decujusOnly: props.settings.decujusTreeOnly,
       }));
+      props.dispatch(addToHistory({person: props.decujus}));
    }
 
 }

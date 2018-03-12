@@ -1,10 +1,11 @@
+import { BasePerson, personDisplay } from '../Store/Person';
+
 export const LINE_SPACING = 16;
 export const MARGIN = 0;
 export const F_HEIGHT = 16;  // height of the row with "F" (families)
 
-interface JSONQuiltsPerson {
-   id: number;
-   name: string;
+interface JSONQuiltsPerson extends BasePerson {
+   // Only  id, givn, surn are set
    sex: string;
 }
 
@@ -58,7 +59,8 @@ interface JSONFamily extends Array<number> {
 }
 
 interface JSONQuilts {
-   persons: JSONQuiltsPerson[][]; // For each layer the persons
+   persons: { [id: number]: JSONQuiltsPerson };
+   perlayer: number[][]; // For each layer the person id
    families: JSONFamily[][]; // For each layer, [parent1, parent2, child...]
       // ??? Should be sent as a simple list, independent of layers. The
       // layout will need to duplicate the family for each layer where one of
@@ -70,22 +72,23 @@ interface JSONQuilts {
 
 export class QuiltsResult {
    layers: Layer[];
+   persons: { [id: number]: JSONQuiltsPerson };
 
    constructor(data: JSONQuilts,
                isVisible: (personId: JSONQuiltsPerson) => boolean,
    ) {
       let personToLayout: {[id: number]: QuiltsPersonLayout} = {};
-
-      this.layers = data.persons.map(
-         (persons: JSONQuiltsPerson[], layerIndex: number) => ({
+      this.persons = data.persons;
+      this.layers = data.perlayer.map(
+         (persons: number[], layerIndex: number) => ({
             left: 0,
             right: 0,
             top: 0,
             height: 0,
-            persons: persons.filter(p => isVisible(p)).map(
-               (p, index) => {
-                  const l = personToLayout[p.id] = {
-                     person: p,
+            persons: persons.filter(p => isVisible(data.persons[p])).map(
+               (p: number, index) => {
+                  return personToLayout[p] = {
+                     person: data.persons[p],
                      layer: layerIndex,
                      index: index,
                      minX: NaN,
@@ -95,7 +98,6 @@ export class QuiltsResult {
                      childFamilies: [],
                      parentFamilies: [],
                   };
-                  return l;
                }),
             families: [],  // set later
       }));
@@ -167,7 +169,8 @@ export class QuiltsResult {
          const l: Layer = this.layers[layer];
          const maxWidth = Math.max.apply(
             null,
-            l.persons.map(p => this.computeWidth(p.person.name)));
+            l.persons.map(p => this.computeWidth(
+               personDisplay(p.person))));
 
          l.top = layerY;
          l.left = layerX;
@@ -281,7 +284,7 @@ export function* fetchQuiltsFromServer(decujus: number, decujusOnly: boolean) {
    const data: JSONQuilts = yield resp.json();
    const filtered: boolean = false;
    const selected: {[id: number]: boolean} = {};
-   if (!data.persons) {
+   if (!data.perlayer) {
       return undefined;
    } else {
       return new QuiltsResult(

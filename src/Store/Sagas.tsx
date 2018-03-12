@@ -6,7 +6,7 @@ import { fetchEventFromServer, EventDetails } from '../Server/Event';
 import { fetchPlacesFromServer, FetchPlacesResult } from '../Server/Place';
 import { fetchSourcesFromServer, FetchSourcesResult,
          fetchSourceDetailsFromServer } from '../Server/Source';
-import { fetchQuiltsFromServer } from '../Server/Quilts';
+import { fetchQuiltsFromServer, QuiltsResult } from '../Server/Quilts';
 import { Source } from '../Store/Source';
 import { AppState } from '../Store/State';
 import { PersonSet } from '../Store/Person';
@@ -45,8 +45,7 @@ export type fetchQuiltsParams = {
    decujus: number,
    decujusOnly: boolean;
 };
-export type fetchQuiltsResult = {
-};
+export type fetchQuiltsResult = QuiltsResult;
 function* _fetchQuilts(p: fetchQuiltsParams) {
    return yield call(fetchQuiltsFromServer, p.decujus, p.decujusOnly);
 }

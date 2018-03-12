@@ -462,7 +462,8 @@ class GeneaGraph(Digraph):
         for v in V:
             v.view = defaultview()
 
-        persons = []
+        persons = {}
+        perlayer = []
         persons_to_layer = {}
 
         logger.debug('%s components in graph' % (len(g.C), ))
@@ -474,13 +475,20 @@ class GeneaGraph(Digraph):
            sug.layers.reverse()
 
            for layerIndex, layer in enumerate(sug.layers):
-               if layerIndex not in persons:
-                   persons.extend([[]] * (layerIndex + 1 - len(persons)))
-               persons[layerIndex].extend(
-                   {"sex": node.data.sex, "name": node.data.name, "id": node.data.main_id}
-                    for node in layer
-                    if hasattr(node, "data")   # ignore dummy vertices
-               )
+               if layerIndex not in perlayer:
+                   perlayer.extend([[]] * (layerIndex + 1 - len(perlayer)))
+
+               for node in layer:
+                   # ignore dummy vertices
+                   if hasattr(node, "data"):
+                       n = node.data.name.split('/', 2)
+                       persons[node.data.main_id] = {
+                           "id": node.data.main_id,
+                           "givn": n[0],
+                           "surn": n[1] if len(n) >= 2 else "",
+                           "sex": node.data.sex,
+                       }
+                       perlayer[layerIndex].append(node.data.main_id)
 
                for node in layer:
                    if hasattr(node, "data"):
@@ -500,6 +508,7 @@ class GeneaGraph(Digraph):
         ]
 
         return {
+            "perlayer": perlayer,
             "persons": persons,
             "families": flatten_families
         }
@@ -587,6 +596,7 @@ class QuiltsView(JSONView):
         data = global_graph.json(subset)
         return {
             "persons": data["persons"],
+            "perlayer": data["perlayer"],
             "families": data["families"],
             "decujusOnly": decujus_tree,
             "decujus_name": "",

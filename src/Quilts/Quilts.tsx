@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as d3Color from 'd3-color';
 import * as d3Scale from 'd3-scale';
+import { personDisplay } from '../Store/Person';
 import { QuiltsSettings } from '../Store/Quilts';
 import { QuiltsResult, Layer, LINE_SPACING, MARGIN, F_HEIGHT,
          QuiltsPersonLayout, Family } from '../Server/Quilts';
@@ -90,7 +91,7 @@ export default class Quilts extends React.PureComponent<QuiltsProps, QuiltsState
                         {
                            (p.person.sex === 'F' ? '\u2640' :
                             p.person.sex === 'M' ? '\u2642' :
-                            '') + p.person.name
+                            '') + personDisplay(p.person)
                         }
                      </text>
                   ))
