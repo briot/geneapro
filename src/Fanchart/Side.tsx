@@ -18,7 +18,8 @@ export default function FanchartSide(props: FanchartSideProps) {
                <span>
                   Generations
                   <small>
-                     ancestors: {props.settings.ancestors}
+                     ancestors: {props.settings.ancestors},
+                     descendants: {props.settings.descendants},
                      {props.settings.showMissingPersons ? ', show missing persons' : ''}
                      {props.settings.showSourcedEvents ? ', sourced events' : ''}
                      {props.settings.showMarriages ? ', show marriages' : ''}
@@ -34,6 +35,15 @@ export default function FanchartSide(props: FanchartSideProps) {
                      defaultValue={props.settings.ancestors}
                      label="Ancestors"
                      fieldName="ancestors"
+                     min={0}
+                     max={12}
+                     onChange={props.onChange}
+                  />
+
+                  <SliderField
+                     defaultValue={props.settings.descendants}
+                     label="Descendants"
+                     fieldName="descendants"
                      min={0}
                      max={12}
                      onChange={props.onChange}

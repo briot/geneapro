@@ -8,9 +8,9 @@ tmux new-window -t $SESSION:1 "npm run start"
 tmux split-window             "source python_env/bin/activate; cd backend; ./manage.py runserver 8002"
 tmux resize-pane -y 15
 
-tmux split-window 
-tmux send-keys "source python_env/bin/activate; clear; echo 'Cb-X to kill the session'" C-m
-tmux resize-pane -y 5
+#tmux split-window 
+#tmux send-keys "source python_env/bin/activate; clear; echo 'Cb-X to kill the session'" C-m
+#tmux resize-pane -y 5
 
 # Attach to session
 tmux -2 attach-session -t $SESSION

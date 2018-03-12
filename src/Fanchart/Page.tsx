@@ -37,7 +37,7 @@ class FanchartPageConnected extends React.PureComponent<FanchartPageConnectedPro
       props.dispatch(fetchPedigree.request({
          decujus: props.decujus.id,
          ancestors: props.settings.ancestors,
-         descendants: 1,
+         descendants: props.settings.descendants,
       }));
 
       props.dispatch(addToHistory({person: props.decujus}));

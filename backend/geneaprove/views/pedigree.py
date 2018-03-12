@@ -85,7 +85,9 @@ class PedigreeData(JSONView):
                  node)
                 for node in global_graph.children(p.id)]
             sorted.sort(
-                key=lambda c: c[0].birth.Date if c[0] and c[0].birth else '')
+                key=lambda c: (False, c[0].birth.Date) \
+                    if c[0] and c[0].birth
+                    else (True, None))
             for c in sorted:
                 if c[0]:
                     c[0].generation = -gen  # distance[c[1]]

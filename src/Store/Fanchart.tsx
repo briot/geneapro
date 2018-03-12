@@ -6,6 +6,7 @@ import { ColorScheme } from '../Store/Pedigree';
 
 export interface FanchartSettings {
    ancestors: number;
+   descendants: number;
    colors: ColorScheme;
    sepColors: ColorScheme;
    fullAngle: number; // full opening angle, in degrees
@@ -32,6 +33,7 @@ export const changeFanchartSettings = actionCreator<
 export function fanchartReducer(
    state: FanchartSettings = {
       ancestors: 4,
+      descendants: 1,
       colors: ColorScheme.PEDIGREE,
       sepColors: ColorScheme.PEDIGREE,
       fullAngle: 200,

@@ -75,44 +75,34 @@ export function Fanchart(props: FanchartProps) {
    };
    recurse(props.layouts[props.decujus]);
 
-   const decujus = props.persons[props.decujus];
-   if (decujus && decujus.children) {
-      const BOX_WIDTH = 150;
-      const BOX_HEIGHT = 40;
+   const recurseChildren = (pl: PersonLayout) => {
+      for (let c of pl.children) {
+         const p: Person|undefined = props.persons[c.id];
+         boxes.push(
+            <g transform="translate(0,10)" key={c.id}>
+               <FanchartBox
+                  person={p}
+                  layout={c}
+                  allEvents={props.allEvents}
+                  settings={props.settings}
+               />
+               {
+                  props.layouts.spaceBetweenGens !== 0 && (
+                     <path
+                        className="separator"
+                        {...styleToString(Style.forSeparator(props.settings.sepColors, c))}
+                        d={separatorArc(c) as string}
+                        key={c.id}
+                     />
+                  )
+               }
+            </g>
+         );
 
-      let y = Math.max(
-         0,
-         BOX_WIDTH / 2 *
-            Math.tan((props.settings.fullAngle - 180) * Math.PI / 360)) + 10;
-
-      for (let p2 of decujus.children) {
-         if (p2) {
-            const p2Full = props.persons[p2];
-            if (p2Full) {
-               boxes.push(
-                  <Link to={'/fanchart/' + p2} key={p2}>
-                     <g
-                        className="child"
-                        transform={`translate(${-BOX_WIDTH / 2},${y})`}
-                     >
-                        <rect
-                           width={BOX_WIDTH}
-                           height={BOX_HEIGHT}
-                        />
-                        <text>
-                           <tspan dy="1em">
-                              {p2Full.givn} {p2Full.surn}
-                           </tspan>
-                        </text>
-                     </g>
-                  </Link>
-               );
-
-               y += BOX_HEIGHT + 8;
-            }
-         }
+         recurseChildren(c);
       }
-   }
+   };
+   recurseChildren(props.layouts[props.decujus]);
 
    const transform = `translate(${props.layouts.centerX + 10},${props.layouts.centerY + 10})`;
    return (
@@ -204,13 +194,18 @@ interface FanchartBoxProps {
    allEvents: GenealogyEventSet;
 }
 
+const MIN_ANGLE_STRAIGHT_TEXT = 15 * Math.PI / 180;
+
 export function FanchartBox(props: FanchartBoxProps) {
    const d = fanarc(props.layout) as string;
    const style = Style.forPerson(props.settings.colors, props.layout);
    const children: JSX.Element[] = [];
+   const diff = props.layout.maxAngle - props.layout.minAngle;
 
    const td = path();
-   if (props.layout.generation >= props.settings.straightTextThreshold) {
+   if (Math.abs(props.layout.generation) >= props.settings.straightTextThreshold
+       || Math.abs(diff) < MIN_ANGLE_STRAIGHT_TEXT
+   ) {
       const a = standardAngle(
          (props.layout.minAngle + props.layout.maxAngle) / 2) - Math.PI / 2;
       const ca = Math.cos(a);
@@ -224,10 +219,24 @@ export function FanchartBox(props: FanchartBoxProps) {
       td.lineTo(R * ca, R * sa);
 
    } else {
-      let m = props.layout.minAngle - Math.PI / 2;
-      let M = props.layout.maxAngle - Math.PI / 2;
-      td.arc(
-         0, 0, (props.layout.minRadius + props.layout.maxRadius) / 2, m, M);
+      const m = props.layout.minAngle - Math.PI / 2;
+      const M = props.layout.maxAngle - Math.PI / 2;
+      const r = (props.layout.minRadius + props.layout.maxRadius) / 2;
+
+      // Reverse display of children names
+      if (props.layout.generation < 0) {
+         td.arc(0, 0, r, M, m, true);
+      } else {
+         td.arc(0, 0, r, m, M);
+      }
+
+      // Else compute if middle of box is in lower half
+      //const PI2 = Math.PI * 2;
+      //let c: number;
+      //if (props.settings.readableText) {
+      //   const middle = (m + M) / 2;
+      //   const c = middle - Math.floor(middle / PI2) * PI2;
+      //   lowerHalf = c < Math.PI;
    }
 
    if (props.person) {
@@ -277,7 +286,7 @@ export function FanchartBox(props: FanchartBoxProps) {
                textAnchor="middle"
                xlinkHref={'#text' + props.layout.id}
             >
-               <tspan dy="2.1em" className="details">{dates}</tspan>
+               <tspan dy="1.3em" className="details">{dates}</tspan>
             </textPath>
          </text>
       );

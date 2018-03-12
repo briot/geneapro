@@ -14,6 +14,7 @@ export interface PersonLayout extends BasePersonLayout {
    parentsMarriage?: {
       text: string;
    }
+   children: PersonLayout[];
 }
 
 export interface PersonLayouts {
