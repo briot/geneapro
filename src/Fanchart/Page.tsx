@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
-import { Person, personDisplay, personPlaceholder } from '../Store/Person';
+import { Person, PersonSet, personDisplay } from '../Store/Person';
 import { addToHistory } from '../Store/History';
 import { FanchartSettings, changeFanchartSettings } from '../Store/Fanchart';
 import { fetchPedigree } from '../Store/Sagas';
@@ -14,11 +14,11 @@ import FanchartLayout from '../Fanchart/Layout';
 
 interface FanchartPageConnectedProps {
    settings: FanchartSettings;
-   persons: { [id: number]: Person};
+   persons: PersonSet;
    allEvents: GenealogyEventSet;
    onChange: (diff: Partial<FanchartSettings>) => void;
    dispatch: GPDispatch;
-   decujus: Person;
+   decujusid: number;
 }
 
 class FanchartPageConnected extends React.PureComponent<FanchartPageConnectedProps, {}> {
@@ -27,36 +27,40 @@ class FanchartPageConnected extends React.PureComponent<FanchartPageConnectedPro
    }
 
    componentWillReceiveProps(nextProps: FanchartPageConnectedProps) {
-      if (this.props.decujus.id !== nextProps.decujus.id ||
-          this.props.settings.ancestors !== nextProps.settings.ancestors) {
+      if (this.props.decujusid !== nextProps.decujusid ||
+          this.props.settings.ancestors !== nextProps.settings.ancestors ||
+          this.props.settings.descendants !== nextProps.settings.descendants
+      ) {
          this.calculateData(nextProps);
       }
+
+      const decujus: Person = nextProps.persons[nextProps.decujusid];
+      nextProps.dispatch(addToHistory({person: decujus}));
    }
 
    calculateData(props: FanchartPageConnectedProps) {
       props.dispatch(fetchPedigree.request({
-         decujus: props.decujus.id,
+         decujus: props.decujusid,
          ancestors: props.settings.ancestors,
          descendants: props.settings.descendants,
       }));
-
-      props.dispatch(addToHistory({person: props.decujus}));
    }
 
    render() {
-      const decujus: Person = this.props.decujus;
-      if (!this.props.settings.loading && decujus) {
+      const decujus: Person = this.props.persons[this.props.decujusid];
+
+      if (decujus) {
          document.title = 'Fanchart for ' + personDisplay(decujus);
       }
 
-      const main = this.props.settings.loading ? (
+      const main = this.props.settings.loading || !decujus ? (
             <Loader active={true} size="large">Loading</Loader>
          ) : (
             <FanchartLayout
                settings={this.props.settings}
                persons={this.props.persons}
                allEvents={this.props.allEvents}
-               decujus={decujus.id}
+               decujus={this.props.decujusid}
             />
          );
 
@@ -80,15 +84,12 @@ interface PropsFromRoute {
 }
  
 const FanchartPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => {
-      const id = Number(ownProps.match.params.decujusId);
-      return {
-         settings: state.fanchart,
-         persons: state.persons,
-         allEvents: state.events,
-         decujus: state.persons[id] || personPlaceholder(id),
-      };
-   },
+   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+      settings: state.fanchart,
+      persons: state.persons,
+      allEvents: state.events,
+      decujusid: Number(ownProps.match.params.decujusId),
+   }),
    (dispatch: GPDispatch) => ({
       dispatch,
       onChange: (diff: Partial<FanchartSettings>) => {

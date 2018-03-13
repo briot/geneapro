@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
-import { Person, PersonSet, personDisplay, personPlaceholder } from '../Store/Person';
+import { PersonSet, personDisplay } from '../Store/Person';
 import { QuiltsSettings, changeQuiltsSettings } from '../Store/Quilts';
 import { fetchQuilts } from '../Store/Sagas';
 import { AppState, GPDispatch } from '../Store/State';
@@ -18,26 +18,27 @@ interface QuiltsPageConnectedProps {
    onChange: (diff: Partial<QuiltsSettings>) => void;
    layout: QuiltsResult|undefined;
    dispatch: GPDispatch;
-   decujus: Person;
+   decujusid: number;
 }
 
 class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, {}> {
    componentWillMount() {
-      // ??? This sets 'loading=true' in the state, but this.props do not
-      // reflect that yet...
       this.calculateProps(this.props);
    }
 
    componentWillReceiveProps(nextProps: QuiltsPageConnectedProps) {
-      if (this.props.decujus.id !== nextProps.decujus.id ||
+      if (this.props.decujusid !== nextProps.decujusid ||
           this.props.settings.decujusTreeOnly !== nextProps.settings.decujusTreeOnly
       ) {
          this.calculateProps(nextProps);
       }
+
+      const p = nextProps.allPersons[nextProps.decujusid];
+      nextProps.dispatch(addToHistory({person: p}));
    }
 
    render() {
-      const decujus = this.props.decujus;
+      const decujus = this.props.allPersons[this.props.decujusid];
       if (decujus) {
          document.title = 'Quilts for ' + personDisplay(decujus);
       }
@@ -51,7 +52,7 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
             <Quilts
                settings={this.props.settings}
                layout={this.props.layout}
-               decujus={decujus.id}
+               decujus={this.props.decujusid}
             />
          );
 
@@ -71,10 +72,9 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
 
    private calculateProps(props: QuiltsPageConnectedProps) {
       props.dispatch(fetchQuilts.request({
-         decujus: props.decujus.id,
+         decujus: props.decujusid,
          decujusOnly: props.settings.decujusTreeOnly,
       }));
-      props.dispatch(addToHistory({person: props.decujus}));
    }
 
 }
@@ -84,15 +84,12 @@ interface PropsFromRoute {
 }
  
 const QuiltsPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => {
-      const id = Number(ownProps.match.params.decujusId);
-      return {
-         settings: state.quilts,
-         layout: state.quiltsLayout ? state.quiltsLayout.layout : undefined,
-         allPersons: state.persons,
-         decujus: state.persons[id] || personPlaceholder(id),
-      };
-   },
+   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+      settings: state.quilts,
+      layout: state.quiltsLayout ? state.quiltsLayout.layout : undefined,
+      allPersons: state.persons,
+      decujusid: Number(ownProps.match.params.decujusId),
+   }),
    (dispatch: GPDispatch) => ({
       dispatch,
       onChange: (diff: Partial<QuiltsSettings>) => {

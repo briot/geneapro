@@ -231,9 +231,9 @@ export function FanchartBox(props: FanchartBoxProps) {
       }
 
       // Else compute if middle of box is in lower half
-      //const PI2 = Math.PI * 2;
-      //let c: number;
-      //if (props.settings.readableText) {
+      // const PI2 = Math.PI * 2;
+      // let c: number;
+      // if (props.settings.readableText) {
       //   const middle = (m + M) / 2;
       //   const c = middle - Math.floor(middle / PI2) * PI2;
       //   lowerHalf = c < Math.PI;

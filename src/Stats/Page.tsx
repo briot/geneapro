@@ -3,8 +3,9 @@ import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
 import { JSONStats, fetchStatsFromServer } from '../Server/Stats';
-import { AppState } from '../Store/State';
-import { Person, personDisplay, personPlaceholder } from '../Store/Person';
+import { AppState, GPDispatch } from '../Store/State';
+import { PersonSet, personDisplay } from '../Store/Person';
+import { addToHistory } from '../Store/History';
 import StatsGeneration from '../Stats/Generations';
 import StatsLifespan from '../Stats/Lifespan';
 import StatsTree from '../Stats/Tree';
@@ -12,7 +13,9 @@ import '../Stats/Stats.css';
 import Page from '../Page';
 
 interface StatsPageConnectedProps {
-   decujus: Person;
+   persons: PersonSet;
+   dispatch: GPDispatch;
+   decujusid: number;
 }
 
 interface StatsPageConnectedState {
@@ -23,7 +26,7 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
                                                      StatsPageConnectedState> {
    constructor(props: StatsPageConnectedProps) {
       super(props);
-      this.state = {data: undefined};
+      this.state = {};
    }
 
    componentWillMount() {
@@ -31,14 +34,17 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
    }
 
    componentWillReceiveProps(nextProps: StatsPageConnectedProps) {
-      if (this.props.decujus !== nextProps.decujus) {
+      if (this.props.decujusid !== nextProps.decujusid) {
          this.calculateProps(nextProps);
       }
+
+      const p = nextProps.persons[nextProps.decujusid];
+      nextProps.dispatch(addToHistory({person: p}));
    }
 
    render() {
-      const decujus = this.props.decujus;
-      if (this.state.data) {
+      const decujus = this.props.persons[this.props.decujusid];
+      if (decujus) {
          document.title = 'Stats for ' + personDisplay(decujus);
       }
 
@@ -47,8 +53,8 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
       ) : (
          <div>
             <StatsTree
-               decujus={this.props.decujus.id}
-               decujusName={personDisplay(this.props.decujus)}
+               decujus={this.props.decujusid}
+               decujusName={personDisplay(decujus)}
                totalInDatabase={this.state.data.total_persons}
                totalInTree={this.state.data.total_ancestors}
                fatherAncestors={this.state.data.total_father}
@@ -75,7 +81,7 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
    }
 
    private calculateProps(props: StatsPageConnectedProps) {
-      fetchStatsFromServer(props.decujus.id).then((s: JSONStats) => {
+      fetchStatsFromServer(props.decujusid).then((s: JSONStats) => {
          this.setState({data: s});
       });
    }
@@ -86,10 +92,13 @@ interface PropsFromRoute {
 }
  
 const StatsPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => {
-      const id = Number(ownProps.match.params.decujusId);
-      return {decujus: state.persons[id] || personPlaceholder(id)};
-   }
+   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+      persons: state.persons,
+      decujusid: Number(ownProps.match.params.decujusId),
+   }),
+   (dispatch: GPDispatch) => ({
+      dispatch,
+   }),
 )(StatsPageConnected);
 
 export default StatsPage;

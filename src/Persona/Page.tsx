@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
-import { Person, personDisplay, personPlaceholder } from '../Store/Person';
+import { PersonSet, personDisplay } from '../Store/Person';
 import { addToHistory } from '../Store/History';
 import { AppState, GPDispatch } from '../Store/State';
 import { fetchPersonDetails, fetchEventDetails } from '../Store/Sagas';
@@ -11,7 +11,8 @@ import Page from '../Page';
 import Persona from '../Persona/Persona';
 
 interface PersonaPageProps {
-   person: Person;
+   id: number;
+   persons: PersonSet;
    allEvents: GenealogyEventSet;
    dispatch: GPDispatch;
 }
@@ -22,14 +23,16 @@ class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
    }
 
    componentWillReceiveProps(nextProps: PersonaPageProps) {
-      if (nextProps.person.id !== this.props.person.id) {
+      if (nextProps.id !== this.props.id) {
          this.calculateData(nextProps);
       }
+
+      const p = nextProps.persons[nextProps.id];
+      nextProps.dispatch(addToHistory({person: p}));
    }
 
    calculateData(props: PersonaPageProps) {
-      props.dispatch(addToHistory({person: props.person}));
-      props.dispatch(fetchPersonDetails.request({id: props.person.id}));
+      props.dispatch(fetchPersonDetails.request({id: props.id}));
    }
 
    onShowEventDetails = (id: number) => {
@@ -37,11 +40,11 @@ class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
    }
 
    render() {
-      const p = this.props.person;
+      const p = this.props.persons[this.props.id];
       document.title = p ? personDisplay(p) : 'Persona';
       return (
          <Page
-            decujus={this.props.person}
+            decujus={p}
             main={p ?
                <Persona
                   person={p}
@@ -60,13 +63,11 @@ interface PropsFromRoute {
 }
 
 const PersonaPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => {
-      const id = Number(ownProps.match.params.id);
-      return {
-         allEvents: state.events,
-         person: state.persons[id] || personPlaceholder(id),
-      };
-   },
+   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+      allEvents: state.events,
+      persons: state.persons,
+      id: Number(ownProps.match.params.id),
+   }),
    (dispatch: GPDispatch) => ({
       dispatch,
    }),

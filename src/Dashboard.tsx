@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { AppState } from './Store/State';
-import { Person, personPlaceholder } from './Store/Person';
+import { PersonSet } from './Store/Person';
 import { RouteComponentProps } from 'react-router';
 import { Card, Header, Icon, Image, SemanticICONS, Statistic } from 'semantic-ui-react';
 import Page from './Page';
@@ -113,12 +113,14 @@ class Dashboard extends React.PureComponent<{}, {}> {
 }
 
 interface DashboardProps {
-   decujus?: Person;
+   persons: PersonSet;
+   decujusid?: number;
 }
 
 const DashboardPageConnected = (props: DashboardProps) => {
+   const decujus = props.decujusid === undefined ? undefined : props.persons[props.decujusid];
    document.title = 'Dashboard';
-   return <Page main={<Dashboard/>} decujus={props.decujus} />;
+   return <Page main={<Dashboard/>} decujus={decujus} />;
 };
 
 interface PropsFromRoute {
@@ -126,12 +128,10 @@ interface PropsFromRoute {
 }
 
 const DashboardPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => {
-      const id = Number(ownProps.match.params.decujusId) || DEFAULT_DECUJUS;
-      return {
-         decujus: state.persons[id] || personPlaceholder(id),
-      };
-   },
+   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+      persons: state.persons,
+      decujus: Number(ownProps.match.params.decujusId) || DEFAULT_DECUJUS,
+   }),
 )(DashboardPageConnected);
 
 export default DashboardPage;

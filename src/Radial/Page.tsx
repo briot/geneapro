@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
-import { Person, personDisplay, personPlaceholder } from '../Store/Person';
+import { PersonSet, personDisplay } from '../Store/Person';
 import { addToHistory } from '../Store/History';
 import { RadialSettings, changeRadialSettings } from '../Store/Radial';
 import { fetchPedigree } from '../Store/Sagas';
@@ -13,10 +13,10 @@ import Page from '../Page';
 
 interface RadialPageConnectedProps {
    settings: RadialSettings;
-   persons: { [id: number]: Person};
+   persons: PersonSet;
    onChange: (diff: Partial<RadialSettings>) => void;
    dispatch: GPDispatch;
-   decujus: Person;
+   decujusid: number;
 }
 
 class RadialPageConnected extends React.PureComponent<RadialPageConnectedProps, {}> {
@@ -25,25 +25,26 @@ class RadialPageConnected extends React.PureComponent<RadialPageConnectedProps, 
    }
 
    componentWillReceiveProps(nextProps: RadialPageConnectedProps) {
-      if (this.props.decujus.id !== nextProps.decujus.id ||
+      if (this.props.decujusid !== nextProps.decujusid ||
           this.props.settings.generations !== nextProps.settings.generations) {
          this.calculateData(nextProps);
       }
+
+      const p = nextProps.persons[nextProps.decujusid];
+      nextProps.dispatch(addToHistory({person: p}));
    }
 
    calculateData(props: RadialPageConnectedProps) {
       props.dispatch(fetchPedigree.request({
-         decujus: props.decujus.id,
+         decujus: props.decujusid,
          ancestors: Math.max(0, props.settings.generations),
          descendants: Math.abs(Math.min(0, props.settings.generations)),
       }));
-
-      props.dispatch(addToHistory({person: props.decujus}));
    }
 
    render() {
-      const decujus = this.props.decujus;
-      if (!this.props.settings.loading && decujus) {
+      const decujus = this.props.persons[this.props.decujusid];
+      if (decujus) {
          document.title = 'Radial for ' + personDisplay(decujus);
       }
 
@@ -53,7 +54,7 @@ class RadialPageConnected extends React.PureComponent<RadialPageConnectedProps, 
             <Radial
                settings={this.props.settings}
                persons={this.props.persons}
-               decujus={decujus.id}
+               decujus={this.props.decujusid}
             />
          );
 
@@ -77,14 +78,11 @@ interface PropsFromRoute {
 }
  
 const RadialPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => {
-      const id = Number(ownProps.match.params.decujusId);
-      return {
-         settings: state.radial,
-         persons: state.persons,
-         decujus: state.persons[id] || personPlaceholder(id),
-      };
-   },
+   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+      settings: state.radial,
+      persons: state.persons,
+      decujusid: Number(ownProps.match.params.decujusId),
+   }),
    (dispatch: GPDispatch) => ({
       dispatch,
       onChange: (diff: Partial<RadialSettings>) => {

@@ -52,16 +52,6 @@ export interface PersonSet {
 }
 
 /**
- * Create an empty person record that only contains the id.
- */
-export function personPlaceholder(id: number) {
-   return {id: id,
-           givn: '',
-           surn: '',
-   };
-}
-
-/**
  * Return the display name for the person
  */
 export function personDisplay(p?: Person) {
