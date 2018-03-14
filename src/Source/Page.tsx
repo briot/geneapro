@@ -41,9 +41,7 @@ class SourcePageConnected extends React.PureComponent<SourcePageProps> {
          <Page
             decujus={undefined}
             main={ (s || this.props.id < 0) ?
-               <SourceDetails
-                   source={s}
-               /> :
+               <SourceDetails source={s} /> :
                <Loader active={true} size="large">Loading</Loader>
             }
          />

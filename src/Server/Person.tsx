@@ -1,4 +1,5 @@
-import { BasePerson, Person, PersonSet, EventAndRole, Characteristic } from '../Store/Person';
+import { BasePerson, Person, PersonSet } from '../Store/Person';
+import { P2E, P2C } from '../Store/Assertion';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { JSONPlace } from '../Server/Place';
@@ -120,33 +121,33 @@ export interface JSONAssertion {
    researcher: JSONResearcher;
 }
 
-interface P2E extends JSONAssertion {
+interface P2EJSON extends JSONAssertion {
    p1: {person: JSONPersonForAssertion};
    p2: {role: string;
         event: JSONEvent};
 }
 
-interface P2C extends JSONAssertion {
+interface P2CJSON extends JSONAssertion {
    p1: {person: JSONPersonForAssertion};
    p2: {char: JSONCharacteristic;
         parts: JSONCharPart[]};
 }
 
-interface P2P extends JSONAssertion {
+interface P2PJSON extends JSONAssertion {
    p1: {person: JSONPersonForAssertion};
    p2: {person: JSONPersonForAssertion};
 }
 
-interface P2G extends JSONAssertion {
+interface P2GJSON extends JSONAssertion {
    p1: {person: JSONPersonForAssertion};
 }
 
 interface JSONPersonDetails {
    person: BasePerson;
-   p2c: P2C[];
-   p2e: P2E[];
-   p2g: P2G[];
-   p2p: P2P[];
+   p2c: P2CJSON[];
+   p2e: P2EJSON[];
+   p2g: P2GJSON[];
+   p2p: P2PJSON[];
    sources: {[id: number]: JSONSource};
 }
 
@@ -162,10 +163,10 @@ export function* fetchPersonDetailsFromServer(id: number) {
       throw new Error('Server returned an error');
    }
    const data: JSONPersonDetails = yield resp.json();
-   const pEvents: EventAndRole[] = [];
+   const pEvents: P2E[] = [];
    const events: GenealogyEventSet = {};
    const places: PlaceSet = {};
-   const chars: Characteristic[] = [];
+   const chars: P2C[] = [];
 
    for (const e of data.p2e) {
       let placeId: number|undefined;
@@ -183,8 +184,16 @@ export function* fetchPersonDetailsFromServer(id: number) {
          type: ev.type,
       };
       pEvents.push({
+         researcher: e.researcher.name,
+         surety: e.surety,
+         sourceId: e.source_id,
+         rationale: e.rationale,
+         disproved: e.disproved,
+         last_changed: e.last_change,
+         personId: id,
          role: e.p2.role,
-         eventId: e.p2.event.id});
+         eventId: e.p2.event.id
+      });
    }
 
    for (const c of data.p2c) {
@@ -196,11 +205,20 @@ export function* fetchPersonDetailsFromServer(id: number) {
          };
       }
       chars.push({
-         date: c.p2.char.date,
-         date_sort: c.p2.char.date_sort,
-         name: c.p2.char.name,
-         placeId: p ? p.id : undefined,
-         parts: c.p2.parts,
+         researcher: c.researcher.name,
+         surety: c.surety,
+         sourceId: c.source_id,
+         rationale: c.rationale,
+         disproved: c.disproved,
+         last_changed: c.last_change,
+         personId: id,
+         characteristic: {
+            date: c.p2.char.date,
+            date_sort: c.p2.char.date_sort,
+            name: c.p2.char.name,
+            placeId: p ? p.id : undefined,
+            parts: c.p2.parts,
+         }
       });
    }
 

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Accordion, Icon, Segment, Step } from 'semantic-ui-react';
 import { Source } from '../Store/Source';
 import SourceCitation from '../Source/Citation';
+import SourceMedias from '../Source/Media';
 import './Source.css';
 
 interface SourceProps {
@@ -60,14 +61,14 @@ export default class SourceDetails extends React.PureComponent<SourceProps, Sour
                   null :
                   <Step.Group ordered={true} stackable="tablet" fluid={true} size="mini">
                      <Step
-                        completed={step > 1}
-                        active={step === 1}
+                        completed={!!s}
+                        active={!s}
                         title="Citing"
                         description="the source"
                      />
                      <Step
-                        completed={step > 2}
-                        active={step === 2}
+                        completed={s && s.medias && s.medias.length > 0}
+                        active={s && !s.medias}
                         disabled={!s}
                         title="Capturing"
                         description="images, sounds, videos"
@@ -129,7 +130,7 @@ export default class SourceDetails extends React.PureComponent<SourceProps, Sour
                      <Accordion.Content
                          active={this.state.showMedia}
                      >
-                        media
+                        <SourceMedias source={s} />
                      </Accordion.Content>
                   </Accordion>
                ) : null

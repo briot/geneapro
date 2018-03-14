@@ -1,28 +1,25 @@
 import * as React from 'react';
-import { Characteristic, CharacteristicPart } from '../Store/Person';
+import { P2C, CharacteristicPart } from '../Store/Assertion';
 import Box from '../Persona/Box';
 
 interface PersonaCharacteristicProps {
-   char: Characteristic;
+   char: P2C;
 }
 
 export default function PersonaCharacteristic(props: PersonaCharacteristicProps) {
+   const c = props.char.characteristic;
    return (
       <Box
          color="blue"
-         date={props.char.date}
-         placeId={props.char.placeId}
-         title={
-            <span className="type">
-               {props.char.name}
-            </span>
-         }
+         date={c.date}
+         placeId={c.placeId}
+         title={<span className="type">{c.name}</span>}
          content={
             <div>
-               {props.char.parts.map(
+               {c.parts.map(
                   (p: CharacteristicPart, idx: number) =>
                      <div key={idx}>
-                        {p.name === props.char.name ?
+                        {p.name === c.name ?
                            '' :
                            p.name + ': '}
                         {p.value}

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Icon, Segment } from 'semantic-ui-react';
-import { Person, EventAndRole, Characteristic } from '../Store/Person';
+import { Person } from '../Store/Person';
+import { P2E, P2C } from '../Store/Assertion';
 import { GenealogyEventSet } from '../Store/Event';
 import PersonaCharacteristic from '../Persona/Characteristic';
 import PersonaEvent from '../Persona/Event';
@@ -31,7 +32,7 @@ export default function Persona(props: PersonaProps) {
    if (p.events) {
       items = items.concat(
          p.events.map(
-            (evRole: EventAndRole) => {
+            (evRole: P2E) => {
                const ev = props.allEvents[evRole.eventId];
                if (ev) {
                   return {date_sort: ev.date_sort,
@@ -53,9 +54,9 @@ export default function Persona(props: PersonaProps) {
    if (p.chars) {
       items = items.concat(
          p.chars.map(
-            (c: Characteristic, idx: number) => ({
+            (c: P2C, idx: number) => ({
                id: 'char' + idx,
-               date_sort: c.date_sort,
+               date_sort: c.characteristic.date_sort,
                item: <PersonaCharacteristic char={c} />
             }))
       );

@@ -1,20 +1,4 @@
-export interface EventAndRole {
-   role: string;
-   eventId: number;  // points to a GenealogyEvent in the state
-}
-
-export interface CharacteristicPart {
-   name: string;
-   value: string;
-}
-
-export interface Characteristic {
-   date?: string;
-   date_sort?: string;
-   name: string;
-   placeId?: number;  // points to a Place in the state
-   parts: CharacteristicPart[];
-}
+import { P2E, P2C } from './Assertion';
 
 // The base type is only needed until the server returns a proper Person.
 export interface BasePerson {
@@ -38,9 +22,8 @@ export interface Person extends BasePerson {
    children?: (number|null)[];
 
    // Those are only known after asking for a person's details
-   events?: EventAndRole[];
-
-   chars?: Characteristic[];
+   events?: P2E[];
+   chars?: P2C[];
 }
 
 export interface PersonSet {

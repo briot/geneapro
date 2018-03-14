@@ -411,7 +411,7 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
             </Form.Group>
    
             <Form.TextArea
-               label="Comments"
+               label="Notes"
                value={this.state.source.comments || ''}
                onChange={this.commentsChange}
             />

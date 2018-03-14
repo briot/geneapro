@@ -5,8 +5,10 @@ import { JSONAssertion, JSONResearcher } from '../Server/Person';
 interface JSONSourceRepr {
    comments: string;
    id: number;
+   file: string;        // path to the file
+   mime: string;        // type of the image
    source_id: number;   // ??? Not needed
-   url: string;
+   url: string;         // how to get the image from the server
 }
 
 interface JSONSource {
@@ -43,6 +45,13 @@ export function* fetchSourceDetailsFromServer(id: number) {
       abbrev: data.source.abbrev,
       biblio: data.source.abbrev,
       medium: '',
+      medias: data.repr.map(m => ({
+         id: m.id,
+         comments: m.comments,
+         file: m.file,
+         mime: m.mime,
+         url: m.url
+      })),
    };
    return r;
 }

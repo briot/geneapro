@@ -1,3 +1,11 @@
+export interface SourceMedia {
+   id: number;
+   comments: string;
+   file: string;        // path to the file
+   mime: string;        // type of the image
+   url: string;         // how to get the image from the server
+}
+
 export interface Source {
    id: number;
    title: string;  // full citation
@@ -11,6 +19,8 @@ export interface Source {
    subject_place?: string;
    jurisdiction_place?: string;
    last_change?: string;
+
+   medias?: SourceMedia[];
 }
 
 export interface SourceSet {
