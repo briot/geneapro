@@ -56,7 +56,8 @@ class Assertion(GeneaProveModel):
 
     class Meta:
         """Meta data for the model"""
-        db_table = "assertion"
+        # db_table = "assertion"
+        abstract = True
 
     def to_json(self):
         return {
@@ -163,12 +164,12 @@ class P2G(Assertion):
 #   event      = models.ForeignKey (Event, related_name="characteristics")
 #   characteristic = models.ForeignKey (Characteristic, related_name="events")
 
-class Assertion_Assertion (GeneaProveModel):
-    original = models.ForeignKey(Assertion, related_name="leads_to")
-    deduction = models.ForeignKey(Assertion, related_name="deducted_from")
-    sequence_number = models.IntegerField(default=1)
-
-    class Meta:
-        """Meta data for the model"""
-        ordering = ("sequence_number",)
-        db_table = "assertion_assertion"
+#class Assertion_Assertion (GeneaProveModel):
+#    original = models.ForeignKey(Assertion, related_name="leads_to")
+#    deduction = models.ForeignKey(Assertion, related_name="deducted_from")
+#    sequence_number = models.IntegerField(default=1)
+#
+#    class Meta:
+#        """Meta data for the model"""
+#        ordering = ("sequence_number",)
+#        db_table = "assertion_assertion"

@@ -158,7 +158,7 @@ def forward(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('geneaprove', '0001_initial')
+        ('geneaprove', '0002_auto_20180314_0957')
     ]
     operations = [
         migrations.RunPython(forward)

@@ -36,6 +36,15 @@ DEBUG = False
 INLINE_SOURCE = -2
 NO_SOURCE = -1
 
+FORM_TO_MIME = {
+    'jpeg': 'image/jpeg',  # Gramps
+    'image/png': 'image/png',  # Gramps
+    'image/jpeg': 'image/jpeg',
+    'png': 'image/png',  # rootsMagic
+    'jpg': 'image/jpg',  # rootsMagic
+    'JPG': 'image/jpg',  # rootsMagic
+    '': 'application/octet-stream'}
+
 
 def as_list(obj):
     """
@@ -129,14 +138,25 @@ class SourceManager(object):
 
     def __add_OBJE_to_source(self, source, obje):
         """
+        Create object representations in the database
         :param models.Source source: the source to which we add a
            representation
         :param GedcomRecord obje: the OBJE description. This can also be a
            list of such objects
         """
-        if obje:
-            for o in as_list(obje):
-                obj = self.importer._create_obje(o, source)
+        for o in as_list(obje):
+            if o is None:
+                continue
+            if isinstance(o, str):
+                self.importer.report_error('Ignore OBJE reference: %s' % o)
+                continue
+
+            obj = self.importer._objects.get(o.FILE, None)
+            if not obj or obj.comments != o.TITL:
+                mime = FORM_TO_MIME.get(o.FORM, 'application/octet-stream')
+                self.importer._objects[o.FILE] = models.Representation.objects.create(
+                    source=source, mime_type=mime, file=o.FILE,
+                    comments=o.TITL)
 
     def __add_source_to_REPO(self, source, repo):
         """
@@ -280,14 +300,15 @@ class SourceManager(object):
                             nested_source.save()
 
                         for k, v in parts:
-                            try:
-                                typ = models.Citation_Part_Type.objects.get(
-                                    gedcom=k)
-                            except:
+                            typ = self.importer._citation_part_types.get(k, None)
+                            if typ is None:
                                 typ = models.Citation_Part_Type.objects.create(
                                     name=k.title(), gedcom=k)
-                            p = models.Citation_Part(type=typ, value=v)
-                            nested_source.parts.add(p, bulk=False)
+                                self.importer._citation_part_types[k] = typ
+
+                            self.importer._all_citation_parts.append(
+                                models.Citation_Part(
+                                    type=typ, value=v, source=nested_source))
 
                     self.__add_OBJE_to_source(
                         nested_source, getattr(s, "OBJE", None))
@@ -357,6 +378,13 @@ class GedcomImporter(object):
         self._places = dict()
         self._repo = dict()
 
+        self._all_place_parts = []    # list of Place_Part to bulk_create
+        self._all_p2c = []            # list of P2C to bulk_create
+        self._all_p2e = []            # list of P2E to bulk_create
+        self._all_p2p = []            # list of P2P to bulk_create
+        self._all_char_parts = []     # list of Characteristic_Part
+        self._all_citation_parts = [] # list of Citation_Part
+
         self._sourcePersona = dict()  # Indexed on (sourceId, gedcom personId)
         # returns the Persona to use for that source. As a special
         # case, sourceId is set to NO_SOURCE for those events and
@@ -392,6 +420,13 @@ class GedcomImporter(object):
             self._create_family(s)
         if DEBUG:
             logger.info("Done importing families")
+
+        models.Place_Part.objects.bulk_create(self._all_place_parts)
+        models.P2C.objects.bulk_create(self._all_p2c)
+        models.P2E.objects.bulk_create(self._all_p2e)
+        models.P2P.objects.bulk_create(self._all_p2p)
+        models.Characteristic_Part.objects.bulk_create(self._all_char_parts)
+        models.Citation_Part.objects.bulk_create(self._all_citation_parts)
 
         for k, v in data.for_all_fields():
             if k not in ("SOUR", "INDI", "FAM", "HEAD", "SUBM",
@@ -487,33 +522,6 @@ class GedcomImporter(object):
                 self.report_error("%s Unhandled REPO.%s" % (location(v), k))
 
         return r
-
-    def _create_obje(self, data, source):
-        """Create an object (representation) in the database"""
-
-        if data is None:
-            return None
-
-        if isinstance(data, str):
-            self.report_error('Ignore OBJE reference: %s' % data)
-            return
-
-        form_to_mime = {
-            'jpeg': 'image/jpeg',  # Gramps
-            'image/png': 'image/png',  # Gramps
-            'image/jpeg': 'image/jpeg',
-            'png': 'image/png',  # rootsMagic
-            'jpg': 'image/jpg',  # rootsMagic
-            'JPG': 'image/jpg',  # rootsMagic
-            '': 'application/octet-stream'}
-
-        mime = form_to_mime.get(data.FORM, 'application/octet-stream')
-
-        obj = self._objects.get(data.FILE, None)
-        if not obj or obj.comments != data.TITL:
-            self._objects[data.FILE] = models.Representation.objects.create(
-                source=source, mime_type=mime, file=data.FILE,
-                comments=data.TITL)
 
     def _create_family(self, data):
         """Create the equivalent of a FAMILY in the database"""
@@ -630,10 +638,10 @@ class GedcomImporter(object):
             self._places[long_name] = p  # For reuse
 
             if data.MAP:
-                pp = models.Place_Part.objects.create(
+                self._all_place_parts.append(models.Place_Part(
                     place=p,
                     type=self._place_part_types['MAP'],
-                    name=data.MAP.LATI + ' ' + data.MAP.LONG)
+                    name=data.MAP.LATI + ' ' + data.MAP.LONG))
 
             if addr:
                 for key, val in addr.for_all_fields():
@@ -643,8 +651,8 @@ class GedcomImporter(object):
                             self.report_error(
                                 'Unknown place part: ' + key)
                         else:
-                            pp = models.Place_Part.objects.create(
-                                place=p, type=part, name=val)
+                            self._all_place_parts.append(models.Place_Part(
+                                place=p, type=part, name=val))
 
         # ??? Unhandled attributes of PLAC: FORM, SOURCE and NOTE
         # FORM would in fact tell us how to split the name to get its
@@ -687,13 +695,14 @@ class GedcomImporter(object):
 
         # Link old and new personas
 
-        models.P2P.objects.create(
-            surety=self._default_surety,
-            researcher=self._researcher,
-            person1=indi,
-            person2=ind,
-            type=models.P2P.sameAs,
-            rationale='Single individual in the gedcom file')
+        self._all_p2p.append(
+            models.P2P(
+                surety=self._default_surety,
+                researcher=self._researcher,
+                person1=indi,
+                person2=ind,
+                type=models.P2P.sameAs,
+                rationale='Single individual in the gedcom file'))
 
         return ind
 
@@ -767,26 +776,30 @@ class GedcomImporter(object):
             # Associate the characteristic with the persona.
             # Such an association is done via assertions, based on sources.
 
-            for sid, s in self.source_manager.create_sources_ref(val):
-                ind = self._indi_for_source(sourceId=sid, indi=indi)
-                models.P2C.objects.create(
+            self._all_p2c.extend(
+                models.P2C(
                     surety=self._default_surety,
                     researcher=self._researcher,
-                    person=ind,
+                    person=self._indi_for_source(sourceId=sid, indi=indi),
                     source=s,
                     characteristic=c)
+                for sid, s in self.source_manager.create_sources_ref(val)
+            )
 
             # The main characteristic part is the value found on the same
             # GEDCOM line as the characteristic itself. For simple
             # characteristics like "SEX", this will in fact be the only part.
 
             if typ:
-                models.Characteristic_Part.objects.create(
-                    characteristic=c, type=typ, name=str_value)
+                self._all_char_parts.append(
+                    models.Characteristic_Part(
+                        characteristic=c, type=typ, name=str_value))
 
             # We might have other characteristic part, most notably for names.
 
             if isinstance(val, GedcomRecord):
+                midl = self._char_types['_MIDL']
+
                 for k, v in val.for_all_fields():
                     t = self._char_types.get(k, None)
                     if t:
@@ -798,25 +811,26 @@ class GedcomImporter(object):
 
                             n = self._get_note(val)
                             if n:
-                                models.Characteristic_Part.objects.create(
-                                    characteristic=c, type=t, name=n)
+                                self._all_char_parts.append(
+                                    models.Characteristic_Part(
+                                        characteristic=c, type=t, name=n))
 
                         elif k == 'GIVN' and GIVEN_NAME_TO_MIDDLE_NAME:
                             if v:
                                 n = v.replace(',', ' ').split(' ')
-                                models.Characteristic_Part.objects.create(
-                                    characteristic=c, type=t, name=n[0])
+                                self._all_char_parts.append(
+                                    models.Characteristic_Part(
+                                        characteristic=c, type=t, name=n[0]))
+                                self._all_char_parts.extend(
+                                    models.Characteristic_Part(
+                                        characteristic=c, type=midl, name=m)
+                                    for m in n[1:] if m
+                                )
 
-                                for m in n[1:]:
-                                    if m:
-                                        ob = models.Characteristic_Part.objects
-                                        ob.create(
-                                            characteristic=c,
-                                            type=self._char_types['_MIDL'],
-                                            name=m)
                         elif v:
-                            models.Characteristic_Part.objects.create(
-                                characteristic=c, type=t, name=v)
+                            self._all_char_parts.append(
+                                models.Characteristic_Part(
+                                    characteristic=c, type=t, name=v))
 
                     elif k == 'SOUR':
                         pass  # handled in the create_sources_ref loop above
@@ -961,17 +975,18 @@ class GedcomImporter(object):
 
                     n = self._get_note(data)
 
-                for sid, s in all_src:
-                    ind = self._indi_for_source(sourceId=sid, indi=person)
-                    a = models.P2E.objects.create(
+                self._all_p2e.extend(
+                    models.P2E(
                         surety=self._default_surety,
                         researcher=self._researcher,
-                        person=ind,
+                        person=self._indi_for_source(sourceId=sid, indi=person),
                         event=evt,
                         source=s,
                         role=role,
                         last_change=last_change,
                         rationale=n)
+                    for sid, s in all_src
+                )
 
         for k, v in data.for_all_fields():
             # ADDR and PLAC are handled in create_place
@@ -1055,11 +1070,12 @@ class GedcomImporter(object):
                 # string value, assume this is a characteristic.  Create the
                 # corresponding type in the database, and import the field
 
-                typ = models.Characteristic_Part_Type.objects.create(
-                    is_name_part=False,
-                    name=field,
-                    gedcom=field)
-                self._char_types[field] = typ
+                if field not in self._char_types:
+                    self._char_types[field] = \
+                        models.Characteristic_Part_Type.objects.create(
+                            is_name_part=False,
+                            name=field,
+                            gedcom=field)
 
                 for v in as_list(value):
                     self._create_characteristic(field, v, indi)
@@ -1216,8 +1232,10 @@ class GedcomFileImporter(geneaprove.importers.Importer):
                         django.utils.timezone.get_default_timezone()).strftime(
                             "%Y-%m-%d %H:%M:%S %Z"))
 
-            parser = GedcomImporterCumulate(gedcom_name, parsed)
-            logger.info('Done analyzing %s' % filename)
+            with transaction.atomic():
+                parser = GedcomImporterCumulate(gedcom_name, parsed)
+                logger.info('Done analyzing %s' % filename)
+
             return (True, "\n".join(parser.errors))
 
         except Invalid_Gedcom as e:

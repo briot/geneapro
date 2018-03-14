@@ -10,7 +10,7 @@ class ProfileMiddleware(object):
     def __doprofile(self):
         """Whether to do profiling"""
         # One way to profile only from a single session
-        return True or hasattr(request, 'profiler')
+        return False or hasattr(request, 'profiler')
 
     def process_request(self, request):
         if self.__doprofile():

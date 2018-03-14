@@ -54,7 +54,7 @@ def view(request, id, size=None):
                                  yconstrain=int(size))
 
     try:
-        bin = open(f).read()
+        bin = open(f, "rb").read()
     except FileNotFoundError:
         bin = ''
 

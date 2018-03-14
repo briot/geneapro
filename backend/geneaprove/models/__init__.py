@@ -11,7 +11,7 @@ object appropriate for use by simplejson. For instance:
 
 from django.db import models, connection
 import django.utils.timezone
-from .asserts import Assertion, P2P, P2C, P2E, P2G, Assertion_Assertion
+from .asserts import Assertion, P2P, P2C, P2E, P2G
 from .characteristic import Characteristic_Part_Type, \
     Characteristic, Characteristic_Part
 from .event import Event_Type, Event_Type_Role, Event
@@ -222,7 +222,6 @@ all_fields = {
     'p2c':            sql_table_name(P2C),
     'p2e':            sql_table_name(P2E),
     'char_part.char': sql_field_name(Characteristic_Part, "characteristic"),
-    'assert.pk':      sql_field_name(Assertion, "pk"),
     'p2e.pk':         sql_field_name(P2E, "pk"),
     'p2c.pk':         sql_field_name(P2C, "pk"),
     'p2c.char':       sql_field_name(P2C, "characteristic"),
