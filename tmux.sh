@@ -5,7 +5,7 @@ tmux bind X confirm-before kill-session
 
 # Setup a window to compile files
 tmux new-window -t $SESSION:1 "npm run start"
-tmux split-window             "source python_env/bin/activate; cd backend; ./manage.py runserver 8002"
+tmux split-window             "source python_env/bin/activate; cd backend; ./manage.py migrate; ./manage.py runserver 8002"
 tmux resize-pane -y 15
 
 #tmux split-window 
