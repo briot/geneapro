@@ -3,6 +3,7 @@ Various views related to displaying the pedgree of a person graphically
 """
 
 from django.db.models import Min
+from django.db import transaction
 from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.to_json import JSONView
@@ -228,7 +229,10 @@ def extended_personas(
             places[c.place_id] = c.place
 
     chars = models.Characteristic_Part.objects.select_related(
-        'type', 'characteristic', 'characteristic__place')
+        'type', 'characteristic', 'characteristic__place').filter(
+            type__in=(models.Characteristic_Part_Type.PK_sex,
+                      models.Characteristic_Part_Type.PK_given_name,
+                      models.Characteristic_Part_Type.PK_surname)).order_by()
 
     for part in sql_in(chars, "characteristic", nodes and c2p):
         person = c2p[part.characteristic_id]
@@ -361,12 +365,17 @@ class SuretySchemesList(JSONView):
 class PersonaList(JSONView):
     """View the list of all personas"""
 
+    @transaction.atomic
     def get_json(self, params, decujus=1):
         global_graph.update_if_needed()
         if global_graph.is_empty():
             all = {}
         else:
-            styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
+            # Computing styles takes some time, and is not needed for now in
+            # the persona list view
+
+            # styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
+            styles = None
 
             all = extended_personas(
                 nodes=None, styles=styles,
@@ -382,7 +391,7 @@ class PersonaList(JSONView):
                 'birth': p.birth,
                 'death': p.death,
                 'id': p.id,
-                'styles': p.styles,
+                # 'styles': p.styles,
                 'marriage': p.marriage}
                for p in all]
 
