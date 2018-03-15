@@ -8,6 +8,9 @@ from django.views.generic import View
 from django.http import HttpResponse, QueryDict
 from django.core.serializers.json import DjangoJSONEncoder
 from geneaprove.utils.date import DateRange
+import logging
+
+logger = logging.getLogger('geneaprove.JSON')
 
 
 ###########################################################################
@@ -157,7 +160,9 @@ class JSONView(View):
         resp = method(params, *args, **kwargs) or {"success": True}
 
         # Can't use JsonResponse since we want our own converter
+        logger.debug('converting result to JSON')
         result = self.to_json(resp)
+        logger.debug('Done converting')
         return HttpResponse(result, content_type='application/json')
 
     def get(self, request, *args, **kwargs):
@@ -166,8 +171,7 @@ class JSONView(View):
         """
         params = JSONViewParams()
         params.update(request.GET)
-        if settings.DEBUG:
-            print("   %s.get() => %s" % (self.__class__, params))
+        logger.debug('%s.%s.get(%s)', self.__module__, self.__class__.__name__, params)
         return self.__internal(self.get_json, params, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -182,6 +186,5 @@ class JSONView(View):
             params.set_from_body(request.body)
         else:
             params.set_files(request.FILES)
-        if settings.DEBUG:
-            print("   %s.post() => %s" % (self.__class__, params))
+        logger.debug('%s.%s.post(%s)', self.__module__, self.__class__.__name__, params)
         return self.__internal(self.post_json, params, *args, **kwargs)
