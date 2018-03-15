@@ -34,11 +34,15 @@ const middlewares: Redux.Middleware[] = [
 
 if (process.env.NODE_ENV === `development`) {
    // Log actions to the console
+   // Enabling 'diff' is useful in some cases, but has a very significant
+   // performance impact (extra 14s to display the list of persons with
+   // 10000 individuals).
    const { createLogger } = require('redux-logger');
    middlewares.push(
       createLogger({collapsed: true,
                     duration: true,
-                    diff: true}));   // log actions in the console
+                    timestamp: true,
+                    diff: false}));   // log actions in the console
 }
 
 export const store: GPStore = Redux.createStore(
