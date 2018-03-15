@@ -36,6 +36,8 @@ class AJAXSimpleExceptionResponse(object):
            else:
                format = self.style.SQL_COLTYPE
 
+           print('\n'.join('%s (%s)' % (q['sql'], q['time']) for q in connection.queries))
+
            print(format(
                "Total time: %fs  /  queries time (%s queries): %fs" % (
                    end - start, len(connection.queries), total)))

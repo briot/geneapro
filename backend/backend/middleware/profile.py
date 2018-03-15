@@ -4,23 +4,28 @@ import cProfile
 # Invokes the profiler when processing a query.
 # Postprocess results with:
 #     pyprof2calltree -k -i /tmp/*.pro
-
+#
+# or, when kcachegrind is not available, you can also use
+#     cprofilev -f /tmp/*.pro
+#     navigate to http://127.0.0.1:4000
 
 class ProfileMiddleware(object):
-    def __doprofile(self):
-        """Whether to do profiling"""
-        # One way to profile only from a single session
-        return False or hasattr(request, 'profiler')
+    def __init__(self, get_response):
+        self.get_response = get_response
 
-    def process_request(self, request):
-        if self.__doprofile():
-            request.profiler = cProfile.Profile()
-            request.profiler.enable()
+    def __call__(self, request):
+        if hasattr(request, 'profiler'):
+            profiler = cProfile.Profile()
+            profiler.enable()
 
-    def process_response(self, request, response):
-        if self.__doprofile():
-            request.profiler.disable()
+            response = self.get_response(request)
+
+            profiler.disable()
             stamp = "%s" % (request.path.replace("/", "__"),)
-            request.profiler.dump_stats('/tmp/%s.pro' % stamp)
-            print "Dumped profile info in /tmp/%s.pro" % stamp
-        return response
+            profiler.dump_stats('/tmp/%s.pro' % stamp)
+            print("Dumped profile info in /tmp/%s.pro" % stamp)
+
+            return response
+
+        else:
+            return self.get_response(request)
