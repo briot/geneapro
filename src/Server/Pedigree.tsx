@@ -1,5 +1,6 @@
 import { Person } from '../Store/Person';
-import { JSONPersons, jsonPersonToPerson, FetchPersonsResult } from '../Server/Person';
+import { JSONStyle, JSONPersons, jsonPersonToPerson,
+         FetchPersonsResult } from '../Server/Person';
 
 /**
  * Sent back by the server
@@ -9,7 +10,7 @@ interface JSONPedigree extends JSONPersons {
    decujus: number;
    generations: number;  // including decujus
    descendants: number;
-   // styles; any[];
+   styles: JSONStyle[];
    p: Person;
 }
 
@@ -29,7 +30,7 @@ export function* fetchPedigreeFromServer(
    }
 
    const data: JSONPedigree = yield resp.json();
-   const result: FetchPersonsResult = jsonPersonToPerson(data);
+   const result: FetchPersonsResult = jsonPersonToPerson(data, data.styles);
    result.persons[data.decujus].knownAncestors = data.generations;
    result.persons[data.decujus].knownDescendants = data.descendants;
    return result;

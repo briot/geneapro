@@ -6,7 +6,8 @@ import { Person, PersonSet } from '../Store/Person';
 import { FanchartSettings } from '../Store/Fanchart';
 import { GenealogyEventSet } from '../Store/Event';
 import { PersonLayout, PersonLayouts } from '../Fanchart/types';
-import { Style, styleToString } from '../style';
+import { Style } from '../style';
+import { styleToString } from '../Store/Styles';
 import ScalableSVG from '../SVG.Scalable';
 import { event_to_string } from '../Store/Event';
 
@@ -45,7 +46,8 @@ export function Fanchart(props: FanchartProps) {
 
       if (props.layouts.spaceBetweenGens !== 0) {
          const d = separatorArc(pl) as string;
-         const style = Style.forSeparator(props.settings.sepColors, pl);
+         const style = Style.forSeparator(
+            props.settings.sepColors, p, pl);
          seps.push(
             <path
                className="separator"
@@ -90,7 +92,8 @@ export function Fanchart(props: FanchartProps) {
                   props.layouts.spaceBetweenGens !== 0 && (
                      <path
                         className="separator"
-                        {...styleToString(Style.forSeparator(props.settings.sepColors, c))}
+                        {...styleToString(Style.forSeparator(
+                           props.settings.sepColors, p, c))}
                         d={separatorArc(c) as string}
                         key={c.id}
                      />
@@ -198,7 +201,9 @@ const MIN_ANGLE_STRAIGHT_TEXT = 15 * Math.PI / 180;
 
 export function FanchartBox(props: FanchartBoxProps) {
    const d = fanarc(props.layout) as string;
-   const style = Style.forPerson(props.settings.colors, props.layout);
+   const style = Style.forPerson(
+      props.settings.colors, props.person, props.layout);
+   const styleStr = styleToString(style);
    const children: JSX.Element[] = [];
    const diff = props.layout.maxAngle - props.layout.minAngle;
 
@@ -266,7 +271,7 @@ export function FanchartBox(props: FanchartBoxProps) {
       const dates = `${birth} - ${death}`;
 
       children.push(
-         <text key="text">
+         <text key="text" fill={styleStr.color}>
             <textPath
                startOffset="50%"
                textAnchor="middle"
@@ -299,7 +304,7 @@ export function FanchartBox(props: FanchartBoxProps) {
          <g>
             <path
                className="background"
-               {...styleToString(style)}
+               {...styleStr}
                d={d}
             />
             {children}

@@ -8,6 +8,7 @@ from geneaprove.views.styles import RULE_ATTR, RULE_EVENT, RULE_IN, RULE_IS, \
     RULE_SMALLER, RULE_CONTAINS_INSENSITIVE, RULE_BEFORE, \
     RULE_SMALLER_EQUAL, RULE_IS_INSENSITIVE
 
+decujus = 2
 
 def style_rules():
     return [
@@ -32,11 +33,11 @@ def style_rules():
           ("age", RULE_SMALLER_EQUAL, 60)],
          {"color": "blue"}),
 
-        ("Person's age today is more than 80, and is alive",
+        ("Person's age today is more than 60, and is alive",
          RULE_ATTR,
-         [("age", RULE_GREATER, 80),
+         [("age", RULE_GREATER, 60),
           ("ALIVE", RULE_IS, "Y")],
-         {"color": "orange"}),
+         {"stroke": "orange"}),
 
         ("Foreign people in different color",
          RULE_EVENT,
@@ -73,24 +74,24 @@ def style_rules():
          [("IMPLEX", RULE_GREATER, 1)],
          {"fill": "yellow"}),
 
-        ("All male ancestors of person id=1",
+        ("All male ancestors of person id=i%s" % decujus,
          RULE_ATTR,
-         [("ancestor", RULE_IS, 1), ("SEX", RULE_IS, "M")],
+         [("ancestor", RULE_IS, decujus), ("SEX", RULE_IS, "M")],
          {"fill": "#D6E0EA", "stroke": "#9CA3D4"}),
 
-        ("All female ancestors of person id=1",
+        ("All female ancestors of person id=%s" % decujus,
          RULE_ATTR,
-         [("ancestor", RULE_IS, 1), ("SEX", RULE_IS, "F")],
+         [("ancestor", RULE_IS, decujus), ("SEX", RULE_IS, "F")],
          {"fill": "#E9DAF1", "stroke": "#fF2080"}),
 
-        ("All male descendants of person id=1",
+        ("All male descendants of person id=%s" % decujus,
          RULE_ATTR,
-         [("descendant", RULE_IS, 1), ("SEX", RULE_IS, "M")],
+         [("descendant", RULE_IS, decujus), ("SEX", RULE_IS, "M")],
          {"fill": "#D6E0EA", "stroke": "#9CA3D4"}),
 
-        ("All female descendants of person id=1",
+        ("All female descendants of person id=%s" % decujus,
          RULE_ATTR,
-         [("descendant", RULE_IS, 1), ("SEX", RULE_IS, "F")],
+         [("descendant", RULE_IS, decujus), ("SEX", RULE_IS, "F")],
          {"fill": "#E9DAF1", "stroke": "#fF2080"}),
 
         ("Unknown father",

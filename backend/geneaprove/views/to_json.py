@@ -161,6 +161,7 @@ class JSONView(View):
 
         # Can't use JsonResponse since we want our own converter
         logger.debug('converting result to JSON')
+
         result = self.to_json(resp)
         logger.debug('Done converting')
         return HttpResponse(result, content_type='application/json')

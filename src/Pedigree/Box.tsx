@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Style, styleToString } from '../style';
+import { Style } from '../style';
+import { styleToString } from '../Store/Styles';
 import { Person } from '../Store/Person';
 import { PedigreeSettings } from '../Store/Pedigree';
 import { GenealogyEventSet } from '../Store/Event';
@@ -59,8 +60,8 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
          </text>
       );
 
-   const style = Style.forPerson(props.style.colors, layout);
-   const link = props.person ? '/pedigree/' + props.person.id : '#';
+   const style = Style.forPerson(props.style.colors, p, layout);
+   const link = p ? '/pedigree/' + p.id : '#';
    return (
       <Link to={link}>
          <g

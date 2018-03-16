@@ -3,6 +3,7 @@ Various views related to displaying the pedgree of a person graphically
 """
 
 from geneaprove import models
+from django.db import transaction
 from geneaprove.utils.date import DateRange
 from geneaprove.views.styles import Styles
 from geneaprove.views.persona import extended_personas, \
@@ -20,6 +21,7 @@ class PedigreeData(JSONView):
         # Whether to show full dates or only the year
         self.year_only = False
 
+    @transaction.atomic
     def get_json(self, params, id):
         # ??? Should lock until the view has been generated
         global_graph.update_if_needed()

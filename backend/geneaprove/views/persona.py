@@ -11,6 +11,9 @@ from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import global_graph
 from geneaprove.views.styles import Styles
 from geneaprove.views.queries import sql_in
+import logging
+
+logger = logging.getLogger('geneaprove.PERSONA')
 
 
 def event_types_for_pedigree():
@@ -101,6 +104,7 @@ def extended_personas(
 
     # Get the role names
 
+    logger.debug('MANU getting role names')
     for role in models.Event_Type_Role.objects.all():
         roles[role.id] = role.name
 
@@ -121,6 +125,8 @@ def extended_personas(
                 persons[mid] = p
                 __add_default_person_attributes(p)
 
+    logger.debug('MANU retrieve personas')
+
     ################
     # Check all events that the persons were involved in.
     ################
@@ -135,6 +141,8 @@ def extended_personas(
         all_ids = set()
         for p in nodes:
             all_ids.update(p.ids)
+
+    logger.debug('MANU about to retrieve events')
 
     # Also query the 'principal' for each events, so that we can provide
     # that information graphically.
@@ -180,6 +188,8 @@ def extended_personas(
             elif e.type_id == models.Event_Type.PK_marriage:
                 person.marriage = e
 
+    logger.debug('MANU done processing events')
+
     #########
     # Get all groups to which the personas belong
     #########
@@ -202,6 +212,7 @@ def extended_personas(
     # Get all characteristics of these personas
     #########
 
+    logger.debug('MANU processing p2c')
     c2p = dict()  # characteristic_id -> person
     all_p2c = models.P2C.objects.select_related(
         'characteristic', 'characteristic__place')
@@ -228,6 +239,8 @@ def extended_personas(
         if compute_parts and c.place:
             places[c.place_id] = c.place
 
+    logger.debug('MANU processing characteristic parts')
+
     chars = models.Characteristic_Part.objects.select_related(
         'type', 'characteristic', 'characteristic__place').filter(
             type__in=(models.Characteristic_Part_Type.PK_sex,
@@ -250,6 +263,8 @@ def extended_personas(
     # could benefit from them.
     ########
 
+    logger.debug('MANU processing places')
+
     if compute_parts:
         prev_place = None
         d = None
@@ -270,6 +285,8 @@ def extended_personas(
     # Get the title for all sources that are mentioned
     ##########
 
+    logger.debug('MANU get source titles')
+
     if all_sources is not None:
         for s in sql_in(models.Source.objects, "id", all_sources.keys()):
             all_sources[s.id] = s
@@ -279,6 +296,7 @@ def extended_personas(
     ##########
 
     if styles:
+        logger.debug('MANU compute styles')
         for p in persons.values():
             styles.compute(p, as_css=as_css)
 
@@ -371,11 +389,7 @@ class PersonaList(JSONView):
         if global_graph.is_empty():
             all = {}
         else:
-            # Computing styles takes some time, and is not needed for now in
-            # the persona list view
-
-            # styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
-            styles = None
+            styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
 
             all = extended_personas(
                 nodes=None, styles=styles,

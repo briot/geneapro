@@ -55,7 +55,8 @@ else
    fi
 fi
 
-pip install django pillow pylint pylint-django pep8 autopep8 grandalf
+pip install django pillow pylint pylint-django pep8 autopep8 grandalf \
+   django-prepared-query cprofilev
 
 # The actual layout of the sources was created with:
 #     django-admin startproject backend

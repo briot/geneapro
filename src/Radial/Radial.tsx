@@ -5,7 +5,8 @@ import { Link } from 'react-router-dom';
 import { RadialSettings } from '../Store/Radial';
 import { Person } from '../Store/Person';
 import ScalableSVG from '../SVG.Scalable';
-import { BasePersonLayout, Style, styleToString } from '../style';
+import { BasePersonLayout, Style } from '../style';
+import { styleToString } from '../Store/Styles';
 import './Radial.css';
 
 interface RadialLayout extends BasePersonLayout {
@@ -95,7 +96,8 @@ export default function Radial(props: RadialProps) {
                <circle
                   r={circleSize}
                   key={node.data.p.id}
-                  {...styleToString(Style.forPerson(props.settings.colors, node.data))}
+                  {...styleToString(Style.forPerson(
+                     props.settings.colors, node.data.p, node.data))}
                />
                {
                   <text

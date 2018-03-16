@@ -1,8 +1,13 @@
+import * as d3Color from 'd3-color';
 import { BasePerson, Person, PersonSet } from '../Store/Person';
 import { P2E, P2C } from '../Store/Assertion';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { JSONPlace } from '../Server/Place';
+
+export interface JSONStyle  {
+   [cssName: string]: string;
+}
 
 export interface JSONPerson {
    id: number;
@@ -12,10 +17,10 @@ export interface JSONPerson {
    generation: number;
    parents: (number|null)[];
    children: (number|null)[];
-   style: number;
    birth: JSONEvent;
    marriage: JSONEvent;
    death: JSONEvent;
+   style: number;  // index into the styles array
 }
 
 export interface JSONPersons {
@@ -27,11 +32,15 @@ export interface FetchPersonsResult {
    events: GenealogyEventSet;
 }
 
-export function jsonPersonToPerson(json: JSONPersons): FetchPersonsResult {
+export function jsonPersonToPerson(
+   json: JSONPersons,
+   styles: JSONStyle[],
+): FetchPersonsResult {
    let persons: PersonSet = {};
    let events: GenealogyEventSet = {};
    for (const pid of Object.keys(json.persons)) {
       const jp: JSONPerson = json.persons[pid];
+      const s: JSONStyle = styles[jp.style];
       persons[pid] = {
          id: jp.id,
          givn: jp.givn,
@@ -43,6 +52,12 @@ export function jsonPersonToPerson(json: JSONPersons): FetchPersonsResult {
          knownDescendants: 0,
          parents: jp.parents,
          children: jp.children,
+         style: {
+            fill: s && d3Color.color(s.fill),
+            stroke: s && d3Color.color(s.stroke),
+            color: s && d3Color.color(s.color),
+            fontWeight: s && s['font-weight'],
+         }
       };
 
       if (jp.birth) {
@@ -65,7 +80,7 @@ export function* fetchPersonsFromServer() {
    }
 
    const data: JSONPersons = yield resp.json();
-   return jsonPersonToPerson(data);
+   return jsonPersonToPerson(data, [] /* styles */);
 }
 
 interface JSONPersonForAssertion {

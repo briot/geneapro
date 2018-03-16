@@ -28,6 +28,7 @@ export enum ColorScheme {
    GENERATION = 2,
    QUARTILE = 3,
    NO_BOX = 4,
+   CUSTOM = 5,
 }
 export const ColorSchemeNames: {[id: number]: string} = {};
 ColorSchemeNames[ColorScheme.PEDIGREE] = 'Pedigree';
@@ -35,6 +36,7 @@ ColorSchemeNames[ColorScheme.WHITE] = 'White';
 ColorSchemeNames[ColorScheme.GENERATION] = 'Generation';
 ColorSchemeNames[ColorScheme.QUARTILE] = 'Quartile';
 ColorSchemeNames[ColorScheme.NO_BOX] = 'No Box';
+ColorSchemeNames[ColorScheme.CUSTOM] = 'Custom';
 
 export interface PedigreeSettings {
    showUnknown: boolean;
