@@ -1,2 +1,14 @@
 .SideNav {
 }
+
+.SideNav .hideOverflow {
+   white-space: nowrap;
+   overflow: hidden;
+
+   /* Doesn't work because text is displayed as 'table-cell', not 'block' */
+   text-overflow: ellipsis;
+}
+
+.SideNav .hideOverflow:hover {
+   overflow: visible;
+}

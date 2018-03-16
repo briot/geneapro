@@ -26,9 +26,9 @@ class SideNavItem extends React.PureComponent<SideNavItemProps> {
          this.props.label;
 
       return (
-         <List.Item disabled={this.props.disabled}>
+         <List.Item disabled={this.props.disabled} className="hideOverflow">
             <List.Icon name={this.props.icon} />
-            <List.Content>
+            <List.Content title={this.props.label}>
                {link}
             </List.Content>
          </List.Item>
@@ -43,13 +43,13 @@ interface SideNavCategoryProps {
 
 function SideNavCategory(props: SideNavCategoryProps) {
    return (
-      props.linkTo ? (
-         <Header size="small" sub={true}>
-            <Link to={props.linkTo} style={LINK_STYLE}>{props.label}</Link>
-         </Header>
-      ) : (
-         <Header size="small" sub={true}>{props.label}</Header>
-      )
+      <Header size="small" sub={true} className="hideOverflow">
+         {
+            props.linkTo ? (
+               <Link to={props.linkTo} style={LINK_STYLE}>{props.label}</Link>
+            ) : props.label
+         }
+      </Header>
    );
 }
 
