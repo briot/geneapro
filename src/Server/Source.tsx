@@ -1,5 +1,7 @@
 import { Source, SourceSet } from '../Store/Source';
-import { JSONAssertion, JSONResearcher } from '../Server/Person';
+import { JSONAssertion, JSONResearcher,
+         AssertionEntities, AssertionEntitiesJSON,
+         assertionFromJSON, setAssertionEntities } from '../Server/Person';
 
 // Representation of sources (media)
 interface JSONSourceRepr {
@@ -26,11 +28,15 @@ interface JSONSource {
    subject_place?: string;
 }
 
-interface JSONResult {
+interface JSONResult extends AssertionEntitiesJSON {
    source: JSONSource;
    higher_sources: JSONSource[] | null;
    asserts: JSONAssertion[];
    repr: JSONSourceRepr[];
+}
+
+export interface FetchSourceDetailsResult extends AssertionEntities {
+   source: Source;
 }
 
 export function* fetchSourceDetailsFromServer(id: number) {
@@ -39,20 +45,28 @@ export function* fetchSourceDetailsFromServer(id: number) {
       throw new Error('Server returned an error');
    }
    const data: JSONResult = yield resp.json();
-   const r: Source = {
-      id: data.source.id,
-      title: data.source.title,
-      abbrev: data.source.abbrev,
-      biblio: data.source.abbrev,
-      medium: '',
-      medias: data.repr.map(m => ({
-         id: m.id,
-         comments: m.comments,
-         file: m.file,
-         mime: m.mime,
-         url: m.url
-      })),
+   
+   let r: FetchSourceDetailsResult = {
+      source: {
+         id: data.source.id,
+         title: data.source.title,
+         abbrev: data.source.abbrev,
+         biblio: data.source.abbrev,
+         medium: '',
+         medias: data.repr.map(m => ({
+            id: m.id,
+            comments: m.comments,
+            file: m.file,
+            mime: m.mime,
+            url: m.url
+         })),
+         assertions: data.asserts.map(a => assertionFromJSON(a)),
+      },
+      events: {},
+      persons: {},
+      places: {},
    };
+   setAssertionEntities(data, r);
    return r;
 }
 

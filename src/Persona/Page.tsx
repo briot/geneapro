@@ -5,7 +5,7 @@ import { Loader } from 'semantic-ui-react';
 import { PersonSet, personDisplay } from '../Store/Person';
 import { addToHistory } from '../Store/History';
 import { AppState, GPDispatch } from '../Store/State';
-import { fetchPersonDetails, fetchEventDetails } from '../Store/Sagas';
+import { fetchPersonDetails } from '../Store/Sagas';
 import { GenealogyEventSet } from '../Store/Event';
 import Page from '../Page';
 import Persona from '../Persona/Persona';
@@ -35,10 +35,6 @@ class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
       props.dispatch(fetchPersonDetails.request({id: props.id}));
    }
 
-   onShowEventDetails = (id: number) => {
-      this.props.dispatch(fetchEventDetails.request({id: id}));
-   }
-
    render() {
       const p = this.props.persons[this.props.id];
       document.title = p ? personDisplay(p) : 'Persona';
@@ -49,7 +45,6 @@ class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
                <Persona
                   person={p}
                   allEvents={this.props.allEvents}
-                  onShowEventDetails={this.onShowEventDetails}
                /> :
                <Loader active={true} size="large">Loading</Loader>
             }

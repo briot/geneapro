@@ -101,6 +101,8 @@ documents the citation styles.""")
     def get_asserts(self):
         """
         Return all assertions related to the given source.
+        Only the id is retrieved for some related fields like persons and
+        events. Further queries are needed to retrieve them.
         """
         from .asserts import Assertion, P2P, P2C, P2E, P2G
         if self.id == -1:
@@ -108,7 +110,9 @@ documents the citation styles.""")
         asserts = []
         schemes = set()
         for table in (P2E, P2C, P2P, P2G):
-            for c in table.objects.select_related().filter(source=self):
+            for c in table.objects.select_related(
+                *table.related_json_fields()
+            ).filter(source=self):
                 asserts.append(c)
                 schemes.add(c.surety.scheme_id)
         return asserts

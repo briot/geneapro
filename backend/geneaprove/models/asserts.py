@@ -5,6 +5,7 @@ from .characteristic import Characteristic
 from .event import Event, Event_Type_Role
 from .group import Group, Group_Type_Role
 from .persona import Persona
+from .place import Place
 from .researcher import Researcher
 from .source import Source
 from .surety import Surety_Scheme_Part
@@ -59,6 +60,11 @@ class Assertion(GeneaProveModel):
         # db_table = "assertion"
         abstract = True
 
+    @staticmethod
+    def related_json_fields():
+        """What select_related() to use if we want to export to JSON"""
+        return ['researcher', 'surety']
+
     def to_json(self):
         return {
             "disproved": self.disproved,
@@ -67,6 +73,40 @@ class Assertion(GeneaProveModel):
             "last_change": self.last_change,
             "source_id": self.source_id,
             "surety": self.surety_id}
+
+    def getEventIds(self):
+        """
+        Return the list of event ids
+        """
+        return set()
+
+    def getPersonIds(self):
+        """
+        Return the list of person ids
+        """
+        return set()
+
+    def getPlaceIds(self):
+        """
+        Return the list of place ids
+        """
+        return set()
+
+    @staticmethod
+    def getEntities(asserts):
+        """
+        Get the list of persons and events needed for the given list of
+        assertions
+        """
+        return {
+            "events": list(Event.objects.
+                select_related('type').
+                filter(id__in=set.union(*(a.getEventIds() for a in asserts)))),
+            "persons": list(Persona.objects.
+                filter(id__in=set.union(*(a.getPersonIds() for a in asserts)))),
+            "places": list(Place.objects.
+                filter(id__in=set.union(*(a.getPlaceIds() for a in asserts)))),
+        }
 
 
 class P2P(Assertion):
@@ -87,10 +127,13 @@ class P2P(Assertion):
     #   several other personas, which in turn can be linked to other
     #   personas.
 
+    def getPersonIds(self):
+        return set([self.person1_id, self.person2_id])
+
     def to_json(self):
         res = super(P2P, self).to_json()
-        res['p1'] = {'person': self.person1}
-        res['p2'] = {'person': self.person2}
+        res['p1'] = {'person': self.person1_id}
+        res['p2'] = {'person': self.person2_id}
         return res
 
 
@@ -104,12 +147,22 @@ class P2C(Assertion):
         """Meta data for the model"""
         db_table = "p2c"
 
+    @staticmethod
+    def related_json_fields():
+        return Assertion.related_json_fields() + ['characteristic']
+
+    def getPersonIds(self):
+        return set([self.person_id])
+
+    def getPlaceIds(self):
+        return set([self.characteristic.place_id])
+
     def to_json(self):
         res = super(P2C, self).to_json()
         parts = []
         for p in self.characteristic.parts.select_related():
             parts.append({'name': p.type.name, 'value': p.name})
-        res['p1'] = {'person': self.person}
+        res['p1'] = {'person': self.person_id}
         res['p2'] = {'char': self.characteristic, 'parts': parts}
         return res
 
@@ -132,10 +185,26 @@ class P2E(Assertion):
         """Meta data for the model"""
         db_table = "p2e"
 
+    @staticmethod
+    def related_json_fields():
+        return Assertion.related_json_fields() + ['role']
+
+    def getPersonIds(self):
+        return set([self.person_id])
+
+    def getEventIds(self):
+        """
+        Return the list of event ids
+        """
+        return set([self.event_id])
+
+    def getPlaceIds(self):
+        return set([self.event.place_id])
+
     def to_json(self):
         res = super(P2E, self).to_json()
-        res['p1'] = {'person': self.person}
-        res['p2'] = {'event': self.event, 'role': self.role.name}
+        res['p1'] = {'person': self.person_id}
+        res['p2'] = {'event': self.event_id, 'role': self.role.name}
         return res
 
 
@@ -149,10 +218,17 @@ class P2G(Assertion):
         """Meta data for the model"""
         db_table = "p2g"
 
+    @staticmethod
+    def related_json_fields():
+        return Assertion.related_json_fields() + ['role']
+
+    def getPersonIds(self):
+        return set([self.person_id])
+
     def to_json(self):
         res = super(P2G, self).to_json()
-        res['p1'] = {'person': self.person}
-        res['p2'] = {'group': self.group, 'role': self.role.name}
+        res['p1'] = {'person': self.person_id}
+        res['p2'] = {'group': self.group_id, 'role': self.role.name}
         return res
 
 

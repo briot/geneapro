@@ -3,6 +3,7 @@ import { Accordion, Icon, Segment, Step } from 'semantic-ui-react';
 import { Source } from '../Store/Source';
 import SourceCitation from '../Source/Citation';
 import SourceMedias from '../Source/Media';
+import SourceAssertions from '../Source/Assertions';
 import './Source.css';
 
 interface SourceProps {
@@ -153,7 +154,7 @@ export default class SourceDetails extends React.PureComponent<SourceProps, Sour
                      <Accordion.Content
                          active={this.state.showAssertions}
                      >
-                        assertions
+                        <SourceAssertions source={s} />
                      </Accordion.Content>
                   </Accordion>
                ) : null

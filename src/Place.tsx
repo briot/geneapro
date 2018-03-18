@@ -10,9 +10,15 @@ interface PlaceNameProps {
 
 class PlaceNameConnected extends React.PureComponent<PlaceNameProps> {
    render() {
-      return this.props.id ?
-         <span className="place">{this.props.allPlaces[this.props.id].name}</span> :
-         null;
+      const place = this.props.id ?
+         this.props.allPlaces[this.props.id] :
+         undefined;
+
+      if (!place) {
+         return null;
+      }
+
+      return <span className="place">{place.name}</span>;
    }
 }
 

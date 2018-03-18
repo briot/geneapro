@@ -79,12 +79,14 @@ class SourceView(JSONView):
         # pylint: disable=arguments-differ
         # pylint: disable=redefined-builtin
         source = get_source(id)
-        return {
+        asserts = source.get_asserts()
+        
+        return dict({
             'source':  source,
             'higher_sources': source.get_higher_sources(),
-            'asserts': source.get_asserts(),
+            'asserts': asserts,
             'repr':    source.get_representations(),
-        }
+        }, **models.Assertion.getEntities(asserts))
 
 
 class EditSourceCitation(JSONView):

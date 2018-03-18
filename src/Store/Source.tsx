@@ -1,3 +1,5 @@
+import { Assertion } from '../Store/Assertion';
+
 export interface SourceMedia {
    id: number;
    comments: string;
@@ -21,6 +23,7 @@ export interface Source {
    last_change?: string;
 
    medias?: SourceMedia[];
+   assertions?: Assertion[];
 }
 
 export interface SourceSet {

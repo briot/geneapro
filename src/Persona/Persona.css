@@ -50,27 +50,3 @@
 .Persona .date + td {
    padding-left: 20px;
 }
-
-.Persona .fullDate {
-   font-weight: bold;
-   font-size: 0.9em;
-   margin-right: 30px;
-}
-
-.Persona .place {
-   font-style: italic;
-}
-
-.Persona .type {
-   font-weight: bold;
-   margin-right: 5px;
-}
-
-.Persona .role {
-   color: #999;
-   margin-right: 15px;
-}
-
-.Persona .rationale {
-   padding-left: 30px;
-}

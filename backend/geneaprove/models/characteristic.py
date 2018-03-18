@@ -51,7 +51,7 @@ class Characteristic(GeneaProveModel):
             "sources": list(self.sources if hasattr(self, 'sources') else []),
             "date": self.date,
             "date_sort": None if not d else DateRange(d),
-            "place": self.place}
+            "place": self.place_id}
 
 
 class Characteristic_Part(GeneaProveModel):

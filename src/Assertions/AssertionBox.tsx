@@ -1,6 +1,10 @@
 import * as React from 'react';
 import { Rating, Segment } from 'semantic-ui-react';
+import { connect } from 'react-redux';
+import { AppState } from '../Store/State';
 import { PlaceName } from '../Place';
+import { PlaceSet } from '../Store/Place';
+import './AssertionBox.css';
 
 interface BoxProps {
    color: 'red'|'blue'|'green';
@@ -9,9 +13,14 @@ interface BoxProps {
    title: JSX.Element;
    content: JSX.Element;
 }
-export default function Box(props: BoxProps) {
+
+interface ConnectedBoxProps extends BoxProps {
+   places: PlaceSet;
+}
+
+function AssertionBoxConnected(props: ConnectedBoxProps) {
    return (
-      <Segment color={props.color}>
+      <Segment color={props.color} className="Assertion">
          <Rating
             style={{float: 'right'}}
             rating={1}   /* ??? Incorrect */
@@ -34,3 +43,11 @@ export default function Box(props: BoxProps) {
       </Segment>
    );
 }
+
+const AssertionBox = connect(
+   (state: AppState, props: BoxProps) => ({
+      ...props,
+      places: state.places
+   }),
+)(AssertionBoxConnected);
+export default AssertionBox;

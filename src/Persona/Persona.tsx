@@ -3,8 +3,8 @@ import { Icon, Segment } from 'semantic-ui-react';
 import { Person } from '../Store/Person';
 import { P2E, P2C } from '../Store/Assertion';
 import { GenealogyEventSet } from '../Store/Event';
-import PersonaCharacteristic from '../Persona/Characteristic';
-import PersonaEvent from '../Persona/Event';
+import P2CView from '../Assertions/P2C';
+import P2EView from '../Assertions/P2E';
 import './Persona.css';
 
 interface Item {
@@ -16,7 +16,6 @@ interface Item {
 interface PersonaProps {
    person: Person;
    allEvents: GenealogyEventSet;
-   onShowEventDetails?: (id: number) => void;
 }
 
 export default function Persona(props: PersonaProps) {
@@ -29,37 +28,26 @@ export default function Persona(props: PersonaProps) {
       Number(birthEvent.date_sort.substring(0, 4)) :
       undefined;
 
-   if (p.events) {
-      items = items.concat(
-         p.events.map(
-            (evRole: P2E) => {
-               const ev = props.allEvents[evRole.eventId];
-               if (ev) {
-                  return {date_sort: ev.date_sort,
-                          id: 'event' + ev.id,
-                          item: (
-                             <PersonaEvent
-                                onShowDetails={props.onShowEventDetails}
-                                role={evRole.role}
-                                event={ev}
-                             />
-                          ),
-                  };
-               }
-               return undefined;
-            }
-         ));
-   }
-
-   if (p.chars) {
-      items = items.concat(
-         p.chars.map(
-            (c: P2C, idx: number) => ({
+   if (p.asserts) {
+      items = p.asserts.map((a, idx) => {
+         if (a instanceof P2E) {
+            const ev = props.allEvents[a.eventId];
+            return ev ?
+               {date_sort: ev.date_sort,
+                id: 'event' + a.eventId,
+                item: <P2EView p2e={a} />
+               } : undefined;
+         } else if (a instanceof P2C) {
+            return {
                id: 'char' + idx,
-               date_sort: c.characteristic.date_sort,
-               item: <PersonaCharacteristic char={c} />
-            }))
-      );
+               date_sort: a.characteristic.date_sort,
+               item: <P2CView p2c={a} />
+            };
+         } else {
+            window.console.error('Unhandled assertion in person');
+            return undefined;
+         }
+      });
    }
 
    items.sort(

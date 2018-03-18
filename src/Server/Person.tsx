@@ -1,6 +1,6 @@
 import * as d3Color from 'd3-color';
 import { BasePerson, Person, PersonSet } from '../Store/Person';
-import { P2E, P2C } from '../Store/Assertion';
+import { Assertion, P2E, P2C, P2P, P2G } from '../Store/Assertion';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { JSONPlace } from '../Server/Place';
@@ -96,12 +96,12 @@ interface JSONEventType {
    gedcom: string;
 }
 
-interface JSONEvent {
+export interface JSONEvent {
    id: number;
    date: string;
    date_sort: string;
    name: string;
-   place?: JSONPlace;
+   place?: number;
    type: JSONEventType;
 }
 
@@ -112,7 +112,7 @@ interface JSONCharacteristic {
    date?: string;
    date_sort?: string;
    name: string;
-   place?: JSONPlace;
+   place?: number;
    sources: JSONSource[]; 
 }
 
@@ -137,39 +137,166 @@ export interface JSONAssertion {
 }
 
 interface P2EJSON extends JSONAssertion {
-   p1: {person: JSONPersonForAssertion};
-   p2: {role: string;
-        event: JSONEvent};
+   p1: {person: number};
+   p2: {role: string; event: number};
+}
+function p2eFromJSON(e: P2EJSON) {
+   return new P2E(
+      e.surety /* surety */,
+      e.researcher.name /* researcher */,
+      e.rationale /* rationale */,
+      e.disproved /* disproved */,
+      e.last_change /* lastChanged */,
+      e.p1.person /* personId */,
+      e.p2.event /* eventId */,
+      e.p2.role /* role */,
+      e.source_id /* sourceId */
+   );
 }
 
 interface P2CJSON extends JSONAssertion {
-   p1: {person: JSONPersonForAssertion};
-   p2: {char: JSONCharacteristic;
-        parts: JSONCharPart[]};
+   p1: {person: number};
+   p2: {char: JSONCharacteristic; parts: JSONCharPart[]};
+}
+function p2cFromJSON(c: P2CJSON) {
+   return new P2C(
+      c.surety /* surety */,
+      c.researcher.name /* researcher */,
+      c.rationale /* rationale */,
+      c.disproved /* disproved */,
+      c.last_change /* lastChanged */,
+      c.p1.person /* personId */,
+      {
+         date: c.p2.char.date,
+         date_sort: c.p2.char.date_sort,
+         name: c.p2.char.name,
+         placeId: c.p2.char.place,
+         parts: c.p2.parts,
+      } /* characteristic */,
+      c.source_id /* sourceId */,
+   );
 }
 
 interface P2PJSON extends JSONAssertion {
-   p1: {person: JSONPersonForAssertion};
-   p2: {person: JSONPersonForAssertion};
+   p1: {person: number};
+   p2: {person: number};
+}
+function p2pFromJSON(a: P2PJSON) {
+   return new P2P(
+      a.surety /* surety */,
+      a.researcher.name /* researcher */,
+      a.rationale /* rationale */,
+      a.disproved /* disproved */,
+      a.last_change /* astChanged */,
+      a.p1.person /* person1Id */,
+      a.p2.person /* person2Id */,
+      a.source_id /* sourceId */,
+   );
 }
 
 interface P2GJSON extends JSONAssertion {
-   p1: {person: JSONPersonForAssertion};
+   p1: {person: number};
+}
+function p2gFromJSON(a: P2GJSON) {
+   return new P2G(
+      a.surety /* surety */,
+      a.researcher.name /* researcher */,
+      a.rationale /* rationale */,
+      a.disproved /* disproved */,
+      a.last_change /* astChanged */,
+      a.p1.person /* personId */,
+      -1 /* groupId */,
+      a.source_id /* sourceId */,
+   );
 }
 
-interface JSONPersonDetails {
+function isP2E(a: JSONAssertion): a is P2EJSON {
+   return (a as P2EJSON).p1.person !== undefined &&
+          (a as P2EJSON).p2.event !== undefined;
+}
+
+function isP2C(a: JSONAssertion): a is P2CJSON {
+   return (a as P2CJSON).p1.person !== undefined &&
+          (a as P2CJSON).p2.char !== undefined;
+}
+
+function isP2P(a: JSONAssertion): a is P2PJSON {
+   return (a as P2PJSON).p1.person !== undefined &&
+          (a as P2PJSON).p2.person !== undefined;
+}
+
+export function assertionFromJSON(a: JSONAssertion): Assertion {
+   if (isP2E(a)) {
+      return p2eFromJSON(a);
+   } else if (isP2C(a)) {
+      return p2cFromJSON(a);
+   } else if (isP2P(a)) {
+      return p2pFromJSON(a);
+   } else {
+      return p2gFromJSON(a as P2GJSON);
+   }
+}
+
+export interface AssertionEntitiesJSON {
+   events: JSONEvent[];  // All events mentioned in the asserts
+   persons: JSONPersonForAssertion[];
+   places: JSONPlace[];
+}
+
+interface JSONPersonDetails extends AssertionEntitiesJSON {
    person: BasePerson;
-   p2c: P2CJSON[];
-   p2e: P2EJSON[];
-   p2g: P2GJSON[];
-   p2p: P2PJSON[];
+   asserts: JSONAssertion[];
    sources: {[id: number]: JSONSource};
 }
 
-export interface DetailsResult {
+export interface AssertionEntities {
    events: GenealogyEventSet; // All events seen in the result
-   person: Person;
+   persons: PersonSet;
    places: PlaceSet;
+}
+
+export interface DetailsResult extends AssertionEntities {
+   person: Person;
+}
+
+export function setAssertionEntities(
+   entities: AssertionEntitiesJSON,
+   into: AssertionEntities,
+   
+) {
+   for (const p of entities.places) {
+      into.places[p.id] = {
+         id: p.id,
+         name: p.name,
+         // p.date,
+         // p.date_sort,
+         // p.parent_place_id,
+      };
+   }
+
+   for (const e of entities.events) {
+      into.events[e.id] = {
+         id: e.id,
+         date: e.date,
+         date_sort: e.date_sort,
+         name: e.name,
+         placeId: e.place,
+         type: e.type,
+      };
+   }
+
+   for (const p of entities.persons) {
+      into.persons[p.id] = {
+         id: p.id,
+         givn: p.name,
+         surn: '',
+         knownAncestors: 0,
+         knownDescendants: 0,
+         // p.description ?
+         // p.last_change ?
+      };
+   }
+
 }
 
 export function* fetchPersonDetailsFromServer(id: number) {
@@ -178,69 +305,14 @@ export function* fetchPersonDetailsFromServer(id: number) {
       throw new Error('Server returned an error');
    }
    const data: JSONPersonDetails = yield resp.json();
-   const pEvents: P2E[] = [];
-   const events: GenealogyEventSet = {};
-   const places: PlaceSet = {};
-   const chars: P2C[] = [];
-
-   for (const e of data.p2e) {
-      let placeId: number|undefined;
-      const ev: JSONEvent = e.p2.event;
-      if (ev.place) {
-         placeId = ev.place.id;
-         places[placeId] = ev.place;
-      }
-      events[ev.id] = {
-         id: ev.id,
-         date: ev.date,
-         date_sort: ev.date_sort,
-         name: ev.name,
-         placeId: placeId,
-         type: ev.type,
-      };
-      pEvents.push({
-         researcher: e.researcher.name,
-         surety: e.surety,
-         sourceId: e.source_id,
-         rationale: e.rationale,
-         disproved: e.disproved,
-         last_changed: e.last_change,
-         personId: id,
-         role: e.p2.role,
-         eventId: e.p2.event.id
-      });
-   }
-
-   for (const c of data.p2c) {
-      const p: JSONPlace|undefined = c.p2.char.place;
-      if (p) {
-         places[p.id] = {
-            id: p.id,
-            name: p.name
-         };
-      }
-      chars.push({
-         researcher: c.researcher.name,
-         surety: c.surety,
-         sourceId: c.source_id,
-         rationale: c.rationale,
-         disproved: c.disproved,
-         last_changed: c.last_change,
-         personId: id,
-         characteristic: {
-            date: c.p2.char.date,
-            date_sort: c.p2.char.date_sort,
-            name: c.p2.char.name,
-            placeId: p ? p.id : undefined,
-            parts: c.p2.parts,
-         }
-      });
-   }
-
-   const r: DetailsResult = {
-      person: {...data.person, events: pEvents, chars: chars},
-      places: places,
-      events: events,
+   let r: DetailsResult = {
+      person: {...data.person,
+               asserts: data.asserts.map(a => assertionFromJSON(a)),
+              },
+      persons: {},
+      events: {},
+      places: {},
    };
+   setAssertionEntities(data, r);
    return r;
 }

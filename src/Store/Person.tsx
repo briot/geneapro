@@ -1,4 +1,4 @@
-import { P2E, P2C } from './Assertion';
+import { Assertion } from './Assertion';
 import { PersonStyle } from './Styles';
 
 // The base type is only needed until the server returns a proper Person.
@@ -24,8 +24,7 @@ export interface Person extends BasePerson {
    children?: (number|null)[];
 
    // Those are only known after asking for a person's details
-   events?: P2E[];
-   chars?: P2C[];
+   asserts?: Assertion[];
 }
 
 export interface PersonSet {

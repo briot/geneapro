@@ -1,0 +1,27 @@
+.Assertion {
+}
+
+.Assertion .fullDate {
+   font-weight: bold;
+   font-size: 0.9em;
+   margin-right: 30px;
+}
+
+.Assertion .place {
+   font-style: italic;
+}
+
+.Assertion .type {
+   font-weight: bold;
+   margin-right: 5px;
+}
+
+.Assertion .role {
+   color: #999;
+   margin-right: 15px;
+}
+
+.Assertion .rationale {
+   padding-left: 30px;
+}
+

@@ -11,27 +11,75 @@ export interface Characteristic {
    parts: CharacteristicPart[];
 }
 
-export interface Assertion {
-   surety:         number;
-   researcher:     string;
-   sourceId?:      number;  // points to a Source in the state
-   rationale:      string;
-   disproved:      boolean;
-   last_changed:   string;
+export class Assertion {
+   constructor(
+      public surety:      number,
+      public researcher:  string,
+      public rationale:   string,
+      public disproved:   boolean,
+      public lastChanged: string,
+      public sourceId?:   number   // points to a Source in the state
+   ) {
+   }
 }
 
-export interface P2P extends Assertion {
-   person1Id:      number;  // points to a Persona in the state
-   person2Id:      number;  // points to a Persona in the state
+export class P2P extends Assertion {
+   constructor(
+      public surety:      number,
+      public researcher:  string,
+      public rationale:   string,
+      public disproved:   boolean,
+      public lastChanged: string,
+      public person1Id:   number,  // points to a Persona in the state
+      public person2Id:   number,  // points to a Persona in the state
+      public sourceId?:   number   // points to a Source in the state
+   )  {
+      super(surety, researcher, rationale, disproved, lastChanged, sourceId);
+   }
 }
 
-export interface P2C extends Assertion {
-   personId:       number;  // points to a Persona in the state
-   characteristic: Characteristic;
+export class P2G extends Assertion {
+   constructor(
+      public surety:      number,
+      public researcher:  string,
+      public rationale:   string,
+      public disproved:   boolean,
+      public lastChanged: string,
+      public personId:    number,  // points to a Persona in the state
+      public groupId:     number,  // points to a Group in the state
+      public sourceId?:   number   // points to a Source in the state
+   )  {
+      super(surety, researcher, rationale, disproved, lastChanged, sourceId);
+   }
 }
 
-export interface P2E extends Assertion {
-   personId:       number;  // points to a Persona in the state
-   eventId:        number;  // points to a GenealogyEvent in the state
-   role:           string;
+export class P2C extends Assertion {
+   constructor(
+      public surety:         number,
+      public researcher:     string,
+      public rationale:      string,
+      public disproved:      boolean,
+      public lastChanged:    string,
+      public personId:       number,  // points to a Persona in the state
+      public characteristic: Characteristic,
+      public sourceId?:      number   // points to a Source in the state
+   )  {
+      super(surety, researcher, rationale, disproved, lastChanged, sourceId);
+   }
+}
+
+export class P2E extends Assertion {
+   constructor(
+      public surety:        number,
+      public researcher:    string,
+      public rationale:     string,
+      public disproved:     boolean,
+      public lastChanged:   string,
+      public personId:      number,  // points to a Persona in the state
+      public eventId:       number,  // points to a GenealogyEvent in the state
+      public role:          string,
+      public sourceId?:     number   // points to a Source in the state
+   )  {
+      super(surety, researcher, rationale, disproved, lastChanged, sourceId);
+   }
 }

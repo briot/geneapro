@@ -55,8 +55,7 @@ def more_recent(obj1, obj2):
 
 
 def extended_personas(
-        nodes, styles, graph, p2e=None, event_types=None, schemes=None,
-        p2c=None, p2g=None,
+        nodes, styles, graph, asserts=None, event_types=None, schemes=None,
         all_sources=None, as_css=False, query_groups=True):
     """
     Compute the events for the various persons in `nodes` (all all persons in
@@ -74,9 +73,7 @@ def extended_personas(
        :param as_css:
           True to get the styles as a CSS string rather than a python dict
        :param event_types: restricts the types of events that are retrieved
-       :param dict p2e: All person-to-event assertions
-       :param dict p2c: All persona-to-characteristic assertions
-       :param dict p2g: All persona-to-group assertions
+       :param list asserts: All assertions
        :return: a list of persons:
           * persons is a dictionary of Persona instances, indexed on persona_id
 
@@ -95,7 +92,6 @@ def extended_personas(
     compute_parts = styles and styles.need_place_parts()
 
     roles = dict()  # role_id  -> name
-    places = dict()  # place_id -> place
 
     assert schemes is None or isinstance(schemes, set)
 
@@ -132,7 +128,7 @@ def extended_personas(
     ################
 
     events = models.P2E.objects.select_related(
-        'event', 'event__place', 'event__type', 'surety')
+        'event', 'event__type', *models.P2E.related_json_fields())
     if event_types:
         events = events.filter(event__type__in=event_types)
 
@@ -155,9 +151,8 @@ def extended_personas(
         # ??? A person could be involved multiple times in the same
         # event, under multiple roles. Here we are only preserving the
         # last occurrence
-        if p2e is not None:
-            # ??? Should we reset p.p1, since this is always the same
-            p2e[e.id] = p
+        if asserts is not None:
+            asserts.append(p)
 
         if all_sources is not None:
             all_sources.setdefault(p.source_id, {})
@@ -168,9 +163,6 @@ def extended_personas(
 
         if schemes is not None:
             schemes.add(p.surety.scheme_id)
-
-        if compute_parts and e.place:
-            places[e.place_id] = e.place
 
         if styles:
             styles.process(person, p.role_id, e)
@@ -195,13 +187,15 @@ def extended_personas(
     #########
 
     if query_groups:
-        groups = models.P2G.objects.select_related('group')
+        groups = models.P2G.objects.select_related(
+            *models.P2G.related_json_fields())
+
         for gr in sql_in(groups, "person", all_ids):
             p_node = graph.node_from_id(gr.person_id)
             person = persons[p_node.main_id]
 
-            if p2g is not None:
-                p2g[gr.group_id] = gr
+            if asserts is not None:
+                asserts.append(gr)
             if all_sources is not None:
                 all_sources.setdefault(gr.source_id, {})
 
@@ -215,7 +209,7 @@ def extended_personas(
     logger.debug('MANU processing p2c')
     c2p = dict()  # characteristic_id -> person
     all_p2c = models.P2C.objects.select_related(
-        'characteristic', 'characteristic__place')
+        *models.P2C.related_json_fields())
 
     for p in sql_in(all_p2c, "person", all_ids):
         c = p.characteristic
@@ -231,18 +225,13 @@ def extended_personas(
         if schemes is not None:
             schemes.add(p.surety.scheme_id)
 
-        if p2c is not None:
-            # ??? Should we reset p.person, since this is always the same
-            # ??? but can't set it to None in the model
-            p2c[c.id] = p
-
-        if compute_parts and c.place:
-            places[c.place_id] = c.place
+        if asserts is not None:
+            asserts.append(p)
 
     logger.debug('MANU processing characteristic parts')
 
     chars = models.Characteristic_Part.objects.select_related(
-        'type', 'characteristic', 'characteristic__place').filter(
+        'type', 'characteristic').filter(
             type__in=(models.Characteristic_Part_Type.PK_sex,
                       models.Characteristic_Part_Type.PK_given_name,
                       models.Characteristic_Part_Type.PK_surname)).order_by()
@@ -263,23 +252,23 @@ def extended_personas(
     # could benefit from them.
     ########
 
-    logger.debug('MANU processing places')
-
-    if compute_parts:
-        prev_place = None
-        d = None
-
-        for p in sql_in(models.Place_Part.objects
-                        .order_by('place').select_related('type'),
-                        "place", places):
-
-            # ??? We should also check the parent place to gets its own parts
-            if p.place_id != prev_place:
-                prev_place = p.place_id
-                d = dict()
-                setattr(places[prev_place], "parts", d)
-
-            d[p.type.name] = p.name
+#    logger.debug('MANU processing places')
+#
+#    if compute_parts:
+#        prev_place = None
+#        d = None
+#
+#        for p in sql_in(models.Place_Part.objects
+#                        .order_by('place').select_related('type'),
+#                        "place", places):
+#
+#            # ??? We should also check the parent place to gets its own parts
+#            if p.place_id != prev_place:
+#                prev_place = p.place_id
+#                d = dict()
+#                setattr(places[prev_place], "parts", d)
+#
+#            d[p.type.name] = p.name
 
     ##########
     # Get the title for all sources that are mentioned
@@ -310,22 +299,22 @@ class PersonaView(JSONView):
         global_graph.update_if_needed()
 
         all_sources = {}
-        p2e = {}
-        p2c = {}
-        p2g = {}
+        asserts = []
 
         p = extended_personas(
             nodes=set([global_graph.node_from_id(id)]),
-            p2e=p2e,
-            p2c=p2c,
-            p2g=p2g,
+            asserts=asserts,
             all_sources=all_sources,
             styles=None, as_css=True, graph=global_graph, schemes=None)
 
         node = global_graph.node_from_id(id)
-        assertions = list(models.P2P.objects.filter(
+
+        asserts.extend(models.P2P.objects.filter(
             type=models.P2P.sameAs,
-            person1__in=node.ids.union(node.different)))
+            person1__in=node.ids.union(node.different)).select_related(
+                *models.P2P.related_json_fields()
+            )
+        )
 
         decujus = p[node.main_id]
 
@@ -335,14 +324,11 @@ class PersonaView(JSONView):
         # referenced by any from assertions. This would make it easier to
         # store in React, and would save on the amount of data we send.
 
-        return {
+        return dict({
             "person": decujus,
             "sources": all_sources,
-            "p2c": list(p2c.values()),
-            "p2e": list(p2e.values()),
-            "p2p": assertions,
-            "p2g": list(p2g.values())
-        }
+            "asserts": asserts,
+        }, **models.Assertion.getEntities(asserts))
 
 
 class GlobalSettings(JSONView):

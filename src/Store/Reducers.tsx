@@ -7,10 +7,10 @@ import { fetchPedigree, fetchPedigreeResult, fetchPersonDetails, fetchPersons,
          fetchPlaces } from '../Store/Sagas';
 import { GenealogyEventSet, addEvents } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
-import { Source, SourceSet } from '../Store/Source';
+import { SourceSet } from '../Store/Source';
 import { EventDetails } from '../Server/Event';
 import { DetailsResult, FetchPersonsResult } from '../Server/Person';
-import { FetchSourcesResult } from '../Server/Source';
+import { FetchSourcesResult, FetchSourceDetailsResult } from '../Server/Source';
 import { FetchPlacesResult } from '../Server/Place';
 import { fetchQuilts } from '../Store/Sagas';
 
@@ -53,11 +53,17 @@ export function personsReducer(
       }
       return persons;
 
+   } else if (isType(action, fetchSourceDetails.done)) {
+      const data = action.payload.result as FetchSourceDetailsResult;
+      return {...state, ...data.persons};
+
    } else if (isType(action, fetchPersonDetails.done)) {
       const data: DetailsResult = action.payload.result as DetailsResult;
 
       // ??? Should merge
-      const result = {...state, [data.person.id]: data.person};
+      const result = {...state,
+                      ...data.persons,
+                      [data.person.id]: data.person};
 
       // Create an alias if necessary, in case the person was referenced
       // by one of its personas
@@ -82,6 +88,10 @@ export function eventsReducer(
 
    } else if (isType(action, fetchPersons.done)) {
       const data = action.payload.result as FetchPersonsResult;
+      return {...state, ...data.events};
+
+   } else if (isType(action, fetchSourceDetails.done)) {
+      const data = action.payload.result as FetchSourceDetailsResult;
       return {...state, ...data.events};
 
    } else if (isType(action, fetchEventDetails.done)) {
@@ -123,6 +133,12 @@ export function placesReducer(
    } else if (isType(action, fetchPlaces.done)) {
       const {places} = action.payload.result as FetchPlacesResult;
       return {...state, ...places};
+   } else if (isType(action, fetchPersonDetails.done)) {
+      const data: DetailsResult = action.payload.result as DetailsResult;
+      return {...state, ...data.places};
+   } else if (isType(action, fetchSourceDetails.done)) {
+      const data = action.payload.result as FetchSourceDetailsResult;
+      return {...state, ...data.places};
    }
    return state;
 }
@@ -136,7 +152,8 @@ export function sourcesReducer(
 ) {
    if (isType(action, fetchSourceDetails.done)) {
       const result = {...state};
-      const source = action.payload.result as Source;
+      const data = action.payload.result as FetchSourceDetailsResult;
+      const source = data.source;
       if (source.id in result) {
          result[source.id] = {...result[source.id], ...source};
       } else {

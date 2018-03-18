@@ -1,15 +1,15 @@
 import * as React from 'react';
 import { P2C, CharacteristicPart } from '../Store/Assertion';
-import Box from '../Persona/Box';
+import AssertionBox from '../Assertions/AssertionBox';
 
-interface PersonaCharacteristicProps {
-   char: P2C;
+interface P2CViewProps {
+   p2c: P2C;
 }
 
-export default function PersonaCharacteristic(props: PersonaCharacteristicProps) {
-   const c = props.char.characteristic;
+export default function P2CView(props: P2CViewProps) {
+   const c = props.p2c.characteristic;
    return (
-      <Box
+      <AssertionBox
          color="blue"
          date={c.date}
          placeId={c.placeId}
