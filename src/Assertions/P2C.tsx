@@ -12,8 +12,9 @@ export default function P2CView(props: P2CViewProps) {
       <AssertionBox
          color="blue"
          date={c.date}
+         dateSort={c.date_sort}
+         tag={c.name}
          placeId={c.placeId}
-         title={<span className="type">{c.name}</span>}
          content={
             <div>
                {c.parts.map(

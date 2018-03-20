@@ -1,0 +1,16 @@
+.Place {
+   max-width: 1100px;
+}
+
+.Place .pageTitle {
+   background: #cdcdcd;
+   font-size: 1.4em;
+   line-height: 1.6em;
+   white-space: nowrap;
+   color: #4d4d4d;
+   font-family: serif;
+}
+
+.Place .pageContent {
+   background: #ececec;
+}

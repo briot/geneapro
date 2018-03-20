@@ -18,7 +18,6 @@ interface SourcePageProps {
 class SourcePageConnected extends React.PureComponent<SourcePageProps> {
    componentWillMount() {
       this.calculateData(this.props);
-      this.props.dispatch(addToHistory({source: this.props.source}));
    }
 
    componentWillReceiveProps(nextProps: SourcePageProps) {

@@ -3,6 +3,7 @@ import { fetchPedigreeFromServer } from '../Server/Pedigree';
 import { fetchPersonsFromServer, fetchPersonDetailsFromServer,
          FetchPersonsResult, DetailsResult } from '../Server/Person';
 import { fetchEventFromServer, EventDetails } from '../Server/Event';
+import { fetchPlaceFromServer, PlaceDetails } from '../Server/Place';
 import { fetchPlacesFromServer, FetchPlacesResult } from '../Server/Place';
 import { fetchSourcesFromServer, FetchSourcesResult,
          fetchSourceDetailsFromServer, FetchSourceDetailsResult } from '../Server/Source';
@@ -122,6 +123,24 @@ function* _fetchEventDetails(p: fetchEventDetailsParams) {
 }
 export const fetchEventDetails = createAsyncAction(
    'DATA/EVENT', _fetchEventDetails, _hasEventDetails);
+
+/**
+ * Async Action: fetch details for one place
+ */
+
+export type fetchPlaceDetailsParams = {
+   id: number;
+};
+function _hasPlaceDetails(p: fetchPlaceDetailsParams, state: AppState) {
+   return (p.id in state.places &&
+           state.places[p.id].asserts !== undefined);
+}
+function* _fetchPlaceDetails(p: fetchPlaceDetailsParams) {
+   const res: PlaceDetails = yield call(fetchPlaceFromServer, p.id);
+   return res;
+}
+export const fetchPlaceDetails = createAsyncAction(
+   'DATA/PLACE', _fetchPlaceDetails, _hasPlaceDetails);
 
 /**
  * Async Action: fetch details for one source

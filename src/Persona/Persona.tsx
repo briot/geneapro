@@ -35,7 +35,7 @@ export default function Persona(props: PersonaProps) {
             return ev ?
                {date_sort: ev.date_sort,
                 id: 'event' + a.eventId,
-                item: <P2EView p2e={a} />
+                item: <P2EView p2e={a} hidePerson={true} />
                } : undefined;
          } else if (a instanceof P2C) {
             return {

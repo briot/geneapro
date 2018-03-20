@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
+import { AppState } from './Store/State';
 import { Link } from 'react-router-dom';
 import { Icon } from 'semantic-ui-react';
 import { Place } from './Store/Place';
@@ -65,15 +67,25 @@ export function urlPlace(id: number) {
 }
 
 interface PlaceLinkProps {
-   place: Place;
+   id: number;
    className?: string;
 }
+interface ConnectedPlaceLinkProps extends PlaceLinkProps {
+   place?: Place;
+}
 
-export function PlaceLink(props: PlaceLinkProps) {
+export function ConnectedPlaceLink(props: ConnectedPlaceLinkProps) {
    return (
-      <Link to={urlPlace(props.place.id)} className={props.className + ' placeLink'}>
+      <Link to={urlPlace(props.id)} className={props.className + ' placeLink'}>
          <Icon name="globe" />
-         {props.place.name}
+         {props.place ? props.place.name : 'Unnamed place'}
       </Link>
    );
 }
+
+export const PlaceLink = connect(
+   (state: AppState, props: PlaceLinkProps) => ({
+      ...props,
+      place: state.places[props.id],
+   }),
+)(ConnectedPlaceLink);

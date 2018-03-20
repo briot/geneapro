@@ -1,53 +1,90 @@
 import * as React from 'react';
-import { Rating, Segment } from 'semantic-ui-react';
-import { connect } from 'react-redux';
-import { AppState } from '../Store/State';
-import { PlaceName } from '../Place';
-import { PlaceSet } from '../Store/Place';
+import { Icon, Rating, Segment } from 'semantic-ui-react';
+import { PlaceLink } from '../Links';
 import './AssertionBox.css';
 
 interface BoxProps {
    color: 'red'|'blue'|'green';
    date?: string;
+   dateSort?: string;
    placeId?: number;  // points to a Place in the store
-   title: JSX.Element;
-   content: JSX.Element;
+   tag?: string|JSX.Element;
+   title?: string;
+   content?: JSX.Element;
+
+   onExpand?: () => void;
+   expandable?: boolean;
+   // If true, the content is hidden by default, and will be revealed when
+   // clicking on an arrow.
 }
 
-interface ConnectedBoxProps extends BoxProps {
-   places: PlaceSet;
+interface BoxState {
+   expanded: boolean;
 }
 
-function AssertionBoxConnected(props: ConnectedBoxProps) {
-   return (
-      <Segment color={props.color} className="Assertion">
-         <Rating
-            style={{float: 'right'}}
-            rating={1}   /* ??? Incorrect */
-            size="mini"
-            maxRating={5}
-         />
-         <div style={{textAlign: 'center'}}>
-            {props.title}
-         </div>
-         <div>
-            {props.date ?
-               <span className="fullDate">{props.date}</span> :
-               null
+export default class AssertionBox extends React.PureComponent<BoxProps, BoxState> {
+   constructor(props: BoxProps) {
+      super(props);
+      this.state = {
+         expanded: false,
+      };
+   }
+
+   onExpand = () => {
+      if (this.props.expandable) {
+         this.setState(old => {
+            if (!old.expanded) {
+               if (this.props.onExpand) {
+                  this.props.onExpand();
+               }
             }
-            <PlaceName id={props.placeId} />
-         </div>
-         <div>
-            {props.content}
-         </div>
-      </Segment>
-   );
-}
+            return {expanded: !old.expanded};
+         });
+      }
+   }
 
-const AssertionBox = connect(
-   (state: AppState, props: BoxProps) => ({
-      ...props,
-      places: state.places
-   }),
-)(AssertionBoxConnected);
-export default AssertionBox;
+   render() {
+      const p = this.props;
+      return (
+         <Segment color={p.color} className="Assertion">
+            <div className="expander" onClick={this.onExpand}>
+               {
+                  p.expandable &&
+                     <Icon name={this.state.expanded ? 'dropdown' : 'triangle right'} />
+               }
+            </div>
+
+            <div className="assertionTitle">
+               <div className="dateAndTag">
+                  <div>
+                  {
+                     p.date &&
+                     <span title={p.dateSort}>{p.date}</span>
+                  }
+                  </div>
+                  <div>
+                     {p.tag}
+                  </div>
+               </div>
+
+               <div className={'nameAndPlace ' + (p.title || p.placeId ? 'bordered ' : '')}>
+                  <div>{p.title}</div>
+                  <div>{p.placeId && <PlaceLink id={p.placeId} />}</div>
+               </div>
+
+               <Rating
+                  className="rating"
+                  rating={1}   /* ??? Incorrect */
+                  size="mini"
+                  maxRating={5}
+               />
+            </div>
+
+            {
+               (!p.expandable || this.state.expanded) &&
+               <div className="details">{p.content}</div>
+            }
+         </Segment>
+      );
+   }
+}

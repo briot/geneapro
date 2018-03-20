@@ -102,7 +102,7 @@ class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListSt
                                 const p: Place = places[rowIndex as number];
                                 return (
                                    <Cell {...props}>
-                                      <PlaceLink place={p} />
+                                      <PlaceLink id={p.id} />
                                    </Cell>
                                 );
                              }}

@@ -1,6 +1,7 @@
 import { actionCreator } from '../Store/Actions';
 import { Person } from '../Store/Person';
 import { Source } from '../Store/Source';
+import { Place } from '../Store/Place';
 
 export enum HistoryKind {
    PERSON = 0,
@@ -32,4 +33,5 @@ export function lastVisitedPerson(hist: HistoryItem[]): number|undefined {
 export const addToHistory = actionCreator<{
    person?: Person;
    source?: Source;
+   place?: Place;
 }>('DATA/HISTORY');

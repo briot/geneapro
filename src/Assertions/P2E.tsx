@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import { Accordion, Icon, Loader, Rating, Segment } from 'semantic-ui-react';
+import { Loader, Rating, Segment } from 'semantic-ui-react';
 import { GenealogyEvent, GenealogyEventSet } from '../Store/Event';
+import { PersonSet } from '../Store/Person';
 import { P2E } from '../Store/Assertion';
 import { AppState, GPDispatch } from '../Store/State';
 import { fetchEventDetails } from '../Store/Sagas';
@@ -19,7 +20,7 @@ function EventDetails(props: EventDetailsProps) {
    return (
       <Segment.Group className="eventDetails">
          {props.event.persons.map(
-            (p) => (
+            p => (
                <Segment key={p.id}>
                   <div>
                      <Rating
@@ -53,44 +54,34 @@ function EventDetails(props: EventDetailsProps) {
 
 interface P2EProps {
    p2e: P2E;
+
+   hidePerson?: boolean;
+   // If true, does not display the person. Useful when on the Persona page,
+   // where we have already displayed the person.
 }
 
 interface P2EConnectedProps extends P2EProps {
    events: GenealogyEventSet;
+   persons: PersonSet;
    dispatch: GPDispatch;
 }
 
-interface P2EState {
-   showDetails: boolean;
-}
+class P2EViewConnected extends React.PureComponent<P2EConnectedProps> {
 
-class P2EViewConnected extends React.PureComponent<P2EConnectedProps, P2EState> {
-
-   constructor() {
-      super();
-      this.state = {
-         showDetails: false,
-      };
-   }
-
-   onTitleClick = (e: React.SyntheticEvent<HTMLElement>, props2: {active: boolean}) => {
-      const show = !this.state.showDetails;
-      this.setState({showDetails: show});
-      if (show) {
-         // Fetch event details
-         this.props.dispatch(fetchEventDetails.request({id: this.props.p2e.eventId}));
-      }
+   onExpand = () => {
+      this.props.dispatch(fetchEventDetails.request({id: this.props.p2e.eventId}));
    }
 
    render() {
       const a = this.props.p2e;  //  the assertion
       const e = this.props.events[a.eventId];
+      // const p = this.props.hidePerson ? undefined : this.props.persons[a.personId];
 
       if (!e) {
          return (
             <AssertionBox
                color="green"
-               title={<span>Unknown event</span>}
+               title="Unknown event"
                content={<span>Unknown event</span>}
             />
          );
@@ -100,36 +91,20 @@ class P2EViewConnected extends React.PureComponent<P2EConnectedProps, P2EState> 
          <AssertionBox
             color="green"
             date={e.date}
+            dateSort={e.date_sort}
+            tag={<span>
+                    {e.type ? e.type.name : 'Unknown'}
+                    {
+                        a.role !== 'principal' &&
+                        <span className="role"> ({a.role})</span>
+                    }
+                 </span>
+                }
             placeId={e.placeId}
-            title={
-               <div>
-                  <span className="type">
-                     {e.type ?  e.type.name : ''}
-                  </span>
-                  {a.role !== 'principal' ?
-                     <span className="role">(as {a.role})</span> :
-                     null}
-               </div>
-            }
-            content={
-               <Accordion
-                  styled={false}
-                  exclusive={false}
-                  fluid={true}
-               >
-                  <Accordion.Title
-                     active={this.state.showDetails}
-                     onClick={this.onTitleClick}
-                  >
-                     <Icon name="dropdown" />
-                     {e.name}
-                  </Accordion.Title>
-                  <Accordion.Content
-                     active={this.state.showDetails}
-                  >
-                     <EventDetails event={e} />
-                  </Accordion.Content>
-               </Accordion>}
+            title={e.name}
+            expandable={true}
+            onExpand={this.onExpand}
+            content={<EventDetails event={e} />}
          />
       );
    }
@@ -138,7 +113,8 @@ class P2EViewConnected extends React.PureComponent<P2EConnectedProps, P2EState> 
 const P2EView = connect(
    (state: AppState, props: P2EProps) => ({
       ...props,
-      events: state.events
+      events: state.events,
+      persons: state.persons,
    }),
    (dispatch: GPDispatch) => ({
       dispatch,

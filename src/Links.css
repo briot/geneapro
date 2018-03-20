@@ -13,3 +13,10 @@
    margin-left: 15px;
    color: black;
 }
+
+a:hover,
+.sourceLink:hover,
+.personaLink:hover,
+.placeLink:hover {
+   text-decoration: underline;
+}

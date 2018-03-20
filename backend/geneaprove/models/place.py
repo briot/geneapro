@@ -42,6 +42,28 @@ class Place(GeneaProveModel):
         self.date_sort = compute_sort_date(self.date)
         super(Place, self).save(**kwargs)
 
+    def get_asserts(self):
+        """
+        Return all assertions related to the given place.
+        Only the id is retrieved for some related fields like persons and
+        events. Further queries are needed to retrieve them.
+        """
+        from .asserts import P2C, P2E
+        asserts = []
+
+        if self.id != -1:
+            asserts.extend(
+                P2C.objects.select_related(
+                    *P2C.related_json_fields()
+                ).filter(characteristic__place_id=self.id))
+
+            asserts.extend(
+                P2E.objects.select_related(
+                    *P2E.related_json_fields()
+                ).filter(event__place_id=self.id))
+
+        return asserts
+
 
 class Place_Part_Type(Part_Type):
     """

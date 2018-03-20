@@ -1,10 +1,37 @@
-.Assertion {
+.Assertion.ui.segment {
+   padding: 5px 5px;
 }
 
-.Assertion .fullDate {
+.Assertion .expander {
+   float: left;
+   height: 100%;
+   cursor: pointer;
+}
+
+.Assertion .assertionTitle {
+   margin-left: 20px;
+   display: flex;
+}
+.Assertion .dateAndTag {
+   text-align: left;
+   min-width: 10px;
+   margin-right: 10px;
    font-weight: bold;
    font-size: 0.9em;
-   margin-right: 30px;
+
+}
+.Assertion .nameAndPlace {
+   flex-grow: 1;
+}
+.Assertion .nameAndPlace.bordered {
+   border-left: 1px solid #ccc;
+   padding-left: 5px;
+}
+.Assertion .rating {
+}
+
+.Assertion .details {
+   margin-left: 30px;
 }
 
 .Assertion .place {
@@ -18,7 +45,7 @@
 
 .Assertion .role {
    color: #999;
-   margin-right: 15px;
+   font-weight: normal;
 }
 
 .Assertion .rationale {
