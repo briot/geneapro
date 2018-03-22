@@ -35,7 +35,6 @@ class PlacePageConnected extends React.PureComponent<PlacePageProps> {
 
    render() {
       const p = this.props.place;
-      window.console.log(p, this.props.id);
       document.title = p ? p.name : 'Place';
       return (
          <Page
@@ -56,7 +55,6 @@ interface PropsFromRoute {
 const PlacePage = connect(
    (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => {
       const id = Number(ownProps.match.params.id);
-      window.console.log('Places=', state.places);
       return {
          id,
          place: state.places[id] as Place | undefined,

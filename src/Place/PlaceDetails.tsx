@@ -1,9 +1,8 @@
 import * as React from 'react';
 import { Segment } from 'semantic-ui-react';
-import { Assertion, P2E, P2C } from '../Store/Assertion';
+import { Assertion } from '../Store/Assertion';
 import { Place } from '../Store/Place';
-import P2EView from '../Assertions/P2E';
-import P2CView from '../Assertions/P2C';
+import AssertionView from '../Assertions/Assertion';
 import './PlaceDetails.css';
 
 interface PlaceProps {
@@ -24,9 +23,7 @@ export default class PlaceDetails extends React.PureComponent<PlaceProps, {}> {
                   this.props.place.asserts &&
                   this.props.place.asserts.map(
                      (a: Assertion, idx: number) => (
-                        a instanceof P2E ? <P2EView key={idx} p2e={a} /> :
-                        a instanceof P2C ? <P2CView key={idx} p2c={a} /> :
-                        <span key={idx}>Assertion</span>
+                        <AssertionView key={idx} assert={a} />
                      )
                   )
                } 

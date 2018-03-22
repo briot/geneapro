@@ -154,8 +154,9 @@ LOGGING = {
     'handlers': {
         'file': {
             'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': 'file.log',
+            'class': 'logging.StreamHandler',
+            # 'class': 'logging.FileHandler',
+            # 'filename': 'file.log',
             'formatter': 'simple'
         },
         'console': {

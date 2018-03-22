@@ -1,5 +1,30 @@
-.Assertion.ui.segment {
-   padding: 5px 5px;
+.Assertion + .Assertion {
+   padding-top: 10px;
+}
+.Assertion.disproved {
+   text-decoration: line-through;
+}
+
+.Assertion .ui.attached.segment+div+.ui.attached.segment {
+	border-top: 0;
+}
+
+.Assertion .role {
+	position: absolute;
+	z-index: 1000;
+	width: 100%;
+	text-align: left;
+	margin-top: -0.9em;
+	font-size: 0.8em;
+}
+.Assertion .role > span {
+	margin-left: 10px;
+	background: white;
+	padding: 0 5px;
+   color: #999;
+   font-weight: normal;
+	border-radius: 5px;
+	border: 1px solid #ddd;
 }
 
 .Assertion .expander {
@@ -8,7 +33,14 @@
    cursor: pointer;
 }
 
-.Assertion .assertionTitle {
+.Assertion .ui.segment.details {
+	margin-left: 30px;
+	width: calc(100% - 29px);
+	background-color: #f9f9f9;
+	padding: 3px 3px;
+}
+
+.Assertion .assertionTitle > div {
    margin-left: 20px;
    display: flex;
 }
@@ -18,37 +50,31 @@
    margin-right: 10px;
    font-weight: bold;
    font-size: 0.9em;
-
+   white-space: nowrap;
 }
 .Assertion .nameAndPlace {
    flex-grow: 1;
+   flex-shrink: 1;
 }
 .Assertion .nameAndPlace.bordered {
    border-left: 1px solid #ccc;
    padding-left: 5px;
 }
-.Assertion .rating {
+.Assertion .right {
+   float: right;
+   text-align: right;
+   font-size: 0.7em;
+}
+.Assertion .right .sourceLink {
+   margin-left: 10px;
+}
+.Assertion .researcher {
+   font-size: 0.7em;
 }
 
-.Assertion .details {
-   margin-left: 30px;
+.Assertion .eventDetails {
+   width: 100%;
+   font-size: 0.8em;
+   border: 1px solid #ddd;
+   margin-left: 20px;
 }
-
-.Assertion .place {
-   font-style: italic;
-}
-
-.Assertion .type {
-   font-weight: bold;
-   margin-right: 5px;
-}
-
-.Assertion .role {
-   color: #999;
-   font-weight: normal;
-}
-
-.Assertion .rationale {
-   padding-left: 30px;
-}
-

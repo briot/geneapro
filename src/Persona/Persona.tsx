@@ -3,8 +3,7 @@ import { Icon, Segment } from 'semantic-ui-react';
 import { Person } from '../Store/Person';
 import { P2E, P2C } from '../Store/Assertion';
 import { GenealogyEventSet } from '../Store/Event';
-import P2CView from '../Assertions/P2C';
-import P2EView from '../Assertions/P2E';
+import AssertionView from '../Assertions/Assertion';
 import './Persona.css';
 
 interface Item {
@@ -35,13 +34,13 @@ export default function Persona(props: PersonaProps) {
             return ev ?
                {date_sort: ev.date_sort,
                 id: 'event' + a.eventId,
-                item: <P2EView p2e={a} hidePerson={true} />
+                item: <AssertionView assert={a} hidePerson={true} />
                } : undefined;
          } else if (a instanceof P2C) {
             return {
                id: 'char' + idx,
                date_sort: a.characteristic.date_sort,
-               item: <P2CView p2c={a} />
+               item: <AssertionView assert={a} hidePerson={true} />
             };
          } else {
             window.console.error('Unhandled assertion in person');
