@@ -1,0 +1,35 @@
+table.AssertionTimeline {
+   table-layout: fixed;
+   border-spacing: 0;
+   width: 100%;
+}
+
+.AssertionTimeline td {
+   padding-bottom: 20px;
+}
+
+.AssertionTimeline .date {
+   width: 60px;
+   border-right: 2px solid black;
+   padding-right: 10px;
+   font-size: 0.8em;
+   text-align: right;
+   vertical-align: top;
+   position: relative;
+}
+
+.AssertionTimeline .age {
+   color: #999;
+   display: block;
+}
+
+.AssertionTimeline .date i {
+   position: absolute;
+   top: 0;
+   right: -11px;
+   font-size: 1.1em;
+}
+
+.AssertionTimeline .date + td {
+   padding-left: 20px;
+}

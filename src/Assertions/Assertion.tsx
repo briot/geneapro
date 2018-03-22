@@ -47,12 +47,12 @@ function AssertionBox(props: BoxProps) {
    );
 }
 
-interface Props {
+interface AssertionProps {
    assert: Assertion;
    hidePerson?: boolean;
 }
 
-export default function AssertionView(props: Props) {
+export default function AssertionView(props: AssertionProps) {
    const a = props.assert;
    if (a instanceof P2E) {
       return (

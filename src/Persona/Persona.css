@@ -2,16 +2,6 @@
    max-width: 1100px;
 }
 
-.Persona table {
-   table-layout: fixed;
-   border-spacing: 0;
-   width: 100%;
-}
-
-.Persona td {
-   padding-bottom: 10px;
-}
-
 .Persona .pagetitle {
    background: #cdcdcd;
    font-size: 1.4em;
@@ -23,30 +13,4 @@
 
 .Persona .pageContent {
    background: #ececec;
-}
-
-.Persona .date {
-   width: 60px;
-   border-right: 2px solid black;
-   padding-right: 10px;
-   font-size: 0.8em;
-   text-align: right;
-   vertical-align: top;
-   position: relative;
-}
-
-.Persona .age {
-   color: #999;
-   display: block;
-}
-
-.Persona .date i {
-   position: absolute;
-   top: 0;
-   right: -11px;
-   font-size: 1.1em;
-}
-
-.Persona .date + td {
-   padding-left: 20px;
 }

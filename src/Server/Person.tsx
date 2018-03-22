@@ -1,6 +1,6 @@
 import * as d3Color from 'd3-color';
 import { BasePerson, Person, PersonSet } from '../Store/Person';
-import { Assertion, P2E, P2C, P2P, P2G } from '../Store/Assertion';
+import { Assertion, AssertionList, P2E, P2C, P2P, P2G } from '../Store/Assertion';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { JSONPlace } from '../Server/Place';
@@ -307,7 +307,8 @@ export function* fetchPersonDetailsFromServer(id: number) {
    const data: JSONPersonDetails = yield resp.json();
    let r: DetailsResult = {
       person: {...data.person,
-               asserts: data.asserts.map(a => assertionFromJSON(a)),
+               asserts: new AssertionList(
+                  data.asserts.map(a => assertionFromJSON(a))),
               },
       persons: {},
       events: {},

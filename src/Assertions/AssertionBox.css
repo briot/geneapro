@@ -1,8 +1,14 @@
+.Assertion {
+   border-top: 2px solid green;
+}
 .Assertion + .Assertion {
-   padding-top: 10px;
+   margin-top: 10px;
 }
 .Assertion.disproved {
    text-decoration: line-through;
+}
+.Assertion .ui.segment {
+   padding-left: 0;
 }
 
 .Assertion .ui.attached.segment+div+.ui.attached.segment {
@@ -34,8 +40,8 @@
 }
 
 .Assertion .ui.segment.details {
-	margin-left: 30px;
-	width: calc(100% - 29px);
+	margin-left: 20px;
+	width: calc(100% - 19px);
 	background-color: #f9f9f9;
 	padding: 3px 3px;
 }

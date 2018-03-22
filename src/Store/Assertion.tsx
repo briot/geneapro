@@ -1,3 +1,5 @@
+import { GenealogyEventSet } from '../Store/Event';
+
 export interface CharacteristicPart {
    name: string;
    value: string;
@@ -20,6 +22,14 @@ export class Assertion {
       public lastChanged: string,
       public sourceId?:   number   // points to a Source in the state
    ) {
+   }
+
+   /**
+    * Return the sort order for timelines. The format of the date should
+    * be ISO: yyyy-mm-dd
+    */
+   getSortDate(events: GenealogyEventSet): string|undefined {
+      return undefined;
    }
 }
 
@@ -66,6 +76,11 @@ export class P2C extends Assertion {
    )  {
       super(surety, researcher, rationale, disproved, lastChanged, sourceId);
    }
+
+   /** overriding */
+   getSortDate(events: GenealogyEventSet): string|undefined {
+      return this.characteristic.date_sort;
+   }
 }
 
 export class P2E extends Assertion {
@@ -81,5 +96,28 @@ export class P2E extends Assertion {
       public sourceId?:     number   // points to a Source in the state
    )  {
       super(surety, researcher, rationale, disproved, lastChanged, sourceId);
+   }
+
+   /** overriding */
+   getSortDate(events: GenealogyEventSet): string|undefined {
+      const e = events[this.eventId];
+      return e ? e.date_sort : undefined;
+   }
+}
+
+export class AssertionList {
+   constructor(private asserts: Assertion[]) {
+   }
+
+   get(): Assertion[] {
+      return this.asserts;
+   }
+
+   sortByDate(events: GenealogyEventSet) {
+      const items: {d: string|undefined, a: Assertion}[] =
+         this.asserts.map(a => ({d: a.getSortDate(events), a: a}));
+      items.sort((a1, a2) => (
+         !a1.d ? -1 : !a2.d ? 1 : a1.d!.localeCompare(a2.d!)));
+      this.asserts = items.map(i => i.a);
    }
 }

@@ -6,14 +6,12 @@ import { PersonSet, personDisplay } from '../Store/Person';
 import { addToHistory } from '../Store/History';
 import { AppState, GPDispatch } from '../Store/State';
 import { fetchPersonDetails } from '../Store/Sagas';
-import { GenealogyEventSet } from '../Store/Event';
 import Page from '../Page';
 import Persona from '../Persona/Persona';
 
 interface PersonaPageProps {
    id: number;
    persons: PersonSet;
-   allEvents: GenealogyEventSet;
    dispatch: GPDispatch;
 }
 
@@ -44,7 +42,6 @@ class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
             main={p ?
                <Persona
                   person={p}
-                  allEvents={this.props.allEvents}
                /> :
                <Loader active={true} size="large">Loading</Loader>
             }
@@ -59,7 +56,6 @@ interface PropsFromRoute {
 
 const PersonaPage = connect(
    (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
-      allEvents: state.events,
       persons: state.persons,
       id: Number(ownProps.match.params.id),
    }),

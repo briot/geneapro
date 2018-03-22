@@ -1,5 +1,5 @@
 import { PlaceSet } from '../Store/Place';
-import { Assertion } from '../Store/Assertion';
+import { AssertionList } from '../Store/Assertion';
 import { JSONAssertion, AssertionEntities, AssertionEntitiesJSON,
          assertionFromJSON,
          setAssertionEntities } from '../Server/Person';
@@ -34,7 +34,7 @@ export function* fetchPlacesFromServer() {
 }
 
 export interface PlaceDetails extends AssertionEntities {
-   asserts: Assertion[];
+   asserts: AssertionList;
 }
 
 interface JSONResult extends AssertionEntitiesJSON {
@@ -50,7 +50,7 @@ export function* fetchPlaceFromServer(id: number) {
    const data: JSONResult = yield resp.json();
 
    let result: PlaceDetails = {
-      asserts: data.asserts.map(a => assertionFromJSON(a)),
+      asserts: new AssertionList(data.asserts.map(a => assertionFromJSON(a))),
       events: {},
       persons: {},
       places: {},

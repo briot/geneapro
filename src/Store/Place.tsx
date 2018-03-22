@@ -1,10 +1,9 @@
-import { Assertion } from '../Store/Assertion';
+import { AssertionList } from '../Store/Assertion';
 
 export interface Place {
    id: number;
    name: string;
-
-   asserts?: Assertion[];
+   asserts?: AssertionList;
 }
 
 export interface PlaceSet {
