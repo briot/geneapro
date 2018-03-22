@@ -57,6 +57,7 @@ export default class SourceDetails extends React.PureComponent<SourceProps, Sour
             <Segment attached={true} className="pageTitle">
                {this.state.title || <span>&nbsp;</span>}
             </Segment>
+
             <Segment attached={true}>
                {step > 4 ?
                   null :
@@ -143,6 +144,7 @@ export default class SourceDetails extends React.PureComponent<SourceProps, Sour
                      styled={true}
                      fluid={true}
                      style={{marginTop: '10px'}}
+                     className="pageContent"
                   >
                      <Accordion.Title
                          active={this.state.showAssertions}

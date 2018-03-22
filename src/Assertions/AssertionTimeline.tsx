@@ -12,7 +12,8 @@ function ageAtDate(refYear?: number, date?: string): string {
    // dates before 1970.
    if (refYear && date) {
       const b2 = Number(date.substring(0, 4));
-      return b2 === refYear ? '' : `(${b2 - refYear})`;
+      // return b2 === refYear ? '' : `(${b2 - refYear})`;
+      return `(${b2 - refYear})`;
    }
    return '';
 }

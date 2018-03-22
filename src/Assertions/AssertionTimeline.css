@@ -4,7 +4,7 @@ table.AssertionTimeline {
    width: 100%;
 }
 
-.AssertionTimeline td {
+.AssertionTimeline > tbody > tr > td {
    padding-bottom: 20px;
 }
 
