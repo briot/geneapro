@@ -28,15 +28,11 @@ function View(props: ConnectedProps) {
             {p.surn.toUpperCase()}{' '}{p.givn}
          </Segment>
          <Segment attached={true} className="pageContent">
-            <table>
-               <tbody>
-                  <AssertionTimeline
-                     asserts={p.asserts}
-                     refYear={birthYear}
-                     hidePart1={true}
-                  />
-               </tbody>
-            </table>
+            <AssertionTimeline
+               asserts={p.asserts}
+               refYear={birthYear}
+               hidePart1={true}
+            />
          </Segment>
       </div>
    );

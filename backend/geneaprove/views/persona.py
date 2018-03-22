@@ -33,9 +33,9 @@ def __add_default_person_attributes(person):
     """
 
     person.sex = "?"
-    person.birth = None
-    person.death = None
-    person.marriage = None
+    person.birthEventId = None
+    person.deathEventId = None
+    person.marriageEventId = None
     person.generation = None
 
     n = person.name.split('/', 2)
@@ -140,8 +140,12 @@ def extended_personas(
 
     logger.debug('MANU about to retrieve events')
 
+    birth = None
+    death = None
+
     # Also query the 'principal' for each events, so that we can provide
     # that information graphically.
+
     for p in sql_in(events, "person", all_ids):
         e = p.event
 
@@ -172,13 +176,13 @@ def extended_personas(
             if not e.Date:
                 pass
             elif e.type_id == models.Event_Type.PK_birth:
-                if person.birth is None or more_recent(person.birth, e):
-                    person.birth = e
+                if birth is None or more_recent(birth, e):
+                    person.birthEventId = e.id
             elif e.type_id == models.Event_Type.PK_death:
-                if person.death is None or more_recent(person.death, e):
-                    person.death = e
+                if death is None or more_recent(death, e):
+                    person.deathEventId = e.id
             elif e.type_id == models.Event_Type.PK_marriage:
-                person.marriage = e
+                person.marriageEventId = e.id
 
     logger.debug('MANU done processing events')
 
