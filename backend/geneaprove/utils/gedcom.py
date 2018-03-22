@@ -52,7 +52,6 @@ LINE_RE = re.compile(r'^(?P<level>\d+)\s' + OPTIONAL_XREF_ID +
                      r'(?P<tag>\w+)' + r'(?:\s(?P<value>.*))?')
 unlimited = 100000
 
-DEBUG = False
 PROGRESS = False
 
 # _GRAMMAR is a tuple of tuples, each of which describes one of the nodes
@@ -541,8 +540,7 @@ class _Lexical(object):
         r = (int(g.group("level")), g.group("tag"), g.group("xref_id"),
              self.to_str(g.group("value") or u""))
 
-        if DEBUG:
-            logger.debug("%04d: %s" % (self.line, r))
+        # logger.debug("%04d: %s" % (self.line, r))
 
         if PROGRESS and self.line % 1000 == 0:
             logger.info("Gedcom: line %d" % (self.line, ))
@@ -555,11 +553,12 @@ class _Lexical(object):
                 self.encoding = "heredis-ansi"
             elif r[3] == "UNICODE":
                 self.encoding = "utf-16"
+            elif r[3] == "UTF-8":
+                self.encoding = "utf-8"
             else:
-                self.encoding = r[3]
+                logger.info('Unknown encoding %s' % (r[3], ))
 
-            if DEBUG:
-                logger.debug('set encoding=%s' % (self.encoding, ))
+            logger.debug('set encoding=%s' % (self.encoding, ))
 
         return r
 
@@ -1050,8 +1049,8 @@ class Gedcom(object):
                compatible with file.
         """
         if isinstance(filename, str):
-            # Do not assume a specific encoding
-            filename = open(filename, "U", encoding='latin-1')
+            # Do not assume a specific encoding, so read as bytes
+            filename = open(filename, "rb")
 
         return self.parser.parse(_Lexical(filename))
 
