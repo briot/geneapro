@@ -24,8 +24,8 @@ export default class SourceDetails extends React.PureComponent<SourceProps, Sour
       this.state = {
          title: undefined,
          showCitation: !props.source || !props.source.title,
-         showMedia: false,
-         showAssertions: false,
+         showMedia: true,
+         showAssertions: true,
       };
    }
 
@@ -51,6 +51,12 @@ export default class SourceDetails extends React.PureComponent<SourceProps, Sour
    render() {
       const s = this.props.source;
       const step: number = !s ? 1 : 2;
+      const step1Complete = !!s;
+      const step2Complete = s && s.medias && s.medias.length > 0;
+      const step3Complete = s && s.assertions && s.assertions.length > 0;
+      const step4Complete = step3Complete;  //  ??? Incorrect
+      const allStepsComplete =
+         step1Complete && step2Complete && step3Complete && step4Complete;
 
       return (
          <div className="Source">
@@ -58,40 +64,43 @@ export default class SourceDetails extends React.PureComponent<SourceProps, Sour
                {this.state.title || <span>&nbsp;</span>}
             </Segment>
 
-            <Segment attached={true}>
-               {step > 4 ?
-                  null :
-                  <Step.Group ordered={true} stackable="tablet" fluid={true} size="mini">
-                     <Step
-                        completed={!!s}
-                        active={!s}
-                        title="Citing"
-                        description="the source"
-                     />
-                     <Step
-                        completed={s && s.medias && s.medias.length > 0}
-                        active={s && !s.medias}
-                        disabled={!s}
-                        title="Capturing"
-                        description="images, sounds, videos"
-                     />
-                     <Step
-                        completed={step > 3}
-                        active={step === 3}
-                        disabled={!s}
-                        title="Identifying"
-                        description="persons and events"
-                     />
-                     <Step
-                        completed={step > 4}
-                        active={step === 4}
-                        disabled={!s}
-                        title="Asserting"
-                        description="what the source says"
-                     />
-                  </Step.Group>
-               }
-            </Segment>
+            {
+               !allStepsComplete &&
+               <Segment attached={true}>
+                  {step > 4 ?
+                     null :
+                     <Step.Group ordered={true} stackable="tablet" fluid={true} size="mini">
+                        <Step
+                           completed={step1Complete}
+                           active={!s}
+                           title="Citing"
+                           description="the source"
+                        />
+                        <Step
+                           completed={step2Complete}
+                           active={s && !s.medias}
+                           disabled={!s}
+                           title="Capturing"
+                           description="images, sounds, videos"
+                        />
+                        <Step
+                           completed={step3Complete}
+                           active={step === 3}
+                           disabled={!s}
+                           title="Identifying"
+                           description="persons and events"
+                        />
+                        <Step
+                           completed={step4Complete}
+                           active={step === 4}
+                           disabled={!s}
+                           title="Asserting"
+                           description="what the source says"
+                        />
+                     </Step.Group>
+                  }
+               </Segment>
+            }
 
             <Accordion
                styled={true}
