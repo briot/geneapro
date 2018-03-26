@@ -20,7 +20,7 @@ export default class AssertionPartCharacteristic extends React.PureComponent<Cha
             title={
                <div>
                   <div className="dateAndTag">
-                     <div>{c.date && <span title={c.date_sort}>{c.date}</span>}</div>
+                     <div>{c.date && <span title={c.date_sort||undefined}>{c.date}</span>}</div>
                      <div>{c.name}</div>
                   </div>
                   <div className={'nameAndPlace ' + (c.placeId || c.parts.length ? 'bordered' : '')}>

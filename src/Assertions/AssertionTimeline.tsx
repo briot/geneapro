@@ -7,12 +7,11 @@ import { GenealogyEventSet } from '../Store/Event';
 import AssertionView from '../Assertions/Assertion';
 import './AssertionTimeline.css';
 
-function ageAtDate(refYear?: number, date?: string): string {
+function ageAtDate(refYear?: number, date?: string|null): string {
    // We can't use javascript's Date, since it cannot represent
    // dates before 1970.
    if (refYear && date) {
       const b2 = Number(date.substring(0, 4));
-      // return b2 === refYear ? '' : `(${b2 - refYear})`;
       return `(${b2 - refYear})`;
    }
    return '';
@@ -40,7 +39,7 @@ function ConnectedView(props: ConnectedProps) {
    props.asserts.sortByDate(props.events);
 
    const list  = props.asserts.get();
-   let prev: string|undefined;
+   let prev: string|null = '@#@';
 
    return (
       <table className="AssertionTimeline">
@@ -48,8 +47,9 @@ function ConnectedView(props: ConnectedProps) {
             {
                list.map((a, idx) => {
                   const d = a.getSortDate(props.events);
-                  const isSame = d === prev;
-                  prev = d;
+                  const year = d ? d.substring(0, 4) : null;
+                  const isSame = year === prev;
+                  prev = year;
                   return (
                      <tr key={idx}>
                         <td className="date">
@@ -57,7 +57,7 @@ function ConnectedView(props: ConnectedProps) {
                               isSame ?
                                  null : (
                                  <div>
-                                    {d}
+                                    {year}
                                     <span className="age">
                                        {ageAtDate(props.refYear, d)}
                                     </span>

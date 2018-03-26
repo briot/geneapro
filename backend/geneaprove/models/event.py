@@ -85,5 +85,5 @@ class Event(GeneaProveModel):
             "type": self.type,
             "place": self.place_id,
             "date": self.date,
-            "date_sort": None if not d else DateRange(d)
+            "date_sort": self.date_sort
         }
