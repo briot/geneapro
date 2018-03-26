@@ -158,9 +158,9 @@ export function sourcesReducer(
    action: Redux.Action
 ) {
    if (isType(action, fetchSourceDetails.done)) {
-      const result = {...state};
       const data = action.payload.result as FetchSourceDetailsResult;
       const source = data.source;
+      const result = {...state, ...data.sources};
       if (source.id in result) {
          result[source.id] = {...result[source.id], ...source};
       } else {
@@ -175,6 +175,12 @@ export function sourcesReducer(
          result[s.id] = s;
       }
       return result;
+   } else if (isType(action, fetchPlaceDetails.done)) {
+      const {sources} = action.payload.result as PlaceDetails;
+      return {...state, ...sources};
+   } else if (isType(action, fetchPersonDetails.done)) {
+      const {sources}: DetailsResult = action.payload.result as DetailsResult;
+      return {...state, ...sources};
    }
 
    return state;

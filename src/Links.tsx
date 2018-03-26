@@ -4,6 +4,7 @@ import { AppState } from './Store/State';
 import { Link } from 'react-router-dom';
 import { Icon } from 'semantic-ui-react';
 import { Place } from './Store/Place';
+import { SourceSet } from './Store/Source';
 import './Links.css';
 
 /**
@@ -41,22 +42,30 @@ export function urlSource(id: number) {
 
 interface SourceLinkProps {
    id: number;
-   name?: string;
-   className?: string;
+   showName?: boolean;
+}
+interface ConnectedSourceLinkProps extends SourceLinkProps {
+   sources: SourceSet;
 }
 
-export function SourceLink(props: SourceLinkProps) {
+function ConnectedSourceLink(props: ConnectedSourceLinkProps) {
+   const s = props.sources[props.id];
    return (
-      <Link to={urlSource(props.id)} className={props.className + ' sourceLink'}>
-         <Icon name="book" />
-         <span className="id">{props.id}</span>
-         {props.name ?
-            <span className="title">{props.name}</span> :
-            null
-         }
+      <Link to={urlSource(props.id)} className="sourceLink">
+         <span title={s ? s.title : undefined}>
+            <Icon name="book" />
+            <span className="id">{props.id}</span>
+            {s && props.showName ?  <span className="title">{s.abbrev}</span> : null}
+         </span>
       </Link>
    );
 }
+export const SourceLink = connect(
+   (state: AppState, props: SourceLinkProps) => ({
+      ...props,
+      sources: state.sources,
+   })
+)(ConnectedSourceLink);
 
 /**
  * Place links

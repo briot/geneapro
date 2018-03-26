@@ -36,7 +36,7 @@ function AssertionBox(props: BoxProps) {
                   <span>Changed: {a.lastChanged}</span>
                   {
                      a.sourceId &&
-                     <SourceLink id={a.sourceId}/>
+                     <SourceLink id={a.sourceId} showName={false}/>
                   }
                </div>
             </div>

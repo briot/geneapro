@@ -9,6 +9,7 @@ from .place import Place
 from .researcher import Researcher
 from .source import Source
 from .surety import Surety_Scheme_Part
+from .representation import Representation
 
 
 class Assertion(GeneaProveModel):
@@ -74,23 +75,8 @@ class Assertion(GeneaProveModel):
             "source_id": self.source_id,
             "surety": self.surety_id}
 
-    def getEventIds(self):
-        """
-        Return the list of event ids
-        """
-        return set()
-
-    def getPersonIds(self):
-        """
-        Return the list of person ids
-        """
-        return set()
-
-    def getPlaceIds(self):
-        """
-        Return the list of place ids
-        """
-        return set()
+    def getRelatedIds(self):
+        return {}
 
     @staticmethod
     def getEntities(asserts):
@@ -98,14 +84,26 @@ class Assertion(GeneaProveModel):
         Get the list of persons and events needed for the given list of
         assertions
         """
+        ids = {
+            "events": set(),
+            "persons": set(),
+            "places": set(),
+            "sources": set(),
+        }
+        for a in asserts:
+            e = a.getRelatedIds()
+            ids["events"].update(e.get("events", []))
+            ids["persons"].update(e.get("persons", []))
+            ids["places"].update(e.get("places", []))
+            ids["sources"].update(e.get("sources", []))
+            ids["sources"].update([a.source_id])
         return {
+            "asserts": asserts,
             "events": list(Event.objects.
-                select_related('type').
-                filter(id__in=set.union(*(a.getEventIds() for a in asserts)))),
-            "persons": list(Persona.objects.
-                filter(id__in=set.union(*(a.getPersonIds() for a in asserts)))),
-            "places": list(Place.objects.
-                filter(id__in=set.union(*(a.getPlaceIds() for a in asserts)))),
+                select_related('type').filter(id__in=ids["events"])),
+            "persons": list(Persona.objects.filter(id__in=ids["persons"])),
+            "places": list(Place.objects.filter(id__in=ids["places"])),
+            "sources": list(Source.objects.filter(id__in=ids["sources"])),
         }
 
 
@@ -127,8 +125,8 @@ class P2P(Assertion):
     #   several other personas, which in turn can be linked to other
     #   personas.
 
-    def getPersonIds(self):
-        return set([self.person1_id, self.person2_id])
+    def getRelatedIds(self):
+        return {"persons": set([self.person1_id, self.person2_id])}
 
     def to_json(self):
         res = super(P2P, self).to_json()
@@ -151,11 +149,9 @@ class P2C(Assertion):
     def related_json_fields():
         return Assertion.related_json_fields() + ['characteristic']
 
-    def getPersonIds(self):
-        return set([self.person_id])
-
-    def getPlaceIds(self):
-        return set([self.characteristic.place_id])
+    def getRelatedIds(self):
+        return {"persons": [self.person_id],
+                "places": [self.characteristic.place_id]}
 
     def to_json(self):
         res = super(P2C, self).to_json()
@@ -189,17 +185,10 @@ class P2E(Assertion):
     def related_json_fields():
         return Assertion.related_json_fields() + ['role']
 
-    def getPersonIds(self):
-        return set([self.person_id])
-
-    def getEventIds(self):
-        """
-        Return the list of event ids
-        """
-        return set([self.event_id])
-
-    def getPlaceIds(self):
-        return set([self.event.place_id])
+    def getRelatedIds(self):
+        return {"persons": [self.person_id],
+                "events": [self.event_id],
+                "places": [self.event.place_id]}
 
     def to_json(self):
         res = super(P2E, self).to_json()
@@ -222,8 +211,8 @@ class P2G(Assertion):
     def related_json_fields():
         return Assertion.related_json_fields() + ['role']
 
-    def getPersonIds(self):
-        return set([self.person_id])
+    def getRelatedIds(self):
+        return {"persons": [self.person_id]}
 
     def to_json(self):
         res = super(P2G, self).to_json()

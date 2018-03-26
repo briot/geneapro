@@ -84,7 +84,6 @@ class SourceView(JSONView):
         return dict({
             'source':  source,
             'higher_sources': source.get_higher_sources(),
-            'asserts': asserts,
             'repr':    source.get_representations(),
         }, **models.Assertion.getEntities(asserts))
 

@@ -102,10 +102,7 @@ class SourceListConnected extends React.PureComponent<SourceListProps, SourceLis
                                 const p: Source = sources[rowIndex as number];
                                 return (
                                    <Cell {...props}>
-                                      <SourceLink
-                                          id={p.id}
-                                          name={p.title}
-                                      />
+                                      <SourceLink id={p.id} />
                                    </Cell>
                                 );
                              }}

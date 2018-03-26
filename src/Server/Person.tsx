@@ -2,6 +2,8 @@ import * as d3Color from 'd3-color';
 import { BasePerson, Person, PersonSet } from '../Store/Person';
 import { Assertion, AssertionList, P2E, P2C, P2P, P2G } from '../Store/Assertion';
 import { GenealogyEventSet } from '../Store/Event';
+import { SourceSet } from '../Store/Source';
+import { JSONSource, sourceFromJSON } from '../Server/Source';
 import { PlaceSet } from '../Store/Place';
 import { JSONPlace } from '../Server/Place';
 
@@ -103,9 +105,6 @@ export interface JSONEvent {
    name: string;
    place?: number;
    type: JSONEventType;
-}
-
-interface JSONSource {
 }
 
 interface JSONCharacteristic {
@@ -241,18 +240,19 @@ export interface AssertionEntitiesJSON {
    events: JSONEvent[];  // All events mentioned in the asserts
    persons: JSONPersonForAssertion[];
    places: JSONPlace[];
+   sources: JSONSource[];
 }
 
 interface JSONPersonDetails extends AssertionEntitiesJSON {
    person: BasePerson;
    asserts: JSONAssertion[];
-   sources: {[id: number]: JSONSource};
 }
 
 export interface AssertionEntities {
    events: GenealogyEventSet; // All events seen in the result
    persons: PersonSet;
    places: PlaceSet;
+   sources: SourceSet;
 }
 
 export interface DetailsResult extends AssertionEntities {
@@ -297,6 +297,9 @@ export function setAssertionEntities(
       };
    }
 
+   for (const s of entities.sources) {
+      into.sources[s.id] = sourceFromJSON(s);
+   }
 }
 
 export function* fetchPersonDetailsFromServer(id: number) {
@@ -313,6 +316,7 @@ export function* fetchPersonDetailsFromServer(id: number) {
       persons: {},
       events: {},
       places: {},
+      sources: {},
    };
    setAssertionEntities(data, r);
    return r;

@@ -330,8 +330,6 @@ class PersonaView(JSONView):
 
         return dict({
             "person": decujus,
-            "sources": all_sources,
-            "asserts": asserts,
         }, **models.Assertion.getEntities(asserts))
 
 

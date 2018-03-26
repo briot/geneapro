@@ -26,7 +26,5 @@ class PlaceView(JSONView):
     def get_json(self, params, id):
         place = models.Place.objects.get(id=id)
         asserts = place.get_asserts()
-        
         return dict({
-            'asserts': asserts,
         }, **models.Assertion.getEntities(asserts))

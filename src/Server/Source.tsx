@@ -13,7 +13,7 @@ interface JSONSourceRepr {
    url: string;         // how to get the image from the server
 }
 
-interface JSONSource {
+export interface JSONSource {
    id: number;
    abbrev: string;  // abbreviated citation
    biblio: string;  // bibliographic citation
@@ -39,6 +39,19 @@ export interface FetchSourceDetailsResult extends AssertionEntities {
    source: Source;
 }
 
+export function sourceFromJSON(s: JSONSource) {
+   const result: Source = {
+      id: s.id,
+      title: s.title,
+      abbrev: s.abbrev,
+      biblio: s.abbrev,
+      medium: '',
+      medias: [],
+      assertions: [],
+   };
+   return result;
+}
+
 export function* fetchSourceDetailsFromServer(id: number) {
    const resp: Response = yield window.fetch('/data/sources/' + id);
    if (resp.status !== 200) {
@@ -47,25 +60,20 @@ export function* fetchSourceDetailsFromServer(id: number) {
    const data: JSONResult = yield resp.json();
    
    let r: FetchSourceDetailsResult = {
-      source: {
-         id: data.source.id,
-         title: data.source.title,
-         abbrev: data.source.abbrev,
-         biblio: data.source.abbrev,
-         medium: '',
-         medias: data.repr.map(m => ({
-            id: m.id,
-            comments: m.comments,
-            file: m.file,
-            mime: m.mime,
-            url: m.url
-         })),
-         assertions: data.asserts.map(a => assertionFromJSON(a)),
-      },
+      source: sourceFromJSON(data.source),
       events: {},
       persons: {},
       places: {},
+      sources: {},
    };
+   r.source.assertions = data.asserts.map(a => assertionFromJSON(a));
+   r.source.medias = data.repr.map(m => ({
+      id: m.id,
+      comments: m.comments,
+      file: m.file,
+      mime: m.mime,
+      url: m.url
+   }));
    setAssertionEntities(data, r);
    return r;
 }
