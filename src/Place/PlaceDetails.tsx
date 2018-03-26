@@ -16,7 +16,9 @@ export default function PlaceDetails(props: PlaceProps) {
             {p && p.name}
          </Segment>
          <Segment attached={true} className="pageContent">
-            <AssertionTimeline asserts={p ? p.asserts : undefined} />
+            <AssertionTimeline
+               asserts={p ? p.asserts : undefined}
+            />
          </Segment>
       </div>
    );

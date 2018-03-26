@@ -21,7 +21,7 @@ function ageAtDate(refYear?: number, date?: string): string {
 interface TimelineProps {
    asserts?: AssertionList;
 
-   hidePart1?: boolean;
+   hidePersonIf?: number;
    //  If true, do not show the first part of assertions
 
    refYear?: number;
@@ -67,7 +67,7 @@ function ConnectedView(props: ConnectedProps) {
                            }
                         </td>
                         <td>
-                           <AssertionView assert={a} hidePerson={props.hidePart1}/>
+                           <AssertionView assert={a} hidePersonIf={props.hidePersonIf}/>
                         </td>
                      </tr>
                   );

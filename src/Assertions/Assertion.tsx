@@ -4,7 +4,7 @@ import { Assertion } from '../Store/Assertion';
 import AssertionPartEvent from '../Assertions/AssertionPartEvent';
 import AssertionPartPerson from '../Assertions/AssertionPartPerson';
 import AssertionPartCharacteristic from '../Assertions/AssertionPartChar';
-import { P2E, P2C } from '../Store/Assertion';
+import { P2E, P2C, P2P } from '../Store/Assertion';
 import { SourceLink } from '../Links';
 import './AssertionBox.css';
 
@@ -49,7 +49,9 @@ function AssertionBox(props: BoxProps) {
 
 interface AssertionProps {
    assert: Assertion;
-   hidePerson?: boolean;
+
+   hidePersonIf?: number;
+   //  Hide persons when they have this idea (to be used on the Persona page)
 }
 
 export default function AssertionView(props: AssertionProps) {
@@ -58,7 +60,8 @@ export default function AssertionView(props: AssertionProps) {
       return (
          <AssertionBox
             assert={a}
-            p1={props.hidePerson ? undefined : <AssertionPartPerson personId={a.personId} />}
+            p1={props.hidePersonIf === a.personId ?
+                undefined : <AssertionPartPerson personId={a.personId} />}
             p2={<AssertionPartEvent eventId={a.eventId}/>}
             role={a.role}
          />
@@ -67,9 +70,23 @@ export default function AssertionView(props: AssertionProps) {
       return (
          <AssertionBox
             assert={a}
-            p1={props.hidePerson ? undefined : <AssertionPartPerson personId={a.personId} />}
+            p1={props.hidePersonIf === a.personId ?
+                undefined : <AssertionPartPerson personId={a.personId} />}
             p2={<AssertionPartCharacteristic characteristic={a.characteristic} />}
             role="characteristic"
+         />
+      );
+   } else if (a instanceof P2P) {
+      return (
+         <AssertionBox
+            assert={a}
+            p1={props.hidePersonIf === a.person2Id ||
+                props.hidePersonIf === a.person1Id ?
+                undefined : <AssertionPartPerson personId={a.person1Id} />}
+            p2={props.hidePersonIf === a.person1Id ?
+                <AssertionPartPerson personId={a.person2Id} /> :
+                <AssertionPartPerson personId={a.person1Id} />}
+            role="same as"
          />
       );
    } else {

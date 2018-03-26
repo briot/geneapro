@@ -31,7 +31,7 @@ function View(props: ConnectedProps) {
             <AssertionTimeline
                asserts={p.asserts}
                refYear={birthYear}
-               hidePart1={true}
+               hidePersonIf={p.id}
             />
          </Segment>
       </div>
