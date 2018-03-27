@@ -10,6 +10,14 @@ export interface RadialSettings {
    loading: boolean; // true while loading pedigree data
 }
 
+export const defaultRadial: RadialSettings = {
+   colors: ColorScheme.WHITE,
+   showText: true,
+   generations: 6,
+   spacing: 45,
+   loading: false,
+};
+
 /**
  * Action: change one or more pedigree settings
  */

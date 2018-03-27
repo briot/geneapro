@@ -54,6 +54,21 @@ export interface PedigreeSettings {
    loading: boolean; // true while loading pedigree data
 }
 
+export const defaultPedigree: PedigreeSettings = {
+   showUnknown: false,
+   layout: LayoutScheme.LEFT_RIGHT,
+   links: LinkStyle.CURVE,
+   sameSize: false,
+   colors: ColorScheme.PEDIGREE,
+   vertPadding: 5,
+   horizSpacing: 30,
+   showSourcedEvents: true,
+   showMarriages: true,
+   ancestors: 4,
+   descendants: 1,
+   loading: false,
+};
+
 /**
  * Whether the layout is left-to-right or top-down
  */

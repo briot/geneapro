@@ -122,17 +122,17 @@ function p2gFromJSON(a: JSON.P2G) {
    );
 }
 
-function isP2E(a: JSON.Assertion): a is JSON.P2E{
+function isP2E(a: JSON.Assertion): a is JSON.P2E {
    return (a as JSON.P2E).p1.person !== undefined &&
           (a as JSON.P2E).p2.event !== undefined;
 }
 
-function isP2C(a: JSON.Assertion): a is JSON.P2C{
+function isP2C(a: JSON.Assertion): a is JSON.P2C {
    return (a as JSON.P2C).p1.person !== undefined &&
           (a as JSON.P2C).p2.char !== undefined;
 }
 
-function isP2P(a: JSON.Assertion): a is JSON.P2P{
+function isP2P(a: JSON.Assertion): a is JSON.P2P {
    return (a as JSON.P2P).p1.person !== undefined &&
           (a as JSON.P2P).p2.person !== undefined;
 }

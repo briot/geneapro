@@ -8,6 +8,12 @@ export interface QuiltsSettings {
    // Whether to only display persons in the decuju's tree
 }
 
+export const defaultQuilts: QuiltsSettings = {
+   ancestors: 60,
+   loading: false,
+   decujusTreeOnly: true,
+};
+
 /**
  * Action: change one or more pedigree settings
  */

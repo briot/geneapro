@@ -2,28 +2,8 @@ import * as Redux from 'redux';
 import createSagaMiddleware from 'redux-saga';
 import { persistStore, autoRehydrate } from 'redux-persist';
 import { AppState, GPStore } from '../Store/State';
-import { fanchartReducer } from '../Store/Fanchart';
-import { pedigreeReducer } from '../Store/PedigreeReducer';
-import { radialReducer } from '../Store/RadialReducer';
-import { quiltsReducer, quiltsLayoutReducer } from '../Store/QuiltsReducer';
-import { personsReducer, historyReducer, eventsReducer,
-         sourcesReducer, placesReducer } from '../Store/Reducers';
+import { rootReducer } from '../Store/Reducers';
 import { rootSaga } from '../Store/Sagas';
-import { csrfReducer } from '../Store/Csrf';
-
-export const rootReducer = Redux.combineReducers<AppState>({
-   pedigree: pedigreeReducer,
-   fanchart: fanchartReducer,
-   radial: radialReducer,
-   quilts: quiltsReducer,
-   quiltsLayout: quiltsLayoutReducer,
-   persons: personsReducer,
-   history: historyReducer,
-   events: eventsReducer,
-   sources: sourcesReducer,
-   places: placesReducer,
-   csrf: csrfReducer,
-});
 
 // Use generators as reducers
 const sagaMiddleware = createSagaMiddleware();
@@ -45,7 +25,7 @@ if (process.env.NODE_ENV === `development`) {
                     diff: false}));   // log actions in the console
 }
 
-export const store: GPStore = Redux.createStore(
+export const store: GPStore = Redux.createStore<AppState>(
    rootReducer /* reducer */,
    Redux.compose(  /* enhancer */
       Redux.applyMiddleware(...middlewares) as Redux.StoreEnhancer<AppState>,
