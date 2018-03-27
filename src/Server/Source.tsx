@@ -1,45 +1,20 @@
 import { Source, SourceSet } from '../Store/Source';
-import { JSONAssertion, JSONResearcher,
-         AssertionEntities, AssertionEntitiesJSON,
+import { AssertionEntities, AssertionEntitiesJSON,
          assertionFromJSON, setAssertionEntities } from '../Server/Person';
-
-// Representation of sources (media)
-interface JSONSourceRepr {
-   comments: string;
-   id: number;
-   file: string;        // path to the file
-   mime: string;        // type of the image
-   source_id: number;   // ??? Not needed
-   url: string;         // how to get the image from the server
-}
-
-export interface JSONSource {
-   id: number;
-   abbrev: string;  // abbreviated citation
-   biblio: string;  // bibliographic citation
-   title: string;   // full citation
-   comments: string;
-   higher_source_id: number | null;
-   jurisdiction_place?: {};
-   last_change: string;
-   medium: string;
-   researcher: JSONResearcher;
-   subject_date?: string;
-   subject_place?: string;
-}
+import { JSON } from '../Server/JSON';
 
 interface JSONResult extends AssertionEntitiesJSON {
-   source: JSONSource;
-   higher_sources: JSONSource[] | null;
-   asserts: JSONAssertion[];
-   repr: JSONSourceRepr[];
+   source: JSON.Source;
+   higher_sources: JSON.Source[] | null;
+   asserts: JSON.Assertion[];
+   repr: JSON.SourceRepr[];
 }
 
 export interface FetchSourceDetailsResult extends AssertionEntities {
    source: Source;
 }
 
-export function sourceFromJSON(s: JSONSource) {
+export function sourceFromJSON(s: JSON.Source) {
    const result: Source = {
       id: s.id,
       title: s.title,
@@ -65,6 +40,7 @@ export function* fetchSourceDetailsFromServer(id: number) {
       persons: {},
       places: {},
       sources: {},
+      researchers: {},
    };
    r.source.assertions = data.asserts.map(a => assertionFromJSON(a));
    r.source.medias = data.repr.map(m => ({
@@ -87,6 +63,6 @@ export function* fetchSourcesFromServer() {
    if (resp.status !== 200) {
       throw new Error('Server returned an error');
    }
-   const data: JSONSource[] = yield resp.json();
+   const data: JSON.Source[] = yield resp.json();
    return {sources: data};
 }

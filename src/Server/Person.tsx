@@ -3,31 +3,9 @@ import { BasePerson, Person, PersonSet } from '../Store/Person';
 import { Assertion, AssertionList, P2E, P2C, P2P, P2G } from '../Store/Assertion';
 import { GenealogyEventSet } from '../Store/Event';
 import { SourceSet } from '../Store/Source';
-import { JSONSource, sourceFromJSON } from '../Server/Source';
+import { sourceFromJSON } from '../Server/Source';
 import { PlaceSet } from '../Store/Place';
-import { JSONPlace } from '../Server/Place';
-
-export interface JSONStyle  {
-   [cssName: string]: string;
-}
-
-export interface JSONPerson {
-   id: number;
-   givn: string;
-   surn: string;
-   sex: string;
-   generation: number;
-   parents: (number|null)[];
-   children: (number|null)[];
-   birth: JSONEvent;
-   marriage: JSONEvent;
-   death: JSONEvent;
-   style: number;  // index into the styles array
-}
-
-export interface JSONPersons {
-   persons: JSONPerson[];
-}
+import { JSON } from '../Server/JSON';
 
 export interface FetchPersonsResult {
    persons: PersonSet;
@@ -35,14 +13,14 @@ export interface FetchPersonsResult {
 }
 
 export function jsonPersonToPerson(
-   json: JSONPersons,
-   styles: JSONStyle[],
+   json: JSON.Persons,
+   styles: JSON.Style[],
 ): FetchPersonsResult {
    let persons: PersonSet = {};
    let events: GenealogyEventSet = {};
    for (const pid of Object.keys(json.persons)) {
-      const jp: JSONPerson = json.persons[pid];
-      const s: JSONStyle = styles[jp.style];
+      const jp: JSON.Person = json.persons[pid];
+      const s: JSON.Style = styles[jp.style];
       persons[pid] = {
          id: jp.id,
          givn: jp.givn,
@@ -81,68 +59,14 @@ export function* fetchPersonsFromServer() {
       throw new Error('Server returned an error');
    }
 
-   const data: JSONPersons = yield resp.json();
+   const data: JSON.Persons = yield resp.json();
    return jsonPersonToPerson(data, [] /* styles */);
 }
 
-interface JSONPersonForAssertion {
-   id: number;
-   name: string;
-   description: string;
-   last_change: string;
-}
-
-interface JSONEventType {
-   id: number;
-   name: string;  // "birth"
-   gedcom: string;
-}
-
-export interface JSONEvent {
-   id: number;
-   date: string;
-   date_sort: string;
-   name: string;
-   place?: number;
-   type: JSONEventType;
-}
-
-interface JSONCharacteristic {
-   date?: string;
-   date_sort?: string;
-   name: string;
-   place?: number;
-   sources: JSONSource[]; 
-}
-
-interface JSONCharPart {
-   name: string;
-   value: string;
-}
-
-export interface JSONResearcher {
-   id: number;
-   name: string;
-   comment: string;
-}
-
-export interface JSONAssertion {
-   disproved: boolean;
-   rationale: string;
-   last_change: string;
-   source_id: number;
-   surety: number;
-   researcher: JSONResearcher;
-}
-
-interface P2EJSON extends JSONAssertion {
-   p1: {person: number};
-   p2: {role: string; event: number};
-}
-function p2eFromJSON(e: P2EJSON) {
+function p2eFromJSON(e: JSON.P2E) {
    return new P2E(
       e.surety /* surety */,
-      e.researcher.name /* researcher */,
+      e.researcher /* researcher */,
       e.rationale /* rationale */,
       e.disproved /* disproved */,
       e.last_change /* lastChanged */,
@@ -153,14 +77,10 @@ function p2eFromJSON(e: P2EJSON) {
    );
 }
 
-interface P2CJSON extends JSONAssertion {
-   p1: {person: number};
-   p2: {char: JSONCharacteristic; parts: JSONCharPart[]};
-}
-function p2cFromJSON(c: P2CJSON) {
+function p2cFromJSON(c: JSON.P2C) {
    return new P2C(
       c.surety /* surety */,
-      c.researcher.name /* researcher */,
+      c.researcher /* researcher */,
       c.rationale /* rationale */,
       c.disproved /* disproved */,
       c.last_change /* lastChanged */,
@@ -176,14 +96,10 @@ function p2cFromJSON(c: P2CJSON) {
    );
 }
 
-interface P2PJSON extends JSONAssertion {
-   p1: {person: number};
-   p2: {person: number};
-}
-function p2pFromJSON(a: P2PJSON) {
+function p2pFromJSON(a: JSON.P2P) {
    return new P2P(
       a.surety /* surety */,
-      a.researcher.name /* researcher */,
+      a.researcher /* researcher */,
       a.rationale /* rationale */,
       a.disproved /* disproved */,
       a.last_change /* astChanged */,
@@ -193,13 +109,10 @@ function p2pFromJSON(a: P2PJSON) {
    );
 }
 
-interface P2GJSON extends JSONAssertion {
-   p1: {person: number};
-}
-function p2gFromJSON(a: P2GJSON) {
+function p2gFromJSON(a: JSON.P2G) {
    return new P2G(
       a.surety /* surety */,
-      a.researcher.name /* researcher */,
+      a.researcher /* researcher */,
       a.rationale /* rationale */,
       a.disproved /* disproved */,
       a.last_change /* astChanged */,
@@ -209,22 +122,22 @@ function p2gFromJSON(a: P2GJSON) {
    );
 }
 
-function isP2E(a: JSONAssertion): a is P2EJSON {
-   return (a as P2EJSON).p1.person !== undefined &&
-          (a as P2EJSON).p2.event !== undefined;
+function isP2E(a: JSON.Assertion): a is JSON.P2E{
+   return (a as JSON.P2E).p1.person !== undefined &&
+          (a as JSON.P2E).p2.event !== undefined;
 }
 
-function isP2C(a: JSONAssertion): a is P2CJSON {
-   return (a as P2CJSON).p1.person !== undefined &&
-          (a as P2CJSON).p2.char !== undefined;
+function isP2C(a: JSON.Assertion): a is JSON.P2C{
+   return (a as JSON.P2C).p1.person !== undefined &&
+          (a as JSON.P2C).p2.char !== undefined;
 }
 
-function isP2P(a: JSONAssertion): a is P2PJSON {
-   return (a as P2PJSON).p1.person !== undefined &&
-          (a as P2PJSON).p2.person !== undefined;
+function isP2P(a: JSON.Assertion): a is JSON.P2P{
+   return (a as JSON.P2P).p1.person !== undefined &&
+          (a as JSON.P2P).p2.person !== undefined;
 }
 
-export function assertionFromJSON(a: JSONAssertion): Assertion {
+export function assertionFromJSON(a: JSON.Assertion): Assertion {
    if (isP2E(a)) {
       return p2eFromJSON(a);
    } else if (isP2C(a)) {
@@ -232,20 +145,21 @@ export function assertionFromJSON(a: JSONAssertion): Assertion {
    } else if (isP2P(a)) {
       return p2pFromJSON(a);
    } else {
-      return p2gFromJSON(a as P2GJSON);
+      return p2gFromJSON(a as JSON.P2G);
    }
 }
 
 export interface AssertionEntitiesJSON {
-   events: JSONEvent[];  // All events mentioned in the asserts
-   persons: JSONPersonForAssertion[];
-   places: JSONPlace[];
-   sources: JSONSource[];
+   events: JSON.Event[];  // All events mentioned in the asserts
+   persons: JSON.PersonForAssertion[];
+   places: JSON.Place[];
+   sources: JSON.Source[];
+   researchers: JSON.Researcher[];
 }
 
 interface JSONPersonDetails extends AssertionEntitiesJSON {
    person: BasePerson;
-   asserts: JSONAssertion[];
+   asserts: JSON.Assertion[];
 }
 
 export interface AssertionEntities {
@@ -253,6 +167,7 @@ export interface AssertionEntities {
    persons: PersonSet;
    places: PlaceSet;
    sources: SourceSet;
+   researchers: {[key: number]: JSON.Researcher};
 }
 
 export interface DetailsResult extends AssertionEntities {
@@ -317,6 +232,7 @@ export function* fetchPersonDetailsFromServer(id: number) {
       events: {},
       places: {},
       sources: {},
+      researchers: {},
    };
    setAssertionEntities(data, r);
    return r;

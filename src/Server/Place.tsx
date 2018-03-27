@@ -1,16 +1,9 @@
 import { PlaceSet } from '../Store/Place';
 import { AssertionList } from '../Store/Assertion';
-import { JSONAssertion, AssertionEntities, AssertionEntitiesJSON,
+import { AssertionEntities, AssertionEntitiesJSON,
          assertionFromJSON,
          setAssertionEntities } from '../Server/Person';
-
-export interface JSONPlace {
-   id: number;
-   name: string;
-   date: string|null;
-   date_sort: string|null;
-   parent_place_id: number;
-}
+import { JSON } from '../Server/JSON';
 
 export interface FetchPlacesResult {
    places: PlaceSet;
@@ -22,7 +15,7 @@ export function* fetchPlacesFromServer() {
       throw new Error('Server returned an error');
    }
 
-   const data: JSONPlace[] = yield resp.json();
+   const data: JSON.Place[] = yield resp.json();
    let places: PlaceSet = {};
    for (const p of data) {
       places[p.id] = {
@@ -38,7 +31,7 @@ export interface PlaceDetails extends AssertionEntities {
 }
 
 interface JSONResult extends AssertionEntitiesJSON {
-   asserts: JSONAssertion[];
+   asserts: JSON.Assertion[];
 }
 
 export function* fetchPlaceFromServer(id: number) {
@@ -55,6 +48,7 @@ export function* fetchPlaceFromServer(id: number) {
       persons: {},
       places: {},
       sources: {},
+      researchers: {},
    };
    setAssertionEntities(data, result);
 

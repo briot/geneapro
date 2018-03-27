@@ -70,7 +70,7 @@ class Assertion(GeneaProveModel):
         return {
             "disproved": self.disproved,
             "rationale": self.rationale,
-            "researcher": self.researcher if self.researcher_id else None,
+            "researcher": self.researcher_id,
             "last_change": self.last_change,
             "source_id": self.source_id,
             "surety": self.surety_id}
@@ -89,14 +89,18 @@ class Assertion(GeneaProveModel):
             "persons": set(),
             "places": set(),
             "sources": set(),
+            "researchers": set(),
         }
         for a in asserts:
             e = a.getRelatedIds()
             ids["events"].update(e.get("events", []))
             ids["persons"].update(e.get("persons", []))
             ids["places"].update(e.get("places", []))
+            ids["researchers"].update(e.get("researchers", []))
             ids["sources"].update(e.get("sources", []))
+
             ids["sources"].update([a.source_id])
+            ids["researchers"].update([a.researcher_id])
         return {
             "asserts": asserts,
             "events": list(Event.objects.
@@ -104,6 +108,7 @@ class Assertion(GeneaProveModel):
             "persons": list(Persona.objects.filter(id__in=ids["persons"])),
             "places": list(Place.objects.filter(id__in=ids["places"])),
             "sources": list(Source.objects.filter(id__in=ids["sources"])),
+            "researchers": list(Researcher.objects.filter(id__in=ids["researchers"])),
         }
 
 
@@ -151,7 +156,8 @@ class P2C(Assertion):
 
     def getRelatedIds(self):
         return {"persons": [self.person_id],
-                "places": [self.characteristic.place_id]}
+                "places": [self.characteristic.place_id],
+               }
 
     def to_json(self):
         res = super(P2C, self).to_json()
@@ -159,7 +165,11 @@ class P2C(Assertion):
         for p in self.characteristic.parts.select_related():
             parts.append({'name': p.type.name, 'value': p.name})
         res['p1'] = {'person': self.person_id}
-        res['p2'] = {'char': self.characteristic, 'parts': parts}
+        res['p2'] = {'char': self.characteristic,
+                     'repr': list(self.source.representations.all())
+                         if self.characteristic.name == "image" and self.source_id
+                         else None,
+                     'parts': parts}
         return res
 
 

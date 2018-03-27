@@ -1,0 +1,133 @@
+/**
+ * The data sent by the server
+ */
+
+export namespace JSON {
+   export interface Style  {
+      [cssName: string]: string;
+   }
+  
+   // Simplified person, sent for assertions
+   export interface PersonForAssertion {
+      id: number;
+      name: string;
+      description: string;
+      last_change: string;
+   }
+   
+   export interface EventType {
+      id: number;
+      name: string;  // "birth"
+      gedcom: string;
+   }
+   
+   export interface Event {
+      id: number;
+      date: string;
+      date_sort: string;
+      name: string;
+      place?: number;
+      type: EventType;
+   }
+   
+   export interface Person {
+      id: number;
+      givn: string;
+      surn: string;
+      sex: string;
+      generation: number;
+      parents: (number|null)[];
+      children: (number|null)[];
+      birth: Event;
+      marriage: Event;
+      death: Event;
+      style: number;  // index into the styles array
+   }
+   
+   export interface Persons {
+      persons: Person[];
+   }
+
+   export interface Researcher {
+      id: number;
+      name: string;
+      comment: string;
+   }
+ 
+   export interface Source {
+      id: number;
+      abbrev: string;  // abbreviated citation
+      biblio: string;  // bibliographic citation
+      title: string;   // full citation
+      comments: string;
+      higher_source_id: number | null;
+      jurisdiction_place?: {};
+      last_change: string;
+      medium: string;
+      researcher: Researcher;
+      subject_date?: string;
+      subject_place?: string;
+   }
+
+   export interface Characteristic {
+      date?: string;
+      date_sort?: string;
+      name: string;
+      place?: number;
+      sources: Source[]; 
+   }
+   
+   export interface CharPart {
+      name: string;
+      value: string;
+   }
+   
+  
+   // Representation of sources (media)
+   export interface SourceRepr {
+      comments: string;
+      id: number;
+      file: string;        // path to the file
+      mime: string;        // type of the image
+      source_id: number;   // ??? Not needed
+      url: string;         // how to get the image from the server
+   }
+   
+   export interface Assertion {
+      disproved: boolean;
+      rationale: string;
+      last_change: string;
+      source_id: number;
+      surety: number;
+      researcher: number;
+   }
+   
+   export interface P2E extends Assertion {
+      p1: {person: number};
+      p2: {role: string; event: number};
+   }
+   
+   export interface P2C extends Assertion {
+      p1: {person: number};
+      p2: {char: Characteristic;
+           repr: SourceRepr[] | undefined;   // when char.name=="image" only
+           parts: CharPart[]};
+   }
+   
+   export interface P2P extends Assertion {
+      p1: {person: number};
+      p2: {person: number};
+   }
+   
+   export interface P2G extends Assertion {
+      p1: {person: number};
+   }
+   
+   export interface Place {
+      id: number;
+      name: string;
+      date: string|null;
+      date_sort: string|null;
+      parent_place_id: number;
+   }
+}

@@ -16,7 +16,7 @@ export interface Characteristic {
 export abstract class Assertion {
    constructor(
       public surety:      number,
-      public researcher:  string,
+      public researcher:  number,  // xref
       public rationale:   string,
       public disproved:   boolean,
       public lastChanged: string,
@@ -43,7 +43,7 @@ export abstract class Assertion {
 export class P2P extends Assertion {
    constructor(
       public surety:      number,
-      public researcher:  string,
+      public researcher:  number,  // xref
       public rationale:   string,
       public disproved:   boolean,
       public lastChanged: string,
@@ -63,7 +63,7 @@ export class P2P extends Assertion {
 export class P2G extends Assertion {
    constructor(
       public surety:      number,
-      public researcher:  string,
+      public researcher:  number,  // xref
       public rationale:   string,
       public disproved:   boolean,
       public lastChanged: string,
@@ -83,7 +83,7 @@ export class P2G extends Assertion {
 export class P2C extends Assertion {
    constructor(
       public surety:         number,
-      public researcher:     string,
+      public researcher:     number,  // xref
       public rationale:      string,
       public disproved:      boolean,
       public lastChanged:    string,
@@ -108,7 +108,7 @@ export class P2C extends Assertion {
 export class P2E extends Assertion {
    constructor(
       public surety:        number,
-      public researcher:    string,
+      public researcher:    number,  // xref
       public rationale:     string,
       public disproved:     boolean,
       public lastChanged:   string,

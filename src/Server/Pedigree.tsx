@@ -1,16 +1,16 @@
 import { Person } from '../Store/Person';
-import { JSONStyle, JSONPersons, jsonPersonToPerson,
-         FetchPersonsResult } from '../Server/Person';
+import { jsonPersonToPerson, FetchPersonsResult } from '../Server/Person';
+import { JSON } from './JSON';
 
 /**
  * Sent back by the server
  */
 
-interface JSONPedigree extends JSONPersons {
+interface JSONPedigree extends JSON.Persons {
    decujus: number;
    generations: number;  // including decujus
    descendants: number;
-   styles: JSONStyle[];
+   styles: JSON.Style[];
    p: Person;
 }
 
