@@ -37,8 +37,8 @@ export default class AssertionPartCharacteristic extends React.PureComponent<Cha
                               </div>)
                         }
                      </div>
+                     <Media medias={c.medias} />
                   </div>
-                  <Media medias={c.medias} />
                </div>
             }
          />

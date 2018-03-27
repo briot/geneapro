@@ -1,0 +1,33 @@
+.medialist {
+   display: flex;
+   flex-wrap: nowrap;
+}
+
+.medialist .image {
+   max-width: 100px;
+}
+
+.medialist .image + .image {
+   margin-left: 5px;
+}
+
+.medialistSingle legend,
+.medialist legend {
+   display: inline-block;
+   font-size: 0.8em;
+   font-style: italic;
+   overflow: hidden;
+   text-align: center;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+   width: 100%;
+}
+
+.medialistSingle {
+}
+.medialistSingle legend {
+   flex-grow: 1;
+}
+.medialistSingle > span {
+   display: flex;
+}

@@ -51,16 +51,18 @@
    display: flex;
 }
 .Assertion .dateAndTag {
-   text-align: left;
-   min-width: 10px;
-   margin-right: 10px;
-   font-weight: bold;
+   flex-shrink: 0;
    font-size: 0.9em;
+   font-weight: bold;
+   margin-right: 10px;
+   min-width: 10px;
+   text-align: left;
    white-space: nowrap;
 }
 .Assertion .nameAndPlace {
    flex-grow: 1;
    flex-shrink: 1;
+   overflow-x: auto;
 }
 .Assertion .nameAndPlace.bordered {
    border-left: 1px solid #ccc;

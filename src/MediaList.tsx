@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Button, Image } from 'semantic-ui-react';
 import { SourceMedia } from './Store/Source';
+import './MediaList.css';
 
 interface MediasProps {
    medias?: SourceMedia[];
@@ -43,18 +44,22 @@ export default class Medias extends React.PureComponent<MediasProps, MediasState
       if (this.state.selected !== undefined) {
          const m = this.props.medias[this.state.selected];
          return (
-            <div>
-               <Button
-                  size="mini"
-                  floated="right"
-                  onClick={() => this.selectImage()}
-               >
-                  X
-               </Button>
+            <div className="medialistSingle">
+               <span>
+                  <legend>
+                     {m.comments}
+                  </legend>
+                  <Button
+                     size="mini"
+                     onClick={() => this.selectImage()}
+                  >
+                     X
+                  </Button>
+               </span>
                <Image
                   fluid={true}
                   src={m.url}
-                  title={m.file}
+                  title={m.comments + '\n\n' + m.file}
                />
             </div>
          );
@@ -62,21 +67,23 @@ export default class Medias extends React.PureComponent<MediasProps, MediasState
 
       return (
          <div
+            className="medialist"
             ref={(r: HTMLDivElement) => this.imageGroup = r}
-            style={{whiteSpace: 'nowrap', overflowX: 'auto'}}
          >
             {
                this.props.medias.map((m, idx) => (
-                  <Image
-                     key={m.id}
-                     src={m.url}
-                     size="small"
-                     bordered={true}
-                     spaced="right"
-                     title={m.file}
-                     style={{minWidth: 50}}
-                     onClick={() => this.selectImage(idx)}
-                  />
+                  <div className="image">
+                     <Image
+                        key={m.id}
+                        src={m.url}
+                        size="small"
+                        bordered={true}
+                        title={m.comments + '\n\n' + m.file}
+                        style={{minWidth: 50}}
+                        onClick={() => this.selectImage(idx)}
+                     />
+                     <legend>{m.comments}</legend>
+                  </div>
                ))
             }
          </div>
