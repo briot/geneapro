@@ -161,13 +161,18 @@ class P2C(Assertion):
 
     def to_json(self):
         res = super(P2C, self).to_json()
+        fetch_image = False
+
         parts = []
         for p in self.characteristic.parts.select_related():
             parts.append({'name': p.type.name, 'value': p.name})
+            if p.type.gedcom == "_IMG":
+                fetch_image = True
+
         res['p1'] = {'person': self.person_id}
         res['p2'] = {'char': self.characteristic,
                      'repr': list(self.source.representations.all())
-                         if self.characteristic.name == "image" and self.source_id
+                         if fetch_image and self.source
                          else None,
                      'parts': parts}
         return res

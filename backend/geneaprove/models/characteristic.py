@@ -58,7 +58,7 @@ class Characteristic_Part(GeneaProveModel):
     """
     Most characteristics have a single part (such as Occupation
     for instance). However, the full name is also stored as a
-    characterstic, and therefore various parts might be needed.
+    characteristic, and therefore various parts might be needed.
     """
 
     characteristic = models.ForeignKey(Characteristic, related_name="parts")
