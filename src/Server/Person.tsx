@@ -6,6 +6,7 @@ import { SourceSet } from '../Store/Source';
 import { sourceFromJSON } from '../Server/Source';
 import { PlaceSet } from '../Store/Place';
 import { JSON } from '../Server/JSON';
+import { ResearcherSet } from '../Store/Researcher';
 
 export interface FetchPersonsResult {
    persons: PersonSet;
@@ -167,7 +168,7 @@ export interface AssertionEntities {
    persons: PersonSet;
    places: PlaceSet;
    sources: SourceSet;
-   researchers: {[key: number]: JSON.Researcher};
+   researchers: ResearcherSet;
 }
 
 export interface DetailsResult extends AssertionEntities {
@@ -214,6 +215,10 @@ export function setAssertionEntities(
 
    for (const s of entities.sources) {
       into.sources[s.id] = sourceFromJSON(s);
+   }
+
+   for (const r of entities.researchers) {
+      into.researchers[r.id] = {name: r.name};
    }
 }
 

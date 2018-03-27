@@ -11,6 +11,7 @@ import { actionCreator } from '../Store/Actions';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { QuiltsResult } from '../Server/Quilts';
+import { ResearcherSet} from '../Store/Researcher';
 
 export interface AppState {
    pedigree: PedigreeSettings;
@@ -26,6 +27,7 @@ export interface AppState {
    sources: SourceSet;
    history: HistoryItem[];    // id of persons recently visited
    csrf: string;              // CSRF token for Django
+   researchers: ResearcherSet;
 }
 
 export type GPDispatch = Redux.Dispatch<AppState>;

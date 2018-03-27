@@ -35,6 +35,7 @@ export function rootReducer(
       places: {},
       sources: {},
       history: [],
+      researchers: {},
       csrf: '',
    },
    action: Redux.Action
@@ -159,6 +160,7 @@ export function rootReducer(
       return {...state,
               events: {...state.events, ...data.events},
               places: {...state.places, ...data.places},
+              researchers: {...state.researchers, ...data.researchers},
               sources: {...state.sources, ...data.sources},
               persons};
 
@@ -172,6 +174,7 @@ export function rootReducer(
               events: {...state.events, ...data.events},
               places: {...state.places, ...data.places},
               sources: {...state.sources, ...data.sources},
+              researchers: {...state.researchers, ...data.researchers},
               persons: {...state.persons, ...data.persons}};
 
    } else if (isType(action, fetchQuilts.started)) {
@@ -207,6 +210,7 @@ export function rootReducer(
               events: {...state.events, ...data.events},
               sources,
               places: {...state.places, ...data.places},
+              researchers: {...state.researchers, ...data.researchers},
               persons: {...state.persons, ...data.persons}};
 
    } else if (isType(action, fetchSources.done)) {

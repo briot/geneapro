@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
+import { AppState } from '../Store/State';
 import { Rating, Segment } from 'semantic-ui-react';
 import { Assertion } from '../Store/Assertion';
 import AssertionPartEvent from '../Assertions/AssertionPartEvent';
@@ -6,6 +8,7 @@ import AssertionPartPerson from '../Assertions/AssertionPartPerson';
 import AssertionPartCharacteristic from '../Assertions/AssertionPartChar';
 import { P2E, P2C, P2P } from '../Store/Assertion';
 import { SourceLink } from '../Links';
+import { ResearcherSet } from '../Store/Researcher';
 import './AssertionBox.css';
 
 interface BoxProps {
@@ -14,8 +17,11 @@ interface BoxProps {
    p2?: JSX.Element;
    role?: string;     // Separator between the two parts of the assertion
 }
+interface ConnectedBoxProps extends BoxProps {
+   researchers: ResearcherSet;
+}
 
-function AssertionBox(props: BoxProps) {
+function ConnectedAssertionBox(props: ConnectedBoxProps) {
    const a = props.assert;
    return (
       <div className={'Assertion ' + (a.disproved ? 'disproved' : '')} >
@@ -41,11 +47,20 @@ function AssertionBox(props: BoxProps) {
                </div>
             </div>
             <div><i>Rationale:</i> {a.rationale}</div>
-            <div className="researcher">Researched by: {a.researcher}</div>
+            <div className="researcher">
+               Researched by: {props.researchers[a.researcher].name}
+            </div>
          </Segment>
       </div>
    );
 }
+
+const AssertionBox = connect(
+   (state: AppState, props: BoxProps) => ({
+      ...props,
+      researchers: state.researchers,
+   })
+)(ConnectedAssertionBox);
 
 interface AssertionProps {
    assert: Assertion;
