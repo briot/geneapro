@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Characteristic, CharacteristicPart } from '../Store/Assertion';
 import AssertionPart from '../Assertions/AssertionPart';
 import { PlaceLink } from '../Links';
+import Media from '../MediaList';
 
 /**
  * Characteristic Part
@@ -37,6 +38,7 @@ export default class AssertionPartCharacteristic extends React.PureComponent<Cha
                         }
                      </div>
                   </div>
+                  <Media medias={c.medias} />
                </div>
             }
          />

@@ -92,6 +92,7 @@ function p2cFromJSON(c: JSON.P2C) {
          name: c.p2.char.name,
          placeId: c.p2.char.place,
          parts: c.p2.parts,
+         medias: c.p2.repr ? c.p2.repr.map(m => JSON.toMedia(m)) : undefined,
       } /* characteristic */,
       c.source_id /* sourceId */,
    );

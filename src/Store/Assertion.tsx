@@ -1,4 +1,5 @@
 import { GenealogyEventSet } from '../Store/Event';
+import { SourceMedia } from '../Store/Source';
 
 export interface CharacteristicPart {
    name: string;
@@ -11,6 +12,8 @@ export interface Characteristic {
    name: string;
    placeId?: number;  // points to a Place in the state
    parts: CharacteristicPart[];
+
+   medias?: SourceMedia[];  // Only set when name == "image"
 }
 
 export abstract class Assertion {

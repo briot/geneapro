@@ -11,7 +11,7 @@ import { actionCreator } from '../Store/Actions';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { QuiltsResult } from '../Server/Quilts';
-import { ResearcherSet} from '../Store/Researcher';
+import { ResearcherSet } from '../Store/Researcher';
 
 export interface AppState {
    pedigree: PedigreeSettings;

@@ -43,13 +43,7 @@ export function* fetchSourceDetailsFromServer(id: number) {
       researchers: {},
    };
    r.source.assertions = data.asserts.map(a => assertionFromJSON(a));
-   r.source.medias = data.repr.map(m => ({
-      id: m.id,
-      comments: m.comments,
-      file: m.file,
-      mime: m.mime,
-      url: m.url
-   }));
+   r.source.medias = data.repr.map(m => JSON.toMedia(m));
    setAssertionEntities(data, r);
    return r;
 }

@@ -1,3 +1,5 @@
+import { SourceMedia } from '../Store/Source';
+
 /**
  * The data sent by the server
  */
@@ -82,8 +84,6 @@ export namespace JSON {
       value: string;
    }
    
-  
-   // Representation of sources (media)
    export interface SourceRepr {
       comments: string;
       id: number;
@@ -129,5 +129,19 @@ export namespace JSON {
       date: string|null;
       date_sort: string|null;
       parent_place_id: number;
+   }
+
+   /*****************************
+    * Converters to store types *
+    *****************************/
+
+   export function toMedia(r: SourceRepr): SourceMedia {
+      return {
+         id: r.id,
+         comments: r.comments,
+         file: r.file,
+         mime: r.mime,
+         url: r.url,
+      };
    }
 }
