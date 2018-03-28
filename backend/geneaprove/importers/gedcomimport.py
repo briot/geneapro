@@ -599,49 +599,43 @@ class GedcomImporter(object):
                 result += ' %s=%s' % (key, val)
         return result
 
-    def _create_place(self, data, id=''):
-        """If data contains a subnode PLAC, parse and returns it.
+    def _internal_create_place(self, data, addr):
+        """
+        Check if the place already exists, since GEDCOM will duplicate
+        places unfortunately.
+        We need to take into account all the place parts, which is done
+        by simulating a long name including all the optional parts.
+
+        Take into account all parts (the GEDCOM standard only defines a
+        few of these for a PLAC, but software such a gramps add quite a
+        number of fields
+
+        :param data: the parent node ("ADDR")
+           This node might include a "MAP" child for latitude/longitude
+        :param addr: the actual address node ("PLAC" or "ADR1")
         """
 
-        if data is None:
-            return None
+        map = getattr(data, "MAP", None)
 
-        addr = getattr(data, "ADDR", None)
-        data = getattr(data, "PLAC", None)
+        lookup_name = data.value + self._addr_image(addr)
+        if map:
+            lookup_name += ' MAP=%s,%s' % (map.LATI, map.LONG)
 
-        if addr is None and data is None:
-            return None
-        if data is None and addr is not None:
-            self.report_error("%s Unexpected: got an ADDR without a PLAC" % (
-                location(addr)))
-            return None
-
-        # Check if the place already exists, since GEDCOM will duplicate
-        # places unfortunately.
-        # We need to take into account all the place parts, which is done
-        # by simulating a long name including all the optional parts.
-
-        # Take into account all parts (the GEDCOM standard only defines a
-        # few of these for a PLAC, but software such a gramps add quite a
-        # number of fields
-
-        long_name = data.value + self._addr_image(addr)
-        if data.MAP:
-            long_name = long_name + ' MAP=%s,%s' % (data.MAP.LATI,
-                                                    data.MAP.LONG)
-
-        p = self._places.get(long_name)
-
+        p = self._places.get(lookup_name)
         if not p:
-            p = models.Place.objects.create(name=data.value, date=None,
-                                            parent_place=None)
-            self._places[long_name] = p  # For reuse
+            # ??? Should create hierarchy of places
+            p = models.Place.objects.create(
+                name=data.value,
+                date=None,
+                parent_place=None)
 
-            if data.MAP:
+            self._places[lookup_name] = p  # For reuse
+
+            if map:
                 self._all_place_parts.append(models.Place_Part(
                     place=p,
                     type=self._place_part_types['MAP'],
-                    name=data.MAP.LATI + ' ' + data.MAP.LONG))
+                    name=map.LATI + ' ' + map.LONG))
 
             if addr:
                 for key, val in addr.for_all_fields():
@@ -665,6 +659,28 @@ class GedcomImporter(object):
                     "%s Unhandled PLAC.%s" % (location(v), k))
 
         return p
+
+    def _create_place(self, data, id=''):
+        """If data contains a subnode PLAC, parse and returns it.
+        """
+
+        if data is None:
+            return None
+
+        addr = getattr(data, "ADDR", None)
+        plac = getattr(data, "PLAC", None)
+
+        if addr is None and plac is None:
+            return None
+
+        # We have a "ADDR", but no "PLAC": in Gramps, this corresponds to
+        # filling the "Address" information for a person. This should get
+        # converted to a RESI event, and we'll create a place for it. We
+        # seem to have more info in the ADR1 subfield
+        if plac is None and addr is not None:
+            return self._internal_create_place(addr, addr)
+
+        return self._internal_create_place(plac, addr)
 
     def _indi_for_source(self, sourceId, indi):
         """Return the instance of Persona to use for the given source.

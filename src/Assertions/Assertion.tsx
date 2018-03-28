@@ -46,7 +46,9 @@ function ConnectedAssertionBox(props: ConnectedBoxProps) {
                   }
                </div>
             </div>
-            <div><i>Rationale:</i> {a.rationale}</div>
+            <div style={{whiteSpace: 'pre-line'}}>
+               <i>Rationale:</i> {a.rationale}
+            </div>
             <div className="researcher">
                Researched by: {props.researchers[a.researcher].name}
             </div>

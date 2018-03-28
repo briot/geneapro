@@ -72,9 +72,8 @@ export default class Medias extends React.PureComponent<MediasProps, MediasState
          >
             {
                this.props.medias.map((m, idx) => (
-                  <div className="image">
+                  <div className="image" key={m.id}>
                      <Image
-                        key={m.id}
                         src={m.url}
                         size="small"
                         bordered={true}
