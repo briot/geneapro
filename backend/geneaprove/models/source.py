@@ -74,7 +74,7 @@ documents the citation styles.""")
             "higher_source_id": self.higher_source_id,
             "subject_place": self.subject_place,
             "jurisdiction_place": self.jurisdiction_place,
-            "researcher": self.researcher if self.researcher_id else None,
+            "researcher": self.researcher_id,
             "subject_date": self.subject_date,
             "medium": self.medium,
             "title": self.title,

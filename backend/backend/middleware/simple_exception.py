@@ -36,7 +36,10 @@ class AJAXSimpleExceptionResponse(object):
            else:
                format = self.style.SQL_COLTYPE
 
-           print('\n'.join('%s (%s)' % (q['sql'], q['time']) for q in connection.queries))
+           # These are also visible by activating loggers, which is
+           # better since they mix with other logs and can help find which
+           # part of the code is doing queries.
+           # print('\n'.join('%s (%s)' % (q['sql'], q['time']) for q in connection.queries))
 
            print(format(
                "Total time: %fs  /  queries time (%s queries): %fs" % (

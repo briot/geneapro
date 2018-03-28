@@ -1,5 +1,6 @@
 from django.db import models
 import django.utils.timezone
+import logging
 from .base import GeneaProveModel
 from .characteristic import Characteristic
 from .event import Event, Event_Type_Role
@@ -10,6 +11,9 @@ from .researcher import Researcher
 from .source import Source
 from .surety import Surety_Scheme_Part
 from .representation import Representation
+
+
+logger = logging.getLogger('geneaprove.asserts')
 
 
 class Assertion(GeneaProveModel):
@@ -64,7 +68,7 @@ class Assertion(GeneaProveModel):
     @staticmethod
     def related_json_fields():
         """What select_related() to use if we want to export to JSON"""
-        return ['researcher', 'surety']
+        return []
 
     def to_json(self):
         return {
@@ -101,7 +105,9 @@ class Assertion(GeneaProveModel):
 
             ids["sources"].update([a.source_id])
             ids["researchers"].update([a.researcher_id])
-        return {
+
+        logger.debug('getEntities, fetching related entities')
+        r = {
             "asserts": asserts,
             "events": list(Event.objects.
                 select_related('type').filter(id__in=ids["events"])),
@@ -110,6 +116,8 @@ class Assertion(GeneaProveModel):
             "sources": list(Source.objects.filter(id__in=ids["sources"])),
             "researchers": list(Researcher.objects.filter(id__in=ids["researchers"])),
         }
+        logger.debug('getEntities, done fetching related entities')
+        return r
 
 
 class P2P(Assertion):

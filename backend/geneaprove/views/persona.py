@@ -56,7 +56,7 @@ def more_recent(obj1, obj2):
 
 def extended_personas(
         nodes, styles, graph, asserts=None, event_types=None, schemes=None,
-        all_sources=None, as_css=False, query_groups=True):
+        as_css=False, query_groups=True):
     """
     Compute the events for the various persons in `nodes` (all all persons in
     the database if None)
@@ -68,8 +68,6 @@ def extended_personas(
            database.
        :param graph: an instance of Graph, which is used to compute whether
           two ids represent the same person.
-       :param dict all_sources: either a dictionary, or None. If specified, it
-          will be filled with  "sourceId -> models.Source" objects
        :param as_css:
           True to get the styles as a CSS string rather than a python dict
        :param event_types: restricts the types of events that are retrieved
@@ -158,9 +156,6 @@ def extended_personas(
         if asserts is not None:
             asserts.append(p)
 
-        if all_sources is not None:
-            all_sources.setdefault(p.source_id, {})
-
         # ??? Could we take advantage of the e.date_sort string, instead
         # of reparsing the DateRange ?
         e.Date = e.date and DateRange(e.date)
@@ -200,8 +195,6 @@ def extended_personas(
 
             if asserts is not None:
                 asserts.append(gr)
-            if all_sources is not None:
-                all_sources.setdefault(gr.source_id, {})
 
             if schemes is not None:
                 schemes.add(gr.surety.scheme_id)
@@ -220,9 +213,6 @@ def extended_personas(
         p_node = graph.node_from_id(p.person_id)
         person = persons[p_node.main_id]
         c2p[c.id] = person
-
-        if all_sources is not None:
-            all_sources.setdefault(p.source_id, {})
 
         c.date = c.date and DateRange(c.date)
 
@@ -275,16 +265,6 @@ def extended_personas(
 #            d[p.type.name] = p.name
 
     ##########
-    # Get the title for all sources that are mentioned
-    ##########
-
-    logger.debug('MANU get source titles')
-
-    if all_sources is not None:
-        for s in sql_in(models.Source.objects, "id", all_sources.keys()):
-            all_sources[s.id] = s
-
-    ##########
     # Compute the styles
     ##########
 
@@ -302,13 +282,11 @@ class PersonaView(JSONView):
     def get_json(self, params, id):
         global_graph.update_if_needed()
 
-        all_sources = {}
         asserts = []
 
         p = extended_personas(
             nodes=set([global_graph.node_from_id(id)]),
             asserts=asserts,
-            all_sources=all_sources,
             styles=None, as_css=True, graph=global_graph, schemes=None)
 
         node = global_graph.node_from_id(id)
@@ -382,7 +360,7 @@ class PersonaList(JSONView):
             all = extended_personas(
                 nodes=None, styles=styles,
                 event_types=event_types_for_pedigree(),
-                all_sources=None, graph=global_graph, as_css=True)
+                graph=global_graph, as_css=True)
 
         all = [p for p in all.values()]
         all.sort(key=lambda x: x.surn)

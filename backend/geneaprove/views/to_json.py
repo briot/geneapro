@@ -63,6 +63,7 @@ class ModelEncoder(DjangoJSONEncoder):
 
         # Must be last, since all model objects have a default to_json
         elif hasattr(obj, 'to_json'):
+            # logger.debug('Converting %s', type(obj))
             return obj.to_json()
 
         else:

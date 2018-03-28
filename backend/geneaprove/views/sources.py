@@ -26,8 +26,7 @@ def get_source(id):
         return s
 
     else:
-        return models.Source.objects.select_related(
-            'researcher').get(pk=id)
+        return models.Source.objects.select_related().get(pk=id)
 
 
 class CitationModel(JSONView):
@@ -171,7 +170,7 @@ class SourcesList(JSONView):
     def get_json(self, params):
         return models.Source.objects.order_by(
             'abbrev', 'title').select_related(
-                'researcher', 'subject_place', 'jurisdiction_place')
+                'subject_place', 'jurisdiction_place')
 
 
 class SourceRepresentations(JSONView):

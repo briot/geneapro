@@ -1063,6 +1063,19 @@ class DateRange(object):
                from <range1> to <range2>
                where  range[12] = date | between <date1> and <date2>
         """
+        precision = PRECISION_EXACT
+        match = ABOUT_RE.search(self.text)
+        if match:
+            precision = PRECISION_ABOUT
+            self.text = self.text[:match.start(0)] + self.text[match.end(0):]
+        else:
+            match = EST_RE.search(self.text)
+            if match:
+                precision = PRECISION_ESTIMATED
+                self.text = self.text[:match.start(0)] + self.text[match.end(0):]
+
+        # ??? What should we do with `precision` ?
+
         if self.span != SPAN_FROM:
             groups = PERIOD_RE.search(self.text)
             if groups:
