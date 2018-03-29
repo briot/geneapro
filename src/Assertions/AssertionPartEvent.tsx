@@ -21,16 +21,13 @@ function EventDetails(props: EventDetailsProps) {
    }
    return (
       <table className="eventDetails">
-         {props.event.persons.map(
-            p => ([
+         <tbody>
+         {
+            props.event.persons.map(p => ([
                <tr key={p.id}>
                   <td>{p.role}</td>
-                  <td>
-                     <PersonaLink
-                        className="name"
-                        id={p.id}
-                        givn={p.name}
-                     />
+                  <td className="name">
+                     <PersonaLink id={p.id} />
                   </td>
                   <td><SourceLink id={p.sourceId} /></td>
                   <td>
@@ -42,11 +39,10 @@ function EventDetails(props: EventDetailsProps) {
                      />
                   </td>
                </tr>,
-               p.rationale &&
-                  <tr><td/><td colSpan={3}>{p.rationale}</td></tr>,
-            ])
-          )
+               p.rationale ? <tr><td/><td colSpan={3}>{p.rationale}</td></tr> : null,
+            ]))
          }
+         </tbody>
       </table>
    );
 }

@@ -52,6 +52,7 @@ export class P2P extends Assertion {
       public lastChanged: string,
       public person1Id:   number,  // points to a Persona in the state
       public person2Id:   number,  // points to a Persona in the state
+      public relation:    string,  // type of relationship
       public sourceId?:   number   // points to a Source in the state
    )  {
       super(surety, researcher, rationale, disproved, lastChanged, sourceId);

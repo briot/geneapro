@@ -149,21 +149,28 @@ LOGGING = {
             'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(levelname)s %(asctime)s %(message)s'
+            'format': '%(funcName)s %(levelname)s %(asctime)s %(message)s'
+        },
+        'simplegray': {
+            'format': '\033[2m%(asctime)s %(message)s\033[0m'
         },
     },
     'handlers': {
         'file': {
             'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            # 'class': 'logging.FileHandler',
-            # 'filename': 'file.log',
+            'class': 'logging.FileHandler',
+            'filename': 'geneaprove.log',
             'formatter': 'simple'
         },
         'console': {
             'level': 'DEBUG',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
+        },
+        'consolegray': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simplegray',
         },
     },
     'loggers': {
@@ -175,7 +182,12 @@ LOGGING = {
         'django': {
             'handlers': ['console'],
             'level': 'DEBUG',
-            'propagate': True,
+            'propagate': False,
         },
+        'django.db.backends': {   # Logging SQL queries
+            'handlers': ['consolegray'],
+            'level': 'DEBUG',
+            'propagate': False,
+        }
     }
 }

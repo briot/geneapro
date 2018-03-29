@@ -11,7 +11,7 @@ object appropriate for use by simplejson. For instance:
 
 from django.db import models, connection
 import django.utils.timezone
-from .asserts import Assertion, P2P, P2C, P2E, P2G
+from .asserts import Assertion, P2P, P2C, P2E, P2G, P2P_Type
 from .characteristic import Characteristic_Part_Type, \
     Characteristic, Characteristic_Part
 from .event import Event_Type, Event_Type_Role, Event

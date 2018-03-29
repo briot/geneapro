@@ -107,6 +107,7 @@ function p2pFromJSON(a: JSON.P2P) {
       a.last_change /* astChanged */,
       a.p1.person /* person1Id */,
       a.p2.person /* person2Id */,
+      a.type /* relation */,
       a.source_id /* sourceId */,
    );
 }

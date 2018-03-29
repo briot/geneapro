@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { Icon } from 'semantic-ui-react';
 import { Place } from './Store/Place';
 import { SourceSet } from './Store/Source';
+import { personDisplay, Person } from './Store/Person';
 import './Links.css';
 
 /**
@@ -17,20 +18,25 @@ export function urlPersona(id: number) {
 
 interface PersonaLinkProps {
    id: number;
-   surn?: string;  // will be upper-cased
-   givn?: string;  // displayed as-is
-   className?: string;
+}
+interface ConnectedPersonaLinkProps extends PersonaLinkProps {
+   person: Person|undefined;
 }
 
-export function PersonaLink(props: PersonaLinkProps) {
+function ConnectedPersonaLink(props: ConnectedPersonaLinkProps) {
    return (
-      <Link to={urlPersona(props.id)} className={props.className + ' personaLink'}>
+      <Link to={urlPersona(props.id)} className="personaLink">
          <Icon name="user" />
-         {props.surn ? props.surn.toUpperCase() + ' ' : ''}
-         {props.givn ? props.givn : ''}
+         {personDisplay(props.person)}
       </Link>
    );
 }
+export const PersonaLink = connect(
+   (state: AppState, props: PersonaLinkProps) => ({
+      ...props,
+      person: state.persons[props.id],
+   }),
+)(ConnectedPersonaLink);
 
 /**
  * source links

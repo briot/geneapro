@@ -103,7 +103,7 @@ export default function AssertionView(props: AssertionProps) {
             p2={props.hidePersonIf === a.person1Id ?
                 <AssertionPartPerson personId={a.person2Id} /> :
                 <AssertionPartPerson personId={a.person1Id} />}
-            role="same as"
+            role={a.relation}
          />
       );
    } else {

@@ -117,6 +117,7 @@ export namespace JSON {
    export interface P2P extends Assertion {
       p1: {person: number};
       p2: {person: number};
+      type: string;   // type of relationship
    }
    
    export interface P2G extends Assertion {

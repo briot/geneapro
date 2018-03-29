@@ -120,23 +120,37 @@ class Assertion(GeneaProveModel):
         return r
 
 
+class P2P_Type(GeneaProveModel):
+    """
+    Describes how two persons relate to each other
+    """
+    name = models.TextField(null=False)
+
+    class Meta:
+        db_table = "p2p_type"
+
+    sameAs = 1
+    # "sameAs" => connects two personas that represent the same real world
+    #   person (along with a rationale). One persona might be linked to
+    #   several other personas, which in turn can be linked to other
+    #   personas.
+
+
 class P2P(Assertion):
     """Persona-to-Persona assertions, to represent the Persona.sameAs
        relationship.
     """
     person1 = models.ForeignKey(Persona, related_name="sameAs1")
     person2 = models.ForeignKey(Persona, related_name="sameAs2")
-    type = models.IntegerField()
+    type = models.ForeignKey(P2P_Type)
 
     class Meta:
         db_table = "p2p"
 
-    sameAs = 1
-    # valid values for typ.
-    # "sameAs" => connects two personas that represent the same real world
-    #   person (along with a rationale). One persona might be linked to
-    #   several other personas, which in turn can be linked to other
-    #   personas.
+    @staticmethod
+    def related_json_fields():
+        """What select_related() to use if we want to export to JSON"""
+        return Assertion.related_json_fields() + ['type']
 
     def getRelatedIds(self):
         return {"persons": set([self.person1_id, self.person2_id])}
@@ -145,6 +159,7 @@ class P2P(Assertion):
         res = super(P2P, self).to_json()
         res['p1'] = {'person': self.person1_id}
         res['p2'] = {'person': self.person2_id}
+        res['type'] = self.type.name
         return res
 
 

@@ -427,7 +427,7 @@ class Invalid_Gedcom(Exception):
         super(Invalid_Gedcom, self).__init__(self)
         self.msg = msg
 
-    def __str__(self):
+    def __repr__(self):
         return str(self.msg)
 
 
@@ -750,7 +750,7 @@ class GedcomRecord(object):
             else:
                 yield key, val, level
 
-    def __str__(self):
+    def __repr__(self):
         return "GedcomRecord(%s)" % self.value
 
     def location(self):
@@ -875,7 +875,7 @@ class _GedcomParser(object):
                 else:           # A single record
                     self.result.__dict__[n] = None
 
-    def __str__(self):
+    def __repr__(self):
         return 'GedcomParser(name=%s)' % self.name
 
     def parse(self, lexical, gedcomFile=None, indent="   "):

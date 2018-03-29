@@ -4,7 +4,6 @@ import { PersonaLink } from '../Links';
 
 interface StatsTreeProps {
    decujus: number;
-   decujusName: string;
    totalInDatabase: number;
    totalInTree: number;
    fatherAncestors: number;
@@ -52,10 +51,7 @@ export default function StatsTree(props: StatsTreeProps) {
                   </Statistic.Value>
                   <Statistic.Label>
                      In tree:&nbsp;
-                     <PersonaLink
-                        id={props.decujus}
-                        surn={props.decujusName}
-                     />
+                     <PersonaLink id={props.decujus} />
                   </Statistic.Label>
                </Statistic>
             </Card.Content>

@@ -141,7 +141,7 @@ class GeneaGraph(Digraph):
                     p0.update(p1)  # merge both groups
                     d[id1] = p0
 
-        query = models.P2P.objects.filter(type=models.P2P.sameAs)
+        query = models.P2P.objects.filter(type_id=models.P2P_Type.sameAs)
         for p in query.values_list('person1', 'person2', 'disproved'):
             add_to_dict(different if p[2] else sameas, p[0], p[1])
 

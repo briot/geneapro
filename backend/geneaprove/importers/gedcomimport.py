@@ -374,9 +374,11 @@ class GedcomImporter(object):
         self._char_types = dict()
         self._citation_part_types = dict()
         self._place_part_types = dict()
-        self._get_all_event_types()
         self._places = dict()
         self._repo = dict()
+        self._p2p_types = dict()
+
+        self._create_enum_cache()
 
         self._all_place_parts = []    # list of Place_Part to bulk_create
         self._all_p2c = []            # list of P2C to bulk_create
@@ -437,8 +439,8 @@ class GedcomImporter(object):
     def report_error(self, msg):
         logger.info(msg)
 
-    def _get_all_event_types(self):
-        """Create a local cache for Event_Type"""
+    def _create_enum_cache(self):
+        """Create a local cache for enumeration tables"""
 
         for evt in models.Event_Type.objects.exclude(gedcom__isnull=True):
             if evt.gedcom:
@@ -463,6 +465,9 @@ class GedcomImporter(object):
             gedcom__isnull=True)
         for p in cit_part_types:
             self._citation_part_types[p.gedcom] = p
+
+        for p in models.P2P_Type.objects.all():
+            self._p2p_types[p.name.lower()] = p
 
     def _create_CHAN(self, data):
         """data should be a form of CHAN"""
@@ -717,7 +722,7 @@ class GedcomImporter(object):
                 researcher=self._researcher,
                 person1=indi,
                 person2=ind,
-                type=models.P2P.sameAs,
+                type_id=models.P2P_Type.sameAs,
                 rationale='Single individual in the gedcom file'))
 
         return ind
@@ -1114,9 +1119,37 @@ class GedcomImporter(object):
                             OBJE=value)]),
                     indi=indi)
 
+            elif field == "ASSO":
+                # There can be one or more ASSO, so we receive a list
+                assert isinstance(value, list)   # of GedcomRecord
+
+                for val in value:
+                    related = self._sourcePersona[(NO_SOURCE, val.value)]
+                    relation = None
+
+                    for f, v in val.for_all_fields():
+                        if f == "RELA":
+                            relation = self._p2p_types.get(v.lower(), None)
+                            if relation is None:
+                                relation = models.P2P_Type.objects.create(name=v)
+                                self._p2p_types[v.lower()] = relation
+
+                        else:
+                            self.report_error("%s Unhandled INDI.ASSO.%s" % (
+                                location(value), f))
+
+                    if relation is not None:
+                        self._all_p2p.append(
+                            models.P2P(
+                                surety=self._default_surety,
+                                researcher=self._researcher,
+                                person1=indi,
+                                person2=related,
+                                type=relation))
+
             else:
-                self.report_error("%s Unhandled INDI.%s: %s" % (
-                    location(value), field, value))
+                self.report_error("%s Unhandled INDI.%s" % (
+                    location(value), field))
 
         return indi
 

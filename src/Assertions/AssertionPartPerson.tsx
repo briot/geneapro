@@ -1,8 +1,6 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
-import { AppState, GPDispatch } from '../Store/State';
-import { PersonSet, personDisplay } from '../Store/Person';
 import AssertionPart from '../Assertions/AssertionPart';
+import { PersonaLink } from '../Links';
 
 /**
  * Person Part
@@ -12,29 +10,11 @@ import AssertionPart from '../Assertions/AssertionPart';
 interface PersonProps {
    personId: number;
 }
-interface ConnectedPersonProps extends PersonProps {
-   persons: PersonSet;
-   dispatch: GPDispatch;
-}
 
-class ConnectedAssertionPartPerson extends React.PureComponent<ConnectedPersonProps> {
+export default class AssertionPartPerson extends React.PureComponent<PersonProps> {
    render() {
-      const p = this.props.persons[this.props.personId];
       return (
-         <AssertionPart
-            title={<div>{personDisplay(p)}</div>}
-         />
+         <AssertionPart title={<PersonaLink id={this.props.personId} />} />
       );
    }
 }
-
-const AssertionPartPerson = connect(
-   (state: AppState, props: PersonProps) => ({
-      ...props,
-      persons: state.persons,
-   }),
-   (dispatch: GPDispatch) => ({
-      dispatch,
-   }),
-)(ConnectedAssertionPartPerson);
-export default AssertionPartPerson;

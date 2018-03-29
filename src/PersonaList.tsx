@@ -106,54 +106,45 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
                      headerHeight={30}
                   >
                      <Column
-                             header={<Cell>Surname</Cell>}
-                             cell={({rowIndex, ...props}: CellProps) => {
-                                const p: Person = persons[rowIndex as number];
-                                const b: string = event_to_string(
-                                   p.birthEventId ?
-                                      this.props.allEvents[p.birthEventId] :
-                                      undefined,
-                                   false, true);
-                                const d: string = event_to_string(
-                                   p.deathEventId ?
-                                      this.props.allEvents[p.deathEventId] :
-                                      undefined,
-                                   false, true);
-                                return (
-                                   <Cell {...props}>
-                                      <PersonaLink
-                                         className="name"
-                                         id={p.id}
-                                         surn={p.surn}
-                                         givn={p.givn}
-                                      />
-                                     <span className="lifespan">
-                                        <span>{b}</span>
-                                        {(b || d) ? ' - ' : ''}
-                                        <span>{d}</span>
-                                     </span>
-                                   </Cell>
-                                );
-                             }}
-                             isResizable={false}
-                             width={nameWidth}
+                        header={<Cell>Surname</Cell>}
+                        cell={({rowIndex, ...props}: CellProps) => {
+                           const p: Person = persons[rowIndex as number];
+                           const b: string = event_to_string(
+                              p.birthEventId ?
+                                 this.props.allEvents[p.birthEventId] :
+                                 undefined,
+                              false, true);
+                           const d: string = event_to_string(
+                              p.deathEventId ?
+                                 this.props.allEvents[p.deathEventId] :
+                                 undefined,
+                              false, true);
+                           return (
+                              <Cell {...props} className="name">
+                                 <PersonaLink id={p.id} />
+                                <span className="lifespan">
+                                   <span>{b}</span>
+                                   {(b || d) ? ' - ' : ''}
+                                   <span>{d}</span>
+                                </span>
+                              </Cell>
+                           );
+                        }}
+                        isResizable={false}
+                        width={nameWidth}
                      />
                      <Column
-                             header={<Cell>Id</Cell>}
-                             cell={({rowIndex, ...props}: CellProps) => {
-                                const p: Person = persons[rowIndex as number];
-                                return (
-                                   <Cell {...props}>
-                                      <PersonaLink
-                                         className="id"
-                                         id={p.id}
-                                         givn={p.id.toString()}
-                                      />
-                                   </Cell>
-                                );
-                             }}
-                             isResizable={false}
-                             width={idWidth}
+                        header={<Cell>Id</Cell>}
+                        cell={({rowIndex, ...props}: CellProps) => {
+                           const p: Person = persons[rowIndex as number];
+                           return (
+                              <Cell {...props} className="id">
+                                 <PersonaLink id={p.id} />
+                              </Cell>
+                           );
+                        }}
+                        isResizable={false}
+                        width={idWidth}
                      />
                   </Table>
                </div>

@@ -104,7 +104,9 @@ export function rootReducer(
             persons: persons,
          };
       }
-      return {...state, events};
+      return {...state,
+              events,
+              persons: {...state.persons, ...persons}};
 
    } else if (isType(action, fetchPedigree.started)) {
       return {...state,

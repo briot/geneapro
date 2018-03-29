@@ -292,7 +292,6 @@ class PersonaView(JSONView):
         node = global_graph.node_from_id(id)
 
         asserts.extend(models.P2P.objects.filter(
-            type=models.P2P.sameAs,
             person1__in=node.ids.union(node.different)).select_related(
                 *models.P2P.related_json_fields()
             )
