@@ -11,6 +11,16 @@
    font-family: serif;
 }
 
+.Persona .pagetitle .lifespan {
+   float: right;
+}
+.Persona .pagetitle .gender {
+   font-size: 0.8em;
+   margin-right: 10px;
+}
+
 .Persona .pageContent {
    background: #ececec;
 }
+
+
