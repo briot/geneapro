@@ -22,7 +22,6 @@ export function sourceFromJSON(s: JSON.Source) {
       biblio: s.abbrev,
       medium: '',
       medias: [],
-      assertions: [],
    };
    return result;
 }

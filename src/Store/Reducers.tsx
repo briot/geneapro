@@ -2,6 +2,7 @@ import * as Redux from 'redux';
 import { isType } from 'redux-typescript-actions';
 import { AppState, rehydrate } from '../Store/State';
 import { personDisplay, PersonSet } from '../Store/Person';
+import { SourceSet } from '../Store/Source';
 import { addToHistory, HistoryItem, HistoryKind } from '../Store/History';
 import { fetchPedigree, fetchPedigreeResult, fetchPersonDetails, fetchPersons,
          fetchEventDetails, fetchSourceDetails, fetchSources,
@@ -36,6 +37,18 @@ function mergePersons(state: PersonSet, action: PersonSet) {
       }
    }
 
+   return result;
+}
+
+/**
+ * Merge existing data for sources
+ */
+
+function mergeSources(state: SourceSet, action: SourceSet) {
+   let result: SourceSet = {...state};
+   for (const id of Object.keys(action)) {
+      result[id] = {...result[id], ...action[id]};
+   }
    return result;
 }
 
@@ -123,7 +136,7 @@ export function rootReducer(
                                    asserts: data.asserts}
                       },
               places: {...state.places, ...data.places},
-              sources: {...state.sources, ...data.sources},
+              sources: mergeSources(state.sources, data.sources),
               researchers: {...state.researchers, ...data.researchers},
               persons: mergePersons(state.persons, data.persons)};
 
@@ -182,7 +195,7 @@ export function rootReducer(
               events: {...state.events, ...data.events},
               places: {...state.places, ...data.places},
               researchers: {...state.researchers, ...data.researchers},
-              sources: {...state.sources, ...data.sources},
+              sources: mergeSources(state.sources, data.sources),
               persons};
 
    } else if (isType(action, fetchPlaces.done)) {
@@ -194,7 +207,7 @@ export function rootReducer(
       return {...state,
               events: {...state.events, ...data.events},
               places: {...state.places, ...data.places},
-              sources: {...state.sources, ...data.sources},
+              sources: mergeSources(state.sources, data.sources),
               researchers: {...state.researchers, ...data.researchers},
               persons: mergePersons(state.persons, data.persons)};
 
@@ -221,7 +234,7 @@ export function rootReducer(
 
    } else if (isType(action, fetchSourceDetails.done)) {
       const data = action.payload.result as FetchSourceDetailsResult;
-      const sources = {...state.sources, ...data.sources};
+      const sources = mergeSources(state.sources, data.sources);
       if (data.source.id in sources) {
          sources[data.source.id] = {...sources[data.source.id], ...data.source};
       } else {
@@ -236,11 +249,8 @@ export function rootReducer(
 
    } else if (isType(action, fetchSources.done)) {
       const data = action.payload.result as FetchSourcesResult;
-      const sources = {...state.sources};
-      for (const s of Object.values(data.sources)) {
-         sources[s.id] = s;
-      }
-      return {...state, sources};
+      return {...state,
+              sources: mergeSources(state.sources, data.sources)};
 
    } else if (isType(action, rehydrate)) {
 
