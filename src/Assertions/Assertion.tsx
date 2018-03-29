@@ -9,7 +9,7 @@ import AssertionPartCharacteristic from '../Assertions/AssertionPartChar';
 import { P2E, P2C, P2P } from '../Store/Assertion';
 import { SourceLink } from '../Links';
 import { ResearcherSet } from '../Store/Researcher';
-import './AssertionBox.css';
+import './Assertion.css';
 
 interface BoxProps {
    assert: Assertion;
