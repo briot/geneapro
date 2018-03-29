@@ -57,7 +57,7 @@ export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, S
    }
 
    onMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-      if (e.button === 1) {
+      if (e.button === 0) {
          this.origin = {
             clickX: e.pageX,
             clickY: e.pageY,
