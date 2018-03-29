@@ -53,7 +53,7 @@ export default class SourceDetails extends React.PureComponent<SourceProps, Sour
       const step: number = !s ? 1 : 2;
       const step1Complete = !!s;
       const step2Complete = s && s.medias && s.medias.length > 0;
-      const step3Complete = s && s.assertions && s.assertions.length > 0;
+      const step3Complete = s && s.asserts && s.asserts.get().length > 0;
       const step4Complete = step3Complete;  //  ??? Incorrect
       const allStepsComplete =
          step1Complete && step2Complete && step3Complete && step4Complete;

@@ -1,4 +1,5 @@
 import { Source, SourceSet } from '../Store/Source';
+import { AssertionList } from '../Store/Assertion';
 import { AssertionEntities, AssertionEntitiesJSON,
          assertionFromJSON, setAssertionEntities } from '../Server/Person';
 import { JSON } from '../Server/JSON';
@@ -41,7 +42,7 @@ export function* fetchSourceDetailsFromServer(id: number) {
       sources: {},
       researchers: {},
    };
-   r.source.assertions = data.asserts.map(a => assertionFromJSON(a));
+   r.source.asserts = new AssertionList(data.asserts.map(a => assertionFromJSON(a)));
    r.source.medias = data.repr.map(m => JSON.toMedia(m));
    setAssertionEntities(data, r);
    return r;

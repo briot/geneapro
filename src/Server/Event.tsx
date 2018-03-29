@@ -1,26 +1,12 @@
 import { JSON } from '../Server/JSON';
-import { Assertion } from '../Store/Assertion';
+import { AssertionList } from '../Store/Assertion';
 import { AssertionEntities, AssertionEntitiesJSON,
          setAssertionEntities, assertionFromJSON } from '../Server/Person';
 
 export interface EventDetails extends AssertionEntities {
    id: number;
-   asserts: Assertion[];
+   asserts: AssertionList;
 }
-
-// interface PartialP2E {   // should be JSONAssertion, need change in server
-//    disproved: boolean;
-//    rationale: string;
-//    role_name: string;
-//    source: {
-//       id: number;
-//    };
-//    surety: number;
-//    person: {
-//       name: string;
-//       id: number;
-//    };
-// }
 
 interface JSONEventDetails extends AssertionEntitiesJSON {
    id: number;
@@ -36,7 +22,7 @@ export function* fetchEventFromServer(id: number) {
    const data: JSONEventDetails = yield resp.json();
    let result: EventDetails = {
       id: data.id,
-      asserts: data.asserts.map(a => assertionFromJSON(a)),
+      asserts: new AssertionList(data.asserts.map(a => assertionFromJSON(a))),
       persons: {},
       events: {},
       places: {},

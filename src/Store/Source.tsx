@@ -1,4 +1,4 @@
-import { Assertion } from '../Store/Assertion';
+import { AssertionList } from '../Store/Assertion';
 
 export interface SourceMedia {
    id: number;
@@ -23,7 +23,7 @@ export interface Source {
    last_change?: string;
 
    medias?: SourceMedia[];
-   assertions?: Assertion[];
+   asserts?: AssertionList;
 }
 
 export interface SourceSet {

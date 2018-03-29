@@ -162,11 +162,5 @@ export class AssertionList {
             return da.localeCompare(db);
          }
       });
-
-      // const items: {d: string|undefined, a: Assertion}[] =
-      //    this.asserts.map(a => ({d: a.getSortDate(events), a: a}));
-      // items.sort((a1, a2) => (
-      //    !a1.d ? -1 : !a2.d ? 1 : a1.d!.localeCompare(a2.d!)));
-      // this.asserts = items.map(i => i.a);
    }
 }

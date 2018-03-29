@@ -10,13 +10,13 @@ interface SourceAssertionsProps {
 export default class SourceAssertions extends React.PureComponent<SourceAssertionsProps, {}> {
 
    render() {
-      const a = this.props.source.assertions;
+      const a = this.props.source.asserts;
 
       if (!a) {
          return null;
       }
 
-      return a.map(
+      return a.get().map(
          (b: Assertion, idx: number) => (
             <AssertionView key={idx} assert={b} />
          )

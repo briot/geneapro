@@ -1,5 +1,5 @@
 import { actionCreator } from '../Store/Actions';
-import { Assertion } from '../Store/Assertion';
+import { AssertionList } from '../Store/Assertion';
 
 interface EventType {
    id: number;
@@ -17,8 +17,7 @@ export interface GenealogyEvent {
    type?: EventType;
 
    // Only available after we fetched the details
-//   persons?: PersonInEvent[];
-   asserts?: Assertion[];
+   asserts?: AssertionList;
 }
 
 export interface GenealogyEventSet {

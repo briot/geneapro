@@ -24,7 +24,7 @@ function EventDetails(props: EventDetailsProps) {
       <table className="eventDetails">
          <tbody>
          {
-            props.event.asserts.map((a, idx) => {
+            props.event.asserts.get().map((a, idx) => {
                if (a instanceof P2E) {
                   return [
                      <tr key={idx}>
