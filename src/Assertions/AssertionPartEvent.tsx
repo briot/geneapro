@@ -6,6 +6,7 @@ import { Loader, Rating } from 'semantic-ui-react';
 import { PersonaLink, SourceLink, PlaceLink } from '../Links';
 import { GenealogyEvent } from '../Store/Event';
 import AssertionPart from '../Assertions/AssertionPart';
+import { P2E } from '../Store/Assertion';
 
 /**
  * Brief details for an event
@@ -16,31 +17,38 @@ interface EventDetailsProps {
 }
 
 function EventDetails(props: EventDetailsProps) {
-   if (props.event === undefined || props.event.persons === undefined) {
+   if (props.event === undefined || props.event.asserts === undefined) {
       return <Loader active={true} size="small">Loading</Loader>;
    }
    return (
       <table className="eventDetails">
          <tbody>
          {
-            props.event.persons.map(p => ([
-               <tr key={p.id}>
-                  <td>{p.role}</td>
-                  <td className="name">
-                     <PersonaLink id={p.id} />
-                  </td>
-                  <td><SourceLink id={p.sourceId} /></td>
-                  <td>
-                     <Rating
-                        style={{float: 'right'}}
-                        rating={1}   /* ??? Incorrect */
-                        size="mini"
-                        maxRating={5}
-                     />
-                  </td>
-               </tr>,
-               p.rationale ? <tr><td/><td colSpan={3}>{p.rationale}</td></tr> : null,
-            ]))
+            props.event.asserts.map((a, idx) => {
+               if (a instanceof P2E) {
+                  return [
+                     <tr key={idx}>
+                        <td>{a.role}</td>
+                        <td className="name">
+                           <PersonaLink id={a.personId} />
+                        </td>
+                        <td><SourceLink id={a.sourceId} /></td>
+                        <td>
+                           <Rating
+                              style={{float: 'right'}}
+                              rating={1}   /* ??? Incorrect */
+                              size="mini"
+                              maxRating={5}
+                           />
+                        </td>
+                     </tr>,
+                     a.rationale ? <tr><td/><td colSpan={3}>{a.rationale}</td></tr> : null,
+                  ];
+               } else {
+                  return <span>Unknown assertion</span>;
+               }
+            })
+            
          }
          </tbody>
       </table>

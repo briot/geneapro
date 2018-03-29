@@ -115,7 +115,7 @@ export type fetchEventDetailsParams = {
 };
 function _hasEventDetails(p: fetchEventDetailsParams, state: AppState) {
    return (p.id in state.events &&
-           state.events[p.id].persons !== undefined);
+           state.events[p.id].asserts !== undefined);
 }
 function* _fetchEventDetails(p: fetchEventDetailsParams) {
    const res: EventDetails = yield call(fetchEventFromServer, p.id);

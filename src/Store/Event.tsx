@@ -1,19 +1,10 @@
 import { actionCreator } from '../Store/Actions';
+import { Assertion } from '../Store/Assertion';
 
 interface EventType {
    id: number;
    name: string;    // e.g. "birth"
    gedcom: string;  // e.g. "BIRT"
-}
-
-export interface PersonInEvent {
-   id: number;
-   name: string;  // display name for the person 
-                  // ??? Would be better to avoid this
-   rationale: string; // why this person is associated with the event
-   surety: number;
-   sourceId: number;
-   role: string;
 }
 
 export interface GenealogyEvent {
@@ -26,7 +17,8 @@ export interface GenealogyEvent {
    type?: EventType;
 
    // Only available after we fetched the details
-   persons?: PersonInEvent[];
+//   persons?: PersonInEvent[];
+   asserts?: Assertion[];
 }
 
 export interface GenealogyEventSet {

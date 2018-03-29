@@ -4,7 +4,7 @@ import { AppState } from './Store/State';
 import { Link } from 'react-router-dom';
 import { Icon } from 'semantic-ui-react';
 import { Place } from './Store/Place';
-import { SourceSet } from './Store/Source';
+import { Source } from './Store/Source';
 import { personDisplay, Person } from './Store/Person';
 import './Links.css';
 
@@ -47,15 +47,19 @@ export function urlSource(id: number) {
 }
 
 interface SourceLinkProps {
-   id: number;
+   id: number|undefined;
    showName?: boolean;
 }
 interface ConnectedSourceLinkProps extends SourceLinkProps {
-   sources: SourceSet;
+   source: Source;
 }
 
 function ConnectedSourceLink(props: ConnectedSourceLinkProps) {
-   const s = props.sources[props.id];
+   if (props.id === undefined) {
+      return null;
+   }
+
+   const s = props.source;
    return (
       <Link to={urlSource(props.id)} className="sourceLink">
          <span title={s ? s.title : undefined}>
@@ -69,7 +73,7 @@ function ConnectedSourceLink(props: ConnectedSourceLinkProps) {
 export const SourceLink = connect(
    (state: AppState, props: SourceLinkProps) => ({
       ...props,
-      sources: state.sources,
+      source: props.id === undefined ? undefined : state.sources[props.id],
    })
 )(ConnectedSourceLink);
 

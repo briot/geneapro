@@ -1,7 +1,7 @@
 import * as Redux from 'redux';
 import { isType } from 'redux-typescript-actions';
 import { AppState, rehydrate } from '../Store/State';
-import { personDisplay } from '../Store/Person';
+import { personDisplay, PersonSet } from '../Store/Person';
 import { addToHistory, HistoryItem, HistoryKind } from '../Store/History';
 import { fetchPedigree, fetchPedigreeResult, fetchPersonDetails, fetchPersons,
          fetchEventDetails, fetchSourceDetails, fetchSources,
@@ -15,6 +15,29 @@ import { defaultPedigree, changePedigreeSettings } from '../Store/Pedigree';
 import { defaultFanchart, changeFanchartSettings } from '../Store/Fanchart';
 import { defaultRadial, changeRadialSettings } from '../Store/Radial';
 import { defaultQuilts, changeQuiltsSettings } from '../Store/Quilts';
+
+/**
+ * Merge existing data for persons with new data read from an action
+ */
+
+function mergePersons(state: PersonSet, action: PersonSet) {
+   let result: PersonSet = {...state};
+
+   for (const id of Object.keys(action)) {
+      // Special case: when the details come from an assertion, do we not get
+      // a surname. In this case, we want to preserve the more details info
+      // ??? TO BE FIXED, we should be getting the surn for assertions too
+
+      const p = action[id];
+      if (result[id] && p.surn === '') {
+         // Don't change anything
+      } else {
+         result[id] = {...result[id], ...p};
+      }
+   }
+
+   return result;
+}
 
 /**
  * Global reducer
@@ -93,20 +116,16 @@ export function rootReducer(
       return {...state, radial: {...state.radial, ...action.payload.diff}};
 
    } else if (isType(action, fetchEventDetails.done)) {
-      const events = {...state.events};
-      const {id, persons} = action.payload.result as EventDetails;
-      if (id in events) {
-         events[id] = {...events[id], persons: persons};
-      } else {
-         events[id] = {
-            id: id,
-            name: '',  // ??? Server should send this information back
-            persons: persons,
-         };
-      }
+      const data = action.payload.result as EventDetails;
       return {...state,
-              events,
-              persons: {...state.persons, ...persons}};
+              events: {...state.events,
+                       [data.id]: {...state.events[data.id],
+                                   asserts: data.asserts}
+                      },
+              places: {...state.places, ...data.places},
+              sources: {...state.sources, ...data.sources},
+              researchers: {...state.researchers, ...data.researchers},
+              persons: mergePersons(state.persons, data.persons)};
 
    } else if (isType(action, fetchPedigree.started)) {
       return {...state,
@@ -143,7 +162,7 @@ export function rootReducer(
       const data = action.payload.result as FetchPersonsResult;
       return {...state,
               events: {...state.events, ...data.events},
-              persons: {...state.persons, ...data.persons}};
+              persons: mergePersons(state.persons, data.persons)};
 
    } else if (isType(action, fetchPersonDetails.done)) {
       const data: DetailsResult = action.payload.result as DetailsResult;
@@ -177,7 +196,7 @@ export function rootReducer(
               places: {...state.places, ...data.places},
               sources: {...state.sources, ...data.sources},
               researchers: {...state.researchers, ...data.researchers},
-              persons: {...state.persons, ...data.persons}};
+              persons: mergePersons(state.persons, data.persons)};
 
    } else if (isType(action, fetchQuilts.started)) {
       return {...state, quilts: {...state.quilts, loading: true}};
@@ -213,7 +232,7 @@ export function rootReducer(
               sources,
               places: {...state.places, ...data.places},
               researchers: {...state.researchers, ...data.researchers},
-              persons: {...state.persons, ...data.persons}};
+              persons: mergePersons(state.persons, data.persons)};
 
    } else if (isType(action, fetchSources.done)) {
       const data = action.payload.result as FetchSourcesResult;

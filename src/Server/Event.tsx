@@ -1,26 +1,30 @@
-import { PersonInEvent } from '../Store/Event';
+import { JSON } from '../Server/JSON';
+import { Assertion } from '../Store/Assertion';
+import { AssertionEntities, AssertionEntitiesJSON,
+         setAssertionEntities, assertionFromJSON } from '../Server/Person';
 
-export interface EventDetails {
+export interface EventDetails extends AssertionEntities {
    id: number;
-   persons: PersonInEvent[];
+   asserts: Assertion[];
 }
 
-interface PartialP2E {   // should be JSONAssertion, need change in server
-   disproved: boolean;
-   rationale: string;
-   role_name: string;
-   source: {
-      id: number;
-   };
-   surety: number;
-   person: {
-      name: string;
-      id: number;
-   };
-}
+// interface PartialP2E {   // should be JSONAssertion, need change in server
+//    disproved: boolean;
+//    rationale: string;
+//    role_name: string;
+//    source: {
+//       id: number;
+//    };
+//    surety: number;
+//    person: {
+//       name: string;
+//       id: number;
+//    };
+// }
 
-interface JSONEvent {
-   p2e: PartialP2E[];
+interface JSONEventDetails extends AssertionEntitiesJSON {
+   id: number;
+   asserts: JSON.Assertion[];
 }
 
 export function* fetchEventFromServer(id: number) {
@@ -29,18 +33,16 @@ export function* fetchEventFromServer(id: number) {
       throw new Error('Server returned an error');
    }
 
-   const data: JSONEvent = yield resp.json();
-   const result: EventDetails = {
-      id,
-      persons: data.p2e.map(
-         (p: PartialP2E) => ({
-            id: p.person.id,
-            name: p.person.name,
-            rationale: p.rationale,
-            surety: p.surety,
-            sourceId: p.source.id,
-            role: p.role_name,
-         })),
+   const data: JSONEventDetails = yield resp.json();
+   let result: EventDetails = {
+      id: data.id,
+      asserts: data.asserts.map(a => assertionFromJSON(a)),
+      persons: {},
+      events: {},
+      places: {},
+      sources: {},
+      researchers: {},
    };
+   setAssertionEntities(data, result /* into */);
    return result;
 }

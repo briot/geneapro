@@ -73,7 +73,7 @@ urlpatterns = [
     url(r'^data/sources/(\d+)/allRepr', SourceRepresentations.as_view()),
     url(r'^data/sources/(\d+)/delRepr/(\d+)', DelSourceRepr.as_view()),
     url(r'^data/suretySchemes$', SuretySchemesList.as_view()),
-    url(r'^data/event/(\d+)$', geneaprove.views.events.view),
+    url(r'^data/event/(\d+)$', geneaprove.views.events.EventDetailsView.as_view()),
     url(r'^data/legend$', geneaprove.views.rules.getLegend),
     url(r'^data/stats/(?P<id>\d+)$', StatsView.as_view()),
     url(r'^data/import$', GedcomImport.as_view()),
