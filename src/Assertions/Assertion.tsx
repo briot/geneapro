@@ -80,7 +80,7 @@ export default function AssertionView(props: AssertionProps) {
             p1={props.hidePersonIf === a.personId ?
                 undefined : <AssertionPartPerson personId={a.personId} />}
             p2={<AssertionPartEvent eventId={a.eventId}/>}
-            role={a.role}
+            role={' as ' + a.role}
          />
       );
    } else if (a instanceof P2C) {
@@ -90,19 +90,17 @@ export default function AssertionView(props: AssertionProps) {
             p1={props.hidePersonIf === a.personId ?
                 undefined : <AssertionPartPerson personId={a.personId} />}
             p2={<AssertionPartCharacteristic characteristic={a.characteristic} />}
-            role="characteristic"
+            role={a.characteristic.name}
          />
       );
    } else if (a instanceof P2P) {
       return (
          <AssertionBox
             assert={a}
-            p1={props.hidePersonIf === a.person2Id ||
-                props.hidePersonIf === a.person1Id ?
+            p1={props.hidePersonIf === a.person1Id ?
                 undefined : <AssertionPartPerson personId={a.person1Id} />}
-            p2={props.hidePersonIf === a.person1Id ?
-                <AssertionPartPerson personId={a.person2Id} /> :
-                <AssertionPartPerson personId={a.person1Id} />}
+            p2={props.hidePersonIf === a.person2Id ?
+                undefined : <AssertionPartPerson personId={a.person2Id} />}
             role={a.relation}
          />
       );

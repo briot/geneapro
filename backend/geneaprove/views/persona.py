@@ -2,7 +2,7 @@
 Various views related to displaying the pedgree of a person graphically
 """
 
-from django.db.models import Min
+from django.db.models import Min, Q
 from django.db import transaction
 from geneaprove import models
 from geneaprove.utils.date import DateRange
@@ -292,7 +292,9 @@ class PersonaView(JSONView):
         node = global_graph.node_from_id(id)
 
         asserts.extend(models.P2P.objects.filter(
-            person1__in=node.ids.union(node.different)).select_related(
+            Q(person1__in=node.ids.union(node.different)) |
+            Q(person2__in=node.ids.union(node.different))
+        ).select_related(
                 *models.P2P.related_json_fields()
             )
         )

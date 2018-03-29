@@ -20,11 +20,13 @@ export default class AssertionPartCharacteristic extends React.PureComponent<Cha
          <AssertionPart
             title={
                <div>
-                  <div className="dateAndTag">
-                     <div>{c.date && <span title={c.date_sort || undefined}>{c.date}</span>}</div>
-                     <div>{c.name}</div>
-                  </div>
-                  <div className={'nameAndPlace ' + (c.placeId || c.parts.length ? 'bordered' : '')}>
+                  {
+                     c.date &&
+                     <div className="dateAndTag">
+                        <div><span title={c.date_sort || undefined}>{c.date}</span></div>
+                     </div>
+                  }
+                  <div className={'nameAndPlace ' + (c.date && (c.placeId || c.parts.length) ? 'bordered' : '')}>
                      <div>{c.placeId && <PlaceLink id={c.placeId} />}</div>
                      <div>
                         {c.parts.map(
