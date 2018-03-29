@@ -58,5 +58,11 @@ export function* fetchSourcesFromServer() {
       throw new Error('Server returned an error');
    }
    const data: JSON.Source[] = yield resp.json();
-   return {sources: data};
+   const result: FetchSourcesResult = {
+      sources: {},
+   };
+   for (const s of data) {
+      result.sources[s.id] = sourceFromJSON(s);
+   }
+   return result;
 }

@@ -54,7 +54,7 @@ export function urlSource(id: number) {
 
 interface SourceLinkProps {
    id: number|undefined;
-   showName?: boolean;
+   showAbbrev?: boolean;
 }
 interface ConnectedSourceLinkProps extends SourceLinkProps {
    source: Source;
@@ -68,12 +68,12 @@ function ConnectedSourceLink(props: ConnectedSourceLinkProps) {
    const s = props.source;
    return (
       <Link
-          to={urlSource(props.id)}
-          className="link source"
-          title={s ? s.title : undefined}
+         to={urlSource(props.id)}
+         className="link source"
+         title={s ? s.title : undefined}
       >
          <Icon name="book" />
-         {s && props.showName ?
+         {s && props.showAbbrev ?
             <span className="title">{s.abbrev}</span> : 
             <span className="notitle" />
          }

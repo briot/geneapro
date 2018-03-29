@@ -53,6 +53,7 @@ class SourceListConnected extends React.PureComponent<SourceListProps, SourceLis
          );
       }
 
+      list.sort((s1, s2) => s1.abbrev.localeCompare(s2.abbrev));
       return list;
    }
 
@@ -97,17 +98,17 @@ class SourceListConnected extends React.PureComponent<SourceListProps, SourceLis
                      headerHeight={30}
                   >
                      <Column
-                             header={<Cell>Name</Cell>}
-                             cell={({rowIndex, ...props}: CellProps) => {
-                                const p: Source = sources[rowIndex as number];
-                                return (
-                                   <Cell {...props}>
-                                      <SourceLink id={p.id} />
-                                   </Cell>
-                                );
-                             }}
-                             isResizable={false}
-                             width={width}
+                          header={<Cell>Name</Cell>}
+                          cell={({rowIndex, ...props}: CellProps) => {
+                             const s: Source = sources[rowIndex as number];
+                             return (
+                                <Cell {...props}>
+                                   <SourceLink id={s.id} showAbbrev={true}/>
+                                </Cell>
+                             );
+                          }}
+                          isResizable={false}
+                          width={width}
                      />
                   </Table>
                </div>
