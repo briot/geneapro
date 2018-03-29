@@ -38,6 +38,9 @@ export interface PersonSet {
 /**
  * Return the display name for the person
  */
-export function personDisplay(p?: Person) {
-   return p ? `${p.surn.toUpperCase()} ${p.givn} (${p.id})` : '';
+export function personDisplay(p?: Person, withId?: boolean) {
+   return p ?
+      (withId ? `${p.surn.toUpperCase()} ${p.givn} (${p.id})` :
+                `${p.surn.toUpperCase()} ${p.givn}`) :
+      '';
 }

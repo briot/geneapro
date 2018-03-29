@@ -24,10 +24,16 @@ interface ConnectedPersonaLinkProps extends PersonaLinkProps {
 }
 
 function ConnectedPersonaLink(props: ConnectedPersonaLinkProps) {
+   const s = personDisplay(props.person);
    return (
-      <Link to={urlPersona(props.id)} className="personaLink">
+      <Link
+         to={urlPersona(props.id)}
+         className="link persona"
+         title={s}
+      >
          <Icon name="user" />
-         {personDisplay(props.person)}
+         {s}
+         <span className="id">{props.id}</span>
       </Link>
    );
 }
@@ -61,12 +67,17 @@ function ConnectedSourceLink(props: ConnectedSourceLinkProps) {
 
    const s = props.source;
    return (
-      <Link to={urlSource(props.id)} className="sourceLink">
-         <span title={s ? s.title : undefined}>
-            <Icon name="book" />
-            <span className="id">{props.id}</span>
-            {s && props.showName ?  <span className="title">{s.abbrev}</span> : null}
-         </span>
+      <Link
+          to={urlSource(props.id)}
+          className="link source"
+          title={s ? s.title : undefined}
+      >
+         <Icon name="book" />
+         {s && props.showName ?
+            <span className="title">{s.abbrev}</span> : 
+            <span className="notitle" />
+         }
+         <span className="id">{props.id}</span>
       </Link>
    );
 }
@@ -87,7 +98,6 @@ export function urlPlace(id: number) {
 
 interface PlaceLinkProps {
    id: number;
-   className?: string;
 }
 interface ConnectedPlaceLinkProps extends PlaceLinkProps {
    place?: Place;
@@ -95,7 +105,7 @@ interface ConnectedPlaceLinkProps extends PlaceLinkProps {
 
 export function ConnectedPlaceLink(props: ConnectedPlaceLinkProps) {
    return (
-      <Link to={urlPlace(props.id)} className={props.className + ' placeLink'}>
+      <Link to={urlPlace(props.id)} className="link  place">
          <Icon name="globe" />
          {props.place ? props.place.name : 'Unnamed place'}
       </Link>

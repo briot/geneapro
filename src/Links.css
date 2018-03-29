@@ -1,22 +1,16 @@
-.personaLink:after {
-}
-
-.sourceLink .id {
+.link .id {
    font-size: 0.7em;
    font-style: italic;
    vertical-align: super;
-   margin-left: -5px;
+   margin-left: 2px;
    display: inline-block;
-   width: 1em;
 }
-.sourceLink .title {
-   margin-left: 15px;
-   color: black;
+
+.link .notitle {
+   margin-left: -5px;   /* compensate for the id's margin-left */
 }
 
 a:hover,
-.sourceLink:hover,
-.personaLink:hover,
-.placeLink:hover {
+.link:hover {
    text-decoration: underline;
 }
