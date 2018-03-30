@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Person } from '../Store/Person';
-import { event_to_string } from '../Store/Event';
 import { PedigreeSettings, isVertical } from '../Store/Pedigree';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
@@ -350,23 +349,19 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
                   (father.x + father.w + mother.x) / 2 :
                   lay.x + lay.w / 2);
 
-               if (f && f.marriageEventId) {
+               if (f && f.marriageISODate) {
                   lay.parentsMarriage = {
                      x: middle,
                      y: father.y - sizing.padding(father.generation - 1) / 3,
-                     text: event_to_string(
-                        this.props.allEvents[f.marriageEventId],
-                        this.props.settings.showSourcedEvents),
+                     text: f.marriageISODate,
                      fs: father.fs,
                      alignX: 'middle',
                   };
-               } else if (m && m.marriageEventId) {
+               } else if (m && m.marriageISODate) {
                   lay.parentsMarriage = {
                      x: middle,
                      y: mother.y - sizing.padding(mother.generation - 1) / 3,
-                     text: event_to_string(
-                        this.props.allEvents[m.marriageEventId],
-                        this.props.settings.showSourcedEvents),
+                     text: m.marriageISODate,
                      fs: mother.fs,
                      alignX: 'middle',
                   };
@@ -377,20 +372,18 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
                   (father.y + father.h + mother.y) / 2 :
                   lay.y + lay.h / 2);
 
-               if (f && f.marriageEventId) {
+               if (f && f.marriageISODate) {
                   lay.parentsMarriage = {
                      x: father.x - sizing.padding(father.generation) / 3,
                      y: middle,
-                     text: event_to_string(
-                        this.props.allEvents[f.marriageEventId]),
+                     text: f.marriageISODate,
                      fs: father.fs,
                   };
-               } else if (m && m.marriageEventId) {
+               } else if (m && m.marriageISODate) {
                   lay.parentsMarriage = {
                      x: mother.x - sizing.padding(mother.generation) / 3,
                      y: middle,
-                     text: event_to_string(
-                        this.props.allEvents[m.marriageEventId]),
+                     text: m.marriageISODate,
                      fs: mother.fs,
                   };
                }

@@ -10,47 +10,42 @@ import { ResearcherSet } from '../Store/Researcher';
 
 export interface FetchPersonsResult {
    persons: PersonSet;
-   events: GenealogyEventSet;
 }
 
 export function jsonPersonToPerson(
+   p: JSON.Person,
+   styles?: JSON.Style[],
+): Person {
+   const s: JSON.Style|undefined = styles && p.style ? styles[p.style] : undefined;
+   return {
+      id: p.id,
+      name: p.name,
+      birthISODate: p.birthISODate,
+      deathISODate: p.deathISODate,
+      marriageISODate: p.marriageISODate,
+      knownAncestors: 0,
+      knownDescendants: 0,
+      parents: p.parents,
+      children: p.children,
+      style: {
+         fill: s && d3Color.color(s.fill),
+         stroke: s && d3Color.color(s.stroke),
+         color: s && d3Color.color(s.color),
+         fontWeight: s && s['font-weight'],
+      }
+   };
+}
+
+
+export function jsonPersonsToPerson(
    json: JSON.Persons,
    styles?: JSON.Style[],
 ): FetchPersonsResult {
    let persons: PersonSet = {};
-   let events: GenealogyEventSet = {};
-   for (const pid of Object.keys(json.persons)) {
-      const jp: JSON.Person = json.persons[pid];
-      const s: JSON.Style|undefined = styles ? styles[jp.style] : undefined;
-      persons[pid] = {
-         id: jp.id,
-         name: jp.name,
-         birthEventId: jp.birth ? jp.birth.id : undefined,
-         deathEventId: jp.death ? jp.death.id : undefined,
-         marriageEventId: jp.marriage ? jp.marriage.id : undefined,
-         knownAncestors: 0,
-         knownDescendants: 0,
-         parents: jp.parents,
-         children: jp.children,
-         style: {
-            fill: s && d3Color.color(s.fill),
-            stroke: s && d3Color.color(s.stroke),
-            color: s && d3Color.color(s.color),
-            fontWeight: s && s['font-weight'],
-         }
-      };
-
-      if (jp.birth) {
-         events[jp.birth.id] = jp.birth;
-      }
-      if (jp.death) {
-         events[jp.death.id] = jp.death;
-      }
-      if (jp.marriage) {
-         events[jp.marriage.id] = jp.marriage;
-      }
+   for (const jp of json.persons) {
+      persons[jp.id] = jsonPersonToPerson(jp);
    }
-   return {persons, events};
+   return {persons};
 }
 
 export function* fetchPersonsFromServer() {
@@ -60,7 +55,7 @@ export function* fetchPersonsFromServer() {
    }
 
    const data: JSON.Persons = yield resp.json();
-   return jsonPersonToPerson(data, [] /* styles */);
+   return jsonPersonsToPerson(data, [] /* styles */);
 }
 
 function p2eFromJSON(e: JSON.P2E) {
@@ -153,7 +148,7 @@ export function assertionFromJSON(a: JSON.Assertion): Assertion {
 
 export interface AssertionEntitiesJSON {
    events?: JSON.Event[];  // All events mentioned in the asserts
-   persons?: JSON.PersonForAssertion[];
+   persons?: JSON.Person[];
    places?: JSON.Place[];
    researchers?: JSON.Researcher[];
    sources?: JSON.Source[];

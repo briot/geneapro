@@ -8,7 +8,7 @@ import { Person, PersonSet } from './Store/Person';
 import { GenealogyEventSet } from './Store/Event';
 import { PersonaLink } from './Links';
 import { Table, CellProps, Column, Cell } from 'fixed-data-table';
-import { event_to_string } from './Store/Event';
+import { extractYear } from './Store/Event';
 import { fetchPersons } from './Store/Sagas';
 
 import './PersonaList.css';
@@ -21,7 +21,7 @@ interface PersonaListProps {
 
 interface PersonaListState {
    filter?: string;
-   persons: Person[];
+   persons: Person[];  // sorted
 }
 
 class PersonaListConnected extends React.PureComponent<PersonaListProps, PersonaListState> {
@@ -47,10 +47,8 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
    }
 
    computePersons(set: PersonSet, filter?: string): Person[] {
-      let list = Object.entries(set)
-         .map(
-            ([key, val]: [string, Person]) => val).sort(
-            (p1: Person, p2: Person) => p1.name.localeCompare(p2.name));
+      let list = Object.values(set)
+         .sort((p1, p2) => p1.name.localeCompare(p2.name));
 
       if (filter) {
          list = list.filter(
@@ -107,16 +105,8 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
                         header={<Cell>Surname</Cell>}
                         cell={({rowIndex, ...props}: CellProps) => {
                            const p: Person = persons[rowIndex as number];
-                           const b: string = event_to_string(
-                              p.birthEventId ?
-                                 this.props.allEvents[p.birthEventId] :
-                                 undefined,
-                              false, true);
-                           const d: string = event_to_string(
-                              p.deathEventId ?
-                                 this.props.allEvents[p.deathEventId] :
-                                 undefined,
-                              false, true);
+                           const b = extractYear(p.birthISODate);
+                           const d = extractYear(p.deathISODate);
                            return (
                               <Cell {...props} className="name">
                                  <PersonaLink id={p.id} />

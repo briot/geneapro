@@ -59,17 +59,17 @@ class StatsView(JSONView):
             gen_range = [index + 1, "?", "?", ""]  # gen, min, max, legend
             for p in generations[index]:
                 p = persons[p.main_id]
-                if p.birth and p.birth.Date:
-                    if births is None or p.birth.Date < births:
-                        births = p.birth.Date
-                        year = p.birth.Date.year(cal)
+                if p.birthISODate:
+                    if births is None or p.birthISODate < births:
+                        births = p.birthISODate
+                        year = int(p.birthISODate[0:4])
                         if year is not None:
                             gen_range[1] = year
 
-                if p.death and p.death.Date:
-                    if deaths is None or p.death.Date > deaths:
-                        deaths = p.death.Date
-                        year = p.death.Date.year(cal)
+                if p.deathISODate:
+                    if deaths is None or p.deathISODate > deaths:
+                        deaths = p.deathISODate
+                        year = int(p.deathISODate[0:4])
                         if year is not None:
                             gen_range[2] = year
 
@@ -104,15 +104,16 @@ class StatsView(JSONView):
             ages.append([a, 0, 0, 0])  # date_range, males, females, unknown
 
         for p in persons.values():
-            if p.birth and p.birth.Date and p.death and p.death.Date:
-                age = p.death.Date.years_since(p.birth.Date)
-                if age is not None:
-                    if p.sex == "M":
-                        ages[int(age / 5)][1] += 1
-                    elif p.sex == "F":
-                        ages[int(age / 5)][2] += 1
-                    else:
-                        ages[int(age / 5)][3] += 1
+            if p.birthISODate and p.deathISODate:
+                age = int(p.deathISODate[0:4]) - int(p.birthISODate[0:4])
+                #if age is not None:
+                #    if p.sex == "M":
+                #        ages[int(age / 5)][1] += 1
+                #    elif p.sex == "F":
+                #        ages[int(age / 5)][2] += 1
+                #    else:
+                #        ages[int(age / 5)][3] += 1
+                ages[int(age / 5)][3] += 1
 
         return {
             "total_ancestors": len(allpeople),
@@ -122,7 +123,5 @@ class StatsView(JSONView):
             "ranges":          ranges,
             "ages":            ages,
             "decujus":         decujus.main_id,
-            "decujus_name":  "%s %s" % (
-                persons[decujus.main_id].givn,
-                persons[decujus.main_id].surn)
+            "decujus_name":    persons[decujus.main_id].name,
         }

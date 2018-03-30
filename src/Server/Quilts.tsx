@@ -147,10 +147,10 @@ export class QuiltsResult {
    /**
     * Compute the width of a string on the screen
     */
-   private computeWidth(txt: string) {
+   private computeWidth(txt: string|undefined) {
       // ??? Needs improvement
       // With the canvas, we were using ctx.measureText(txt).width
-      return Math.max((txt.length + 1) * 8, 100);
+      return txt === undefined ? 0 : Math.max((txt.length + 1) * 8, 100);
    }
 
    /**

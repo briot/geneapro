@@ -167,7 +167,6 @@ export function rootReducer(
    } else if (isType(action, fetchPersons.done)) {
       const data = action.payload.result as FetchPersonsResult;
       return {...state,
-              events: {...state.events, ...data.events},
               persons: mergePersons(state.persons, data.persons)};
 
    } else if (isType(action, fetchPersonDetails.done)) {

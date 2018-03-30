@@ -75,7 +75,7 @@ interface ChildrenAndParents {
 }
 
 export interface ChildrenAndParentsSet {
-   [person_id: number]: ChildrenAndParents;
+   [personId: number]: ChildrenAndParents;
 }
 
 /**

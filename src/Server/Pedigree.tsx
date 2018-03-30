@@ -1,4 +1,4 @@
-import { jsonPersonToPerson } from '../Server/Person';
+import { jsonPersonsToPerson } from '../Server/Person';
 import { ChildrenAndParentsSet } from '../Store/Pedigree';
 import { fetchPedigreeResult } from '../Store/Sagas';
 import { JSON } from './JSON';
@@ -21,7 +21,8 @@ interface JSONPedigree {
  * generations.
  */
 export function* fetchPedigreeFromServer(
-   decujus: number, ancestors: number, descendants: number) {
+   decujus: number, ancestors: number, descendants: number
+) {
 
    const resp: Response = yield window.fetch(
       '/data/pedigree/' + decujus +
@@ -33,7 +34,7 @@ export function* fetchPedigreeFromServer(
 
    const data: JSONPedigree = yield resp.json();
    const result: fetchPedigreeResult = {
-      ...jsonPersonToPerson(data, data.styles),
+      ...jsonPersonsToPerson(data, data.styles),
       events: {},
       layout: data.layout,
    };

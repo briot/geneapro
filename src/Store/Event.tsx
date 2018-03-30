@@ -58,3 +58,7 @@ export function event_to_string(e?: GenealogyEvent,
       return '';
    }
 }
+
+export function extractYear(isoDate: string|undefined): number|undefined {
+   return isoDate ? Number(isoDate.substring(0, 4)) : undefined;
+}

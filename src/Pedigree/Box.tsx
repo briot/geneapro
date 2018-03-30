@@ -22,29 +22,10 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
    const layout = props.layout;
    const translate = `translate(${layout.x},${layout.y})`;
 
-   const details: JSX.Element[] = [];
-   if (p) {
-      if (p.birthEventId && p.birthEventId in props.allEvents) {
-         details.push(
-            <EventText
-               event={props.allEvents[p.birthEventId]}
-               showSources={props.style.showSourcedEvents}
-               allPlaces={props.allPlaces}
-               key="birth"
-               prefix="b"
-            />);
-      }
-      if (p.deathEventId && p.deathEventId in props.allEvents) {
-         details.push(
-            <EventText
-               event={props.allEvents[p.deathEventId]}
-               key="death"
-               showSources={props.style.showSourcedEvents}
-               allPlaces={props.allPlaces}
-               prefix="d"
-            />);
-      }
-   }
+   const details = p ? [
+      <EventText key="b" isoDate={p.birthISODate} prefix="b" />,
+      <EventText key="d" isoDate={p.deathISODate} prefix="d" />
+   ] : undefined;
 
    const text = p === undefined ?
       null :

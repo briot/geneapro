@@ -27,11 +27,3 @@ class Persona(GeneaProveModel):
         """Meta data for the model"""
         db_table = "persona"
 
-    def to_json(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-        }
-
-
-

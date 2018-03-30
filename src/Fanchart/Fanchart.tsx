@@ -9,7 +9,7 @@ import { PersonLayout, PersonLayouts } from '../Fanchart/types';
 import { Style } from '../style';
 import { styleToString } from '../Store/Styles';
 import ScalableSVG from '../SVG.Scalable';
-import { event_to_string } from '../Store/Event';
+import { extractYear } from '../Store/Event';
 
 import './Fanchart.css';
 
@@ -256,18 +256,8 @@ export function FanchartBox(props: FanchartBoxProps) {
          />
       );
 
-      const birth = event_to_string(
-         props.person.birthEventId ?
-            props.allEvents[props.person.birthEventId] : undefined,
-         props.settings.showSourcedEvents /* showSources */,
-         true /* useDateSort */,
-         true /* yearOnly */);
-      const death = event_to_string(
-         props.person.deathEventId ?
-            props.allEvents[props.person.deathEventId] : undefined,
-         props.settings.showSourcedEvents /* showSources */,
-         true /* useDateSort */,
-         true /* yearOnly */);
+      const birth = extractYear(props.person.birthISODate);
+      const death = extractYear(props.person.deathISODate);
       const dates = `${birth} - ${death}`;
 
       children.push(

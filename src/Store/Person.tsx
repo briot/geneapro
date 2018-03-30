@@ -5,9 +5,10 @@ import { PersonStyle } from './Styles';
 export interface BasePerson {
    id: number;
    name: string;             // as found in the source document
-   birthEventId?: number;    // points to a GenealogyEvent in the state
-   deathEventId?: number;    // points to a GenealogyEvent in the state
-   marriageEventId?: number; // points to a GenealogyEvent in the state
+
+   birthISODate?: string;    // dates, using the 'date_sort' from the database
+   deathISODate?: string;
+   marriageISODate?: string;
 
    knownAncestors: number;     // number of known ancestors generations in store
    knownDescendants: number;   // number of known descendants gens in store

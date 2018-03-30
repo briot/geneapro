@@ -33,14 +33,9 @@ def __add_default_person_attributes(person):
     PERSON is an instance of Persona.
     """
 
-    person.sex = "?"
-    person.birthEventId = None
-    person.deathEventId = None
-    person.marriageEventId = None
-
-    # ??? Could query name with
-    # select characteristic_part.* from p2c, characteristic, characteristic_part where p2c.person_id=3 and p2c.characteristic_id=characteristic.id and characteristic.name='Name' and characteristic_part.characteristic_id=characteristic.id and characteristic_part.type_id in (34,33,35)
-
+    person.birthISODate = None
+    person.deathISODate = None
+    person.marriageISODate = None
 
 def more_recent(obj1, obj2):
     """
@@ -171,12 +166,12 @@ def extended_personas(
                 pass
             elif e.type_id == models.Event_Type.PK_birth:
                 if birth is None or more_recent(birth, e):
-                    person.birthEventId = e.id
+                    person.birthISODate = e.date_sort
             elif e.type_id == models.Event_Type.PK_death:
                 if death is None or more_recent(death, e):
-                    person.deathEventId = e.id
+                    person.deathISODate = e.date_sort
             elif e.type_id == models.Event_Type.PK_marriage:
-                person.marriageEventId = e.id
+                person.marriageISODate = e.date_sort
 
     logger.debug('MANU done processing events')
 
@@ -184,54 +179,60 @@ def extended_personas(
     # Get all groups to which the personas belong
     #########
 
-    if query_groups:
-        groups = models.P2G.objects.select_related(
-            *models.P2G.related_json_fields())
-
-        for gr in sql_in(groups, "person", all_ids):
-            p_node = graph.node_from_id(gr.person_id)
-            person = persons[p_node.main_id]
-
-            if asserts is not None:
-                asserts.append(gr)
-
-            if schemes is not None:
-                schemes.add(gr.surety.scheme_id)
+#    if query_groups:
+#        groups = models.P2G.objects.select_related(
+#            *models.P2G.related_json_fields())
+#
+#        for gr in sql_in(groups, "person", all_ids):
+#            p_node = graph.node_from_id(gr.person_id)
+#            person = persons[p_node.main_id]
+#
+#            if asserts is not None:
+#                asserts.append(gr)
+#
+#            if schemes is not None:
+#                schemes.add(gr.surety.scheme_id)
 
     #########
     # Get all characteristics of these personas
     #########
 
-    logger.debug('MANU processing p2c')
-    c2p = dict()  # characteristic_id -> person
-    all_p2c = models.P2C.objects.select_related(
-        *models.P2C.related_json_fields())
+    if asserts:
+        asserts.extend(sql_in(
+            models.P2C.objects.select_related(*models.P2C.related_json_fields()),
+            "person",
+            all_ids))
 
-    for p in sql_in(all_p2c, "person", all_ids):
-        c = p.characteristic
-        p_node = graph.node_from_id(p.person_id)
-        person = persons[p_node.main_id]
-        c2p[c.id] = person
+#    logger.debug('MANU processing p2c')
+#    c2p = dict()  # characteristic_id -> person
+#    all_p2c = models.P2C.objects.select_related(
+#        *models.P2C.related_json_fields())
+#
+#    for p in sql_in(all_p2c, "person", all_ids):
+#        c = p.characteristic
+#        p_node = graph.node_from_id(p.person_id)
+#        person = persons[p_node.main_id]
+#        c2p[c.id] = person
+#
+#        c.date = c.date and DateRange(c.date)
+#
+#        if schemes is not None:
+#            schemes.add(p.surety.scheme_id)
+#
+#        if asserts is not None:
+#            asserts.append(p)
 
-        c.date = c.date and DateRange(c.date)
-
-        if schemes is not None:
-            schemes.add(p.surety.scheme_id)
-
-        if asserts is not None:
-            asserts.append(p)
-
-    logger.debug('MANU processing characteristic parts')
-
-    chars = models.Characteristic_Part.objects.select_related(
-        'type', 'characteristic').filter(
-            type__in=(models.Characteristic_Part_Type.PK_sex, )).order_by()
-
-    for part in sql_in(chars, "characteristic", nodes and c2p):
-        person = c2p[part.characteristic_id]
-
-        if part.type_id == models.Characteristic_Part_Type.PK_sex:
-            person.sex = part.name
+#    logger.debug('MANU processing characteristic parts')
+#
+#    chars = models.Characteristic_Part.objects.select_related(
+#        'type', 'characteristic').filter(
+#            type__in=(models.Characteristic_Part_Type.PK_sex, )).order_by()
+#
+#    for part in sql_in(chars, "characteristic", nodes and c2p):
+#        person = c2p[part.characteristic_id]
+#
+#        if part.type_id == models.Characteristic_Part_Type.PK_sex:
+#            person.sex = part.name
 
     ########
     # Compute place parts once, to limit the number of queries
@@ -354,15 +355,6 @@ class PersonaList(JSONView):
                 event_types=event_types_for_pedigree(),
                 graph=global_graph, as_css=True)
 
-        # Necessary to avoid lots of queries to get extra information
-        all = [{'name': p.name,
-                'birth': p.birth,
-                'death': p.death,
-                'id': p.id,
-                # 'styles': p.styles,
-                'marriage': p.marriage}
-               for p in all.values()]
-
         return {
-            'persons': all,
+            'persons': list(all.values()),
         }

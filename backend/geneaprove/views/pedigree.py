@@ -111,6 +111,6 @@ class PedigreeData(JSONView):
         return {'generations': max_levels,
                 'descendants': maxdepthDescendants,
                 'decujus':     decujus.main_id,
-                'persons':     persons,
+                'persons':     list(persons.values()),
                 'layout':      layout,
                 'styles':      styles.all_styles() if styles is not None else None}

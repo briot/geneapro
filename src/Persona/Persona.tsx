@@ -5,7 +5,7 @@ import { AppState } from '../Store/State';
 import { P2C } from '../Store/Assertion';
 import { Segment } from 'semantic-ui-react';
 import { Person, personDisplay } from '../Store/Person';
-import { GenealogyEventSet } from '../Store/Event';
+import { GenealogyEventSet, extractYear } from '../Store/Event';
 import AssertionTimeline from '../Assertions/AssertionTimeline';
 import './Persona.css';
 
@@ -19,14 +19,8 @@ interface ConnectedProps extends Props {
 
 function View(props: ConnectedProps) {
    const p: Person = props.person;
-   const birthEvent = p.birthEventId ? props.events[p.birthEventId] : undefined;
-   const birthYear: number|undefined = birthEvent && birthEvent.date_sort ?
-      Number(birthEvent.date_sort.substring(0, 4)) :
-      undefined;
-   const deathEvent = p.deathEventId ? props.events[p.deathEventId] : undefined;
-   const deathYear: number|undefined = deathEvent && deathEvent.date_sort ?
-      Number(deathEvent.date_sort.substring(0, 4)) :
-      undefined;
+   const birthYear = extractYear(p.birthISODate);
+   const deathYear = extractYear(p.deathISODate);
 
    let gender: string = '';
    if (p.asserts) {

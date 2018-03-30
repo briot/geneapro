@@ -9,11 +9,6 @@ export namespace JSON {
       [cssName: string]: string;
    }
   
-   export interface PersonForAssertion {
-      id: number;
-      name: string;  // As found in the source document
-   }
-   
    export interface EventType {
       id: number;
       name: string;  // "birth"
@@ -32,13 +27,12 @@ export namespace JSON {
    export interface Person {
       id: number;
       name: string;  // As found in the source document
-      sex: string;
-      parents: (number|null)[];
-      children: (number|null)[];
-      birth: Event;
-      marriage: Event;
-      death: Event;
-      style: number;  // index into the styles array
+      parents?: (number|null)[];
+      children?: (number|null)[];
+      birthISODate?: string;
+      deathISODate?: string;
+      marriageISODate?: string;
+      style?: number;  // index into the styles array
    }
    
    export interface Persons {
