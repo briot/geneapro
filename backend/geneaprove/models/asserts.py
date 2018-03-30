@@ -79,45 +79,12 @@ class Assertion(GeneaProveModel):
             "source_id": self.source_id,
             "surety": self.surety_id}
 
-    def getRelatedIds(self):
-        return {}
-
-    @staticmethod
-    def getEntities(asserts):
+    def getRelatedIds(self, into):
         """
-        Get the list of persons and events needed for the given list of
-        assertions
+        :param geneaprove.views.related.JSONResult into: where to add the ids
         """
-        ids = {
-            "events": set(),
-            "persons": set(),
-            "places": set(),
-            "sources": set(),
-            "researchers": set(),
-        }
-        for a in asserts:
-            e = a.getRelatedIds()
-            ids["events"].update(e.get("events", []))
-            ids["persons"].update(e.get("persons", []))
-            ids["places"].update(e.get("places", []))
-            ids["researchers"].update(e.get("researchers", []))
-            ids["sources"].update(e.get("sources", []))
-
-            ids["sources"].update([a.source_id])
-            ids["researchers"].update([a.researcher_id])
-
-        logger.debug('getEntities, fetching related entities')
-        r = {
-            "asserts": asserts,
-            "events": list(Event.objects.
-                select_related('type').filter(id__in=ids["events"])),
-            "persons": list(Persona.objects.filter(id__in=ids["persons"])),
-            "places": list(Place.objects.filter(id__in=ids["places"])),
-            "sources": list(Source.objects.filter(id__in=ids["sources"])),
-            "researchers": list(Researcher.objects.filter(id__in=ids["researchers"])),
-        }
-        logger.debug('getEntities, done fetching related entities')
-        return r
+        into.update(researcher_ids=[self.researcher_id],
+                    source_ids=[self.source_id])
 
 
 class P2P_Type(GeneaProveModel):
@@ -152,8 +119,9 @@ class P2P(Assertion):
         """What select_related() to use if we want to export to JSON"""
         return Assertion.related_json_fields() + ['type']
 
-    def getRelatedIds(self):
-        return {"persons": set([self.person1_id, self.person2_id])}
+    def getRelatedIds(self, into):
+        super().getRelatedIds(into)
+        into.update(person_ids=[self.person1_id, self.person2_id])
 
     def to_json(self):
         res = super(P2P, self).to_json()
@@ -177,10 +145,10 @@ class P2C(Assertion):
     def related_json_fields():
         return Assertion.related_json_fields() + ['characteristic']
 
-    def getRelatedIds(self):
-        return {"persons": [self.person_id],
-                "places": [self.characteristic.place_id],
-               }
+    def getRelatedIds(self, into):
+        super().getRelatedIds(into)
+        into.update(person_ids=[self.person_id],
+                    place_ids=[self.characteristic.place_id])
 
     def to_json(self):
         res = super(P2C, self).to_json()
@@ -223,10 +191,11 @@ class P2E(Assertion):
     def related_json_fields():
         return Assertion.related_json_fields() + ['role']
 
-    def getRelatedIds(self):
-        return {"persons": [self.person_id],
-                "events": [self.event_id],
-                "places": [self.event.place_id]}
+    def getRelatedIds(self, into):
+        super().getRelatedIds(into)
+        into.update(person_ids=[self.person_id],
+                    event_ids=[self.event_id],
+                    place_ids=[self.event.place_id])
 
     def to_json(self):
         res = super(P2E, self).to_json()
@@ -249,8 +218,9 @@ class P2G(Assertion):
     def related_json_fields():
         return Assertion.related_json_fields() + ['role']
 
-    def getRelatedIds(self):
-        return {"persons": [self.person_id]}
+    def getRelatedIds(self, into):
+        super().getRelatedIds(into)
+        into.update(person_ids=[self.person_id])
 
     def to_json(self):
         res = super(P2G, self).to_json()

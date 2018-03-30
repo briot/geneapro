@@ -152,11 +152,11 @@ export function assertionFromJSON(a: JSON.Assertion): Assertion {
 }
 
 export interface AssertionEntitiesJSON {
-   events: JSON.Event[];  // All events mentioned in the asserts
-   persons: JSON.PersonForAssertion[];
-   places: JSON.Place[];
-   sources: JSON.Source[];
-   researchers: JSON.Researcher[];
+   events?: JSON.Event[];  // All events mentioned in the asserts
+   persons?: JSON.PersonForAssertion[];
+   places?: JSON.Place[];
+   researchers?: JSON.Researcher[];
+   sources?: JSON.Source[];
 }
 
 interface JSONPersonDetails extends AssertionEntitiesJSON {
@@ -181,42 +181,52 @@ export function setAssertionEntities(
    into: AssertionEntities,
    
 ) {
-   for (const p of entities.places) {
-      into.places[p.id] = {
-         id: p.id,
-         name: p.name,
-         // p.date,
-         // p.date_sort,
-         // p.parent_place_id,
-      };
+   if (entities.places) {
+      for (const p of entities.places) {
+         into.places[p.id] = {
+            id: p.id,
+            name: p.name,
+            // p.date,
+            // p.date_sort,
+            // p.parent_place_id,
+         };
+      }
    }
 
-   for (const e of entities.events) {
-      into.events[e.id] = {
-         id: e.id,
-         date: e.date,
-         date_sort: e.date_sort,
-         name: e.name,
-         placeId: e.place,
-         type: e.type,
-      };
+   if (entities.events) {
+      for (const e of entities.events) {
+         into.events[e.id] = {
+            id: e.id,
+            date: e.date,
+            date_sort: e.date_sort,
+            name: e.name,
+            placeId: e.place,
+            type: e.type,
+         };
+      }
    }
 
-   for (const p of entities.persons) {
-      into.persons[p.id] = {
-         id: p.id,
-         name: p.name,
-         knownAncestors: 0,
-         knownDescendants: 0,
-      };
+   if (entities.persons) {
+      for (const p of entities.persons) {
+         into.persons[p.id] = {
+            id: p.id,
+            name: p.name,
+            knownAncestors: 0,
+            knownDescendants: 0,
+         };
+      }
    }
 
-   for (const s of entities.sources) {
-      into.sources[s.id] = sourceFromJSON(s);
+   if (entities.sources) {
+      for (const s of entities.sources) {
+         into.sources[s.id] = sourceFromJSON(s);
+      }
    }
 
-   for (const r of entities.researchers) {
-      into.researchers[r.id] = {name: r.name};
+   if (entities.researchers) {
+      for (const r of entities.researchers) {
+         into.researchers[r.id] = {name: r.name};
+      }
    }
 }
 
@@ -228,8 +238,9 @@ export function* fetchPersonDetailsFromServer(id: number) {
    const data: JSONPersonDetails = yield resp.json();
    let r: DetailsResult = {
       person: {...data.person,
-               asserts: new AssertionList(
-                  data.asserts.map(a => assertionFromJSON(a))),
+               asserts: data.asserts ? new AssertionList(
+                  data.asserts.map(a => assertionFromJSON(a))) :
+                  undefined,
               },
       persons: {},
       events: {},

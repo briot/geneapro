@@ -7,6 +7,7 @@ from django.db import transaction
 from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.to_json import JSONView
+from geneaprove.views.related import JSONResult
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import global_graph
 from geneaprove.views.styles import Styles
@@ -293,15 +294,11 @@ class PersonaView(JSONView):
 
         decujus = p[node.main_id]
 
-        # ??? All those assertions are sending the same p1 field which is
-        # the person, and is useless in this context.
-        # ??? Persons and events should be sent as a separate field, and
-        # referenced by any from assertions. This would make it easier to
-        # store in React, and would save on the amount of data we send.
-
-        return dict({
+        r = JSONResult(asserts=asserts)
+        return r.to_json({
             "person": decujus,
-        }, **models.Assertion.getEntities(asserts))
+            "asserts": asserts,
+        })
 
 
 class GlobalSettings(JSONView):

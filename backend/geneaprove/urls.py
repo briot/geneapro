@@ -63,7 +63,7 @@ urlpatterns = [
     url(r'^data/persona/list$', PersonaList.as_view()),
     url(r'^data/persona/(?P<id>\d+)$', PersonaView.as_view()),
     url(r'^data/place/(?P<id>\d+)$', geneaprove.views.places.PlaceView.as_view()),
-    url(r'^data/places/list$', geneaprove.views.places.view_list),
+    url(r'^data/places/list$', geneaprove.views.places.PlaceList.as_view()),
     url(r'^data/sources/list$', SourcesList.as_view()),
     url(r'^data/sources/(?P<id>-?\d+)$', SourceView.as_view()),
     url(r'^data/sources/(?P<id>-?\d+)/saveparts$',

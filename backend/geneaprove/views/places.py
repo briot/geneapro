@@ -2,20 +2,15 @@
 Event-related views
 """
 
-from django.http import HttpResponse
 from geneaprove import models
-from geneaprove.views.to_json import to_json, JSONView
+from geneaprove.views.to_json import JSONView
+from geneaprove.views.related import JSONResult
 
-
-def view_list(request):
+class PlaceList(JSONView):
     """View the list of a all known places"""
-    # pylint: disable=unused-argument
 
-    # ??? How do we get the list of parts immediately too ?
-    places = models.Place.objects.order_by('name')
-    return HttpResponse(
-        to_json(places),
-        content_type='application/json')
+    def get_json(self, params):
+        return models.Place.objects.all()
 
 
 class PlaceView(JSONView):
@@ -26,5 +21,7 @@ class PlaceView(JSONView):
     def get_json(self, params, id):
         place = models.Place.objects.get(id=id)
         asserts = place.get_asserts()
-        return dict({
-        }, **models.Assertion.getEntities(asserts))
+        r = JSONResult(asserts=asserts)
+        return r.to_json({
+           "asserts": asserts,
+        })

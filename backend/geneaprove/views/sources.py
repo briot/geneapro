@@ -5,6 +5,7 @@ Source-related views
 import os
 from django.conf import settings
 from geneaprove.views.to_json import JSONView
+from geneaprove.views.related import JSONResult
 from geneaprove import models
 from geneaprove.utils.citations import Citations
 
@@ -78,13 +79,15 @@ class SourceView(JSONView):
         # pylint: disable=arguments-differ
         # pylint: disable=redefined-builtin
         source = get_source(id)
+
         asserts = source.get_asserts()
-        
-        return dict({
+        r = JSONResult(asserts=asserts)
+        return r.to_json({
             'source':  source,
+            'asserts': asserts,
             'higher_sources': source.get_higher_sources(),
-            'repr':    source.get_representations(),
-        }, **models.Assertion.getEntities(asserts))
+            'repr': source.get_representations(),
+        })
 
 
 class EditSourceCitation(JSONView):
