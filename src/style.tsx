@@ -50,6 +50,7 @@ export class Style {
                   1.0);
                break;
             case ColorScheme.WHITE:
+               style.fill = d3Color.color('#fff');
                break;
             case ColorScheme.NO_BOX:
                break;
