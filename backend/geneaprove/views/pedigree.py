@@ -11,6 +11,9 @@ from geneaprove.views.persona import extended_personas, \
 from geneaprove.views.to_json import JSONView, to_json
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import global_graph
+import logging
+
+logger = logging.getLogger('geneaprove.pedigree')
 
 
 class PedigreeData(JSONView):
@@ -39,7 +42,9 @@ class PedigreeData(JSONView):
         self.year_only = params.get('year_only', '') == 'true'
 
         decujus = global_graph.node_from_id(id)
+
         styles = Styles(style_rules(), global_graph, decujus=decujus.main_id)
+        styles = None  # disabled for now
 
         distance = dict()
         people = global_graph.people_in_tree(
@@ -86,10 +91,6 @@ class PedigreeData(JSONView):
                 (persons[node.main_id] if node.main_id in persons else None,
                  node)
                 for node in global_graph.children(p.id)]
-            sorted.sort(
-                key=lambda c: (False, c[0].birth.Date) \
-                    if c[0] and c[0].birth
-                    else (True, None))
             for c in sorted:
                 if c[0]:
                     c[0].generation = -gen  # distance[c[1]]
@@ -101,45 +102,15 @@ class PedigreeData(JSONView):
         add_parents(main)
         add_children(main, gen=1)
         main = persons[decujus.main_id]
+
+        layout = {}
+        for p in persons.values():
+            layout[p.id] = {'children': getattr(p, 'children', None),
+                            'parents': getattr(p, 'parents', None)}
+
         return {'generations': max_levels,
                 'descendants': maxdepthDescendants,
                 'decujus':     decujus.main_id,
                 'persons':     persons,
-                'styles':      styles.all_styles()}
-
-    def to_json(self, value):
-        # We will however return a simpler version of the information computed
-        # above (which includes all known events for the persons)
-
-        show_age = False
-
-        def person_to_json_for_pedigree(obj):
-            if isinstance(obj, models.Persona):
-                d = obj.death
-                if show_age and obj.birth:
-                    if d:
-                        if d.Date:
-                            d.Date += " (age %s)" % (
-                                str(d.Date.years_since(obj.birth.Date)), )
-                    else:
-                        d = {}
-                        d.Date = " (age %s)" % (
-                            DateRange.today().years_since(obj.birth.Date),)
-
-                return {
-                    'id':   obj.id,
-                    'givn': obj.givn,
-                    'surn': obj.surn,
-                    'sex':  obj.sex,
-                    'generation': obj.generation,
-                    'parents':
-                        obj.parents if hasattr(obj, 'parents') else None,
-                    'children':
-                        obj.children if hasattr(obj, 'children') else None,
-                    'style': obj.styles,
-                    'birth': obj.birth,
-                    'marriage': obj.marriage,
-                    'death': d}
-
-        return to_json(value, custom=person_to_json_for_pedigree,
-                       year_only=self.year_only)
+                'layout':      layout,
+                'styles':      styles.all_styles() if styles is not None else None}

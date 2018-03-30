@@ -4,7 +4,7 @@ import { Icon } from 'semantic-ui-react';
 import { AppState } from '../Store/State';
 import { P2C } from '../Store/Assertion';
 import { Segment } from 'semantic-ui-react';
-import { Person } from '../Store/Person';
+import { Person, personDisplay } from '../Store/Person';
 import { GenealogyEventSet } from '../Store/Event';
 import AssertionTimeline from '../Assertions/AssertionTimeline';
 import './Persona.css';
@@ -33,9 +33,9 @@ function View(props: ConnectedProps) {
       for (const a of p.asserts.get()) {
          // ??? Should compare non-display string, not "sex"
          if (a instanceof P2C && a.characteristic.name === 'sex') {
-            for (const p of a.characteristic.parts) {
-               if (p.name === 'sex') {
-                  gender = p.value;
+            for (const part of a.characteristic.parts) {
+               if (part.name === 'sex') {
+                  gender = part.value;
                }
             }
             break;
@@ -52,7 +52,7 @@ function View(props: ConnectedProps) {
                      gender === 'F' ? 'woman' :
                     'genderless'}
             />
-            {p.surn.toUpperCase()}{' '}{p.givn}
+            {personDisplay(p)}
             <span className="lifespan">
                {birthYear} - {deathYear}
             </span>

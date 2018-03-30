@@ -50,13 +50,11 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
       let list = Object.entries(set)
          .map(
             ([key, val]: [string, Person]) => val).sort(
-            (p1: Person, p2: Person) => p1.surn.localeCompare(p2.surn) ||
-                                        p1.givn.localeCompare(p2.givn));
+            (p1: Person, p2: Person) => p1.name.localeCompare(p2.name));
 
       if (filter) {
          list = list.filter(
-            (p: Person) => p.surn.toLowerCase().indexOf(filter) >= 0 ||
-                           p.givn.toLowerCase().indexOf(filter) >= 0
+            (p: Person) => p.name.toLowerCase().indexOf(filter) >= 0
          );
       }
 

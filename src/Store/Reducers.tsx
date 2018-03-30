@@ -25,16 +25,8 @@ function mergePersons(state: PersonSet, action: PersonSet) {
    let result: PersonSet = {...state};
 
    for (const id of Object.keys(action)) {
-      // Special case: when the details come from an assertion, do we not get
-      // a surname. In this case, we want to preserve the more details info
-      // ??? TO BE FIXED, we should be getting the surn for assertions too
-
       const p = action[id];
-      if (result[id] && p.surn === '') {
-         // Don't change anything
-      } else {
-         result[id] = {...result[id], ...p};
-      }
+      result[id] = {...result[id], ...p};
    }
 
    return result;
@@ -152,14 +144,15 @@ export function rootReducer(
 
    } else if (isType(action, fetchPedigree.done)) {
       let persons = {...state.persons};
-      const diff: fetchPedigreeResult = action.payload.result;
-      for (let idstr of Object.keys(diff.persons)) {
+      const data: fetchPedigreeResult = action.payload.result;
+      for (let idstr of Object.keys(data.persons)) {
          const id = Number(idstr);
          // Should merge with care ???
          persons[id] = {knownAncestors: 0,   // default
                         knownDescendants: 0, // default
                         ...persons[id],      // preserve existing info
-                        ...diff.persons[id]          // override with new info
+                        ...data.persons[id], // override with new info
+                        ...data.layout[id],  // parents and children
                        };
          if (action.payload.params.decujus === id) {
             persons[id].knownAncestors = action.payload.params.ancestors;

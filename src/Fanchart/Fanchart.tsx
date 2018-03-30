@@ -277,14 +277,7 @@ export function FanchartBox(props: FanchartBoxProps) {
                textAnchor="middle"
                xlinkHref={'#text' + props.layout.id}
             >
-               <tspan dy="0em" className="name">{props.person.surn}</tspan>
-            </textPath>
-            <textPath
-               startOffset="50%"
-               textAnchor="middle"
-               xlinkHref={'#text' + props.layout.id}
-            >
-               <tspan dy="1em" className="name">{props.person.givn}</tspan>
+               <tspan dy="0em" className="name">{props.person.name}</tspan>
             </textPath>
             <textPath
                startOffset="50%"

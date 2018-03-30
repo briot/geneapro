@@ -32,6 +32,9 @@ can be any of "color" (text color), "fill" (background color),
 """
 
 from geneaprove.utils.date import DateRange
+import logging
+
+logger = logging.getLogger('geneaprove.styles')
 
 RULE_EVENT = 0
 RULE_ATTR = 1
@@ -74,6 +77,9 @@ def alive(person):
     # before the first child's birth date (recursively). But that becomes
     # more expensive to compute
 
+    logger.error('Did not compute birth or death for person')
+    return False
+
     if person.death is not None:
         return False
     elif person.birth is None:
@@ -95,6 +101,9 @@ def get_place(event, part):
        event occurred.
        PART is one of "name", "country",...
     """
+    logger.error('Did not compute place for event')
+    return None
+
     if event.place:
         if part == "name":
             return event.place.name
@@ -325,10 +334,13 @@ class Styles(ColorScheme):
                 match = True
                 for t in r[1]:
                     if t[0] == "age":
-                        if person.birth and e.Date:
-                            value = e.Date.years_since(person.birth.Date)
-                        else:
-                            value = None
+                        # ??? Would need to compute birth from birthEventId
+                        logger.error('Did not compute birthEvent for person')
+                        # if person.birth and e.Date:
+                        #     value = e.Date.years_since(person.birth.Date)
+                        # else:
+                        #     value = None
+                        value = None
                     elif t[0].startswith("place."):
                         value = get_place(e, t[0][6:])
                     elif t[0] == "role":
@@ -401,10 +413,12 @@ class Styles(ColorScheme):
                     elif t[0] == "IMPLEX":
                         value = t[3].get(person.id, 0)
                     elif t[0] == "age":
-                        if person.birth:
-                            value = self.today.years_since(person.birth.Date)
-                        else:
-                            value = ""
+                        logger.error('Did not compute age for person')
+                        value = ""
+                        # if person.birth:
+                        #     value = self.today.years_since(person.birth.Date)
+                        # else:
+                        #     value = ""
                     elif t[0] == "ancestor":
                         match = person.id in t[1]
                         if not match:

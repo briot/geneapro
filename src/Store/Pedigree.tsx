@@ -69,6 +69,15 @@ export const defaultPedigree: PedigreeSettings = {
    loading: false,
 };
 
+interface ChildrenAndParents {
+   children: number[];   // ids of children
+   parents: number[];    // ids of parents
+}
+
+export interface ChildrenAndParentsSet {
+   [person_id: number]: ChildrenAndParents;
+}
+
 /**
  * Whether the layout is left-to-right or top-down
  */

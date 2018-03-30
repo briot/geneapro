@@ -11,13 +11,27 @@ class Persona(GeneaProveModel):
     (when we are sure all attributes apply to the same person)
     """
 
-    name = models.TextField()
+    name = models.TextField(db_column='name')
+    # The name as found in the source document.
+    # The name will be displayed exactly as such in the GUI. Any name property
+    # (which distinguishes given name, surname,...) is extra, detailed
+    # information that only shows on the Persona page.
+    
     description = models.TextField(null=True)
     last_change = models.DateTimeField(default=django.utils.timezone.now)
 
     def __str__(self):
-        return self.name
+        return 'Persona<%d,%d>' % (self.id, self.name)
 
     class Meta:
         """Meta data for the model"""
         db_table = "persona"
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+        }
+
+
+

@@ -15,17 +15,16 @@ export interface FetchPersonsResult {
 
 export function jsonPersonToPerson(
    json: JSON.Persons,
-   styles: JSON.Style[],
+   styles?: JSON.Style[],
 ): FetchPersonsResult {
    let persons: PersonSet = {};
    let events: GenealogyEventSet = {};
    for (const pid of Object.keys(json.persons)) {
       const jp: JSON.Person = json.persons[pid];
-      const s: JSON.Style = styles[jp.style];
+      const s: JSON.Style|undefined = styles ? styles[jp.style] : undefined;
       persons[pid] = {
          id: jp.id,
-         givn: jp.givn,
-         surn: jp.surn,
+         name: jp.name,
          birthEventId: jp.birth ? jp.birth.id : undefined,
          deathEventId: jp.death ? jp.death.id : undefined,
          marriageEventId: jp.marriage ? jp.marriage.id : undefined,
@@ -206,12 +205,9 @@ export function setAssertionEntities(
    for (const p of entities.persons) {
       into.persons[p.id] = {
          id: p.id,
-         givn: p.name,
-         surn: '',
+         name: p.name,
          knownAncestors: 0,
          knownDescendants: 0,
-         // p.description ?
-         // p.last_change ?
       };
    }
 

@@ -42,7 +42,7 @@ function ConnectedAssertionBox(props: ConnectedBoxProps) {
                   <span>Changed: {a.lastChanged}&nbsp;</span>
                   {
                      a.sourceId &&
-                     <SourceLink id={a.sourceId} showName={false}/>
+                     <SourceLink id={a.sourceId}/>
                   }
                </div>
             </div>

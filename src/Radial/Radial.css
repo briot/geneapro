@@ -10,13 +10,16 @@
 }
 
 .Radial text {
-   display: none;
-   font-size: 6px;
+   font-size: 0.6em;
    font-family: sans;
    text-overflow: ellipsis;
+   display: none;
 }
-.Radial.visibleNames text,
+.Radial.visibleNames text {
+   display: inline;
+}
 .Radial .node:hover text {
    display: inline;
+   font-size: 1em;
 }
 

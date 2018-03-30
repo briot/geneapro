@@ -140,8 +140,8 @@ class P2P(Assertion):
     """Persona-to-Persona assertions, to represent the Persona.sameAs
        relationship.
     """
-    person1 = models.ForeignKey(Persona, related_name="sameAs1")
-    person2 = models.ForeignKey(Persona, related_name="sameAs2")
+    person1 = models.ForeignKey(Persona, related_name="p2p_from")
+    person2 = models.ForeignKey(Persona, related_name="p2p_to")
     type = models.ForeignKey(P2P_Type)
 
     class Meta:
@@ -166,7 +166,7 @@ class P2P(Assertion):
 class P2C(Assertion):
     """Persona-to-Characteristic assertions"""
 
-    person = models.ForeignKey(Persona, related_name="characteristics")
+    person = models.ForeignKey(Persona, related_name="p2c")
     characteristic = models.ForeignKey(Characteristic, related_name="persons")
 
     class Meta:

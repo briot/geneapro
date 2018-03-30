@@ -12,6 +12,7 @@ import { AppState } from '../Store/State';
 import { PersonSet } from '../Store/Person';
 import { allSagas, createAsyncAction } from '../Store/Actions';
 import { addEvents, GenealogyEventSet } from '../Store/Event';
+import { ChildrenAndParentsSet } from '../Store/Pedigree';
 
 /**
  * Async Action: fetch ancestors data from the server
@@ -25,6 +26,7 @@ export type fetchPedigreeParams = {
 export type fetchPedigreeResult = {
    persons: PersonSet;
    events: GenealogyEventSet;
+   layout: ChildrenAndParentsSet;
 };
 function _hasPedigree(p: fetchPedigreeParams, state: AppState) {
    return (p.decujus in state.persons &&

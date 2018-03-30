@@ -36,11 +36,9 @@ def __add_default_person_attributes(person):
     person.birthEventId = None
     person.deathEventId = None
     person.marriageEventId = None
-    person.generation = None
 
-    n = person.name.split('/', 2)
-    person.givn = n[0]
-    person.surn = n[1] if len(n) >= 2 else ""
+    # ??? Could query name with
+    # select characteristic_part.* from p2c, characteristic, characteristic_part where p2c.person_id=3 and p2c.characteristic_id=characteristic.id and characteristic.name='Name' and characteristic_part.characteristic_id=characteristic.id and characteristic_part.type_id in (34,33,35)
 
 
 def more_recent(obj1, obj2):
@@ -226,19 +224,13 @@ def extended_personas(
 
     chars = models.Characteristic_Part.objects.select_related(
         'type', 'characteristic').filter(
-            type__in=(models.Characteristic_Part_Type.PK_sex,
-                      models.Characteristic_Part_Type.PK_given_name,
-                      models.Characteristic_Part_Type.PK_surname)).order_by()
+            type__in=(models.Characteristic_Part_Type.PK_sex, )).order_by()
 
     for part in sql_in(chars, "characteristic", nodes and c2p):
         person = c2p[part.characteristic_id]
 
         if part.type_id == models.Characteristic_Part_Type.PK_sex:
             person.sex = part.name
-        elif part.type_id == models.Characteristic_Part_Type.PK_given_name:
-            person.givn = part.name
-        elif part.type_id == models.Characteristic_Part_Type.PK_surname:
-            person.surn = part.name
 
     ########
     # Compute place parts once, to limit the number of queries
@@ -358,23 +350,21 @@ class PersonaList(JSONView):
         else:
             styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
 
+            styles = None   # disabled for now
+
             all = extended_personas(
                 nodes=None, styles=styles,
                 event_types=event_types_for_pedigree(),
                 graph=global_graph, as_css=True)
 
-        all = [p for p in all.values()]
-        all.sort(key=lambda x: x.surn)
-
         # Necessary to avoid lots of queries to get extra information
-        all = [{'surn': p.surn,
-                'givn': p.givn,
+        all = [{'name': p.name,
                 'birth': p.birth,
                 'death': p.death,
                 'id': p.id,
                 # 'styles': p.styles,
                 'marriage': p.marriage}
-               for p in all]
+               for p in all.values()]
 
         return {
             'persons': all,

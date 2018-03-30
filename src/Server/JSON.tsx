@@ -9,12 +9,9 @@ export namespace JSON {
       [cssName: string]: string;
    }
   
-   // Simplified person, sent for assertions
    export interface PersonForAssertion {
       id: number;
-      name: string;
-      description: string;
-      last_change: string;
+      name: string;  // As found in the source document
    }
    
    export interface EventType {
@@ -34,10 +31,8 @@ export namespace JSON {
    
    export interface Person {
       id: number;
-      givn: string;
-      surn: string;
+      name: string;  // As found in the source document
       sex: string;
-      generation: number;
       parents: (number|null)[];
       children: (number|null)[];
       birth: Event;

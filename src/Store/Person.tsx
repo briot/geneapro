@@ -4,8 +4,7 @@ import { PersonStyle } from './Styles';
 // The base type is only needed until the server returns a proper Person.
 export interface BasePerson {
    id: number;
-   givn: string;
-   surn: string;
+   name: string;             // as found in the source document
    birthEventId?: number;    // points to a GenealogyEvent in the state
    deathEventId?: number;    // points to a GenealogyEvent in the state
    marriageEventId?: number; // points to a GenealogyEvent in the state
@@ -40,7 +39,6 @@ export interface PersonSet {
  */
 export function personDisplay(p?: Person, withId?: boolean) {
    return p ?
-      (withId ? `${p.surn.toUpperCase()} ${p.givn} (${p.id})` :
-                `${p.surn.toUpperCase()} ${p.givn}`) :
+      (withId ? `${p.name} (${p.id})` : p.name) :
       '';
 }

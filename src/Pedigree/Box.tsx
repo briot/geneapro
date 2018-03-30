@@ -54,7 +54,7 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
             clipPath={p ? 'url(#clipGen' + layout.generation + ')' : ''}
          >
             <tspan dy={layout.fs} className="name" x="2">
-               {p.givn} {p.surn}
+               {p.name}
             </tspan>
             {details}
          </text>

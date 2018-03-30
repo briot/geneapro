@@ -1,17 +1,19 @@
-import { Person } from '../Store/Person';
-import { jsonPersonToPerson, FetchPersonsResult } from '../Server/Person';
+import { jsonPersonToPerson } from '../Server/Person';
+import { ChildrenAndParentsSet } from '../Store/Pedigree';
+import { fetchPedigreeResult } from '../Store/Sagas';
 import { JSON } from './JSON';
 
 /**
  * Sent back by the server
  */
 
-interface JSONPedigree extends JSON.Persons {
+interface JSONPedigree {
    decujus: number;
    generations: number;  // including decujus
    descendants: number;
-   styles: JSON.Style[];
-   p: Person;
+   styles: JSON.Style[]|undefined;
+   persons: JSON.Person[];
+   layout: ChildrenAndParentsSet;
 }
 
 /**
@@ -30,7 +32,12 @@ export function* fetchPedigreeFromServer(
    }
 
    const data: JSONPedigree = yield resp.json();
-   const result: FetchPersonsResult = jsonPersonToPerson(data, data.styles);
+   const result: fetchPedigreeResult = {
+      ...jsonPersonToPerson(data, data.styles),
+      events: {},
+      layout: data.layout,
+   };
+      
    result.persons[data.decujus].knownAncestors = data.generations;
    result.persons[data.decujus].knownDescendants = data.descendants;
    return result;

@@ -3,7 +3,7 @@ import * as d3Hierarchy from 'd3-hierarchy';
 import * as d3Shape from 'd3-shape';
 import { Link } from 'react-router-dom';
 import { RadialSettings } from '../Store/Radial';
-import { Person } from '../Store/Person';
+import { Person, personDisplay } from '../Store/Person';
 import ScalableSVG from '../SVG.Scalable';
 import { BasePersonLayout, Style } from '../style';
 import { styleToString } from '../Store/Styles';
@@ -98,18 +98,16 @@ export default function Radial(props: RadialProps) {
                   key={node.data.p.id}
                   {...styleToString(Style.forPerson(
                      props.settings.colors, node.data.p, node.data))}
-               />
+               >
+                  <title>{personDisplay(node.data.p, true /* withId */)}</title>
+               </circle>
                {
                   <text
                      dy=".31em"
                      textAnchor={node.x < Math.PI ? 'start' : 'end'}
                      transform={node.x < Math.PI ? 'translate(8)' : 'rotate(180)translate(-8)'}
                   >
-                     {
-                        props.settings.showText ?
-                           node.data.p.surn :
-                           node.data.p.surn + ' ' + node.data.p.givn
-                     }
+                     {personDisplay(node.data.p)}
                   </text>
                }
             </g>
