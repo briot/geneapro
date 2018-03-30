@@ -68,7 +68,7 @@ class Event(GeneaProveModel):
 
     def save(self, **kwargs):
         self.date_sort = compute_sort_date(self.date)
-        super(Event, self).save(**kwargs)
+        super().save(**kwargs)
 
     def __str__(self):
         d = self.date

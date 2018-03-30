@@ -32,7 +32,7 @@ class ModelEncoder(DjangoJSONEncoder):
         """
         if 'separators' not in kwargs:
             kwargs['separators'] = (',', ':')
-        super(ModelEncoder, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.year_only = year_only
         self.custom = custom
 
@@ -67,7 +67,7 @@ class ModelEncoder(DjangoJSONEncoder):
             return obj.to_json()
 
         else:
-            return super(ModelEncoder, self).default(obj)
+            return super().default(obj)
 
 
 def to_json(obj, custom=None, year_only=True):
@@ -101,7 +101,7 @@ class JSONViewParams(QueryDict):
     """
 
     def __init__(self):
-        super(JSONViewParams, self).__init__('', mutable=True)
+        super().__init__('', mutable=True)
         self.files = []
 
     def set_files(self, files):

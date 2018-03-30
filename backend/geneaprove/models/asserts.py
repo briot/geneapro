@@ -124,7 +124,7 @@ class P2P(Assertion):
         into.update(person_ids=[self.person1_id, self.person2_id])
 
     def to_json(self):
-        res = super(P2P, self).to_json()
+        res = super().to_json()
         res['p1'] = {'person': self.person1_id}
         res['p2'] = {'person': self.person2_id}
         res['type'] = self.type.name
@@ -151,7 +151,7 @@ class P2C(Assertion):
                     place_ids=[self.characteristic.place_id])
 
     def to_json(self):
-        res = super(P2C, self).to_json()
+        res = super().to_json()
         fetch_image = False
 
         parts = []
@@ -198,7 +198,7 @@ class P2E(Assertion):
                     place_ids=[self.event.place_id])
 
     def to_json(self):
-        res = super(P2E, self).to_json()
+        res = super().to_json()
         res['p1'] = {'person': self.person_id}
         res['p2'] = {'event': self.event_id, 'role': self.role.name}
         return res
@@ -223,7 +223,7 @@ class P2G(Assertion):
         into.update(person_ids=[self.person_id])
 
     def to_json(self):
-        res = super(P2G, self).to_json()
+        res = super().to_json()
         res['p1'] = {'person': self.person_id}
         res['p2'] = {'group': self.group_id, 'role': self.role.name}
         return res

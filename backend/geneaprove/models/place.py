@@ -40,7 +40,7 @@ class Place(GeneaProveModel):
 
     def save(self, **kwargs):
         self.date_sort = compute_sort_date(self.date)
-        super(Place, self).save(**kwargs)
+        super().save(**kwargs)
 
     def get_asserts(self):
         """

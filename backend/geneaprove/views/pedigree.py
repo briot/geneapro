@@ -20,7 +20,7 @@ class PedigreeData(JSONView):
     """Return the data for the Pedigree or Fanchart views."""
 
     def __init__(self):
-        super(PedigreeData, self).__init__()
+        super().__init__()
         # Whether to show full dates or only the year
         self.year_only = False
 

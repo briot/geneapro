@@ -36,7 +36,6 @@ export function jsonPersonToPerson(
    };
 }
 
-
 export function jsonPersonsToPerson(
    json: JSON.Persons,
    styles?: JSON.Style[],

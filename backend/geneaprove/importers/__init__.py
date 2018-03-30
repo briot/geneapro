@@ -22,7 +22,7 @@ class ImporterMetaClass(type):
     """Meta class for importers, which ensures that all importers declared
        in the source are automatically registered"""
     def __new__(mcs, name, bases, attrs):
-        super_new = super(ImporterMetaClass, mcs).__new__
+        super_new = type.__new__
         parents = [b for b in bases if isinstance(b, ImporterMetaClass)]
         if not parents:
             # Don't do anything for Importer itself, only for its subclasses

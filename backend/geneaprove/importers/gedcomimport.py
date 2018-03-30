@@ -1223,7 +1223,7 @@ class GedcomImporterCumulate(GedcomImporter):
 
     def __init__(self, gedcom_name, data, *args, **kwargs):
         self.errors = []
-        super(GedcomImporterCumulate, self).__init__(
+        super().__init__(
             *args, gedcom_name=gedcom_name, data=data, **kwargs)
 
     def report_error(self, msg):
@@ -1246,7 +1246,7 @@ class GedcomFileImporter(geneaprove.importers.Importer):
 
     def __init__(self):
         self._parser = None  # The gedcom parser
-        super(GedcomFileImporter, self).__init__()
+        super().__init__()
 
     def parse(self, filename):
         """Parse and import a gedcom file.

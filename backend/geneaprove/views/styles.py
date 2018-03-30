@@ -224,7 +224,7 @@ class Styles(ColorScheme):
     def __init__(self, rules, graph, decujus):
         """Rules specifies the rules to use for the highlighting.
         """
-        super(Styles, self).__init__()
+        super().__init__()
 
         # Preprocess the rules for faster computation
 

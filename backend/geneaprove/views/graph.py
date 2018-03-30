@@ -93,7 +93,7 @@ class GeneaGraph(Digraph):
     """
 
     def __init__(self):
-        super(GeneaGraph, self).__init__()
+        super().__init__()
 
         # Fast mapping from database id to graph nodes.
         # There can be multiple ids mapping to the same node, when all the ids

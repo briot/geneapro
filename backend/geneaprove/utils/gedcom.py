@@ -424,7 +424,7 @@ _GRAMMAR = dict(
 class Invalid_Gedcom(Exception):
 
     def __init__(self, msg):
-        super(Invalid_Gedcom, self).__init__(self)
+        super().__init__(self)
         self.msg = msg
 
     def __repr__(self):
@@ -994,7 +994,7 @@ class GedcomFile(GedcomRecord):
     """Represents a whole GEDCOM file"""
 
     def __init__(self):
-        super(GedcomFile, self).__init__()
+        super().__init__()
         self._ids = dict()
 
     def obj_from_id(self, id):
