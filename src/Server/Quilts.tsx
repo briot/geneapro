@@ -5,7 +5,7 @@ export const MARGIN = 0;
 export const F_HEIGHT = 16;  // height of the row with "F" (families)
 
 interface JSONQuiltsPerson extends BasePerson {
-   // Only  id, givn, surn are set
+   // Only  id, name are set
    sex: string;
 }
 

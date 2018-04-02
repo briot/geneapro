@@ -481,11 +481,9 @@ class GeneaGraph(Digraph):
                for node in layer:
                    # ignore dummy vertices
                    if hasattr(node, "data"):
-                       n = node.data.name.split('/', 2)
                        persons[node.data.main_id] = {
                            "id": node.data.main_id,
-                           "givn": n[0],
-                           "surn": n[1] if len(n) >= 2 else "",
+                           "name": node.data.name,
                            "sex": node.data.sex,
                        }
                        perlayer[layerIndex].append(node.data.main_id)
