@@ -127,6 +127,7 @@ def forward(apps, schema_editor):
         CPT(gedcom="",          is_name_part=False,  name="RFN"),
         CPT(gedcom="",          is_name_part=False,  name="RIN"),
         CPT(gedcom="SEX",       is_name_part=False,  name="sex"),
+        CPT(gedcom="TYPE",      is_name_part=False,  name="type"),
         CPT(gedcom="",          is_name_part=False,
             name="social security number"),
         CPT(gedcom="",          is_name_part=False,  name="telephone"),

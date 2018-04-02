@@ -42,10 +42,10 @@ function EventDetails(props: EventDetailsProps) {
                            />
                         </td>
                      </tr>,
-                     a.rationale ? <tr><td/><td colSpan={3}>{a.rationale}</td></tr> : null,
+                     a.rationale ? <tr key={'rat' + idx}><td/><td colSpan={3}>{a.rationale}</td></tr> : null,
                   ];
                } else {
-                  return <span>Unknown assertion</span>;
+                  return <span key={idx}>Unknown assertion</span>;
                }
             })
             

@@ -539,7 +539,7 @@ class GedcomImporter(object):
         if wife:
             wife = self._sourcePersona[(NO_SOURCE, wife.id)]
 
-        family_events = ("MARR", "DIV", "CENS", "ENGA", "EVEN")
+        family_events = ("MARR", "MARC", "DIV", "CENS", "ENGA", "EVEN")
         found = 0
 
         # We might have a family with children only.
@@ -822,6 +822,7 @@ class GedcomImporter(object):
                 midl = self._char_types['_MIDL']
 
                 for k, v in val.for_all_fields():
+                    logger.debug('MANU k=%s v=%s', k, v)
                     t = self._char_types.get(k, None)
                     if t:
                         if k == 'NOTE':
@@ -865,9 +866,18 @@ class GedcomImporter(object):
                     elif k == "TYPE" and key == "NAME":
                         pass  # handled
 
+                    elif k == "TYPE":
+                        # For instance "FACT.TYPE" explains what the attribute
+                        # is about.
+
+                        self._all_char_parts.append(
+                            models.Characteristic_Part(
+                                characteristic=c, type=t, name=v))
+
                     else:
                         self.report_error("%s Unhandled %s.%s" % (
                             location(val), key, k))
+
 
     def _create_obje_for_place(self, data, place, CHAN=None):
         # If an event has an OBJE: since the source is an xref, the object
