@@ -441,8 +441,8 @@ class GedcomString(str):
     # add .line field
 
     def __add__(self, value):
-        r = GedcomString(str(self) + value)
-        setattr(r, "_line", getattr(self, "line", "???"))
+        r = GedcomString('%s%s' % (self, value))
+        setattr(r, "_line", getattr(self, "line", None))
         return r
 
     def setLine(self, line):
@@ -453,8 +453,8 @@ class GedcomString(str):
         setattr(self, "_line", line)
 
     def location(self):
-        """A string showing the location where SELF was defined"""
-        return "line %s" % getattr(self, "line", "???")
+        """the line number showing the location where SELF was defined"""
+        return getattr(self, "_line", None)
 
 
 class _Lexical(object):
@@ -652,7 +652,7 @@ class GedcomRecord(object):
            therefore need special handling when copying a gedcomRecord.
         """
         self.value = GedcomString("")
-        self._line = "???"  # Line where this record started
+        self._line = None  # Line where this record started
         self._gedcom = None
         self.xref = None
 
@@ -755,7 +755,7 @@ class GedcomRecord(object):
 
     def location(self):
         """A string showing the location where SELF was defined"""
-        return "line %s" % self._line
+        return self._line
 
 
 XREF_NONE = 0       # No xref allowed

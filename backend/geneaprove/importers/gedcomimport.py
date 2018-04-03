@@ -58,13 +58,16 @@ def as_list(obj):
         return [obj]
 
 
-def location(obj):
+def get_location(obj):
     """Return the location (in the gedcom file) of obj"""
 
     try:
-        return as_list(obj)[0].location()
+        if isinstance(obj, list):
+            return obj[0].location()   # from gedcom.py
+        else:
+            return obj.location()      # from gedcom.py
     except AttributeError:
-        return "???"
+        return None
 
 
 def parse_gedcom_date(data_date):
@@ -148,7 +151,8 @@ class SourceManager(object):
             if o is None:
                 continue
             if isinstance(o, str):
-                self.importer.report_error('Ignore OBJE reference: %s' % o)
+                self.importer.report_error(
+                    location=None, msg='Ignore OBJE reference: %s' % o)
                 continue
 
             obj = self.importer._objects.get(o.FILE, None)
@@ -176,14 +180,15 @@ class SourceManager(object):
                 if k == "CALN":
                     if len(v) > 1:
                         self.importer.report_error(
-                            "%s A single CALN per REPO is supported" % (
-                                location(v), ))
+                            location=v,
+                            msg="A single CALN per REPO is supported")
                     else:
                         caln = v[0].value
                         source_type = (v[0].MEDI or '').lower()
                 else:
                     self.importer.report_error(
-                        "%s Unhandled REPO.%s" % (location(v), k))
+                        location=v,
+                        msg="Unhandled REPO.%s" % (k, ))
 
             models.Repository_Source.objects.create(
                 repository=rep,
@@ -225,7 +230,8 @@ class SourceManager(object):
 
             elif k not in ("REPO", "OBJE", "TITL", "CHAN", "ABBR"):
                 self.importer.report_error(
-                    "%s Unhandled SOUR.%s" % (location(v), k))
+                    location=v,
+                    msg="Unhandled SOUR.%s" % (k, ))
 
         if hasattr(sour, "id"):
             self.sources[sour.id] = src
@@ -434,10 +440,8 @@ class GedcomImporter(object):
             if k not in ("SOUR", "INDI", "FAM", "HEAD", "SUBM",
                          "TRLR", "ids", "filename"):
                 self.report_error(
-                    "%s Unhandled FILE.%s" % (location(v), k))
-
-    def report_error(self, msg):
-        logger.info(msg)
+                    location=v,
+                    msg="Unhandled FILE.%s" % (k, ))
 
     def _create_enum_cache(self):
         """Create a local cache for enumeration tables"""
@@ -527,7 +531,9 @@ class GedcomImporter(object):
             # CALN is handled directly in the source itself
             if k not in ("NAME", "ADDR", "WWW", "PHON", "RIN", "NOTE", "id",
                          "CALN"):
-                self.report_error("%s Unhandled REPO.%s" % (location(v), k))
+                self.report_error(
+                    location=v,
+                    mg="Unhandled REPO.%s" % (k, ))
 
         return r
 
@@ -598,7 +604,9 @@ class GedcomImporter(object):
         for k, v in data.for_all_fields():
             if k not in ("CHIL", "HUSB", "WIFE", "id",
                          "CHAN") + family_events:
-                self.report_error("%s Unhandled FAM.%s" % (location(v), k))
+                self.report_error(
+                    location=v,
+                    msg="Unhandled FAM.%s" % (k, ))
 
     def _addr_image(self, data):
         result = ""
@@ -651,7 +659,8 @@ class GedcomImporter(object):
                         part = self._place_part_types.get(key, None)
                         if not part:
                             self.report_error(
-                                'Unknown place part: ' + key)
+                                location=val,
+                                msg='Unknown place part: %s' % (key, ))
                         else:
                             self._all_place_parts.append(models.Place_Part(
                                 place=p, type=part, name=val))
@@ -664,7 +673,8 @@ class GedcomImporter(object):
         for k, v in data.for_all_fields():
             if k not in ("MAP", ):
                 self.report_error(
-                    "%s Unhandled PLAC.%s" % (location(v), k))
+                    location=v,
+                    msg="Unhandled PLAC.%s" % (k, ))
 
         return p
 
@@ -893,8 +903,9 @@ class GedcomImporter(object):
                                 characteristic=c, type=t, name=v))
 
                     else:
-                        self.report_error("%s Unhandled %s.%s" % (
-                            location(val), key, k))
+                        self.report_error(
+                            location=val,
+                            msg="Unhandled %s.%s" % (k, ))
 
 
     def _create_obje_for_place(self, data, place, CHAN=None):
@@ -922,8 +933,9 @@ class GedcomImporter(object):
                             OBJE=obje),
                         subject_place=place)
                 else:
-                    self.report_error("%s Unhandled OBJE" %
-                                      (location(data.OBJE)))
+                    self.report_error(
+                        location=data.OBJE,
+                        msg="Unhandled OBJE")
 
     def _create_event(self, indi, field, data, CHAN=None):
         """Create a new event, associated with INDI by way of one or more
@@ -974,8 +986,8 @@ class GedcomImporter(object):
 
             if principal is None:
                 self.report_error(
-                    "%s No principal given for event: %s - %s" % (
-                        location(data), field, data))
+                    location=data,
+                    msg="No principal given for event: %s - %s" % (field, data))
 
         else:
             principal = indi
@@ -1042,7 +1054,9 @@ class GedcomImporter(object):
             # SOURCE is handled in create_sources_ref
             if k not in ("DATE", "ADDR", "PLAC", "SOUR", "TYPE", "OBJE",
                          "NOTE", "_all", "xref"):
-                self.report_error("%s Unhandled EVENT.%s" % (location(v), k))
+                self.report_error(
+                    location=v,
+                    msg="Unhandled EVENT.%s" % (k, ))
 
         return evt
 
@@ -1168,8 +1182,9 @@ class GedcomImporter(object):
                                 self._p2p_types[v.lower()] = relation
 
                         else:
-                            self.report_error("%s Unhandled INDI.ASSO.%s" % (
-                                location(value), f))
+                            self.report_error(
+                                location=value,
+                                msg="Unhandled INDI.ASSO.%s" % (f, ))
 
                     if relation is not None:
                         self._all_p2p.append(
@@ -1182,8 +1197,9 @@ class GedcomImporter(object):
                                 type=relation))
 
             else:
-                self.report_error("%s Unhandled INDI.%s" % (
-                    location(value), field))
+                self.report_error(
+                    location=value,
+                    msg="Unhandled INDI.%s" % (field, ))
 
         return indi
 
@@ -1260,8 +1276,19 @@ class GedcomImporterCumulate(GedcomImporter):
         super().__init__(
             *args, gedcom_name=gedcom_name, data=data, **kwargs)
 
-    def report_error(self, msg):
-        self.errors.append(msg)
+    def report_error(self, location, msg):
+        loc = get_location(location)
+        if loc is not None and not isinstance(loc, int):
+            logger.critical('Type error %s' % (type(loc), ))
+        self.errors.append((loc, msg))
+
+    def errors_as_string(self):
+        self.errors.sort(key=lambda e: e[0] if e[0] is not None else -1)
+
+        return "\n".join(
+            'Line %s: %s' % ('???' if line is None else line,
+                              msg)
+            for (line, msg) in self.errors)
 
 
 ##################################
@@ -1319,7 +1346,7 @@ class GedcomFileImporter(geneaprove.importers.Importer):
                 parser = GedcomImporterCumulate(gedcom_name, parsed)
                 logger.info('Done analyzing %s' % filename)
 
-            return (True, "\n".join(parser.errors))
+            return (True, parser.errors_as_string())
 
         except Invalid_Gedcom as e:
             logger.error("Exception while parsing GEDCOM:\n%s" % (e, ))
