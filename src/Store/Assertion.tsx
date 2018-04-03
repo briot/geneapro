@@ -22,7 +22,7 @@ export abstract class Assertion {
       public researcher:  number,  // xref
       public rationale:   string,
       public disproved:   boolean,
-      public lastChanged: string,
+      public lastChanged: Date,
       public sourceId?:   number   // points to a Source in the state
    ) {
    }
@@ -49,7 +49,7 @@ export class P2P extends Assertion {
       public researcher:  number,  // xref
       public rationale:   string,
       public disproved:   boolean,
-      public lastChanged: string,
+      public lastChanged: Date,
       public person1Id:   number,  // points to a Persona in the state
       public person2Id:   number,  // points to a Persona in the state
       public relation:    string,  // type of relationship
@@ -70,7 +70,7 @@ export class P2G extends Assertion {
       public researcher:  number,  // xref
       public rationale:   string,
       public disproved:   boolean,
-      public lastChanged: string,
+      public lastChanged: Date,
       public personId:    number,  // points to a Persona in the state
       public groupId:     number,  // points to a Group in the state
       public sourceId?:   number   // points to a Source in the state
@@ -90,7 +90,7 @@ export class P2C extends Assertion {
       public researcher:     number,  // xref
       public rationale:      string,
       public disproved:      boolean,
-      public lastChanged:    string,
+      public lastChanged:    Date,
       public personId:       number,  // points to a Persona in the state
       public characteristic: Characteristic,
       public sourceId?:      number   // points to a Source in the state
@@ -115,7 +115,7 @@ export class P2E extends Assertion {
       public researcher:    number,  // xref
       public rationale:     string,
       public disproved:     boolean,
-      public lastChanged:   string,
+      public lastChanged:   Date,
       public personId:      number,  // points to a Persona in the state
       public eventId:       number,  // points to a GenealogyEvent in the state
       public role:          string,

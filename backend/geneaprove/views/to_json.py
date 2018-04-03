@@ -50,10 +50,7 @@ class ModelEncoder(DjangoJSONEncoder):
             return obj.display(year_only=self.year_only)
 
         elif isinstance(obj, datetime.datetime):
-            if self.year_only:
-                return obj.strftime('%Y')
-            else:
-                return obj.isoformat()
+            return obj.isoformat()
 
         elif isinstance(obj, django.db.models.query.QuerySet):
             return list(obj)
@@ -70,7 +67,7 @@ class ModelEncoder(DjangoJSONEncoder):
             return super().default(obj)
 
 
-def to_json(obj, custom=None, year_only=True):
+def to_json(obj, custom=None, year_only=False):
     """
     Converts a type to json data, properly converting database instances.
     If year_only is true, then the dates will only include the year

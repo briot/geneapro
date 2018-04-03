@@ -475,16 +475,19 @@ class GedcomImporter(object):
         # In Geneatique 2010, there can be several occurrences of CHAN. But
         # we only preserve the most recent one
 
-        result = None
-        for d in as_list(data):
-            tmp = parse_gedcom_date(d.DATE)
-            if result is None or (tmp is not None and tmp > result):
-                result = tmp
-
-        if result:
-            return result
-        else:
+        if data is None:
             return django.utils.timezone.now()
+
+        if isinstance(data, GedcomRecord) or isinstance(data, list): 
+            result = None
+            for d in as_list(data):
+                tmp = parse_gedcom_date(d.DATE)
+                if result is None or (tmp is not None and tmp > result):
+                    result = tmp
+
+            return result
+
+        return data
 
     def _create_repo(self, data):
         """
@@ -740,7 +743,7 @@ class GedcomImporter(object):
 
         return "\n\n".join(n)
 
-    def _create_characteristic(self, key, value, indi):
+    def _create_characteristic(self, key, value, indi, CHAN=None):
         """Create a Characteristic for the person indi.
          Return True if a characteristic could be created, false otherwise.
          (key,value) come from the GEDCOM structure.
@@ -770,6 +773,8 @@ class GedcomImporter(object):
             typ = self._char_types[key]
 
         value = as_list(value)
+
+        last_change = self._create_CHAN(CHAN)
 
         for val_index, val in enumerate(value):
             if val is None:
@@ -802,6 +807,7 @@ class GedcomImporter(object):
                     surety=self._default_surety,
                     researcher=self._researcher,
                     person=self._indi_for_source(sourceId=sid, indi=indi),
+                    last_change=last_change,
                     source=s,
                     characteristic=c)
                 for sid, s in self.source_manager.create_sources_ref(val)
@@ -822,7 +828,6 @@ class GedcomImporter(object):
                 midl = self._char_types['_MIDL']
 
                 for k, v in val.for_all_fields():
-                    logger.debug('MANU k=%s v=%s', k, v)
                     t = self._char_types.get(k, None)
                     if t:
                         if k == 'NOTE':
@@ -1041,7 +1046,7 @@ class GedcomImporter(object):
         # The name to use is the first one in the list of names
         indi = models.Persona.objects.create(
             name=name,
-            description=self._get_note(data.NOTE),
+            description=None,
             last_change=self._create_CHAN(data.CHAN))
         indi._gedcom_id = data.id
         self._sourcePersona[(NO_SOURCE, data.id)] = indi
@@ -1050,6 +1055,7 @@ class GedcomImporter(object):
         """Add events and characteristics to an INDI"""
 
         indi = self._sourcePersona[(NO_SOURCE, data.id)]
+        CHAN = indi.last_change  # self._create_CHAN(getattr(data, "CHAN", None))
 
         # For all properties of the individual
 
@@ -1063,8 +1069,10 @@ class GedcomImporter(object):
                 # child births.
                 pass
 
-            elif field in ("CHAN", "NOTE"):
-                # Already handled
+            elif field in ("CHAN", ):
+                # Already added to all assertions.
+                # Also taken into account in _create_bare_indi to set the date
+                # on the persona itself.
                 pass
 
             elif field == "BIRT":
@@ -1083,15 +1091,15 @@ class GedcomImporter(object):
 
                 for v in value:
                     self._create_event(
-                        indi=local_indi, field=field, data=v, CHAN=data.CHAN)
+                        indi=local_indi, field=field, data=v, CHAN=CHAN)
 
             elif field in self._char_types:
-                self._create_characteristic(field, value, indi)
+                self._create_characteristic(field, value, indi, CHAN=CHAN)
 
             elif field in self._event_types:
                 for v in value:
                     self._create_event(
-                        indi=indi, field=field, data=v, CHAN=data.CHAN)
+                        indi=indi, field=field, data=v, CHAN=CHAN)
 
             elif field.startswith("_") and \
                     (isinstance(value, str) or
@@ -1109,14 +1117,15 @@ class GedcomImporter(object):
                             gedcom=field)
 
                 for v in as_list(value):
-                    self._create_characteristic(field, v, indi)
+                    self._create_characteristic(field, v, indi, CHAN=CHAN)
 
             elif field == "SOUR":
                 # The individual is apparently cited in a source, but is not
                 # related to a specific GEDCOM event. So instead we associate
                 # with a general census event.
                 evt_data = GedcomRecord(SOUR=value)
-                self._create_event(indi, field="CENS", data=evt_data)
+                self._create_event(
+                    indi, field="CENS", data=evt_data, CHAN=CHAN)
 
             elif field == "OBJE":
                 self._create_characteristic(
@@ -1125,9 +1134,10 @@ class GedcomImporter(object):
                         value='',
                         SOUR=[GedcomRecord(
                             TITL="Media for %s" % indi.name,
-                            CHAN=None,
+                            CHAN=CHAN,
                             OBJE=value)]),
-                    indi=indi)
+                    indi=indi,
+                    CHAN=CHAN)
 
             elif field == "ASSO":
                 # There can be one or more ASSO, so we receive a list
@@ -1153,6 +1163,7 @@ class GedcomImporter(object):
                             models.P2P(
                                 surety=self._default_surety,
                                 researcher=self._researcher,
+                                last_change=CHAN,
                                 person1=indi,
                                 person2=related,
                                 type=relation))

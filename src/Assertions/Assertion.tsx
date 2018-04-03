@@ -39,7 +39,6 @@ function ConnectedAssertionBox(props: ConnectedBoxProps) {
                   />
                </div>
                <div>
-                  <span>Changed: {a.lastChanged}&nbsp;</span>
                   {
                      a.sourceId &&
                      <SourceLink id={a.sourceId}/>
@@ -50,7 +49,8 @@ function ConnectedAssertionBox(props: ConnectedBoxProps) {
                <i>Rationale:</i> {a.rationale}
             </div>
             <div className="researcher">
-               Researched by: {props.researchers[a.researcher].name}
+               Research: {props.researchers[a.researcher].name}
+               &nbsp;({a.lastChanged.toDateString()})
             </div>
          </Segment>
       </div>

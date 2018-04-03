@@ -18,7 +18,11 @@ class Persona(GeneaProveModel):
     # information that only shows on the Persona page.
     
     description = models.TextField(null=True)
+    # Additional data to distinguish the person among other homonyms
+
     last_change = models.DateTimeField(default=django.utils.timezone.now)
+    # The last change date will be computed as the date of the most recent
+    # assertion that applies to the person.
 
     def __str__(self):
         return 'Persona<%d,%d>' % (self.id, self.name)
