@@ -998,15 +998,20 @@ class GedcomImporter(object):
 
         # Can we find a descriptive name for this event ?
 
+        type_descr = ''
+        if getattr(data, "TYPE", None):
+            type_descr = ' (%s)' % (data.TYPE, )
+
         if event_type.gedcom == 'BIRT':
-            name = 'Birth of ' + name
+            name = 'Birth%s of %s' % (type_descr, name)
             evt = self._births.get(principal._gedcom_id, None)
         elif event_type.gedcom == 'MARR':
-            name = 'Marriage of ' + name
+            name = 'Marriage%s of %s' % (type_descr, name)
         elif event_type.gedcom == "DEAT":
-            name = "Death of " + name
+            name = 'Death%s of %s' % (type_descr, name)
         else:
-            name = "%s of %s" % (evt_name or event_type.name, name)
+            name = "%s%s of %s" % (
+                evt_name or event_type.name, type_descr, name)
 
         # Create the event if needed.
 
@@ -1024,11 +1029,14 @@ class GedcomImporter(object):
             all_src = self.source_manager.create_sources_ref(None)
 
         last_change = self._create_CHAN(CHAN)
+        principal_found = False
 
         for person, role in indi:
             if person:
                 n = ""
                 if role == self._principal:
+                    principal_found = False
+
                     # If we have a note associated with the event, we assume it
                     # deals with the event itself, not with its sources.  Since
                     # the note also appears in the context of an INDI, we store
@@ -1052,11 +1060,11 @@ class GedcomImporter(object):
         for k, v in data.for_all_fields():
             # ADDR and PLAC are handled in create_place
             # SOURCE is handled in create_sources_ref
-            if k not in ("DATE", "ADDR", "PLAC", "SOUR", "TYPE", "OBJE",
-                         "NOTE", "_all", "xref"):
+            if k not in ("DATE", "ADDR", "PLAC", "SOUR", "OBJE",
+                         "TYPE", "NOTE", "_all", "xref"):
                 self.report_error(
                     location=v,
-                    msg="Unhandled EVENT.%s" % (k, ))
+                    msg="Unhandled %s.%s" % (field, k, ))
 
         return evt
 
