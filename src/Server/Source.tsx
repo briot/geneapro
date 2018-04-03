@@ -20,8 +20,14 @@ export function sourceFromJSON(s: JSON.Source) {
       id: s.id,
       title: s.title,
       abbrev: s.abbrev,
-      biblio: s.abbrev,
-      medium: '',
+      biblio: s.biblio,
+      comments: s.comments,
+      higherSourceId: s.higher_source_id,
+      medium: s.medium,
+      jurisdictionPlace: s.jurisdiction_place,
+      lastChange: new Date(s.last_change),
+      subjectDate: s.subject_date,
+      subjectPlace: s.subject_place,
       medias: [],
    };
    return result;

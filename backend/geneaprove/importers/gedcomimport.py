@@ -218,7 +218,7 @@ class SourceManager(object):
             biblio=title,
             last_change=self.importer._create_CHAN(
                 getattr(sour, "CHAN", None)),
-            comments='')
+            comments=self.importer._get_all_notes(sour))
 
         self.__add_OBJE_to_source(src, sour.OBJE)
         self.__add_source_to_REPO(src, getattr(sour, "REPO", None))
@@ -228,7 +228,7 @@ class SourceManager(object):
                 # ??? Should we preserve gedcom ids ?
                 pass
 
-            elif k not in ("REPO", "OBJE", "TITL", "CHAN", "ABBR"):
+            elif k not in ("REPO", "OBJE", "TITL", "CHAN", "ABBR", "NOTE"):
                 self.importer.report_error(
                     location=v,
                     msg="Unhandled SOUR.%s" % (k, ))
@@ -298,7 +298,7 @@ class SourceManager(object):
                                 researcher=self.importer._researcher,
                                 title=(sour[1].title or u'') + parts_string,
                                 abbrev=(sour[1].abbrev or u'') + parts_string,
-                                comments="",
+                                comments='',
                                 last_change=sour[1].last_change)
                             self.sources[new_id] = nested_source
                             nested_source.comments += self.importer._get_all_notes(

@@ -296,17 +296,17 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
    }
 
    jurisdictionPlaceChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
-      this.setState({source: {...this.state.source, jurisdiction_place: e.currentTarget.value},
+      this.setState({source: {...this.state.source, jurisdictionPlace: e.currentTarget.value},
                      modified: true});
    }
 
    subjectPlaceChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
-      this.setState({source: {...this.state.source, subject_place: e.currentTarget.value},
+      this.setState({source: {...this.state.source, subjectPlace: e.currentTarget.value},
                      modified: true});
    }
 
    subjectDateChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
-      this.setState({source: {...this.state.source, subject_date: e.currentTarget.value},
+      this.setState({source: {...this.state.source, subjectDate: e.currentTarget.value},
                      modified: true});
    }
 
@@ -385,21 +385,21 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
                <Form.Input
                   label="Subject date"
                   placeholder="What date is this about ?"
-                  value={this.state.source.subject_date || ''}
+                  value={this.state.source.subjectDate || ''}
                   onChange={this.subjectDateChange}
                   title="The date the source is about. This isn't the date of the source itself"
                />
                <Form.Input
                   label="Subject place"
                   placeholder="What place is this about ?"
-                  value={this.state.source.subject_place || ''}
+                  value={this.state.source.subjectPlace || ''}
                   onChange={this.subjectPlaceChange}
                   title="The place the source is about"
                />
                <Form.Input
                   label="Jurisdiction place"
                   placeholder="Where did you find it ?"
-                  value={this.state.source.jurisdiction_place || ''}
+                  value={this.state.source.jurisdictionPlace || ''}
                   onChange={this.jurisdictionPlaceChange}
                   title="Where the source was found"
                />

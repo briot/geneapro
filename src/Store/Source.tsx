@@ -17,10 +17,11 @@ export interface Source {
 
    //  Research details
    comments?: string;
-   subject_date?: string;
-   subject_place?: string;
-   jurisdiction_place?: string;
-   last_change?: string;
+   higherSourceId?: number|null;
+   subjectDate?: string;
+   subjectPlace?: string;
+   jurisdictionPlace?: string;
+   lastChange?: Date;
 
    medias?: SourceMedia[];
    asserts?: AssertionList;

@@ -14,6 +14,7 @@ def forward(apps, schema_editor):
     EType = apps.get_model('geneaprove', 'Event_Type')
     ETRole = apps.get_model('geneaprove', 'Event_Type_Role')
     CPT = apps.get_model('geneaprove', 'Characteristic_Part_Type')
+    CIT = apps.get_model('geneaprove', 'Citation_Part_Type')
     GT = apps.get_model('geneaprove', 'Group_Type')
     db_alias = schema_editor.connection.alias
 
@@ -39,6 +40,15 @@ def forward(apps, schema_editor):
         PPart(gedcom="",         name="province"),
         PPart(gedcom="STAE",     name="state"),
         PPart(gedcom="POST",     name="zipcode")])
+
+    CIT.objects.using(db_alias).bulk_create([
+        CIT(gedcom='TITL',       name='title'),
+        CIT(gedcom='CHAN',       name='last change'),
+        CIT(gedcom='DATE',       name='date'),
+        CIT(gedcom='PAGE',       name='page'),
+        CIT(gedcom='QUAY',       name='quality'),
+        CIT(gedcom='TEXT',       name='text'),
+        CIT(gedcom='PUBL',       name='publisher')])
 
     RType.objects.using(db_alias).bulk_create([
         RType(description="",         name="album"),

@@ -52,10 +52,10 @@ export namespace JSON {
       title: string;   // full citation
       comments: string;
       higher_source_id: number | null;
-      jurisdiction_place?: {};
+      jurisdiction_place?: string;
       last_change: string;
       medium: string;
-      researcher: Researcher;
+      researcher: number;
       subject_date?: string;
       subject_place?: string;
    }
