@@ -295,7 +295,7 @@ class SourceManager(object):
                                 comments="",
                                 last_change=sour[1].last_change)
                             self.sources[new_id] = nested_source
-                            nested_source.comments += self.importer._get_note(
+                            nested_source.comments += self.importer._get_all_notes(
                                 s)
                             nested_source.save()
 
@@ -505,7 +505,7 @@ class GedcomImporter(object):
         if getattr(data, "RIN", None):
             info.append("\nRIN=" + data.RIN)
         if getattr(data, "NOTE", None):
-            info.append(self._get_note(data))
+            info.append(self._get_all_notes(data))
 
         info = "".join(info)
         r = None
@@ -731,15 +731,24 @@ class GedcomImporter(object):
         return ind
 
     def _get_note(self, data):
+        """
+        Given a NOTE node, retrieve its value either inline or as xref.
+        For instance, if the value is "@N0082@" it will return the value of
+        the corresponding xref.
+        """
+        v = data
+        if v.startswith("@") and v.endswith("@"):
+            return self._data.obj_from_id(v).value
+        else:
+            return v
+
+    def _get_all_notes(self, data):
         """Retrieves the NOTE information from data, if any. Such notes can
            be xref, which are automatically resolved here.
         """
         n = []
         for p in getattr(data, "NOTE", []):
-            if p.startswith("@") and p.endswith("@"):
-                n.append(self._data.obj_from_id(p).value)
-            else:
-                n.append(p)
+            n.append(self._get_note(p))
 
         return "\n\n".join(n)
 
@@ -799,6 +808,9 @@ class GedcomImporter(object):
                     date=getattr(val, "DATE", None))
                 str_value = val.value
 
+            if key == "NOTE":
+                str_value = self._get_note(str_value)
+
             # Associate the characteristic with the persona.
             # Such an association is done via assertions, based on sources.
 
@@ -836,11 +848,12 @@ class GedcomImporter(object):
                             # defines this. However, in gedcom these notes can
                             # be xref, so resolve them here.
 
-                            n = self._get_note(val)
-                            if n:
-                                self._all_char_parts.append(
-                                    models.Characteristic_Part(
-                                        characteristic=c, type=t, name=n))
+                            for note in v:
+                                n = self._get_note(note)
+                                if n:
+                                    self._all_char_parts.append(
+                                        models.Characteristic_Part(
+                                            characteristic=c, type=t, name=n))
 
                         elif k == 'GIVN' and GIVEN_NAME_TO_MIDDLE_NAME:
                             if v:
@@ -1009,7 +1022,7 @@ class GedcomImporter(object):
                     # the note also appears in the context of an INDI, we store
                     # it in the assertion.
 
-                    n = self._get_note(data)
+                    n = self._get_all_notes(data)
 
                 self._all_p2e.extend(
                     models.P2E(
