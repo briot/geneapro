@@ -141,11 +141,10 @@ documents the citation styles.""")
     def get_citations_as_list(self):
         """
         :return: [{name:..., value:..., fromHigh:...}]
-           Similar to get_citations, but returns a sorted list
+           Similar to get_citations, but returns a list
         """
         parts = self.get_citations()
-        return sorted(dict(name=k, **v)
-                      for k, v in parts.items())
+        return list(dict(name=k, **v) for k, v in parts.items())
 
     def get_representations(self):
         """

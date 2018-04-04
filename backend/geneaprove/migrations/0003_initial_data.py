@@ -48,6 +48,7 @@ def forward(apps, schema_editor):
         CIT(gedcom='PAGE',       name='page'),
         CIT(gedcom='QUAY',       name='quality'),
         CIT(gedcom='TEXT',       name='text'),
+        CIT(gedcom='AUTH',       name='author'),
         CIT(gedcom='PUBL',       name='publisher')])
 
     RType.objects.using(db_alias).bulk_create([
