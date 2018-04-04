@@ -9,6 +9,7 @@ interface JSONResult extends AssertionEntitiesJSON {
    higher_sources: JSON.Source[] | null;
    asserts: JSON.Assertion[];
    repr: JSON.SourceRepr[];
+   parts: JSON.CitationPart[];
 }
 
 export interface FetchSourceDetailsResult extends AssertionEntities {
@@ -29,6 +30,7 @@ export function sourceFromJSON(s: JSON.Source) {
       subjectDate: s.subject_date,
       subjectPlace: s.subject_place,
       medias: [],
+      parts: {},
    };
    return result;
 }
@@ -50,6 +52,10 @@ export function* fetchSourceDetailsFromServer(id: number) {
    };
    r.source.asserts = new AssertionList(data.asserts.map(a => assertionFromJSON(a)));
    r.source.medias = data.repr.map(m => JSON.toMedia(m));
+
+   for (const p of data.parts) {
+      r.source.parts[p.name] = p;
+   }
    setAssertionEntities(data, r);
    return r;
 }

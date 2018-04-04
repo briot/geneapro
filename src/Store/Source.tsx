@@ -8,6 +8,16 @@ export interface SourceMedia {
    url: string;         // how to get the image from the server
 }
 
+export interface CitationPart {
+   name: string;
+   value: string;
+   fromHigh: boolean;   // true if from high-level source
+}
+
+export interface CitationPartSet {
+   [name: string]: CitationPart;
+}
+
 export interface Source {
    id: number;
    title: string;  // full citation
@@ -23,8 +33,9 @@ export interface Source {
    jurisdictionPlace?: string;
    lastChange?: Date;
 
-   medias?: SourceMedia[];
+   medias: SourceMedia[];
    asserts?: AssertionList;
+   parts: CitationPartSet;
 }
 
 export interface SourceSet {
@@ -38,5 +49,7 @@ export function createNewSource(medium: string): Source {
       title: '',
       abbrev: '',
       biblio: '',
+      medias: [],
+      parts: {},
    };
 }

@@ -228,6 +228,16 @@ class SourceManager(object):
                 # ??? Should we preserve gedcom ids ?
                 pass
 
+            elif k in ("PUBL", ):
+                typ = self.importer._citation_part_types.get(k, None)
+                if typ is None:
+                    typ = models.Citation_Part_Type.objects.create(
+                        name=k.title(), gedcom=k)
+                    self.importer._citation_part_types[k] = typ
+
+                self.importer._all_citation_parts.append(
+                    models.Citation_Part(type=typ, value=v, source=src))
+
             elif k not in ("REPO", "OBJE", "TITL", "CHAN", "ABBR", "NOTE"):
                 self.importer.report_error(
                     location=v,

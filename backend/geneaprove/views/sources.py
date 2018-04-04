@@ -57,19 +57,6 @@ class CitationModels(JSONView):
         }
 
 
-class SourceCitation(JSONView):
-    """
-    Return the citation parts for a source
-    """
-
-    def get_json(self, params, id):
-        # pylint: disable=arguments-differ
-        # pylint: disable=redefined-builtin
-        return {
-            'parts': get_source(id).get_citations_as_list()
-        }
-
-
 class SourceView(JSONView):
     """
     View a specific source by id
@@ -85,6 +72,7 @@ class SourceView(JSONView):
         return r.to_json({
             'source':  source,
             'asserts': asserts,
+            'parts': source.get_citations_as_list(),
             'higher_sources': source.get_higher_sources(),
             'repr': source.get_representations(),
         })

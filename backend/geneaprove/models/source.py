@@ -127,27 +127,24 @@ documents the citation styles.""")
         """
 
         if self.higher_source:
-            # ??? bug in pylint
-            # pylint: disable=no-member
-
             result = {
-                k: (v, True)
+                k: {"value": v, "fromHigh": True}
                 for k, v in self.higher_source.get_citations().items()}
         else:
             result = {}
 
-        for part in self.parts.select_related('type__name').all():
-            result[part.type.name] = (part.value, False)
+        for part in self.parts.select_related(*Citation_Part.related_json_fields()).all():
+            result[part.type.name] = {"value": part.value, "fromHigh": False}
 
         return result
 
     def get_citations_as_list(self):
         """
-        :return: [{name:..., value:..., fromHigher:...}]
+        :return: [{name:..., value:..., fromHigh:...}]
            Similar to get_citations, but returns a sorted list
         """
         parts = self.get_citations()
-        return sorted({'name': k, 'value': v[0], 'fromHigher': v[1]}
+        return sorted(dict(name=k, **v)
                       for k, v in parts.items())
 
     def get_representations(self):
@@ -196,3 +193,14 @@ class Citation_Part(GeneaProveModel):
     class Meta:
         """Meta data for the model"""
         db_table = "citation_part"
+
+    @staticmethod
+    def related_json_fields():
+        """What select_related() to use to export to JSON"""
+        return ['type']
+
+    def to_json(self):
+        return {
+            "type": self.type.name,
+            "value": self.value,
+        }

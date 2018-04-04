@@ -44,6 +44,12 @@ export namespace JSON {
       name: string;
       comment: string;
    }
+
+   export interface CitationPart {
+      name: string;
+      value: string;
+      fromHigh: boolean;  // true if from a higher level source
+   }
  
    export interface Source {
       id: number;

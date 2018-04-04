@@ -16,7 +16,7 @@ import geneaprove.views.representation
 import geneaprove.views.rules
 from geneaprove.views.stats import StatsView
 from geneaprove.views.sources import \
-    SourceView, SourceCitation, EditSourceCitation, \
+    SourceView, EditSourceCitation, \
     CitationModels, CitationModel, SourcesList, \
     SourceRepresentations, AddSourceRepr, DelSourceRepr
 from geneaprove.views.graph import QuiltsView
@@ -68,7 +68,6 @@ urlpatterns = [
     url(r'^data/sources/(?P<id>-?\d+)$', SourceView.as_view()),
     url(r'^data/sources/(?P<id>-?\d+)/saveparts$',
         EditSourceCitation.as_view()),
-    url(r'^data/sources/(?P<id>-?\d+)/parts$', SourceCitation.as_view()),
     url(r'^data/sources/(\d+)/addRepr', AddSourceRepr.as_view()),
     url(r'^data/sources/(\d+)/allRepr', SourceRepresentations.as_view()),
     url(r'^data/sources/(\d+)/delRepr/(\d+)', DelSourceRepr.as_view()),
