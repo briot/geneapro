@@ -551,34 +551,55 @@ class GedcomImporter(object):
     def _create_family(self, data):
         """Create the equivalent of a FAMILY in the database"""
 
-        husb = data.HUSB
-        if husb:
-            husb = self._sourcePersona[(NO_SOURCE, husb.id)]
-
-        wife = data.WIFE
-        if wife:
-            wife = self._sourcePersona[(NO_SOURCE, wife.id)]
-
-        family_events = ("MARR", "MARC", "DIV", "CENS", "ENGA", "EVEN")
-        found = 0
-
         # We might have a family with children only.
         # Or a family with only one parent.
         # In such cases, we create the missing parents, so the the siblings
         # are not lost (if we created a single parent, their might still
         # be ambiguities if that parent also belonged to another family
 
+        husb = data.HUSB
+        if husb:
+            husb = self._sourcePersona[(NO_SOURCE, husb.id)]
         if not husb:
             husb = models.Persona.objects.create(name="@Unknown@")
+
+        wife = data.WIFE
+        if wife:
+            wife = self._sourcePersona[(NO_SOURCE, wife.id)]
         if not wife:
             wife = models.Persona.objects.create(name="@Unknown@")
 
-        for field in family_events:
-            for evt in getattr(data, field, []):
-                found += 1
-                self._create_event(
-                    [(husb, self._principal), (wife, self._principal)],
-                    field, evt, CHAN=data.CHAN)
+        children = [self._sourcePersona[(NO_SOURCE, c.id)] for c in data.CHIL]
+ 
+        # Process all fields
+
+        CHAN = self._create_CHAN(data.CHAN)
+        found = 0
+
+        for k, v in data.for_all_fields():
+            if k in ("MARR", "MARC", "DIV", "CENS", "ENGA", "EVEN"):
+                for e in as_list(v):
+                    found += 1
+                    self._create_event(
+                        [(husb, self._principal), (wife, self._principal)],
+                        field=k, data=e, CHAN=CHAN)
+
+            elif k in ("NOTE", ):
+                for indi in [husb, wife] + children:
+                    self._create_characteristic(
+                        key=k,
+                        value=v,
+                        indi=indi,
+                        CHAN=CHAN)
+
+            elif k in ("CHIL", "HUSB", "WIFE", "id", "CHAN"):
+                # already handled
+                pass
+
+            else:
+                self.report_error(
+                    location=v,
+                    msg="Unhandled FAM.%s" % (k, ))
 
         # if there is no event to "build" the family, we generate a dummy
         # one. Otherwise there would be no relationship between husband and
@@ -589,9 +610,9 @@ class GedcomImporter(object):
             family_built.setLine(data._line)
             self._create_event(
                 [(husb, self._principal), (wife, self._principal)],
-                "MARR",
+                "MARC",
                 family_built,
-                CHAN=data.CHAN)
+                CHAN=CHAN)
 
         # Now add the children.
         # If there is an explicit BIRT event for the child, this was already
@@ -600,24 +621,17 @@ class GedcomImporter(object):
         # with its parents.
 
         for c in data.CHIL:
+            p = self._sourcePersona[(NO_SOURCE, c.id)]
             # Associate parents with the child's birth event. This does not
             # recreate an event if one already exists.
 
             if self._births.get(c.id, None) is None:
                 self._create_event(
-                    indi=[
-                        (self._sourcePersona[(
-                            NO_SOURCE, c.id)], self._principal),
-                        (husb, self._birth__father),
-                        (wife, self._birth__mother)],
-                    field="BIRT", data=c, CHAN=data.CHAN)
+                    indi=[(p,    self._principal),
+                          (husb, self._birth__father),
+                          (wife, self._birth__mother)],
+                    field="BIRT", data=c, CHAN=CHAN)
 
-        for k, v in data.for_all_fields():
-            if k not in ("CHIL", "HUSB", "WIFE", "id",
-                         "CHAN") + family_events:
-                self.report_error(
-                    location=v,
-                    msg="Unhandled FAM.%s" % (k, ))
 
     def _addr_image(self, data):
         result = ""
