@@ -134,7 +134,7 @@ def forward(apps, schema_editor):
         CPT(gedcom="",          is_name_part=False,  name="patronymic"),
         CPT(gedcom="",          is_name_part=False,  name="personality"),
         CPT(gedcom="DSCR",      is_name_part=False,  name="physical description"),
-        CPT(gedcom="",          is_name_part=False,  name="religion"),
+        CPT(gedcom="RELI",      is_name_part=False,  name="religion"),
         CPT(gedcom="",          is_name_part=False,  name="RFN"),
         CPT(gedcom="",          is_name_part=False,  name="RIN"),
         CPT(gedcom="SEX",       is_name_part=False,  name="sex"),
