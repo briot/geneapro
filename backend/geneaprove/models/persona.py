@@ -24,8 +24,8 @@ class Persona(GeneaProveModel):
     # The last change date will be computed as the date of the most recent
     # assertion that applies to the person.
 
-    def __str__(self):
-        return 'Persona<%d,%d>' % (self.id, self.name)
+    def __repr__(self):
+        return 'Persona<%d,%s>' % (self.id, self.name)
 
     class Meta:
         """Meta data for the model"""

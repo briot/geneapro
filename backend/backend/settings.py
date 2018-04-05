@@ -146,10 +146,10 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+            'format': '%(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(funcName)s %(levelname)s %(asctime)s %(message)s'
+            'format': '%(asctime)s %(funcName)s %(message)s'
         },
         'simplegray': {
             'format': '\033[2m%(asctime)s %(message)s\033[0m'
@@ -184,6 +184,8 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
+
+        # Those are disabled in gedcomimport.py
         'django.db.backends': {   # Logging SQL queries
             'handlers': ['consolegray'],
             'level': 'DEBUG',

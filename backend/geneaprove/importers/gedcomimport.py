@@ -18,6 +18,8 @@ import os
 
 logger = logging.getLogger('geneaprove.importers')
 
+logging.getLogger('django.db.backends').setLevel(logging.WARNING)
+
 # If true, the given name read from gedcom is split (on spaces) into
 # a given name and one or more middle names. This might not be appropriate
 # for all languages.
@@ -592,6 +594,20 @@ class GedcomImporter(object):
                         indi=indi,
                         CHAN=CHAN)
 
+            elif k in ("SOUR", ):
+                # If we have some SOUR for the family, we need to create a
+                # special relationship to represent them. They are not
+                # associated with one specific event.
+
+                tmp = GedcomRecord()
+                tmp.setLine(v[0]._line)
+                tmp.SOUR = v
+                self._create_event(
+                    [(husb, self._principal), (wife, self._principal)],
+                    "MARR",
+                    tmp,
+                    CHAN=CHAN)
+
             elif k in ("CHIL", "HUSB", "WIFE", "id", "CHAN"):
                 # already handled
                 pass
@@ -600,6 +616,25 @@ class GedcomImporter(object):
                 self.report_error(
                     location=v,
                     msg="Unhandled FAM.%s" % (k, ))
+
+        # Now add the children.
+        # If there is an explicit BIRT event for the child, this was already
+        # fully handled in _create_indi, so we do nothing more here. But if
+        # there is no known BIRT even, we still need to associate the child
+        # with its parents.
+
+        for c in data.CHIL:
+            # Associate parents with the child's birth event. This does not
+            # recreate an event if one already exists.
+
+            if self._births.get(c.id, None) is None:
+                found += 1
+                p = self._sourcePersona[(NO_SOURCE, c.id)]
+                self._create_event(
+                    indi=[(p,    self._principal),
+                          (husb, self._birth__father),
+                          (wife, self._birth__mother)],
+                    field="BIRT", data=c, CHAN=CHAN)
 
         # if there is no event to "build" the family, we generate a dummy
         # one. Otherwise there would be no relationship between husband and
@@ -610,28 +645,9 @@ class GedcomImporter(object):
             family_built.setLine(data._line)
             self._create_event(
                 [(husb, self._principal), (wife, self._principal)],
-                "MARC",
+                "MARR",
                 family_built,
                 CHAN=CHAN)
-
-        # Now add the children.
-        # If there is an explicit BIRT event for the child, this was already
-        # fully handled in _create_indi, so we do nothing more here. But if
-        # there is no known BIRT even, we still need to associate the child
-        # with its parents.
-
-        for c in data.CHIL:
-            p = self._sourcePersona[(NO_SOURCE, c.id)]
-            # Associate parents with the child's birth event. This does not
-            # recreate an event if one already exists.
-
-            if self._births.get(c.id, None) is None:
-                self._create_event(
-                    indi=[(p,    self._principal),
-                          (husb, self._birth__father),
-                          (wife, self._birth__mother)],
-                    field="BIRT", data=c, CHAN=CHAN)
-
 
     def _addr_image(self, data):
         result = ""
@@ -1029,7 +1045,6 @@ class GedcomImporter(object):
 
         if event_type.gedcom == 'BIRT':
             name = 'Birth%s of %s' % (type_descr, name)
-            evt = self._births.get(principal._gedcom_id, None)
         elif event_type.gedcom == 'MARR':
             name = 'Marriage%s of %s' % (type_descr, name)
         elif event_type.gedcom == "DEAT":
@@ -1038,49 +1053,47 @@ class GedcomImporter(object):
             name = "%s%s of %s" % (
                 evt_name or event_type.name, type_descr, name)
 
-        # Create the event if needed.
+        # For each source, we duplicate the event.
+        # Otherwise, we end up with multiple 'principal', 'mother',...
+        # for the same event.
+        # ??? We should then mark them as being the same event, via a
+        # Place2Place table relationship.
 
-        if not evt:
-            place = self._create_place(data)
-            self._create_obje_for_place(data, place, CHAN)  # processes OBJE
+        last_change = self._create_CHAN(CHAN)
+        all_src = self.source_manager.create_sources_ref(data)
+        place = self._create_place(data)
+        self._create_obje_for_place(data, place, CHAN)  # processes OBJE
+
+        for sid, s in all_src:
             evt = models.Event.objects.create(
                 type=event_type, place=place,
                 name=name, date=getattr(data, "DATE", None))
 
             if event_type.gedcom == 'BIRT':
                 self._births[principal._gedcom_id] = evt
-            all_src = self.source_manager.create_sources_ref(data)
-        else:
-            all_src = self.source_manager.create_sources_ref(None)
 
-        last_change = self._create_CHAN(CHAN)
-        principal_found = False
+            for person, role in indi:
+                if person:
+                    n = ""
+                    if role == self._principal:
+                        # If we have a note associated with the event, we assume it
+                        # deals with the event itself, not with its sources.  Since
+                        # the note also appears in the context of an INDI, we store
+                        # it in the assertion.
 
-        for person, role in indi:
-            if person:
-                n = ""
-                if role == self._principal:
-                    principal_found = False
+                        n = self._get_all_notes(data)
 
-                    # If we have a note associated with the event, we assume it
-                    # deals with the event itself, not with its sources.  Since
-                    # the note also appears in the context of an INDI, we store
-                    # it in the assertion.
-
-                    n = self._get_all_notes(data)
-
-                self._all_p2e.extend(
-                    models.P2E(
-                        surety=self._default_surety,
-                        researcher=self._researcher,
-                        person=self._indi_for_source(sourceId=sid, indi=person),
-                        event=evt,
-                        source=s,
-                        role=role,
-                        last_change=last_change,
-                        rationale=n)
-                    for sid, s in all_src
-                )
+                    self._all_p2e.append(
+                        models.P2E(
+                            surety=self._default_surety,
+                            researcher=self._researcher,
+                            person=self._indi_for_source(sourceId=sid, indi=person),
+                            event=evt,
+                            source=s,
+                            role=role,
+                            last_change=last_change,
+                            rationale=n)
+                    )
 
         for k, v in data.for_all_fields():
             # ADDR and PLAC are handled in create_place
@@ -1116,6 +1129,9 @@ class GedcomImporter(object):
 
         indi = self._sourcePersona[(NO_SOURCE, data.id)]
         CHAN = indi.last_change  # self._create_CHAN(getattr(data, "CHAN", None))
+
+        if indi.id in (9070,9071,9038):
+            logger.info('create indi %s %s data=%s', indi.id, data.id, id(data))
 
         # For all properties of the individual
 
