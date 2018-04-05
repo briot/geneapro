@@ -4,7 +4,7 @@ import { AppState, GPDispatch } from '../Store/State';
 import { fetchEventDetails } from '../Store/Sagas';
 import { Loader, Rating } from 'semantic-ui-react';
 import { PersonaLink, SourceLink, PlaceLink } from '../Links';
-import { GenealogyEvent } from '../Store/Event';
+import { GenealogyEvent, GenealogyEventSet } from '../Store/Event';
 import AssertionPart from '../Assertions/AssertionPart';
 import { P2E } from '../Store/Assertion';
 
@@ -17,6 +17,7 @@ interface EventDetailsProps {
 }
 
 function EventDetails(props: EventDetailsProps) {
+   window.console.log('MANU details', props.event, props.event && props.event.asserts);
    if (props.event === undefined || props.event.asserts === undefined) {
       return <Loader active={true} size="small">Loading</Loader>;
    }
@@ -64,17 +65,18 @@ interface EventProps {
    eventId: number;
 }
 interface ConnectedEventProps extends EventProps {
-   event: GenealogyEvent;
+   events: GenealogyEventSet;
    dispatch: GPDispatch;
 }
 
 class ConnectedAssertionPartEvent extends React.PureComponent<ConnectedEventProps> {
    onExpand = () => {
-      this.props.dispatch(fetchEventDetails.request({id: this.props.event.id}));
+      this.props.dispatch(fetchEventDetails.request({id: this.props.eventId}));
    }
    
    render() {
-      const e = this.props.event;
+      const e = this.props.events[this.props.eventId];
+      window.console.log('MANU ', e, this.props.eventId);
       return (
          <AssertionPart
             title={
@@ -102,7 +104,7 @@ class ConnectedAssertionPartEvent extends React.PureComponent<ConnectedEventProp
 const AssertionPartEvent = connect(
    (state: AppState, props: EventProps) => ({
       ...props,
-      event: state.events[props.eventId],
+      events: state.events,
    }),
    (dispatch: GPDispatch) => ({
       dispatch,

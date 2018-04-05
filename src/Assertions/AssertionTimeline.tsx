@@ -45,13 +45,13 @@ function ConnectedView(props: ConnectedProps) {
       <table className="AssertionTimeline">
          <tbody>
             {
-               list.map((a, idx) => {
+               list.map(a => {
                   const d = a.getSortDate(props.events);
                   const year = d ? d.substring(0, 4) : null;
                   const isSame = year === prev;
                   prev = year;
                   return (
-                     <tr key={idx}>
+                     <tr key={a.id}>
                         <td className="date">
                            {
                               isSame ?

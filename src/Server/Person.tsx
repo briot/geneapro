@@ -59,6 +59,7 @@ export function* fetchPersonsFromServer() {
 
 function p2eFromJSON(e: JSON.P2E) {
    return new P2E(
+      e.id,
       e.surety /* surety */,
       e.researcher /* researcher */,
       e.rationale /* rationale */,
@@ -73,6 +74,7 @@ function p2eFromJSON(e: JSON.P2E) {
 
 function p2cFromJSON(c: JSON.P2C) {
    return new P2C(
+      c.id,
       c.surety /* surety */,
       c.researcher /* researcher */,
       c.rationale /* rationale */,
@@ -93,6 +95,7 @@ function p2cFromJSON(c: JSON.P2C) {
 
 function p2pFromJSON(a: JSON.P2P) {
    return new P2P(
+      a.id,
       a.surety /* surety */,
       a.researcher /* researcher */,
       a.rationale /* rationale */,
@@ -107,6 +110,7 @@ function p2pFromJSON(a: JSON.P2P) {
 
 function p2gFromJSON(a: JSON.P2G) {
    return new P2G(
+      a.id,
       a.surety /* surety */,
       a.researcher /* researcher */,
       a.rationale /* rationale */,

@@ -18,6 +18,7 @@ export interface Characteristic {
 
 export abstract class Assertion {
    constructor(
+      public id:          number,
       public surety:      number,
       public researcher:  number,  // xref
       public rationale:   string,
@@ -45,6 +46,7 @@ export abstract class Assertion {
 
 export class P2P extends Assertion {
    constructor(
+      public id:          number,
       public surety:      number,
       public researcher:  number,  // xref
       public rationale:   string,
@@ -55,7 +57,7 @@ export class P2P extends Assertion {
       public relation:    string,  // type of relationship
       public sourceId?:   number   // points to a Source in the state
    )  {
-      super(surety, researcher, rationale, disproved, lastChanged, sourceId);
+      super(id, surety, researcher, rationale, disproved, lastChanged, sourceId);
    }
 
    /** overriding */
@@ -66,6 +68,7 @@ export class P2P extends Assertion {
 
 export class P2G extends Assertion {
    constructor(
+      public id:          number,
       public surety:      number,
       public researcher:  number,  // xref
       public rationale:   string,
@@ -75,7 +78,7 @@ export class P2G extends Assertion {
       public groupId:     number,  // points to a Group in the state
       public sourceId?:   number   // points to a Source in the state
    )  {
-      super(surety, researcher, rationale, disproved, lastChanged, sourceId);
+      super(id, surety, researcher, rationale, disproved, lastChanged, sourceId);
    }
 
    /** overriding */
@@ -86,6 +89,7 @@ export class P2G extends Assertion {
 
 export class P2C extends Assertion {
    constructor(
+      public id:             number,
       public surety:         number,
       public researcher:     number,  // xref
       public rationale:      string,
@@ -95,7 +99,7 @@ export class P2C extends Assertion {
       public characteristic: Characteristic,
       public sourceId?:      number   // points to a Source in the state
    )  {
-      super(surety, researcher, rationale, disproved, lastChanged, sourceId);
+      super(id, surety, researcher, rationale, disproved, lastChanged, sourceId);
    }
 
    /** overriding */
@@ -111,6 +115,7 @@ export class P2C extends Assertion {
 
 export class P2E extends Assertion {
    constructor(
+      public id:          number,
       public surety:        number,
       public researcher:    number,  // xref
       public rationale:     string,
@@ -121,7 +126,7 @@ export class P2E extends Assertion {
       public role:          string,
       public sourceId?:     number   // points to a Source in the state
    )  {
-      super(surety, researcher, rationale, disproved, lastChanged, sourceId);
+      super(id, surety, researcher, rationale, disproved, lastChanged, sourceId);
    }
 
    /** overriding */
@@ -145,22 +150,25 @@ export class AssertionList {
       return this.asserts;
    }
 
+   sortStrings(s1: string|null, s2: string|null): number {
+      return !s1 ? (!s2 ? 0 : -1) :
+             !s2 ?  1 :
+             s1.localeCompare(s2);
+   }
+
    sortByDate(events: GenealogyEventSet) {
       this.asserts.sort((a, b) => {
-         const da = a.getSortDate(events);
-         const db = b.getSortDate(events);
-         if (!da) {
-            if (db) {
-               return -1;
-            }
-            const ka = a.getSortKey(events);
-            const kb = b.getSortKey(events);
-            return ka.localeCompare(kb);
-         } else if (!db) {
-            return 1;
-         } else {
-            return da.localeCompare(db);
+         let result = this.sortStrings(
+            a.getSortDate(events), b.getSortDate(events));
+         if (result === 0) {
+            result = this.sortStrings(
+               a.getSortKey(events), b.getSortKey(events));
          }
+         if (result === 0) {
+            //  Keep stable sort
+            result = a.id - b.id;
+         }
+         return result;
       });
    }
 }

@@ -89,6 +89,7 @@ export namespace JSON {
    }
    
    export interface Assertion {
+      id: number;
       disproved: boolean;
       rationale: string;
       last_change: string;

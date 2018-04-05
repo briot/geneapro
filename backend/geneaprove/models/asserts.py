@@ -72,6 +72,7 @@ class Assertion(GeneaProveModel):
 
     def to_json(self):
         return {
+            "id": self.id,
             "disproved": self.disproved,
             "rationale": self.rationale,
             "researcher": self.researcher_id,
