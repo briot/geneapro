@@ -19,10 +19,12 @@ fg_yellow = '\033[1;33m'
 if len(sys.argv) == 1:
     gedcom = sys.stdin
 else:
-    gedcom = file(sys.argv[1])
+    gedcom = open(sys.argv[1], "rb")
+
+buffer = gedcom.read().replace('\r\n', '\n').replace('\r', '\n')
 
 line_num=1
-for line in gedcom.readlines():
+for line in buffer.splitlines():
     comps = line.split()
 
     level = comps[0]

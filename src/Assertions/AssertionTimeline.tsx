@@ -31,7 +31,7 @@ interface ConnectedProps extends TimelineProps {
    events: GenealogyEventSet;
 }
 
-function ConnectedView(props: ConnectedProps) {
+function ConnectedAssertionTimeline(props: ConnectedProps) {
    if (!props.asserts) {
       return null;
    }
@@ -51,7 +51,7 @@ function ConnectedView(props: ConnectedProps) {
                   const isSame = year === prev;
                   prev = year;
                   return (
-                     <tr key={a.id}>
+                     <tr key={a.constructor.name + a.id/* 'P2E<id>' or 'P2C<id>' */}>
                         <td className="date">
                            {
                               isSame ?
@@ -83,5 +83,5 @@ const AssertionTimeline = connect(
       ...props,
       events: state.events,
    }),
-)(ConnectedView);
+)(ConnectedAssertionTimeline);
 export default AssertionTimeline;

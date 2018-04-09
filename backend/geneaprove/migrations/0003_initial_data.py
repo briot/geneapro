@@ -39,7 +39,14 @@ def forward(apps, schema_editor):
         PPart(gedcom="",         name="monument"),
         PPart(gedcom="",         name="province"),
         PPart(gedcom="STAE",     name="state"),
-        PPart(gedcom="POST",     name="zipcode")])
+        PPart(gedcom="POST",     name="zipcode"),
+        PPart(gedcom="WWW",      name="website"),
+        PPart(gedcom="EMAIL",    name="email"),
+        PPart(gedcom="FAX",      name="fax"),
+        PPart(gedcom="WEB",      name="website"),
+        PPart(gedcom="NOTE",     name="note"),
+        PPart(gedcom="FORM",     name="place hierarchy"),
+    ])
 
     CIT.objects.using(db_alias).bulk_create([
         CIT(gedcom='TITL',       name='title'),
@@ -107,11 +114,15 @@ def forward(apps, schema_editor):
         EType(gedcom="WILL",     name="will")])
 
     birth = EType.objects.get(gedcom="BIRT")
+    adoption = EType.objects.get(gedcom="ADOP")
 
     ETRole.objects.using(db_alias).bulk_create([
         ETRole(name="principal",   type=None),
         ETRole(name="father",      type=birth),
-        ETRole(name="mother",      type=birth)])
+        ETRole(name="mother",      type=birth),
+        ETRole(name="adopting",    type=adoption),
+        ETRole(name="not adopting", type=adoption),
+    ])
 
     CPT.objects.using(db_alias).bulk_create([
         CPT(gedcom="",          is_name_part=False,  name="address"),

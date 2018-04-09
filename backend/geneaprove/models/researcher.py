@@ -1,5 +1,6 @@
 from django.db import models
 from .base import GeneaProveModel
+from .place import Place
 
 
 class Researcher(GeneaProveModel):
@@ -8,6 +9,7 @@ class Researcher(GeneaProveModel):
     """
 
     name = models.CharField(max_length=100)
+    place = models.ForeignKey(Place, null=True)
     comment = models.TextField(
         null=True,
         help_text="Contact information for this researcher, like email"

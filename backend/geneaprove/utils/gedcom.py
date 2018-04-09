@@ -11,464 +11,70 @@ to access the various fields.
 
 This package provides minimal error handling: it checks that tags occur as
 many times as needed in the standard, and not more. Otherwise an error is
-raised. This check is based on the Gedcom 5.5 grammar
+raised. This check is based on the Gedcom 5.5.1 grammar
 
-This file has no external dependency, except for the _ function which is
-used for internationalization.
+Performance:
+   parses Royal92-Famous European Royalty Gedcom.ged
+      0.198s
 
-This parser is reasonably fast, and will parse the ITIS.ged file in 3:08 min
-(472_676 individuals)
+   Catalog of life database (1_275_735 species, 2.1 million individuals)
+   http://famousfamilytrees.blogspot.se/2008/07/species-family-trees.html
+      42.78s
 
-??? Missing: handling of charsets. We should always convert to utf8 in the
-    resulting structure
-??? Currently, we reject custom tags (_NAME) for which no specific support
-    was added. This is intended: we could accept them in the parser, but then
-    the rest of the code would not handle it, and that data would not be
-    imported correctly. Better warn the user in such a case
 """
 
-# Use django's translation if possible, else make this file standalone
-try:
-    from django.utils.translation import ugetNone as _
-    _("foo")
-except ImportError:
-    def _(txt):
-        return txt
-
 import logging
-import re
 import sys
-import copy
+import time
 
 
 logger = logging.getLogger('geneaprove.gedcom')
-
-__all__ = ["Gedcom", "GedcomFile", "GedcomIndi", "GedcomFam", "GedcomRecord",
-           "Invalid_Gedcom", "GedcomString"]
-
-POINTER_STRING = "(?:[^@]*)"
-OPTIONAL_XREF_ID = r"(?:(?P<xref_id>@\w" + POINTER_STRING + r"@)\s)?"
-LINE_RE = re.compile(r'^(?P<level>\d+)\s' + OPTIONAL_XREF_ID +
-                     r'(?P<tag>\w+)' + r'(?:\s(?P<value>.*))?')
 unlimited = 100000
 
-PROGRESS = False
 
-# _GRAMMAR is a tuple of tuples, each of which describes one of the nodes
-# that the record accepts:
-#   (tag_name, min_occurrences, max_occurrences, handler)
-#
-# The tag_name field can be either a string or a tuple of strings
-# indicating all the tags that are accepted and handled the same way.
-# For instance:
-# ("NAME",  0, 1, None)     # pure text
-# ("CHILD", 0, 1, "INDI")   # An inline INDI record
-# ("DATE",  0, 1, (...))    # An inline anonymous record
-# ("CHILD:XREF(INDI)", 0, 1, None) # An xref to an INDI
-# ("CHILD:XREF(INDI)", 0, 1, "INDI") # Either an xref or an inline INDI
-# ("FAMC:XREF(FAM)",  0, 1, (...))   # An xref to FAM, plus inline fields
-#
-# You cannot specify a list of names when one of them is an XREF.
-# In the case where the name in XREF is not the same as the handler, the former
-# is supposed to be a superset of the latter.
-#
-# The handler field is a string that indicates the name of an entry
-# in grammar that contains the valid child nodes. It can be None to indicate
-# that the field only contains None data.
-# The handler can also be specified itself as a tuple of tuples to describe
-# all child nodes.
+class _File(object):
+    def __init__(self, filename):
+        # Do not assume a specific encoding, so read as bytes
+        f = open(filename, "rb")
+        self.buffer = f.read()
+        f.close()
+        self.pos = 0
 
-EVENT_DETAILS = (("TYPE", 0, 1, None),
-                 ("DATE", 0, 1, None),
-                 ("_SDATE", 0, 1, None),  # ??? Sort date in RootsMagic
-                 ("PLAC", 0, 1, "PLAC"),
-                 ("ADDR", 0, 1, "ADDR"),
-                 ("PHON", 0, 3, None),  # In gedcom: part of ADDR
-                 ("AGE",  0, 1, None),  # Age at event
-                 ("AGNC", 0, 1, None),  # Responsible agency
-                 ("CAUS", 0, 1, None),  # Cause of event
-                 ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-                 ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-                 ("ASSO", 0, unlimited, "_ASSOC"),  # ??? Geneatique 2010
-                 ("_ACT", 0, unlimited, None),  # ??? Geneatique 2010
-                 ("NOTE", 0, unlimited, None))  # Note on event
-_GRAMMAR = dict(
-    file=(("HEAD", 1, 1,         "HEAD"),
-          ("FAM",  0, unlimited, "FAM"),
-          ("INDI", 0, unlimited, "INDI"),
-          ("OBJE", 0, unlimited, "OBJE"),
-          ("NOTE", 0, unlimited, "NOTE"),
-          ("REPO", 0, unlimited, "REPO"),
-          ("SOUR", 0, unlimited, "SOUR"),
-          ("SUBM", 0, unlimited, "SUBM"),
-          ("SUBN", 0, 1,         "SUBN"),
-          ("_EVDEF", 0, unlimited, "_EVDEF"),  # ??? RootsMagic
-          ("TRLR", 1, 1,         None)),
-
-    CHAN=(("DATE", 1, 1,         # Change date
-           (("TIME", 0, 1, None),)),
-          ("NOTE", 0, unlimited, None)),  # note structure
-
-    OBJE=(("FORM", 1, 1,         None),  # Multimedia format
-          ("TITL", 0, 1,         None),  # Descriptive title
-          ("FILE", 0, 1,         None),  # Multimedia file reference
-          ("NOTE", 0, unlimited, None),  # Note on multimedia object
-          ("BLOB", 1, 1,         None),
-          ("OBJE:XREF(OBJE)", 0, 1, None),
-          ("REFN", 0, unlimited,
-           (("TYPE", 0, 1, None),)),
-          ("RIN",  0, 1,         None),
-          ("CHAN", 0, 1,         "CHAN"),),
-
-    _ASSOC=(("RELA", 0, 1,         None),  # ??? Geneatique 20210
-            ("TYPE", 0, 1,         None),
-            ("NOTE", 0, unlimited, None),
-            ("SOUR", 0, unlimited, "SOURCE_CITATION")),
-
-    MULTIMEDIA_LINK=(("FORM", 0, 1, None),   # ??? Optional for Geneatique 2010
-                     # but mandatory in standard
-                     ("TITL", 0, 1, None),
-                     ("FILE", 1, 1, None),
-                     ("_TYPE", 0, 1, None),  # ??? RootsMagic extension
-                     ("_SCBK", 0, 1, None),  # ??? RootsMagic extension
-                     ("_PRIM", 0, 1, None),  # ??? RootsMagic extension
-                     ("NOTE", 0, unlimited, None)),
-
-    SOURCE_CITATION=(("TEXT", 0, unlimited, None),      # Text from source
-                     ("NOTE", 0, unlimited, None),      # Note on source
-                     ("PAGE", 0, 1,         None),      # Where within source
-                     ("EVEN", 0, 1,                    # Event type cited from
-                      (("ROLE", 0, 1,     None),)),   # Role in event
-                     ("DATA", 0, 1,
-                      (("DATE", 0, 1,     None),      # Entry recording date
-                       ("TEXT", 0, unlimited, None))),  # Text from source
-                     ("QUAY", 0, 1,         None),      # Certainty assessment
-                     ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-                     ("NOTE", 0, unlimited, None),
-                     ("_QUAL", 0, 1, None),  # ??? RootsMagic extension
-                     ("_INFO", 0, 1, None),  # ??? RootsMagic extension
-                     ("_TMPLT", 0, 1, "_TMPLT")),  # ??? RootsMagic extension
-
-    _TMPLT=(  # ??? RootsMagic only
-        ("TID", 0, 1, None),
-        ("FIELD", 0, unlimited,
-         (("NAME", 0, unlimited, None),
-          ("VALUE", 0, unlimited, None),)),),
-
-    _EVDEF=(  # ??? RootsMagic only   # eg./  "BIRT"
-        ("TYPE", 0, 1, None),    # eg./  "P"
-        ("TITL", 0, 1, None),   # eg./  "Birth"
-        ("ABBR",  0, 1, None),
-        # eg./  "Birth"
-        # eg./ [person] was born< [Date]>< [PlaceDetails]>< [Place]>.
-        ("SENT",  0, 1, None),
-        ("PLAC",  0, 1, None),   # eg./ "Y"
-        ("DATE",  0, 1, None),   # eg./ "Y"
-        ("DESC",  0, 1, None),   # eg./ "N"
-        ),
-
-    ADDR=(("ADR1", 0, 1, None),  # Address line 1
-          ("ADR2", 0, 1, None),  # Address line 2
-          ("CITY", 0, 1, None),  # Address city
-          ("STAE", 0, 1, None),  # Address state
-          ("POST", 0, 1, None),  # Address postal code
-          ("CTRY", 0, 1, None),  # Address country
-          ("NOTE", 0, unlimited, None)),  # ??? RootsMagic extension
-
-    SOUR=(("DATA", 0, 1,
-           (("EVEN", 0, unlimited,  # Event recorded
-             (("DATE", 0, 1, None),       # Date period
-              ("PLAC", 0, 1, "PLAC"))),   # Source jurisdiction place
-            ("AGNC", 0, 1,         None),   # Responsible agency
-            ("NOTE", 0, unlimited, None))),  # Note on data
-          ("AUTH", 0, 1, None),  # Source originator
-          ("TITL", 0, 1, None),  # Source descriptive title
-          ("ABBR", 0, 1, None),  # Source filed by entry
-          ("PUBL", 0, 1, None),  # Source publication facts
-          ("TEXT", 0, 1, None),  # Text from source
-          ("REPO", 0, 1,  # Source repository citation
-           (("NOTE", 0, unlimited, None),  # Note on repository
-            ("CALN", 0, unlimited,  # Source call number
-             (("MEDI", 0, 1, None),)))),  # Source media type
-          ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-          ("NOTE", 0, unlimited, None),  # Note on source
-          ("REFN", 0, unlimited,  # User reference number
-           (("TYPE", 0, 1, None),)),  # User reference type
-          ("RIN", 0, 1, None),        # Automated record id
-          ("CHAN", 0, 1,        # Change date
-           (("DATE", 1, 1,  # Change date
-             (("TIME", 0, 1, None),)),  # Time value
-            ("NOTE", 0, unlimited, None),)),  # Note on change date
-          ("_SUBQ", 0, 1, None),  # ??? RootsMagic
-          ("_BIBL", 0, 1, None),  # ??? RootsMagic
-          ("_TMPLT", 0, 1, "_TMPLT")),  # ??? RootsMagic extension
-
-    PLAC=(("FORM", 0, 1,         None),  # Place hierarchy
-          ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-          ("NOTE", 0, unlimited, None),
-          ("MAP",  0, 1,                 # ??? Gramps addition
-           (("LATI", 1, 1,     None),
-            ("LONG", 1, 1,     None))),),
-
-    INDI=(("RESN", 0, 1,         None),    # Restriction notice
-          ("NAME", 0, unlimited, "NAME"),
-          ("SEX",  0, 1,         None),    # Sex value
-          ("_UID", 0, unlimited, None),    # ??? RootsMagic extension
-          (("BIRT", "CHR"), 0, unlimited,
-           EVENT_DETAILS +
-           (("FAMC:XREF(FAM)", 0, 1, None),)),  # Child to family link
-          ("ADOP", 0, unlimited,
-           EVENT_DETAILS +
-           (("FAMC:XREF(FAM)", 0, 1,
-             (("ADOP", 0, 1, None),)),)),  # Adopted by which parent
-          (("DEAT", "BURI", "CREM",
-            "BAPM", "BARM", "BASM", "BLES",
-            "CHRA", "CONF", "FCOM", "ORDN", "NATU",
-            "EMIG", "IMMI", "CENS", "PROB", "WILL",
-            "GRAD", "RETI", "EVEN",
-            "CAST",  # Cast name
-            "DSCR",  # Physical description
-            "EDUC",  # Scholastic achievement
-            "IDNO",  # National Id number
-            "NATI",  # National or tribal origin
-            "NCHI",  # Count of children
-            "NMR",   # Count of marriages
-            "OCCU",  # Occupation
-            "PROP",  # Possessions
-            "RELI",  # Religious affiliation
-            "RESI",  # Residence
-            "SSN",   # Social security number
-            "TITL"),  # Nobility type title
-           0, unlimited,  # Individual attributes
-           EVENT_DETAILS),
-
-          (("BAPL", "CONL", "ENDL"), 0, unlimited,
-           ((("STAT", "DATE", "TEMP", "PLAC"), 0, 1, None),
-            ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-            ("NOTE", 0, unlimited, None))),
-
-          ("SLGC", 0, unlimited,
-           ((("STAT", "DATE", "TEMP", "PLAC"), 0, 1, None),
-            ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-            ("FAMC:XREF(FAM)", 1, 1, None),
-            ("NOTE", 0, unlimited, None))),
-
-          ("FAMC:XREF(FAM)", 0, unlimited,    # Child to family link
-           (("PEDI", 0, unlimited, None),  # pedigree linkage type
-            ("NOTE", 0, unlimited, None))),
-          ("FAMS", 0, unlimited, None),  # Spouse to family link
-          ("SUBM:XREF(SUBM)", 0, unlimited, None),  # Submitter pointer
-          ("ASSO", 0, unlimited,
-           (("RELA", 1, 1,         None),  # Relation_is descriptor
-            ("NOTE", 0, unlimited, None),
-            ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
-          ("RELATION", 0, unlimited,  # ??? Geneatique 2010
-           (("ASSO", 0, unlimited, "_ASSOC"),)),  # ??? Geneatique 2010
-
-          ("ALIA:XREF(INDI)", 0, unlimited, None),
-          ("ANCI:XREF(SUBM)", 0, unlimited, None),
-          ("DESI:XREF(SUBM)", 0, unlimited, None),
-          ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-          ("IMAGE", 0, unlimited,  # ??? Geneatique 2010
-           (("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-            ("NOTE", 0, unlimited, None))),
-          ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-          ("NOTE", 0, unlimited, None),
-          ("RFN",  0, 1,         None),  # Permanent record file number
-          ("AFN",  0, 1,         None),  # Ancestral file number
-          ("REFN", 0, unlimited,  # User reference number
-           (("TYPE", 0, 1, None),)),  # User reference type
-          ("RIN",  0, 1,         None),  # Automated record Id
-          ("CHAN", 0, unlimited,         "CHAN"),  # Change date
-          # ??? CHAN unlimited in geneatique 2010, but standard stays
-          # 1 occurrence max
-          ("SIGN", 0, 1,         None),  # ??? Geneatique 2010
-          ("FACT", 0, unlimited,  # ??? gramps extension
-           (("TYPE", 1, 1,         None),  # type of fact ??? gramps
-            ("NOTE", 0, unlimited, None),
-            ("SOUR", 0, unlimited, "SOURCE_CITATION"))),
-          ("_CHV", 0, 1, None),  # ??? Geneatique 2010
-          ("_DEG", 0, unlimited,   # ??? gramps extensions for diplomas
-           (("TYPE", 1, 1, None),
-            ("DATE", 0, 1, None))),
-          ("_MILT", 0, unlimited,  # ??? gramps extension for military
-           (("TYPE", 1, 1,         None),
-            ("DATE", 1, 1,         None),
-            ("NOTE", 0, unlimited, None),
-            ("ADDR", 0, 1,         "ADDR"),
-            ("PLAC", 0, 1,         "PLAC"),
-            ("SOUR", 0, unlimited, "SOURCE_CITATION")))),
-
-    REPO=(("NAME", 0, 1,         None),   # Name of repository
-          ("WWW",  0, unlimited, None),   # ??? Gramps extension
-          ("ADDR", 0, 1,         "ADDR"),  # Address of repository
-          ("PHON", 0, 3,         None),
-          ("NOTE", 0, unlimited, None),   # Repository notes
-          ("REFN", 0, unlimited,          # User reference number
-           (("TYPE", 0, 1, None),)),    # User reference type
-          ("RIN", 0, 1, None),            # Automated record id
-          ("CHAN", 0, 1, "CHAN")),
-
-    EVENT_FOR_INDI=EVENT_DETAILS + (
-        ("HUSB", 0, 1, (("AGE", 1, 1, None),)),  # Age at event
-        ("WIFE", 0, 1, (("AGE", 1, 1, None),))),  # Age at event
-
-    FAM=((("ANUL", "CENS", "DIV", "DIVF",
-           "ENGA", "MARR", "MARB", "MARC",
-           "MARL", "MARS",
-           "EVEN"), 0, unlimited, "EVENT_FOR_INDI"),
-         ("_UID", 0, 1, None),   # Reunion on OSX
-         ("HUSB:XREF(INDI)", 0, 1,         None),
-         ("WIFE:XREF(INDI)", 0, 1,         None),
-         ("CHIL:XREF(INDI)", 0, unlimited, None),  # xref to children
-         ("NCHI", 0, 1,         None),  # count of children
-         ("SUBM:XREF(SUBM)", 0, unlimited, None),  # xref to SUBM
-
-         ("SLGS", 0, unlimited,  # LDS spouse sealing
-          (("STAT", 0, 1, None),  # Spouse sealing Date status
-           ("DATE", 0, 1, None),  # Date LDS ordinance
-           ("TEMP", 0, 1, None),  # Templace code
-           ("PLAC", 0, 1, None),  # Place living ordinance
-           ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-           ("NOTE", 0, unlimited, None))),
-
-         ("SOUR", 0, unlimited, "SOURCE_CITATION"),  # source
-         ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-         ("NOTE", 0, unlimited, None),
-         ("REFN", 0, unlimited,  # User reference number
-          (("TYPE", 0, 1, None),)),  # User reference type
-         ("RIN", 0, 1, None),      # Automated record id
-         ("CHAN", 0, 1,         "CHAN")),    # Change date
-
-    SUBM=(("NAME", 1, 1,         "NAME"),  # Submitter name
-          ("ADDR", 0, 1,         "ADDR"),  # Current address of submitter
-          ("EMAIL", 0, 1,        None),   # ??? Heredis extension
-          ("OBJE:XREF(OBJE)", 0, unlimited, "MULTIMEDIA_LINK"),
-          ("LANG", 0, 3,         None),   # Language preference
-          ("RFN",  0, 1,         None),   # Submitter registered rfn
-          ("RIN",  0, 1,         None),   # Automated record id
-          ("WWW",  0, 1,         None),   # Gedcom 5.5.1
-          ("PHON", 0, 3,         None),
-          ("CHAN", 0, 1,         "CHAN")),  # Change date
-
-    SUBN=(("SUBM:XREF(SUBM)",  0, 1,    None),
-          ("FAMF",  0, 1,         None),   # Name of family file
-          ("TEMP",  0, 1,         None),   # Temple code
-          ("ANCE",  0, 1,         None),   # Generations of ancestors
-          ("DESC",  0, 1,         None),   # Generations of descendants
-          ("ORDI",  0, 1,         None),   # Ordinance process flag
-          ("RIN",   0, 1,         None)),  # Automated record id
-
-    NOTE=(("SOUR", 0, unlimited, "SOURCE_CITATION"),
-          ("REFN", 0, unlimited,
-           (("TYPE", 0, 1, None),)),
-          ("RIN",  0, 1, None),
-          ("CHAN", 0, 1, "CHAN")),
-
-    # statistics: number of tags of each type
-    # https://www.tamurajones.net/GEDCOM_STS.xhtml
-    _STS=(("INDI", 0, 1, None),
-          ("FAM",  0, 1, None),
-          ("REPO", 0, 1, None),
-          ("SOUR", 0, 1, None),
-          ("NOTE", 0, 1, None),
-          ("SUBM", 0, 1, None),
-          ("OBJE", 0, 1, None),
-          ("_LOC", 0, 1, None)),
-
-    HEAD=(("SOUR", 1, 1,  # Approved system id
-           (("VERS", 0, 1, None),  # Version number
-            ("NAME", 0, 1, None),  # Name of product
-            ("CORP", 0, 1,  # Name of business
-             (("ADDR", 0, 1, "ADDR"),
-              ("_ADDR", 0, 1, "ADDR"),  # ??? Geneatique 2010
-              ("WWW", 0, 1, None),  # ??? RootsMagic extension
-              ("WEB", 0, 1, None),  # ??? Heredis extension
-              ("PHON", 0, 3, None))),
-            ("DATA", 0, 1,  # Name of source data
-             (("DATE", 0, 1, None),  # Publication date
-              ("COPR", 0, 1, None))))),  # Copyright source data
-          ("DEST", 0, 1, None),       # Receiving system name
-          ("DATE", 0, 1,        # Transmission date
-           (("TIME", 0, 1, None),)),  # Time value
-          ("SUBM:XREF(SUBM)", 0, 1, None),  # Xref to SUBM
-          # Gedcom says minimum is 1, but RootsMagic provides none
-          ("SUBN:XREF(SUBN)", 0, 1, None),  # Xref to SUBN
-          ("FILE", 0, 1, None),       # File name
-          ("COPR", 0, 1, None),       # Copyright Gedcom file
-          ("GEDC", 1, 1,
-           (("VERS", 1, 1, None),   # Version number
-            ("FORM", 1, 1, None))),  # Gedcom form
-          ("CHAR", 1, 1,       # Character set
-           (("VERS", 0, 1, None),)),  # Version number
-          ("LANG", 0, 1, None),       # Language of text
-          ("_STS", 0, 1, "_STS"),   # statistics
-          ("PLAC", 0, 1,
-           (("FORM", 1, 1, None),)),  # Place hierarchy
-          ("_HME", 0, 1, None),        # ??? Extension from gedcom torture
-          ("NOTE", 0, 1, None)),       # Gedcom content description
-
-    NAME=(("NPFX", 0, 1,         None),  # Name piece prefix
-          ("TYPE", 0, 1,         None),
-          ("GIVN", 0, 1,         None),  # Name piece given
-          ("NICK", 0, 1,         None),  # Name piece nickname
-          ("SPFX", 0, 1,         None),  # Name piece surname prefix
-          ("SURN", 0, 1,         None),  # Name piece surname
-          ("NSFX", 0, 1,         None),  # Name piece suffix
-          ("POST", 0, 1,         None),  # ??? Geneatique 2010
-          ("CITY", 0, 1,         None),  # ??? Geneatique 2010
-          ("SOUR", 0, unlimited, "SOURCE_CITATION"),
-          ("NOTE", 0, unlimited, None)))
-
-
-class Invalid_Gedcom(Exception):
-
-    def __init__(self, msg):
-        super().__init__(self)
-        self.msg = msg
-
-    def __repr__(self):
-        return str(self.msg)
-
-
-class GedcomString(str):
-    """A string that also stores a location in a file"""
-
-    # Overriding __init__ seems problematic here. We can't add new
-    # parameters ("line=0" for instance), and calling str.__init__
-    # shows a warning that "object.__init__ doesn't take any argument".
-    # So we just use GedcomString as a small wrapper, to which we manually
-    # add .line field
-
-    def __add__(self, value):
-        r = GedcomString('%s%s' % (self, value))
-        setattr(r, "_line", getattr(self, "line", None))
-        return r
-
-    def setLine(self, line):
+    def readline(self):
         """
-        LINES is the list of GEDCOM lines that were used in creating the value.
-        LINES can either be a single integer or a list of integers
+        Return the next line, omitting the \n, \r or \r\n terminator
         """
-        setattr(self, "_line", line)
+        p = self.pos
+        if p is None or p >= len(self.buffer):
+            return None
 
-    def location(self):
-        """the line number showing the location where SELF was defined"""
-        return getattr(self, "_line", None)
+        while True:
+            c = self.buffer[p]
+            if c == 10:
+                result = self.buffer[self.pos:p]
+                self.pos = p + 1
+                return result
+            elif c == 13:
+                result = self.buffer[self.pos:p]
+                self.pos = p + 1
+                if self.pos < len(self.buffer) and self.buffer[self.pos] == 10:
+                    self.pos += 1
+                return result
+            p += 1
+            if p >= len(self.buffer):
+                result = self.buffer[self.pos:]
+                self.pos = None
+                return result
 
 
 class _Lexical(object):
-
     """Return lines of the GEDCOM file, taking care of concatenation when
        needed, and potentially skipping levels
     """
 
-    # The components of the tuple returned by readline
-    LEVEL = 0
-    TAG = 1
-    XREF_ID = 2
-    VALUE = 3
-    LINE = 4
+    FIELD_TAG = 2
+    FIELD_XREF_ID = 3
+    FIELD_VALUE = 4
 
     def __init__(self, stream):
         """Lexical parser for a GEDCOM file. This returns lines one by one,
@@ -478,582 +84,788 @@ class _Lexical(object):
         self.file = stream
         self.level = 0     # Level of the current line
         self.line = 0      # Current line
-        self.current_line = None
+
         self.encoding = 'iso_8859_1'
-        self.prefetch = self._parse_next_line()  # Prefetched line, parsed
+        self.decode = self.decode_any
 
-    def to_str(self, value):
-        """Converts value to a string"""
-        if isinstance(value, str):
-            r = GedcomString(value)
-        else:
-            if self.encoding == "heredis-ansi":
-                value = value.replace(bytes([135]), bytes([225]))  # a-acute
-                value = value.replace(bytes([141]), bytes([231]))  # c-cedilla
-                r = GedcomString(value.decode('iso-8859-1', "replace"))
-
-            else:
-                r = GedcomString(value.decode(self.encoding, "replace"))
-
-        r.setLine(self.line)
-        return r
-
-    def _parse_next_line(self):
-        """Fetch the next relevant line of the GEDCOM stream,
-           and split it into its fields"""
-
-        self.line += 1
-
-        # Leading whitespace must be ignored in gedcom files
-        line = self.to_str(self.file.readline()).lstrip().rstrip('\n')
-        if not line:
-            return None
-
-        # Ignore trailing \r, for Windows files
-        line = line.rstrip('\r')
-
+        l = self.file.readline()
         if self.line == 1 and line[0:3] == "\xEF\xBB\xBF":
             self.encoding = 'utf-8'
-            line = line[3:]
+            l = l[3:]
+
+        self.current = None # current line, after resolving CONT and CONC
+        self.prefetch = self._parse_line(l)
+        self._readline()
+
+    def decode_heredis_ansi(self, value):
+        value = value.replace(bytes([135]), bytes([225]))  # a-acute
+        value = value.replace(bytes([141]), bytes([231]))  # c-cedilla
+        return value.decode('iso-8859-1', "replace")
+
+    def decode_any(self, value):
+        return value.decode(self.encoding, "replace")
+
+    def _parse_line(self, line):
+        """
+        Parse one line into its components
+        """
+        self.line += 1
+        if not line:
+            return
 
         # The standard limits the length of lines, but some software ignore
         # that, like Reunion on OSX for instance (#20)
+        # The call to split gets rid of leading and trailing whitespaces
 
-        g = LINE_RE.match(line)
-        if not g:
-            if self.line == 1:
-                raise Invalid_Gedcom(
-                    "%s Invalid gedcom file, first line must be '0 HEAD'" %
-                    self.get_location(1))
-            else:
-                raise Invalid_Gedcom(
-                    "%s Invalid line format: '%s'" % (
-                        self.get_location(1),
-                        line))
+        line = self.decode(line).split('\n')[0]
+        g = line.split(None, 2)   # Extract first three fields
+        if len(g) < 2:
+            raise Invalid_Gedcom(
+                "Line %s Invalid line format: '%s'" % (self.line, line))
 
-        if self.line == 1:
-            if g.group("level") != "0" or g.group("tag") != "HEAD":
-                raise Invalid_Gedcom(
-                    "%s Invalid gedcom file, first line must be '0 HEAD'" %
-                    self.get_location(1))
+        if g[1][0] == '@':
+            # "1 @I0001@ INDI"
+            # "1 @N0001@ NOTE value"
+            tag_and_val = g[2].split(None, 1)
+            r = (self.line,
+                 int(g[0]),                     # level
+                 tag_and_val[0],                # tag
+                 g[1],                          # xref_id
+                 tag_and_val[1] if len(tag_and_val) == 2 else '') # value
+        else:
+            # "2 RESI where"
+            r = (self.line,
+                 int(g[0]),                     # level
+                 g[1],                          # tag
+                 None,                          # xref_id
+                 g[2] if len(g) == 3 else '')   # value
 
-        r = (int(g.group("level")), g.group("tag"), g.group("xref_id"),
-             self.to_str(g.group("value") or u""))
-
-        # logger.debug("%04d: %s" % (self.line, r))
-
-        if PROGRESS and self.line % 1000 == 0:
-            logger.info("Gedcom: line %d" % (self.line, ))
-
-        if r[0] == 1 and r[1] == "CHAR":
-            if r[3] == "ANSEL":
+        if r[1] == 1 and r[2] == "CHAR":
+            if r[4] == "ANSEL":
                 self.encoding = "iso-8859-1"
-            elif r[3] == "ANSI":
+                self.decode = self.decode_any
+            elif r[4] == "ANSI":
                 # ??? Heredis specific
                 self.encoding = "heredis-ansi"
-            elif r[3] == "UNICODE":
+                self.decode = self.decode_heredis_ansi
+            elif r[4] == "UNICODE":
                 self.encoding = "utf-16"
-            elif r[3] == "UTF-8":
+                self.decode = self.decode_any
+            elif r[4] == "UTF-8":
                 self.encoding = "utf-8"
+                self.decode = self.decode_any
+            elif r[4] == "ASCII":
+                self.encoding = "ascii"
+                self.decode = self.decode_any
             else:
-                logger.info('Unknown encoding %s' % (r[3], ))
-
-            logger.debug('set encoding=%s' % (self.encoding, ))
+                logger.info('Unknown encoding %s' % (r[4], ))
 
         return r
 
-    def get_location(self, offset=0):
-        """Return the current parser location
-           This is intended for error messages
-        """
-        return self.file.name + ":" + str(self.line + offset - 1)
+    def peek(self):
+        # logger.debug('MANU %s', self.current)
+        return self.current
 
-    def readline(self, skip_to_level=-1):
-        """
-        Return the next line (after doing proper concatenation).
-        If skip_to_level is specified, skip all lines until the next one at
-        the specified level (or higher), ie skip current block potentially
-        """
+    def consume(self):
+        c = self.current
+        # logger.debug('MANU %s', self.current)
+        self._readline()
+        return c
+
+    def _readline(self):
         if not self.prefetch:
-            self.current_line = None
-            return None
+            self.current = (self.line + 1, -1, None, None, None)
+            return
 
         result = self.prefetch
-        if skip_to_level != -1:
-            while result \
-                    and result[_Lexical.LEVEL] > skip_to_level:
-                result = self._parse_next_line()
-                self.prefetch = result
-
-        value = result[_Lexical.VALUE]
-        self.prefetch = self._parse_next_line()
+        value = result[_Lexical.FIELD_VALUE]
+        self.prefetch = self._parse_line(self.file.readline())
 
         while self.prefetch:
-            if self.prefetch[_Lexical.TAG] == "CONT":
+            if self.prefetch[_Lexical.FIELD_TAG] == "CONT":
                 value += "\n"
-                value += self.prefetch[_Lexical.VALUE]
-
-            elif self.prefetch[_Lexical.TAG] == "CONC":
-                value += self.prefetch[_Lexical.VALUE]
-
+                value += self.prefetch[_Lexical.FIELD_VALUE]
+            elif self.prefetch[_Lexical.FIELD_TAG] == "CONC":
+                value += self.prefetch[_Lexical.FIELD_VALUE]
             else:
                 break
 
-            self.prefetch = self._parse_next_line()
+            self.prefetch = self._parse_line(self.file.readline())
 
         # It seems that tags are case insensitive
-        self.current_line = (result[_Lexical.LEVEL],
-                             result[_Lexical.TAG].upper(),
-                             result[_Lexical.XREF_ID],
-                             value,
-                             self.line - 1)
-        return self.current_line
+        self.current = (result[0],
+                         result[1],
+                         result[_Lexical.FIELD_TAG].upper(),
+                         result[_Lexical.FIELD_XREF_ID],
+                         value)
 
 
 class GedcomRecord(object):
-    """A Gedcom record (either individual, source, family,...)
-       Each record contains one field per valid child node, even if the
-       corresponding node did not exist in the file:
 
-       - If the value for this node is always a simple string, it is put as is.
-         This does not apply when the Gedcom grammar indicates that a field can
-         sometimes be a record with subfields.
-           e.g. n   @I0001@ INDI
-                n+1 NAME foo /bar/
-                n+2 SURN bar
-         is accessible as indi.NAME.SURN (a string)
-         If in fact this specific field does not occur in the gedcom file, None
-         is returned. If the node can be repeated multiple times,
-         a list of strings is returned (possibly empty if the node was not in
-         the file)
-
-       - If the value is itself a record, it is put in a GedcomRecord
-           e.g. n   @I0001@ INDI
-                n+1 ASSO @I00002@
-                n+2 RELA Godfather    (there is always one and only one)
-         is accessible as indi.ASSO
-         Often, the record itself has a value (like the id of the
-         individual I00002 above), which can be accessed via the "value" key,
-         for instance:
-            indi.ASSO.value
-
-       - If the field could be repeated multiple times, it is a list:
-           e.g. n @I00001 INDI
-                n+1 NAME foo /bar/
-                n+2 NOTE note1
-                n+2 NOTE note2
-         You can traverse all notes with
-             for s in indi.NAME.NOTE:
-                ...
-    """
-
-    def __init__(self, **args):
-        """LIST_FIELDS is the list of fields from gedcom that are lists, and
-           therefore need special handling when copying a gedcomRecord.
+    def __init__(self, line, tag, id=None, value='', fields=None):
         """
-        self.value = GedcomString("")
-        self._line = None  # Line where this record started
-        self._gedcom = None
-        self.xref = None
-
-        for key, val in args.items():
-            self.__dict__[key] = val
-
-    def xref_to(self, xref, gedcom):
-        """Indicates that the record contains no real data, but is an xref
-           to some other record. Accessing the attributes of the record
-           automatically dereference the xref, so this is mostly transparent
-           to users
+        Return of parsing one line of gedcom.
+        :param int linenum: line number where this occurs
+        :param str tag: the tag
+        :param str|None value: the value after the tag, unless it was a
+            xref. This is None if gedcom does not allow a value for this tag.
         """
+        self.line = line
+        self.tag = tag
+        self.value = value
 
-        # We'll need to lookup the attribute in the derefed object.  Using
-        # __getattribute__ would be called for all attributes, including
-        # internal ones like __dict__, and is thus less efficient.  However,
-        # __getattr__ will only be called if the attribute is not in the
-        # dictionary, so we remove the keys that are delegated.
-
-        # Note: it might too early to lookup the object in the gedcom file,
-        # since it might not have been parsed already. So we'll have to do it
-        # in __getattr__ if not available yet
-
-        obj = gedcom.obj_from_id(xref)
-        if obj:
-            self._all = obj
+        if fields is None:
+            self.fields = []
         else:
-            self._gedcom = gedcom
-
-        self.xref = xref
-        fields = [k for k in self.__dict__.keys()
-                  if k[0].isupper() or (k[0] == '_' and k[1].isupper())]
-        for key in fields:
-            del self.__dict__[key]
-        del self.__dict__['value']
-
-    def __getattr__(self, name):
-        """Automatic dereference (self must be an xref)
-           In the case of XREF_AND_INLINE, some attributes are defined both
-           in SELF and in the dereferenced record."""
-        try:
-            xref = object.__getattribute__(self, "xref")
-            if xref:
-                if name == "_all":
-                    # Cache the derefenced object
-                    obj = self._gedcom.obj_from_id(xref)
-                    del self.__dict__["_gedcom"]  # no longer needed
-                    self.__dict__["_all"] = obj
-                    return obj
-                else:
-                    # Possibly will call __getattr__ for "_all"
-                    return self._all.__getattribute__(name)
-        except AttributeError:
-            pass
-
-        return object.__getattribute__(self, name)
-
-    def setLine(self, line):
-        """Set the line at which SELF started"""
-        self._line = line
-
-    def for_all_fields(self):
-        """A generator that returns each field of self (ignoring null
-           fields), as read from GEDCOM
-        """
-        for key, val in self.__dict__.items():
-            if val is None or val == []:
-                pass   # Nothing to do, field is unset
-            elif key == "value":
-                pass   # Ignored, this is the simple value for the field
-            elif key in ("_line", "_ids", "_gedcom", "_Gedcom__filename",
-                         "_all"):
-                pass   # Internal
-            elif key.startswith("__"):
-                pass   # python internal
-            else:
-                yield key, val
-
-    def for_all_fields_recursive(self, level=1):
-        """
-        recursive for_all_fields, Lists are flattened.
-        :return: (key, value, level)
-        """
-        for key, val in self.for_all_fields():
-            if isinstance(val, GedcomRecord):
-                yield key, val, level
-                for k, v, lev in val.for_all_fields_recursive(level + 1):
-                    yield k, v, lev
-            elif isinstance(val, list):
-                for v2 in val:
-                    yield key, v2, level
-                    if isinstance(v2, GedcomRecord):
-                        for k, v, l in v2.for_all_fields_recursive(level + 1):
-                            yield k, v, l
-            else:
-                yield key, val, level
+            self.fields = fields   # array of GedcomRecord, in file order
+        self.xref = None   # points to one of the dict(), used to resolve xref
+        self.id = id
 
     def __repr__(self):
-        return "GedcomRecord(%s)" % self.value
+        return "GedcomRecord(tag=%s,line=%s)" % (self.tag, self.id)
 
-    def location(self):
-        """A string showing the location where SELF was defined"""
-        return self._line
-
-
-XREF_NONE = 0       # No xref allowed
-XREF_PURE = 1       # A pure xref (only textual value)
-XREF_OR_INLINE = 2  # Either an xref or an inline record
-XREF_AND_INLINE = 3  # An xref, with optional additional inline fields
-
-
-class _GedcomParser(object):
-
-    def __init__(self, name, grammar, all_parsers, register=None):
-        """Parse the grammar and initialize all parsers. This is only
-           called once per element in the grammar, and no longer called
-           when parsing a gedcom file
+    def as_xref(self):
         """
+        Report the ID of the object that self points to, or None.
+        The caller is responsible for knowing whether this point to an INDI,
+        a SOUR,...
+        """
+        if self.value and self.value[0] == '@':
+            return self.value
+        return None
 
-        self.name = name
 
-        if register == "INDI":
-            self.result = GedcomIndi()
-        elif register == "FAM":
-            self.result = GedcomFam()
-        elif register == "SOUR":
-            self.result = GedcomSour()
-        elif register == "SUBM":
-            self.result = GedcomSubm()
-        elif name == "file":
-            self.result = GedcomFile()
+class F(object):
+
+    def __init__(self, tag, min, max, text="", children=None):
+        """
+        Describes one field of the grammar
+        :param str tag: the tag found at the beginning of the line.
+        :param int min: the minimal number of occurrences within parent
+        :param int max: the maximum number of occurrences within parent
+        :param str|None text:
+            None indicates that no text value is expected
+            "Y" indicates that the only valid values are "Y" or null,
+              to indicate that an event took place, with no additional info
+            "" indicates that some textual value is expected
+            "INDI" indicates an xref to an INDI field is expected, or inline
+               textual value
+        :param None|list children:
+            list of F objects that can be found as children. You can also
+            use tag names instead of F objects, they will be looked up
+            later.
+            CONT and CONC children are always handled automatically and do
+            not need to appear in this grammar.
+        """
+        assert isinstance(min, int)
+        assert isinstance(max, int)
+        assert children is None or isinstance(children, list)
+
+        self.tag = tag
+        self.min = min
+        self.max = max
+        self.text = text
+        if children is None:
+            self.children = None
         else:
-            self.result = GedcomRecord()  # General type of the result
+            self.children = {c.tag: c for c in children}
 
-        self.parsers = dict()      # Parser for children nodes
+    def parse(self, lexical):
+        """
+        Read current line from lexical parser, and process it.
+        This doesn't modify self, and is fully reentrant
+        """
+        
+        if self.tag:
+            (linenum, level, tag, id, value) = lexical.consume()
+            assert tag == self.tag, '%s != %s' % (tag, self.tag)
+        else:
+            # special case for toplevel FILE
+            linenum = 0
+            id = None
+            value = ''
+            tag = ''
+            level = -1
 
-        if register:
-            # Register as soon as possible, in case the record contains XREF to
-            # itself
-            all_parsers[register] = self
+        tags = {}    # tag -> number of times children were seen
+        val = value
 
-        for c in grammar:
-            names = c[0]
-            type = c[3]
+        if self.text is None:
+            if value:
+                raise Invalid_Gedcom(
+                    "Line %s Unexpected text value after %s" % (linenum, tag))
+            val = None
+        elif self.text == "Y":
+            # Gedcom standard says value must be "Y", but PAF also uses "N".
+            # The tag should simply not be there in this case
+            if value and value not in ("Y", "N"):
+                raise Invalid_Gedcom(
+                    "Line %s Unexpected text value after %s" % (linenum, tag))
+            
+        r = GedcomRecord(id=id, line=linenum, tag=tag, value=val)
 
-            if isinstance(names, str):
-                names = [c[0]]
+        while True:
+            (clinenum, clevel, ctag, cid, cval) = lexical.peek()
+            if clevel <= level:
+                break
 
-            n = names[0]
-            if n.find(":XREF(") != -1:
-                xref_to = n[n.find("(") + 1:-1]
-                n = n[:n.find(":")]
-                names = [n]
+            tags[ctag] = tags.setdefault(ctag, 0) + 1
 
-                handler = all_parsers.get(xref_to)
-                if handler is None:
-                    handler = _GedcomParser(xref_to, _GRAMMAR[xref_to],
-                                            all_parsers, register=xref_to)
-                result = handler.result  # The type we are pointing to
+            if self.children is None:
+                cdescr = None
+            else:
+                cdescr = self.children.get(ctag, None)
 
-                if type is None:
-                    is_xref = XREF_PURE
-                    handler = None
-                elif isinstance(type, str):
-                    is_xref = XREF_OR_INLINE
-
-                    # xref_to must be a superset of type
-                    handler = all_parsers.get(type)
-                    if handler is None:
-                        handler = _GedcomParser(
-                            type, _GRAMMAR[type], all_parsers, register=type)
-
+            if cdescr is None:
+                if ctag[0] == '_':
+                    # A custom tag is allowed, and should accept anything
+                    raise Invalid_Gedcom(
+                        "Line %d Custom tag not supported: %s" % (clinenum, ctag))
                 else:
-                    is_xref = XREF_AND_INLINE
-                    handler = _GedcomParser(n, type, all_parsers)
+                    raise Invalid_Gedcom(
+                        "Line %s Unexpected tag: %s" % (clinenum, ctag))
 
-                    # The type of the result should be that of xref_to, so that
-                    # the methods exist. However, the result has more fields,
-                    # which are those inherited from handler.result.
-                    # When parsing the file, we should merge the list of fields
+                # skip this record (should be a special type of F)
+                while True:
+                    (l, t, v) = lexical.consume()
+                    (l, t, v) = lexical.peek()
+                    if l >= clevel:
+                        break
 
             else:
-                is_xref = XREF_NONE
+                c = cdescr.parse(lexical)  # read until end of child record
+                r.fields.append(c)
 
-                if type is None:  # text only
-                    handler = None
-                    result = None
+        # We have parsed all children, make sure we had all expected ones,
+        # and not more
 
-                elif isinstance(type, str):
-                    # ref to one of the toplevel nodes
-                    handler = all_parsers.get(type)
-                    if handler is None:
-                        handler = _GedcomParser(
-                            type, _GRAMMAR[type], all_parsers, register=type)
-                    result = handler.result
+        pass
 
-                else:  # An inline list of nodes
-                    handler = _GedcomParser(
-                        self.name + ":" + n, type, all_parsers)
-                    result = handler.result
+        return r
 
-                # HANDLER points to the parser for the children, and is null
-                # for pure text nodes or pure xref. It will be set if we are
-                # expecting an inline record, or either an xref or an inline
-                # record. In both cases it has the ability to parse the inline
-                # record.  IS_XREF is null if the node can be a pointer to a
-                # record result.
 
-            for n in names:
-                self.parsers[n] = (c[1],  # min occurrences
-                                   c[2],  # max occurrences
-                                   handler,
-                                   is_xref,  # type of xref
-                                   result)
+# Address structure (gedcom 5.5.1, p31)
 
-                if c[2] > 1:    # A list of record
-                    self.result.__dict__[n] = []
-                elif handler is None:  # text only
-                    self.result.__dict__[n] = None
-                else:           # A single record
-                    self.result.__dict__[n] = None
+ADDR = [
+    F("ADR1", 0, 1),                 # Address line 1
+    F("ADR2", 0, 1),                 # Address line 2
+    F("ADR3", 0, 1),                 # Address line 3
+    F("CITY", 0, 1),                 # Address city (for sorting)
+    F("STAE", 0, 1),                 # Address state (for sorting)
+    F("POST", 0, 1),                 # Address postal code (for sorting)
+    F("CTRY", 0, 1),                 # Address country (for sorting)
+    F("NOTE", 0, unlimited),         # ??? RootsMagic extension
+]
+
+ADDR_STRUCT = [
+    F("ADDR", 0, 1, '', ADDR),
+    F("_ADDR", 0, 1, '', ADDR),      # ??? Geneatique 2010
+    F("PHON", 0, 3),                 # Phone number
+    F("EMAIL", 0, 3),                # address email
+    F("FAX", 0, 3),                  # address fax
+    F("WWW", 0, 3),                  # address web page
+    F("WEB", 0, 1),                  # ??? Heredis extension
+]
+ADDR_FIELDS = set(f.tag for f in ADDR_STRUCT)
+
+# statistics: number of tags of each type
+# https://www.tamurajones.net/GEDCOM_STS.xhtml
+STS = [
+    F("INDI", 0, 1),
+    F("FAM",  0, 1),
+    F("REPO", 0, 1),
+    F("SOUR", 0, 1),
+    F("NOTE", 0, 1),
+    F("SUBM", 0, 1),
+    F("OBJE", 0, 1),
+    F("_LOC", 0, 1),
+]
+
+# Header structure, Gedcom 5.5.1, p23
+HEADER = [
+    F("SOUR", 1, 1, '', [                # Approved system id
+       F("VERS", 0, 1),                  # Version number
+       F("NAME", 0, 1),                  # Name of product
+       F("CORP", 0, 1, '', ADDR_STRUCT), # Name of business
+       F("DATA", 0, 1, '', [             # Name of source data
+           F("DATE", 0, 1),              # Publication date
+           F("COPR", 0, 1),              # Copyright source data
+       ]),
+    ]),
+    F("DEST", 0, 1),                     # Receiving system name
+    F("DATE", 0, 1, '', [                # Transmission date
+       F("TIME", 0, 1),                  # Time value
+    ]),
+    F("SUBM", 1, 1, "SUBM"),             # Xref to SUBM
+    F("SUBN", 0, 1, "SUBN"),             # Submission number
+    F("FILE", 0, 1),                     # File name
+    F("COPR", 0, 1),                     # Copyright Gedcom file
+    F("GEDC", 1, 1, None, [
+        F("VERS", 1, 1),                 # Version number
+        F("FORM", 1, 1),                 # Gedcom form
+    ]),
+    F("CHAR", 1, 1, '', [                # Character set
+        F("VERS", 0, 1),                 # Version number
+    ]),
+    F("LANG", 0, 1),                     # Language of text
+    F("_STS", 0, 1, '', STS),            # statistics
+    F("PLAC", 0, 1, None, [
+       F("FORM", 1, 1),                   # Place hierarchy
+    ]),
+    F("_HME", 0, 1),                     # Extension from gedcom torture
+    F("NOTE", 0, 1),                     # Gedcom content description
+]
+
+CHAN = \
+    F("CHAN", 1, 1, None, [              # Geccom 5.5.1, p31
+        F("DATE", 1, 1, '', [            # change date
+            F("TIME", 0, 1),             # time value
+        ]),
+        F("NOTE", 0, unlimited, "NOTE"),
+    ])
+
+SUBMISSION_REC = [                     # Gedcom 5.5.1, p28
+    F("SUBM", 0, 1, "SUBM"),
+    F("FAMF", 0, 1),                   # Name of family file
+    F("TEMP", 0, 1),                   # Temple code
+    F("ANCE", 0, 1),                   # Generations of ancestors
+    F("DESC", 0, 1),                   # Generations of descendants
+    F("ORDI", 0, 1),                   # Ordinance process flag
+    F("RIN",  0, 1),                   # Automated record id
+    F("NOTE", 0, unlimited, "NOTE"),
+    CHAN,
+]
+
+MULTIMEDIA_LINK = [
+    F("FORM", 0, 1),
+    F("TITL", 0, 1),              # descriptive title
+    F("FILE", 1, unlimited, '', [ # multimedia file refn
+        F("FORM", 0, 1, '', [     # multimedia format (min=1 in gedcom 5.5.1)
+            F("MEDI", 0, 1,),     # source media type
+        ]),
+    ]),
+    F("FORM", 0, 1, '', [         # multimedia format (gedcom 5.5.0)
+        F("MEDI", 0, 1,),         # source media type
+    ]),
+    F("_TYPE", 0, 1),             # ??? RootsMagic extension
+    F("_SCBK", 0, 1),             # ??? RootsMagic extension
+    F("_PRIM", 0, 1),             # ??? RootsMagic extension
+    F("NOTE", 0, unlimited, "NOTE"),   # ??? Gramps extension
+]
+
+SOURCE_CITATION = [
+    F("TEXT", 0, unlimited),           # Text from source
+    F("QUAY", 0, 1),                   # Certainty assessment
+    F("PAGE", 0, 1),                   # Where within source
+    F("EVEN", 0, 1, '', [              # Event type cited from
+        F("ROLE", 0, 1),               # Role in event
+    ]),
+    F("DATA", 0, 1, None, [
+        F("DATE", 0, 1),               # Entry recording date
+        F("TEXT", 0, unlimited),       # Text from source
+    ]),
+    F("_QUAL", 0, 1),                  # ??? RootsMagic extension
+    F("_INFO", 0, 1),                  # ??? RootsMagic extension
+    # F("_TMPLT", 0, 1, '', TMPLT),      # ??? RootsMagic extension
+    F("OBJE", 0, unlimited, "OBJE", MULTIMEDIA_LINK),
+    F("NOTE", 0, unlimited, "NOTE"),
+]
+
+PLACE_STRUCT = [
+    F("FORM", 0, 1),                   # Place hierarchy
+    F("FONE", 0, unlimited, '', [      # Place phonetic variation
+        F("TYPE", 1, 1),               # Phonetic type
+    ]),
+    F("ROMN", 0, unlimited, '', [      # Place romanized variation
+        F("TYPE", 1, 1),               # Romanized type
+    ]),
+    F("MAP", 0, 1, None, [ 
+        F("LATI", 1, 1),               # Place latitude
+        F("LONG", 1, 1),               # Place longitude
+    ]),
+    F("NOTE", 0, unlimited, "NOTE"),
+    F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),   # In TGC55C.ged
+]
+
+MULTIMEDIA_REC = [
+    F("FILE", 0, 1, "", [                     # Multimedia file reference
+        F("FORM", 1, 1, "", [                 # Multimedia format
+            F("TYPE", 0, 1, ""),
+        ]),
+        F("TITL", 0, 1),                      # Descriptive title
+    ]),
+    F("TITL", 0, 1),                          # gecom 5.5 (?) used in TGC55C.ged
+    F("BLOB", 0, 1),                          # gecom 5.5
+    F("FORM", 0, 1),                          # gecom 5.5
+    F("REFN", 0, unlimited, "", [             # User reference number
+        F("TYPE", 0, 1),                      # User reference type
+    ]),
+    F("RIN",  0, 1),                          # Automated record id
+    F("NOTE", 0, unlimited, "NOTE"),
+    F("BLOB", 0, 1),                          # Removed in gedcom 5.5.1
+    F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+    CHAN,
+]
+
+EVENT_DETAIL = ADDR_STRUCT + [
+    F("TYPE", 0, 1, ''),                # Event or fact classification
+    F("DATE", 0, 1),                    # Date value
+    F("_SDATE", 0, 1),                  # Sort date in RootsMagic
+    F("PLAC", 0, 1, '', PLACE_STRUCT),  # Place name
+    F("AGNC", 0, 1),                    # Responsible agency
+    F("RELI", 0, 1),                    # Religious affiliation
+    F("CAUS", 0, 1),                    # Cause of event
+    F("RESN", 0, 1),                    # Restriction notice
+    F("_ACT", 0, unlimited),            # ??? Geneatique 2010
+    F("NOTE", 0, unlimited, "NOTE"),
+    F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+    # F("ASSO", 0, unlimited, '', ASSOC), # ??? Geneatique 2010
+    F("OBJE", 0, unlimited, "OBJE", MULTIMEDIA_LINK),
+]
+
+FAMILY_EVENT_DETAIL = [
+    F("HUSB", 0, 1, None, [
+        F("AGE", 1, 1),                # age at event
+    ]),
+    F("WIFE", 0, 1, None, [
+        F("AGE", 1, 1),                # age at event
+    ]),
+    F("AGE", 0, unlimited),            # Invalid, but used in TGC55C.ged
+] + EVENT_DETAIL
+
+FAM_EVENT_STRUCT = [
+    F("RESN", 0, 1),                   # Restriction notice
+    F("ANUL", 0, unlimited, "Y", FAMILY_EVENT_DETAIL),
+    F("CENS", 0, unlimited, "Y", FAMILY_EVENT_DETAIL),
+    F("DIV",  0, unlimited, "Y", FAMILY_EVENT_DETAIL),
+    F("DIVF", 0, unlimited, "Y", FAMILY_EVENT_DETAIL),
+    F("ENGA", 0, unlimited, "Y", FAMILY_EVENT_DETAIL),
+    F("MARB", 0, unlimited, "Y", FAMILY_EVENT_DETAIL),
+    F("MARC", 0, unlimited, "Y", FAMILY_EVENT_DETAIL),
+    F("MARR", 0, unlimited, "Y", FAMILY_EVENT_DETAIL),
+    F("MARL", 0, unlimited, "Y", FAMILY_EVENT_DETAIL),
+    F("MARS", 0, unlimited, "Y", FAMILY_EVENT_DETAIL),
+    F("RESI", 0, unlimited, "Y", FAMILY_EVENT_DETAIL),
+    F("EVEN", 0, unlimited, '',  FAMILY_EVENT_DETAIL),
+]
+FAM_EVENT_FIELDS = set(f.tag for f in FAM_EVENT_STRUCT)
+
+LDS_SPOUSE_SEALING = [
+    F("STAT", 0, 1, '', [        # Spouse sealing Date status
+        F("DATE", 1, 1),         # Change date
+    ]),
+    F("DATE", 0, 1),             # Date LDS ordinance
+    F("TEMP", 0, 1),             # Temple code
+    F("PLAC", 0, 1),             # Place living ordinance
+    F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+    F("NOTE", 0, unlimited, "NONE"),
+]
+
+FAM_REC = FAM_EVENT_STRUCT + [
+    F("_UID", 0, 1),                   # Reunion on OSX
+    F("RESN", 0, 1,),                  # Restriction notice
+    F("HUSB", 0, 1, "INDI"),
+    F("WIFE", 0, 1, "INDI"),
+    F("CHIL", 0, unlimited, "INDI"),   # xref to children
+    F("NCHI", 0, 1),                   # count of children
+    F("SUBM", 0, unlimited, "SUBM"),
+    F("SLGS", 0, unlimited, None, LDS_SPOUSE_SEALING), # lds spouse sealing
+    F("REFN", 0, unlimited, '', [      # User reference number
+       F("TYPE", 0, 1),                # User reference type
+    ]),
+    F("RIN", 0, 1),                    # Automated record id
+    CHAN,
+    F("NOTE", 0, unlimited, "NOTE"),
+    F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+    F("OBJE", 0, unlimited, "OBJE", MULTIMEDIA_LINK),
+]
+
+SUBM_REC = ADDR_STRUCT + [
+    F("NAME", 1, 1),                   # Submitter name
+    F("OBJE", 0, unlimited, "OBJE", MULTIMEDIA_LINK),
+    F("LANG", 0, 3),                   # Language preference
+    F("RFN",  0, 1),                   # Submitter registered rfn
+    F("RIN",  0, 1),                   # Automated record id
+    F("COMM", 0, unlimited),           # ??? PAF extension
+    F("NOTE", 0, unlimited, "NOTE"),
+    CHAN,
+]
+
+PERSONAL_NAME_STRUCT = [
+    F("TYPE", 0, 1),                   # Name type
+    F("NPFX", 0, 1),                   # Name piece prefix
+    F("GIVN", 0, 1),                   # Name piece given
+    F("NICK", 0, 1),                   # Name piece nickname
+    F("SPFX", 0, 1),                   # Name piece surname prefix
+    F("SURN", 0, 1),                   # Name piece surname
+    F("NSFX", 0, 1),                   # Name piece suffix
+    F("POST", 0, 1),                   # ??? Geneatique 2010
+    F("CITY", 0, 1),                   # ??? Geneatique 2010
+    F("NOTE", 0, unlimited, "NOTE"),
+    F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+]
+
+INDI_EV_DETAIL = EVENT_DETAIL + [
+    F("AGE", 0, unlimited),
+]
+
+INDIVIDUAL_ATTRIBUTE_STRUCT = [
+    F("CAST",  0, unlimited, '', INDI_EV_DETAIL), # Cast name 
+    F("DSCR",  0, unlimited, '', INDI_EV_DETAIL), # Physical description
+    F("EDUC",  0, unlimited, '', INDI_EV_DETAIL), # Scholastic achievement
+    F("IDNO",  0, unlimited, '', INDI_EV_DETAIL), # Natural Id number
+    F("NATI",  0, unlimited, '', INDI_EV_DETAIL), # National or tribal origin
+    F("NCHI",  0, unlimited, '', INDI_EV_DETAIL), # Count of children
+    F("NMR",   0, unlimited, '', INDI_EV_DETAIL), # Count of marriages
+    F("OCCU",  0, unlimited, '', INDI_EV_DETAIL), # Occupation
+    F("PROP",  0, unlimited, '', INDI_EV_DETAIL), # Possessions
+    F("RELI",  0, unlimited, '', INDI_EV_DETAIL), # Religious affiliation
+    F("RESI",  0, unlimited, "Y", INDI_EV_DETAIL), # Resides at
+    F("SSN",   0, unlimited, '', INDI_EV_DETAIL), # Social security number
+    F("TITL",  0, unlimited, '', INDI_EV_DETAIL), # Nobility type title
+    F("FACT",  0, unlimited, '', INDI_EV_DETAIL), # Attribute descriptor
+]
+
+INDIVIDUAL_EVENT_STRUCT = [
+    F("BIRT", 0, unlimited, "Y", INDI_EV_DETAIL + [
+        F("FAMC", 0, 1, "FAM"),
+    ]),
+    F("CHR", 0, unlimited, "Y", INDI_EV_DETAIL + [
+        F("FAMC", 0, 1, "FAM"),       # Child to family link
+    ]),
+    F("DEAT", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("BURI", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("CREM", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("ADOP", 0, unlimited, "Y",  INDI_EV_DETAIL + [
+        F("FAMC", 0, 1, "FAM", [
+            F("ADOP", 0, 1),          # Adopted by which parent
+        ]),
+    ]),
+    F("BAPM", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("BARM", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("BASM", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("BLES", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("CHRA", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("CONF", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("FCOM", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("ORDN", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("NATU", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("EMIG", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("EMIG", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("IMMI", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("CENS", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("PROB", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("WILL", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("GRAD", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("RETI", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("EVEN", 0, unlimited, "Y", INDI_EV_DETAIL),
+]
+
+LDS_INDI_ORDINANCE_BAPL = [
+    F("DATE", 0, 1),      # Date LDS ordinance
+    F("TEMP", 0, 1),      # Temple code
+    F("PLAC", 0, 1),      # Place living ordinance
+    F("STAT", 0, 1, '', [ # LDS Baptimsm date status
+        F("DATE", 1, 1),  # Change date
+    ]),
+    F("NOTE", 0, unlimited, "NOTE"),
+    F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+]
+
+LDS_INDI_ORDINANCE_SGLC = [
+    F("DATE", 0, 1),      # Date LDS ordinance
+    F("TEMP", 0, 1),      # Temple code
+    F("PLAC", 0, 1),      # Place living ordinance
+    F("FAMC", 1, 1, "FAM"),
+    F("STAT", 0, 1, '', [ # LDS Baptimsm date status
+        F("DATE", 1, 1),  # Change date
+    ]),
+    F("NOTE", 0, unlimited, "NOTE"),
+    F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+]
+
+LDS_INDI_ORDINANCE = [
+    F("BAPL", 0, 1, None, LDS_INDI_ORDINANCE_BAPL),
+    F("CONL", 0, 1, "Y", LDS_INDI_ORDINANCE_BAPL),
+    F("ENDL", 0, 1, None, LDS_INDI_ORDINANCE_BAPL),
+    F("SLGC", 0, 1, None, LDS_INDI_ORDINANCE_SGLC),
+]
+
+INDI_REC = INDIVIDUAL_EVENT_STRUCT + \
+    INDIVIDUAL_ATTRIBUTE_STRUCT + \
+    LDS_INDI_ORDINANCE + [
+    F("RESN", 0, 1),                    # Restriction notice
+    F("NAME", 0, unlimited, '', PERSONAL_NAME_STRUCT),
+    F("SEX",  0, 1),                    # Sex value
+    F("_UID", 0, unlimited),            # ??? RootsMagic extension
+    F("FAMC", 0, unlimited, "FAM", [    # Child to family link
+        F("PEDI", 0, 1),                # Pedigree linkage type
+        F("STAT", 0, 1),                # Child linkage status
+        F("NOTE", 0, unlimited, "NOTE"),
+    ]),
+    F("FAMS", 0, unlimited, "FAM", [    # Spouse to family link
+        F("NOTE", 0, unlimited, "NOTE"),
+    ]),
+    F("SUBM", 0, unlimited, "SUBM"),    # Submitter
+    F("ASSO", 0, unlimited, "INDI", [   # Association
+        F("RELA", 1, 1),                # Relation-is descriptor
+        F("NOTE", 0, unlimited, "NOTE"),
+        F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+    ]),
+    F("RELATION", 0, unlimited, '', [   # Geneatique 2010
+        F("ASSO", 0, unlimited, '', [
+            F("RELA", 0, 1),
+            F("TYPE", 0, 1),
+            F("NOTE", 0, unlimited, "NOTE"),
+            F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+        ]),
+    ]),
+    F("ALIA", 0, unlimited, "INDI"),
+    F("ANCI", 0, unlimited, "SUBM"),
+    F("DESI", 0, unlimited, "SUBM"),
+    F("RFN",  0, 1),                   # Permanent record file number
+    F("AFN",  0, 1),                   # Ancestral file number
+    F("REFN", 0, unlimited, '', [      # User reference number
+        F("TYPE", 0, 1),               # User reference type
+    ]),
+    F("RIN", 0, 1),                    # Automated record id
+    CHAN,
+    F("NOTE", 0, unlimited, "NOTE", [
+       F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),   # In TGC55C.ged
+    ]),
+    F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+    F("OBJE", 0, unlimited, "OBJE", MULTIMEDIA_LINK),
+    F("IMAGE", 0, unlimited, '', [     # ??? Geneatique 2010
+        F("OBJE", 0, unlimited, "OBJE", MULTIMEDIA_LINK),
+        F("NOTE", 0, unlimited, "NOTE"),
+    ]),
+    F("SIGN", 0, 1),                   # ??? Geneatique 2010
+    F("_CHV", 0, 1),                   # ??? Geneatique 2010
+    F("_DEG", 0, unlimited, '', [      # ??? gramps extensions for diplomas
+        F("TYPE", 1, 1),
+        F("DATE", 0, 1),
+    ]),
+    F("_MILT", 0, unlimited, '', ADDR_STRUCT + [  # ??? gramps extension
+        F("TYPE", 1, 1),
+        F("DATE", 1, 1),
+        F("NOTE", 0, unlimited),
+        F("PLAC", 0, 1, '', PLACE_STRUCT),
+        F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+    ]),
+]
+
+ROOTSMAGIC_TMPLT = [
+    F("TID", 0, 1),
+    F("FIELD", 0, unlimited, "", [
+        F("NAME", 0, unlimited),
+        F("VALUE", 0, unlimited),
+    ]),
+]
+
+SOURCE_REC = [
+    F("DATA", 0, 1, None, [
+        F("EVEN", 0, unlimited, '', [          # Event recorded
+            F("DATE", 0, 1),                   # Date period
+            F("PLAC", 0, 1),                   # Source jurisdiction place
+        ]),
+        F("AGNC", 0, 1),                       # Responsible agency
+        F("NOTE", 0, unlimited, "NOTE"),
+    ]),
+    F("AUTH", 0, 1),                           # Source originator
+    F("TITL", 0, 1),                           # Source descriptive title
+    F("ABBR", 0, 1),                           # Source filed by entry
+    F("PUBL", 0, 1),                           # Source publication facts
+    F("TEXT", 0, 1),                           # Text from source
+    F("REPO", 0, 1, "REPO", [                  # Source repository citation
+        F("NOTE", 0, unlimited, "NOTE"),
+        F("CALN", 0, unlimited, "", [          # Source call number
+            F("MEDI", 0, 1),                   # Source media type
+        ]),
+    ]),
+    F("REFN", 0, unlimited, "", [              # User reference number
+        F("TYPE", 0, 1),                       # User reference type
+    ]),
+    F("RIN", 0, 1),                            # Automated record id
+    CHAN,
+    F("NOTE", 0, unlimited, "NOTE"),           # Note on source
+    F("OBJE", 0, unlimited, "OBJE", MULTIMEDIA_LINK),
+    F("_SUBQ", 0, 1),                          # ??? RootsMagic
+    F("_BIBL", 0, 1),                          # ??? RootsMagic
+    F("_TMPLT", 0, 1, "", ROOTSMAGIC_TMPLT),   # ??? RootsMagic extension
+]
+
+NOTE_REC = [
+    F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+    F("REFN", 0, unlimited, "", [
+        F("TYPE", 0, 1),
+    ]),
+    F("RIN",  0, 1),
+    CHAN,
+]
+
+REPO_REC = ADDR_STRUCT + [
+    F("NAME", 0, 1),                           # Name of repository
+    F("NOTE", 0, unlimited, "NOTE"),           # Repository notes
+    F("REFN", 0, unlimited, "", [              # User reference number
+        F("TYPE", 0, 1),                       # User reference type
+    ]),
+    F("RIN", 0, 1),                            # Automated record id
+    CHAN,
+
+]
+
+ROOTSMAGIC_EVDEF = [
+    F("TYPE", 0, 1),                          # eg./  "P"
+    F("TITL", 0, 1),                          # eg./  "Birth"
+    F("ABBR",  0, 1),
+        # eg./  "Birth"
+        # eg./ [person] was born< [Date]>< [PlaceDetails]>< [Place]>.
+    F("SENT",  0, 1),
+    F("PLAC",  0, 1),                         # eg./ "Y"
+    F("DATE",  0, 1),                         # eg./ "Y"
+    F("DESC",  0, 1),                         # eg./ "N"
+]
+
+FILE = \
+    F('', 1, 1, None, [
+        F("HEAD",   1, 1,         None, HEADER),
+        F("SUBN",   0, 1,         None, SUBMISSION_REC),
+        F("FAM",    0, unlimited, None, FAM_REC),
+        F("INDI",   0, unlimited, None, INDI_REC),
+        F("OBJE",   0, unlimited, None, MULTIMEDIA_REC),
+        F("NOTE",   0, unlimited, "", NOTE_REC),
+        F("REPO",   0, unlimited, None, REPO_REC),
+        F("SOUR",   0, unlimited, None, SOURCE_REC),
+        F("SUBM",   0, unlimited, None, SUBM_REC),
+        F("_EVDEF", 0, unlimited, None, ROOTSMAGIC_EVDEF),  # ??? RootsMagic
+        F("TRLR",   1, 1,         None),
+    ])
+
+
+class Invalid_Gedcom(Exception):
+
+    def __init__(self, msg):
+        super().__init__(self)
+        self.msg = msg
 
     def __repr__(self):
-        return 'GedcomParser(name=%s)' % self.name
-
-    def parse(self, lexical, gedcomFile=None, indent="   "):
-        # We don't do a deepcopy here, but instead we replace lists the first
-        # time they are referenced to make sure don't modify self.result
-        result = copy.copy(self.result)
-        line = lexical.current_line
-
-        if line:  # When parsing ROOT, there is no prefetch
-            # Store the line for error msg
-            result.setLine(line[_Lexical.LINE])
-
-            if line[_Lexical.VALUE]:
-                result.value = line[_Lexical.VALUE]
-            startlevel = line[_Lexical.LEVEL]
-
-            # Register the entity if need be
-            if startlevel == 0 and line[_Lexical.XREF_ID]:
-                result.id = line[_Lexical.XREF_ID]
-                gedcomFile.store_id(line[_Lexical.XREF_ID], result)
-
-        else:
-            startlevel = -1
-            gedcomFile = result
-
-        line = lexical.readline()  # Children start at next line
-
-        try:
-            while line and line[_Lexical.LEVEL] > startlevel:
-                tag = line[_Lexical.TAG]
-                p = self.parsers[tag]
-                value = line[_Lexical.VALUE]
-                xref = p[3]
-
-                if xref != XREF_NONE \
-                   and value != "" \
-                   and value[0] == '@' and value[-1] == '@':  # An xref
-
-                    if xref == XREF_AND_INLINE:
-                        res = p[2].parse(
-                            lexical, gedcomFile, indent=indent + "   ")
-                        line = lexical.current_line
-                    else:
-                        res = copy.copy(p[4])
-                        line = lexical.readline()
-
-                    res.xref_to(value, gedcomFile)
-
-                # inline record
-                elif p[2] and xref in (XREF_NONE, XREF_OR_INLINE):
-                    res = p[2].parse(
-                        lexical, gedcomFile, indent=indent + "   ")
-                    line = lexical.current_line
-
-                elif xref != XREF_NONE:  # we should have had an xref
-                    raise Invalid_Gedcom(
-                        "%s Expecting an xref for %s" % (
-                            lexical.get_location(),
-                            tag))
-
-                else:  # A string, but not an xref (handled above)
-                    res = value
-                    line = lexical.readline()
-
-                val = result.__dict__[tag]
-
-                if p[1] == 1:
-                    if val:  # None or empty string
-                        raise Invalid_Gedcom(
-                            "%s Too many occurrences of %s" %
-                            (lexical.get_location(), tag))
-                    result.__dict__[tag] = res
-
-                elif p[1] == unlimited:
-                    # Make sure we do not modify the original list
-                    if val == []:
-                        val = []
-                        result.__dict__[tag] = val
-                    val.append(res)
-
-                elif len(val) < p[1]:
-                    if val == []:
-                        val = []
-                        result.__dict__[tag] = val
-                    val.append(res)
-
-                else:
-                    raise Invalid_Gedcom(
-                        "%s Too many occurrences (%d) of %s (max %d)" %
-                        (lexical.get_location(), p[1] + 1, tag, len(val)))
-
-        except KeyError as e:
-            raise Invalid_Gedcom(
-                "%s Invalid tag %s inside %s" %
-                (lexical.get_location(), tag, self.name))
-
-        # Check we have reach the minimal number of occurrences
-
-        for tag, p in self.parsers.items():
-            val = result.__dict__[tag]
-            if p[0] != 0 and (val is None or val == ()):
-                raise Invalid_Gedcom(
-                    "%s Missing 1 occurrence of %s in %s" %
-                    (lexical.get_location(), tag, self.name))
-
-            elif p[0] > 1 and len(val) < p[0]:
-                raise Invalid_Gedcom(
-                    "%s Missing %d occurrences of %s in %s" %
-                    (lexical.get_location(), p[0] - len(val), tag, self.name))
-
-        return result
+        return self.msg
 
 
-class GedcomFile(GedcomRecord):
-
-    """Represents a whole GEDCOM file"""
-
-    def __init__(self):
-        super().__init__()
-        self._ids = dict()
-
-    def obj_from_id(self, id):
-        return self._ids.get(id, None)
-
-    def store_id(self, id, obj):
-        self._ids[id] = obj
-
-
-class GedcomIndi(GedcomRecord):
-
-    """Represents an INDIvidual from a GEDCOM file"""
-    pass
-
-
-class GedcomFam(GedcomRecord):
-
-    """Represents a family from a GEDCOM file"""
-    pass
-
-
-class GedcomSubm(GedcomRecord):
-
-    """Represents a SUBM in a GEDCOM file"""
-    pass
-
-
-class GedcomSour(GedcomRecord):
-
-    """Represents a SOUR in a GEDCOM file"""
-    pass
-
-
-class Gedcom(object):
-
-    """This class provides parsers for GEDCOM files.
-       Only one instance of this class should be created even if you want to
-       parse multiple GEDCOM files, since the parsers can be reused multiple
-       times.
+def parse_gedcom(filename):
+    """Parse the specified GEDCOM file, check its syntax, and return a
+       GedcomFile instance.
+       Raise Invalid_Gedcom in case of error.
+       :param filename:
+           Either the name of a file, or an instance of a class
+           compatible with file.
     """
 
-    def __init__(self):
-        parsers = dict()
-        self.parser = _GedcomParser("file", _GRAMMAR["file"], parsers)
-
-    def parse(self, filename):
-        """Parse the specified GEDCOM file, check its syntax, and return a
-           GedcomFile instance.
-           Raise Invalid_Gedcom in case of error.
-           :param filename:
-               Either the name of a file, or an instance of a class
-               compatible with file.
-        """
-        if isinstance(filename, str):
-            # Do not assume a specific encoding, so read as bytes
-            filename = open(filename, "rb")
-
-        return self.parser.parse(_Lexical(filename))
+    start = time.time()
+    result = FILE.parse(_Lexical(_File(filename)))
+    logger.info('Parsed in %ss', time.time() - start)
+    return result
 
 
 if __name__ == '__main__':
-    Gedcom().parse(sys.argv[1])
+    parse_gedcom(sys.argv[1])

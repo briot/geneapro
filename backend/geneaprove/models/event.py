@@ -43,6 +43,9 @@ class Event_Type_Role(GeneaProveModel):
     PK_principal = lazy_lookup(name='principal')
     PK_birth__father = lazy_lookup(name='father', type__gedcom='BIRT')
     PK_birth__mother = lazy_lookup(name='mother', type__gedcom='BIRT')
+    PK_adoption__adopting = lazy_lookup(name='adopting', type__gedcom='ADOP')
+    PK_adoption__not_adopting = lazy_lookup(
+        name='not adopting', type__gedcom='ADOP')
 
 
 class Event(GeneaProveModel):

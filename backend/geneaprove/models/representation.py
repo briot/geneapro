@@ -5,13 +5,13 @@ from .source import Source
 
 class Representation(GeneaProveModel):
     """
-    Contains the representation of a source in a variete of formats.
+    Contains the representation of a source in various formats.
     A given source can have multiple representations
     """
 
     mime_type = models.CharField(max_length=40)
     source = models.ForeignKey(Source, related_name="representations")
-    file = models.TextField()
+    file = models.TextField(null=True)
     comments = models.TextField(null=True)
 
     class Meta:
