@@ -7,16 +7,6 @@ PYTHON=${PYTHON:-python3.6}
 VIRTUALENV=${VIRTUALENV:-virtualenv}
 NODE=${NODE:-node}
 
-######################
-# Check requirements #
-######################
-
-${NODE} -v 2>/dev/null | grep v7.10.1 >/dev/null
-if [ $? != 0 ]; then
-   echo "nodejs 7.10.1 not found"
-   exit 1
-fi
-
 #########################
 # Front-end development #
 #########################
