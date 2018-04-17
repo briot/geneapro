@@ -90,12 +90,13 @@ class Dashboard extends React.PureComponent<{}, {}> {
    render() {
       return (
          <div>
+            <i>This is a mockup</i>
             <Header size="medium">Recently views persons</Header>
             <Card.Group>
                <PersonCard name="Emmanuel Briot" dates="1975-" />
-               <PersonCard name="Roland Briot" dates="1950-2008" image="/assets/roland.jpg" />
-               <PersonCard name="Jacques Le Texier" image="/assets/jacques_LE_TEXIER.jpg" />
-               <PersonCard name="Marie-Helene Greard" image="invalid"/>
+               <PersonCard name="John Smith" dates="1950-2008" image="/assets/roland.jpg" />
+               <PersonCard name="Louis XIII" image="/assets/jacques_LE_TEXIER.jpg" />
+               <PersonCard name="Josephine" image="invalid"/>
             </Card.Group>
             <Header size="medium">Recently views places</Header>
             <Card.Group>
