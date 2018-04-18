@@ -30,7 +30,7 @@ export function importGEDCOM(files: File[], csrfToken: string): Promise<ImportRe
          window.console.log('Upload failed', resp);
          return {
             success: false,
-            error: 'Upload failed with error {resp.status}, {resp.statusText}',
+            error: `Upload failed with error ${resp.status}, ${resp.statusText}`,
          };
       }
       const result: Promise<ImportResponse> = resp.json();
