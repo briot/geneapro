@@ -26,8 +26,8 @@ export class UploadForm extends React.PureComponent<UploadFormProps, UploadFormS
 
    fileInput: HTMLInputElement|null = null;
 
-   constructor() {
-      super();
+   constructor(props: UploadFormProps) {
+      super(props);
       this.state = {
          files: [],
          uploading: false,

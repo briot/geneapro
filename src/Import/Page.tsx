@@ -17,8 +17,8 @@ interface ImportPageState {
 }
 
 class ImportPageConnected extends React.PureComponent<ImportPageProps, ImportPageState> {
-   constructor() {
-      super();
+   constructor(props: ImportPageProps) {
+      super(props);
       this.state = {};
    }
 

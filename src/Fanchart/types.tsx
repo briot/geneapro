@@ -13,7 +13,7 @@ export interface PersonLayout extends BasePersonLayout {
    parents: PersonLayout[];
    parentsMarriage?: {
       text: string;
-   }
+   };
    children: PersonLayout[];
 }
 

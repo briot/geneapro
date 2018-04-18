@@ -3,6 +3,7 @@ import { Card } from 'semantic-ui-react';
 import * as d3Color from 'd3-color';
 import * as d3Selection from 'd3-selection';
 import * as d3Scale from 'd3-scale';
+import * as d3ScaleChromatic from 'd3-scale-chromatic';
 import * as d3Axis from 'd3-axis';
 import * as d3Shape from 'd3-shape';
 import { JSONAges } from '../Server/Stats';
@@ -32,7 +33,7 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
    }
 
    color(gen: number) {
-      return d3Scale.schemeCategory10[gen % 20];
+      return d3ScaleChromatic.schemeCategory10[gen % 20];
    }
 
    draw() {

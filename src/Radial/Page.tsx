@@ -11,7 +11,11 @@ import RadialSide from '../Radial/Side';
 import Radial from '../Radial/Radial';
 import Page from '../Page';
 
-interface RadialPageConnectedProps {
+interface PropsFromRoute {
+   decujusId: string;
+}
+
+interface RadialPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    settings: RadialSettings;
    persons: PersonSet;
    onChange: (diff: Partial<RadialSettings>) => void;
@@ -73,15 +77,12 @@ class RadialPageConnected extends React.PureComponent<RadialPageConnectedProps, 
    }
 }
 
-interface PropsFromRoute {
-   decujusId: string;
-}
- 
 const RadialPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
+      ...props,
       settings: state.radial,
       persons: state.persons,
-      decujusid: Number(ownProps.match.params.decujusId),
+      decujusid: Number(props.match.params.decujusId),
    }),
    (dispatch: GPDispatch) => ({
       dispatch,

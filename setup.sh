@@ -11,7 +11,7 @@ NODE=${NODE:-node}
 # Front-end development #
 #########################
 
-yarn install
+npm install
 
 ########################
 # Back-end development #
@@ -45,8 +45,8 @@ else
    fi
 fi
 
-pip install django pillow pylint pylint-django pep8 autopep8 grandalf \
-   django-prepared-query cprofilev
+pip install django==1.10.6 pillow pylint pylint-django pep8 autopep8 grandalf \
+   django-prepared-query cprofilev pyinstaller appdirs
 
 # The actual layout of the sources was created with:
 #     django-admin startproject backend

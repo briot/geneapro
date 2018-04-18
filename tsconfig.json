@@ -15,7 +15,8 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "baseUrl": "src"
   },
   "exclude": [
     "node_modules",
@@ -24,6 +25,7 @@
     "acceptance-tests",
     "webpack",
     "jest",
+    "python_env",
     "src/setupTests.ts"
   ]
 }

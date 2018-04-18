@@ -20,8 +20,8 @@ interface SourceListState {
 }
 
 class SourceListConnected extends React.PureComponent<SourceListProps, SourceListState> {
-   constructor() {
-      super();
+   constructor(props: SourceListProps) {
+      super(props);
       this.state = {
          filter: '',
          sources: [],

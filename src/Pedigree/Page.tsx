@@ -13,7 +13,11 @@ import Page from '../Page';
 import PedigreeLayout from '../Pedigree/Layout';
 import PedigreeSide from '../Pedigree/Side';
 
-interface PedigreePageConnectedProps {
+interface PropsFromRoute {
+   decujusId: string;
+}
+ 
+interface PedigreePageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    settings: PedigreeSettings;
    persons: PersonSet;
    allEvents: GenealogyEventSet;
@@ -84,17 +88,14 @@ class PedigreePageConnected extends React.PureComponent<PedigreePageConnectedPro
    }
 }
 
-interface PropsFromRoute {
-   decujusId: string;
-}
- 
 const PedigreePage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
+      ...props,
       settings: state.pedigree,
       persons: state.persons,
       allEvents: state.events,
       allPlaces: state.places,
-      decujusid: Number(ownProps.match.params.decujusId),
+      decujusid: Number(props.match.params.decujusId),
    }),
    (dispatch: GPDispatch) => ({
       dispatch,

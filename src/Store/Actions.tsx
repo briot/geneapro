@@ -1,6 +1,5 @@
 import { call, put, select, takeEvery, ForkEffect } from 'redux-saga/effects';
-import { Action } from 'redux-typescript-actions';
-import actionCreatorFactory from 'redux-typescript-actions';
+import actionCreatorFactory, { Action } from 'typescript-fsa';
 import { AppState } from '../Store/State';
 
 export const actionCreator = actionCreatorFactory('GP' /* prefix */);

@@ -28,8 +28,8 @@ export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, S
 
    private svgRef: SVGSVGElement;
 
-   constructor() {
-      super();
+   constructor(props: ScalableSVGProps) {
+      super(props);
       this.state = {
          scale: 1,
          translate: {left: 0, top: 0},

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as d3Color from 'd3-color';
-import * as d3Scale from 'd3-scale';
+import * as d3ScaleChromatic from 'd3-scale-chromatic';
 import { personDisplay } from '../Store/Person';
 import { QuiltsSettings } from '../Store/Quilts';
 import { QuiltsResult, Layer, LINE_SPACING, MARGIN, F_HEIGHT,
@@ -8,7 +8,7 @@ import { QuiltsResult, Layer, LINE_SPACING, MARGIN, F_HEIGHT,
 import ScalableSVG from '../SVG.Scalable';
 import './Quilts.css';
 
-const allColors = d3Scale.schemeCategory10.map((c: string) => d3Color.rgb(c));
+const allColors = d3ScaleChromatic.schemeCategory10.map((c: string) => d3Color.rgb(c));
 
 interface QuiltsProps {
    settings: QuiltsSettings;
@@ -29,8 +29,8 @@ export default class Quilts extends React.PureComponent<QuiltsProps, QuiltsState
 
    nextColor: number = 0;
 
-   constructor() {
-      super();
+   constructor(props: QuiltsProps) {
+      super(props);
       this.state = {
          selected: [],
       };

@@ -9,7 +9,11 @@ import { fetchPersonDetails } from '../Store/Sagas';
 import Page from '../Page';
 import Persona from '../Persona/Persona';
 
-interface PersonaPageProps {
+interface PropsFromRoute {
+   id: string;
+}
+
+interface PersonaPageProps extends RouteComponentProps<PropsFromRoute> {
    id: number;
    persons: PersonSet;
    dispatch: GPDispatch;
@@ -50,14 +54,11 @@ class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
    }
 }
 
-interface PropsFromRoute {
-   id: string;
-}
-
 const PersonaPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
+      ...props,
       persons: state.persons,
-      id: Number(ownProps.match.params.id),
+      id: Number(props.match.params.id),
    }),
    (dispatch: GPDispatch) => ({
       dispatch,

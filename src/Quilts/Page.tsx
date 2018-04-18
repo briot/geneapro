@@ -12,7 +12,11 @@ import Page from '../Page';
 import Quilts from '../Quilts/Quilts';
 import QuiltsSide from '../Quilts/Side';
 
-interface QuiltsPageConnectedProps {
+interface PropsFromRoute {
+   decujusId: string;
+}
+ 
+interface QuiltsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    settings: QuiltsSettings;
    allPersons: PersonSet;
    onChange: (diff: Partial<QuiltsSettings>) => void;
@@ -79,16 +83,13 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
 
 }
 
-interface PropsFromRoute {
-   decujusId: string;
-}
- 
 const QuiltsPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
+      ...props,
       settings: state.quilts,
       layout: state.quiltsLayout ? state.quiltsLayout.layout : undefined,
       allPersons: state.persons,
-      decujusid: Number(ownProps.match.params.decujusId),
+      decujusid: Number(props.match.params.decujusId),
    }),
    (dispatch: GPDispatch) => ({
       dispatch,

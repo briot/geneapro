@@ -1,5 +1,5 @@
 import * as Redux from 'redux';
-import { isType } from 'redux-typescript-actions';
+import { isType } from 'typescript-fsa';
 import { AppState, rehydrate } from '../Store/State';
 import { personDisplay, PersonSet } from '../Store/Person';
 import { SourceSet } from '../Store/Source';

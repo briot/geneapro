@@ -4,28 +4,28 @@ import './App.css';
 import * as React from 'react';
 import { Provider } from 'react-redux';
 import { BrowserRouter, Route } from 'react-router-dom';
-import { store, setPersist } from './Store/Store';
 import DashboardPage from './Dashboard';
 import FanchartPage from './Fanchart/Page';
-import PedigreePage from './Pedigree/Page';
-import PersonaList from './PersonaList';
-import PlaceList from './PlaceList';
-import SourceList from './SourceList';
-import PersonaPage from './Persona/Page';
-import SourcePage from './Source/Page';
 import ImportPage from './Import/Page';
-import RadialPage from './Radial/Page';
-import QuiltsPage from './Quilts/Page';
-import StatsPage from './Stats/Page';
+import PedigreePage from './Pedigree/Page';
+import PersonaPage from './Persona/Page';
+import PersonaList from './PersonaList';
 import PlacePage from './Place/Page';
+import PlaceList from './PlaceList';
+import QuiltsPage from './Quilts/Page';
+import RadialPage from './Radial/Page';
+import SourcePage from './Source/Page';
+import SourceList from './SourceList';
+import StatsPage from './Stats/Page';
+import { setPersist, store } from './Store/Store';
 
 class MainAppState {
-   rehydrated: boolean;
+   public rehydrated: boolean;
 }
 
 export default class App extends React.PureComponent<{}, MainAppState> {
-   constructor() {
-      super();
+   constructor(props: {}) {
+      super(props);
       this.state = {rehydrated: false };
    }
 
@@ -48,7 +48,7 @@ export default class App extends React.PureComponent<{}, MainAppState> {
                   <Route path="/place/list" component={PlaceList} />
                   <Route path="/source/list" component={SourceList} />
                   <Route path="/pedigree/:decujusId(\\d+)" component={PedigreePage} />
-                  <Route path="/fanchart/:decujusId(\\d+)" component={FanchartPage} />
+                  <Route path="/fanchart/:id(\\d+)" component={FanchartPage} />
                   <Route path="/radial/:decujusId(\\d+)" component={RadialPage} />
                   <Route path="/quilts/:decujusId(\\d+)" component={QuiltsPage} />
                   <Route path="/persona/:id(\\d+)" component={PersonaPage} />

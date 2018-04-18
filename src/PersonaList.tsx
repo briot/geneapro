@@ -25,8 +25,8 @@ interface PersonaListState {
 }
 
 class PersonaListConnected extends React.PureComponent<PersonaListProps, PersonaListState> {
-   constructor() {
-      super();
+   constructor(props: PersonaListProps) {
+      super(props);
       this.state = {
          filter: '',
          persons: [],

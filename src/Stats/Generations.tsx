@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Card } from 'semantic-ui-react';
 import * as d3Selection from 'd3-selection';
 import * as d3Scale from 'd3-scale';
+import * as d3ScaleChromatic from 'd3-scale-chromatic';
 import * as d3Axis from 'd3-axis';
 import { JSONGenerationRange } from '../Server/Stats';
 
@@ -22,7 +23,7 @@ export default class StatsGeneration extends React.PureComponent<StatsGeneration
    }
 
    color(gen: number) {
-      return d3Scale.schemeCategory20b[gen % 20];
+      return d3ScaleChromatic.schemePastel1[gen % 10];
    }
 
    draw() {

@@ -12,7 +12,11 @@ import StatsTree from '../Stats/Tree';
 import '../Stats/Stats.css';
 import Page from '../Page';
 
-interface StatsPageConnectedProps {
+interface PropsFromRoute {
+   decujusId: string;
+}
+ 
+interface StatsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    persons: PersonSet;
    dispatch: GPDispatch;
    decujusid: number;
@@ -86,14 +90,11 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
    }
 }
 
-interface PropsFromRoute {
-   decujusId: string;
-}
- 
 const StatsPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
+      ...props,
       persons: state.persons,
-      decujusid: Number(ownProps.match.params.decujusId),
+      decujusid: Number(props.match.params.decujusId),
    }),
    (dispatch: GPDispatch) => ({
       dispatch,

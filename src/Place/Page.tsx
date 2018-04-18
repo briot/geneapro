@@ -9,7 +9,11 @@ import { Place } from '../Store/Place';
 import PlaceDetails from '../Place/PlaceDetails';
 import Page from '../Page';
 
-interface PlacePageProps {
+interface PropsFromRoute {
+   id: string;
+}
+
+interface PlacePageProps extends RouteComponentProps<PropsFromRoute> {
    id: number;
    place: Place|undefined;
    dispatch: GPDispatch;
@@ -48,14 +52,11 @@ class PlacePageConnected extends React.PureComponent<PlacePageProps> {
    }
 }
 
-interface PropsFromRoute {
-   id: string;
-}
-
 const PlacePage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => {
-      const id = Number(ownProps.match.params.id);
+   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => {
+      const id = Number(props.match.params.id);
       return {
+         ...props,
          id,
          place: state.places[id] as Place | undefined,
       };

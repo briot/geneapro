@@ -12,7 +12,11 @@ import Page from '../Page';
 import FanchartSide from '../Fanchart/Side';
 import FanchartLayout from '../Fanchart/Layout';
 
-interface FanchartPageConnectedProps {
+interface PropsFromRoute {
+   id: string;
+}
+ 
+interface FanchartPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    settings: FanchartSettings;
    persons: PersonSet;
    allEvents: GenealogyEventSet;
@@ -21,7 +25,7 @@ interface FanchartPageConnectedProps {
    decujusid: number;
 }
 
-class FanchartPageConnected extends React.PureComponent<FanchartPageConnectedProps, {}> {
+class FanchartPageConnected extends React.PureComponent<FanchartPageConnectedProps> {
    componentDidMount() {
       this.calculateData(this.props);
    }
@@ -79,16 +83,13 @@ class FanchartPageConnected extends React.PureComponent<FanchartPageConnectedPro
    }
 }
 
-interface PropsFromRoute {
-   decujusId: string;
-}
- 
 const FanchartPage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
+   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
+      ...props,
       settings: state.fanchart,
       persons: state.persons,
       allEvents: state.events,
-      decujusid: Number(ownProps.match.params.decujusId),
+      decujusid: Number(props.match.params.id),
    }),
    (dispatch: GPDispatch) => ({
       dispatch,

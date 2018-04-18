@@ -9,7 +9,11 @@ import { Source } from '../Store/Source';
 import Page from '../Page';
 import SourceDetails from '../Source/Source';
 
-interface SourcePageProps {
+interface PropsFromRoute {
+   id: string;
+}
+
+interface SourcePageProps extends RouteComponentProps<PropsFromRoute> {
    id: number;
    source: Source|undefined;
    dispatch: GPDispatch;
@@ -48,14 +52,11 @@ class SourcePageConnected extends React.PureComponent<SourcePageProps> {
    }
 }
 
-interface PropsFromRoute {
-   id: string;
-}
-
 const SourcePage = connect(
-   (state: AppState, ownProps: RouteComponentProps<PropsFromRoute>) => ({
-      id: Number(ownProps.match.params.id),
-      source: state.sources[Number(ownProps.match.params.id)] as Source | undefined,
+   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
+      ...props,
+      id: Number(props.match.params.id),
+      source: state.sources[Number(props.match.params.id)] as Source | undefined,
    }),
    (dispatch: GPDispatch) => ({
       dispatch,
