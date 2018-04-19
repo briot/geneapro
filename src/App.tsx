@@ -3,7 +3,7 @@ import './App.css';
 
 import * as React from 'react';
 import { Provider } from 'react-redux';
-import { BrowserRouter, Route } from 'react-router-dom';
+import { BrowserRouter, Route, Switch } from 'react-router-dom';
 import DashboardPage from './Dashboard';
 import FanchartPage from './Fanchart/Page';
 import ImportPage from './Import/Page';
@@ -42,21 +42,22 @@ export default class App extends React.PureComponent<{}, MainAppState> {
       return (
          <Provider store={store}>
             <BrowserRouter>
-               <div>
-                  <Route path="/:decujusId(\\d+)?" exact={true} component={DashboardPage} />
+               <Switch>
+                  <Route path="/:decujusId?" exact={true} component={DashboardPage} />
                   <Route path="/persona/list" component={PersonaList} />
                   <Route path="/place/list" component={PlaceList} />
                   <Route path="/source/list" component={SourceList} />
-                  <Route path="/pedigree/:decujusId(\\d+)" component={PedigreePage} />
-                  <Route path="/fanchart/:id(\\d+)" component={FanchartPage} />
-                  <Route path="/radial/:decujusId(\\d+)" component={RadialPage} />
-                  <Route path="/quilts/:decujusId(\\d+)" component={QuiltsPage} />
-                  <Route path="/persona/:id(\\d+)" component={PersonaPage} />
-                  <Route path="/source/:id(-?\\d+)" component={SourcePage} />
-                  <Route path="/place/:id(-?\\d+)" component={PlacePage} />
+                  <Route path="/pedigree/:decujusId" component={PedigreePage} />
+                  <Route path="/fanchart/:id" component={FanchartPage} />
+                  <Route path="/radial/:decujusId" component={RadialPage} />
+                  <Route path="/quilts/:decujusId" component={QuiltsPage} />
+                  <Route path="/persona/:id" component={PersonaPage} />
+                  <Route path="/source/:id" component={SourcePage} />
+                  <Route path="/place/:id" component={PlacePage} />
                   <Route path="/import" component={ImportPage} />
-                  <Route path="/stats/:decujusId(\\d+)" component={StatsPage} />
-               </div>
+                  <Route path="/stats/:decujusId" component={StatsPage} />
+                  <Route children={() => <span>No match for route</span>} />
+               </Switch>
             </BrowserRouter>
          </Provider>
       );
