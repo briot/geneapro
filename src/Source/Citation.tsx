@@ -124,34 +124,31 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
    // manual citations entered by the user (or original citation).
    // These are used in case the user goes back to a CUSTOM model
 
-   constructor(props: CitationProps) {
-      super(props);
-      this.state = {
-         modified: false,
-         models: [],
-         templateParts: new Set(),
-         source: createNewSource(CUSTOM),  // updated in componentWillMount
-      };
-   }
+   state: CitationState = {
+      modified: false,
+      models: [],
+      templateParts: new Set(),
+      source: createNewSource(CUSTOM),  // updated in componentDidMount
+   };
 
-   async componentWillMount() {
+   async componentDidMount() {
       let s = await fetchCitationModelsFromServer();
       s.source_types.sort((a, b) => a.type.localeCompare(b.type));
       this.setState({models: s.source_types,
-                     source: this._updateSource(this.props)});
+                     source: this._updateSource()});
    }
 
-   componentWillReceiveProps(nextProps: CitationProps) {
-      if (!this.props.source) {
-         if (nextProps.source) {
-            this.setState({source: this._updateSource(nextProps)});
-         }
-      } else if (!nextProps.source) {
+   componentDidUpdate(old: CitationProps) {
+      if (!old.source) {
          if (this.props.source) {
-            this.setState({source: this._updateSource(nextProps)});
+            this.setState({source: this._updateSource()});
          }
-      } else if (this.props.source.id !== nextProps.source.id) {
-         this.setState({source: this._updateSource(nextProps)});
+      } else if (!this.props.source) {
+         if (old.source) {
+            this.setState({source: this._updateSource()});
+         }
+      } else if (this.props.source.id !== old.source.id) {
+         this.setState({source: this._updateSource()});
       }
    }
 
@@ -172,8 +169,8 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
     * Take into account a change in the original source. Return the
     * update to be performed on this.state
     */
-   _updateSource(props: CitationProps): Source {
-      if (!props.source) {
+   _updateSource(): Source {
+      if (!this.props.source) {
          let source = createNewSource(CUSTOM);
          this.manualTitle = '';
          this.manualAbbrev = '';
@@ -181,12 +178,12 @@ export default class SourceCitation extends React.PureComponent<CitationProps, C
          this.fetchModel(source, CUSTOM);
          return source;
       } else {
-         this.manualTitle = props.source.title;
-         this.manualAbbrev = props.source.abbrev;
-         this.manualBiblio = props.source.biblio;
-         const newMedium = props.source.medium || CUSTOM;
-         this.fetchModel(props.source, newMedium);
-         return {...props.source, medium: newMedium};
+         this.manualTitle = this.props.source.title;
+         this.manualAbbrev = this.props.source.abbrev;
+         this.manualBiblio = this.props.source.biblio;
+         const newMedium = this.props.source.medium || CUSTOM;
+         this.fetchModel(this.props.source, newMedium);
+         return {...this.props.source, medium: newMedium};
       }
    }
 

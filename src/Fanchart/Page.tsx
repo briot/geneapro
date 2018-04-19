@@ -27,26 +27,26 @@ interface FanchartPageConnectedProps extends RouteComponentProps<PropsFromRoute>
 
 class FanchartPageConnected extends React.PureComponent<FanchartPageConnectedProps> {
    componentDidMount() {
-      this.calculateData(this.props);
+      this.calculateData();
    }
 
-   componentWillReceiveProps(nextProps: FanchartPageConnectedProps) {
-      if (this.props.decujusid !== nextProps.decujusid ||
-          this.props.settings.ancestors !== nextProps.settings.ancestors ||
-          this.props.settings.descendants !== nextProps.settings.descendants
+   componentDidUpdate(old: FanchartPageConnectedProps) {
+      if (this.props.decujusid !== old.decujusid ||
+          this.props.settings.ancestors !== old.settings.ancestors ||
+          this.props.settings.descendants !== old.settings.descendants
       ) {
-         this.calculateData(nextProps);
+         this.calculateData();
       }
 
-      const decujus: Person = nextProps.persons[nextProps.decujusid];
-      nextProps.dispatch(addToHistory({person: decujus}));
+      const decujus: Person = this.props.persons[this.props.decujusid];
+      this.props.dispatch(addToHistory({person: decujus}));
    }
 
-   calculateData(props: FanchartPageConnectedProps) {
-      props.dispatch(fetchPedigree.request({
-         decujus: props.decujusid,
-         ancestors: props.settings.ancestors,
-         descendants: props.settings.descendants,
+   calculateData() {
+      this.props.dispatch(fetchPedigree.request({
+         decujus: this.props.decujusid,
+         ancestors: this.props.settings.ancestors,
+         descendants: this.props.settings.descendants,
       }));
    }
 

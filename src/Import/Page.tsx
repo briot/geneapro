@@ -17,10 +17,7 @@ interface ImportPageState {
 }
 
 class ImportPageConnected extends React.PureComponent<ImportPageProps, ImportPageState> {
-   constructor(props: ImportPageProps) {
-      super(props);
-      this.state = {};
-   }
+   state: ImportPageState = {};
 
    doUpload = (files: File[]) => {
       return importGEDCOM(files, this.props.csrf_token).then(res => {

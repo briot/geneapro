@@ -27,14 +27,8 @@ interface QuiltsState {
 
 export default class Quilts extends React.PureComponent<QuiltsProps, QuiltsState> {
 
+   state: QuiltsState = { selected: [] };
    nextColor: number = 0;
-
-   constructor(props: QuiltsProps) {
-      super(props);
-      this.state = {
-         selected: [],
-      };
-   }
 
    addToSelection(p: QuiltsPersonLayout) {
       // Unselect if it was already selected

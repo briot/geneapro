@@ -25,24 +25,21 @@ interface PersonaListState {
 }
 
 class PersonaListConnected extends React.PureComponent<PersonaListProps, PersonaListState> {
-   constructor(props: PersonaListProps) {
-      super(props);
-      this.state = {
-         filter: '',
-         persons: [],
-      };
-   }
+   state: PersonaListState = {
+      filter: '',
+      persons: [],
+   };
 
-   componentWillReceiveProps(nextProps: PersonaListProps) {
-      if (nextProps.persons !== this.props.persons) {
+   componentDidUpdate(old: PersonaListProps) {
+      if (old.persons !== this.props.persons) {
          this.setState((s: PersonaListState) => ({
             ...s,
-            persons: this.computePersons(nextProps.persons, s.filter),
+            persons: this.computePersons(this.props.persons, s.filter),
          }));
       }
    }
 
-   componentWillMount() {
+   componentDidMount() {
       this.props.dispatch(fetchPersons.request({}));
    }
 

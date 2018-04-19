@@ -20,20 +20,20 @@ interface SourcePageProps extends RouteComponentProps<PropsFromRoute> {
 }
 
 class SourcePageConnected extends React.PureComponent<SourcePageProps> {
-   componentWillMount() {
-      this.calculateData(this.props);
+   componentDidMount() {
+      this.calculateData();
    }
 
-   componentWillReceiveProps(nextProps: SourcePageProps) {
-      if (nextProps.id !== this.props.id) {
-         this.calculateData(nextProps);
+   componentDidUpdate(old: SourcePageProps) {
+      if (old.id !== this.props.id) {
+         this.calculateData();
       }
-      nextProps.dispatch(addToHistory({source: nextProps.source}));
+      this.props.dispatch(addToHistory({source: this.props.source}));
    }
 
-   calculateData(props: SourcePageProps) {
-      if (props.id >= 0) {
-         props.dispatch(fetchSourceDetails.request({id: props.id}));
+   calculateData() {
+      if (this.props.id >= 0) {
+         this.props.dispatch(fetchSourceDetails.request({id: this.props.id}));
       }
    }
 

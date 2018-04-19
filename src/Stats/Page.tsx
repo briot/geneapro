@@ -28,22 +28,20 @@ interface StatsPageConnectedState {
 
 class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
                                                      StatsPageConnectedState> {
-   constructor(props: StatsPageConnectedProps) {
-      super(props);
-      this.state = {};
+
+   state: StatsPageConnectedState = {};
+
+   componentDidMount() {
+      this.calculateProps();
    }
 
-   componentWillMount() {
-      this.calculateProps(this.props);
-   }
-
-   componentWillReceiveProps(nextProps: StatsPageConnectedProps) {
-      if (this.props.decujusid !== nextProps.decujusid) {
-         this.calculateProps(nextProps);
+   componentDidUpdate(old: StatsPageConnectedProps) {
+      if (this.props.decujusid !== old.decujusid) {
+         this.calculateProps();
       }
 
-      const p = nextProps.persons[nextProps.decujusid];
-      nextProps.dispatch(addToHistory({person: p}));
+      const p = this.props.persons[this.props.decujusid];
+      this.props.dispatch(addToHistory({person: p}));
    }
 
    render() {
@@ -83,8 +81,8 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
       );
    }
 
-   private calculateProps(props: StatsPageConnectedProps) {
-      fetchStatsFromServer(props.decujusid).then((s: JSONStats) => {
+   private calculateProps() {
+      fetchStatsFromServer(this.props.decujusid).then((s: JSONStats) => {
          this.setState({data: s});
       });
    }

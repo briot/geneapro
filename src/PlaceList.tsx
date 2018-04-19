@@ -20,24 +20,21 @@ interface PlaceListState {
 }
 
 class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListState> {
-   constructor(props: PlaceListProps) {
-      super(props);
-      this.state = {
-         filter: '',
-         places: [],
-      };
-   }
+   state: PlaceListState = {
+      filter: '',
+      places: [],
+   };
 
-   componentWillReceiveProps(nextProps: PlaceListProps) {
-      if (nextProps.allPlaces !== this.props.allPlaces) {
+   componentDidUpdate(old: PlaceListProps) {
+      if (old.allPlaces !== this.props.allPlaces) {
          this.setState((s: PlaceListState) => ({
             ...s,
-            places: this.computePlaces(nextProps.allPlaces, s.filter),
+            places: this.computePlaces(this.props.allPlaces, s.filter),
          }));
       }
    }
 
-   componentWillMount() {
+   componentDidMount() {
       this.props.dispatch(fetchPlaces.request({}));
    }
 

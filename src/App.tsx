@@ -24,12 +24,9 @@ class MainAppState {
 }
 
 export default class App extends React.PureComponent<{}, MainAppState> {
-   constructor(props: {}) {
-      super(props);
-      this.state = {rehydrated: false };
-   }
+   state: MainAppState = {rehydrated: false};
 
-   componentWillMount() {
+   componentDidMount() {
       setPersist(() => {
          this.setState({rehydrated: true});
       });
@@ -39,25 +36,26 @@ export default class App extends React.PureComponent<{}, MainAppState> {
       if (!this.state.rehydrated) {
          return <div>Loading...</div>;
       }
+      // <React.StrictMode>   // See https://reactjs.org/docs/strict-mode.html
       return (
          <Provider store={store}>
             <BrowserRouter>
-               <Switch>
-                  <Route path="/:decujusId?" exact={true} component={DashboardPage} />
-                  <Route path="/persona/list" component={PersonaList} />
-                  <Route path="/place/list" component={PlaceList} />
-                  <Route path="/source/list" component={SourceList} />
-                  <Route path="/pedigree/:decujusId" component={PedigreePage} />
-                  <Route path="/fanchart/:id" component={FanchartPage} />
-                  <Route path="/radial/:decujusId" component={RadialPage} />
-                  <Route path="/quilts/:decujusId" component={QuiltsPage} />
-                  <Route path="/persona/:id" component={PersonaPage} />
-                  <Route path="/source/:id" component={SourcePage} />
-                  <Route path="/place/:id" component={PlacePage} />
-                  <Route path="/import" component={ImportPage} />
-                  <Route path="/stats/:decujusId" component={StatsPage} />
-                  <Route children={() => <span>No match for route</span>} />
-               </Switch>
+                  <Switch>
+                     <Route path="/:decujusId?" exact={true} component={DashboardPage} />
+                     <Route path="/persona/list" component={PersonaList} />
+                     <Route path="/place/list" component={PlaceList} />
+                     <Route path="/source/list" component={SourceList} />
+                     <Route path="/pedigree/:decujusId" component={PedigreePage} />
+                     <Route path="/fanchart/:id" component={FanchartPage} />
+                     <Route path="/radial/:decujusId" component={RadialPage} />
+                     <Route path="/quilts/:decujusId" component={QuiltsPage} />
+                     <Route path="/persona/:id" component={PersonaPage} />
+                     <Route path="/source/:id" component={SourcePage} />
+                     <Route path="/place/:id" component={PlacePage} />
+                     <Route path="/import" component={ImportPage} />
+                     <Route path="/stats/:decujusId" component={StatsPage} />
+                     <Route children={() => <span>No match for route</span>} />
+                  </Switch>
             </BrowserRouter>
          </Provider>
       );

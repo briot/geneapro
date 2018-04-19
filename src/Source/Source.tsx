@@ -18,14 +18,16 @@ interface SourceState {
 }
 
 export default class SourceDetails extends React.PureComponent<SourceProps, SourceState> {
+   state: SourceState = {
+      title: undefined,
+      showCitation: false,
+      showMedia: true,
+      showAssertions: true,
+   };
 
-   constructor(props: SourceProps) {
-      super(props);
-      this.state = {
-         title: undefined,
-         showCitation: !props.source || !props.source.title,
-         showMedia: true,
-         showAssertions: true,
+   static getDerivedStateFromProps(nextProps: SourceProps, prevState: SourceState) {
+      return {...prevState,
+              showCitation: !nextProps.source || !nextProps.source.title,
       };
    }
 

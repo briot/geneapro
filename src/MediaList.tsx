@@ -12,14 +12,9 @@ interface MediasState {
 }
 
 export default class Medias extends React.PureComponent<MediasProps, MediasState> {
-
+   state: MediasState = {};
    imageGroup: HTMLDivElement;
    scrollLeft: number|undefined;
-
-   constructor(props: MediasProps) {
-      super(props);
-      this.state = {};
-   }
 
    componentDidUpdate() {
       if (this.scrollLeft !== undefined && this.imageGroup) {

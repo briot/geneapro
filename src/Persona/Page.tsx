@@ -20,21 +20,21 @@ interface PersonaPageProps extends RouteComponentProps<PropsFromRoute> {
 }
 
 class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
-   componentWillMount() {
-      this.calculateData(this.props);
+   componentDidMount() {
+      this.calculateData();
    }
 
-   componentWillReceiveProps(nextProps: PersonaPageProps) {
-      if (nextProps.id !== this.props.id) {
-         this.calculateData(nextProps);
+   componentDidUpdate(old: PersonaPageProps) {
+      if (old.id !== this.props.id) {
+         this.calculateData();
       }
 
-      const p = nextProps.persons[nextProps.id];
-      nextProps.dispatch(addToHistory({person: p}));
+      const p = this.props.persons[this.props.id];
+      this.props.dispatch(addToHistory({person: p}));
    }
 
-   calculateData(props: PersonaPageProps) {
-      props.dispatch(fetchPersonDetails.request({id: props.id}));
+   calculateData() {
+      this.props.dispatch(fetchPersonDetails.request({id: this.props.id}));
    }
 
    render() {

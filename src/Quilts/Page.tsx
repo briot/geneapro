@@ -26,19 +26,19 @@ interface QuiltsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
 }
 
 class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, {}> {
-   componentWillMount() {
-      this.calculateProps(this.props);
+   componentDidMount() {
+      this.calculateProps();
    }
 
-   componentWillReceiveProps(nextProps: QuiltsPageConnectedProps) {
-      if (this.props.decujusid !== nextProps.decujusid ||
-          this.props.settings.decujusTreeOnly !== nextProps.settings.decujusTreeOnly
+   componentDidUpdate(old: QuiltsPageConnectedProps) {
+      if (this.props.decujusid !== old.decujusid ||
+          this.props.settings.decujusTreeOnly !== old.settings.decujusTreeOnly
       ) {
-         this.calculateProps(nextProps);
+         this.calculateProps();
       }
 
-      const p = nextProps.allPersons[nextProps.decujusid];
-      nextProps.dispatch(addToHistory({person: p}));
+      const p = this.props.allPersons[this.props.decujusid];
+      this.props.dispatch(addToHistory({person: p}));
    }
 
    render() {
@@ -74,10 +74,10 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
       );
    }
 
-   private calculateProps(props: QuiltsPageConnectedProps) {
-      props.dispatch(fetchQuilts.request({
-         decujus: props.decujusid,
-         decujusOnly: props.settings.decujusTreeOnly,
+   private calculateProps() {
+      this.props.dispatch(fetchQuilts.request({
+         decujus: this.props.decujusid,
+         decujusOnly: this.props.settings.decujusTreeOnly,
       }));
    }
 

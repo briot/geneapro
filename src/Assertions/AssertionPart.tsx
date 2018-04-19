@@ -21,12 +21,7 @@ interface PartState {
 }
 
 export default class AssertionPart extends React.PureComponent<PartProps, PartState> {
-   constructor(props: PartProps) {
-      super(props);
-      this.state = {
-         expanded: false,
-      };
-   }
+   state: PartState = {expanded: false};
 
    onExpand = () => {
       if (this.props.expandable) {

@@ -25,14 +25,10 @@ interface UploadFormState {
 export class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
 
    fileInput: HTMLInputElement|null = null;
-
-   constructor(props: UploadFormProps) {
-      super(props);
-      this.state = {
-         files: [],
-         uploading: false,
-      };
-   }
+   state: UploadFormState = {
+      files: [],
+      uploading: false,
+   };
 
    send(files: File[]) {
       this.setState({uploading: true});

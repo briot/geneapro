@@ -15,6 +15,10 @@ interface ScalableSVGState {
 }
 
 export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, ScalableSVGState> {
+   state: ScalableSVGState = {
+      scale: 1,
+      translate: {left: 0, top: 0},
+   };
 
    zoomExtent: [number, number] = [1 / 6, 6];
    // Maximum levels of zoom (in and out)
@@ -28,14 +32,6 @@ export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, S
 
    private svgRef: SVGSVGElement;
 
-   constructor(props: ScalableSVGProps) {
-      super(props);
-      this.state = {
-         scale: 1,
-         translate: {left: 0, top: 0},
-      };
-   }
-   
    render() {
       return (
          <svg

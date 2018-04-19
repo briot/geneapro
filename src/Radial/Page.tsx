@@ -25,24 +25,24 @@ interface RadialPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
 
 class RadialPageConnected extends React.PureComponent<RadialPageConnectedProps, {}> {
    componentDidMount() {
-      this.calculateData(this.props);
+      this.calculateData();
    }
 
-   componentWillReceiveProps(nextProps: RadialPageConnectedProps) {
-      if (this.props.decujusid !== nextProps.decujusid ||
-          this.props.settings.generations !== nextProps.settings.generations) {
-         this.calculateData(nextProps);
+   componentDidUpdate(old: RadialPageConnectedProps) {
+      if (this.props.decujusid !== old.decujusid ||
+          this.props.settings.generations !== old.settings.generations) {
+         this.calculateData();
       }
 
-      const p = nextProps.persons[nextProps.decujusid];
-      nextProps.dispatch(addToHistory({person: p}));
+      const p = this.props.persons[this.props.decujusid];
+      this.props.dispatch(addToHistory({person: p}));
    }
 
-   calculateData(props: RadialPageConnectedProps) {
-      props.dispatch(fetchPedigree.request({
-         decujus: props.decujusid,
-         ancestors: Math.max(0, props.settings.generations),
-         descendants: Math.abs(Math.min(0, props.settings.generations)),
+   calculateData() {
+      this.props.dispatch(fetchPedigree.request({
+         decujus: this.props.decujusid,
+         ancestors: Math.max(0, this.props.settings.generations),
+         descendants: Math.abs(Math.min(0, this.props.settings.generations)),
       }));
    }
 
