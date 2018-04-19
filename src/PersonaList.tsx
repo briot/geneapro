@@ -102,7 +102,7 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
                      headerHeight={30}
                   >
                      <Column
-                        header={<Cell>Surname</Cell>}
+                        header={<Cell>Name</Cell>}
                         cell={({rowIndex, ...props}: CellProps) => {
                            const p: Person = persons[rowIndex as number];
                            const b = extractYear(p.birthISODate);
