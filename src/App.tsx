@@ -41,7 +41,6 @@ export default class App extends React.PureComponent<{}, MainAppState> {
          <Provider store={store}>
             <BrowserRouter>
                   <Switch>
-                     <Route path="/:decujusId?" exact={true} component={DashboardPage} />
                      <Route path="/persona/list" component={PersonaList} />
                      <Route path="/place/list" component={PlaceList} />
                      <Route path="/source/list" component={SourceList} />
@@ -54,6 +53,7 @@ export default class App extends React.PureComponent<{}, MainAppState> {
                      <Route path="/place/:id" component={PlacePage} />
                      <Route path="/import" component={ImportPage} />
                      <Route path="/stats/:decujusId" component={StatsPage} />
+                     <Route path="/:decujusId?" exact={true} component={DashboardPage} />
                      <Route children={() => <span>No match for route</span>} />
                   </Switch>
             </BrowserRouter>

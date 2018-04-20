@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Form, Icon } from 'semantic-ui-react';
+import { Button, Form, Icon, Loader } from 'semantic-ui-react';
 import './upload.css';
 
 export interface UploadResult {
@@ -31,6 +31,7 @@ export class UploadForm extends React.PureComponent<UploadFormProps, UploadFormS
    };
 
    send(files: File[]) {
+      window.console.log('MANU sending files', files);
       this.setState({uploading: true});
       this.props.doUpload(files).then((res: {success: boolean}) => {
          if (res.success) {
@@ -53,6 +54,7 @@ export class UploadForm extends React.PureComponent<UploadFormProps, UploadFormS
             tmp = [];
          }
 
+         window.console.log('MANU Add files', tmp);
          this.setState({files: tmp});
       }
    }
@@ -93,6 +95,10 @@ export class UploadForm extends React.PureComponent<UploadFormProps, UploadFormS
             drag it here
          </div>
       );
+
+      if (this.state.uploading) {
+         return <Loader active={true} size="large">Uploading</Loader>;
+      }
 
       return (
          <Form

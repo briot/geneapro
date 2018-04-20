@@ -72,8 +72,8 @@ class ImportPageConnected extends React.PureComponent<ImportPageProps, ImportPag
                   <p>
                   Geneaprove is currently mostly read-only. As such, we
                   recommend importing data from another genealogy software.
-                  In particular, the authors have tested importing from
-                  <b>Gramps</b> and <b>Roots Magic</b>.
+                  In particular, the authors have tested importing
+                  from <b>Gramps</b> and <b>Roots Magic</b>.
                   </p>
                   <p>
                   Most genealogy software are capable of exporting your data
