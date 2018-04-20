@@ -1,17 +1,38 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import 'fixed-data-table/dist/fixed-data-table.css';
 import Page from './Page';
 import { AppState, GPDispatch } from './Store/State';
 import { Input, Segment } from 'semantic-ui-react';
 import { Person, PersonSet } from './Store/Person';
 import { GenealogyEventSet } from './Store/Event';
 import { PersonaLink } from './Links';
-import { Table, CellProps, Column, Cell } from 'fixed-data-table';
 import { extractYear } from './Store/Event';
 import { fetchPersons } from './Store/Sagas';
-
+import SmartTable, { ColumnDescr } from './SmartTable';
 import './PersonaList.css';
+
+const ColId: ColumnDescr<Person, number> = {
+   headerName: 'Id',
+   get: (p: Person) => p.id,
+   format: (pid: number) => <PersonaLink id={pid} />,
+};
+
+const ColLife: ColumnDescr<Person, Person> = {
+   headerName: 'Lifespan',
+   defaultWidth: 20,
+   get: (p: Person) => p,
+   format: (p: Person) => {
+      const b = extractYear(p.birthISODate);
+      const d = extractYear(p.deathISODate);
+      return (
+         <span className="lifespan">
+            <span>{b}</span>
+            {(b || d) ? ' - ' : ''}
+            <span>{d}</span>
+         </span>
+      );
+   },
+};
 
 interface PersonaListProps {
    persons: PersonSet;
@@ -29,6 +50,8 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
       filter: '',
       persons: [],
    };
+
+   readonly cols: ColumnDescr<Person, Person|number>[] = [ColId, ColLife];
 
    componentDidUpdate(old: PersonaListProps) {
       if (old.persons !== this.props.persons) {
@@ -67,8 +90,6 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
       const width = 900;
       document.title = 'List of persons';
 
-      const idWidth = 100;
-      const nameWidth = width - idWidth;
       const persons = this.state.persons;
 
       return (
@@ -90,48 +111,14 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
                         style={{position: 'absolute', right: '5px', top: '5px'}}
                      />
                   </Segment>
-                  <Table
-                     rowHeight={30}
-                     rowsCount={persons.length}
+
+                  <SmartTable
                      width={width}
                      height={600}
-                     footerHeight={0}
-                     headerHeight={30}
-                  >
-                     <Column
-                        header={<Cell>Name</Cell>}
-                        cell={({rowIndex, ...props}: CellProps) => {
-                           const p: Person = persons[rowIndex as number];
-                           const b = extractYear(p.birthISODate);
-                           const d = extractYear(p.deathISODate);
-                           return (
-                              <Cell {...props} className="name">
-                                 <PersonaLink id={p.id} />
-                                <span className="lifespan">
-                                   <span>{b}</span>
-                                   {(b || d) ? ' - ' : ''}
-                                   <span>{d}</span>
-                                </span>
-                              </Cell>
-                           );
-                        }}
-                        isResizable={false}
-                        width={nameWidth}
-                     />
-                     <Column
-                        header={<Cell>Id</Cell>}
-                        cell={({rowIndex, ...props}: CellProps) => {
-                           const p: Person = persons[rowIndex as number];
-                           return (
-                              <Cell {...props} className="id">
-                                 <PersonaLink id={p.id} />
-                              </Cell>
-                           );
-                        }}
-                        isResizable={false}
-                        width={idWidth}
-                     />
-                  </Table>
+                     rowHeight={30}
+                     rows={persons}
+                     columns={this.cols}
+                  />
                </div>
             }
          />

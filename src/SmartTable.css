@@ -1,0 +1,138 @@
+/**
+ * SmartTable component
+ */
+.smartTable {
+   width: 100%;
+   display: flex;
+}
+.smartTable table {
+   font-family: Arial;
+   border-collapse: collapse;
+   border: 1px solid transparent;
+   table-layout: fixed;
+}
+.smartTable td,
+.smartTable th {
+   border-right: 1px solid #d4d4d4;
+   white-space: nowrap;
+   outline: none;  /* prevent highlighting when we click on column-resizer */
+   overflow: hidden;
+}
+.smartTable .ellipsize {
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
+/** Small rows */
+.smartTable.tiny td,
+.smartTable.tiny th {
+   font-size: 10px;
+   min-height: 0px;
+   line-height: 13px;
+   padding-top: 0;
+   padding-bottom: 0;
+}
+
+/** resizable columns */
+.smartTable td,
+.smartTable th {
+   min-width: 0px;
+}
+
+.smartTable tbody {
+   cursor: pointer;
+}
+.smartTable tbody tr:hover {
+   background-color: #f3f3f3;
+}
+
+/** Sortable table */
+.smartTable .sortable {
+   display: inline-block;
+   width: 100%;  /* easier to click on, to change sort column */
+}
+.smartTable .sortable:after {
+   font-family: Icons;
+   font-size: 10px;
+   padding-left: 1px;
+   position: absolute;
+}
+.smartTable .sortable:not(.sortUp):not(.sortDown):hover:after {
+   content: "\f0dc";  /* fa-var-sort */
+}
+.smartTable .sortUp:after {
+   content: "\f0de";  /* fa-var-sort-asc */
+}
+.smartTable .sortDown:after {
+   content: "\f0dd";  /* fa-var-sort-desc */
+}
+
+/* fixed headers */
+.smartTable.fixedHeader {
+   position: relative;
+}
+.smartTable.fixedHeader thead th,
+.smartTable.fixedHeader tfoot th {
+   /* only the <div> within is made visible, not the <th> */
+   height: 0;
+   line-height: 0;
+   margin: 0;
+   padding: 0;
+   border: none;
+   white-space: nowrap;
+}
+.smartTable.fixedHeader .header {
+   position: absolute;
+   width: 100%;
+   line-height: normal;
+   border-right: 1px solid #d4d4d4;
+}
+.smartTable.fixedHeader .header .ellipsize {
+   height: 100%;
+   vertical-align: middle;
+   padding: 5px 0;  /* vertical alignment */
+}
+
+.smartTable.fixedHeader thead .header {
+   top: 0;
+   border-bottom: 1px solid #d4d4d4;
+   border-left: 1px solid #d4d4d4;
+}
+.smartTable.fixedHeader tfoot .header {
+   bottom: 1px;
+   border-top: 1px solid #d4d4d4;
+}
+.smartTable.fixedHeader thead tr th:first-child .header,
+.smartTable.fixedHeader tfoot tr th:first-child .header {
+   margin-left: -1px;
+}
+
+/** Resizable columns */
+.smartTable .columnResizer {
+    position: absolute;
+    right: 3px;
+    width: 5px;
+    z-index: 6;
+    cursor: ew-resize;
+}
+
+/* tables with virtual rows */
+.virtual .stContainer {
+   /* width: 100%; */
+   overflow-y: auto;
+}
+.smartTable.virtual tr:first-child {
+   vertical-align: bottom;  /* The cell has a very large height to simulate
+                               scrollbars */
+}
+.smartTable.virtual tr:last-child {
+   vertical-align: top;
+}
+
+/* tables with filters */
+.smartTable input {
+   width: 100%;
+   font-size: 10px;
+   padding: 0;
+   margin: -2px 0;
+}

@@ -1,13 +1,19 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import 'fixed-data-table/dist/fixed-data-table.css';
 import Page from './Page';
 import { AppState, GPDispatch } from './Store/State';
 import { Input, Segment } from 'semantic-ui-react';
 import { Place, PlaceSet } from './Store/Place';
 import { PlaceLink } from './Links';
-import { Table, CellProps, Column, Cell } from 'fixed-data-table';
 import { fetchPlaces } from './Store/Sagas';
+import SmartTable, { ColumnDescr } from './SmartTable';
+import './PlaceList.css';
+
+const ColName: ColumnDescr<Place, Place> = {
+   headerName: 'Name',
+   get: (p: Place) => p,
+   format: (p: Place) => <PlaceLink id={p.id} />,
+};
 
 interface PlaceListProps {
    allPlaces: PlaceSet;
@@ -24,6 +30,8 @@ class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListSt
       filter: '',
       places: [],
    };
+
+   readonly cols: ColumnDescr<Place, Place>[] = [ColName];
 
    componentDidUpdate(old: PlaceListProps) {
       if (old.allPlaces !== this.props.allPlaces) {
@@ -85,28 +93,13 @@ class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListSt
                         style={{position: 'absolute', right: '5px', top: '5px'}}
                      />
                   </Segment>
-                  <Table
-                     rowHeight={30}
-                     rowsCount={places.length}
+                  <SmartTable
                      width={width}
                      height={600}
-                     footerHeight={0}
-                     headerHeight={30}
-                  >
-                     <Column
-                             header={<Cell>Name</Cell>}
-                             cell={({rowIndex, ...props}: CellProps) => {
-                                const p: Place = places[rowIndex as number];
-                                return (
-                                   <Cell {...props}>
-                                      <PlaceLink id={p.id} />
-                                   </Cell>
-                                );
-                             }}
-                             isResizable={false}
-                             width={width}
-                     />
-                  </Table>
+                     rowHeight={30}
+                     rows={places}
+                     columns={this.cols}
+                  />
                </div>
             }
          />

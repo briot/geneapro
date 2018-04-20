@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "d3": "^5.0.2",
-    "fixed-data-table": "^0.6.5",
     "react": "^16.3.2",
     "react-dom": "^16.3.2",
     "react-redux": "^5.0.7",
@@ -26,13 +25,13 @@
   "proxy": "http://localhost:8002",
   "devDependencies": {
     "@types/d3": "^5.0.0",
-    "@types/fixed-data-table": "^0.6.33",
     "@types/jest": "^22.2.3",
     "@types/node": "^9.6.5",
     "@types/react": "^16.3.11",
     "@types/react-dom": "^16.0.5",
     "@types/react-redux": "^5.0.16",
     "@types/react-router-dom": "^4.2.6",
+    "react-draggable": "^3.0.5",
     "typescript": "^2.8.1",
     "typescript-fsa": "2.5.0"
   }

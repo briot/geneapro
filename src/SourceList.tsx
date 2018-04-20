@@ -1,13 +1,19 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import 'fixed-data-table/dist/fixed-data-table.css';
 import Page from './Page';
 import { AppState, GPDispatch } from './Store/State';
 import { Input, Segment } from 'semantic-ui-react';
 import { Source, SourceSet } from './Store/Source';
 import { SourceLink } from './Links';
-import { Table, CellProps, Column, Cell } from 'fixed-data-table';
 import { fetchSources } from './Store/Sagas';
+import SmartTable, { ColumnDescr } from './SmartTable';
+import './SourceList.css';
+
+const colName: ColumnDescr<Source, number> = {
+   headerName: 'Name',
+   get: (s: Source) => s.id,
+   format: (sid: number) => <SourceLink id={sid} showAbbrev={true}/>,
+};
 
 interface SourceListProps {
    allSources: SourceSet;
@@ -24,6 +30,8 @@ class SourceListConnected extends React.PureComponent<SourceListProps, SourceLis
       filter: '',
       sources: [],
    };
+
+   readonly cols: ColumnDescr<Source, number>[] = [colName];
 
    componentDidUpdate(old: SourceListProps) {
       if (old.allSources !== this.props.allSources) {
@@ -86,28 +94,14 @@ class SourceListConnected extends React.PureComponent<SourceListProps, SourceLis
                         style={{position: 'absolute', right: '5px', top: '5px'}}
                      />
                   </Segment>
-                  <Table
-                     rowHeight={30}
-                     rowsCount={sources.length}
+
+                  <SmartTable
                      width={width}
                      height={600}
-                     footerHeight={0}
-                     headerHeight={30}
-                  >
-                     <Column
-                          header={<Cell>Name</Cell>}
-                          cell={({rowIndex, ...props}: CellProps) => {
-                             const s: Source = sources[rowIndex as number];
-                             return (
-                                <Cell {...props}>
-                                   <SourceLink id={s.id} showAbbrev={true}/>
-                                </Cell>
-                             );
-                          }}
-                          isResizable={false}
-                          width={width}
-                     />
-                  </Table>
+                     rowHeight={30}
+                     rows={sources}
+                     columns={this.cols}
+                  />
                </div>
             }
          />
