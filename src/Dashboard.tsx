@@ -91,14 +91,21 @@ class Dashboard extends React.PureComponent<{}, {}> {
       return (
          <div>
             <i>This is a mockup</i>
-            <Header size="medium">Recently views persons</Header>
+            <Header size="medium">Recently viewed persons</Header>
             <Card.Group>
-               <PersonCard name="Emmanuel Briot" dates="1975-" />
-               <PersonCard name="John Smith" dates="1950-2008" image="/assets/roland.jpg" />
-               <PersonCard name="Louis XIII" image="/assets/jacques_LE_TEXIER.jpg" />
+               <PersonCard name="Emmanuel Briot" dates="1975-" image="/assets/Emmanuel_Briot.jpg"/>
+               <PersonCard name="John Smith" dates="~January, 1580-June 21, 1631" image="/assets/John_Smith.jpg" />
+               <PersonCard name="Louis XIII" image="/assets/Louis_XIII.jpg" />
                <PersonCard name="Josephine" image="invalid"/>
+               <PersonCard name="Napoléon Bonaparte" dates="August 15, 1769-May 5, 1821" />
+               <PersonCard name="" dates="~60 Years Ago-Last Thursday" image="/assets/unknown-image.png" />
+               <PersonCard name="" dates="12 BC-34 AD" />
+               <PersonCard name="" image="/assets/unknown-image.png" />
+               <PersonCard name="" image="invalid" />
+               <PersonCard name="" dates="" image="" />
+               <PersonCard name="" />
             </Card.Group>
-            <Header size="medium">Recently views places</Header>
+            <Header size="medium">Recently viewed places</Header>
             <Card.Group>
                <PlaceCard name="Villeurbanne" loc="Rhone, France" />
                <PlaceCard name="Londres" loc="UK" />
