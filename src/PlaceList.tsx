@@ -77,7 +77,7 @@ class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListSt
       return (
          <Page
             main={
-               <div className="PlaceList">
+               <div className="PlaceList List">
                   <Segment
                      style={{width: width}}
                      color="blue"
@@ -95,7 +95,6 @@ class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListSt
                   </Segment>
                   <SmartTable
                      width={width}
-                     height={600}
                      rowHeight={30}
                      rows={places}
                      columns={this.cols}

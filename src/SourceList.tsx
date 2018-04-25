@@ -78,7 +78,7 @@ class SourceListConnected extends React.PureComponent<SourceListProps, SourceLis
       return (
          <Page
             main={
-               <div className="SourceList">
+               <div className="SourceList List">
                   <Segment
                      style={{width: width}}
                      color="blue"
@@ -97,7 +97,6 @@ class SourceListConnected extends React.PureComponent<SourceListProps, SourceLis
 
                   <SmartTable
                      width={width}
-                     height={600}
                      rowHeight={30}
                      rows={sources}
                      columns={this.cols}

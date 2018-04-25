@@ -7,6 +7,7 @@ import './SmartTable.css';
 const DEFAULT_WIDTH = 100;
 const SCROLLBAR_WIDTH = 0; // at least as wide as scrollbar
 const MIN_COL_WIDTH_PX = 10;
+const SCROLL_MARGIN = 20; // How many extra invisible rows to create
 
 type Alignment = 'right' | 'left' | 'center';
 
@@ -112,11 +113,12 @@ extends React.Component<ColumnResizerProps<RowData, ColumnsData>> {
    }
 
    render() {
+      const scroll = this.props.table.scrollable;
       return (
          <DraggableCore onDrag={this.onDrag} onStart={this.onDragStart as DraggableEventHandler}>
             <div
                className="columnResizer"
-               style={{height: this.props.table.props.height}}
+               style={{height: scroll ? scroll.clientHeight : '100%'}}
             />
          </DraggableCore>
       );
@@ -175,7 +177,6 @@ interface SmartTableProps<RowData, ColumnsData> {
 
    // Size allocated to the table
    width: number;
-   height: number;
 
    // Whether headers should scroll with the table, or always stay visible
    fixedHeader?: boolean;
@@ -240,7 +241,7 @@ extends React.PureComponent<SmartTableProps<RowData, ColumnsData>,
       colWidth: [],
       filters: [],
    };
-   private scrollable?: HTMLElement|null;
+   scrollable?: HTMLElement|null;
 
    static sortRows<T>(
       rows: T[],
@@ -315,18 +316,20 @@ extends React.PureComponent<SmartTableProps<RowData, ColumnsData>,
    }
 
    protected createRows(): JSX.Element[] {
-      let result: JSX.Element[] = [];
-
+      if (!this.scrollable) {
+         return [];
+      }
       const rows = this.state.sortedRows;
       const rh: number = this.props.rowHeight!;
-      const totalHeight = this.props.height +
+      const totalHeight = this.scrollable.clientHeight +
          rh * this.rowsInHead() -
          rh * this.state.rowsInFoot;
-      const fromIndex = Math.floor(this.state.scrollTop / rh);
+      const fromIndex = Math.max(0, Math.floor(this.state.scrollTop / rh) - SCROLL_MARGIN);
       const toIndex = Math.min(
-         Math.ceil((this.state.scrollTop + totalHeight) / rh) - 1,
+         Math.ceil((this.state.scrollTop + totalHeight) / rh) - 1 + SCROLL_MARGIN,
          rows.length - 1);  // last valid index
 
+      let result: JSX.Element[] = [];
       for (let r = fromIndex; r <= toIndex; r++) {
          const height: number =
             (r === fromIndex ? (fromIndex + 1) * rh :
@@ -344,7 +347,7 @@ extends React.PureComponent<SmartTableProps<RowData, ColumnsData>,
       return result;
    }
 
-   onScroll = (/*event: React.UIEvent<HTMLDivElement>*/) => {
+   onScroll = () => {
       this.setState({scrollTop: this.scrollable!.scrollTop});
    }
 
@@ -460,7 +463,6 @@ extends React.PureComponent<SmartTableProps<RowData, ColumnsData>,
          <div
             onScroll={this.onScroll}
             className={'smartTable virtual ' + (this.props.fixedHeader ? 'fixedHeader' : '')}
-            style={{height: this.props.height + 'px'}}
          >
             <div
                ref={r => this.scrollable = r}

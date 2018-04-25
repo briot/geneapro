@@ -95,7 +95,7 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
       return (
          <Page
             main={
-               <div className="PersonaList">
+               <div className="PersonaList List">
                   <Segment
                      style={{width: width}}
                      color="blue"
@@ -114,10 +114,10 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
 
                   <SmartTable
                      width={width}
-                     height={600}
                      rowHeight={30}
                      rows={persons}
                      columns={this.cols}
+                     resizableColumns={true}
                   />
                </div>
             }
