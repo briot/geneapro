@@ -1078,7 +1078,8 @@ class GedcomImporter(object):
                 t = self._citation_part_types.get(tag, None)
                 if t is None:
                     t = self._citation_part_types[tag] = \
-                        models.Citation_Part_Type(gedcom=tag, name=tag)
+                        models.Citation_Part_Type.objects.create(
+                            gedcom=tag, name=tag)
                 self._all_citation_parts.append(
                     models.Citation_Part(
                         source=s,
@@ -1585,7 +1586,8 @@ class GedcomImporter(object):
                         l = a.value.lower()
                         relation = self._p2p_types.get(l, None)
                         if relation is None:
-                            relation = models.P2P_Type.objects.create(a.value)
+                            relation = models.P2P_Type.objects.create(
+                                name=a.value)
                             self._p2p_types[l] = relation
                     else:
                         self.ignored(a, prefix="INDI.ASSO")
