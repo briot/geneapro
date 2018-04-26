@@ -329,7 +329,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('mime_type', models.CharField(max_length=40)),
-                ('file', models.TextField()),
+                ('file', models.TextField(null=True)),
                 ('comments', models.TextField(null=True)),
             ],
             options={
@@ -357,6 +357,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=100)),
+                ('place', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='geneaprove.Place')),
                 ('comment', models.TextField(help_text='Contact information for this researcher, like email or postal addresses,...', null=True)),
             ],
             options={
@@ -483,12 +484,12 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='p2p',
             name='person1',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sameAs1', to='geneaprove.Persona'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='p2p_from', to='geneaprove.Persona'),
         ),
         migrations.AddField(
             model_name='p2p',
             name='person2',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sameAs2', to='geneaprove.Persona'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='p2p_to', to='geneaprove.Persona'),
         ),
         migrations.AddField(
             model_name='p2p',
@@ -558,7 +559,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='p2c',
             name='person',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='characteristics', to='geneaprove.Persona'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='p2c', to='geneaprove.Persona'),
         ),
         migrations.AddField(
             model_name='p2c',
