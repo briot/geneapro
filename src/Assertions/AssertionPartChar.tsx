@@ -31,7 +31,7 @@ export default class AssertionPartCharacteristic extends React.PureComponent<Cha
                      <div>
                         {c.parts.map(
                            (p: CharacteristicPart, idx: number) =>
-                              <div key={idx}>
+                              <div key={idx} className="preLine">
                                  {p.name === c.name ?
                                     '' :
                                     p.name + ': '}

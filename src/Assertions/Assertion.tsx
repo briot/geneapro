@@ -45,7 +45,7 @@ function ConnectedAssertionBox(props: ConnectedBoxProps) {
                   }
                </div>
             </div>
-            <div style={{whiteSpace: 'pre-line'}}>
+            <div className="preLine">
                <i>Rationale:</i> {a.rationale}
             </div>
             <div className="researcher">

@@ -586,13 +586,14 @@ class GedcomImporter(object):
         for e in fam_events:
             found += 1
             self._create_event(
-                e, husb_and_wife, CHAN=chan, surety=self._default_surety)
+                e, husb_and_wife, CHAN=chan, surety=self._default_surety,
+                prefix="FAM")
 
         for n in notes:
             all_children = [self._ids_indi[(NO_SOURCE, x.as_xref())]
                             for x in children]
             for indi in [husb, wife] + all_children:
-                self._create_characteristic(n, indi, CHAN=chan)
+                self._create_characteristic(n, indi, CHAN=chan, prefix="FAM")
 
         if sources:
             # If we have some SOUR for the family, we need to create a
@@ -611,6 +612,7 @@ class GedcomImporter(object):
                              ]),
                 husb_and_wife,
                 surety=self._default_surety,
+                prefix="FAM",
                 CHAN=chan)
 
         # Now add the children.
@@ -786,13 +788,14 @@ class GedcomImporter(object):
         x = field.as_xref()
         return self._ids_note[x] if x else field.value
 
-    def _create_characteristic(self, field, indi, CHAN=None):
+    def _create_characteristic(self, field, indi, CHAN=None, prefix=""):
         """Create a Characteristic for the person indi.
          Return True if a characteristic could be created, false otherwise.
 
          :param GedcomRecord field:
          :param Persona indi:
          :param datetime.datetime|None CHAN:
+         :param str prefix: for error messages
 
          As defined in the GEDCOM standard, and except for the NAME which
          is special, all other attributes follow the following grammar:
@@ -801,6 +804,9 @@ class GedcomImporter(object):
          where EVENT_DETAIL can define any of the following: TYPE, DATE,
          PLAC, ADDR, AGE, AGNC, CAUS, SOUR, NOTE, MULT
         """
+
+        if prefix:
+            prefix += "."
 
         if field.tag == 'NAME':
             # Special handling for name: its value was used to create the
@@ -823,7 +829,7 @@ class GedcomImporter(object):
             elif f.tag in SOUR_FIELDS:
                 pass   # already processed
             elif f.tag == "DATE":
-                self.ignore_fields(f, prefix=field.tag)
+                self.ignore_fields(f, prefix=prefix + field.tag)
                 date = f.value
 
         c = models.Characteristic.objects.create(
@@ -873,7 +879,7 @@ class GedcomImporter(object):
                 pass   # already handled
 
             elif f.tag == "NOTE":
-                self.ignore_fields(f, prefix=field.tag)
+                self.ignore_fields(f, prefix=prefix + field.tag)
                 self._all_char_parts.append(
                     models.Characteristic_Part(
                         characteristic=c,
@@ -881,7 +887,7 @@ class GedcomImporter(object):
                         name=self._get_note(f)))
 
             elif f.tag == "GIVN" and GIVEN_NAME_TO_MIDDLE_NAME:
-                self.ignore_fields(f, prefix=field.tag)
+                self.ignore_fields(f, prefix=prefix + field.tag)
 
                 givn = self._char_types[f.tag]
                 midl = self._char_types['_MIDL']
@@ -895,7 +901,7 @@ class GedcomImporter(object):
                     for m in n[1:] if m)
 
             elif f.tag in self._char_types:
-                self.ignore_fields(f, prefix=field.tag)
+                self.ignore_fields(f, prefix=prefix + field.tag)
 
                 # Includes "TYPE", since "FACT.TYPE" explains what the
                 # attribute is about.
@@ -905,7 +911,7 @@ class GedcomImporter(object):
                         characteristic=c, type=t, name=f.value))
 
             else:
-                self.ignored(f, prefix=field.tag)
+                self.ignored(f, prefix=prefix + field.tag)
 
     def _process_SOUR(self, sour, prefix):
         """
@@ -924,8 +930,8 @@ class GedcomImporter(object):
         obje = []    # list of GedcomRecord
         repos = []
         text = []    # Text representation of the source
-        subject_date = ""
-        subject_date_sort = ""
+        subject_date = None
+        events = []  # Anonymous events referenced in source
 
         x = sour.as_xref()
         if x:
@@ -960,26 +966,13 @@ class GedcomImporter(object):
                 repos.append(f)
             elif f.tag == "DATA":
                 for a in f.fields:
-                    if a.tag == "EVEN":
-                        if a.value:
-                            self.report_error(a, "ignored EVEN value")
-                        for b in a.fields:
-                            if b.tag == "DATE":
-                                self.ignore_fields(
-                                    b, prefix="%s.DATA.EVEN" % prefix)
-                                subject_date = b.value
-                                # ??? Should set subject_date_sort
-                            elif b.tag == "PLAC":
-                                self.ignore_fields(
-                                    b, prefix="%s.DATA.EVEN" % prefix)
-                                notes.append("Place: %s" % b.value)
-                            else:
-                                self.ignored(b, prefix="%s.DATA.EVEN" % prefix)
+                    if a.tag == "EVEN":  # List of events in that source
+                        events.append(a)
                     elif a.tag == "AGNC":
-                        self.ignored(a, prefix="%s.DATA" % prefix)
+                        self.ignore_fields(a, prefix="%s.DATA" % prefix)
                         notes.append("Agency: %s" % a.value)
                     elif a.tag == "NOTE":
-                        self.ignored(a, prefix="%s.DATA" % prefix)
+                        self.ignore_fields(a, prefix="%s.DATA" % prefix)
                         notes.append(a.value)
                     elif a.tag == "DATE":   # for SOURCE_CITATION
                         self.ignore_fields(a, prefix="%s.DATA" % prefix)
@@ -988,8 +981,6 @@ class GedcomImporter(object):
                         subject_date = a.value
                     elif a.tag == "TEXT":   # for SOURCE_CITATION
                         self.ignore_fields(a, prefix="%s.DATA" % prefix)
-                        if subject_date:
-                            self.report_error(a, "Multiple DATA.DATE")
                         text.append(a.value)
                     else:
                         self.ignored(a, prefix="%s.DATA" % prefix)
@@ -1033,7 +1024,6 @@ class GedcomImporter(object):
             s.biblio = bibl or title
             s.comments = '\n\n'.join(notes)
             s.subject_date = subject_date
-            s.subject_date_sort = subject_date_sort
             s.save()
 
             # Associate with the repositories
@@ -1097,6 +1087,52 @@ class GedcomImporter(object):
                     file=None,
                     mime_type="text/plain",
                     comments=t)
+
+            # Create anonymous events
+
+            for a in events:
+                date = None
+                plac = self._extract_ADDR_PLAC_OBJE(a)
+
+                for b in a.fields:
+                    if b.tag == "DATE":
+                        self.ignore_fields(b, prefix="%s.DATA.EVEN" % prefix)
+                        date = b.value
+                    elif b.tag in PLAC_OBJE_FIELDS:
+                        pass # already handled
+                    else:
+                        self.ignored(b, prefix="%s.DATA.EVEN" % prefix)
+
+                types = a.value or "EVEN"
+                for tname in types.split(','):
+                    tname = tname.strip()
+                    t = self._event_types.get(tname, None)
+                    if t is None:
+                        t = self._event_types[tname] = \
+                            models.Event_Type.objects.create(
+                                gedcom=tname, name=tname)
+                    e = models.Event.objects.create(
+                        type=t,
+                        place=plac,
+                        name=t.name,
+                        date=date)
+                    anonymous = models.Persona.objects.create(
+                        name="Anonymous from gedcom source",
+                        description="Created automatically by importer",
+                        last_change=last_change)
+                    self._all_p2e.append(
+                        models.P2E(
+                            surety=self._default_surety,
+                            researcher=self._researcher,
+                            disproved=False,
+                            person=anonymous,
+                            event=e,
+                            source=s,
+                            role=self._principal,
+                            last_change=last_change,
+                            rationale="Event described in Gedcom"))
+
+            # Return the source
 
             self._sources[lookup_name] = s
             return (sour.id or NO_SOURCE, s)
@@ -1403,13 +1439,14 @@ class GedcomImporter(object):
             for f in files]
 
     def _create_event(self, field, indi_and_role, surety, CHAN=None,
-                      disproved=False):
+                      disproved=False, prefix=""):
         """
         Create a new event, associated with INDI by way of one or more
         assertions based on sources.
 
         :param list indi_and_role: list of individual to associate with the
            event, and their role
+        :param str prefix: for error messages
         """
 
         assert isinstance(indi_and_role, list)
@@ -1425,6 +1462,9 @@ class GedcomImporter(object):
         date = None
         place = self._extract_ADDR_PLAC_OBJE(field)
 
+        if prefix:
+            prefix += "."
+
         # The notes we find are associated with the event, not with the source.
         # Since they are also found in the context of INDI, they thus belong
         # to both the event and the person, so we store them in p2e assertions
@@ -1432,7 +1472,7 @@ class GedcomImporter(object):
 
         for f in field.fields:
             if place is None and f.tag == "OBJE":
-                self.ignored(f, prefix=field.tag)
+                self.ignored(f, prefix=prefix + field.tag)
             elif f.tag in PLAC_OBJE_FIELDS:
                 pass # already processed
             elif f.tag in SOUR_FIELDS:
@@ -1440,7 +1480,7 @@ class GedcomImporter(object):
             elif f.tag == "FAMC" and field.tag == "ADOP":
                 pass  # already processed
             elif f.tag == "TYPE":
-                self.ignore_fields(f, prefix=field.tag)
+                self.ignore_fields(f, prefix=prefix + field.tag)
                 type_descr = ' (%s)' % f.value
 
                 # In Gramps, an "EVEN" is used to represent events entered as
@@ -1462,13 +1502,13 @@ class GedcomImporter(object):
                     type_descr = ''  # to avoid duplication in name of event
 
             elif f.tag == "DATE":
-                self.ignore_fields(f, prefix=field.tag)
+                self.ignore_fields(f, prefix=prefix + field.tag)
                 date = f.value
             elif f.tag == "NOTE":
-                self.ignore_fields(f, prefix=field.tag)
+                self.ignore_fields(f, prefix=prefix + field.tag)
                 notes.append(self._get_note(f))
             else:
-                self.ignored(f, prefix=field.tag)
+                self.ignored(f, prefix=prefix + field.tag)
 
         # Create a descriptive name for the event
 
@@ -1540,7 +1580,8 @@ class GedcomImporter(object):
                 self._create_characteristic(d, indi, CHAN=indi.last_change)
 
             elif f.tag in self._char_types:
-                self._create_characteristic(f, indi, CHAN=indi.last_change)
+                self._create_characteristic(
+                    f, indi, CHAN=indi.last_change, prefix="INDI")
             elif f.tag[0] == "_" and f.value and not f.fields:
                 # A GEDCOM extension by an application.  If this is a simple
                 # string value, assume this is a characteristic.  Create the
@@ -1548,19 +1589,20 @@ class GedcomImporter(object):
                 self._char_types[f.tag] = \
                     models.Characteristic_Part_Type.objects.create(
                         is_name_part=False, name=f.tag, gedcom=f.tag)
-                self._create_characteristic(f, indi, CHAN=indi.last_change)
+                self._create_characteristic(
+                    f, indi, CHAN=indi.last_change, prefix="INDI")
 
             elif f.tag in self._event_types:
                 self._create_event(
                     f, [(indi, self._principal)], CHAN=indi.last_change,
-                    surety=self._default_surety)
+                    surety=self._default_surety, prefix="INDI")
             elif f.tag[0] == "_" and f.fields:
                 # A GEDCOM extension as a complex value. Assume it is an event
                 self._event_types[f.tag] = \
                     models.Event_Type.objects.create(gedcom=f.tag, name=f.tag)
                 self._create_event(
                     f, [(indi, self._principal)], CHAN=indi.last_change,
-                    surety=self._default_surety)
+                    surety=self._default_surety, prefix="INDI")
 
             elif f.tag == "SOUR":
                 # The individual is apparently cited in a source, but is not
@@ -1603,6 +1645,18 @@ class GedcomImporter(object):
                             person1=indi,
                             person2=related,
                             type=relation))
+
+            elif f.tag == "ALIA":
+                related = self._ids_indi[(NO_SOURCE, f.as_xref())]
+                self._all_p2p.append(
+                    models.P2P(
+                        surety=self._default_surety,
+                        researcher=self._researcher,
+                        last_change=indi.last_change,
+                        person1=indi,
+                        person2=related,
+                        rationale="Marked as aliases in imported gedcom",
+                        type_id=models.P2P_Type.sameAs))
 
             else:
                 self.ignored(f, prefix='INDI')

@@ -17,6 +17,10 @@
    height: calc(100vh - 90px);
 }
 
+.preLine {
+   white-space: pre-line !important;
+}
+
 /* Workaround bug in semantic-ui: an icon 'list' results in extra
  * indentation.
  * https://github.com/Semantic-Org/Semantic-UI/issues/5499

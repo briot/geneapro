@@ -62,7 +62,7 @@ export default class SourceDetails extends React.PureComponent<SourceProps, Sour
 
       return (
          <div className="Source">
-            <Segment attached={true} className="pageTitle">
+            <Segment attached={true} className="pageTitle preLine">
                {this.state.title || <span>&nbsp;</span>}
             </Segment>
 
