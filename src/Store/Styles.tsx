@@ -1,9 +1,9 @@
 import * as d3Color from 'd3-color';
 
 export interface PersonStyle {
-   fill?: d3Color.ColorCommonInstance;
-   stroke?: d3Color.ColorCommonInstance;
-   color?: d3Color.ColorCommonInstance;
+   fill?: d3Color.ColorCommonInstance|null;
+   stroke?: d3Color.ColorCommonInstance|null;
+   color?: d3Color.ColorCommonInstance|null;
    fontWeight?: string;
 }
 
