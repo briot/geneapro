@@ -29,7 +29,6 @@ export function sourceFromJSON(s: JSON.Source) {
       lastChange: new Date(s.last_change),
       subjectDate: s.subject_date,
       subjectPlace: s.subject_place,
-      medias: [],
       parts: {},
    };
    return result;

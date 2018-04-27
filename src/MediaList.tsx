@@ -54,6 +54,7 @@ export default class Medias extends React.PureComponent<MediasProps, MediasState
                <Image
                   fluid={true}
                   src={m.url}
+                  alt={m.file}
                   title={m.comments + '\n\n' + m.file}
                />
             </div>
@@ -72,6 +73,7 @@ export default class Medias extends React.PureComponent<MediasProps, MediasState
                         src={m.url}
                         size="small"
                         bordered={true}
+                        alt={m.file}
                         title={m.comments + '\n\n' + m.file}
                         style={{minWidth: 50}}
                         onClick={() => this.selectImage(idx)}

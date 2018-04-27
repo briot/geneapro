@@ -33,7 +33,7 @@ export interface Source {
    jurisdictionPlace?: string;
    lastChange?: Date;
 
-   medias: SourceMedia[];
+   medias?: SourceMedia[];
    asserts?: AssertionList;
    parts: CitationPartSet;
 }
