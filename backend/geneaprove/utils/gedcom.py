@@ -34,10 +34,17 @@ unlimited = 100000
 
 class _File(object):
     def __init__(self, filename):
-        # Do not assume a specific encoding, so read as bytes
-        f = open(filename, "rb")
-        self.buffer = f.read()
-        f.close()
+        # Reading from './manage.py import', we get a string
+        if isinstance(filename, str): 
+            # Do not assume a specific encoding, so read as bytes
+            f = open(filename, "rb")
+            self.buffer = f.read()
+            f.close()
+
+        # From the GUI client, we get a django file object
+        else:
+            self.buffer = filename.read()
+
         self.pos = 0
 
     def readline(self):
