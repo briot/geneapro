@@ -43,6 +43,7 @@ def forward(apps, schema_editor):
         PPart(gedcom="WWW",      name="website"),
         PPart(gedcom="EMAIL",    name="email"),
         PPart(gedcom="FAX",      name="fax"),
+        PPart(gedcom="PHON",     name="phone"),
         PPart(gedcom="WEB",      name="website"),
         PPart(gedcom="NOTE",     name="note"),
         PPart(gedcom="FORM",     name="place hierarchy"),

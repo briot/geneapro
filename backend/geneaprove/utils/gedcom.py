@@ -112,6 +112,13 @@ class _Lexical(object):
     def decode_any(self, value):
         return value.decode(self.encoding, "replace")
 
+    def error(self, msg, fatal=False):
+        m = "Line %s: %s" % (self.line, msg)
+        if fatal:
+            raise Exception(m)
+        else:
+            print(m)
+
     def _parse_line(self, line):
         """
         Parse one line into its components
@@ -127,8 +134,7 @@ class _Lexical(object):
         line = self.decode(line).split('\n')[0]
         g = line.split(None, 2)   # Extract first three fields
         if len(g) < 2:
-            raise Invalid_Gedcom(
-                "Line %s Invalid line format: '%s'" % (self.line, line))
+            self.error(line, fatal=True)
 
         if g[1][0] == '@':
             # "1 @I0001@ INDI"
@@ -165,7 +171,7 @@ class _Lexical(object):
                 self.encoding = "ascii"
                 self.decode = self.decode_any
             else:
-                logger.info('Unknown encoding %s' % (r[4], ))
+                self.error('Unknown encoding %s' % (r[4], ))
 
         return r
 
@@ -299,15 +305,13 @@ class F(object):
 
         if self.text is None:
             if value:
-                raise Invalid_Gedcom(
-                    "Line %s Unexpected text value after %s" % (linenum, tag))
+                print("Line %s Unexpected text value after %s" % (linenum, tag))
             val = None
         elif self.text == "Y":
             # Gedcom standard says value must be "Y", but PAF also uses "N".
             # The tag should simply not be there in this case
             if value and value not in ("Y", "N"):
-                raise Invalid_Gedcom(
-                    "Line %s Unexpected text value after %s" % (linenum, tag))
+                print("Line %s Unexpected text value after %s" % (linenum, tag))
             
         r = GedcomRecord(id=id, line=linenum, tag=tag, value=val)
 
@@ -326,11 +330,9 @@ class F(object):
             if cdescr is None:
                 if ctag[0] == '_':
                     # A custom tag is allowed, and should accept anything
-                    raise Invalid_Gedcom(
-                        "Line %d Custom tag not supported: %s" % (clinenum, ctag))
+                    print("Line %d Custom tag not supported: %s" % (clinenum, ctag))
                 else:
-                    raise Invalid_Gedcom(
-                        "Line %s Unexpected tag: %s" % (clinenum, ctag))
+                    print("Line %s Unexpected tag: %s" % (clinenum, ctag))
 
                 # skip this record (should be a special type of F)
                 while True:
@@ -665,7 +667,9 @@ INDIVIDUAL_EVENT_STRUCT = [
     F("WILL", 0, unlimited, "Y", INDI_EV_DETAIL),
     F("GRAD", 0, unlimited, "Y", INDI_EV_DETAIL),
     F("RETI", 0, unlimited, "Y", INDI_EV_DETAIL),
-    F("EVEN", 0, unlimited, "Y", INDI_EV_DETAIL),
+    F("EVEN", 0, unlimited, "", INDI_EV_DETAIL),
+         # Gedcom 5.5.1 says no text should be allowed, but Gramps outputs the
+         # name of the event there.
 ]
 
 LDS_INDI_ORDINANCE_BAPL = [

@@ -1512,12 +1512,15 @@ class GedcomImporter(object):
 
         # Create a descriptive name for the event
 
-        name = "%s%s -- %s" % (
-            (evt_type_name or evt_type.name).title(), # type of event
-            type_descr,       # More specific information for type
-            " and ".join(p.name for p, role in indi_and_role  # Principals
-                         if p and role == self._principal),
-        )
+        name = field.value \
+                if field.value and field.value not in ("Y", "N") else ""
+        if not name:
+            name = "%s%s -- %s" % (
+                (evt_type_name or evt_type.name).title(), # type of event
+                type_descr,       # More specific information for type
+                " and ".join(p.name for p, role in indi_and_role  # Principals
+                             if p and role == self._principal),
+            )
 
         # For each source, we duplicate the event.
         # Otherwise, we end up with multiple 'principal', 'mother',...
