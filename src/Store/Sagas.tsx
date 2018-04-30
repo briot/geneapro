@@ -8,7 +8,8 @@ import { fetchPlacesFromServer, FetchPlacesResult } from '../Server/Place';
 import { fetchSourcesFromServer, FetchSourcesResult,
          fetchSourceDetailsFromServer, FetchSourceDetailsResult } from '../Server/Source';
 import { fetchQuiltsFromServer, QuiltsResult } from '../Server/Quilts';
-import { AppState } from '../Store/State';
+import { fetchCountFromServer, JSONCount } from '../Server/Stats';
+import { AppState, DatabaseObjectsCount } from '../Store/State';
 import { PersonSet } from '../Store/Person';
 import { allSagas, createAsyncAction } from '../Store/Actions';
 import { addEvents, GenealogyEventSet } from '../Store/Event';
@@ -160,6 +161,17 @@ function* _fetchSourceDetails(p: fetchSourceDetailsParams) {
 }
 export const fetchSourceDetails = createAsyncAction(
    'DATA/SOURCE', _fetchSourceDetails, _hasSourceDetails);
+
+/**
+ * Async Action: fetch count of objects from database
+ */
+
+function* _fetchCount() {
+   const res: JSONCount = yield call(fetchCountFromServer, {});
+   return res as DatabaseObjectsCount;
+}
+export const fetchCount = createAsyncAction(
+   'DATA/STATS/COUNT', _fetchCount);
 
 /**
  * Internal

@@ -12,6 +12,9 @@ import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { QuiltsResult } from '../Server/Quilts';
 import { ResearcherSet } from '../Store/Researcher';
+import { JSONCount } from '../Server/Stats';
+
+export type DatabaseObjectsCount = JSONCount;
 
 export interface AppState {
    pedigree: PedigreeSettings;
@@ -21,6 +24,7 @@ export interface AppState {
    quiltsLayout: {
       layout?: QuiltsResult,
    };
+   count: DatabaseObjectsCount|undefined;
    persons: PersonSet;        // details for all persons
    places: PlaceSet;          // details for all places
    events: GenealogyEventSet; // all known events

@@ -18,6 +18,7 @@ export function urlPersona(id: number) {
 
 interface PersonaLinkProps {
    id: number;
+   hideIcon?: boolean;
 }
 interface ConnectedPersonaLinkProps extends PersonaLinkProps {
    person: Person|undefined;
@@ -31,7 +32,7 @@ function ConnectedPersonaLink(props: ConnectedPersonaLinkProps) {
          className="link persona"
          title={s}
       >
-         <Icon name="user" />
+         {!props.hideIcon && <Icon name="user" />}
          {s}
          <span className="id">{props.id}</span>
       </Link>

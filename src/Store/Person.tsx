@@ -1,5 +1,5 @@
-import { AssertionList } from './Assertion';
-import { PersonStyle } from './Styles';
+import { AssertionList } from '../Store/Assertion';
+import { PersonStyle } from '../Store/Styles';
 
 // The base type is only needed until the server returns a proper Person.
 export interface BasePerson {

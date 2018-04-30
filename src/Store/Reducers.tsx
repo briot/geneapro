@@ -5,7 +5,7 @@ import { personDisplay, PersonSet } from '../Store/Person';
 import { SourceSet } from '../Store/Source';
 import { addToHistory, HistoryItem, HistoryKind } from '../Store/History';
 import { fetchPedigree, fetchPedigreeResult, fetchPersonDetails, fetchPersons,
-         fetchEventDetails, fetchSourceDetails, fetchSources,
+         fetchEventDetails, fetchSourceDetails, fetchSources, fetchCount,
          fetchPlaces, fetchPlaceDetails, fetchQuilts } from '../Store/Sagas';
 import { addEvents } from '../Store/Event';
 import { EventDetails } from '../Server/Event';
@@ -64,6 +64,7 @@ export function rootReducer(
       sources: {},
       history: [],
       researchers: {},
+      count: undefined,
       csrf: '',
    },
    action: Redux.Action
@@ -73,7 +74,7 @@ export function rootReducer(
       return {...state, events: {...state.events, ...action.payload.events}};
 
    } else if (isType(action, addToHistory)) {
-      const MAX_HISTORY_SIZE = 15;
+      const MAX_HISTORY_SIZE = 30;
       let item: HistoryItem;
 
       const p = action.payload.person;
@@ -119,6 +120,9 @@ export function rootReducer(
 
    } else if (isType(action, changeRadialSettings)) {
       return {...state, radial: {...state.radial, ...action.payload.diff}};
+
+   } else if (isType(action, fetchCount.done)) {
+      return {...state, count: action.payload.result};
 
    } else if (isType(action, fetchEventDetails.done)) {
       const data = action.payload.result as EventDetails;

@@ -23,6 +23,7 @@ from geneaprove.views.graph import QuiltsView
 import geneaprove.views.events
 import geneaprove.views.merge
 import geneaprove.views.graph
+import geneaprove.views.count
 from geneaprove.views.importers import GedcomImport
 import sys
 
@@ -74,6 +75,7 @@ urlpatterns = [
     url(r'^data/suretySchemes$', SuretySchemesList.as_view()),
     url(r'^data/event/(\d+)$', geneaprove.views.events.EventDetailsView.as_view()),
     url(r'^data/legend$', geneaprove.views.rules.getLegend),
+    url(r'^data/stats/count$', geneaprove.views.count.CountView.as_view()),
     url(r'^data/stats/(?P<id>\d+)$', StatsView.as_view()),
     url(r'^data/import$', GedcomImport.as_view()),
     url(r'^data/citationModel/(?P<model_id>.+)$', CitationModel.as_view()),

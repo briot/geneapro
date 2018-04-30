@@ -218,6 +218,12 @@ class Digraph(object):
         for n in self.outedges:
             yield n
 
+    def nodes_count(self):
+        """
+        Return the number of nodes in the graph
+        """
+        return len(self.outedges)
+
     def sorted_nodes(self):
         """
         Iter over all nodes, in the order defined by the nodes' __cmp__

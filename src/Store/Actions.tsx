@@ -1,4 +1,4 @@
-import { call, put, select, takeEvery, ForkEffect } from 'redux-saga/effects';
+import { call, put, select, takeEvery, CallEffect, ForkEffect } from 'redux-saga/effects';
 import actionCreatorFactory, { Action } from 'typescript-fsa';
 import { AppState } from '../Store/State';
 
@@ -27,7 +27,7 @@ export const allSagas: ForkEffect[] = [];
 
 export function createAsyncAction<Params, Result>(
    type: string,
-   func: (p: Params) => Iterable<Result>,
+   func: (p: Params) => Iterable<CallEffect|Result>,
    alreadyKnown?: (p: Params, state: AppState) => boolean,
 ) {
    const actions = actionCreator.async<Params, Result, {}>(type);
