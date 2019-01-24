@@ -18,10 +18,6 @@ import os
 
 logger = logging.getLogger('geneaprove.importers')
 
-DEBUG = False
-if not DEBUG:
-   logging.getLogger('django.db.backends').setLevel(logging.WARNING)
-
 # If true, the given name read from gedcom is split (on spaces) into
 # a given name and one or more middle names. This might not be appropriate
 # for all languages.

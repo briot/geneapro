@@ -363,6 +363,10 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    http://www.aupresdenosracines.com/2017/04/3-raisons-dutiliser-les-matrices-cadastrales.html
 ** export to Latex
    See https://ctan.org/pkg/genealogytree
+** EventSource vs websockets
+   https://sipsandbits.com/2018/05/10/you-may-not-need-websockets/
+** Old books
+   https://archive.org/search.php?query=jules%20cesar
 
 * Existing code
 ** gedcom parsers

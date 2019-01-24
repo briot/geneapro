@@ -15,7 +15,6 @@ class GedcomTestCase(unittest.TestCase):
     def setUp(self):
         """see inherited documentation"""
         self.dir = os.path.normpath(os.path.dirname(__file__))
-        self.parsers = gedcom.Gedcom()
 
     def _process_file(self, filename):
         """parse a file and test the expected output"""
@@ -23,7 +22,7 @@ class GedcomTestCase(unittest.TestCase):
         error = ""
         try:
             # Universal newline
-            self.parsers.parse(filename)
+            gedcom.parse_gedcom(filename)
             error = error + "OK\n"
         except gedcom.Invalid_Gedcom as e:
             error = error + e.msg + "\n"
@@ -35,7 +34,7 @@ class GedcomTestCase(unittest.TestCase):
         except IOError:
             expected = "OK\n"
         out = error.replace(self.dir, "<dir>")
-        self.assertEqual(expected, out)
+        self.assertEqual(expected, out, msg="in %s" % filename)
 
     def _process_dir(self, dir):
         for f in sorted(os.listdir(dir)):

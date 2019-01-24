@@ -24,7 +24,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '%xg3dwf1s$pp=(%@)46)vxz0ti9$na=x%5s_f0qm!ced0n!0q0'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -188,7 +188,7 @@ LOGGING = {
         # Those are disabled in gedcomimport.py
         'django.db.backends': {   # Logging SQL queries
             'handlers': ['consolegray'],
-            'level': 'DEBUG',
+            'level': 'DEBUG' if DEBUG else 'ERROR',
             'propagate': False,
         }
     }

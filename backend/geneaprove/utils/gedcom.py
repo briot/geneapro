@@ -32,6 +32,16 @@ logger = logging.getLogger('geneaprove.gedcom')
 unlimited = 100000
 
 
+class Invalid_Gedcom(Exception):
+
+    def __init__(self, msg):
+        super().__init__(self)
+        self.msg = msg
+
+    def __repr__(self):
+        return self.msg
+
+
 class _File(object):
     def __init__(self, filename):
         # Reading from './manage.py import', we get a string
@@ -40,10 +50,11 @@ class _File(object):
             f = open(filename, "rb")
             self.buffer = f.read()
             f.close()
-
-        # From the GUI client, we get a django file object
+            self.name = filename
         else:
+            # From the GUI client, we get a django file object
             self.buffer = filename.read()
+            self.name = '<stdin>'
 
         self.pos = 0
 
@@ -102,6 +113,12 @@ class _Lexical(object):
 
         self.current = None # current line, after resolving CONT and CONC
         self.prefetch = self._parse_line(l)
+        if self.prefetch[2] != 0 or \
+           self.prefetch[3] != 'HEAD':
+            self.error("Invalid gedcom file, first line must be '0 HEAD' got %s"
+                       % (self.prefetch, ),
+                       fatal=True)
+
         self._readline()
 
     def decode_heredis_ansi(self, value):
@@ -113,9 +130,9 @@ class _Lexical(object):
         return value.decode(self.encoding, "replace")
 
     def error(self, msg, fatal=False):
-        m = "Line %s: %s" % (self.line, msg)
+        m = "%s:%s %s" % (self.file.name, self.line, msg)
         if fatal:
-            raise Exception(m)
+            raise Invalid_Gedcom(m)
         else:
             print(m)
 
@@ -134,7 +151,7 @@ class _Lexical(object):
         line = self.decode(line).split('\n')[0]
         g = line.split(None, 2)   # Extract first three fields
         if len(g) < 2:
-            self.error(line, fatal=True)
+            self.error("Invalid line '%s'" % line, fatal=True)
 
         if g[1][0] == '@':
             # "1 @I0001@ INDI"
@@ -336,9 +353,9 @@ class F(object):
 
                 # skip this record (should be a special type of F)
                 while True:
-                    (l, t, v) = lexical.consume()
-                    (l, t, v) = lexical.peek()
-                    if l >= clevel:
+                    (i, l, t, i, v) = lexical.consume()  # done with current line
+                    (i, l, t, i, v) = lexical.peek()     # what is on the next line ?
+                    if l <= clevel:
                         break
 
             else:
@@ -851,16 +868,6 @@ FILE = \
         F("_EVDEF", 0, unlimited, None, ROOTSMAGIC_EVDEF),  # ??? RootsMagic
         F("TRLR",   1, 1,         None),
     ])
-
-
-class Invalid_Gedcom(Exception):
-
-    def __init__(self, msg):
-        super().__init__(self)
-        self.msg = msg
-
-    def __repr__(self):
-        return self.msg
 
 
 def parse_gedcom(filename):
