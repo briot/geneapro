@@ -4,10 +4,12 @@ import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
 import { JSONStats, fetchStatsFromServer } from '../Server/Stats';
 import { AppState, GPDispatch } from '../Store/State';
+import { StatsSettings, changeStatsSettings } from '../Store/Stats';
 import { PersonSet, personDisplay } from '../Store/Person';
 import { addToHistory } from '../Store/History';
 import StatsGeneration from '../Stats/Generations';
 import StatsLifespan from '../Stats/Lifespan';
+import StatsSide from '../Stats/Side';
 import StatsTree from '../Stats/Tree';
 import '../Stats/Stats.css';
 import Page from '../Page';
@@ -15,10 +17,12 @@ import Page from '../Page';
 interface PropsFromRoute {
    decujusId: string;
 }
- 
+
 interface StatsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    persons: PersonSet;
    dispatch: GPDispatch;
+   settings: StatsSettings;
+   onChange: (diff: Partial<StatsSettings>) => void;
    decujusid: number;
 }
 
@@ -30,13 +34,16 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
                                                      StatsPageConnectedState> {
 
    state: StatsPageConnectedState = {};
+   controller: AbortController|undefined;
 
    componentDidMount() {
       this.calculateProps();
    }
 
    componentDidUpdate(old: StatsPageConnectedProps) {
-      if (this.props.decujusid !== old.decujusid) {
+      if (this.props.decujusid !== old.decujusid ||
+          this.props.settings.max_age !== old.settings.max_age
+      ) {
          this.calculateProps();
       }
 
@@ -77,13 +84,28 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
          <Page
             decujus={decujus}
             main={main}
+            leftSide={
+               <StatsSide
+                  settings={this.props.settings}
+                  onChange={this.props.onChange}
+               />
+            }
          />
       );
    }
 
    private calculateProps() {
-      fetchStatsFromServer(this.props.decujusid).then((s: JSONStats) => {
-         this.setState({data: s});
+      if (this.controller) {
+         this.controller.abort();
+      }
+      this.controller = new AbortController();
+      fetchStatsFromServer(
+         this.props.decujusid,
+         this.props.settings,
+         this.controller.signal,
+      ).then(
+         (s: JSONStats) => {
+            this.setState({data: s});
       });
    }
 }
@@ -91,11 +113,15 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
 const StatsPage = connect(
    (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
       ...props,
+      settings: state.stats,
       persons: state.persons,
       decujusid: Number(props.match.params.decujusId),
    }),
    (dispatch: GPDispatch) => ({
       dispatch,
+      onChange: (diff: Partial<StatsSettings>) => {
+         dispatch(changeStatsSettings({diff}));
+      },
    }),
 )(StatsPageConnected);
 

@@ -45,7 +45,8 @@ export function setPersist(whenDone: () => void) {
       store,
       {
          // ??? Should not save pedigree.loading
-         whitelist: ['pedigree', 'fanchart', 'radial', 'quilts', 'history'],
+         whitelist: ['pedigree', 'fanchart', 'radial', 'quilts', 'history',
+                     'stats'],
       },
       whenDone
    );

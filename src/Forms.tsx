@@ -37,6 +37,7 @@ interface SliderProps {
    min: number;
    max: number;
    onChange: (diff: Partial<{[name: string]: number}>) => void;
+   doc?: string;
 }
 export class SliderField extends React.PureComponent<SliderProps> {
    change = (data: {target: {value: string}}) => {
@@ -56,6 +57,7 @@ export class SliderField extends React.PureComponent<SliderProps> {
                max={this.props.max.toString()}
                defaultValue={this.props.defaultValue.toString()}
                onChange={this.change}
+               title={this.props.doc}
             />
          </Form.Field>
       );

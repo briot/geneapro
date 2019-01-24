@@ -1,3 +1,5 @@
+import { StatsSettings } from '../Store/Stats';
+
 /**
  * Sent back by the server
  */
@@ -27,9 +29,15 @@ export interface JSONStats {
    decujus_name: string;
 }
 
-export function fetchStatsFromServer(decujus: number): Promise<JSONStats> {
-   return window.fetch('/data/stats/' + decujus)
-      .then(resp => {
+export function fetchStatsFromServer(
+   decujus: number,
+   settings: StatsSettings,
+   signal?: AbortSignal,
+): Promise<JSONStats> {
+   return window.fetch(
+      '/data/stats/' + decujus + '?max_age=' + settings.max_age,
+      {signal}
+   ).then(resp => {
          if (resp.status !== 200) {
             throw new Error('Server returned an error');
          }

@@ -15,6 +15,7 @@ import { FetchPlacesResult, PlaceDetails } from '../Server/Place';
 import { defaultPedigree, changePedigreeSettings } from '../Store/Pedigree';
 import { defaultFanchart, changeFanchartSettings } from '../Store/Fanchart';
 import { defaultRadial, changeRadialSettings } from '../Store/Radial';
+import { defaultStats, changeStatsSettings } from '../Store/Stats';
 import { defaultQuilts, changeQuiltsSettings } from '../Store/Quilts';
 
 /**
@@ -60,6 +61,7 @@ export function rootReducer(
       radial: defaultRadial,
       quilts: defaultQuilts,
       quiltsLayout: {},
+      stats: defaultStats,
       places: {},
       sources: {},
       history: [],
@@ -120,6 +122,9 @@ export function rootReducer(
 
    } else if (isType(action, changeRadialSettings)) {
       return {...state, radial: {...state.radial, ...action.payload.diff}};
+
+   } else if (isType(action, changeStatsSettings)) {
+      return {...state, stats: {...state.stats, ...action.payload.diff}};
 
    } else if (isType(action, fetchCount.done)) {
       return {...state, count: action.payload.result};
@@ -277,6 +282,8 @@ export function rootReducer(
               pedigree: {...state.pedigree,
                          ...action.payload.pedigree,
                          loading: false},
+              stats: {...state.stats,
+                      ...action.payload.stats},
       };
 
    }

@@ -45,7 +45,7 @@ class Invalid_Gedcom(Exception):
 class _File(object):
     def __init__(self, filename):
         # Reading from './manage.py import', we get a string
-        if isinstance(filename, str): 
+        if isinstance(filename, str):
             # Do not assume a specific encoding, so read as bytes
             f = open(filename, "rb")
             self.buffer = f.read()
@@ -113,8 +113,8 @@ class _Lexical(object):
 
         self.current = None # current line, after resolving CONT and CONC
         self.prefetch = self._parse_line(l)
-        if self.prefetch[2] != 0 or \
-           self.prefetch[3] != 'HEAD':
+        if self.prefetch[1] != 0 or \
+           self.prefetch[2] != 'HEAD':
             self.error("Invalid gedcom file, first line must be '0 HEAD' got %s"
                        % (self.prefetch, ),
                        fatal=True)
@@ -305,7 +305,7 @@ class F(object):
         Read current line from lexical parser, and process it.
         This doesn't modify self, and is fully reentrant
         """
-        
+
         if self.tag:
             (linenum, level, tag, id, value) = lexical.consume()
             assert tag == self.tag, '%s != %s' % (tag, self.tag)
@@ -329,7 +329,7 @@ class F(object):
             # The tag should simply not be there in this case
             if value and value not in ("Y", "N"):
                 print("Line %s Unexpected text value after %s" % (linenum, tag))
-            
+
         r = GedcomRecord(id=id, line=linenum, tag=tag, value=val)
 
         while True:
@@ -505,7 +505,7 @@ PLACE_STRUCT = [
     F("ROMN", 0, unlimited, '', [      # Place romanized variation
         F("TYPE", 1, 1),               # Romanized type
     ]),
-    F("MAP", 0, 1, None, [ 
+    F("MAP", 0, 1, None, [
         F("LATI", 1, 1),               # Place latitude
         F("LONG", 1, 1),               # Place longitude
     ]),
@@ -636,7 +636,7 @@ INDI_EV_DETAIL = EVENT_DETAIL + [
 ]
 
 INDIVIDUAL_ATTRIBUTE_STRUCT = [
-    F("CAST",  0, unlimited, '', INDI_EV_DETAIL), # Cast name 
+    F("CAST",  0, unlimited, '', INDI_EV_DETAIL), # Cast name
     F("DSCR",  0, unlimited, '', INDI_EV_DETAIL), # Physical description
     F("EDUC",  0, unlimited, '', INDI_EV_DETAIL), # Scholastic achievement
     F("IDNO",  0, unlimited, '', INDI_EV_DETAIL), # Natural Id number

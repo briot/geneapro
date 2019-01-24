@@ -20,6 +20,8 @@ class StatsView(JSONView):
         id = int(id)
         global_graph.update_if_needed()
 
+        max_age = int(params.get('max_age', '0'))
+
         # ??? The stats includes persons "Unknown" that were created during a
         # gedcom import for the purpose of preserving families. Will be fixed
         # when we store children differently (for instance in a group)
@@ -53,29 +55,40 @@ class StatsView(JSONView):
 
         ranges = []
 
+        current_year = datetime.datetime.now().year
+
         for index in sorted(generations):
             births = None
             deaths = None
             gen_range = [index + 1, "?", "?", ""]  # gen, min, max, legend
             for p in generations[index]:
                 p = persons[p.main_id]
-                if p.birthISODate:
-                    if births is None or p.birthISODate < births:
-                        births = p.birthISODate
-                        year = int(p.birthISODate[0:4])
-                        if year is not None:
-                            gen_range[1] = year
 
-                if p.deathISODate:
-                    if deaths is None or p.deathISODate > deaths:
-                        deaths = p.deathISODate
-                        year = int(p.deathISODate[0:4])
-                        if year is not None:
-                            gen_range[2] = year
+                b_year = int(p.birthISODate[0:4]) if p.birthISODate else None
+                d_year = int(p.deathISODate[0:4]) if p.deathISODate else None
+
+                if b_year:
+                    if births is None or b_year < births:
+                        births = b_year
+                        gen_range[1] = b_year
+
+                # a person doesn't live more than MAX_AGE (but might be
+                # alive otherwise)
+                if not d_year and max_age > 0:
+                    if b_year:
+                        d_year = min(b_year + max_age, current_year)
+                    else:
+                        # no birth nor death known
+                        pass
+
+                if d_year and (deaths is None or d_year > deaths):
+                    deaths = d_year
+                    gen_range[2] = d_year
+
 
             if index >= 0:
                 gen_range[3] = "Gen. %02d (%d / %d) %s - %s" \
-                    % (index + 1, len(generations[index]), 2 ** (index + 1),
+                    % (index + 1, len(generations[index]), 2 ** index,
                        gen_range[1], gen_range[2])
             else:
                 gen_range[3] = "Desc. %02d (%d) %s - %s" \

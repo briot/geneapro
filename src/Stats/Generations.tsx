@@ -34,6 +34,7 @@ export default class StatsGeneration extends React.PureComponent<StatsGeneration
       const width = this.svg.clientWidth;
       const height = this.svg.clientHeight;
       const margin = 30;
+      const barHeight = height / this.props.ranges.length;
       const svg = d3Selection.select(this.svg);
 
       const x = d3Scale.scaleLinear()
@@ -43,7 +44,7 @@ export default class StatsGeneration extends React.PureComponent<StatsGeneration
       const y = d3Scale.scaleLinear()
          .domain([this.props.ranges[0][0],
                   this.props.ranges[this.props.ranges.length - 1][0]])
-         .range([height - margin, 0]);
+         .range([height - margin, barHeight]);
 
       function make_x_axis() {
          return d3Axis.axisBottom(x);
@@ -51,6 +52,8 @@ export default class StatsGeneration extends React.PureComponent<StatsGeneration
       function make_y_axis() {
          return d3Axis.axisLeft(y).ticks(5);
       }
+
+      svg.selectAll('g').remove();
 
       // The grid
       svg.append('g')
@@ -73,15 +76,19 @@ export default class StatsGeneration extends React.PureComponent<StatsGeneration
          .call(make_y_axis());
 
       // The bars
+      const allRect = svg.selectAll('rect')
+         .data(this.props.ranges);
+
+      allRect.enter().append('rect');  // append missing rectangles
+
       svg.selectAll('rect')
          .data(this.props.ranges)
-         .enter().append('rect')
          .attr('fill', d => this.color(d[0]))
          .attr('title', d => d[3])
          .attr('x', d => x(d[1]))
          .attr('y', d => y(d[0] + 1))
          .attr('width', d => x(d[2]) - x(d[1]))
-         .attr('height', height / this.props.ranges.length);
+         .attr('height', barHeight);
    }
 
    render() {
@@ -95,8 +102,8 @@ export default class StatsGeneration extends React.PureComponent<StatsGeneration
             </Card.Content>
             <Card.Content extra={true} className="generationsLegend">
                {
-                  this.props.ranges.map(r => (
-                     <div key={r[0]}>
+                  this.props.ranges.slice(0).reverse().map(r => (
+                     <div key={r[0]} id={'gen' + r[0]}>
                         <span style={{background: this.color(r[0])}}>&nbsp;</span>
                         {r[3]}
                      </div>

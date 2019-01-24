@@ -6,10 +6,18 @@
    text-size: 0.8em;
    display: flex;
    flex-wrap: wrap;
+   flex-direction: row;
 }
 
 .Stats .generationsLegend > div {
-   width: 33%;
+   flex-basis: 33%;
+}
+
+.Stats .generationsLegend span {
+   display: inline-block;
+   margin: 2px;
+   width: 20px;
+   height: 10px;
 }
 
 .Stats .grid path {
@@ -25,9 +33,3 @@
    stroke: #ccc;
 }
 
-.Stats .generationsLegend span {
-   display: inline-block;
-   margin: 2px;
-   width: 20px;
-   height: 10px;
-}
