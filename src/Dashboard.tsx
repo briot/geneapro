@@ -35,7 +35,10 @@ class PersonCard extends React.PureComponent<PersonCardProps, {}> {
       let img: JSX.Element|undefined;
       if (p.asserts) {
          for (const a of p.asserts.get()) {
-            if (a instanceof P2C && a.characteristic.medias) {
+            if (a instanceof P2C
+                && a.characteristic.medias
+                && a.characteristic.medias[0]
+            ) {
                img = <Image floated="right" size="tiny" src={a.characteristic.medias[0].url} />;
                break;
             }
