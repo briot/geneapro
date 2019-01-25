@@ -43,7 +43,8 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
 
    componentDidUpdate(old: StatsPageConnectedProps) {
       if (this.props.decujusid !== old.decujusid ||
-          this.props.settings.max_age !== old.settings.max_age
+          this.props.settings.max_age !== old.settings.max_age ||
+          this.props.settings.bar_width !== old.settings.bar_width
       ) {
          this.calculateProps();
       }
@@ -88,6 +89,7 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
             {this.props.settings.show_lifespan &&
             <StatsLifespan
                ages={this.state.data.ages}
+               settings={this.props.settings}
                decujus={this.props.persons[this.props.decujusid]}
             />
             }

@@ -35,7 +35,9 @@ export function fetchStatsFromServer(
    signal?: AbortSignal,
 ): Promise<JSONStats> {
    return window.fetch(
-      '/data/stats/' + decujus + '?max_age=' + settings.max_age,
+      '/data/stats/' + decujus
+      + '?max_age=' + settings.max_age
+      + '&bar_width=' + settings.bar_width,
       {signal}
    ).then(resp => {
          if (resp.status !== 200) {

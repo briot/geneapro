@@ -10,9 +10,6 @@ from geneaprove.views.persona import extended_personas, \
 from geneaprove.views.to_json import JSONView
 
 
-BOX_RANGE = 5  # number of years per box
-
-
 class StatsView(JSONView):
     """Display the statistics for a given person"""
 
@@ -24,6 +21,7 @@ class StatsView(JSONView):
         global_graph.update_if_needed()
 
         max_age = int(params.get('max_age', '0'))
+        bar_width = int(params.get('bar_width', '5'))
 
         # ??? The stats includes persons "Unknown" that were created during a
         # gedcom import for the purpose of preserving families. Will be fixed
@@ -127,11 +125,11 @@ class StatsView(JSONView):
             print(dir(persons[p.main_id]))
             a = dates[p.main_id]
             if a[0] and a[1]:
-                age = int((a[1] - a[0]) / BOX_RANGE)
+                age = int((a[1] - a[0]) / bar_width)
 
                 if age >= len(ages):
                     for b in range(len(ages), age + 1):
-                        ages.append([b * BOX_RANGE, 0, 0, 0])
+                        ages.append([b * bar_width, 0, 0, 0])
 
                 #if age is not None:
                 #    if p.sex == "M":

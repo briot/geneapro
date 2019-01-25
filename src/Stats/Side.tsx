@@ -21,8 +21,8 @@ export default function StatsSide(props: StatsSideProps) {
                      {props.settings.max_age ?
                          'max age:' + props.settings.max_age :
                          'ignore persons with no explicit death'
-                     }
-                     ,
+                     },
+                     every {props.settings.bar_width} years,
                      {props.settings.show_treestats ? ' show ' : ' hide '}
                      stats,
                      {props.settings.show_generations ? ' show ' : ' hide '}
@@ -49,6 +49,15 @@ export default function StatsSide(props: StatsSideProps) {
                           'this value'}
                   />
 
+                  <SliderField
+                     defaultValue={props.settings.bar_width}
+                     label="Bar width"
+                     fieldName="bar_width"
+                     min={1}
+                     max={80}
+                     onChange={props.onChange}
+                     doc='Width of bars in "age at death", in years'
+                  />
                   <CheckboxField
                      defaultChecked={props.settings.show_treestats}
                      label="Show stats"

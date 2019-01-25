@@ -8,6 +8,7 @@ import * as d3Axis from 'd3-axis';
 import * as d3Shape from 'd3-shape';
 import { JSONAges } from '../Server/Stats';
 import { Person, personDisplay } from '../Store/Person';
+import { StatsSettings } from '../Store/Stats';
 
 interface LifeSpan {
    age: number;      // the age
@@ -19,6 +20,7 @@ interface LifeSpan {
 
 interface StatsLifespanProps {
    decujus: Person;
+   settings: StatsSettings;
    ages: JSONAges[];
 }
 
@@ -58,9 +60,19 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
       const bottom = 20;
       const width = this.svg.clientWidth - left;
       const height = this.svg.clientHeight - top - bottom;
+      const bar_width = this.props.settings.bar_width;
       const svg = d3Selection.select(this.svg);
 
-      const maxAge = Math.max.apply(null, remapped.map(d => d.age));
+      const maxAge = Math.max.apply(
+         null, remapped.map(d => d.age)) + bar_width;
+
+      // Compute where ticks should occur on x axis
+      const tickValues: number[] = [];
+      const maxTick = Math.floor(maxAge / bar_width) * bar_width;
+      for (let a = 0; a <= maxTick; a+= bar_width) {
+         tickValues.push(a);
+      }
+
       const x = d3Scale.scaleLinear()
          .range([0, width])
          .domain([0, maxAge])
@@ -70,12 +82,8 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
          .domain([0, Math.max.apply(null, remapped.map(d => d.total))])
          .nice();
 
-      function make_x_axis() {
-         return d3Axis.axisBottom(x).ticks(maxAge / 5);
-      }
-      function make_y_axis() {
-         return d3Axis.axisLeft(y).ticks(5);
-      }
+      const make_x_axis = () => d3Axis.axisBottom(x).tickValues(tickValues);
+      const make_y_axis = () => d3Axis.axisLeft(y).ticks(5);
 
       svg.selectAll('g.forgrid').remove();
       svg.append('g')
@@ -105,8 +113,7 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
           // [0:y0, 1:y1, data:LifeSpan, key:String, index:number]
 
       const stacked: LifeSpanSeries[] = stack(remapped);
-      const bandwidth = width / remapped.length - 3;
-
+      const bandwidth = x(bar_width)! - x(0)!;
       const layer = g.selectAll('g.layer').data(stacked)
            .enter()
            .append('g')
