@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
 import { JSONStats, fetchStatsFromServer } from '../Server/Stats';
+import { fetchPersonDetails } from '../Store/Sagas';
 import { AppState, GPDispatch } from '../Store/State';
 import { StatsSettings, changeStatsSettings } from '../Store/Stats';
 import { PersonSet, personDisplay } from '../Store/Person';
@@ -49,6 +50,12 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
 
       const p = this.props.persons[this.props.decujusid];
       this.props.dispatch(addToHistory({person: p}));
+
+      // Make sure we have the name of the person
+      if (!p) {
+         this.props.dispatch(
+            fetchPersonDetails.request({id: this.props.decujusid}));
+      }
    }
 
    render() {
@@ -74,12 +81,14 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
             {this.props.settings.show_generations &&
             <StatsGeneration
                ranges={this.state.data.ranges}
+               decujus={this.props.persons[this.props.decujusid]}
             />
             }
 
             {this.props.settings.show_lifespan &&
             <StatsLifespan
                ages={this.state.data.ages}
+               decujus={this.props.persons[this.props.decujusid]}
             />
             }
 

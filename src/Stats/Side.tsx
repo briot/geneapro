@@ -28,7 +28,7 @@ export default function StatsSide(props: StatsSideProps) {
                      {props.settings.show_generations ? ' show ' : ' hide '}
                      generations,
                      {props.settings.show_lifespan ? ' show ' : ' hide '}
-                     pyramid
+                     lifespan
                    </small>
                </span>
             )
@@ -65,7 +65,7 @@ export default function StatsSide(props: StatsSideProps) {
 
                   <CheckboxField
                      defaultChecked={props.settings.show_lifespan}
-                     label="Show pyramid"
+                     label="Show lifespan"
                      fieldName="show_lifespan"
                      onChange={props.onChange}
                   />

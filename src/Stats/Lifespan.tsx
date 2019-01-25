@@ -7,6 +7,7 @@ import * as d3ScaleChromatic from 'd3-scale-chromatic';
 import * as d3Axis from 'd3-axis';
 import * as d3Shape from 'd3-shape';
 import { JSONAges } from '../Server/Stats';
+import { Person, personDisplay } from '../Store/Person';
 
 interface LifeSpan {
    age: number;      // the age
@@ -17,6 +18,7 @@ interface LifeSpan {
 }
 
 interface StatsLifespanProps {
+   decujus: Person;
    ages: JSONAges[];
 }
 
@@ -143,10 +145,12 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
    }
 
    render() {
+      const name = personDisplay(this.props.decujus);
+
       return (
          <Card fluid={true} className="Stats">
             <Card.Content>
-               <Card.Header>Lifespans timespan (oldest birth - latest death)</Card.Header>
+               <Card.Header>Age at death, in {name}'s tree</Card.Header>
                <Card.Description>
                   <svg ref={input => {this.svg = input; }} height="350" width="100%"/>
                </Card.Description>

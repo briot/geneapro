@@ -5,8 +5,10 @@ import * as d3Scale from 'd3-scale';
 import * as d3ScaleChromatic from 'd3-scale-chromatic';
 import * as d3Axis from 'd3-axis';
 import { JSONGenerationRange } from '../Server/Stats';
+import { Person, personDisplay } from '../Store/Person';
 
 interface StatsGenerationProps {
+   decujus: Person;
    ranges: JSONGenerationRange[];
 }
 
@@ -77,10 +79,11 @@ export default class StatsGeneration extends React.PureComponent<StatsGeneration
    }
 
    render() {
+      const name = personDisplay(this.props.decujus);
       return (
          <Card fluid={true} className="Stats">
             <Card.Content>
-               <Card.Header>Generations timespan (oldest birth - latest death)</Card.Header>
+               <Card.Header>Generations timespan (oldest birth - latest death), in {name}'s tree</Card.Header>
                <Card.Description>
                   <svg ref={input => {this.svg = input; }} height="350" width="100%"/>
                </Card.Description>
