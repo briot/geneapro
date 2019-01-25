@@ -61,6 +61,7 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
          <Loader active={true} size="large">Loading</Loader>
       ) : (
          <div>
+            {this.props.settings.show_treestats &&
             <StatsTree
                decujus={this.props.decujusid}
                totalInDatabase={this.state.data.total_persons}
@@ -68,14 +69,19 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
                fatherAncestors={this.state.data.total_father}
                motherAncestors={this.state.data.total_mother}
             />
+            }
 
+            {this.props.settings.show_generations &&
             <StatsGeneration
                ranges={this.state.data.ranges}
             />
+            }
 
+            {this.props.settings.show_lifespan &&
             <StatsLifespan
                ages={this.state.data.ages}
             />
+            }
 
          </div>
          );

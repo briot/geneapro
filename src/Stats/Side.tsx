@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
-import { SliderField } from '../Forms';
+import { CheckboxField, SliderField } from '../Forms';
 import { StatsSettings } from '../Store/Stats';
 
 interface StatsSideProps {
@@ -22,6 +22,13 @@ export default function StatsSide(props: StatsSideProps) {
                          'max age:' + props.settings.max_age :
                          'ignore persons with no explicit death'
                      }
+                     ,
+                     {props.settings.show_treestats ? ' show ' : ' hide '}
+                     stats,
+                     {props.settings.show_generations ? ' show ' : ' hide '}
+                     generations,
+                     {props.settings.show_lifespan ? ' show ' : ' hide '}
+                     pyramid
                    </small>
                </span>
             )
@@ -40,6 +47,27 @@ export default function StatsSide(props: StatsSideProps) {
                      doc={'If 0, ignore people with no explicit death date,' +
                           'otherwise assume they do not live longer than' +
                           'this value'}
+                  />
+
+                  <CheckboxField
+                     defaultChecked={props.settings.show_treestats}
+                     label="Show stats"
+                     fieldName="show_treestats"
+                     onChange={props.onChange}
+                  />
+
+                  <CheckboxField
+                     defaultChecked={props.settings.show_generations}
+                     label="Show generations"
+                     fieldName="show_generations"
+                     onChange={props.onChange}
+                  />
+
+                  <CheckboxField
+                     defaultChecked={props.settings.show_lifespan}
+                     label="Show pyramid"
+                     fieldName="show_lifespan"
+                     onChange={props.onChange}
                   />
                </Form>
             )
