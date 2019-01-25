@@ -25,7 +25,7 @@ export default class StatsGeneration extends React.PureComponent<StatsGeneration
    }
 
    color(gen: number) {
-      return d3ScaleChromatic.schemePastel1[gen % 10];
+      return d3ScaleChromatic.schemeCategory10[gen % 10];
    }
 
    draw() {
