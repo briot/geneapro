@@ -10,6 +10,9 @@ from geneaprove.views.persona import extended_personas, \
 from geneaprove.views.to_json import JSONView
 
 
+BOX_RANGE = 5  # number of years per box
+
+
 class StatsView(JSONView):
     """Display the statistics for a given person"""
 
@@ -46,6 +49,8 @@ class StatsView(JSONView):
 
         cal = CalendarGregorian()
 
+        # Group persons by generations
+
         generations = dict()  # list of persons for each generation
         for a in allpeople:
             d = distance[a]
@@ -53,38 +58,41 @@ class StatsView(JSONView):
                 generations[d] = []
             generations[d].append(a)
 
-        ranges = []
+        # Compute birth and death dates for all persons, taking into account
+        # the max_age setting
 
         current_year = datetime.datetime.now().year
+        dates = {}
+        for a in allpeople:
+            p = persons[a.main_id]
+            b_year = int(p.birthISODate[0:4]) if p.birthISODate else None
+            d_year = int(p.deathISODate[0:4]) if p.deathISODate else None
+            if not d_year and max_age > 0:
+                if b_year:
+                    d_year = min(b_year + max_age, current_year)
+                else:
+                    # no birth nor death known
+                    pass
 
+            dates[a.main_id] = [b_year, d_year]
+
+        # Compute timespans for generations
+
+        ranges = []
         for index in sorted(generations):
             births = None
             deaths = None
             gen_range = [index + 1, "?", "?", ""]  # gen, min, max, legend
             for p in generations[index]:
-                p = persons[p.main_id]
+                a = dates[p.main_id]
 
-                b_year = int(p.birthISODate[0:4]) if p.birthISODate else None
-                d_year = int(p.deathISODate[0:4]) if p.deathISODate else None
+                if a[0] and (births is None or a[0] < births):
+                    births = a[0]
+                    gen_range[1] = a[0]
 
-                if b_year:
-                    if births is None or b_year < births:
-                        births = b_year
-                        gen_range[1] = b_year
-
-                # a person doesn't live more than MAX_AGE (but might be
-                # alive otherwise)
-                if not d_year and max_age > 0:
-                    if b_year:
-                        d_year = min(b_year + max_age, current_year)
-                    else:
-                        # no birth nor death known
-                        pass
-
-                if d_year and (deaths is None or d_year > deaths):
-                    deaths = d_year
-                    gen_range[2] = d_year
-
+                if a[1] and (deaths is None or a[1] > deaths):
+                    deaths = a[1]
+                    gen_range[2] = a[1]
 
             if index >= 0:
                 gen_range[3] = "Gen. %02d (%d / %d) %s - %s" \
@@ -112,13 +120,19 @@ class StatsView(JSONView):
 
             ranges.append(gen_range)
 
-        ages = []
-        for a in range(0, 120, 5):
-            ages.append([a, 0, 0, 0])  # date_range, males, females, unknown
+        # Compute the age pyramid
 
-        for p in persons.values():
-            if p.birthISODate and p.deathISODate:
-                age = int(p.deathISODate[0:4]) - int(p.birthISODate[0:4])
+        ages = []    # date_range, males, females, unknown
+        for p in allpeople:
+            print(dir(persons[p.main_id]))
+            a = dates[p.main_id]
+            if a[0] and a[1]:
+                age = int((a[1] - a[0]) / BOX_RANGE)
+
+                if age >= len(ages):
+                    for b in range(len(ages), age + 1):
+                        ages.append([b * BOX_RANGE, 0, 0, 0])
+
                 #if age is not None:
                 #    if p.sex == "M":
                 #        ages[int(age / 5)][1] += 1
@@ -126,7 +140,7 @@ class StatsView(JSONView):
                 #        ages[int(age / 5)][2] += 1
                 #    else:
                 #        ages[int(age / 5)][3] += 1
-                ages[int(age / 5)][3] += 1
+                ages[age][3] += 1
 
         return {
             "total_ancestors": len(allpeople),

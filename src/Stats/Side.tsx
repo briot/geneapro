@@ -35,7 +35,7 @@ export default function StatsSide(props: StatsSideProps) {
                      label="Max age"
                      fieldName="max_age"
                      min={0}
-                     max={200}
+                     max={130}
                      onChange={props.onChange}
                      doc={'If 0, ignore people with no explicit death date,' +
                           'otherwise assume they do not live longer than' +

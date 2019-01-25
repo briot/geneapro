@@ -13,7 +13,7 @@ interface MediasState {
 
 export default class Medias extends React.PureComponent<MediasProps, MediasState> {
    state: MediasState = {};
-   imageGroup: HTMLDivElement;
+   imageGroup: HTMLDivElement|undefined;
    scrollLeft: number|undefined;
 
    componentDidUpdate() {
@@ -25,7 +25,7 @@ export default class Medias extends React.PureComponent<MediasProps, MediasState
 
    selectImage = (selected?: number) => {
       // Save current scrolling position, so that we can restore it
-      if (selected !== undefined) {
+      if (selected !== undefined && this.imageGroup) {
          this.scrollLeft = this.imageGroup.scrollLeft;
       }
       this.setState({selected: selected});

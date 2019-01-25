@@ -1,4 +1,4 @@
-import * as React from 'react';
+ import * as React from 'react';
 import { DraggableCore, DraggableData,
          DraggableEventHandler } from 'react-draggable';
 import { Sorter } from './Sorter';
@@ -35,7 +35,7 @@ export interface ColumnDescr<RowData, ColumnData> {
 
    // Value to display in the table footer. If this is undefined
    // for all columns the footer is hidden
-   footer?: ColumnData;  
+   footer?: ColumnData;
 
    // Alignment of text within the column
    align?: Alignment;  // default: left
@@ -451,7 +451,7 @@ extends React.PureComponent<SmartTableProps<RowData, ColumnsData>,
                            {c.footer || '\u00A0'/* nbsp */}
                         </div>
                      </th>
-                  ) 
+                  )
                }
             </tr>
          </tfoot>

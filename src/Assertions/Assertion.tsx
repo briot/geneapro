@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import { AppState } from '../Store/State';
-import { Rating, Segment } from 'semantic-ui-react';
+import { Rating } from 'semantic-ui-react';
+import { Segment } from 'semantic-ui-react';
 import { Assertion } from '../Store/Assertion';
 import AssertionPartEvent from '../Assertions/AssertionPartEvent';
 import AssertionPartPerson from '../Assertions/AssertionPartPerson';

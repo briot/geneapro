@@ -3,7 +3,7 @@ import { AssertionList } from '../Store/Assertion';
 import { AssertionEntities, AssertionEntitiesJSON,
          assertionFromJSON,
          setAssertionEntities } from '../Server/Person';
-import { JSON } from '../Server/JSON';
+import * as JSON from '../Server/JSON';
 
 export interface FetchPlacesResult {
    places: PlaceSet;

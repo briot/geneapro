@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-class EventTextProps {
+interface EventTextProps {
    prefix: string;
    isoDate?: string;
 }

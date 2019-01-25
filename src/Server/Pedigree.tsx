@@ -1,7 +1,7 @@
 import { jsonPersonsToPerson } from '../Server/Person';
 import { ChildrenAndParentsSet } from '../Store/Pedigree';
 import { fetchPedigreeResult } from '../Store/Sagas';
-import { JSON } from './JSON';
+import * as JSON from './JSON';
 
 /**
  * Sent back by the server
@@ -38,7 +38,7 @@ export function* fetchPedigreeFromServer(
       events: {},
       layout: data.layout,
    };
-      
+
    result.persons[data.decujus].knownAncestors = data.generations;
    result.persons[data.decujus].knownDescendants = data.descendants;
    return result;

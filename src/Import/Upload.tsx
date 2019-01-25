@@ -75,7 +75,9 @@ export class UploadForm extends React.PureComponent<UploadFormProps, UploadFormS
 
    onDrop = (e: DragEvent) => {
       this.onDragLeave(e);
-      this.addFiles(e.dataTransfer.files);
+      if (e.dataTransfer) {
+         this.addFiles(e.dataTransfer.files);
+      }
    }
 
    cancelEvent = (e: Event) => {

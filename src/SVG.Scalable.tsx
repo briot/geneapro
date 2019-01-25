@@ -23,14 +23,14 @@ export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, S
    zoomExtent: [number, number] = [1 / 6, 6];
    // Maximum levels of zoom (in and out)
 
-   private origin: {
+   private origin: undefined|{
       clickX: number,
       clickY: number,
       translate: Point,
    };
    // Where the mouseDown occurred, only set during a drag
 
-   private svgRef: SVGSVGElement;
+   private svgRef: SVGSVGElement|null = null;
 
    render() {
       return (
@@ -74,12 +74,12 @@ export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, S
    }
 
    onMouseMove = (e: MouseEvent) => {
-      const offsetX = (e.pageX - this.origin.clickX) / this.state.scale;
-      const offsetY = (e.pageY - this.origin.clickY) / this.state.scale;
+      const offsetX = (e.pageX - this.origin!.clickX) / this.state.scale;
+      const offsetY = (e.pageY - this.origin!.clickY) / this.state.scale;
       this.setState({
          translate: {
-            left: this.origin.translate.left - offsetX,
-            top: this.origin.translate.top - offsetY,
+            left: this.origin!.translate.left - offsetX,
+            top: this.origin!.translate.top - offsetY,
          }
       });
    }
@@ -130,7 +130,7 @@ export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, S
     * React to wheel events (zoom in)
     */
    wheeled = (e: React.WheelEvent<SVGSVGElement>) => {
-      const rect = this.svgRef.getBoundingClientRect();
+      const rect = this.svgRef!.getBoundingClientRect();
       const escreen = this.toCanvas(
          {left: e.clientX - rect.left, top: e.clientY - rect.top});
       this.scaleBy(

@@ -92,7 +92,6 @@ def extended_personas(
 
     # Get the role names
 
-    logger.debug('MANU getting role names')
     for role in models.Event_Type_Role.objects.all():
         roles[role.id] = role.name
 
@@ -113,8 +112,6 @@ def extended_personas(
                 persons[mid] = p
                 __add_default_person_attributes(p)
 
-    logger.debug('MANU retrieve personas')
-
     ################
     # Check all events that the persons were involved in.
     ################
@@ -129,8 +126,6 @@ def extended_personas(
         all_ids = set()
         for p in nodes:
             all_ids.update(p.ids)
-
-    logger.debug('MANU about to retrieve events')
 
     birth = None
     death = None
@@ -172,8 +167,6 @@ def extended_personas(
                     person.deathISODate = e.date_sort
             elif e.type_id == models.Event_Type.PK_marriage:
                 person.marriageISODate = e.date_sort
-
-    logger.debug('MANU done processing events')
 
     #########
     # Get all groups to which the personas belong
@@ -263,7 +256,6 @@ def extended_personas(
     ##########
 
     if styles:
-        logger.debug('MANU compute styles')
         for p in persons.values():
             styles.compute(p, as_css=as_css)
 

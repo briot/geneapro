@@ -1,4 +1,4 @@
-import { JSON } from '../Server/JSON';
+import * as JSON from '../Server/JSON';
 import { AssertionList } from '../Store/Assertion';
 import { AssertionEntities, AssertionEntitiesJSON,
          setAssertionEntities, assertionFromJSON } from '../Server/Person';

@@ -11,19 +11,22 @@ import { fetchPersons } from './Store/Sagas';
 import SmartTable, { ColumnDescr } from './SmartTable';
 import './PersonaList.css';
 
-const ColId: ColumnDescr<Person, number> = {
+type Column = ColumnDescr<Person, number|Person>;
+
+const ColId: Column = {
    headerName: 'Id',
    get: (p: Person) => p.id,
-   format: (pid: number) => <PersonaLink id={pid} />,
+   format: (pid: number|Person) => <PersonaLink id={pid as number} />,
 };
 
-const ColLife: ColumnDescr<Person, Person> = {
+const ColLife: Column = {
    headerName: 'Lifespan',
    defaultWidth: 20,
    get: (p: Person) => p,
-   format: (p: Person) => {
-      const b = extractYear(p.birthISODate);
-      const d = extractYear(p.deathISODate);
+   format: (p: number|Person) => {
+      const p2 = p as Person;
+      const b = extractYear(p2.birthISODate);
+      const d = extractYear(p2.deathISODate);
       return (
          <span className="lifespan">
             <span>{b}</span>
@@ -45,13 +48,14 @@ interface PersonaListState {
    persons: Person[];  // sorted
 }
 
-class PersonaListConnected extends React.PureComponent<PersonaListProps, PersonaListState> {
+class PersonaListConnected
+extends React.PureComponent<PersonaListProps, PersonaListState> {
    state: PersonaListState = {
       filter: '',
       persons: [],
    };
 
-   readonly cols: ColumnDescr<Person, Person|number>[] = [ColId, ColLife];
+   readonly cols: Column[] = [ColId, ColLife];
 
    componentDidUpdate(old: PersonaListProps) {
       if (old.persons !== this.props.persons) {
@@ -112,7 +116,7 @@ class PersonaListConnected extends React.PureComponent<PersonaListProps, Persona
                      />
                   </Segment>
 
-                  <SmartTable
+                  <SmartTable<Person, Person|number>
                      width={width}
                      rowHeight={30}
                      rows={persons}

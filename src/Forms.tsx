@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Checkbox, Form, Select } from 'semantic-ui-react';
+import { Checkbox, CheckboxProps, DropdownProps,
+         Form, Select } from 'semantic-ui-react';
 
 interface SelectProps<T extends number> {
    defaultValue: T;
@@ -9,13 +10,14 @@ interface SelectProps<T extends number> {
    onChange: (diff: Partial<{[name: string]: T}>) => void;
 }
 export class SelectField<T extends number> extends React.PureComponent<SelectProps<T>> {
-   change = (e: React.FormEvent<HTMLElement>, data: {value: T}) => {
-      this.props.onChange({[this.props.fieldName]: data.value});
+   change = (e: Event|React.SyntheticEvent, data: DropdownProps) => {
+      this.props.onChange({[this.props.fieldName]: data.value as T});
    }
 
    render() {
       const colors = Object.keys(this.props.names)
-         .map(p => ({text: this.props.names[p], value: Number(p)}));
+         .map(p => Number(p))
+         .map(p => ({text: this.props.names[p], value: p}));
       return (
          <Form.Field>
             <label>{this.props.label}</label>
@@ -64,14 +66,14 @@ export class SliderField extends React.PureComponent<SliderProps> {
    }
 }
 
-interface CheckboxProps {
+interface CheckboxFieldProps {
    defaultChecked: boolean;
    label: string;
    fieldName: string;
    onChange: (diff: Partial<{[name: string]: boolean}>) => void;
 }
-export class CheckboxField extends React.PureComponent<CheckboxProps> {
-   change = (e: React.FormEvent<HTMLElement>, data: {checked: boolean}) => {
+export class CheckboxField extends React.PureComponent<CheckboxFieldProps> {
+   change = (e: Event|React.SyntheticEvent, data: CheckboxProps) => {
       this.props.onChange({[this.props.fieldName]: data.checked});
    }
 

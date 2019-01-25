@@ -22,7 +22,7 @@ interface StatsLifespanProps {
 
 export default class StatsLifespan extends React.PureComponent<StatsLifespanProps> {
 
-   svg: SVGElement | null;
+   svg: SVGElement | null = null;
 
    componentDidMount() {
       this.draw();
@@ -57,8 +57,6 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
       const width = this.svg.clientWidth - left;
       const height = this.svg.clientHeight - top - bottom;
       const svg = d3Selection.select(this.svg);
-      const g = svg.append('g')
-         .attr('transform', `translate(${left},${top})`);
 
       const maxAge = Math.max.apply(null, remapped.map(d => d.age));
       const x = d3Scale.scaleLinear()
@@ -77,24 +75,28 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
          return d3Axis.axisLeft(y).ticks(5);
       }
 
-      // The grid
-      g .append('g')
-        .attr('class', 'grid')
-        .attr('transform', `translate(0,${height})`)
-        .call(make_x_axis().tickSize(-height).tickFormat(_ => ''));
-      g .append('g')
-        .attr('class', 'grid')
-        .call(make_y_axis().tickSize(-width).tickFormat(_ => ''));
+      svg.selectAll('g.forgrid').remove();
+      svg.append('g')
+         .attr('class', 'grid forgrid')
+         .attr('transform', `translate(${left},${top + height})`)
+         .call(make_x_axis().tickSize(-height).tickFormat(_ => '') as any);
+      svg.append('g')
+         .attr('class', 'grid forgrid')
+         .attr('transform', `translate(${left},${top})`)
+         .call(make_y_axis().tickSize(-width).tickFormat(_ => '') as any);
+      svg.append('g')
+         .attr('class', 'axis x-axis forgrid')
+         .attr('transform', `translate(${left},${top + height})`)
+         .call(make_x_axis() as any);
+      svg.append('g')
+         .attr('class', 'axis y-axis forgrid')
+         .attr('transform', `translate(${left},${top})`)
+         .call(make_y_axis() as any);
 
-      // The axis
-      g .append('g')
-        .attr('class', 'axis x-axis')
-        .attr('transform', `translate(0,${height})`)
-        .call(make_x_axis());
-      g .append('g')
-        .attr('class', 'axis y-axis')
-        .call(make_y_axis());
-
+      svg.selectAll('g.bars').remove();
+      const g = svg.append('g')
+         .attr('class', 'bars')
+         .attr('transform', `translate(${left},${top})`);
       type LifeSpanSeriesPoint = d3Shape.SeriesPoint<LifeSpan>;
           // [0:y0, 1:y1, data:LifeSpan]
       type LifeSpanSeries = d3Shape.Series<LifeSpan, string>;
@@ -103,22 +105,21 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
       const stacked: LifeSpanSeries[] = stack(remapped);
       const bandwidth = width / remapped.length - 3;
 
-      g.selectAll('g.layer')
-         .data(stacked)
-         .enter()
-            .append('g')
-            .attr('class', 'layer')
-            .style('fill', (d: LifeSpanSeries, i) => this.color(i))
-            .style('stroke', (d, i) => d3Color.rgb(this.color(i)).darker().toString())
-         .selectAll('rect')
-         .data((d: LifeSpanSeries) => d)
-         .enter()
-            .append('rect')
-            .attr('title', d => d[1] - d[0])
-            .attr('x', (d: LifeSpanSeriesPoint) => x(d.data.age) || 0)
-            .attr('y', (d: LifeSpanSeriesPoint) => y(d[1]))
-            .attr('width', bandwidth)
-            .attr('height', (d: LifeSpanSeriesPoint) => y(d[0]) - y(d[1]));
+      const layer = g.selectAll('g.layer').data(stacked)
+           .enter()
+           .append('g')
+           .attr('class', 'layer')
+           .style('fill', (d: LifeSpanSeries, i) => this.color(i))
+           .style('stroke', (d, i) => d3Color.rgb(this.color(i)).darker().toString())
+           .selectAll('rect')
+              .data((d: LifeSpanSeries) => d)
+              .enter()
+                 .append('rect')
+                 .attr('title', d => d[1] - d[0])
+                 .attr('x', (d: LifeSpanSeriesPoint) => x(d.data.age) || 0)
+                 .attr('y', (d: LifeSpanSeriesPoint) => y(d[1]))
+                 .attr('width', bandwidth)
+                 .attr('height', (d: LifeSpanSeriesPoint) => y(d[0]) - y(d[1]));
 
       const legend = g
          .selectAll('g.legend')

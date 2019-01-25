@@ -19,8 +19,8 @@ import SourceList from './SourceList';
 import StatsPage from './Stats/Page';
 import { setPersist, store } from './Store/Store';
 
-class MainAppState {
-   public rehydrated: boolean;
+interface MainAppState {
+   rehydrated: boolean;
 }
 
 export default class App extends React.PureComponent<{}, MainAppState> {

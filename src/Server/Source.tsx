@@ -2,7 +2,7 @@ import { Source, SourceSet } from '../Store/Source';
 import { AssertionList } from '../Store/Assertion';
 import { AssertionEntities, AssertionEntitiesJSON,
          assertionFromJSON, setAssertionEntities } from '../Server/Person';
-import { JSON } from '../Server/JSON';
+import * as JSON from '../Server/JSON';
 
 interface JSONResult extends AssertionEntitiesJSON {
    source: JSON.Source;
@@ -40,7 +40,7 @@ export function* fetchSourceDetailsFromServer(id: number) {
       throw new Error('Server returned an error');
    }
    const data: JSONResult = yield resp.json();
-   
+
    let r: FetchSourceDetailsResult = {
       source: sourceFromJSON(data.source),
       events: {},

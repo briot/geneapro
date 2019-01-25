@@ -207,10 +207,12 @@ export class QuiltsResult {
             fam.left = this.layers[layerIndex + 1].right + famIndex * LINE_SPACING;
             fam.rightMinY = Math.min.apply(
                null,
-               fam.persons.map(p => p && p.topY).filter(y => y !== undefined));
+               fam.persons.map(p => p && p.topY)
+                          .filter(y => y !== undefined)   as number[]);
             fam.rightMaxY = Math.max.apply(
                null,
-               fam.persons.map(p => p && p.bottomY).filter(y => y !== undefined));
+               fam.persons.map(p => p && p.bottomY)
+                          .filter(y => y !== undefined)   as number[]);
          });
 
          // Second pass: the vertical lines are in fact between two families,

@@ -5,7 +5,7 @@ import { GenealogyEventSet } from '../Store/Event';
 import { SourceSet } from '../Store/Source';
 import { sourceFromJSON } from '../Server/Source';
 import { PlaceSet } from '../Store/Place';
-import { JSON } from '../Server/JSON';
+import * as JSON from '../Server/JSON';
 import { ResearcherSet } from '../Store/Researcher';
 
 export interface FetchPersonsResult {
@@ -177,7 +177,7 @@ export interface DetailsResult extends AssertionEntities {
 export function setAssertionEntities(
    entities: AssertionEntitiesJSON,
    into: AssertionEntities,
-   
+
 ) {
    if (entities.places) {
       for (const p of entities.places) {

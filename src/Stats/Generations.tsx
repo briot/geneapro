@@ -12,7 +12,7 @@ interface StatsGenerationProps {
 
 export default class StatsGeneration extends React.PureComponent<StatsGenerationProps> {
 
-   svg: SVGElement | null;
+   svg: SVGElement | null = null;
 
    componentDidMount() {
       this.draw();
@@ -37,7 +37,7 @@ export default class StatsGeneration extends React.PureComponent<StatsGeneration
       const barHeight = height / this.props.ranges.length;
       const svg = d3Selection.select(this.svg);
 
-      const x = d3Scale.scaleLinear()
+      const x: d3Axis.AxisScale<number> = d3Scale.scaleLinear()
          .domain([Math.min.apply(null, this.props.ranges.map(d => d[1])),
                   Math.max.apply(null, this.props.ranges.map(d => d[2]))])
          .range([margin, width]);
@@ -46,48 +46,33 @@ export default class StatsGeneration extends React.PureComponent<StatsGeneration
                   this.props.ranges[this.props.ranges.length - 1][0]])
          .range([height - margin, barHeight]);
 
-      function make_x_axis() {
-         return d3Axis.axisBottom(x);
-      }
       function make_y_axis() {
          return d3Axis.axisLeft(y).ticks(5);
       }
 
       svg.selectAll('g').remove();
-
-      // The grid
-      svg.append('g')
-        .attr('class', 'grid')
-        .attr('transform', 'translate(0,' + (height - margin) + ')')
-        .call(make_x_axis().tickSize(-height).tickFormat(_ => ''));
-      svg.append('g')
-         .attr('class', 'grid')
-         .attr('transform', `translate(${margin})`)
-         .call(make_y_axis().tickSize(-width).tickFormat(_ => ''));
-
-      // The axis
-      svg.append('g')
-         .attr('class', 'axis x-axis')
+      svg.append('g').attr('class', 'grid')
          .attr('transform', `translate(0,${height - margin})`)
-         .call(make_x_axis());
-      svg.append('g')
-         .attr('class', 'axis y-axis')
+         .call(d3Axis.axisBottom(x).tickSize(-height).tickFormat(_ => '') as any);
+      svg.append('g').attr('class', 'grid')
+         .attr('transform', `translate(${margin})`)
+         .call(make_y_axis().tickSize(-width).tickFormat(_ => '') as any);
+      svg.append('g').attr('class', 'axis x-axis')
+         .attr('transform', `translate(0,${height - margin})`)
+         .call(d3Axis.axisBottom(x) as any);
+      svg.append('g').attr('class', 'axis y-axis')
          .attr('transform', `translate(${margin},0)`)
-         .call(make_y_axis());
+         .call(make_y_axis() as any);
 
       // The bars
-      const allRect = svg.selectAll('rect')
-         .data(this.props.ranges);
-
-      allRect.enter().append('rect');  // append missing rectangles
-
-      svg.selectAll('rect')
-         .data(this.props.ranges)
+      const r = svg.selectAll('rect').data(this.props.ranges);
+      r.enter().append('rect')
+         .merge(r as any)  // update+enter
          .attr('fill', d => this.color(d[0]))
          .attr('title', d => d[3])
-         .attr('x', d => x(d[1]))
+         .attr('x', d => x(d[1])!)
          .attr('y', d => y(d[0] + 1))
-         .attr('width', d => x(d[2]) - x(d[1]))
+         .attr('width', d => x(d[2])! - x(d[1])!)
          .attr('height', barHeight);
    }
 

@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { Accordion, Icon, Segment, Step } from 'semantic-ui-react';
+import { Accordion, AccordionTitleProps, Icon,
+         Segment, Step } from 'semantic-ui-react';
 import { Source } from '../Store/Source';
 import SourceCitation from '../Source/Citation';
 import SourceMedias from '../Source/Media';
@@ -31,17 +32,20 @@ export default class SourceDetails extends React.PureComponent<SourceProps, Sour
       };
    }
 
-   toggleCitation = (e: React.SyntheticEvent<HTMLElement>, props2: {active: boolean}) => {
+   toggleCitation = (e: Event|React.SyntheticEvent,
+                     props2: AccordionTitleProps) => {
       const show = !this.state.showCitation;
       this.setState({showCitation: show});
    }
 
-   toggleMedia = (e: React.SyntheticEvent<HTMLElement>, props2: {active: boolean}) => {
+   toggleMedia = (e: Event|React.SyntheticEvent,
+                  props2: AccordionTitleProps) => {
       const show = !this.state.showMedia;
       this.setState({showMedia: show});
    }
 
-   toggleAssertions = (e: React.SyntheticEvent<HTMLElement>, props2: {active: boolean}) => {
+   toggleAssertions = (e: Event|React.SyntheticEvent,
+                       props2: AccordionTitleProps) => {
       const show = !this.state.showAssertions;
       this.setState({showAssertions: show});
    }

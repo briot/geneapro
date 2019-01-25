@@ -11,7 +11,7 @@ import { PersonLayout, PersonLayouts, Sizing } from '../Pedigree/types';
 const maxFontSize: number = 20;
 
 class SameSize extends Sizing {
-   private horizSpacing: number;
+   private horizSpacing: number = 0;
 
    init(settings: PedigreeSettings) {
       this.horizSpacing = settings.horizSpacing;
@@ -37,15 +37,20 @@ class ProportionalSize extends Sizing {
    private readonly baseBoxWidth = 200;
    private readonly baseRadius = 6;
 
+   constructor() {
+      super();
+      this.heights = [this.baseBoxHeight];
+      this.fs = [this.baseTextHeight];
+      this.widths = [this.baseBoxWidth];
+      this.paddings = [0];
+   }
+
    init(settings: PedigreeSettings) {
       // Maximum generation for which we apply ratios. Later generations will
       // all have the same size.
       // Keep reducing until we reach 10% of the original size
       const maxGenForRatio = Math.log(0.1) / Math.log(this.ratio);
 
-      this.heights = [this.baseBoxHeight];
-      this.fs = [this.baseTextHeight];
-      this.widths = [this.baseBoxWidth];
       this.paddings = [settings.horizSpacing];
 
       const maxgen = Math.max(settings.ancestors, settings.descendants);
@@ -65,8 +70,8 @@ class ProportionalSize extends Sizing {
             this.paddings[gen] = this.paddings[gen - 1];
          }
       }
-
       super.init(settings);
+
    }
 
    boxWidth(generation: number): number {
@@ -193,7 +198,7 @@ class ExpandedLayout extends CompactLayout {
 
    compute(decujus: number, layouts: PersonLayouts, maxGen: number): void {
       // Add dummy layout for all missing persons
-      
+
       const recurse = (p: PersonLayout) => {
          if (p.generation < maxGen) {
             for (let i = 0; i < Math.max(2, p.parents.length); i++) {
@@ -338,7 +343,7 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
       // Add marriages
       if (this.props.settings.showMarriages) {
          for (const id of Object.keys(layout)) {
-            const lay = layout[id];
+            const lay = layout[Number(id)];
             const father = lay.parents[0];
             const mother = lay.parents[1];
             const f = father ? this.props.persons[father.id] : undefined;
@@ -352,17 +357,17 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
                if (f && f.marriageISODate) {
                   lay.parentsMarriage = {
                      x: middle,
-                     y: father.y - sizing.padding(father.generation - 1) / 3,
+                     y: father!.y - sizing.padding(father!.generation - 1) / 3,
                      text: f.marriageISODate,
-                     fs: father.fs,
+                     fs: father!.fs,
                      alignX: 'middle',
                   };
                } else if (m && m.marriageISODate) {
                   lay.parentsMarriage = {
                      x: middle,
-                     y: mother.y - sizing.padding(mother.generation - 1) / 3,
+                     y: mother!.y - sizing.padding(mother!.generation - 1) / 3,
                      text: m.marriageISODate,
-                     fs: mother.fs,
+                     fs: mother!.fs,
                      alignX: 'middle',
                   };
                }
@@ -374,17 +379,17 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
 
                if (f && f.marriageISODate) {
                   lay.parentsMarriage = {
-                     x: father.x - sizing.padding(father.generation) / 3,
+                     x: father!.x - sizing.padding(father!.generation) / 3,
                      y: middle,
                      text: f.marriageISODate,
-                     fs: father.fs,
+                     fs: father!.fs,
                   };
                } else if (m && m.marriageISODate) {
                   lay.parentsMarriage = {
-                     x: mother.x - sizing.padding(mother.generation) / 3,
+                     x: mother!.x - sizing.padding(mother!.generation) / 3,
                      y: middle,
                      text: m.marriageISODate,
-                     fs: mother.fs,
+                     fs: mother!.fs,
                   };
                }
             }

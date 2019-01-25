@@ -19,7 +19,7 @@ export interface PersonLayout extends BasePersonLayout {
       y: number,  // Position of the top of the text
       text: string,
       fs: number,
-      alignX: string, // How to align text with respect to 'x'
+      alignX?: string|undefined, // How to align text with respect to 'x'
    };
 }
 
@@ -35,7 +35,7 @@ export abstract class Sizing {
    // x coordinate for boxes in left-to-right mode, or y coordinate
 
    private dummyId: number = 0;
-   private vertical: boolean;
+   private vertical: boolean = false;
 
    init(settings: PedigreeSettings) {
       this.vertical = isVertical(settings);

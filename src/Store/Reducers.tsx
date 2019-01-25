@@ -25,9 +25,9 @@ import { defaultQuilts, changeQuiltsSettings } from '../Store/Quilts';
 function mergePersons(state: PersonSet, action: PersonSet) {
    let result: PersonSet = {...state};
 
-   for (const id of Object.keys(action)) {
-      const p = action[id];
-      result[id] = {...result[id], ...p};
+   for (const [id, p] of Object.entries(action)) {
+      const n = Number(id);
+      result[n] = {...result[n], ...p};
    }
 
    return result;
@@ -39,8 +39,9 @@ function mergePersons(state: PersonSet, action: PersonSet) {
 
 function mergeSources(state: SourceSet, action: SourceSet) {
    let result: SourceSet = {...state};
-   for (const id of Object.keys(action)) {
-      result[id] = {...result[id], ...action[id]};
+   for (const [id, p] of Object.entries(action)) {
+      const n = Number(id);
+      result[n] = {...result[n], ...p};
    }
    return result;
 }
@@ -223,8 +224,9 @@ export function rootReducer(
       // panel
       const ps = action.payload.result.persons;
       let persons = {...state.persons};
-      for (let id of Object.keys(ps)) {
-         persons[id] = {...persons[id], ...ps[id]};
+      for (let [id, p] of Object.entries(ps)) {
+         const n = Number(id);
+         persons[n] = {...persons[n], ...p};
       }
       return {...state,
               persons,
