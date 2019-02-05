@@ -7,7 +7,8 @@ import { FanchartSettings } from '../Store/Fanchart';
 import { GenealogyEventSet } from '../Store/Event';
 import { PersonLayout, PersonLayouts } from '../Fanchart/types';
 import { Style } from '../style';
-import { styleToString } from '../Store/Styles';
+import { combineStyles, combineStylesForText,
+         styleToString } from '../Store/Styles';
 import ScalableSVG from '../SVG.Scalable';
 import { extractYear } from '../Store/Event';
 
@@ -201,9 +202,14 @@ const MIN_ANGLE_STRAIGHT_TEXT = 15 * Math.PI / 180;
 
 export function FanchartBox(props: FanchartBoxProps) {
    const d = fanarc(props.layout) as string;
+
    const style = Style.forPerson(
       props.settings.colors, props.person, props.layout);
-   const styleStr = styleToString(style);
+   const styleStr = styleToString(combineStyles(
+      style, Style.forFanchartBox(props.settings.colors)));
+   const textStyle = styleToString(combineStylesForText(
+      style, Style.forPedigreeName(props.settings.colors)));
+
    const children: JSX.Element[] = [];
    const diff = props.layout.maxAngle - props.layout.minAngle;
 
@@ -256,12 +262,16 @@ export function FanchartBox(props: FanchartBoxProps) {
          />
       );
 
-      const birth = extractYear(props.person.birthISODate);
-      const death = extractYear(props.person.deathISODate);
+      const birth = extractYear(props.person.birthISODate) || '';
+      const death = extractYear(props.person.deathISODate) || '';
       const dates = `${birth} - ${death}`;
 
       children.push(
-         <text key="text" fill={styleStr.color}>
+         <text
+            key="text"
+            /* fill={styleStr && styleStr.color} */
+            style={textStyle}
+         >
             <textPath
                startOffset="50%"
                textAnchor="middle"

@@ -122,7 +122,6 @@ class StatsView(JSONView):
 
         ages = []    # date_range, males, females, unknown
         for p in allpeople:
-            print(dir(persons[p.main_id]))
             a = dates[p.main_id]
             if a[0] and a[1]:
                 age = int((a[1] - a[0]) / bar_width)

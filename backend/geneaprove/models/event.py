@@ -90,3 +90,19 @@ class Event(GeneaProveModel):
             "date": self.date,
             "date_sort": self.date_sort
         }
+
+    def get_place_part(self, part):
+        """
+        Look for a specific place part, possibly querying the database.
+        `part` is one of "name", "country", ...
+        """
+        if self.place:
+            if part == "name":
+                return self.place.name
+            else:
+                try:
+                    return self.place.parts.get(part, "")
+                except ValueError:
+                    return None
+        else:
+            return None

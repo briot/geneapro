@@ -49,8 +49,9 @@ def more_recent(obj1, obj2):
 
 
 def extended_personas(
-        nodes, styles, graph, asserts=None, event_types=None, schemes=None,
-        as_css=False, query_groups=True):
+        nodes, styles, graph, asserts=None,
+        event_types=None, schemes=None,
+        query_groups=True):
     """
     Compute the events for the various persons in `nodes` (all all persons in
     the database if None)
@@ -62,19 +63,14 @@ def extended_personas(
            database.
        :param graph: an instance of Graph, which is used to compute whether
           two ids represent the same person.
-       :param as_css:
-          True to get the styles as a CSS string rather than a python dict
        :param event_types: restricts the types of events that are retrieved
        :param list asserts: All assertions
-       :return: a list of persons:
+       :return: list of persons:
           * persons is a dictionary of Persona instances, indexed on persona_id
 
        SCHEMES is the list of ids of Surety_Scheme that are used. You
           should pass a set() if you are interested in this. Otherwise, it is
           just discarded.
-
-       This sets persons[*].chars to a list of the characteristics.
-       Only the events of type in TYPES are returned
     """
     if nodes:
         ids = [a.main_id for a in nodes]
@@ -86,9 +82,6 @@ def extended_personas(
     roles = dict()  # role_id  -> name
 
     assert schemes is None or isinstance(schemes, set)
-
-    if styles:
-        styles.start()
 
     # Get the role names
 
@@ -135,14 +128,13 @@ def extended_personas(
 
     for p in sql_in(events, "person", all_ids):
         e = p.event
-
         p_node = graph.node_from_id(p.person_id)
         person = persons[p_node.main_id]
 
         # ??? A person could be involved multiple times in the same
         # event, under multiple roles. Here we are only preserving the
         # last occurrence
-        if asserts is not None:
+        if styles.need_p2e:
             asserts.append(p)
 
         # ??? Could we take advantage of the e.date_sort string, instead
@@ -152,8 +144,8 @@ def extended_personas(
         if schemes is not None:
             schemes.add(p.surety.scheme_id)
 
-        if styles:
-            styles.process(person, p.role_id, e)
+        # if styles:
+        #     styles.process(person, p.role_id, e)
 
         if not p.disproved \
            and p.role_id == models.Event_Type_Role.PK_principal:
@@ -190,42 +182,22 @@ def extended_personas(
     # Get all characteristics of these personas
     #########
 
-    if asserts:
-        asserts.extend(sql_in(
+    if styles.need_p2c:
+        p2c = sql_in(
             models.P2C.objects.select_related(*models.P2C.related_json_fields()),
             "person",
-            all_ids))
+            all_ids)
 
-#    logger.debug('MANU processing p2c')
-#    c2p = dict()  # characteristic_id -> person
-#    all_p2c = models.P2C.objects.select_related(
-#        *models.P2C.related_json_fields())
-#
-#    for p in sql_in(all_p2c, "person", all_ids):
-#        c = p.characteristic
-#        p_node = graph.node_from_id(p.person_id)
-#        person = persons[p_node.main_id]
-#        c2p[c.id] = person
-#
-#        c.date = c.date and DateRange(c.date)
-#
-#        if schemes is not None:
-#            schemes.add(p.surety.scheme_id)
-#
-#        if asserts is not None:
-#            asserts.append(p)
+        for a in p2c:
+            p_node = graph.node_from_id(a.person_id)
+            person = persons[p_node.main_id]
 
-#    logger.debug('MANU processing characteristic parts')
-#
-#    chars = models.Characteristic_Part.objects.select_related(
-#        'type', 'characteristic').filter(
-#            type__in=(models.Characteristic_Part_Type.PK_sex, )).order_by()
-#
-#    for part in sql_in(chars, "characteristic", nodes and c2p):
-#        person = c2p[part.characteristic_id]
-#
-#        if part.type_id == models.Characteristic_Part_Type.PK_sex:
-#            person.sex = part.name
+            if asserts:
+                asserts.append(a)
+
+            for part in a.characteristic.parts.all():
+                if part.type.id == models.Characteristic_Part_Type.PK_sex:
+                    person.sex = part.name
 
     ########
     # Compute place parts once, to limit the number of queries
@@ -251,14 +223,6 @@ def extended_personas(
 #
 #            d[p.type.name] = p.name
 
-    ##########
-    # Compute the styles
-    ##########
-
-    if styles:
-        for p in persons.values():
-            styles.compute(p, as_css=as_css)
-
     return persons
 
 
@@ -269,11 +233,10 @@ class PersonaView(JSONView):
         global_graph.update_if_needed()
 
         asserts = []
-
         p = extended_personas(
             nodes=set([global_graph.node_from_id(id)]),
             asserts=asserts,
-            styles=None, as_css=True, graph=global_graph, schemes=None)
+            styles=None, graph=global_graph, schemes=None)
 
         node = global_graph.node_from_id(id)
 
@@ -339,14 +302,18 @@ class PersonaList(JSONView):
             all = {}
         else:
             styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
-
-            styles = None   # disabled for now
-
-            all = extended_personas(
-                nodes=None, styles=styles,
+            asserts = []
+            persons = extended_personas(
+                nodes=None, styles=styles, asserts=asserts,
                 event_types=event_types_for_pedigree(),
-                graph=global_graph, as_css=True)
+                graph=global_graph)
+
+            # ??? Also need to pass all events
+            all_styles, computed_styles = styles.compute(
+                persons, asserts=asserts)
 
         return {
-            'persons': list(all.values()),
+            'persons': list(persons.values()),
+            'allstyles': all_styles,    # all needed styles
+            'styles': computed_styles,  # for each person
         }

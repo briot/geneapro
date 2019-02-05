@@ -44,7 +44,6 @@ class PedigreeData(JSONView):
         decujus = global_graph.node_from_id(id)
 
         styles = Styles(style_rules(), global_graph, decujus=decujus.main_id)
-        styles = None  # disabled for now
 
         distance = dict()
         people = global_graph.people_in_tree(
@@ -63,10 +62,12 @@ class PedigreeData(JSONView):
         children = {}
 
         persons = {}
+        asserts = []
+
         all_person_nodes = set(ancestors).union(descendants)
         if all_person_nodes:
             persons = extended_personas(
-                all_person_nodes, styles,
+                all_person_nodes, styles, asserts=asserts,
                 event_types=event_types_for_pedigree(), graph=global_graph)
 
         def add_parents(p):
@@ -108,9 +109,13 @@ class PedigreeData(JSONView):
             layout[p.id] = {'children': getattr(p, 'children', None),
                             'parents': getattr(p, 'parents', None)}
 
+        all_styles, computed_styles = styles.compute(
+            persons, asserts=asserts)
+
         return {'generations': max_levels,
                 'descendants': maxdepthDescendants,
                 'decujus':     decujus.main_id,
                 'persons':     list(persons.values()),
                 'layout':      layout,
-                'styles':      styles.all_styles() if styles is not None else None}
+                'allstyles':   all_styles,
+                'styles':      computed_styles}

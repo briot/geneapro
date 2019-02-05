@@ -12,8 +12,8 @@ interface PedigreeSideProps {
 export default function PedigreeSide(props: PedigreeSideProps) {
    const panels = [
       {
+         key: 'generations',
          title: {
-            key: 'generations',
             content: (
                <span>
                   Generations
@@ -27,7 +27,6 @@ export default function PedigreeSide(props: PedigreeSideProps) {
             )
          },
          content: {
-            key: 'generationsContent',
             content: (
                <Form size="tiny">
                   <SliderField
@@ -66,8 +65,8 @@ export default function PedigreeSide(props: PedigreeSideProps) {
          }
       },
       {
+         key: 'theme',
          title: {
-            key: 'theme',
             content: (
                <span>
                   Theme
@@ -84,7 +83,6 @@ export default function PedigreeSide(props: PedigreeSideProps) {
             )
          },
          content: {
-            key: 'themeContent',
             content: (
                <Form size="tiny">
                   <SelectField
@@ -146,7 +144,7 @@ export default function PedigreeSide(props: PedigreeSideProps) {
             )
          }
       }
-      
+
    ];
 
    return (

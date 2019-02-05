@@ -182,7 +182,7 @@ class P2E(Assertion):
             role = " (as " + self.role.name + ")"
         else:
             role = ""
-        return str(self.person) + " " + str(self.event) + role
+        return "<P2E %s-->%s%s>" % (self.person, self.event, role)
 
     class Meta:
         """Meta data for the model"""

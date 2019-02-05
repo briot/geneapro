@@ -26,6 +26,8 @@ const baseQuartileColors = [
    d3Color.rgb(252, 120, 118),
    d3Color.rgb(255, 236, 88)];
 
+const BLACK = d3Color.rgb(0, 0, 0);
+
 export class Style {
 
    /**
@@ -75,6 +77,30 @@ export class Style {
          }
       }
       return style;
+   }
+
+   /**
+    * Default style for pedigree and fanchart text (names)
+    */
+   static forPedigreeName(colors: ColorScheme): PersonStyle {
+      switch (colors) {
+         case ColorScheme.CUSTOM:
+            return {fontWeight: 'normal', color: BLACK};
+         default:
+            return {fontWeight: 'bold', color: BLACK};
+      }
+   }
+
+   /**
+    * Default for fanchart boxes
+    */
+   static forFanchartBox(colors: ColorScheme): PersonStyle {
+      switch (colors) {
+         case ColorScheme.CUSTOM:
+            return {stroke: BLACK};
+         default:
+            return {};
+      }
    }
 
    /**

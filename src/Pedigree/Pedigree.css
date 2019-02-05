@@ -3,11 +3,6 @@
    height: calc(100vh - 0px);
    background: white;
 }
-
-.Pedigree .name {
-   font-weight: bold;
-   fill: black;
-}
 .Pedigree .details {
    fill: #555;
 }

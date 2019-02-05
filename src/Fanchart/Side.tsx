@@ -12,8 +12,8 @@ interface FanchartSideProps {
 export default function FanchartSide(props: FanchartSideProps) {
    const panels = [
       {
+         key: 'generations',
          title: {
-            key: 'generations',
             content: (
                <span>
                   Generations
@@ -28,7 +28,6 @@ export default function FanchartSide(props: FanchartSideProps) {
             )
          },
          content: {
-            key: 'generationsC',
             content: (
                <Form size="tiny">
                   <SliderField
@@ -75,8 +74,8 @@ export default function FanchartSide(props: FanchartSideProps) {
          }
       },
       {
+         key: 'theme',
          title: {
-            key: 'theme',
             content: (
                <span>
                   Theme
@@ -97,7 +96,6 @@ export default function FanchartSide(props: FanchartSideProps) {
             )
          },
          content: {
-            key: 'themeC',
             content: (
                <Form size="tiny">
                   <SelectField

@@ -3,111 +3,112 @@ Various views related to displaying the pedgree of a person graphically
 """
 
 from geneaprove import models
-from geneaprove.views.styles import RULE_ATTR, RULE_EVENT, RULE_IN, RULE_IS, \
-    RULE_IS_NOT, RULE_CONTAINS_NOT_INSENSITIVE, RULE_GREATER, \
-    RULE_SMALLER, RULE_CONTAINS_INSENSITIVE, RULE_BEFORE, \
-    RULE_SMALLER_EQUAL, RULE_IS_INSENSITIVE
-
-decujus = 2
+import geneaprove.views.styles as rules
 
 def style_rules():
     return [
-        ("Persons that are alive",
-         RULE_ATTR,
-         [("ALIVE", RULE_IS, "Y")],
-         {"font-weight": "bold"}),
+        rules.Alive(
+            max_age=110,
+            descr="Persons that are still alive",
+            style=rules.Style(font_weight="bold")),
 
-        ("Born or dead in La Baussaine before 1862",
-         RULE_EVENT,
-         [("type", RULE_IN,
-           (models.Event_Type.PK_birth, models.Event_Type.PK_death)),
-          ("place.name", RULE_CONTAINS_INSENSITIVE, "baussaine"),
-          ("role", RULE_IS, models.Event_Type_Role.PK_principal),
-          ("date", RULE_BEFORE, "1862")],
-         {"color": "rgb(200,0,0)", "stroke": "black"}),
+        rules.Alive(
+            descr="Person's age today is more than 60, and is alive",
+            style=rules.Style(color="orange"),
+            alive=True,
+            age__gt=60),
 
-        ("Died younger than 60",
-         RULE_EVENT,
-         [("type", RULE_IS, models.Event_Type.PK_death),
-          ("role", RULE_IS, models.Event_Type_Role.PK_principal),
-          ("age", RULE_SMALLER_EQUAL, 60)],
-         {"color": "blue"}),
+        rules.Event(
+            descr='PROBLEM: persons too old at death',
+            style=rules.Style(fill='red'),
+            type=models.Event_Type.PK_death,
+            role=models.Event_Type_Role.PK_principal,
+            age__gt=110),
 
-        ("Person's age today is more than 60, and is alive",
-         RULE_ATTR,
-         [("age", RULE_GREATER, 60),
-          ("ALIVE", RULE_IS, "Y")],
-         {"stroke": "orange"}),
+        rules.Event(
+            descr='PROBLEM: persons too young at birth of child',
+            style=rules.Style(fill='red'),
+            type=models.Event_Type.PK_birth,
+            role__in=(models.Event_Type_Role.PK_birth__father,
+                      models.Event_Type_Role.PK_birth__mother),
+            age__lt=17),
 
-        ("Foreign people in different color",
-         RULE_EVENT,
-         [("type", RULE_IS, models.Event_Type.PK_birth),
-          ("role", RULE_IS, models.Event_Type_Role.PK_principal),
-          ("place.country", RULE_IS_NOT, ""),
-          ("place.country", RULE_CONTAINS_NOT_INSENSITIVE, "france")],
-         {"fill": "#AAAAAA"}),
+        rules.Implex(
+            descr='person appears multiple times in ancestor tree of 2',
+            of=2,
+            style=rules.Style(fill='yellow'),
+            count__gte=2),
 
-        ("Person's with more than one marriage",
-         RULE_EVENT,
-         [("type", RULE_IS, models.Event_Type.PK_marriage),
-          ("role", RULE_IS, models.Event_Type_Role.PK_principal),
-          ("count", RULE_GREATER, 1)],
-         {"fill": "rgb(0,155,0)"}),
+        rules.Event(
+            descr="Born or dead in La Baussaine before 1862",
+            style=rules.Style(color="rgb(200,0,0)"),
+            type__in=(models.Event_Type.PK_birth, models.Event_Type.PK_death),
+            role=models.Event_Type_Role.PK_principal,
+            date__lt="1940-01-01",
+            place_name__icontains="baussaine"),
 
-        ("PROBLEM: Persons too young at birth of child",
-         RULE_EVENT,
-         [("type", RULE_IS, models.Event_Type.PK_birth),
-          ("role", RULE_IN, (models.Event_Type_Role.PK_birth__father,
-                             models.Event_Type_Role.PK_birth__mother)),
-          ("age", RULE_SMALLER, 17)],
-         {"fill": "red"}),
+        rules.And(
+            descr='All male ancestors of person 2',
+            style=rules.Style(fill='#c6ebff', stroke='#1d4f67'),
+            rules=[rules.Sex(sex="M"),
+                   rules.Ancestor(of=2)]),
 
-        ("PROBLEM: Persons too old at death",
-         RULE_EVENT,
-         [("type", RULE_IS, models.Event_Type.PK_death),
-          ("role", RULE_IS, models.Event_Type_Role.PK_principal),
-          ("age", RULE_GREATER, 110)],
-         {"fill": "red"}),
+        rules.And(
+            descr='All female ancestors of current decujus',
+            style=rules.Style(fill='#e9daf1', stroke='#ff2080'),
+            rules=[rules.Sex(sex="F"),
+                   rules.Ancestor()]),
 
-        ("If the person appears multiple time in the current tree",
-         RULE_ATTR,
-         [("IMPLEX", RULE_GREATER, 1)],
-         {"fill": "yellow"}),
+        rules.Event(
+            descr='Died younger than 60',
+            style=rules.Style(color='blue'),
+            type=models.Event_Type.PK_death,
+            role=models.Event_Type_Role.PK_principal,
+            age__lt=60),
 
-        ("All male ancestors of person id=i%s" % decujus,
-         RULE_ATTR,
-         [("ancestor", RULE_IS, decujus), ("SEX", RULE_IS, "M")],
-         {"fill": "#D6E0EA", "stroke": "#9CA3D4"}),
+        rules.Default(
+            descr="Set default style",
+            style=rules.Style(stroke='black', fill='none')),
 
-        ("All female ancestors of person id=%s" % decujus,
-         RULE_ATTR,
-         [("ancestor", RULE_IS, decujus), ("SEX", RULE_IS, "F")],
-         {"fill": "#E9DAF1", "stroke": "#fF2080"}),
+        # ("Foreign people in different color",
+        #  RULE_EVENT,
+        #  [("type", RULE_IS, models.Event_Type.PK_birth),
+        #   ("role", RULE_IS, models.Event_Type_Role.PK_principal),
+        #   ("place.country", RULE_IS_NOT, ""),
+        #   ("place.country", RULE_CONTAINS_NOT_INSENSITIVE, "france")],
+        #  {"fill": "#AAAAAA"}),
 
-        ("All male descendants of person id=%s" % decujus,
-         RULE_ATTR,
-         [("descendant", RULE_IS, decujus), ("SEX", RULE_IS, "M")],
-         {"fill": "#D6E0EA", "stroke": "#9CA3D4"}),
+        # ("Person's with more than one marriage",
+        #  RULE_EVENT,
+        #  [("type", RULE_IS, models.Event_Type.PK_marriage),
+        #   ("role", RULE_IS, models.Event_Type_Role.PK_principal),
+        #   ("count", RULE_GREATER, 1)],
+        #  {"fill": "rgb(0,155,0)"}),
 
-        ("All female descendants of person id=%s" % decujus,
-         RULE_ATTR,
-         [("descendant", RULE_IS, decujus), ("SEX", RULE_IS, "F")],
-         {"fill": "#E9DAF1", "stroke": "#fF2080"}),
+        # ("All male descendants of person id=%s" % decujus,
+        #  RULE_ATTR,
+        #  [("descendant", RULE_IS, decujus), ("SEX", RULE_IS, "M")],
+        #  {"fill": "#D6E0EA", "stroke": "#9CA3D4"}),
 
-        ("Unknown father",
-         RULE_ATTR,
-         [("UNKNOWN_FATHER", RULE_IS, "Y")],
-         {"color": "violet"}),
+        # ("All female descendants of person id=%s" % decujus,
+        #  RULE_ATTR,
+        #  [("descendant", RULE_IS, decujus), ("SEX", RULE_IS, "F")],
+        #  {"fill": "#E9DAF1", "stroke": "#fF2080"}),
 
-        ("Unknown mother",
-         RULE_ATTR,
-         [("UNKNOWN_MOTHER", RULE_IS, "Y")],
-         {"color": "violet"}),
+        # ("Unknown father",
+        #  RULE_ATTR,
+        #  [("UNKNOWN_FATHER", RULE_IS, "Y")],
+        #  {"color": "violet"}),
 
-        ("Person's name is Delamote (case insensitive)",
-         RULE_ATTR,
-         [("surname", RULE_IS_INSENSITIVE, "delamotte")],
-         {"color": "green"}),
+        # ("Unknown mother",
+        #  RULE_ATTR,
+        #  [("UNKNOWN_MOTHER", RULE_IS, "Y")],
+        #  {"color": "violet"}),
+
+        # ("Person's name is Delamote (case insensitive)",
+        #  RULE_ATTR,
+        #  [("surname", RULE_IS_INSENSITIVE, "delamotte")],
+        #  {"color": "green"}),
     ]
 
 # ??? Other rules that would be nice to have:

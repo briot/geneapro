@@ -31,189 +31,482 @@ can be any of "color" (text color), "fill" (background color),
 "font-weight", "stroke" (border color)...
 """
 
+from collections.abc import Iterable
+import datetime
 from geneaprove.utils.date import DateRange
+from geneaprove.models import P2E
 import logging
 
 logger = logging.getLogger('geneaprove.styles')
 
-RULE_EVENT = 0
-RULE_ATTR = 1
 
-RULE_CONTAINS = 0
-RULE_CONTAINS_INSENSITIVE = 1
-RULE_IS = 2
-RULE_IS_INSENSITIVE = 3
-RULE_IS_NOT = 4
-RULE_CONTAINS_NOT_INSENSITIVE = 5
+##########
+# Checks #
+##########
 
-RULE_SMALLER = 6   # for integers (use RULE_IS for comparison)
-RULE_SMALLER_EQUAL = 7
-RULE_GREATER_EQUAL = 8
-RULE_GREATER = 9
+class ChecksMeta(type):
+    __registry = set()
 
-RULE_BEFORE = 10   # for dates
-RULE_AFTER = 11
-RULE_ON = 12
+    def __init__(cls, name, bases, attrs):
+        super().__init__(name, bases, attrs)
+        if 'abstract' not in attrs:
+            ChecksMeta.__registry.add(cls)
 
-RULE_IN = 13   # for sets
+    def __iter__(cls):
+        return iter(cls.__registry)
 
-__all__ = ["alive", "get_place",
-           "Styles",
-           "RULE_EVENT", "RULE_ATTR",
-           "RULE_CONTAINS", "RULE_CONTAINS_INSENSITIVE", "RULE_IS",
-           "RULE_IS_INSENSITIVE", "RULE_BEFORE", "RULE_IN",
-           "RULE_IS_NOT", "RULE_GREATER", "RULE_GREATER_EQUAL",
-           "RULE_SMALLER", "RULE_SMALLER_EQUAL", "RULE_AFTER",
-           "RULE_ON", "RULE_CONTAINS_NOT_INSENSITIVE"]
+class Check(object, metaclass=ChecksMeta):
+    """
+    Compares two values according to some relation (contains, is, before,...)
+    """
+    abstract = True
 
-max_age = 110
-# maximum age before we consider a person to be dead
+    def __init__(self, reference):
+        self.reference = reference
+
+    def match(self, value):
+        raise Exception("Abstract class")
 
 
-def alive(person):
-    """Whether the person is alive"""
+class ICheck(Check):
+    """
+    Base class for case-insensitive comparisons
+    """
+    abstract = True
 
-    # If we have no birth date, we could assume it is at least 15 years
-    # before the first child's birth date (recursively). But that becomes
-    # more expensive to compute
-
-    logger.error('Did not compute birth or death for person')
-    return False
-
-    if person.death is not None:
-        return False
-    elif person.birth is None:
-        # Might be alive. We could look at other events to guess at the
-        # timeframe
-        return True
-    else:
-        d = DateRange.today().years_since(person.birth.Date)
-        if d is None:
-            # Could not compute elapsed time (likely because birth has no know
-            # year
-            return True
+    @staticmethod
+    def to_lower(v):
+        if isinstance(v, str):
+            return v.lower()
+        elif isinstance(v, Iterable):
+            return [ICheck.to_lower(a) for a in v]
         else:
-            return d <= max_age
+            return v
+
+    def __init__(self, reference):
+        super().__init__(ICheck.to_lower(reference))
+
+    def match(self, value):
+        return self.imatch(ICheck.to_lower(value))
+
+    def imatch(self, value):
+        """Value is already lower-cased"""
+        raise Exception("Abstract method")
 
 
-def get_place(event, part):
-    """From an instance of Event, return the name of the place where the
-       event occurred.
-       PART is one of "name", "country",...
-    """
-    logger.error('Did not compute place for event')
-    return None
+class Check_Exact(Check):
+    suffix = ""
+    def match(self, value):
+        return value == self.reference
 
-    if event.place:
-        if part == "name":
-            return event.place.name
-        else:
-            try:
-                return event.place.parts.get(part, "")
-            except ValueError:
-                return None
-    else:
-        return None
+class Check_IExact(ICheck):
+    suffix = "__iexact"
+    def imatch(self, value):
+        return value == self.reference
 
+class Check_Different(Check):
+    suffix = "__different"
+    def match(self, value):
+        return value != self.reference
 
-rules_func = (
-    lambda exp, value: exp in value,         # CONTAINS
-    lambda exp, value: exp in value.lower(),  # CONTAINS_INSENSITIVE
-    lambda exp, value: value == exp,         # IS
-    lambda exp, value: value.lower() == exp,  # IS_INSENSITIVE
-    lambda exp, value: value != exp,         # IS_NOT
-    lambda exp, value: exp not in value.lower(),  # CONTAINS_NOT_INSENSITIVE
+class Check_IDifferent(ICheck):
+    suffix = "__idifferent"
+    def imatch(self, value):
+        return value != self.reference
 
-    lambda exp, value: value < exp,          # SMALLER
-    lambda exp, value: value <= exp,         # SMALLER_EQUAL
-    lambda exp, value: value >= exp,         # GREATER_EQUAL
-    lambda exp, value: value > exp,          # GREATER
+class Check_In(Check):
+    suffix = "__in"
+    def match(self, value):
+        return value in self.reference
 
-    lambda exp, value: value < exp,   # BEFORE
-    lambda exp, value: value > exp,   # AFTER
-    lambda exp, value: value == exp,  # ON
+class Check_IIn(ICheck):
+    suffix = "__iin"
+    def imatch(self, value):
+        return value in self.reference
 
-    lambda exp, value: value in exp,         # IN
-)
+class Check_Contains(Check):
+    suffix = "__contains"
+    def match(self, value):
+        return value and self.reference in value
 
+class Check_IContains(ICheck):
+    suffix = "__icontains"
+    def imatch(self, value):
+        return value and self.reference in value
 
-def style_to_css(style):
-    """A style as defined in the rules. It behaves like a standard dict,
-       but provides additional methods for conversion in various contexts
-    """
+class Check_Less(Check):
+    suffix = "__lt"
+    def match(self, value):
+        return value and value < self.reference
 
-    st = {}
-    borderWidth = ""
-    borderColor = "black"
-    borderStyle = "solid"
+class Check_Less_Or_Equal(Check):
+    suffix = "__lte"
+    def match(self, value):
+        return value and value <= self.reference
 
-    for k, v in style.items():
-        if k == "fill":
-            k = "background"
-        elif k == "stroke":
-            borderWidth = borderWidth or "1"  # minimum 1px
-            borderColor = v
-            k = ""
-        elif k == "border-width":
-            borderWidth = v
-            k = ""
-        if k:
-            st[k] = v
+class Check_Greater(Check):
+    suffix = "__gt"
+    def match(self, value):
+        return value and value > self.reference
 
-    if borderWidth:
-        st['border-width'] = '%spx' % borderWidth
-        st['border-color'] = borderColor
-        st['border-style'] = borderStyle
-    return st
+class Check_Greater_Or_Equal(Check):
+    suffix = "__gte"
+    def match(self, value):
+        return value and value >= self.reference
 
+#########
+# Style #
+#########
 
-class ColorScheme(object):
-    """
-    A class that computes the color for a person, based on the angle and
-    distance from the decujus.
-    """
+class Style(object):
+    def __init__(self, font_weight=None, color=None, stroke=None, fill=None):
+        self.font_weight = font_weight
+        self.color = color
+        self.stroke = stroke
+        self.fill = fill
 
-    def __init__(self):
-        # All required styles (id -> (index, {styles}, CSS))
-        self._all_styles = {}
+        self._hash = hash((font_weight, color, stroke, fill))
 
-    def start(self):
-        """Start processing a set of events"""
-        pass
+    def __repr__(self):
+        return '<Style %s>' % self.to_json()
 
-    def need_place_parts(self):
-        """
-        Whether we need to know places to compute proper colors,
-        depending on the user rules.
-        """
-        return False   # color is independent of places
+    def __hash__(self):
+        return self._hash
 
-    def process(self, person, role, e):
-        """
-        Take into account an event, as seen from a specific person, to
-        later compute colors.
-        """
-        pass   # color is independent of events
+    def __eq__(self, second):
+        # For proper use of hash tables
+        return (self.font_weight == second.font_weight and
+                self.color == second.color and
+                self.stroke == second.stroke and
+                self.fill == second.fill)
 
-    def compute(self, person, as_css=False):
-        """
-        Compute the color to use for a person, given events previously
-        seen in `process`.
-        """
-        if as_css:
-            person.styles = "color:black"
-        else:
-            person.styles = 0   # index into array returned by all_styles
-
-    def all_styles(self):
-        """The list of all styles needed to render the tree"""
-        result = []
-        for s in sorted(self._all_styles.values()):
-            result.insert(s[0], s[1])
+    def to_json(self):
+        # Must match PersonStyle from src/Store/Styles.tsx
+        result = {}
+        if self.font_weight:
+            result['fontWeight'] = self.font_weight
+        if self.color:
+            result['color'] = self.color
+        if self.stroke:
+            result['stroke'] = self.stroke
+        if self.fill:
+            result['fill'] = self.fill
         return result
 
+    def merge(self, second):
+        """
+        Merge two styles to create a third one. `self` has priority, and only
+        the properties from `second` that are not set in `self` will be
+        preserved.
+        """
+        return Style(font_weight=self.font_weight or second.font_weight,
+                     color=self.color or second.color,
+                     fill=self.fill or second.fill,
+                     stroke=self.stroke or second.stroke)
 
-class Styles(ColorScheme):
+
+#########
+# Rules #
+#########
+
+class Rule(object):
+    """
+    Build a custom-theme rule.
+    Instances of this class are associated with the color theme, and shared
+    by all persons/events/characteristic.
+    The idea is that these rules act as filters. For each person, and for
+    each rule, we associate a boolean that indicates whether the rule matches
+    for that person. We then feed each assertion related to the person, and
+    update the boolean.
+    """
+
+    __unique_id = 0
+
+    def __init__(self, params=[], *, descr="", style=None,
+                 **kwargs):
+        """
+        :param str[] params:
+           a list of properties that can be tested. This will be used to parse
+           **kwargs: any parameter of the form "name__sufix", where name is in
+           `params` and suffix is on the Check suffixes, will be parsed.
+           For instance   params=["name"]  and  Rule(name__is="value") will
+           result in a name attribute set to a Check_Is instance.
+        """
+
+        # Set a unique id for the rule
+        self.id = Rule.__unique_id
+        Rule.__unique_id += 1
+
+        self.need_places = False
+        self.need_p2e = False
+        self.need_p2c = False
+
+        self.descr = descr
+        self.style = style
+
+        for n in params:
+            setattr(self, n, None)
+
+        for kn, kv in kwargs.items():
+            found = False
+            for n in params:
+                for suffix in Check:
+                    if kn == "%s%s" % (n, suffix.suffix):
+                        setattr(self, n, suffix(kv))
+                        found = True
+                        break
+                if found:
+                    break
+            if not found:
+                raise Exception('Invalid keyword parameter: %s' % kn)
+
+    def precompute(self, graph, decujus):
+        """
+        Some rules require some pre-processing for faster
+        computation (like pre-compute the list of ancestors for instance).
+        Must not modify `self`
+        """
+        return None
+
+    def initial(self, person, precomputed):
+        """
+        Compute the initial status, for the given person
+        Must not modify `self`
+        :returntype: None, True, False
+        """
+        return None
+
+    def merge(self, assertion, current, precomputed):
+        """
+        A new assertion was seen for the person. Check the rule, and combine
+        with `current` to return a new status
+        Must not modify `self`
+        :param current: None, True, False
+        """
+        return current
+
+
+class Alive(Rule):
+    """Check that the person is still alive"""
+    def __init__(self, alive=True,  max_age=110, **kwargs):
+        super().__init__(['age'], **kwargs)
+        self.alive = alive
+        self.max_age = max_age
+
+    def initial(self, person, precomputed):
+        # If we have no birth date, we could assume it is at least 15 years
+        # before the first child's birth date (recursively). But that becomes
+        # more expensive to compute
+
+        b = getattr(person, "birthISODate")  # set for an extended persona
+        d = getattr(person, "deathISODate")  # set for an extended persona
+
+        if d is not None:
+            alive = False  # known death, person is no longer alive
+        elif b is None:
+            alive = None   # no known birth or death, can't say anything
+        else:
+            current_year = datetime.datetime.now().year
+            b_year = int(b[0:4])
+            alive = current_year - b_year < self.max_age
+
+            if self.age and not self.age.match(current_year - b_year):
+                return False
+
+        return alive == self.alive
+
+
+class Sex(Rule):
+    """Whether we have a male (M), female (F) or unknown (None) person"""
+    def __init__(self, sex, **kwargs):
+        super().__init__(**kwargs)
+        self.need_p2c = True
+        self.sex = sex
+
+    def initial(self, person, precomputed):
+        return getattr(person, "sex", None) == self.sex
+
+
+class And(Rule):
+    """
+    Combine multiple rules which must all match. Only the style of the And
+    rule is used, the style of nested rules is ignored
+    """
+    def __init__(self, rules, **kwargs):
+        super().__init__(**kwargs)
+        self.rules = rules
+        for r in self.rules:
+            self.need_p2c = self.need_p2c or r.need_p2c
+            self.need_p2e = self.need_p2e or r.need_p2e
+            self.need_places = self.need_places or r.need_places
+
+    def precompute(self, graph, decujus):
+        p = {}
+        for r in self.rules:
+            p[r.id] = r.precompute(graph, decujus)
+        return p
+
+    def initial(self, person, precomputed):
+        s = True
+        for r in self.rules:
+            # if s is None, we won't have True in the end, stop there.
+            # if s is False, we will have False in the end, stop there.
+            # if s is True, need to look at later rules
+            if s == True:
+               s = r.initial(person, precomputed[r.id])
+        return s
+
+    def merge(self, assertion, current, precomputed):
+        if current == False:
+            return current
+
+        s = True
+        for r in self.rules:
+            if s == True:
+                s = r.merge(assertion, current, precomputed[r.id])
+
+        return current if s is None else s
+
+
+class Known_Father(Rule):
+    """Check whether the person has a known father"""
+    def __init__(self, equal=True, **kwargs):
+        super().__init__(**kwargs)
+        self.expected = equal
+    def precompute(self, graph, decujus):
+        return graph
+    def initial(self, person, precomputed):
+        return bool(precomputed.fathers(person)) == self.expected
+
+
+class Ancestor(Rule):
+    """
+    Check whether the current person is an ancestor of a specific one
+    (by default looking at current decujus)
+    """
+
+    def __init__(self, of=None, **kwargs):
+        super().__init__(**kwargs)
+        self.decujus = of
+
+    def precompute(self, graph, decujus):
+        s = set()
+        for a in graph.people_in_tree(
+                id=self.decujus or decujus,
+                maxdepthAncestors=-1,
+                maxdepthDescendants=0):
+            if self.decujus not in a.ids:
+                s.update(a.ids)
+        return s
+
+    def initial(self, person, ancestors):
+        return person.id in ancestors
+
+
+class Descendants(Rule):
+    """
+    Check whether the current person is a descendant of a specific one.
+    By default uses current decujus
+    """
+
+    def __init__(self, of=None, **kwargs):
+        super().__init__(**kwargs)
+        self.decujus = of
+
+    def precompute(self, graph, decujus):
+        s = set()
+        for a in graph.people_in_tree(
+                id=self.decujus or decujus,
+                maxdepthAncestors=0,
+                maxdepthDescendants=-1):
+            if self.decujus not in a.ids:
+                s.update(a.ids)
+        return s
+
+    def initial(self, person, descendants):
+        return person.id in descendants
+
+
+class Implex(Rule):
+    """Number of times that a person appears in the ancestors tree"""
+
+    def __init__(self, of, **kwargs):
+        super().__init__(['count'], **kwargs)
+        self.decujus = of
+        if self.count is None:
+            raise Exception('Missing `count` argument for Implex')
+
+    def precompute(self, graph, decujus):
+        def build_implex(counts, main_id):
+            """
+            Store in `counts` the persons that appear in the tree to compute
+            whether a person occurs multiple times.
+            """
+            counts[main_id] = counts.get(main_id, 0) + 1
+            fathers = graph.fathers(main_id)
+            if fathers:
+                build_implex(counts, fathers[0].main_id)
+            mothers = graph.mothers(main_id)
+            if mothers:
+                build_implex(counts, mothers[0].main_id)
+
+        counts = {}
+        build_implex(counts, graph.node_from_id(self.decujus or decujus).main_id)
+        return graph, counts
+
+    def initial(self, person, precomputed):
+        graph, counts = precomputed
+        main_id = graph.node_from_id(person.id).main_id
+        return self.count.match(counts.get(main_id, 0))
+
+
+class Event(Rule):
+    """Check that one event matches multiple criterias"""
+    def __init__(self, **kwargs):
+        super().__init__(["type", "role", "date", "place_name", "age"], **kwargs)
+        self.need_p2e = True
+        self.need_places = self.place_name is not None
+
+    def precompute(self, graph, decujus):
+        return {}   # will map personId to birth date
+
+    def initial(self, person, precomputed):
+        b = person.birthISODate
+        if b:
+            precomputed[person.id] = int(person.birthISODate[0:4])
+        return None
+
+    def merge(self, assertion, current, precomputed):
+        # If we already know the result, don't bother computing
+        if current is not None or not isinstance(assertion, P2E):
+            return current
+        if self.role and not self.role.match(assertion.role.id):
+            return current # this event doesn't match, maybe another will
+        if self.type and not self.type.match(assertion.event.type.id):
+            return current
+        if self.date and not self.date.match(assertion.event.date_sort):
+            return current
+        if self.place_name and \
+            not self.place_name.match(assertion.event.get_place_part("name")):
+            return current
+        if self.age:
+            b = precomputed.get(assertion.person_id, None)
+            if b and assertion.event.date_sort:
+                y2 = int(assertion.event.date_sort[0:4])
+                if not self.age.match(y2 - b):
+                    return current
+            else:
+                return current
+        return True
+
+
+class Default(Rule):
+    """Always matches, should in general be last in the list"""
+    def initial(self, person, counts):
+        return True
+
+
+class Styles(object):
 
     """
     This class is responsible for computing the styles (colors and text
@@ -229,255 +522,74 @@ class Styles(ColorScheme):
         # Preprocess the rules for faster computation
 
         self.graph = graph
-        self.rules = []
-        self.today = DateRange.today()
-        self.counts = [None] * len(rules)  # the "count" rules: (test, value)
-        self._need_place_parts = False
+        self.rules = rules
 
-        self.cache = None
-        # will be reset for each person in the tree, to take into account the
-        # list of events for that person.
+        self.need_p2e = False
+        self.need_p2c = False
+        self.need_places = False
 
-        self.styles_count = 0
+        # For each rule, the result of its precomputation
+        self.rules_precomputed = {}
 
-        for index, r in enumerate(rules):
-            _, rule_type, rule_tests, rule_style = r
-
-            if rule_type in (RULE_EVENT, RULE_ATTR):
-                tests = []
-                for t in rule_tests:
-                    if t[0] == "count" and rule_type == RULE_EVENT:
-                        # Handled separately at the end
-                        self.counts[index] = (rules_func[t[1]], t[2])
-                        continue
-                    elif t[0] == "ancestor" and rule_type == RULE_ATTR:
-                        ancestors = graph.people_in_tree(
-                            id=t[2],
-                            maxdepthAncestors=-1,
-                            maxdepthDescendants=0)
-                        tests.append((t[0], [a.main_id for a in ancestors]))
-                        continue
-                    elif t[0] == "descendant" and rule_type == RULE_ATTR:
-                        descendants = graph.people_in_tree(
-                            id=t[2],
-                            maxdepthAncestors=0,
-                            maxdepthDescendants=-1)
-                        tests.append((t[0], [a.main_id for a in descendants]))
-                        continue
-                    elif t[0] == "IMPLEX" and rule_type == RULE_ATTR:
-                        # ??? We used to preprocess the tree to know how many
-                        # times an id occurred in the tree, but the graph no
-                        # longer provides that info
-
-                        def build_implex(counts, id):
-                            """
-                            Store in `counts` the persons that appear in the
-                            tree to compute whether a person occurs multiple
-                            times.
-                            """
-                            counts[id] = counts.get(id, 0) + 1
-                            fathers = graph.fathers(id)
-                            if fathers:
-                                build_implex(counts, fathers[0].main_id)
-                            mothers = graph.mothers(id)
-                            if mothers:
-                                build_implex(counts, mothers[0].main_id)
-                        counts = dict()
-                        build_implex(
-                            counts, graph.node_from_id(decujus).main_id)
-                        tests.append((t[0], rules_func[t[1]], t[2], counts))
-                        continue
-                    elif t[0].startswith("place.") and t[0] != "place.name":
-                        self._need_place_parts = True
-
-                    if t[1] == RULE_CONTAINS_INSENSITIVE \
-                       or t[1] == RULE_CONTAINS_NOT_INSENSITIVE \
-                       or t[1] == RULE_IS_INSENSITIVE:
-                        tests.append((t[0], rules_func[t[1]], t[2].lower()))
-                    elif t[1] == RULE_BEFORE:
-                        tests.append((t[0], rules_func[t[1]], DateRange(t[2])))
-                    else:
-                        tests.append((t[0], rules_func[t[1]], t[2]))
-
-                self.rules.append((rule_type, tests, rule_style))
-            else:
-                print("Unknown rule tag in the style rules: %s" % r)
-
-        self.no_match = [0] * len(self.rules)
+        for r in rules:
+            self.need_p2e = self.need_p2e or r.need_p2e # ??? Should be a list of types
+            self.need_p2c = self.need_p2c or r.need_p2c # ??? Should be a list of types
+            self.need_places = self.need_places or r.need_places
+            self.rules_precomputed[r.id] = r.precompute(
+                graph=graph, decujus=decujus)
 
     def need_place_parts(self):
         """Whether we need extra SQL queries for the place parts"""
-        return self._need_place_parts
+        return self.need_places
 
-    def start(self):
-        """Start processing a set of events for different persons
-           process() should be called for each event, and then compute()
-           for each person
+    def compute(self, persons, asserts=None):
+        """
+        Returns the styles to apply to the persons.
+
+        :param dict persons:
+            maps main ids to Person instance
+        :param list asserts:
+            all assertions applying to any of the personas
+        :returntype: dict
+            maps main_id to a style object
         """
 
-        self.cache = dict()
+        # for each rule and for each person, its current status
+        status = {}
+        for main_id, p in persons.items():
+            status[main_id] = {r.id: r.initial(p, self.rules_precomputed[r.id])
+                          for r in self.rules}
 
-    def process(self, person, role, e):
-        """Process an event into the cache.
-           The event is considered in relation to person. The same event might
-           be processed multiple times, for each person that are part of this
-           event (principals, witnesses,...)
-        """
+        # Apply each assertions
+        for a in asserts:
+            main_id = self.graph.node_from_id(a.person.id).main_id
+            for r in self.rules:
+                status[main_id][r.id] = r.merge(
+                    assertion=a,
+                    current=status[main_id][r.id],
+                    precomputed=self.rules_precomputed[r.id])
 
-        if person.id not in self.cache:
-            pr1 = self.cache[person.id] = list(self.no_match)
-        else:
-            pr1 = self.cache[person.id]
+        # We now know whether each rule applies, so we can set the styles
+        # Make styles unique, so that we send fewer data
+        result = {}
 
-        for index, r in enumerate(self.rules):
-            if r[0] == RULE_EVENT:
-                match = True
-                for t in r[1]:
-                    if t[0] == "age":
-                        # ??? Would need to compute birth from birthEventId
-                        logger.error('Did not compute birthEvent for person')
-                        # if person.birth and e.Date:
-                        #     value = e.Date.years_since(person.birth.Date)
-                        # else:
-                        #     value = None
-                        value = None
-                    elif t[0].startswith("place."):
-                        value = get_place(e, t[0][6:])
-                    elif t[0] == "role":
-                        value = role
-                    elif t[0] == "type":
-                        value = e.type_id
-                    elif t[0] == "date":
-                        value = e.Date
-                    else:
-                        print("Error, invalid field: " + t[0])
-                        continue
+        all_styles = {}   # style -> id
+        all_styles[Style()] = 0  # default style
+        style_id = 1
 
-                    if value is None \
-                            or not t[1](exp=t[2], value=value):
-                        match = False
-                        break
+        for id in persons:
+            s = Style()
+            for r in self.rules:
+                if status[id][r.id] == True:
+                    s = s.merge(r.style)
 
-                if match:
-                    pr1[index] = pr1[index] + 1
+            sv = all_styles.get(s, None)
+            if sv is None:
+                all_styles[s] = style_id
+                sv = style_id
+                style_id += 1
 
-    def _merge(self, styles, style):
-        """Merge style into styles
-           If a key already exists in style1, it is not overridden.
-           Replacement is done in place.
-        """
-        for a in style:
-            if a not in styles:
-                styles[a] = style[a]
+            if sv != 0:   # Do not emit the default style
+                result[id] = sv
 
-    def compute(self, person, as_css=False):
-        """
-        Sets person.styles to contain the list of styles for that person.
-        Nothing is computing if the style is already known.
-        if AS_CSS is True, person.styles is set to a valid CSS style, rather
-        than an index into all_styles.
-        """
-
-        styles = {}
-        hashes = 0
-
-        cache = self.cache.get(person.id, self.no_match)
-        tmp_hash = 1
-
-        # We need to process the rules in the same order given by the user
-        # since they override each other
-
-        for index, r in enumerate(self.rules):
-            if r[0] == RULE_ATTR:
-                match = True
-                for t in r[1]:
-                    if t[0] == "surname":
-                        value = person.surn
-                    elif t[0] == "ALIVE":
-                        if alive(person):
-                            value = "Y"
-                        else:
-                            value = "N"
-                    elif t[0] == "UNKNOWN_FATHER":
-                        if self.graph.fathers(person):
-                            value = "N"
-                        else:
-                            value = "Y"
-                    elif t[0] == "UNKNOWN_MOTHER":
-                        if self.graph.mothers(person):
-                            value = "N"
-                        else:
-                            value = "Y"
-                    elif t[0] == "SEX":
-                        value = person.sex
-                    elif t[0] == "IMPLEX":
-                        value = t[3].get(person.id, 0)
-                    elif t[0] == "age":
-                        logger.error('Did not compute age for person')
-                        value = ""
-                        # if person.birth:
-                        #     value = self.today.years_since(person.birth.Date)
-                        # else:
-                        #     value = ""
-                    elif t[0] == "ancestor":
-                        match = person.id in t[1]
-                        if not match:
-                            break
-                        continue
-                    elif t[0] == "descendant":
-                        match = person.id in t[1]
-                        if not match:
-                            break
-                        continue
-                    else:
-                        value = None
-
-                    if value is None:
-                        match = False
-                        break
-                    elif isinstance(value, int):
-                        if not t[1](exp=int(t[2]), value=value):
-                            match = False
-                            break
-                    elif isinstance(value, str):
-                        if not t[1](exp=str(t[2]), value=value):
-                            match = False
-                            break
-                    else:
-                        print("Unknown type in rule")
-
-                if match:
-                    self._merge(styles, r[2])
-                    hashes += tmp_hash
-
-            else:  # RULE_EVENT
-                count = self.counts[index]
-                if count is None:
-                    if cache[index] > 0:
-                        self._merge(styles, r[2])
-                        hashes += tmp_hash
-                else:
-                    # Need to check the count of the events
-                    if count[0](exp=count[1], value=cache[index]):
-                        self._merge(styles, r[2])
-                        hashes += tmp_hash
-
-            tmp_hash *= 2
-
-        # Default background value
-
-        if "fill" not in styles:
-            styles["fill"] = "none"
-        if "stroke" not in styles:
-            styles["stroke"] = "black"
-
-        s = self._all_styles.get(hashes, None)
-        if not s:
-            s = (self.styles_count, styles, style_to_css(styles))
-            self._all_styles[hashes] = s
-            self.styles_count += 1
-
-        if as_css:
-            person.styles = s[2]
-        else:
-            person.styles = s[0]
+        return {id: s for s, id in all_styles.items()}, result

@@ -6,7 +6,8 @@ import { RadialSettings } from '../Store/Radial';
 import { Person, personDisplay } from '../Store/Person';
 import ScalableSVG from '../SVG.Scalable';
 import { BasePersonLayout, Style } from '../style';
-import { styleToString } from '../Store/Styles';
+import { combineStyles,
+         combineStylesForText, styleToString } from '../Store/Styles';
 import './Radial.css';
 
 interface RadialLayout extends BasePersonLayout {
@@ -20,8 +21,48 @@ interface RadialProps {
    decujus: number;
 }
 
+const CIRCLE_SIZE = 5;  // diameter of circles
+
+function circle(node: d3Hierarchy.HierarchyPointNode<RadialLayout>,
+                settings: RadialSettings,
+) {
+   const style = Style.forPerson(settings.colors, node.data.p, node.data);
+   const textStyle = combineStylesForText(
+      style, Style.forPedigreeName(settings.colors));
+
+   return (
+      <Link
+         to={node.data.p ? '/radial/' + node.data.p.id : '#'}
+         key={node.data.p.id}
+      >
+         <g
+            className="node"
+            transform={`rotate(${node.x * 180 / Math.PI - 90})translate(${node.y})`}
+         >
+            <circle
+               r={CIRCLE_SIZE}
+               key={node.data.p.id}
+               {...styleToString(style)}
+            >
+               <title>{personDisplay(node.data.p, true /* withId */)}</title>
+            </circle>
+            {
+               <text
+                  dy=".31em"
+                  style={styleToString(textStyle)}
+                  textAnchor={node.x < Math.PI ? 'start' : 'end'}
+                  transform={node.x < Math.PI ? 'translate(8)'
+                             : 'rotate(180)translate(-8)'}
+               >
+                  {personDisplay(node.data.p)}
+               </text>
+            }
+         </g>
+      </Link>
+   );
+}
+
 export default function Radial(props: RadialProps) {
-   const circleSize = 5;  // diameter of circles
    const diameter = 2 * Math.abs(props.settings.generations) *
       props.settings.spacing;
    // We are displaying gens*2+1 generations, and leave space
@@ -71,7 +112,7 @@ export default function Radial(props: RadialProps) {
    );
 
    const treeLayout = d3Hierarchy.tree<RadialLayout>()
-      .nodeSize([circleSize, circleSize])
+      .nodeSize([CIRCLE_SIZE, CIRCLE_SIZE])
       .size([2 * Math.PI, diameter / 2])
       .separation((p1, p2) => (p1.parent === p2.parent ? 1 : 2) / p1.depth);
 
@@ -84,39 +125,13 @@ export default function Radial(props: RadialProps) {
    allNodes.map(node => coords[node.data.p.id] = node);
 
    const circles = Object.values(coords).map(
-      (node: d3Hierarchy.HierarchyPointNode<RadialLayout>) => (
-         <Link
-            to={node.data.p ? '/radial/' + node.data.p.id : '#'}
-            key={node.data.p.id}
-         >
-            <g
-               className="node"
-               transform={`rotate(${node.x * 180 / Math.PI - 90})translate(${node.y})`}
-            >
-               <circle
-                  r={circleSize}
-                  key={node.data.p.id}
-                  {...styleToString(Style.forPerson(
-                     props.settings.colors, node.data.p, node.data))}
-               >
-                  <title>{personDisplay(node.data.p, true /* withId */)}</title>
-               </circle>
-               {
-                  <text
-                     dy=".31em"
-                     textAnchor={node.x < Math.PI ? 'start' : 'end'}
-                     transform={node.x < Math.PI ? 'translate(8)' : 'rotate(180)translate(-8)'}
-                  >
-                     {personDisplay(node.data.p)}
-                  </text>
-               }
-            </g>
-         </Link>
-      )
-   );
+      (node: d3Hierarchy.HierarchyPointNode<RadialLayout>) =>
+         circle(node, props.settings));
 
-   const radialLink = d3Shape.linkRadial<d3Hierarchy.HierarchyPointLink<RadialLayout>,
-                                         d3Hierarchy.HierarchyPointNode<RadialLayout>>()
+   const radialLink = d3Shape.linkRadial<
+      d3Hierarchy.HierarchyPointLink<RadialLayout>,
+      d3Hierarchy.HierarchyPointNode<RadialLayout>
+   >()
        .angle(d => coords[d.data.p.id].x)
        .radius(d => coords[d.data.p.id].y);
 

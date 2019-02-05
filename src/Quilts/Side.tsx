@@ -11,8 +11,8 @@ interface QuiltsSideProps {
 export default function QuiltsSide(props: QuiltsSideProps) {
    const panels = [
       {
+         key: 'theme',
          title: {
-            key: 'theme',
             content: (
                <span>
                   Theme
@@ -24,7 +24,6 @@ export default function QuiltsSide(props: QuiltsSideProps) {
             )
          },
          content: {
-            key: 'themeContent',
             content: (
                <Form size="tiny">
                   <SliderField
@@ -46,7 +45,7 @@ export default function QuiltsSide(props: QuiltsSideProps) {
             )
          }
       }
-      
+
    ];
 
    return (

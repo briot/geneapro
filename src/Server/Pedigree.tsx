@@ -11,9 +11,11 @@ interface JSONPedigree {
    decujus: number;
    generations: number;  // including decujus
    descendants: number;
-   styles: JSON.Style[]|undefined;
    persons: JSON.Person[];
    layout: ChildrenAndParentsSet;
+
+   allstyles?: {[id: number]: JSON.Style};  // all used styles
+   styles?: {[person: number]: number};   // person-to-style mapping
 }
 
 /**
@@ -34,7 +36,10 @@ export function* fetchPedigreeFromServer(
 
    const data: JSONPedigree = yield resp.json();
    const result: fetchPedigreeResult = {
-      ...jsonPersonsToPerson(data, data.styles),
+      ...jsonPersonsToPerson(
+         data,
+         data.allstyles,
+         data.styles),
       events: {},
       layout: data.layout,
    };

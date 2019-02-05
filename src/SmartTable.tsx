@@ -43,6 +43,9 @@ export interface ColumnDescr<RowData, ColumnData> {
    // Computing the class name to apply to individual cells
    className?: (v: ColumnData) => string|undefined;
 
+   // Inline style
+   inlineStyle?: (v: ColumnData) => Object|undefined;
+
    // How to sort on this column
    sorter?: Sorter<ColumnData>;
 
@@ -141,11 +144,14 @@ function TableRow<RowData, ColumnsData>(p: TableRowProps<RowData, ColumnsData>) 
          {
             p.table.props.columns.map((c, idx) => {
                const r = c.get(p.row);
+               const inline = c.inlineStyle ? c.inlineStyle(r) : undefined;
                return (
                   <td
                      key={idx}
                      style={{textAlign: c.align,
-                             width: p.table.state.colWidth[idx]}}
+                             width: p.table.state.colWidth[idx],
+                             ...inline
+                           }}
                      className={c.className ? c.className(r) : undefined}
                   >
                      {c.format(r)}

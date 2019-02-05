@@ -7,16 +7,21 @@ import { sourceFromJSON } from '../Server/Source';
 import { PlaceSet } from '../Store/Place';
 import * as JSON from '../Server/JSON';
 import { ResearcherSet } from '../Store/Researcher';
+import { PersonStyle, jsonStyleToStyle } from '../Store/Styles';
 
 export interface FetchPersonsResult {
    persons: PersonSet;
 }
 
+interface IPersonaListRaw extends JSON.Persons {
+   allstyles: {[index: number]: JSON.Style},
+   styles: {[person: number]: number}
+};
+
 export function jsonPersonToPerson(
    p: JSON.Person,
-   styles?: JSON.Style[],
+   style: PersonStyle|undefined,
 ): Person {
-   const s: JSON.Style|undefined = styles && p.style ? styles[p.style] : undefined;
    return {
       id: p.id,
       name: p.name,
@@ -27,23 +32,31 @@ export function jsonPersonToPerson(
       knownDescendants: 0,
       parents: p.parents,
       children: p.children,
-      style: {
-         fill: s && d3Color.color(s.fill),
-         stroke: s && d3Color.color(s.stroke),
-         color: s && d3Color.color(s.color),
-         fontWeight: s && s['font-weight'],
-      }
+      style: style,
    };
 }
 
 export function jsonPersonsToPerson(
    json: JSON.Persons,
-   styles?: JSON.Style[],
+   allStyles?: {[index: number]: JSON.Style},   // definition for styles
+   styles?: {[pid: number]: number},   // person to style index
 ): FetchPersonsResult {
+
+   let allS: {[id: number]: PersonStyle|undefined} = {};
+   if (allStyles && styles) {
+      for (const [id, s] of Object.entries(allStyles)) {
+         allS[Number(id)] = jsonStyleToStyle(s);
+      }
+   }
+
    let persons: PersonSet = {};
    for (const jp of json.persons) {
-      persons[jp.id] = jsonPersonToPerson(jp);
+      persons[jp.id] = jsonPersonToPerson(
+         jp,
+         styles ? allS[styles[jp.id]] : undefined /* style */,
+      );
    }
+
    return {persons};
 }
 
@@ -53,8 +66,8 @@ export function* fetchPersonsFromServer() {
       throw new Error('Server returned an error');
    }
 
-   const data: JSON.Persons = yield resp.json();
-   return jsonPersonsToPerson(data, [] /* styles */);
+   const raw: IPersonaListRaw = yield resp.json();
+   return jsonPersonsToPerson(raw, raw.allstyles, raw.styles);
 }
 
 function p2eFromJSON(e: JSON.P2E) {

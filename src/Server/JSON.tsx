@@ -31,7 +31,7 @@ export interface Person {
    birthISODate?: string;
    deathISODate?: string;
    marriageISODate?: string;
-   style?: number;  // index into the styles array
+   //style?: number;  // index into the styles array
 }
 
 export interface Persons {

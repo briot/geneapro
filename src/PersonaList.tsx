@@ -8,25 +8,26 @@ import { GenealogyEventSet } from './Store/Event';
 import { PersonaLink } from './Links';
 import { extractYear } from './Store/Event';
 import { fetchPersons } from './Store/Sagas';
+import { styleToString } from './Store/Styles';
 import SmartTable, { ColumnDescr } from './SmartTable';
 import './PersonaList.css';
 
-type Column = ColumnDescr<Person, number|Person>;
+type Column = ColumnDescr<Person, Person>;
 
 const ColId: Column = {
    headerName: 'Id',
-   get: (p: Person) => p.id,
-   format: (pid: number|Person) => <PersonaLink id={pid as number} />,
+   get: (p: Person) => p,
+   format: (p: Person) => <PersonaLink id={p.id} />,
+   inlineStyle: (p: Person) => styleToString(p.style),
 };
 
 const ColLife: Column = {
    headerName: 'Lifespan',
    defaultWidth: 20,
    get: (p: Person) => p,
-   format: (p: number|Person) => {
-      const p2 = p as Person;
-      const b = extractYear(p2.birthISODate);
-      const d = extractYear(p2.deathISODate);
+   format: (p: Person) => {
+      const b = extractYear(p.birthISODate);
+      const d = extractYear(p.deathISODate);
       return (
          <span className="lifespan">
             <span>{b}</span>
@@ -116,7 +117,7 @@ extends React.PureComponent<PersonaListProps, PersonaListState> {
                      />
                   </Segment>
 
-                  <SmartTable<Person, Person|number>
+                  <SmartTable<Person, Person>
                      width={width}
                      rowHeight={30}
                      rows={persons}

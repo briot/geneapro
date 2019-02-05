@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Style } from '../style';
-import { styleToString } from '../Store/Styles';
+import { combineStylesForText, styleToString } from '../Store/Styles';
 import { Person } from '../Store/Person';
-import { PedigreeSettings } from '../Store/Pedigree';
+import { ColorScheme, PedigreeSettings } from '../Store/Pedigree';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { PersonLayout } from '../Pedigree/types';
@@ -27,6 +27,11 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
       <EventText key="d" isoDate={p.deathISODate} prefix="d" />
    ] : undefined;
 
+   const style = Style.forPerson(props.style.colors, p, layout);
+   const textStyle = styleToString(combineStylesForText(
+      style, Style.forPedigreeName(props.style.colors)));
+   window.console.log(style, textStyle);
+
    const text = p === undefined ?
       null :
       (
@@ -34,14 +39,13 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
             fontSize={layout.fs}
             clipPath={p ? 'url(#clipGen' + layout.generation + ')' : ''}
          >
-            <tspan dy={layout.fs} className="name" x="2">
+            <tspan dy={layout.fs} style={textStyle} x="2">
                {p.name}
             </tspan>
             {details}
          </text>
       );
 
-   const style = Style.forPerson(props.style.colors, p, layout);
    const link = p ? '/pedigree/' + p.id : '#';
    return (
       <Link to={link}>
@@ -54,7 +58,7 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
                height={layout.h}
                rx={layout.radius + 'px'}
                ry={layout.radius + 'px'}
-               {...styleToString(style)}
+               style={styleToString(style)}
             />
             {text}
          </g>

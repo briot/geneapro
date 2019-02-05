@@ -12,8 +12,8 @@ interface RadialSideProps {
 export default function RadialSide(props: RadialSideProps) {
    const panels = [
       {
+         key: 'generations',
          title: {
-            key: 'generations',
             content: (
                <span>
                   Generations
@@ -26,7 +26,6 @@ export default function RadialSide(props: RadialSideProps) {
             )
          },
          content: {
-            key: 'generationsContent',
             content: (
                <Form size="tiny">
                   <SliderField
@@ -42,8 +41,8 @@ export default function RadialSide(props: RadialSideProps) {
          }
       },
       {
+         key: 'theme',
          title: {
-            key: 'theme',
             content: (
                <span>
                   Theme
@@ -56,7 +55,6 @@ export default function RadialSide(props: RadialSideProps) {
             )
          },
          content: {
-            key: 'themeContent',
             content: (
                <Form size="tiny">
                   <SelectField

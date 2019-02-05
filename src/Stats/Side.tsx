@@ -12,8 +12,8 @@ interface StatsSideProps {
 export default function StatsSide(props: StatsSideProps) {
    const panels = [
       {
+         key: 'stats',
          title: {
-            key: 'stats',
             content: (
                <span>
                   Stats
@@ -34,7 +34,6 @@ export default function StatsSide(props: StatsSideProps) {
             )
          },
          content: {
-            key: 'statsContent',
             content: (
                <Form size="tiny">
                   <SliderField
