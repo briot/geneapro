@@ -492,8 +492,12 @@ class Event(Rule):
         if self.age:
             b = precomputed.get(assertion.person_id, None)
             if b and assertion.event.date_sort:
-                y2 = int(assertion.event.date_sort[0:4])
-                if not self.age.match(y2 - b):
+                try:
+                    y2 = int(assertion.event.date_sort[0:4])
+                    if not self.age.match(y2 - b):
+                        return current
+                except:
+                    print('Cannot parse date_sort for event', assertion)
                     return current
             else:
                 return current

@@ -17,16 +17,6 @@ import logging
 logger = logging.getLogger('geneaprove.PERSONA')
 
 
-def event_types_for_pedigree():
-    """
-    List of events that impact the display of the pedigree
-    """
-
-    return (models.Event_Type.PK_birth,
-            models.Event_Type.PK_death,
-            models.Event_Type.PK_marriage)
-
-
 def __add_default_person_attributes(person):
     """
     Add the default computed attributes for the person.
@@ -36,16 +26,6 @@ def __add_default_person_attributes(person):
     person.birthISODate = None
     person.deathISODate = None
     person.marriageISODate = None
-
-def more_recent(obj1, obj2):
-    """
-    Compare the date_sort field of two objects
-    """
-    if obj1.date_sort is None:
-        return False
-    if obj2.date_sort is None:
-        return True
-    return obj1.date_sort > obj2.date_sort
 
 
 def extended_personas(
@@ -120,42 +100,35 @@ def extended_personas(
         for p in nodes:
             all_ids.update(p.ids)
 
-    birth = None
-    death = None
-
     # Also query the 'principal' for each events, so that we can provide
     # that information graphically.
 
-    for p in sql_in(events, "person", all_ids):
-        e = p.event
-        p_node = graph.node_from_id(p.person_id)
+    for p2e in sql_in(events, "person", all_ids):
+        e = p2e.event
+        p_node = graph.node_from_id(p2e.person_id)
         person = persons[p_node.main_id]
 
-        # ??? A person could be involved multiple times in the same
-        # event, under multiple roles. Here we are only preserving the
-        # last occurrence
-        if styles.need_p2e:
-            asserts.append(p)
+        if asserts is not None:
+            asserts.append(p2e)
 
         # ??? Could we take advantage of the e.date_sort string, instead
         # of reparsing the DateRange ?
-        e.Date = e.date and DateRange(e.date)
+        #   e.Date = e.date and DateRange(e.date)
 
         if schemes is not None:
-            schemes.add(p.surety.scheme_id)
+            schemes.add(p2e.surety.scheme_id)
 
-        # if styles:
-        #     styles.process(person, p.role_id, e)
-
-        if not p.disproved \
-           and p.role_id == models.Event_Type_Role.PK_principal:
-            if not e.Date:
+        if not p2e.disproved \
+           and p2e.role_id == models.Event_Type_Role.PK_principal:
+            if not e.date_sort:
                 pass
             elif e.type_id == models.Event_Type.PK_birth:
-                if birth is None or more_recent(birth, e):
+                if person.birthISODate is None or \
+                        e.date_sort < person.birthISODate:
                     person.birthISODate = e.date_sort
             elif e.type_id == models.Event_Type.PK_death:
-                if death is None or more_recent(death, e):
+                if person.deathISODate is None or \
+                        e.date_sort > person.deathISODate:
                     person.deathISODate = e.date_sort
             elif e.type_id == models.Event_Type.PK_marriage:
                 person.marriageISODate = e.date_sort
@@ -182,22 +155,21 @@ def extended_personas(
     # Get all characteristics of these personas
     #########
 
-    if styles.need_p2c:
-        p2c = sql_in(
-            models.P2C.objects.select_related(*models.P2C.related_json_fields()),
-            "person",
-            all_ids)
+    p2c = sql_in(
+        models.P2C.objects.select_related(*models.P2C.related_json_fields()),
+        "person",
+        all_ids)
 
-        for a in p2c:
-            p_node = graph.node_from_id(a.person_id)
-            person = persons[p_node.main_id]
+    for a in p2c:
+        p_node = graph.node_from_id(a.person_id)
+        person = persons[p_node.main_id]
 
-            if asserts:
-                asserts.append(a)
+        if asserts is not None:
+            asserts.append(a)
 
-            for part in a.characteristic.parts.all():
-                if part.type.id == models.Characteristic_Part_Type.PK_sex:
-                    person.sex = part.name
+        for part in a.characteristic.parts.all():
+            if part.type.id == models.Characteristic_Part_Type.PK_sex:
+                person.sex = part.name
 
     ########
     # Compute place parts once, to limit the number of queries
@@ -298,17 +270,18 @@ class PersonaList(JSONView):
     @transaction.atomic
     def get_json(self, params, decujus=1):
         global_graph.update_if_needed()
+        asserts = []
         if global_graph.is_empty():
-            all = {}
+            persons = []
         else:
             styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
-            asserts = []
             persons = extended_personas(
                 nodes=None, styles=styles, asserts=asserts,
-                event_types=event_types_for_pedigree(),
+                event_types=(models.Event_Type.PK_birth,
+                             models.Event_Type.PK_death,
+                             models.Event_Type.PK_marriage),
                 graph=global_graph)
 
-            # ??? Also need to pass all events
             all_styles, computed_styles = styles.compute(
                 persons, asserts=asserts)
 

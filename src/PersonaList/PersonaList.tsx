@@ -1,24 +1,29 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
-import Page from './Page';
-import { AppState, GPDispatch } from './Store/State';
+import Page from '../Page';
+import { AppState, GPDispatch } from '../Store/State';
 import { Input, Segment } from 'semantic-ui-react';
-import { Person, PersonSet } from './Store/Person';
-import { GenealogyEventSet } from './Store/Event';
-import { PersonaLink } from './Links';
-import { extractYear } from './Store/Event';
-import { fetchPersons } from './Store/Sagas';
-import { styleToString } from './Store/Styles';
-import SmartTable, { ColumnDescr } from './SmartTable';
+import { Person, PersonSet } from '../Store/Person';
+import { GenealogyEventSet } from '../Store/Event';
+import { PersonaLink } from '../Links';
+import PersonaListSide from '../PersonaList/Side';
+import { extractYear } from '../Store/Event';
+import { PersonaListSettings,
+         changePersonaListSettings } from '../Store/PersonaList';
+import { fetchPersons } from '../Store/Sagas';
+import { styleToDOM } from '../Store/Styles';
+import SmartTable, { ColumnDescr } from '../SmartTable';
+import { Style } from '../style';
 import './PersonaList.css';
 
-type Column = ColumnDescr<Person, Person>;
+type Column = ColumnDescr<Person, Person, PersonaListSettings|undefined>;
 
 const ColId: Column = {
    headerName: 'Id',
    get: (p: Person) => p,
    format: (p: Person) => <PersonaLink id={p.id} />,
-   inlineStyle: (p: Person) => styleToString(p.style),
+   inlineStyle: (p: Person, settings: PersonaListSettings|undefined) =>
+      settings && styleToDOM(Style.forPerson(settings.colors, p)),
 };
 
 const ColLife: Column = {
@@ -42,6 +47,9 @@ interface PersonaListProps {
    persons: PersonSet;
    allEvents: GenealogyEventSet;
    dispatch: GPDispatch;
+
+   settings: PersonaListSettings;
+   onChange: (diff: Partial<PersonaListSettings>) => void;
 }
 
 interface PersonaListState {
@@ -99,6 +107,12 @@ extends React.PureComponent<PersonaListProps, PersonaListState> {
 
       return (
          <Page
+            leftSide={
+               <PersonaListSide
+                  settings={this.props.settings}
+                  onChange={this.props.onChange}
+               />
+            }
             main={
                <div className="PersonaList List">
                   <Segment
@@ -117,10 +131,11 @@ extends React.PureComponent<PersonaListProps, PersonaListState> {
                      />
                   </Segment>
 
-                  <SmartTable<Person, Person>
+                  <SmartTable<Person, Person, PersonaListSettings>
                      width={width}
                      rowHeight={30}
                      rows={persons}
+                     data={this.props.settings}
                      columns={this.cols}
                      resizableColumns={true}
                   />
@@ -135,9 +150,13 @@ const PersonaList = connect(
    (state: AppState) => ({
       persons: state.persons,
       allEvents: state.events,
+      settings: state.personalist,
    }),
    (dispatch: GPDispatch) => ({
-      dispatch
+      dispatch,
+      onChange: (diff: Partial<PersonaListSettings>) => {
+         dispatch(changePersonaListSettings({diff}));
+      },
    }),
 )(PersonaListConnected);
 export default PersonaList;

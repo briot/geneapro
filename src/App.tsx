@@ -9,7 +9,7 @@ import FanchartPage from './Fanchart/Page';
 import ImportPage from './Import/Page';
 import PedigreePage from './Pedigree/Page';
 import PersonaPage from './Persona/Page';
-import PersonaList from './PersonaList';
+import PersonaList from './PersonaList/PersonaList';
 import PlacePage from './Place/Page';
 import PlaceList from './PlaceList';
 import QuiltsPage from './Quilts/Page';

@@ -6,8 +6,7 @@ from geneaprove import models
 from django.db import transaction
 from geneaprove.utils.date import DateRange
 from geneaprove.views.styles import Styles
-from geneaprove.views.persona import extended_personas, \
-    event_types_for_pedigree
+from geneaprove.views.persona import extended_personas
 from geneaprove.views.to_json import JSONView, to_json
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import global_graph
@@ -68,7 +67,10 @@ class PedigreeData(JSONView):
         if all_person_nodes:
             persons = extended_personas(
                 all_person_nodes, styles, asserts=asserts,
-                event_types=event_types_for_pedigree(), graph=global_graph)
+                event_types=(models.Event_Type.PK_birth,
+                             models.Event_Type.PK_death,
+                             models.Event_Type.PK_marriage),
+                graph=global_graph)
 
         def add_parents(p):
             p.generation = distance[global_graph.node_from_id(p.id)]

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { Style } from '../style';
-import { combineStylesForText, styleToString } from '../Store/Styles';
+import { combineStyles, styleToSVGText, styleToSVG } from '../Store/Styles';
 import { Person } from '../Store/Person';
 import { ColorScheme, PedigreeSettings } from '../Store/Pedigree';
 import { GenealogyEventSet } from '../Store/Event';
@@ -28,9 +28,8 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
    ] : undefined;
 
    const style = Style.forPerson(props.style.colors, p, layout);
-   const textStyle = styleToString(combineStylesForText(
+   const textStyle = styleToSVGText(combineStyles(
       style, Style.forPedigreeName(props.style.colors)));
-   window.console.log(style, textStyle);
 
    const text = p === undefined ?
       null :
@@ -58,7 +57,7 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
                height={layout.h}
                rx={layout.radius + 'px'}
                ry={layout.radius + 'px'}
-               style={styleToString(style)}
+               style={styleToSVG(style)}
             />
             {text}
          </g>

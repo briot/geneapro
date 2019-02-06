@@ -66,6 +66,11 @@ def style_rules():
             role=models.Event_Type_Role.PK_principal,
             age__lt=60),
 
+        rules.Descendants(
+            descr='All descendants of person 2',
+            style=rules.Style(fill='#06e0ea', stroke='#9ca3d4'),
+            of=2),
+
         rules.Default(
             descr="Set default style",
             style=rules.Style(stroke='black', fill='none')),
@@ -84,11 +89,6 @@ def style_rules():
         #   ("role", RULE_IS, models.Event_Type_Role.PK_principal),
         #   ("count", RULE_GREATER, 1)],
         #  {"fill": "rgb(0,155,0)"}),
-
-        # ("All male descendants of person id=%s" % decujus,
-        #  RULE_ATTR,
-        #  [("descendant", RULE_IS, decujus), ("SEX", RULE_IS, "M")],
-        #  {"fill": "#D6E0EA", "stroke": "#9CA3D4"}),
 
         # ("All female descendants of person id=%s" % decujus,
         #  RULE_ATTR,

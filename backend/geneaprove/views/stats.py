@@ -5,8 +5,7 @@ Statistics
 import datetime
 from geneaprove.utils.date import CalendarGregorian
 from geneaprove.views.graph import global_graph
-from geneaprove.views.persona import extended_personas, \
-    event_types_for_pedigree
+from geneaprove.views.persona import extended_personas
 from geneaprove.views.to_json import JSONView
 
 
@@ -35,7 +34,9 @@ class StatsView(JSONView):
         persons = extended_personas(
             nodes=allpeople,
             styles=None,
-            event_types=event_types_for_pedigree(),
+            event_types=(models.Event_Type.PK_birth,
+                         models.Event_Type.PK_death,
+                         models.Event_Type.PK_marriage),
             graph=global_graph)
 
         f = global_graph.fathers(decujus.main_id)

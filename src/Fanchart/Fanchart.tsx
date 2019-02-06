@@ -7,8 +7,7 @@ import { FanchartSettings } from '../Store/Fanchart';
 import { GenealogyEventSet } from '../Store/Event';
 import { PersonLayout, PersonLayouts } from '../Fanchart/types';
 import { Style } from '../style';
-import { combineStyles, combineStylesForText,
-         styleToString } from '../Store/Styles';
+import { combineStyles, styleToSVGText, styleToSVG } from '../Store/Styles';
 import ScalableSVG from '../SVG.Scalable';
 import { extractYear } from '../Store/Event';
 
@@ -52,7 +51,7 @@ export function Fanchart(props: FanchartProps) {
          seps.push(
             <path
                className="separator"
-               {...styleToString(style)}
+               {...styleToSVG(style)}
                d={d}
                key={pl.id}
             />
@@ -93,7 +92,7 @@ export function Fanchart(props: FanchartProps) {
                   props.layouts.spaceBetweenGens !== 0 && (
                      <path
                         className="separator"
-                        {...styleToString(Style.forSeparator(
+                        {...styleToSVG(Style.forSeparator(
                            props.settings.sepColors, p, c))}
                         d={separatorArc(c) as string}
                         key={c.id}
@@ -205,9 +204,9 @@ export function FanchartBox(props: FanchartBoxProps) {
 
    const style = Style.forPerson(
       props.settings.colors, props.person, props.layout);
-   const styleStr = styleToString(combineStyles(
+   const styleStr = styleToSVG(combineStyles(
       style, Style.forFanchartBox(props.settings.colors)));
-   const textStyle = styleToString(combineStylesForText(
+   const textStyle = styleToSVGText(combineStyles(
       style, Style.forPedigreeName(props.settings.colors)));
 
    const children: JSX.Element[] = [];

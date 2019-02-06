@@ -6,8 +6,7 @@ import { RadialSettings } from '../Store/Radial';
 import { Person, personDisplay } from '../Store/Person';
 import ScalableSVG from '../SVG.Scalable';
 import { BasePersonLayout, Style } from '../style';
-import { combineStyles,
-         combineStylesForText, styleToString } from '../Store/Styles';
+import { combineStyles, styleToSVGText, styleToSVG } from '../Store/Styles';
 import './Radial.css';
 
 interface RadialLayout extends BasePersonLayout {
@@ -27,7 +26,7 @@ function circle(node: d3Hierarchy.HierarchyPointNode<RadialLayout>,
                 settings: RadialSettings,
 ) {
    const style = Style.forPerson(settings.colors, node.data.p, node.data);
-   const textStyle = combineStylesForText(
+   const textStyle = combineStyles(
       style, Style.forPedigreeName(settings.colors));
 
    return (
@@ -42,14 +41,14 @@ function circle(node: d3Hierarchy.HierarchyPointNode<RadialLayout>,
             <circle
                r={CIRCLE_SIZE}
                key={node.data.p.id}
-               {...styleToString(style)}
+               {...styleToSVG(style)}
             >
                <title>{personDisplay(node.data.p, true /* withId */)}</title>
             </circle>
             {
                <text
                   dy=".31em"
-                  style={styleToString(textStyle)}
+                  style={styleToSVGText(textStyle)}
                   textAnchor={node.x < Math.PI ? 'start' : 'end'}
                   transform={node.x < Math.PI ? 'translate(8)'
                              : 'rotate(180)translate(-8)'}

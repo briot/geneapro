@@ -41,40 +41,45 @@ export class Style {
          stroke: colors === ColorScheme.NO_BOX ? undefined : d3Color.color('#222'),
       };
 
-      if (layout) {
-         switch (colors) {
-            case ColorScheme.PEDIGREE:
+      switch (colors) {
+         case ColorScheme.PEDIGREE:
+            if (layout) {
                // Avoid overly saturated colors when displaying few
                // generations.
                style.fill = Color.hsv(
                   (layout.angle || 0) * 360,
                   Math.abs(layout.generation) / MAXGEN,
                   1.0);
-               break;
-            case ColorScheme.WHITE:
-               style.fill = d3Color.color('#fff');
-               break;
-            case ColorScheme.NO_BOX:
-               break;
-            case ColorScheme.QUARTILE:
+            }
+            break;
+         case ColorScheme.WHITE:
+            style.fill = d3Color.color('#fff');
+            break;
+         case ColorScheme.NO_BOX:
+            break;
+         case ColorScheme.QUARTILE:
+            if (layout && layout.sosa) {
                const maxInGen = Math.pow(2, layout.generation);
-               if (layout.sosa) {
-                  const quartile = Math.floor((layout.sosa - maxInGen) * 4 / maxInGen) % 4;
-                  style.fill = layout.generation < 0 ? undefined : baseQuartileColors[quartile];
-               }
-               break;
-            case ColorScheme.GENERATION:
+               const quartile = Math.floor((layout.sosa - maxInGen) * 4 / maxInGen) % 4;
+               style.fill = layout.generation < 0
+                  ? undefined
+                  : baseQuartileColors[quartile];
+            }
+            break;
+         case ColorScheme.GENERATION:
+            if (layout) {
                style.fill = Color.hsv(
-                  180 + 360 * (Math.abs(layout.generation) - 1) / 12, 0.4, 1.0);
-               break;
-            case ColorScheme.CUSTOM:
-               if (p) {
-                  style = {...p.style};
-               }
-               break;
-            default:
-               break;
-         }
+                  180 + 360 * (Math.abs(layout.generation) - 1) / 12,
+                  0.4, 1.0);
+            }
+            break;
+         case ColorScheme.CUSTOM:
+            if (p) {
+               style = {...p.style};
+            }
+            break;
+         default:
+            break;
       }
       return style;
    }

@@ -15,7 +15,7 @@ type Alignment = 'right' | 'left' | 'center';
  * Column description
  */
 
-export interface ColumnDescr<RowData, ColumnData> {
+export interface ColumnDescr<RowData, ColumnData, TableData=undefined> {
    // Width of the column, in pixels. The actual sizes will be adjusted with
    // a common ratio when the table disabled horizontal scrolling
    defaultWidth?: number;  // default: DEFAULT_WIDTH
@@ -44,7 +44,7 @@ export interface ColumnDescr<RowData, ColumnData> {
    className?: (v: ColumnData) => string|undefined;
 
    // Inline style
-   inlineStyle?: (v: ColumnData) => Object|undefined;
+   inlineStyle?: (v: ColumnData, data: TableData) => Object|undefined;
 
    // How to sort on this column
    sorter?: Sorter<ColumnData>;
@@ -62,14 +62,14 @@ export interface ColumnDescr<RowData, ColumnData> {
  * Column resizer
  ****************************************************************************/
 
-interface ColumnResizerProps<RowData, ColumnsData> {
-   table: SmartTable<RowData, ColumnsData>;
+interface ColumnResizerProps<RowData, ColumnsData, TableData> {
+   table: SmartTable<RowData, ColumnsData, TableData>;
    col: number;  // index of column
 }
 
 // Cannot be PureComponent, since height depends on table's height
-class ColumnResizer<RowData, ColumnsData>
-extends React.Component<ColumnResizerProps<RowData, ColumnsData>> {
+class ColumnResizer<RowData, ColumnsData, TableData>
+extends React.Component<ColumnResizerProps<RowData, ColumnsData, TableData>> {
    startX: number = 0;
    colWidthStart: number = 0;     // at start of drag
    nextColWidthStart: number = 0;
@@ -132,19 +132,23 @@ extends React.Component<ColumnResizerProps<RowData, ColumnsData>> {
  * Table row
  ****************************************************************************/
 
-interface TableRowProps<RowData, ColumnsData> {
-   table: SmartTable<RowData, ColumnsData>;
+interface TableRowProps<RowData, ColumnsData, TableData> {
+   table: SmartTable<RowData, ColumnsData, TableData>;
    row: RowData;
    height: number;
 }
 
-function TableRow<RowData, ColumnsData>(p: TableRowProps<RowData, ColumnsData>) {
+function TableRow<RowData, ColumnsData, TableData>(
+   p: TableRowProps<RowData, ColumnsData, TableData>
+) {
    return (
       <tr style={{height: p.height}}>
          {
             p.table.props.columns.map((c, idx) => {
                const r = c.get(p.row);
-               const inline = c.inlineStyle ? c.inlineStyle(r) : undefined;
+               const inline = c.inlineStyle
+                  ? c.inlineStyle(r, p.table.props.data)
+                  : undefined;
                return (
                   <td
                      key={idx}
@@ -167,7 +171,7 @@ function TableRow<RowData, ColumnsData>(p: TableRowProps<RowData, ColumnsData>) 
  * Smart tables
  ****************************************************************************/
 
-interface SmartTableProps<RowData, ColumnsData> {
+interface SmartTableProps<RowData, ColumnsData, TableData=undefined> {
    // List of rows to display. Only the visible ones are actually
    // rendered on screen.
    // This should return a new object when the data changes, not modify in
@@ -175,10 +179,12 @@ interface SmartTableProps<RowData, ColumnsData> {
    // Initial filters should have been applied already.
    rows: RowData[];
 
+   data?: TableData;
+
    // List of columns to display. This is called several times
    // while inserting rows, so it should not create the return value on the
    // fly.
-   columns: ColumnDescr<RowData, ColumnsData>[];
+   columns: ColumnDescr<RowData, ColumnsData, TableData|undefined>[];
    defaultSortColumn?: ColumnDescr<RowData, ColumnsData>;
 
    // Size allocated to the table
@@ -224,8 +230,8 @@ interface SmartTableState<RowData, ColumnsData> {
    filters: string[];
 }
 
-export default class SmartTable<RowData, ColumnsData>
-extends React.PureComponent<SmartTableProps<RowData, ColumnsData>,
+export default class SmartTable<RowData, ColumnsData, TableData>
+extends React.PureComponent<SmartTableProps<RowData, ColumnsData, TableData>,
                             SmartTableState<RowData, ColumnsData>> {
 
    // tslint:disable-next-line: no-any
