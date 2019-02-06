@@ -480,9 +480,9 @@ class Event(Rule):
         # If we already know the result, don't bother computing
         if current is not None or not isinstance(assertion, P2E):
             return current
-        if self.role and not self.role.match(assertion.role.id):
+        if self.role and not self.role.match(assertion.role_id):
             return current # this event doesn't match, maybe another will
-        if self.type and not self.type.match(assertion.event.type.id):
+        if self.type and not self.type.match(assertion.event.type_id):
             return current
         if self.date and not self.date.match(assertion.event.date_sort):
             return current
@@ -566,7 +566,7 @@ class Styles(object):
 
         # Apply each assertions
         for a in asserts:
-            main_id = self.graph.node_from_id(a.person.id).main_id
+            main_id = self.graph.node_from_id(a.person_id).main_id
             for r in self.rules:
                 status[main_id][r.id] = r.merge(
                     assertion=a,

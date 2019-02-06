@@ -57,8 +57,6 @@ def extended_personas(
     else:
         ids = None
 
-    compute_parts = styles and styles.need_place_parts()
-
     roles = dict()  # role_id  -> name
 
     assert schemes is None or isinstance(schemes, set)
@@ -89,8 +87,11 @@ def extended_personas(
     # Check all events that the persons were involved in.
     ################
 
-    events = models.P2E.objects.select_related(
-        'event', 'event__type', *models.P2E.related_json_fields())
+    related = ['event', 'event__type', *models.P2E.related_json_fields()]
+    if styles and styles.need_place_parts:
+        related = ['event__place']
+
+    events = models.P2E.objects.select_related(*related)
     if event_types:
         events = events.filter(event__type__in=event_types)
 
@@ -110,10 +111,6 @@ def extended_personas(
 
         if asserts is not None:
             asserts.append(p2e)
-
-        # ??? Could we take advantage of the e.date_sort string, instead
-        # of reparsing the DateRange ?
-        #   e.Date = e.date and DateRange(e.date)
 
         if schemes is not None:
             schemes.add(p2e.surety.scheme_id)
@@ -155,45 +152,29 @@ def extended_personas(
     # Get all characteristics of these personas
     #########
 
-    p2c = sql_in(
-        models.P2C.objects.select_related(*models.P2C.related_json_fields()),
-        "person",
-        all_ids)
+    # ??? Cannot use .prefetch_related, we get "too many SQL variables"
+    p2cs = list(sql_in(
+                    models.P2C.objects
+                       .select_related(*models.P2C.related_json_fields()),
+                    "person",
+                    all_ids))
 
-    for a in p2c:
-        p_node = graph.node_from_id(a.person_id)
+    parts_for_char = {}
+    for parts in sql_in(models.Characteristic_Part.objects,
+                        "characteristic",
+                        (a.characteristic_id for a in p2cs)):
+        parts_for_char.setdefault(parts.characteristic_id, []).append(parts)
+
+    for p2c in p2cs:
+        p_node = graph.node_from_id(p2c.person_id)
         person = persons[p_node.main_id]
 
         if asserts is not None:
-            asserts.append(a)
+            asserts.append(p2c)
 
-        for part in a.characteristic.parts.all():
-            if part.type.id == models.Characteristic_Part_Type.PK_sex:
+        for part in parts_for_char.get(p2c.characteristic_id, []):
+            if part.type_id == models.Characteristic_Part_Type.PK_sex:
                 person.sex = part.name
-
-    ########
-    # Compute place parts once, to limit the number of queries
-    # These are only used for styles, not for actual display, although we
-    # could benefit from them.
-    ########
-
-#    logger.debug('MANU processing places')
-#
-#    if compute_parts:
-#        prev_place = None
-#        d = None
-#
-#        for p in sql_in(models.Place_Part.objects
-#                        .order_by('place').select_related('type'),
-#                        "place", places):
-#
-#            # ??? We should also check the parent place to gets its own parts
-#            if p.place_id != prev_place:
-#                prev_place = p.place_id
-#                d = dict()
-#                setattr(places[prev_place], "parts", d)
-#
-#            d[p.type.name] = p.name
 
     return persons
 
@@ -274,6 +255,7 @@ class PersonaList(JSONView):
         if global_graph.is_empty():
             persons = []
         else:
+            # styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
             styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
             persons = extended_personas(
                 nodes=None, styles=styles, asserts=asserts,

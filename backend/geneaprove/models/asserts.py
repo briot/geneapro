@@ -155,6 +155,7 @@ class P2C(Assertion):
         res = super().to_json()
         fetch_image = False
 
+        # ??? Could be slow, and result in a lot of queries
         parts = []
         for p in self.characteristic.parts.select_related():
             parts.append({'name': p.type.name, 'value': p.name})
