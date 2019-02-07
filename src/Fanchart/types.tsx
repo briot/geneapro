@@ -1,4 +1,4 @@
-import { BasePersonLayout } from '../style';
+import { BasePersonLayout } from '../Store/ColorTheme';
 
 /**
  * The 'angle' field (in [0,1] range) is used only for colors.

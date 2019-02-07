@@ -1,8 +1,22 @@
 import * as d3Color from 'd3-color';
-import Color from './Color';
-import { ColorScheme } from './Store/Pedigree';
-import { PersonStyle } from './Store/Styles';
-import { Person } from './Store/Person';
+import Style from '../Store/Styles';
+import { Person } from '../Store/Person';
+
+export enum ColorScheme {
+   PEDIGREE = 0,
+   WHITE = 1,
+   GENERATION = 2,
+   QUARTILE = 3,
+   NO_BOX = 4,
+   CUSTOM = 5,
+}
+export const ColorSchemeNames: {[id: number]: string} = {};
+ColorSchemeNames[ColorScheme.PEDIGREE] = 'Pedigree';
+ColorSchemeNames[ColorScheme.WHITE] = 'White';
+ColorSchemeNames[ColorScheme.GENERATION] = 'Generation';
+ColorSchemeNames[ColorScheme.QUARTILE] = 'Quartile';
+ColorSchemeNames[ColorScheme.NO_BOX] = 'No Box';
+ColorSchemeNames[ColorScheme.CUSTOM] = 'Custom';
 
 export interface BasePersonLayout {
    angle: number;
@@ -21,14 +35,18 @@ export interface BasePersonLayout {
 
 const MAXGEN = 12;
 const baseQuartileColors = [
-   d3Color.rgb(127, 229, 252),
-   d3Color.rgb(185, 253, 130),
-   d3Color.rgb(252, 120, 118),
-   d3Color.rgb(255, 236, 88)];
+   'rgb(127,229,252)',
+   'rgb(185,253,130)',
+   'rgb(252,120,118)',
+   'rgb(255,236,88)'];
 
-const BLACK = d3Color.rgb(0, 0, 0);
+const STROKE_GREY = new Style({stroke: '#222'});
+const STROKE_GREY_ON_WHITE = new Style({stroke: '#222', fill: '#fff'});
+const NORMAL_BLACK = new Style({fontWeight: 'normal', color: 'black'});
+const BOLD_BLACK = new Style({fontWeight: 'bold', color: 'black'});
+const DEFAULT = new Style({});
 
-export class Style {
+export default class ColorTheme {
 
    /**
     * Compute the display style for a person
@@ -36,75 +54,71 @@ export class Style {
    static forPerson(colors: ColorScheme,
                     p?: Person,
                     layout?: BasePersonLayout,
-                   ): PersonStyle {
-      let style: PersonStyle = {
-         stroke: colors === ColorScheme.NO_BOX ? undefined : d3Color.color('#222'),
-      };
+   ): Style {
+
+      let fillColor: string | undefined;
 
       switch (colors) {
          case ColorScheme.PEDIGREE:
             if (layout) {
                // Avoid overly saturated colors when displaying few
                // generations.
-               style.fill = Color.hsv(
+               fillColor = Style.hsvStr(
                   (layout.angle || 0) * 360,
                   Math.abs(layout.generation) / MAXGEN,
                   1.0);
             }
-            break;
+            return new Style({stroke: '#222', fill: fillColor});
+
          case ColorScheme.WHITE:
-            style.fill = d3Color.color('#fff');
-            break;
+            return STROKE_GREY_ON_WHITE;
+
          case ColorScheme.NO_BOX:
-            break;
+            return DEFAULT;
+
          case ColorScheme.QUARTILE:
             if (layout && layout.sosa) {
                const maxInGen = Math.pow(2, layout.generation);
                const quartile = Math.floor((layout.sosa - maxInGen) * 4 / maxInGen) % 4;
-               style.fill = layout.generation < 0
+               fillColor = layout.generation < 0
                   ? undefined
                   : baseQuartileColors[quartile];
             }
-            break;
+            return new Style({stroke: '#222', fill: fillColor});
+
          case ColorScheme.GENERATION:
             if (layout) {
-               style.fill = Color.hsv(
+               fillColor = Style.hsvStr(
                   180 + 360 * (Math.abs(layout.generation) - 1) / 12,
                   0.4, 1.0);
             }
-            break;
+            return new Style({stroke: '#222', fill: fillColor});
+
          case ColorScheme.CUSTOM:
-            if (p) {
-               style = {...p.style};
-            }
-            break;
+            return p && p.style ? p.style : STROKE_GREY;
+
          default:
-            break;
+            return STROKE_GREY;
       }
-      return style;
    }
 
    /**
     * Default style for pedigree and fanchart text (names)
     */
-   static forPedigreeName(colors: ColorScheme): PersonStyle {
+   static forPedigreeName(colors: ColorScheme): Style {
       switch (colors) {
-         case ColorScheme.CUSTOM:
-            return {fontWeight: 'normal', color: BLACK};
-         default:
-            return {fontWeight: 'bold', color: BLACK};
+         case ColorScheme.CUSTOM: return NORMAL_BLACK;
+         default:                 return BOLD_BLACK;
       }
    }
 
    /**
     * Default for fanchart boxes
     */
-   static forFanchartBox(colors: ColorScheme): PersonStyle {
+   static forFanchartBox(colors: ColorScheme): Style {
       switch (colors) {
-         case ColorScheme.CUSTOM:
-            return {stroke: BLACK};
-         default:
-            return {};
+         case ColorScheme.CUSTOM: return NORMAL_BLACK;
+         default:                 return DEFAULT;
       }
    }
 
@@ -114,11 +128,8 @@ export class Style {
     */
    static forSeparator(colors: ColorScheme,
                        p?: Person,
-                       layout?: BasePersonLayout): PersonStyle {
-      const s = Style.forPerson(colors, p, layout);
-      if (s.fill) {
-         s.fill = s.fill.darker(0.3);
-      }
-      return s;
+                       layout?: BasePersonLayout
+   ): Style {
+      return ColorTheme.forPerson(colors, p, layout).darker(0.3);
    }
 }

@@ -1,4 +1,4 @@
-import { BasePersonLayout } from '../style';
+import { BasePersonLayout } from '../Store/ColorTheme';
 import { PedigreeSettings, LayoutScheme, isVertical } from '../Store/Pedigree';
 
 export interface PersonLayout extends BasePersonLayout {

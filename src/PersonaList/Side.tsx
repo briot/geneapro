@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
-import { ColorSchemeNames } from '../Store/Pedigree';
+import { ColorSchemeNames } from '../Store/ColorTheme';
 import { PersonaListSettings } from '../Store/PersonaList';
 import { CheckboxField, SliderField, SelectField } from '../Forms';
 

@@ -11,9 +11,9 @@ import { extractYear } from '../Store/Event';
 import { PersonaListSettings,
          changePersonaListSettings } from '../Store/PersonaList';
 import { fetchPersons } from '../Store/Sagas';
-import { styleToDOM } from '../Store/Styles';
+import Style from '../Store/Styles';
 import SmartTable, { ColumnDescr } from '../SmartTable';
-import { Style } from '../style';
+import ColorTheme from '../Store/ColorTheme';
 import './PersonaList.css';
 
 type Column = ColumnDescr<Person, Person, PersonaListSettings|undefined>;
@@ -23,7 +23,7 @@ const ColId: Column = {
    get: (p: Person) => p,
    format: (p: Person) => <PersonaLink id={p.id} />,
    inlineStyle: (p: Person, settings: PersonaListSettings|undefined) =>
-      settings && styleToDOM(Style.forPerson(settings.colors, p)),
+      settings && ColorTheme.forPerson(settings.colors, p).toStr('dom'),
 };
 
 const ColLife: Column = {

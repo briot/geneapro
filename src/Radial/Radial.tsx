@@ -5,8 +5,8 @@ import { Link } from 'react-router-dom';
 import { RadialSettings } from '../Store/Radial';
 import { Person, personDisplay } from '../Store/Person';
 import ScalableSVG from '../SVG.Scalable';
-import { BasePersonLayout, Style } from '../style';
-import { combineStyles, styleToSVGText, styleToSVG } from '../Store/Styles';
+import ColorTheme, { BasePersonLayout } from '../Store/ColorTheme';
+import Style from '../Store/Styles';
 import './Radial.css';
 
 interface RadialLayout extends BasePersonLayout {
@@ -25,9 +25,9 @@ const CIRCLE_SIZE = 5;  // diameter of circles
 function circle(node: d3Hierarchy.HierarchyPointNode<RadialLayout>,
                 settings: RadialSettings,
 ) {
-   const style = Style.forPerson(settings.colors, node.data.p, node.data);
-   const textStyle = combineStyles(
-      style, Style.forPedigreeName(settings.colors));
+   const style = ColorTheme.forPerson(settings.colors, node.data.p, node.data);
+   const textStyle = style.combineWith(
+      ColorTheme.forPedigreeName(settings.colors));
 
    return (
       <Link
@@ -41,14 +41,14 @@ function circle(node: d3Hierarchy.HierarchyPointNode<RadialLayout>,
             <circle
                r={CIRCLE_SIZE}
                key={node.data.p.id}
-               {...styleToSVG(style)}
+               style={style.toStr('svg')}
             >
                <title>{personDisplay(node.data.p, true /* withId */)}</title>
             </circle>
             {
                <text
                   dy=".31em"
-                  style={styleToSVGText(textStyle)}
+                  style={textStyle.toStr('svgtext')}
                   textAnchor={node.x < Math.PI ? 'start' : 'end'}
                   transform={node.x < Math.PI ? 'translate(8)'
                              : 'rotate(180)translate(-8)'}

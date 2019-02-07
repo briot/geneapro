@@ -1,70 +1,91 @@
 import * as d3Color from 'd3-color';
 import * as JSON from '../Server/JSON';
 
-type FontWeight = number|'bold'|'normal'|'lighter'|'bolder';
+type StyleTarget = 'svg' | 'svgtext' | 'dom';
 
-export interface PersonStyle {
-   fill?: d3Color.ColorCommonInstance|null;
-   stroke?: d3Color.ColorCommonInstance|null;
-   color?: d3Color.ColorCommonInstance|null;
-   fontWeight?: FontWeight;
-}
+export default class Style {
 
-/**
- * Return a style suitable for a SVG element
- */
-export function styleToSVG(style: PersonStyle|undefined) {
-   return {
-      fill: style && style.fill ? style.fill.toString() : 'none',
-      stroke: style && style.stroke ? style.stroke.toString() : 'none',
-      color: style && style.color ? style.color.toString() : 'none',
-      fontWeight: (style && style.fontWeight) || 'normal',
-   };
-}
+   protected fill?: string;
+   protected stroke?: string;
+   protected color?: string;
+   protected fontWeight?: JSON.FontWeight;
 
-/**
- * Return a style suitable for a SVG text
- */
-export function styleToSVGText(style: PersonStyle|undefined) {
-   return {
-      fill: style && style.color ? style.color.toString() : 'none',
-      fontWeight: (style && style.fontWeight) || 'normal',
-   };
-}
+   /**
+    * Support for HSV colors
+    */
+   static hsv(h: number, s: number, v: number): d3Color.HSLColor {
+      const ll = (2.0 - s) * v;
+      const ss = (s * v) / (ll <= 1 ? ll : 2.0 - ll);
+      return d3Color.hsl(h, ss, ll / 2);
+   }
 
-/**
- * Return a style suitable for a DOM element
- */
-export function styleToDOM(style: PersonStyle|undefined) {
-   return {
-      background: style && style.fill ? style.fill.toString() : 'none',
-      color: style && style.color ? style.color.toString() : 'none',
-      fontWeight: (style && style.fontWeight) || 'normal',
-   };
-}
+   static hsvStr(h: number, s: number, v: number) {
+      return Style.hsv(h, s, v).toString();
+   }
 
-/**
- * Combines two styles, applying style2 only where style1 is not set.
- */
+   /**
+    * Build from JSON data
+    */
+   constructor(s: JSON.Style) {
+      this.fill = s.fill;
+      this.stroke = s.stroke;
+      this.color = s.color;
+      this.fontWeight = s.fontWeight;
+   }
 
-export function combineStyles(
-   style1: PersonStyle, style2: PersonStyle
-): PersonStyle {
-   return {
-      fill: style1.fill || style2.fill,
-      stroke: style1.stroke || style2.stroke,
-      color: style1.color || style2.color,
-      fontWeight: style1.fontWeight || style2.fontWeight,
-   };
-}
+   /**
+    * Return a version suitable for use as react properties
+    */
 
-export function jsonStyleToStyle(
-   s: JSON.Style|undefined
-): PersonStyle|undefined {
-   return s === undefined ? undefined : {
-      fill: d3Color.color(s.fill),
-      stroke: d3Color.color(s.stroke),
-      color: d3Color.color(s.color),
-      fontWeight: s.fontWeight as FontWeight,
-   };
+   public toStr(target: StyleTarget) {
+      switch(target) {
+         case 'svg':
+            return {
+               fill: this.fill || 'none',
+               stroke: this.stroke || 'none',
+               color: this.color || 'none',
+               fontWeight: this.fontWeight || 'normal',
+            };
+
+         case 'svgtext':
+            return {
+               fill: this.color || 'none',
+               fontWeight: this.fontWeight || 'normal',
+            };
+
+         case 'dom':
+            return {
+               background: this.fill || 'none',
+               color: this.color || 'none',
+               fontWeight: this.fontWeight || 'normal',
+            };
+      }
+   }
+
+   /**
+    * Combines two styles, applying style2 only where this is not set.
+    */
+
+   public combineWith(style2: Style): Style {
+      return new Style({
+         fill: this.fill || style2.fill,
+         stroke: this.stroke || style2.stroke,
+         color: this.color || style2.color,
+         fontWeight: this.fontWeight || style2.fontWeight,
+      });
+   }
+
+   /**
+    * A slightly darker style
+    */
+   public darker(percent: number) {
+      const fillColor = this.fill ? d3Color.color(this.fill) : undefined;
+
+      return new Style({
+         stroke: this.stroke,
+         fill: fillColor ? fillColor.darker(percent).toString() : undefined,
+         color: this.color,
+         fontWeight: this.fontWeight,
+      });
+   }
 }

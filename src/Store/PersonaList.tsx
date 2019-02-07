@@ -1,5 +1,5 @@
 import { actionCreator } from '../Store/Actions';
-import { ColorScheme } from '../Store/Pedigree';
+import { ColorScheme } from '../Store/ColorTheme';
 
 export interface PersonaListSettings {
    colors: ColorScheme;

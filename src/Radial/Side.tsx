@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
 import { RadialSettings } from '../Store/Radial';
-import { ColorSchemeNames } from '../Store/Pedigree';
+import { ColorSchemeNames } from '../Store/ColorTheme';
 import { SliderField, CheckboxField, SelectField } from '../Forms';
 
 interface RadialSideProps {

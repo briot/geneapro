@@ -1,5 +1,5 @@
 import { AssertionList } from '../Store/Assertion';
-import { PersonStyle } from '../Store/Styles';
+import Style from '../Store/Styles';
 
 // The base type is only needed until the server returns a proper Person.
 export interface BasePerson {
@@ -15,7 +15,7 @@ export interface BasePerson {
       // The above two fields are also set while the background loading occurs,
       // so they do not reflect the exact current state of the store.
 
-   style?: PersonStyle;      // custom style specified by user
+   style?: Style;      // custom style specified by user
 }
 
 export interface Person extends BasePerson {

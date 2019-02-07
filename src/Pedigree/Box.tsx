@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { Style } from '../style';
-import { combineStyles, styleToSVGText, styleToSVG } from '../Store/Styles';
+import ColorTheme, { ColorScheme } from '../Store/ColorTheme';
+import Style from '../Store/Styles';
 import { Person } from '../Store/Person';
-import { ColorScheme, PedigreeSettings } from '../Store/Pedigree';
+import { PedigreeSettings } from '../Store/Pedigree';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { PersonLayout } from '../Pedigree/types';
@@ -27,9 +27,9 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
       <EventText key="d" isoDate={p.deathISODate} prefix="d" />
    ] : undefined;
 
-   const style = Style.forPerson(props.style.colors, p, layout);
-   const textStyle = styleToSVGText(combineStyles(
-      style, Style.forPedigreeName(props.style.colors)));
+   const style = ColorTheme.forPerson(props.style.colors, p, layout);
+   const textStyle = style.combineWith(
+      ColorTheme.forPedigreeName(props.style.colors)).toStr('svgtext');
 
    const text = p === undefined ?
       null :
@@ -57,7 +57,7 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
                height={layout.h}
                rx={layout.radius + 'px'}
                ry={layout.radius + 'px'}
-               style={styleToSVG(style)}
+               style={style.toStr('svg')}
             />
             {text}
          </g>

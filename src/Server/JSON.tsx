@@ -1,11 +1,16 @@
 import { SourceMedia } from '../Store/Source';
 
+export type FontWeight = number|'bold'|'normal'|'lighter'|'bolder';
+
 /**
  * The data sent by the server
  */
 
 export interface Style  {
-   [cssName: string]: string;
+   fill?: string;
+   stroke?: string;
+   color?: string;
+   fontWeight?: FontWeight;
 }
 
 export interface EventType {

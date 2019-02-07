@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { PedigreeSettings, ColorScheme, LinkStyle, LayoutScheme,
+import { PedigreeSettings, LinkStyle, LayoutScheme,
          isVertical } from '../Store/Pedigree';
+import { ColorScheme } from '../Store/ColorTheme';
 import { PersonLayout } from '../Pedigree/types';
 
 interface PedigreeLinkProps {

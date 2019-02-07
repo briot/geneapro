@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
-import { LayoutSchemeNames, LinkStyleNames, ColorSchemeNames,
+import { LayoutSchemeNames, LinkStyleNames,
          PedigreeSettings } from '../Store/Pedigree';
+import { ColorSchemeNames } from '../Store/ColorTheme';
 import { CheckboxField, SliderField, SelectField } from '../Forms';
 
 interface PedigreeSideProps {

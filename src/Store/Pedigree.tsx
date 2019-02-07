@@ -1,4 +1,5 @@
 import { actionCreator } from '../Store/Actions';
+import { ColorScheme } from '../Store/ColorTheme';
 
 export enum LayoutScheme {
    LEFT_RIGHT = 0,
@@ -21,22 +22,6 @@ export const LinkStyleNames: {[id: number]: string} = {};
 LinkStyleNames[LinkStyle.STRAIGHT] = 'Straight';
 LinkStyleNames[LinkStyle.ORTHOGONAL] = 'Orthogonal';
 LinkStyleNames[LinkStyle.CURVE] = 'Curve';
-
-export enum ColorScheme {
-   PEDIGREE = 0,
-   WHITE = 1,
-   GENERATION = 2,
-   QUARTILE = 3,
-   NO_BOX = 4,
-   CUSTOM = 5,
-}
-export const ColorSchemeNames: {[id: number]: string} = {};
-ColorSchemeNames[ColorScheme.PEDIGREE] = 'Pedigree';
-ColorSchemeNames[ColorScheme.WHITE] = 'White';
-ColorSchemeNames[ColorScheme.GENERATION] = 'Generation';
-ColorSchemeNames[ColorScheme.QUARTILE] = 'Quartile';
-ColorSchemeNames[ColorScheme.NO_BOX] = 'No Box';
-ColorSchemeNames[ColorScheme.CUSTOM] = 'Custom';
 
 export interface PedigreeSettings {
    showUnknown: boolean;

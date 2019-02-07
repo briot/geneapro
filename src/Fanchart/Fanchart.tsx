@@ -6,8 +6,8 @@ import { Person, PersonSet } from '../Store/Person';
 import { FanchartSettings } from '../Store/Fanchart';
 import { GenealogyEventSet } from '../Store/Event';
 import { PersonLayout, PersonLayouts } from '../Fanchart/types';
-import { Style } from '../style';
-import { combineStyles, styleToSVGText, styleToSVG } from '../Store/Styles';
+import ColorTheme from '../Store/ColorTheme';
+import Style from '../Store/Styles';
 import ScalableSVG from '../SVG.Scalable';
 import { extractYear } from '../Store/Event';
 
@@ -46,12 +46,12 @@ export function Fanchart(props: FanchartProps) {
 
       if (props.layouts.spaceBetweenGens !== 0) {
          const d = separatorArc(pl) as string;
-         const style = Style.forSeparator(
+         const style = ColorTheme.forSeparator(
             props.settings.sepColors, p, pl);
          seps.push(
             <path
                className="separator"
-               {...styleToSVG(style)}
+               {...style.toStr('svg')}
                d={d}
                key={pl.id}
             />
@@ -92,8 +92,8 @@ export function Fanchart(props: FanchartProps) {
                   props.layouts.spaceBetweenGens !== 0 && (
                      <path
                         className="separator"
-                        {...styleToSVG(Style.forSeparator(
-                           props.settings.sepColors, p, c))}
+                        style={ColorTheme.forSeparator(
+                           props.settings.sepColors, p, c).toStr('svg')}
                         d={separatorArc(c) as string}
                         key={c.id}
                      />
@@ -202,12 +202,12 @@ const MIN_ANGLE_STRAIGHT_TEXT = 15 * Math.PI / 180;
 export function FanchartBox(props: FanchartBoxProps) {
    const d = fanarc(props.layout) as string;
 
-   const style = Style.forPerson(
+   const style = ColorTheme.forPerson(
       props.settings.colors, props.person, props.layout);
-   const styleStr = styleToSVG(combineStyles(
-      style, Style.forFanchartBox(props.settings.colors)));
-   const textStyle = styleToSVGText(combineStyles(
-      style, Style.forPedigreeName(props.settings.colors)));
+   const styleStr = style.combineWith(
+      ColorTheme.forFanchartBox(props.settings.colors)).toStr('svg');
+   const textStyle = style.combineWith(
+      ColorTheme.forPedigreeName(props.settings.colors)).toStr('svgtext');
 
    const children: JSX.Element[] = [];
    const diff = props.layout.maxAngle - props.layout.minAngle;

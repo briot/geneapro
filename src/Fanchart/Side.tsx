@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
 import { FanchartSettings } from '../Store/Fanchart';
-import { ColorSchemeNames } from '../Store/Pedigree';
+import { ColorSchemeNames } from '../Store/ColorTheme';
 import { CheckboxField, SliderField, SelectField } from '../Forms';
 
 interface FanchartSideProps {

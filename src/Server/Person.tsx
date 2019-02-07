@@ -7,7 +7,7 @@ import { sourceFromJSON } from '../Server/Source';
 import { PlaceSet } from '../Store/Place';
 import * as JSON from '../Server/JSON';
 import { ResearcherSet } from '../Store/Researcher';
-import { PersonStyle, jsonStyleToStyle } from '../Store/Styles';
+import Style from '../Store/Styles';
 
 export interface FetchPersonsResult {
    persons: PersonSet;
@@ -20,7 +20,7 @@ interface IPersonaListRaw extends JSON.Persons {
 
 export function jsonPersonToPerson(
    p: JSON.Person,
-   style: PersonStyle|undefined,
+   style: Style|undefined,
 ): Person {
    return {
       id: p.id,
@@ -42,10 +42,10 @@ export function jsonPersonsToPerson(
    styles?: {[pid: number]: number},   // person to style index
 ): FetchPersonsResult {
 
-   let allS: {[id: number]: PersonStyle|undefined} = {};
+   let allS: {[id: number]: Style|undefined} = {};
    if (allStyles && styles) {
       for (const [id, s] of Object.entries(allStyles)) {
-         allS[Number(id)] = jsonStyleToStyle(s);
+         allS[Number(id)] = new Style(s);
       }
    }
 
