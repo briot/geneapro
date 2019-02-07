@@ -26,6 +26,7 @@ def __add_default_person_attributes(person):
     person.birthISODate = None
     person.deathISODate = None
     person.marriageISODate = None
+    person.sex = None
 
 
 def extended_personas(

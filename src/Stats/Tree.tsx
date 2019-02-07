@@ -32,7 +32,7 @@ export default function StatsTree(props: StatsTreeProps) {
       <Card.Group>
          <Card>
             <Card.Content>
-               <Statistic>
+               <Statistic size="small">
                   <Statistic.Value>
                      <Icon name="user" size="small"/>
                      {props.totalInDatabase}
@@ -44,7 +44,7 @@ export default function StatsTree(props: StatsTreeProps) {
 
          <Card>
             <Card.Content>
-               <Statistic>
+               <Statistic size="small">
                   <Statistic.Value>
                      <Icon name="user" size="small"/>
                      {props.totalInTree}
@@ -59,7 +59,7 @@ export default function StatsTree(props: StatsTreeProps) {
 
          <Card>
             <Card.Content>
-               <Statistic>
+               <Statistic size="small">
                   <Statistic.Value>
                      <Icon name="user" size="small"/>
                      {props.fatherAncestors}
@@ -71,7 +71,7 @@ export default function StatsTree(props: StatsTreeProps) {
 
          <Card>
             <Card.Content>
-               <Statistic>
+               <Statistic size="small">
                   <Statistic.Value>
                      <Icon name="user" size="small"/>
                      {props.motherAncestors}

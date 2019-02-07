@@ -3,6 +3,7 @@ Statistics
 """
 
 import datetime
+from geneaprove import models
 from geneaprove.utils.date import CalendarGregorian
 from geneaprove.views.graph import global_graph
 from geneaprove.views.persona import extended_personas
@@ -131,14 +132,13 @@ class StatsView(JSONView):
                     for b in range(len(ages), age + 1):
                         ages.append([b * bar_width, 0, 0, 0])
 
-                #if age is not None:
-                #    if p.sex == "M":
-                #        ages[int(age / 5)][1] += 1
-                #    elif p.sex == "F":
-                #        ages[int(age / 5)][2] += 1
-                #    else:
-                #        ages[int(age / 5)][3] += 1
-                ages[age][3] += 1
+                print(p.sex)
+                if p.sex == "M":
+                    ages[age][1] += 1
+                elif p.sex == "F":
+                    ages[age][2] += 1
+                else:
+                    ages[age][3] += 1
 
         return {
             "total_ancestors": len(allpeople),
