@@ -11,7 +11,7 @@ from geneaprove.views.related import JSONResult
 from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import global_graph
 from geneaprove.views.styles import Styles
-from geneaprove.views.queries import sql_in
+from geneaprove.views.queries import sqlin, sql_prefetch_related_object
 import logging
 
 logger = logging.getLogger('geneaprove.PERSONA')
@@ -73,10 +73,11 @@ def extended_personas(
 
     persons = dict()  # id -> person
     if ids:
-        for p in sql_in(models.Persona.objects, "id", ids):
-            # p.id is always the main_id, since that's how ids was built
-            persons[p.id] = p
-            __add_default_person_attributes(p)
+        for qs in sqlin(models.Persona.objects, id__in=ids):
+            for p in qs.all():
+                # p.id is always the main_id, since that's how ids was built
+                persons[p.id] = p
+                __add_default_person_attributes(p)
     else:
         for p in models.Persona.objects.all():
             mid = graph.node_from_id(p.id).main_id
@@ -105,31 +106,32 @@ def extended_personas(
     # Also query the 'principal' for each events, so that we can provide
     # that information graphically.
 
-    for p2e in sql_in(events, "person", all_ids):
-        e = p2e.event
-        p_node = graph.node_from_id(p2e.person_id)
-        person = persons[p_node.main_id]
+    for qs in sqlin(events, person__in=all_ids):
+        for p2e in qs.all():
+            e = p2e.event
+            p_node = graph.node_from_id(p2e.person_id)
+            person = persons[p_node.main_id]
 
-        if asserts is not None:
-            asserts.append(p2e)
+            if asserts is not None:
+                asserts.append(p2e)
 
-        if schemes is not None:
-            schemes.add(p2e.surety.scheme_id)
+            if schemes is not None:
+                schemes.add(p2e.surety.scheme_id)
 
-        if not p2e.disproved \
-           and p2e.role_id == models.Event_Type_Role.PK_principal:
-            if not e.date_sort:
-                pass
-            elif e.type_id == models.Event_Type.PK_birth:
-                if person.birthISODate is None or \
-                        e.date_sort < person.birthISODate:
-                    person.birthISODate = e.date_sort
-            elif e.type_id == models.Event_Type.PK_death:
-                if person.deathISODate is None or \
-                        e.date_sort > person.deathISODate:
-                    person.deathISODate = e.date_sort
-            elif e.type_id == models.Event_Type.PK_marriage:
-                person.marriageISODate = e.date_sort
+            if not p2e.disproved \
+               and p2e.role_id == models.Event_Type_Role.PK_principal:
+                if not e.date_sort:
+                    pass
+                elif e.type_id == models.Event_Type.PK_birth:
+                    if person.birthISODate is None or \
+                            e.date_sort < person.birthISODate:
+                        person.birthISODate = e.date_sort
+                elif e.type_id == models.Event_Type.PK_death:
+                    if person.deathISODate is None or \
+                            e.date_sort > person.deathISODate:
+                        person.deathISODate = e.date_sort
+                elif e.type_id == models.Event_Type.PK_marriage:
+                    person.marriageISODate = e.date_sort
 
     #########
     # Get all groups to which the personas belong
@@ -153,29 +155,21 @@ def extended_personas(
     # Get all characteristics of these personas
     #########
 
-    # ??? Cannot use .prefetch_related, we get "too many SQL variables"
-    p2cs = list(sql_in(
-                    models.P2C.objects
-                       .select_related(*models.P2C.related_json_fields()),
-                    "person",
-                    all_ids))
+    for p2c_set in sqlin(
+          models.P2C.objects.select_related(*models.P2C.related_json_fields()),
+          person__in=all_ids):
 
-    parts_for_char = {}
-    for parts in sql_in(models.Characteristic_Part.objects,
-                        "characteristic",
-                        (a.characteristic_id for a in p2cs)):
-        parts_for_char.setdefault(parts.characteristic_id, []).append(parts)
-
-    for p2c in p2cs:
-        p_node = graph.node_from_id(p2c.person_id)
-        person = persons[p_node.main_id]
+        p2cs = sql_prefetch_related_object(
+            p2c_set.all(), 'characteristic__parts')
 
         if asserts is not None:
-            asserts.append(p2c)
+            asserts.extend(p2cs)
 
-        for part in parts_for_char.get(p2c.characteristic_id, []):
-            if part.type_id == models.Characteristic_Part_Type.PK_sex:
-                person.sex = part.name
+        for p2c in p2cs:
+            person = persons[graph.node_from_id(p2c.person_id).main_id]
+            for p in p2c.characteristic.parts.all():
+                if p.type_id == models.Characteristic_Part_Type.PK_sex:
+                    person.sex = p.name
 
     return persons
 

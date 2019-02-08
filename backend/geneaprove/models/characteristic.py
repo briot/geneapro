@@ -36,6 +36,9 @@ class Characteristic(GeneaProveModel):
         null=True, max_length=100,
         help_text="Date, parsed automatically")
 
+    def __str__(self):
+        return "<Characteristic name=%s>" % (self.name, )
+
     class Meta:
         """Meta data for the model"""
         db_table = "characteristic"

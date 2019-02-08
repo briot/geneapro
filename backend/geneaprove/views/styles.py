@@ -31,10 +31,11 @@ can be any of "color" (text color), "fill" (background color),
 "font-weight", "stroke" (border color)...
 """
 
+from collections import defaultdict
 from collections.abc import Iterable
 import datetime
 from geneaprove.utils.date import DateRange
-from geneaprove.models import P2E
+from geneaprove import models
 import logging
 
 logger = logging.getLogger('geneaprove.styles')
@@ -133,6 +134,16 @@ class Check_IContains(ICheck):
     suffix = "__icontains"
     def imatch(self, value):
         return value and self.reference in value
+
+class Check_Contains_Not(Check):
+    suffix = "__contains_not"
+    def match(self, value):
+        return value and self.reference not in value
+
+class Check_IContains_Not(ICheck):
+    suffix = "__icontains_not"
+    def imatch(self, value):
+        return value and self.reference not in value
 
 class Check_Less(Check):
     suffix = "__lt"
@@ -260,30 +271,35 @@ class Rule(object):
             if not found:
                 raise Exception('Invalid keyword parameter: %s' % kn)
 
-    def precompute(self, graph, decujus):
+    def precompute(self, graph, decujus, precomputed):
         """
         Some rules require some pre-processing for faster
         computation (like pre-compute the list of ancestors for instance).
-        Must not modify `self`
+        Must not modify `self`;
+        Should update precomputed[self.id], and perhaps any other nested rule.
         """
-        return None
+        pass
 
-    def initial(self, person, precomputed):
+    def initial(self, person, main_id, precomputed, statuses):
         """
         Compute the initial status, for the given person
         Must not modify `self`
+        :param dict precomputed: indexed on rule id, as set by `precompute()`
         :returntype: None, True, False
         """
-        return None
+        pass
 
-    def merge(self, assertion, current, precomputed):
+    def merge(self, assertion, main_id, precomputed, statuses):
         """
         A new assertion was seen for the person. Check the rule, and combine
         with `current` to return a new status
         Must not modify `self`
-        :param current: None, True, False
+
+        :param int main_id:  main id of assertion.person
+        :param dict precomputed: indexed on rule id
+        :param dict statuses: indexed on rule_id, then on main_id
         """
-        return current
+        pass
 
 
 class Alive(Rule):
@@ -293,7 +309,7 @@ class Alive(Rule):
         self.alive = alive
         self.max_age = max_age
 
-    def initial(self, person, precomputed):
+    def initial(self, person, main_id, precomputed, statuses):
         # If we have no birth date, we could assume it is at least 15 years
         # before the first child's birth date (recursively). But that becomes
         # more expensive to compute
@@ -311,20 +327,10 @@ class Alive(Rule):
             alive = current_year - b_year < self.max_age
 
             if self.age and not self.age.match(current_year - b_year):
-                return False
+                statuses[self.id][main_id] = False
+                return
 
-        return alive == self.alive
-
-
-class Sex(Rule):
-    """Whether we have a male (M), female (F) or unknown (None) person"""
-    def __init__(self, sex, **kwargs):
-        super().__init__(**kwargs)
-        self.need_p2c = True
-        self.sex = sex
-
-    def initial(self, person, precomputed):
-        return getattr(person, "sex", None) == self.sex
+        statuses[self.id][main_id] = (alive == self.alive)
 
 
 class And(Rule):
@@ -340,32 +346,33 @@ class And(Rule):
             self.need_p2e = self.need_p2e or r.need_p2e
             self.need_places = self.need_places or r.need_places
 
-    def precompute(self, graph, decujus):
-        p = {}
+    def precompute(self, graph, decujus, precomputed):
         for r in self.rules:
-            p[r.id] = r.precompute(graph, decujus)
-        return p
+            r.precompute(graph, decujus, precomputed)
 
-    def initial(self, person, precomputed):
-        s = True
+    def _combine(self, values):
+        result = True
+        for v in values:
+            if v is None:    return None
+            elif v is False: return False
+        return True
+
+    def initial(self, person, main_id, precomputed, statuses):
         for r in self.rules:
-            # if s is None, we won't have True in the end, stop there.
-            # if s is False, we will have False in the end, stop there.
-            # if s is True, need to look at later rules
-            if s == True:
-               s = r.initial(person, precomputed[r.id])
-        return s
+            r.initial(person, main_id, precomputed, statuses)
+        statuses[self.id][main_id] = self._combine(
+            statuses[r.id].get(main_id, None) for r in self.rules)
 
-    def merge(self, assertion, current, precomputed):
-        if current == False:
-            return current
+    def merge(self, assertion, main_id, precomputed, statuses):
+        current = statuses[self.id].get(main_id, None)
+        if current is not None:
+            return
 
-        s = True
         for r in self.rules:
-            if s == True:
-                s = r.merge(assertion, current, precomputed[r.id])
+            r.merge(assertion, main_id, precomputed, statuses)
 
-        return current if s is None else s
+        statuses[self.id][main_id] = self._combine(
+            statuses[r.id].get(main_id, None) for r in self.rules)
 
 
 class Known_Father(Rule):
@@ -373,10 +380,25 @@ class Known_Father(Rule):
     def __init__(self, equal=True, **kwargs):
         super().__init__(**kwargs)
         self.expected = equal
-    def precompute(self, graph, decujus):
-        return graph
-    def initial(self, person, precomputed):
-        return bool(precomputed.fathers(person)) == self.expected
+    def precompute(self, graph, decujus, precomputed):
+        precomputed[self.id] = graph
+    def initial(self, person, main_id, precomputed, statuses):
+        graph = precomputed[self.id]
+        statuses[self.id][main_id] = (
+            bool(graph.fathers(person)) == self.expected)
+
+
+class Known_Mother(Rule):
+    """Check whether the person has a known mother"""
+    def __init__(self, equal=True, **kwargs):
+        super().__init__(**kwargs)
+        self.expected = equal
+    def precompute(self, graph, decujus, precomputed):
+        precomputed[self.id] = graph
+    def initial(self, person, main_id, precomputed, statuses):
+        graph = precomputed[self.id]
+        statuses[self.id][main_id] = (
+            bool(graph.mothers(person)) == self.expected)
 
 
 class Ancestor(Rule):
@@ -389,7 +411,7 @@ class Ancestor(Rule):
         super().__init__(**kwargs)
         self.decujus = of
 
-    def precompute(self, graph, decujus):
+    def precompute(self, graph, decujus, precomputed):
         s = set()
         for a in graph.people_in_tree(
                 id=self.decujus or decujus,
@@ -397,10 +419,12 @@ class Ancestor(Rule):
                 maxdepthDescendants=0):
             if self.decujus not in a.ids:
                 s.update(a.ids)
-        return s
 
-    def initial(self, person, ancestors):
-        return person.id in ancestors
+        precomputed[self.id] = s
+
+    def initial(self, person, main_id, precomputed, statuses):
+        ancestors = precomputed[self.id]
+        statuses[self.id][main_id] = main_id in ancestors
 
 
 class Descendants(Rule):
@@ -413,7 +437,7 @@ class Descendants(Rule):
         super().__init__(**kwargs)
         self.decujus = of
 
-    def precompute(self, graph, decujus):
+    def precompute(self, graph, decujus, precomputed):
         s = set()
         for a in graph.people_in_tree(
                 id=self.decujus or decujus,
@@ -421,10 +445,12 @@ class Descendants(Rule):
                 maxdepthDescendants=-1):
             if self.decujus not in a.ids:
                 s.update(a.ids)
-        return s
 
-    def initial(self, person, descendants):
-        return person.id in descendants
+        precomputed[self.id] = s
+
+    def initial(self, person, main_id, precomputed, statuses):
+        descendants = precomputed[self.id]
+        statuses[self.id][main_id] = main_id in descendants
 
 
 class Implex(Rule):
@@ -436,7 +462,7 @@ class Implex(Rule):
         if self.count is None:
             raise Exception('Missing `count` argument for Implex')
 
-    def precompute(self, graph, decujus):
+    def precompute(self, graph, decujus, precomputed):
         def build_implex(counts, main_id):
             """
             Store in `counts` the persons that appear in the tree to compute
@@ -452,62 +478,108 @@ class Implex(Rule):
 
         counts = {}
         build_implex(counts, graph.node_from_id(self.decujus or decujus).main_id)
-        return graph, counts
+        precomputed[self.id] = (graph, counts)
 
-    def initial(self, person, precomputed):
-        graph, counts = precomputed
+    def initial(self, person, main_id, precomputed, statuses):
+        graph, counts = precomputed[self.id]
         main_id = graph.node_from_id(person.id).main_id
-        return self.count.match(counts.get(main_id, 0))
+        statuses[self.id][main_id] = self.count.match(counts.get(main_id, 0))
+
+
+class Characteristic(Rule):
+    """Check that one characteristic matches multiple criterias"""
+    def __init__(self, **kwargs):
+        super().__init__(["type", "value"], **kwargs)
+
+    def merge(self, assertion, main_id, precomputed, statuses):
+        current = statuses[self.id].get(main_id, None)
+        if current is not None or not isinstance(assertion, models.P2C):
+            return
+
+        found = False
+        for p in assertion.characteristic.parts.all():
+            if self.type and self.type.match(p.type_id):
+                found = True
+                if self.value and not self.value.match(p.name):
+                    return
+
+        if found:
+            statuses[self.id][main_id] = True
 
 
 class Event(Rule):
     """Check that one event matches multiple criterias"""
     def __init__(self, **kwargs):
-        super().__init__(["type", "role", "date", "place_name", "age"], **kwargs)
+        super().__init__([
+            "type",
+            "count",  # number of time this rule matched for a person
+            "role",
+            "date",
+            "place_name",
+            "place_country",
+            "age",    # age of the person at the time of the event
+        ], **kwargs)
         self.need_p2e = True
         self.need_places = self.place_name is not None
 
-    def precompute(self, graph, decujus):
-        return {}   # will map personId to birth date
+    def precompute(self, graph, decujus, precomputed):
+        precomputed[self.id] = {}   # for each person, her birth date
 
-    def initial(self, person, precomputed):
+    def initial(self, person, main_id, precomputed, statuses):
+        births = precomputed[self.id]
         b = person.birthISODate
         if b:
-            precomputed[person.id] = int(person.birthISODate[0:4])
-        return None
+            births[main_id] = [int(person.birthISODate[0:4]), 0]
+        else:
+            births[main_id] = [None, 0]
 
-    def merge(self, assertion, current, precomputed):
+    def merge(self, assertion, main_id, precomputed, statuses):
+        current = statuses[self.id].get(main_id, None)
+
         # If we already know the result, don't bother computing
-        if current is not None or not isinstance(assertion, P2E):
-            return current
+        if current is not None or not isinstance(assertion, models.P2E):
+            return
         if self.role and not self.role.match(assertion.role_id):
-            return current # this event doesn't match, maybe another will
+            return   # this event doesn't match, maybe another will
         if self.type and not self.type.match(assertion.event.type_id):
-            return current
+            return
         if self.date and not self.date.match(assertion.event.date_sort):
-            return current
+            return
         if self.place_name and \
             not self.place_name.match(assertion.event.get_place_part("name")):
-            return current
-        if self.age:
-            b = precomputed.get(assertion.person_id, None)
-            if b and assertion.event.date_sort:
+            return
+        if self.place_country and \
+            not self.place_country.match(
+                    assertion.event.get_place_part("country")):
+            return
+
+        births = precomputed[self.id]
+        pr = births.get(main_id, None)
+
+        if self.age and pr:
+            if pr[0] and assertion.event.date_sort:
                 try:
                     y2 = int(assertion.event.date_sort[0:4])
-                    if not self.age.match(y2 - b):
-                        return current
+                    if not self.age.match(y2 - pr[0]):
+                        return
                 except:
                     print('Cannot parse date_sort for event', assertion)
-                    return current
+                    return
             else:
-                return current
-        return True
+                return
+
+        if self.count and pr:
+            pr[1] += 1
+            if not self.count.match(pr[1]):
+                return
+
+        statuses[self.id][main_id] = True
 
 
 class Default(Rule):
     """Always matches, should in general be last in the list"""
-    def initial(self, person, counts):
-        return True
+    def initial(self, person, main_id, precomputed, statuses):
+        statuses[self.id][main_id] = True
 
 
 class Styles(object):
@@ -533,14 +605,14 @@ class Styles(object):
         self.need_places = False
 
         # For each rule, the result of its precomputation
-        self.rules_precomputed = {}
+        self.precomputed = {}
 
         for r in rules:
             self.need_p2e = self.need_p2e or r.need_p2e # ??? Should be a list of types
             self.need_p2c = self.need_p2c or r.need_p2c # ??? Should be a list of types
             self.need_places = self.need_places or r.need_places
-            self.rules_precomputed[r.id] = r.precompute(
-                graph=graph, decujus=decujus)
+            r.precompute(
+                graph=graph, decujus=decujus, precomputed=self.precomputed)
 
     def need_place_parts(self):
         """Whether we need extra SQL queries for the place parts"""
@@ -559,19 +631,25 @@ class Styles(object):
         """
 
         # for each rule and for each person, its current status
-        status = {}
-        for main_id, p in persons.items():
-            status[main_id] = {r.id: r.initial(p, self.rules_precomputed[r.id])
-                          for r in self.rules}
+        status = defaultdict(dict)
+        # {
+        #     r.id: defaultdict() # {main_id: None for main_id in persons}
+        #     for r in self.rules
+        # }
+
+        for r in self.rules:
+            for main_id, p in persons.items():
+                r.initial(p, main_id, self.precomputed, status)
 
         # Apply each assertions
         for a in asserts:
             main_id = self.graph.node_from_id(a.person_id).main_id
             for r in self.rules:
-                status[main_id][r.id] = r.merge(
+                r.merge(
                     assertion=a,
-                    current=status[main_id][r.id],
-                    precomputed=self.rules_precomputed[r.id])
+                    main_id=main_id,
+                    precomputed=self.precomputed,
+                    statuses=status)
 
         # We now know whether each rule applies, so we can set the styles
         # Make styles unique, so that we send fewer data
@@ -581,10 +659,10 @@ class Styles(object):
         all_styles[Style()] = 0  # default style
         style_id = 1
 
-        for id in persons:
+        for main_id in persons:
             s = Style()
             for r in self.rules:
-                if status[id][r.id] == True:
+                if status[r.id].get(main_id, None) == True:
                     s = s.merge(r.style)
 
             sv = all_styles.get(s, None)
@@ -594,6 +672,6 @@ class Styles(object):
                 style_id += 1
 
             if sv != 0:   # Do not emit the default style
-                result[id] = sv
+                result[main_id] = sv
 
         return {id: s for s, id in all_styles.items()}, result

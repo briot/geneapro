@@ -19,6 +19,14 @@ def style_rules():
             age__gt=60),
 
         rules.Event(
+            descr="Not-French people",
+            style=rules.Style(fill='#AAAAAA'),
+            type=models.Event_Type.PK_birth,
+            role=models.Event_Type_Role.PK_principal,
+            place_name__icontains_not="france"),
+            # place_country__icontains_not="france"),
+#
+        rules.Event(
             descr='PROBLEM: persons too old at death',
             style=rules.Style(fill='red'),
             type=models.Event_Type.PK_death,
@@ -50,13 +58,17 @@ def style_rules():
         rules.And(
             descr='All male ancestors of person 2',
             style=rules.Style(fill='#c6ebff', stroke='#1d4f67'),
-            rules=[rules.Sex(sex="M"),
+            rules=[rules.Characteristic(
+                       type=models.Characteristic_Part_Type.PK_sex,
+                       value__iexact="M"),
                    rules.Ancestor(of=2)]),
 
         rules.And(
             descr='All female ancestors of current decujus',
             style=rules.Style(fill='#e9daf1', stroke='#ff2080'),
-            rules=[rules.Sex(sex="F"),
+            rules=[rules.Characteristic(
+                       type=models.Characteristic_Part_Type.PK_sex,
+                       value__iexact="F"),
                    rules.Ancestor()]),
 
         rules.Event(
@@ -71,48 +83,33 @@ def style_rules():
             style=rules.Style(fill='#06e0ea', stroke='#9ca3d4'),
             of=2),
 
+        rules.Known_Father(
+            descr='Unknown father',
+            equal=False,
+            style=rules.Style(color='violet')),
+        rules.Known_Mother(
+            descr='Unknown mother',
+            equal=False,
+            style=rules.Style(color='violet')),
+
+        rules.Characteristic(
+            descr="Person's whose surname is Poidevin",
+            type=models.Characteristic_Part_Type.PK_surname,
+            value__iexact="poidevin",
+            style=rules.Style(color='green')),
+
+        rules.Event(
+            descr="Perons with more than one marriage",
+            style=rules.Style(fill='rgb(0,155,0)'),
+            type=models.Event_Type.PK_marriage,
+            role=models.Event_Type_Role.PK_principal,
+            count__gt=1),
+
         rules.Default(
             descr="Set default style",
             style=rules.Style(stroke='black', fill='none')),
 
-        # ("Foreign people in different color",
-        #  RULE_EVENT,
-        #  [("type", RULE_IS, models.Event_Type.PK_birth),
-        #   ("role", RULE_IS, models.Event_Type_Role.PK_principal),
-        #   ("place.country", RULE_IS_NOT, ""),
-        #   ("place.country", RULE_CONTAINS_NOT_INSENSITIVE, "france")],
-        #  {"fill": "#AAAAAA"}),
-
-        # ("Person's with more than one marriage",
-        #  RULE_EVENT,
-        #  [("type", RULE_IS, models.Event_Type.PK_marriage),
-        #   ("role", RULE_IS, models.Event_Type_Role.PK_principal),
-        #   ("count", RULE_GREATER, 1)],
-        #  {"fill": "rgb(0,155,0)"}),
-
-        # ("All female descendants of person id=%s" % decujus,
-        #  RULE_ATTR,
-        #  [("descendant", RULE_IS, decujus), ("SEX", RULE_IS, "F")],
-        #  {"fill": "#E9DAF1", "stroke": "#fF2080"}),
-
-        # ("Unknown father",
-        #  RULE_ATTR,
-        #  [("UNKNOWN_FATHER", RULE_IS, "Y")],
-        #  {"color": "violet"}),
-
-        # ("Unknown mother",
-        #  RULE_ATTR,
-        #  [("UNKNOWN_MOTHER", RULE_IS, "Y")],
-        #  {"color": "violet"}),
-
-        # ("Person's name is Delamote (case insensitive)",
-        #  RULE_ATTR,
-        #  [("surname", RULE_IS_INSENSITIVE, "delamotte")],
-        #  {"color": "green"}),
     ]
 
 # ??? Other rules that would be nice to have:
-#   "Is descendant of ..."
-#   "Project Explorer contains (or not) the person"
-#   "Son's name is"
 #   "Has sources", "Has sources with reliability >= "

@@ -142,6 +142,9 @@ class P2C(Assertion):
         """Meta data for the model"""
         db_table = "p2c"
 
+    def __str__(self):
+        return "<P2C person=%s char=%s>" % (self.person_id, self.characteristic)
+
     @staticmethod
     def related_json_fields():
         return Assertion.related_json_fields() + ['characteristic']
@@ -179,11 +182,8 @@ class P2E(Assertion):
     role = models.ForeignKey(Event_Type_Role, null=True)
 
     def __str__(self):
-        if self.role:
-            role = " (as " + self.role.name + ")"
-        else:
-            role = ""
-        return "<P2E %s-->%s%s>" % (self.person, self.event, role)
+        role = " (as %s)" % self.role_id if self.role_id else ""
+        return "<P2E person=%s event=%s%s>" % (self.person_id, self.event, role)
 
     class Meta:
         """Meta data for the model"""

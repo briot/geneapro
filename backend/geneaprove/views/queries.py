@@ -2,57 +2,57 @@
 Support for writing custom SQL queries
 """
 
-from django.db.models import Q
+from django.db.models import prefetch_related_objects
 
 
-# Maximum number of elements in a SQL_IN
-MAX_SQL_IN = 800
-
-
-def sql_split(ids):
-    """Generate multiple tuples to split a long list of ids into more
-       manageable chunks for Sqlite
+def sql_split(ids, chunk_size=900):
+    """
+    Generate multiple tuples to split a long list of ids into more
+    manageable chunks for Sqlite
     """
     if ids is None:
         yield None
     else:
         ids = list(ids)  # need a list to extract parts of it
-        offset = 0
-        while offset < len(ids):
-            yield ids[offset:offset + MAX_SQL_IN]
-            offset += MAX_SQL_IN
+        for i in range(0, len(ids), chunk_size):
+            yield ids[i:i + chunk_size]
 
 
-def sql_in(objects, field_in, ids, or_q=None):
-    """A generator that performs the OBJECTS query, with extra filtering
-       on FIELD_IN. This is equivalent to
-           objects.filter("field_in"__in = ids)
-       except it repeats the query multiple times if there are too many
-       entries in IDS (a limitation of sqlite).
-       IDS should be None to just perform the OBJECTS query without any
-       additional filtering.
-
-       :param or_q:
-           An instance of django.db.models which is OR-ed with the "in"
-           statement. So the query really is:
-                WHERE  field_in  IN ids   OR or_q
+def sql_prefetch_related_object(objects, *attrs):
+    """
+    Performs a prefetch_related_objects on the list, and splits into chunks
+    to make it compatible with sqlite.
+    Returns `objects` again, as a list, after updating related objects.
     """
 
-    if ids is None:
-        if or_q is not None:
-            for obj in objects.filter(or_q).all():
-                yield obj
+    obj = list(objects)
+    for chunk in sql_split(obj):
+        prefetch_related_objects(chunk, *attrs)
+    return obj
+
+
+def sqlin(queryset, **kwargs):
+    """
+    Return one or more querysets, after adding additional:
+         WHERE  param_name IN param_value
+    As opposed to django's builtin support, this works wiith sqlite even
+    when there are more than 1000 values.
+
+    example:
+        for q in sqlin(model.Table.objects, ids__in=[...]):
+            for row in q.all();
+               ...
+    """
+    for k in kwargs:
+        if not k.endswith('__in'):
+            raise Exception('Invalid parameter %s' % k)
+
+    if len(kwargs) != 1:
+        raise Exception('Wrong number of arguments')
+
+    for k, v in kwargs.items():
+        if v is None:
+            yield queryset
         else:
-            for obj in objects.all():
-                yield obj
-    else:
-        field_in += "__in"   # Django syntax for SQL's IN operator
-        for subids in sql_split(ids):
-            kwargs = {field_in: subids}
-            base_q = Q(*(), **kwargs)
-            if or_q is not None:
-                query = objects.filter(base_q | or_q)
-            else:
-                query = objects.filter(base_q)
-            for obj in query:
-                yield obj
+            for chunk in sql_split(v):
+                yield queryset.filter(**{k: chunk})

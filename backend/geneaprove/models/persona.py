@@ -25,7 +25,10 @@ class Persona(GeneaProveModel):
     # assertion that applies to the person.
 
     def __repr__(self):
-        return 'Persona<%d,%s>' % (self.id, self.name)
+        return 'Persona(%d,%s)' % (self.id, self.name)
+
+    def __str__(self):
+        return '<Persona id=%d name=%s>' % (self.id, self.name)
 
     class Meta:
         """Meta data for the model"""

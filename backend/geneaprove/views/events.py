@@ -4,7 +4,6 @@ Event-related views
 
 from django.http import HttpResponse
 from geneaprove import models
-from geneaprove.views.queries import sql_in
 from geneaprove.views.to_json import JSONView
 from geneaprove.views.related import JSONResult
 
