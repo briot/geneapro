@@ -45,8 +45,10 @@ else
    fi
 fi
 
-pip install django==1.10.6 pillow pylint pylint-django pep8 autopep8 grandalf \
-   django-prepared-query cprofilev pyinstaller appdirs
+# pip install django==1.10.6 pillow pylint pylint-django pep8 autopep8 grandalf \
+#    django-prepared-query cprofilev pyinstaller appdirs
+
+pip install django==1.10.6 pillow grandalf django-prepared-query appdirs
 
 # The actual layout of the sources was created with:
 #     django-admin startproject backend
@@ -61,6 +63,7 @@ pip install django==1.10.6 pillow pylint pylint-django pep8 autopep8 grandalf \
    cd backend
    dir=`./manage.py showconf | grep dir= | cut -d= -f2`
    mkdir -p "$dir"
+   ./manage.py makemigrations
    ./manage.py migrate
 )
 
