@@ -1,4 +1,4 @@
-# Setup geneaprove for developers
+# Setup geneaprove for end-users and developers
 
 # Which python interpreter to use (need python 3)
 # Only needed when no virtualenv has been setup yet
@@ -6,6 +6,8 @@ PYTHON=${PYTHON:-python3.6}
 
 VIRTUALENV=${VIRTUALENV:-virtualenv}
 NODE=${NODE:-node}
+
+DEVELOPER=${DEVELOPER:-no}
 
 #########################
 # Front-end development #
@@ -45,10 +47,12 @@ else
    fi
 fi
 
-# pip install django==1.10.6 pillow pylint pylint-django pep8 autopep8 grandalf \
-#    django-prepared-query cprofilev pyinstaller appdirs
-
 pip install django==1.10.6 pillow grandalf django-prepared-query appdirs
+
+if [ "$DEVELOPER" != "no" ]; then
+   # Some useful tools for developers. 
+   pip install pylint pylint-django pep8 autopep8 cprofilev pyinstaller
+fi
 
 # The actual layout of the sources was created with:
 #     django-admin startproject backend
