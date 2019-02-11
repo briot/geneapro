@@ -779,6 +779,7 @@
 2 DATE 5 MAY 0005 B.C.
 2 PLAC Salt Lake City
 2 STAT Cleared
+3 DATE Unknown, added for geneaprove, to match gedcom 5.5.1
 2 TEMP Mormon Temple
 2 SOUR @SOURCE1@
 2 NOTE @N5@
@@ -1275,6 +1276,7 @@
 2 DATE 12 DEC 1976
 2 PLAC Temple
 2 STAT Child
+3 DATE Unknown, added for geneaprove, to match gedcom 5.5.1
 2 TEMP Temple Code
 2 SOUR @SOURCE1@
 3 DATA

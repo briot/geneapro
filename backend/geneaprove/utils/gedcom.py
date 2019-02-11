@@ -116,7 +116,7 @@ class _Lexical(object):
         if self.prefetch[1] != 0 or \
            self.prefetch[2] != 'HEAD':
             self.error("Invalid gedcom file, first line must be '0 HEAD' got %s"
-                       % (self.prefetch, ),
+                       % (l, ),
                        fatal=True)
 
         self._readline()
@@ -129,8 +129,8 @@ class _Lexical(object):
     def decode_any(self, value):
         return value.decode(self.encoding, "replace")
 
-    def error(self, msg, fatal=False):
-        m = "%s:%s %s" % (self.file.name, self.line, msg)
+    def error(self, msg, fatal=False, line=None):
+        m = "%s:%s %s" % (self.file.name, line or self.line, msg)
         if fatal:
             raise Invalid_Gedcom(m)
         else:
@@ -319,16 +319,29 @@ class F(object):
 
         tags = {}    # tag -> number of times children were seen
         val = value
+        has_xref = False
 
         if self.text is None:
             if value:
-                print("Line %s Unexpected text value after %s" % (linenum, tag))
+                lexical.error(
+                    "Unexpected text value after %s" % tag,
+                    line=linenum,
+                    fatal=True)
             val = None
+
         elif self.text == "Y":
             # Gedcom standard says value must be "Y", but PAF also uses "N".
             # The tag should simply not be there in this case
             if value and value not in ("Y", "N"):
-                print("Line %s Unexpected text value after %s" % (linenum, tag))
+                lexical.error(
+                    "Line %s Unexpected text value after %s" % (linenum, tag),
+                    fatal=True)
+
+        elif self.text == "":
+            pass   # allow any text
+
+        else:
+            has_xref = value != ''
 
         r = GedcomRecord(id=id, line=linenum, tag=tag, value=val)
 
@@ -337,19 +350,30 @@ class F(object):
             if clevel <= level:
                 break
 
-            tags[ctag] = tags.setdefault(ctag, 0) + 1
+            # if has_xref:
+            #     lexical.error(
+            #         'Unexpected %s in xref' % ctag,
+            #         line=clinenum,
+            #         fatal=True)
 
             if self.children is None:
                 cdescr = None
             else:
                 cdescr = self.children.get(ctag, None)
 
+            count = tags[ctag] = tags.setdefault(ctag, 0) + 1
+
             if cdescr is None:
                 if ctag[0] == '_':
                     # A custom tag is allowed, and should accept anything
-                    print("Line %d Custom tag not supported: %s" % (clinenum, ctag))
+                    lexical.error(
+                        "Custom tag ignored: %s" % ctag,
+                        line=clinenum)
                 else:
-                    print("Line %s Unexpected tag: %s" % (clinenum, ctag))
+                    lexical.error(
+                        "Unexpected tag: %s" % ctag,
+                        line=clinenum,
+                        fatal=True)
 
                 # skip this record (should be a special type of F)
                 while True:
@@ -359,13 +383,26 @@ class F(object):
                         break
 
             else:
+                if cdescr.max < count:
+                    lexical.error(
+                        'Too many %s in %s' % (ctag, tag),
+                        line=clinenum,
+                        fatal=True)
                 c = cdescr.parse(lexical)  # read until end of child record
                 r.fields.append(c)
 
-        # We have parsed all children, make sure we had all expected ones,
-        # and not more
+        # We have parsed all children, make sure we are not missing any
 
-        pass
+        if self.children is not None and not has_xref:
+            # Not an xref, check we have the right children
+            for ctag, cdescr in self.children.items():
+                if tags.get(ctag, 0) < cdescr.min:
+                    lexical.error(
+                        'Missing %s occurrence of %s in %s' % (
+                            cdescr.min - tags.get(ctag, 0), ctag,
+                            tag if tag else "file"),
+                        line=linenum,
+                        fatal=True)
 
         return r
 
@@ -443,7 +480,7 @@ HEADER = [
 ]
 
 CHAN = \
-    F("CHAN", 1, 1, None, [              # Geccom 5.5.1, p31
+    F("CHAN", 0, 1, None, [              # Geccom 5.5.1, p31
         F("DATE", 1, 1, '', [            # change date
             F("TIME", 0, 1),             # time value
         ]),
