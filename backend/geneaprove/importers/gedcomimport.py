@@ -176,7 +176,7 @@ class GedcomImporter(object):
             title=title,
             abbrev=title,
             biblio=title,
-            last_change=date)
+            last_change=date or django.utils.timezone.now())
 
     def _create_bare_indi(self, indi):
         """
@@ -232,7 +232,8 @@ class GedcomImporter(object):
 
         # The name to use is the first one in the list of names
         p = models.Persona.objects.create(
-            name=name, description=None, last_change=chan)
+            name=name, description=None,
+            last_change=chan or django.utils.timezone.now())
         p._gedcom_id = indi.id
         return p
 
@@ -490,7 +491,7 @@ class GedcomImporter(object):
             elif f.tag == "RIN":
                 self.ignore_fields(f, prefix="REPO")
                 info.append("Automated record id: %s" % f.value)
-            elif f.tag == "REFN": 
+            elif f.tag == "REFN":
                 added = False
                 for a in f.fields:
                     if a.tag == "TYPE":
@@ -1289,7 +1290,7 @@ class GedcomImporter(object):
         # A multimedia representation is always associated with a source, so
         # we create that source.
         # ??? Should this be a characteristic of the place instead ?
-        
+
         known_obje = self._obje_for_places.setdefault(p, set())
         source_for_repr = None
 

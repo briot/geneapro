@@ -1,0 +1,55 @@
+0 HEAD
+1 SOUR test for github issue #38
+1 CHAR UTF-8
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 SUBM @SUBM@
+0 @SUBM@ SUBM
+1 NAME Individual Tester
+1 LANG English
+0 @I1@ INDI
+1 NAME Individual Middle /Tester1/
+1 SEX M
+1 BIRT
+2 DATE 1 January 1960
+2 PLAC Hospital Infirmary, Anywhere, Wyoming, United States
+1 FAMC @F1@
+1 CHAN
+2 DATE 28 Jan 2019
+3 TIME 23:43:37
+0 @I2@ INDI
+1 NAME Father Middle /Tester1/
+1 SEX M
+1 FAMS @F1@
+1 FAMC @F3@
+1 CHAN
+2 DATE 28 Jan 2019
+3 TIME 23:43:37
+0 @I3@ INDI
+1 NAME Mother Middle /Tester2/
+1 SEX F
+1 BIRT
+2 DATE 15 April 1940
+1 FAMS @F1@
+1 FAMC @F2@
+1 CHAN
+2 DATE 28 Jan 2019
+3 TIME 23:43:37
+0 @I4@ INDI
+1 NAME Mother Middle /Tester3/
+1 SEX F
+1 DEAT
+2 DATE 01 June 1999
+2 PLAC Mobile AL
+1 RESI
+2 DATE 1910
+2 PLAC Jackson, Clarke, Alabama, United States
+1 BIRT
+2 DATE 2 Nov 1910
+2 PLAC Auburn, AL
+1 BURI
+2 PLAC Mobile, Mobile County, Alabama, United States of America
+1 FAMS @F2@
+1 FAMC @F5@
+0 TRLR
