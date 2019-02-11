@@ -252,18 +252,29 @@ def get_ymd(txt, months):
 
     m = SPELLED_OUT_RE.search(txt)
     if m:
+        year_known = True
+        month_known = True
+        day_known = True
+
         try:
             month = months[m.group(2).lower()]
-            month_specified = True
         except KeyError:
             month = 1
-            month_specified = False
+            month_known = False
+
         try:
             day = int(m.group(1))
         except TypeError:
             day = 1
-        return (__get_year(m.group(3)), month, day, True,
-                month_specified, True)
+            day_known = False
+
+        try:
+            year = __get_year(m.group(3))
+        except KeyError:
+            year = -4000
+            year_known = False
+
+        return (year, month, day, year_known, month_known, day_known)
 
     m = SPELLED_OUT2_RE.search(txt)
     if m:

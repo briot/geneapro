@@ -1,0 +1,16 @@
+0 HEAD
+1 SOUR test for github issue #38
+1 CHAR UTF-8
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 SUBM @SUBM@
+0 @SUBM@ SUBM
+1 NAME Individual Tester
+1 LANG English
+0 @I1@ INDI
+1 NAME Individual Middle /Tester1/
+1 SEX M
+1 DEAT
+2 DATE Deceased
+0 TRLR

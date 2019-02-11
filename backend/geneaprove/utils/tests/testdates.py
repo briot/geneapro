@@ -21,6 +21,7 @@ JAN_1_1996 = 2450084
 DEC_1_2008 = 2454802
 NOV_11_2008 = DEC_1_2008 - 1
 JAN_1_1700_JU = 2341983
+JAN_1_UNDEFINED = 260090
 JAN_15_UNDEFINED = 260104
 MAY_1_UNDEFINED = 260211
 
@@ -109,7 +110,7 @@ class DateTestCase(unittest.TestCase):
         self._assert_date("jan 1, 2008", JAN_1_2008, "2008-01-01")
         self._assert_date("jan 1 2008", JAN_1_2008, "2008-01-01")
         self._assert_date("1 january 2008", JAN_1_2008, "2008-01-01")
-        self._assert_date("EST JAN 2008", JAN_1_2008, "2008-01-01 ?")
+        self._assert_date("EST JAN 2008", JAN_1_2008, "2008-01 ?")
         self._assert_date("2008-01-01 est", JAN_1_2008, "2008-01-01 ?")
         self._assert_date("2008", JAN_1_2008, "2008")
         self._assert_date("2008 ?  ", JAN_1_2008, "2008 ?")
@@ -158,6 +159,9 @@ class DateTestCase(unittest.TestCase):
         self._assert_date("2008-11-20 - 1 year + 1 month", DEC_20_2007,
                           "2007-12-20")
 
+        # from issue #39
+        self._assert_date('deceased', JAN_1_UNDEFINED, "")
+
         # Partially unknown dates
 
         self._assert_date("1920-08-??", 2422538, "1920-08 ?")
@@ -185,7 +189,7 @@ class DateTestCase(unittest.TestCase):
         self._assert_date(
             "from bet 21 JUN 1876 and abt 2 MAR 1893 TO BEF SEP 1840",
             ((2406427, 2412525), 2393350),
-            "from between 1876-06-21 and ~1893-03-02 to /1840-09-01")
+            "from between 1876-06-21 and ~1893-03-02 to /1840-09")
 
         # Gedcom also says that one end of the periods is optional
 
