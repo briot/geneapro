@@ -20,7 +20,7 @@
     "start": "react-scripts start",
     "server": "./python_env/bin/python backend/manage.py runserver 8002",
     "build": "react-scripts build",
-    "test": "(cd backend; ../python_env/bin/python ./manage.py test) && react-scripts test --env=jsdom",
+    "test": "(cd backend; ../python_env/bin/python ./manage.py test) && (CI=true react-scripts test --env=jsdom)",
     "eject": "react-scripts eject"
   },
   "proxy": "http://localhost:8002",

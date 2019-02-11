@@ -41,13 +41,15 @@ sagaMiddleware.run(rootSaga);
  * and thus avoid displaying the default settings.
  */
 export function setPersist(whenDone: () => void) {
-   persistStore(
-      store,
-      {
-         // ??? Should not save pedigree.loading
-         whitelist: ['pedigree', 'fanchart', 'radial', 'quilts', 'history',
-                     'stats', 'personalist'],
-      },
-      whenDone
-   );
+   if (process.env.NODE_ENV !== 'test') {
+      persistStore(
+         store,
+         {
+            // ??? Should not save pedigree.loading
+            whitelist: ['pedigree', 'fanchart', 'radial', 'quilts', 'history',
+                        'stats', 'personalist'],
+         },
+         whenDone
+      );
+   }
 }
