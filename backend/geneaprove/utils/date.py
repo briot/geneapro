@@ -118,7 +118,7 @@ ADD_RE = re.compile(r"\s*([-+])?\s*" + DELTA_RE + r"\s*$", IGNORECASE)
 
 YEAR_RE = r"(\d{1,4}|(?:an\s+)?[MDCXVI]+)"
 
-OPTDAY = r"(\d?\d|\?*)"  # day (one or two digits), or any number of "?"
+OPTDAY = r"(\d\d?|\?+)"  # day (one or two digits), or any number of "?"
 
 YYYYMMDD_RE = re.compile(
     r"^\s*" + YEAR_RE + "[-/]" + OPTDAY + "[-/]" + OPTDAY + "$", IGNORECASE)
@@ -136,7 +136,7 @@ DDMM_RE = re.compile(r"^\s*(\d{2})[-/](\d{2})$")
 
 BEFORE_RE = re.compile("(<|" + RE_BEFORE + r"|[^\d]/(\\d))", IGNORECASE)
 AFTER_RE = re.compile("(>|" + RE_AFTER + r"|(\\d)/[^\d])", IGNORECASE)
-ABOUT_RE = re.compile(r"\s*(\\b(?:" + RE_ABOUT + r")|~)\s*", IGNORECASE)
+ABOUT_RE = re.compile(r"^\s*(\b(?:" + RE_ABOUT + r")|~)\s*", IGNORECASE)
 EST_RE = re.compile(r"\s*((?:" + RE_EST + r")\s*|\?\s*$)", IGNORECASE)
 
 SPAN_FROM = 1
@@ -230,10 +230,11 @@ def get_ymd(txt, months):
 
     m = YYYYMMDD_RE.search(txt) or ISO_RE.search(txt)
     if m:
+        day_known = m.group(3) and m.group(3)[0].isdigit()
         return (__get_year(m.group(1)),
                 as_int(m.group(2)),
                 as_int(m.group(3)),
-                True, True, True)
+                True, True, day_known)
 
     m = DDMMYYYY_RE.search(txt)
     if m:
@@ -921,28 +922,74 @@ class DateRange(object):
         will attempt to autodetect it.
         """
 
-        self.text = text.strip()  # Date as the user entered it
-        self.ends = [None, None]  # The two ends of the range. These are
-        # either _Date instances or DateRange
-        # instances if self is a period whose
-        # start or end are ranges.
-        self.span = -1  # SPAN_FROM or SPAN_BETWEEN, to describe the range
-        self.__parse()
+        text = self._text = text.strip()  # Date as the user entered it
+
+        groups = PERIOD_RE.search(text)
+        if groups:
+            # First date could be "between A and B"
+            e1 = DateRange(groups.group(2))
+            if e1._to is None:
+                e1 = e1._from
+
+            e2 = DateRange(groups.group(4))
+            if e2._to is None:
+                e2 = e2._from
+
+            self._from = e1
+            self._to = e2
+            self._span = SPAN_FROM
+            return
+
+        groups = FROM_RE.search(text)
+        if groups:
+            e1 = DateRange(groups.group(2))
+            if e1._to is None:
+                e1 = e1._from
+
+            self._from = e1
+            self._to = None
+            self._span = SPAN_FROM
+            return
+
+        groups = TO_RE.search(text)
+        if groups:
+            e1 = DateRange(groups.group(2))
+            if e1._to is None:
+                e1 = e1._from
+
+            self._from = None
+            self._to = e1
+            self._span = SPAN_FROM
+            return
+
+        groups = BETWEEN_RE.search(text)
+        if groups:
+            self._from = _Date(groups.group(2))
+            self._to = _Date(groups.group(4))
+            self._span = SPAN_BETWEEN
+            return
+
+        self._from = _Date(text)
+        self._to = None
+        self._span = -1
 
     @staticmethod
     def today():
         """Return today's date"""
         today = _Date.today()
-        result = DateRange("")
-        result.ends = (today, None)
+        result = DateRange.__new__(DateRange)
+        result._text = str(today)
+        result._from = today
+        result._to = None
+        result._span = -1
         return result
 
     def sort_date(self):
         """Return a single date that can be used when sorting DateRanges.
            For a range of dates, we have chosen (randomly) to return the
            first date in the range."""
-        if self.ends[0]:
-            return self.ends[0].sort_date()
+        if self._from:
+            return self._from.sort_date()
         else:
             return None
 
@@ -952,39 +999,58 @@ class DateRange(object):
         # ranges.
 
         if isinstance(date, TimeDelta):
-            d1 = self.ends[0] - date
-            if self.ends[1]:
-                d2 = self.ends[1] - date
+            d1 = self._from - date
+            if self._to:
+                d2 = self._to - date
             else:
                 d2 = None
 
-            result = DateRange("")
-            result.ends = (d1, d2)
+            result = DateRange.__new__(DateRange)
+            result._text = "%s - %s" % (self, date)
+            result._from = d1
+            result._to = d2
+            result._span = -1
             return result
 
         else:
             assert isinstance(date, DateRange)
-            if self.ends[0] is None or date.ends[0] is None:
+            if self._from is None or date._from is None:
                 return None
-            return self.ends[0] - date.ends[0]
+            return self._from - date._from
+
+    def __add__(self, delta):
+        """Add a delta to a date range"""
+        assert isinstance(delta, TimeDelta)
+        d1 = self._from + delta
+        if self._to:
+            d2 = self._to + delta
+        else:
+            d2 = None
+
+        result = DateRange.__new__(DateRange)
+        result._text = "%s + %s" % (self, delta)
+        result._from = d1
+        result._to = d2
+        result._span = -1
+        return result
 
     def year(self, calendar=None):
         """Return the year to be used for the range, when sorting"""
-        if self.ends[0] and self.ends[0].year_known:
-            return self.ends[0].year(calendar)
+        if self._from and self._from.year_known:
+            return self._from.year(calendar)
         else:
             return None
 
     def __eq__(self, date):
-        return self.ends == date.ends
+        return self._from == date._from and self._to == date._to
 
     def __lt__(self, date):
         """Compare two DateRange"""
-        return date is not None and self.ends[0].date < date.ends[0].date
+        return date is not None and self._from.date < date._from.date
 
     def __gt__(self, date):
         """Compare two DateRange"""
-        return date is not None and self.ends[0].date > date.ends[0].date
+        return date is not None and self._from.date > date._from.date
 
     def __str__(self):
         """Convert to a string"""
@@ -996,128 +1062,51 @@ class DateRange(object):
         :param bool year_only: only display the date.
         """
 
-        if original and self.text:
-            return str(self.text)
+        if original and self._text:
+            return str(self._text)
 
-        if self.ends[0] is None:
-            d2 = self.ends[1].display(
+        if self._from is None:
+            d2 = self._to.display(
                 calendar=calendar, year_only=year_only, original=original)
-            if self.ends[1] is not None:
+            if self._to is not None:
                 return u"to %s" % d2
-            return str(self.text)
-
-        d1 = self.ends[0].display(
-            calendar=calendar, year_only=year_only, original=original)
-
-        if self.ends[1] is not None:
-            d2 = self.ends[1].display(
+            else:
+                return str(self._text)
+        else:
+            d1 = self._from.display(
                 calendar=calendar, year_only=year_only, original=original)
 
-            if self.span == SPAN_FROM:
-                return u"from %s to %s" % (d1, d2)
+            if self._to is not None:
+                d2 = self._to.display(
+                    calendar=calendar, year_only=year_only, original=original)
+
+                if self._span == SPAN_FROM:
+                    return u"from %s to %s" % (d1, d2)
+                else:
+                    return u"between %s and %s" % (d1, d2)
             else:
-                return u"between %s and %s" % (d1, d2)
-        else:
-            if self.span == SPAN_FROM:
-                return u"from %s" % d1
-            else:
-                return d1
+                if self._span == SPAN_FROM:
+                    return u"from %s" % d1
+                else:
+                    return d1
 
     def days_since(self, date):
         """"Return the number of days between two dates"""
-        return self.ends[0].date - date.ends[0].date
+        return self._from.date - date._from.date
 
     def years_since(self, date):
         """Return the number of years between two DateRange.
            Only full years are counted
         """
-        if self.ends[0] is not None \
-                and self.ends[0].year_known \
-                and date.ends[0] is not None \
-                and date.ends[0].year_known:
-            return (self.ends[0] - date.ends[0]).years
+        if self._from is not None \
+                and self._from.year_known \
+                and date._from is not None \
+                and date._from.year_known:
+            return (self._from - date._from).years
         else:
             return None
 
     def day_of_week(self):
         """Return the day of week for the start date"""
-        return self.ends[0].day_of_week()
+        return self._from.day_of_week()
 
-    def __add__(self, delta):
-        """Add a delta to a date range"""
-        assert isinstance(delta, TimeDelta)
-        d1 = self.ends[0] + delta
-        if self.ends[1]:
-            d2 = self.ends[1] + delta
-        else:
-            d2 = None
-
-        result = DateRange("")
-        result.ends = (d1, d2)
-        return result
-
-    def __parse(self):
-        """Parse the text field to create a date or a date range that can be
-           more easily compared and manipulated. We need to handle the
-           case of a period whose ends are ranges:
-               from <range1> to <range2>
-               where  range[12] = date | between <date1> and <date2>
-        """
-        precision = PRECISION_EXACT
-        match = ABOUT_RE.search(self.text)
-        if match:
-            precision = PRECISION_ABOUT
-            self.text = self.text[:match.start(0)] + self.text[match.end(0):]
-        else:
-            match = EST_RE.search(self.text)
-            if match:
-                precision = PRECISION_ESTIMATED
-                self.text = self.text[:match.start(0)] + self.text[match.end(0):]
-
-        # ??? What should we do with `precision` ?
-
-        if self.span != SPAN_FROM:
-            groups = PERIOD_RE.search(self.text)
-            if groups:
-                e1 = DateRange(groups.group(2))
-                if e1.ends[1] is None:
-                    e1 = e1.ends[0]
-
-                e2 = DateRange(groups.group(4))
-                if e2.ends[1] is None:
-                    e2 = e2.ends[0]
-
-                self.ends = (e1, e2)
-                self.span = SPAN_FROM
-                return
-
-            groups = FROM_RE.search(self.text)
-            if groups:
-                e1 = DateRange(groups.group(2))
-                if e1.ends[1] is None:
-                    e1 = e1.ends[0]
-
-                self.ends = (e1, None)
-                self.span = SPAN_FROM
-                return
-
-            groups = TO_RE.search(self.text)
-            if groups:
-                e1 = DateRange(groups.group(2))
-                if e1.ends[1] is None:
-                    e1 = e1.ends[0]
-
-                self.ends = (None, e1)
-                self.span = SPAN_FROM
-                return
-
-        if self.span != SPAN_BETWEEN:
-            groups = BETWEEN_RE.search(self.text)
-            if groups:
-                self.ends = (_Date(groups.group(2)),
-                             _Date(groups.group(4)))
-                self.span = SPAN_BETWEEN
-                return
-
-        self.ends = (_Date(self.text), None)
-        self.span = -1

@@ -43,22 +43,22 @@ class DateTestCase(unittest.TestCase):
 
         def cmp_end(d, exp):
             # pylint: disable=protected-access
-            if isinstance(d, date._Date) or d.ends[1] is None:
+            if isinstance(d, date._Date) or d._to is None:
                 if isinstance(exp, tuple):
                     return "expected a range, got %s" % d
                 elif isinstance(d, date._Date):
                     if d.date != exp:
                         return "%s != %s" % (d.date, exp)
-                elif d.ends[0].date != exp:
-                    return "%s != %s" % (d.ends[0].date, exp)
+                elif d._from.date != exp:
+                    return "%s != %s" % (d._from.date, exp)
             else:
-                if isinstance(exp, tuple):
+                if not isinstance(exp, tuple):
                     return "expected a simple date, got %s" % d
-                return cmp_end(d.ends[0], exp[0]) \
-                    or cmp_end(d.ends[1], exp[1])
+                return cmp_end(d._from, exp[0]) \
+                    or cmp_end(d._to, exp[1])
             return ""
 
-        if not d.ends[0] and not d.ends[1]:
+        if not d._from and not d._to:
             error = "Could not parse date"
         elif expected and d.display(original=False) != expected:
             error = "[" + d.display(original=False) \
@@ -160,7 +160,7 @@ class DateTestCase(unittest.TestCase):
 
         # Partially unknown dates
 
-        self._assert_date("1920-08-??", 2422538, "1920-08-01 ?")
+        self._assert_date("1920-08-??", 2422538, "1920-08 ?")
 
         self._assert_date("entre 1700 ju et 10 vendemiaire XI",
                           (JAN_1_1700_JU, OCT_2_1802),
