@@ -19,13 +19,17 @@ class GedcomTestCase(unittest.TestCase):
     def _process_file(self, filename):
         """parse a file and test the expected output"""
 
-        error = ""
+        error = []
+
+        def pw(msg):
+            error.append(msg)
+
         try:
             # Universal newline
-            gedcom.parse_gedcom(filename)
-            error = error + "OK\n"
+            gedcom.parse_gedcom(filename, print_warning=pw)
+            error.append('OK')
         except gedcom.Invalid_Gedcom as e:
-            error = error + e.msg + "\n"
+            error.append(e.msg)
 
         expected_name = os.path.splitext(filename)[0] + ".out"
         try:
@@ -33,8 +37,8 @@ class GedcomTestCase(unittest.TestCase):
             expected = open(expected_name, encoding='latin-1').read()
         except IOError:
             expected = "OK\n"
-        out = error.replace(self.dir, "<dir>")
-        self.assertEqual(expected, out, msg="in %s" % filename)
+        out = '\n'.join(error).replace(self.dir, "<dir>")
+        self.assertEqual(expected, out + '\n', msg="in %s" % filename)
 
     def _process_dir(self, dir):
         for f in sorted(os.listdir(dir)):

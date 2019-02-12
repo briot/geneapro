@@ -94,7 +94,7 @@ class _Lexical(object):
     FIELD_XREF_ID = 3
     FIELD_VALUE = 4
 
-    def __init__(self, stream):
+    def __init__(self, stream, print_warning):
         """Lexical parser for a GEDCOM file. This returns lines one by one,
            after splitting them into components. This automatically groups
            continuation lines as appropriate
@@ -102,6 +102,7 @@ class _Lexical(object):
         self.file = stream
         self.level = 0     # Level of the current line
         self.line = 0      # Current line
+        self.print_warning = print_warning
 
         self.encoding = 'iso_8859_1'
         self.decode = self.decode_any
@@ -134,7 +135,7 @@ class _Lexical(object):
         if fatal:
             raise Invalid_Gedcom(m)
         else:
-            print(m)
+            self.print_warning(m)
 
     def _parse_line(self, line):
         """
@@ -326,7 +327,7 @@ class F(object):
                 lexical.error(
                     "Unexpected text value after %s" % tag,
                     line=linenum,
-                    fatal=True)
+                    fatal=False)
             val = None
 
         elif self.text == "Y":
@@ -334,8 +335,9 @@ class F(object):
             # The tag should simply not be there in this case
             if value and value not in ("Y", "N"):
                 lexical.error(
-                    "Line %s Unexpected text value after %s" % (linenum, tag),
-                    fatal=True)
+                    "Unexpected text value after %s, expected 'Y'" % tag,
+                    line=linenum,
+                    fatal=False)
 
         elif self.text == "":
             pass   # allow any text
@@ -907,7 +909,7 @@ FILE = \
     ])
 
 
-def parse_gedcom(filename):
+def parse_gedcom(filename, print_warning=lambda m: print(m)):
     """Parse the specified GEDCOM file, check its syntax, and return a
        GedcomFile instance.
        Raise Invalid_Gedcom in case of error.
@@ -917,7 +919,8 @@ def parse_gedcom(filename):
     """
 
     start = time.time()
-    result = FILE.parse(_Lexical(_File(filename)))
+    result = FILE.parse(
+        _Lexical(_File(filename), print_warning=print_warning))
     logger.info('Parsed in %ss', time.time() - start)
     return result
 
