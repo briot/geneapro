@@ -391,7 +391,8 @@ class F(object):
                         line=clinenum,
                         fatal=True)
                 c = cdescr.parse(lexical)  # read until end of child record
-                r.fields.append(c)
+                if c is not None:
+                    r.fields.append(c)
 
         # We have parsed all children, make sure we are not missing any
 
@@ -399,12 +400,24 @@ class F(object):
             # Not an xref, check we have the right children
             for ctag, cdescr in self.children.items():
                 if tags.get(ctag, 0) < cdescr.min:
-                    lexical.error(
-                        'Missing %s occurrence of %s in %s' % (
-                            cdescr.min - tags.get(ctag, 0), ctag,
-                            tag if tag else "file"),
-                        line=linenum,
-                        fatal=True)
+                    ptag = tag if tag else "file"
+                    if ptag[0] != "_":
+                        lexical.error(
+                            'Missing {count} occurrence of {child} in {parent}'.format(
+                                parent=ptag,
+                                count=cdescr.min - tags.get(ctag, 0),
+                                child=ctag),
+                            line=linenum,
+                            fatal=True)
+                    else:
+                        lexical.error(
+                            'Skipping {parent}, missing {count} occurrence of {child}'.format(
+                                parent=ptag,
+                                count=cdescr.min - tags.get(ctag, 0),
+                                child=ctag),
+                            line=linenum,
+                            fatal=False)
+                    return None
 
         return r
 

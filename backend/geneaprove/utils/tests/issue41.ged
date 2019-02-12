@@ -11,4 +11,10 @@
 0 @I1@ INDI
 1 NAME Individual Middle /Tester1/
 1 RESI abt 1950
+1 _MILT
+2 DATE 10 Jun 1780
+2 PLAC North Carolina, United States
+3 MAP
+4 LATI 35.5
+4 LONG -80.0
 0 TRLR

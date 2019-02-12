@@ -1,2 +1,3 @@
 <dir>/issue41.ged:13 Unexpected text value after RESI, expected 'Y'
+<dir>/issue41.ged:14 Skipping _MILT, missing 1 occurrence of TYPE
 OK
