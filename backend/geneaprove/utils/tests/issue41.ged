@@ -10,6 +10,9 @@
 1 LANG English
 0 @I1@ INDI
 1 NAME Individual Middle /Tester1/
+2 NICK nickname 1
+2 NICK nickname 2
+2 NICK nickname 3
 1 RESI abt 1950
 1 _MILT
 2 DATE 10 Jun 1780

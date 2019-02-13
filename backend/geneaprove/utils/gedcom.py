@@ -387,9 +387,9 @@ class F(object):
             else:
                 if cdescr.max < count:
                     lexical.error(
-                        'Too many %s in %s' % (ctag, tag),
+                        'Too many %s in %s (skipped)' % (ctag, tag),
                         line=clinenum,
-                        fatal=True)
+                        fatal=False)
                 c = cdescr.parse(lexical)  # read until end of child record
                 if c is not None:
                     r.fields.append(c)
