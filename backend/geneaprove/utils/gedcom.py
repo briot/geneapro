@@ -29,7 +29,7 @@ import time
 
 
 logger = logging.getLogger('geneaprove.gedcom')
-unlimited = 100000
+unlimited = -1
 
 
 class Invalid_Gedcom(Exception):
@@ -385,7 +385,7 @@ class F(object):
                         break
 
             else:
-                if cdescr.max < count:
+                if cdescr.max != unlimited and cdescr.max < count:
                     lexical.error(
                         'Too many %s in %s (skipped)' % (ctag, tag),
                         line=clinenum,
