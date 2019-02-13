@@ -228,84 +228,84 @@ def get_ymd(txt, months):
        when the month is not found.
     """
 
+    def parse_year(s):
+        try:
+            return __get_year(s), True
+        except:
+            return -4000, False
+
+    def parse_month(s):
+        try:
+            return months[s.lower()], True
+        except KeyError:
+            return 1, False
+
+    def parse_int(s):
+        try:
+            return int(s), True
+        except:
+            return 1, False
+
+
     m = YYYYMMDD_RE.search(txt) or ISO_RE.search(txt)
     if m:
         day_known = m.group(3) and m.group(3)[0].isdigit()
-        return (__get_year(m.group(1)),
-                as_int(m.group(2)),
+        year, year_known = parse_year(m.group(1))
+        month, month_known = parse_int(m.group(2))
+        return (year, month,
                 as_int(m.group(3)),
-                True, True, day_known)
+                year_known, month_known, day_known)
 
     m = DDMMYYYY_RE.search(txt)
     if m:
         if DEFAULT_DDMM_FORMAT == "dd/mm/yyyy":
-            month = int(m.group(2))
-            day = int(m.group(1))
+            month, month_known = parse_int(m.group(2))
+            day, day_known = parse_int(m.group(1))
         else:
-            month = int(m.group(1))
-            day = int(m.group(2))
+            month, month_known = parse_int(m.group(1))
+            day, day_known = parse_int(m.group(2))
 
         if month > 12:
             month, day = day, month
+            month_known, day_known = day_known, month_known
 
-        return (__get_year(m.group(3)), month, day, True, True, True)
+        year, year_known = parse_year(m.group(3))
+        return (year, month, day, year_known, month_known, day_known)
 
     m = SPELLED_OUT_RE.search(txt)
     if m:
-        year_known = True
-        month_known = True
-        day_known = True
-
-        try:
-            month = months[m.group(2).lower()]
-        except KeyError:
-            month = 1
-            month_known = False
-
-        try:
-            day = int(m.group(1))
-        except TypeError:
-            day = 1
-            day_known = False
-
-        try:
-            year = __get_year(m.group(3))
-        except KeyError:
-            year = -4000
-            year_known = False
-
+        day, day_known = parse_int(m.group(1))
+        month, month_known = parse_month(m.group(2))
+        year, year_known = parse_year(m.group(3))
         return (year, month, day, year_known, month_known, day_known)
 
     m = SPELLED_OUT2_RE.search(txt)
     if m:
-        try:
-            month = months[m.group(1).lower()]
-        except KeyError:
-            month = months.get("")
+        year, year_known = parse_year(m.group(3))
+        month, month_known = parse_month(m.group(1))
+        day, day_known = parse_int(m.group(2))
         if month:
-            return (__get_year(m.group(3)), month, int(m.group(2)),
-                    True, True, True)
+            return (year, month, day, year_known, month_known, day_known)
 
     m = DDMM_RE.search(txt)
     if m:
         if DEFAULT_DDMM_FORMAT == "dd/mm/yyyy":
-            month = int(m.group(2))
-            day = int(m.group(1))
+            month, month_known = parse_int(m.group(2))
+            day, day_known = parse_int(m.group(1))
         else:
-            month = int(m.group(1))
-            day = int(m.group(2))
+            month, month_known = parse_int(m.group(1))
+            day, day_known = parse_int(m.group(2))
 
         if month > 12:
             month, day = day, month
-        return (-4000, month, day, False, True, True)
+            month_known, day_known = day_known, month_known
+        return (-4000, month, day, False, month_known, day_known)
 
     m = YYYYMM_RE.search(txt)
     if m:
-        if m.group(3):
-            return (__get_year(m.group(1)), int(m.group(3)), 1,
-                    True, True, False)
-        else:
-            return (__get_year(m.group(1)), 1, 1, True, False, False)
+        year, year_known = parse_year(m.group(1))
+        month, month_known = parse_int(m.group(3))
+        return (year, month, 1, year_known, month_known, False)
 
     return (-4000, 1, 1, False, False, False)
 
