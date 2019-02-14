@@ -771,6 +771,14 @@ LDS_INDI_ORDINANCE = [
     F("SLGC", 0, 1, None, LDS_INDI_ORDINANCE_SGLC),
 ]
 
+GRAMPS_CUSTOM_EVENT = ADDR_STRUCT + [
+    F("TYPE", 0, 1),   # Always in GRAMPS, never in FTM
+    F("DATE", 1, 1),
+    F("NOTE", 0, unlimited),
+    F("PLAC", 0, 1, '', PLACE_STRUCT),
+    F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+]
+
 INDI_REC = INDIVIDUAL_EVENT_STRUCT + \
     INDIVIDUAL_ATTRIBUTE_STRUCT + \
     LDS_INDI_ORDINANCE + [
@@ -821,17 +829,8 @@ INDI_REC = INDIVIDUAL_EVENT_STRUCT + \
     ]),
     F("SIGN", 0, 1),                   # ??? Geneatique 2010
     F("_CHV", 0, 1),                   # ??? Geneatique 2010
-    F("_DEG", 0, unlimited, '', [      # ??? gramps extensions for diplomas
-        F("TYPE", 1, 1),
-        F("DATE", 0, 1),
-    ]),
-    F("_MILT", 0, unlimited, '', ADDR_STRUCT + [  # ??? gramps FTM extension
-        F("TYPE", 0, 1),   # Always in GRAMPS, never in FTM
-        F("DATE", 1, 1),
-        F("NOTE", 0, unlimited),
-        F("PLAC", 0, 1, '', PLACE_STRUCT),
-        F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
-    ]),
+    F("_DEG", 0, unlimited, '', GRAMPS_CUSTOM_EVENT), # ??? gramps extensions for diplomas
+    F("_MILT", 0, unlimited, '', GRAMPS_CUSTOM_EVENT),  # ??? gramps FTM extension
 ]
 
 ROOTSMAGIC_TMPLT = [
