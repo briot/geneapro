@@ -1493,7 +1493,7 @@ class GedcomImporter(object):
                 elif f.value == 'Separation':
                     evt_type = self._event_types['DIV']  # ??? incorrect
                 elif f.value == 'Military':
-                    evt_type = self._event_types['_MIL']
+                    evt_type = self._event_types['_MILT']
                 else:
                     evt_type_name = f.value
                     type_descr = ''  # to avoid duplication in name of event

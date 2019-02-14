@@ -825,8 +825,8 @@ INDI_REC = INDIVIDUAL_EVENT_STRUCT + \
         F("TYPE", 1, 1),
         F("DATE", 0, 1),
     ]),
-    F("_MILT", 0, unlimited, '', ADDR_STRUCT + [  # ??? gramps extension
-        F("TYPE", 1, 1),
+    F("_MILT", 0, unlimited, '', ADDR_STRUCT + [  # ??? gramps FTM extension
+        F("TYPE", 0, 1),   # Always in GRAMPS, never in FTM
         F("DATE", 1, 1),
         F("NOTE", 0, unlimited),
         F("PLAC", 0, 1, '', PLACE_STRUCT),
