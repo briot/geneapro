@@ -10,16 +10,22 @@ import sys
 
 indentation_size = 3
 
-fg_white  = '\033[1;m'
-fg_gray   = '\033[1;30m'
-fg_red    = '\033[1;31m'
-fg_green  = '\033[1;32m'
-fg_yellow = '\033[1;33m'
+fg_reset  = '\033[0;m'
+
+def yellow(s):
+    return '\033[1;33m' + s + fg_reset
+def gray(s):
+    return '\033[1;30m' + s + fg_reset
+def red(s):
+    return '\033[1;31m' + s + fg_reset
+def green(s):
+    return '\033[1;32m' + s + fg_reset
+
 
 if len(sys.argv) == 1:
     gedcom = sys.stdin
 else:
-    gedcom = open(sys.argv[1], "rb")
+    gedcom = open(sys.argv[1], "r")
 
 buffer = gedcom.read().replace('\r\n', '\n').replace('\r', '\n')
 
@@ -33,20 +39,20 @@ for line in buffer.splitlines():
     tag   = 1
 
     if comps[tag].startswith("@"):
-        xref = fg_yellow + comps[1] + fg_white + " "
+        xref = yellow(comps[1]) + " "
         tag   = 2
 
     value = tag + 1
 
     if value < len(comps) and comps[value].startswith("@"):
-        comps[value] = fg_yellow + comps[value] + fg_white
+        comps[value] = yellow(comps[value])
 
     sys.stdout.write("%s %s%s %s%s %s\n" % (
-        fg_gray + "%5d" % line_num + fg_white,
+        gray("%5d" % line_num),
         int(level) * indentation_size * ' ',
-        fg_green + level + fg_white,
+        green(level),
         xref,
-        fg_red + comps[tag] + fg_white,
+        red(comps[tag]),
         " ".join(comps[value:])))
 
     line_num += 1
