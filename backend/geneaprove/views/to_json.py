@@ -158,7 +158,9 @@ class JSONView(View):
         resp = method(params, *args, **kwargs) or {"success": True}
 
         # Can't use JsonResponse since we want our own converter
+        logger.debug('convert to json')
         result = self.to_json(resp)
+        logger.debug('send response')
         return HttpResponse(result, content_type='application/json')
 
     def get(self, request, *args, **kwargs):

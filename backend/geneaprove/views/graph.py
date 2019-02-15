@@ -141,6 +141,7 @@ class GeneaGraph(Digraph):
                     p0.update(p1)  # merge both groups
                     d[id1] = p0
 
+        logger.info('Loading dependency graph')
         query = models.P2P.objects.filter(type_id=models.P2P_Type.sameAs)
         for p in query.values_list('person1', 'person2', 'disproved'):
             add_to_dict(different if p[2] else sameas, p[0], p[1])
@@ -162,6 +163,7 @@ class GeneaGraph(Digraph):
         ######
         # Relationship between person through events
 
+        logger.debug('Loading birth+marriage events')
         p2e = models.P2E.objects.filter(
             event__type__in=(models.Event_Type.PK_birth,
                              models.Event_Type.PK_marriage,
@@ -247,6 +249,7 @@ class GeneaGraph(Digraph):
         for e in events.values():
             e.add_links(graph=self)
 
+        logger.debug('loading characteristics')
         raw = {
             "p2c": models.sql_table_name(models.P2C),
             "cp":  models.sql_table_name(models.Characteristic_Part),
@@ -271,6 +274,7 @@ class GeneaGraph(Digraph):
 
         for c in models.Characteristic_Part.objects.raw(query):
             self.node_from_id(c.person).sex = c.name
+        logger.debug('Done loading graph')
 
     def in_parent_edges(self, node):
         """

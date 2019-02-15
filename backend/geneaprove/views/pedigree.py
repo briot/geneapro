@@ -25,6 +25,8 @@ class PedigreeData(JSONView):
 
     @transaction.atomic
     def get_json(self, params, id):
+        logger.debug('get pedigree data')
+
         # ??? Should lock until the view has been generated
         global_graph.update_if_needed()
 
@@ -63,6 +65,7 @@ class PedigreeData(JSONView):
         persons = {}
         asserts = []
 
+        logger.debug('loading extended personas')
         all_person_nodes = set(ancestors).union(descendants)
         if all_person_nodes:
             persons = extended_personas(
@@ -72,10 +75,25 @@ class PedigreeData(JSONView):
                              models.Event_Type.PK_marriage),
                 graph=global_graph)
 
-        def add_parents(p):
+        main = persons[decujus.main_id]
+
+        # Add parents. Do not use a recursive function, since we want to
+        # handle deep trees
+        logger.debug('setting parents relationships')
+        queue = [main]
+        seen = set()
+        while queue:
+            p = queue.pop()
+
+            if p.id in seen:
+                # Same person seen multiple times
+                continue
+
+            seen.add(p.id)
+
             p.generation = distance[global_graph.node_from_id(p.id)]
             if p.generation >= max_levels:
-                return
+                continue
 
             fathers = global_graph.fathers(p.id)
             mothers = global_graph.mothers(p.id)
@@ -84,11 +102,16 @@ class PedigreeData(JSONView):
                 None if not mothers else mothers[0].main_id]
 
             if fathers and fathers[0].main_id in persons:
-                add_parents(persons[fathers[0].main_id])
+                queue.append(persons[fathers[0].main_id])
             if mothers and mothers[0].main_id in persons:
-                add_parents(persons[mothers[0].main_id])
+                queue.append(persons[mothers[0].main_id])
 
-        def add_children(p, gen):
+        # Add children
+        logger.debug('setting child relationships')
+        queue = [(main, 1)]
+        while queue:
+            p, gen = queue.pop()
+
             p.children = []
             sorted = [
                 (persons[node.main_id] if node.main_id in persons else None,
@@ -99,18 +122,14 @@ class PedigreeData(JSONView):
                     c[0].generation = -gen  # distance[c[1]]
                     p.children.append(c[0].id)
                     if gen < maxdepthDescendants:
-                        add_children(c[0], gen + 1)
-
-        main = persons[decujus.main_id]
-        add_parents(main)
-        add_children(main, gen=1)
-        main = persons[decujus.main_id]
+                        queue.append((c[0], gen + 1))
 
         layout = {}
         for p in persons.values():
             layout[p.id] = {'children': getattr(p, 'children', None),
                             'parents': getattr(p, 'parents', None)}
 
+        logger.debug('computing style')
         all_styles, computed_styles = styles.compute(
             persons, asserts=asserts)
 
