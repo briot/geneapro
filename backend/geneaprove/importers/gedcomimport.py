@@ -107,7 +107,7 @@ class GedcomImporter(object):
         for f in self._data.fields:
             if f.tag == "SOUR":
                 self._ids_sour[f.id] = self._process_SOUR(
-                    f, prefix="SOUR")  # Need NOTE/OBJE
+                    f, prefix="SOUR")[1]  # Need NOTE/OBJE
 
         for f in self._data.fields:
             if f.tag in ("HEAD", "SUBM", "TRLR", "NOTE", "SUBN",
@@ -249,11 +249,10 @@ class GedcomImporter(object):
                 chan = self._process_CHAN(f)
             # Do not report on ignored or unexpected fields
 
-        s = models.Source.objects.create(
+        return models.Source.objects.create(
             higher_source=self._source_for_gedcom,
             researcher=self._researcher,
-            last_change=chan)
-        return s
+            last_change=chan or django.utils.timezone.now())
 
     def _create_bare_SUBM(self, subm):
         return models.Researcher.objects.create(
@@ -932,7 +931,7 @@ class GedcomImporter(object):
 
         x = sour.as_xref()
         if x:
-            parent = self._ids_sour[x][1]
+            parent = self._ids_sour[x]
             title = parent.title
             abbr = parent.abbrev
             bibl = parent.biblio

@@ -773,7 +773,7 @@ LDS_INDI_ORDINANCE = [
 
 GRAMPS_CUSTOM_EVENT = ADDR_STRUCT + [
     F("TYPE", 0, 1),   # Always in GRAMPS, never in FTM
-    F("DATE", 1, 1),
+    F("DATE", 0, 1),   # Always in GRAMPS, optional in FTM
     F("NOTE", 0, unlimited),
     F("PLAC", 0, 1, '', PLACE_STRUCT),
     F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
