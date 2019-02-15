@@ -48,8 +48,10 @@ export default function RadialSide(props: RadialSideProps) {
                   Theme
                   <small>
                      colors: {ColorSchemeNames[props.settings.colors]},&nbsp;
-                     spacing: {props.settings.spacing}px,&nbsp;
-                     {props.settings.showText ? 'show text' : ''}
+                     spacing: {props.settings.spacing}px
+                     {props.settings.showText ? ', show text' : ''}
+                     {props.settings.sameStyleForText ?
+                           ', same color for text' : ''}
                   </small>
                </span>
             )
@@ -77,6 +79,12 @@ export default function RadialSide(props: RadialSideProps) {
                      defaultChecked={props.settings.showText}
                      label="Show text"
                      fieldName="showText"
+                     onChange={props.onChange}
+                  />
+                  <CheckboxField
+                     defaultChecked={props.settings.sameStyleForText}
+                     label="Same color for text"
+                     fieldName="sameStyleForText"
                      onChange={props.onChange}
                   />
                </Form>

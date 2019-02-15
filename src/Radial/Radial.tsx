@@ -26,8 +26,10 @@ function circle(node: d3Hierarchy.HierarchyPointNode<RadialLayout>,
                 settings: RadialSettings,
 ) {
    const style = ColorTheme.forPerson(settings.colors, node.data.p, node.data);
-   const textStyle = style.combineWith(
-      ColorTheme.forPedigreeName(settings.colors));
+   const textStyle = (settings.sameStyleForText ?
+      style.toStr('svgtext2') :  // same as style, with no stroke
+      style.combineWith(
+         ColorTheme.forPedigreeName(settings.colors)).toStr('svgtext'));
 
    return (
       <Link
@@ -48,7 +50,7 @@ function circle(node: d3Hierarchy.HierarchyPointNode<RadialLayout>,
             {
                <text
                   dy=".31em"
-                  style={textStyle.toStr('svgtext')}
+                  style={textStyle}
                   textAnchor={node.x < Math.PI ? 'start' : 'end'}
                   transform={node.x < Math.PI ? 'translate(8)'
                              : 'rotate(180)translate(-8)'}

@@ -1,7 +1,7 @@
 import * as d3Color from 'd3-color';
 import * as JSON from '../Server/JSON';
 
-type StyleTarget = 'svg' | 'svgtext' | 'dom';
+type StyleTarget = 'svg' | 'svgtext' | 'svgtext2' | 'dom';
 
 export default class Style {
 
@@ -50,6 +50,12 @@ export default class Style {
          case 'svgtext':
             return {
                fill: this.color || 'none',
+               fontWeight: this.fontWeight || 'normal',
+            };
+
+         case 'svgtext2':
+            return {
+               fill: this.fill || 'none',
                fontWeight: this.fontWeight || 'normal',
             };
 
