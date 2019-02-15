@@ -26,6 +26,13 @@ export function Fanchart(props: FanchartProps) {
    const seps: JSX.Element[] = [];
    const marriages: JSX.Element[] = [];
 
+   // Handling of implex: the same person could appear multiple times in the
+   // ancestors. React wouldn't like it if we use the same `key` in all
+   // occurrences, so we need to make that key unique. Also it might be nice
+   // to be able to hide those duplicates (though a custom color theme can be
+   // used to highlight them).
+   const seen: Set<number> = new Set();
+
    const separatorArc = arc<PersonLayout>()
       .startAngle(p => p.minAngle)
       .endAngle(p => p.maxAngle)
@@ -33,7 +40,13 @@ export function Fanchart(props: FanchartProps) {
       .outerRadius(p => p.maxRadius + props.layouts.spaceBetweenGens);
 
    const recurse = (pl: PersonLayout) => {
+      if (seen.has(pl.id)) { // Implex
+         return;
+      }
+      seen.add(pl.id);
+
       const p: Person|undefined = props.persons[pl.id];
+
       boxes.push(
          <FanchartBox
             person={p}
@@ -68,6 +81,7 @@ export function Fanchart(props: FanchartProps) {
             />
          );
       }
+
 
       for (let p2 of pl.parents) {
          if (p2) {
