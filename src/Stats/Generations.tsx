@@ -7,45 +7,37 @@ import * as d3Axis from 'd3-axis';
 import { JSONGenerationRange } from '../Server/Stats';
 import { Person, personDisplay } from '../Store/Person';
 
+function color(gen: number) {
+   return d3ScaleChromatic.schemeCategory10[gen % 10];
+}
+
 interface StatsGenerationProps {
    decujus: Person;
    ranges: JSONGenerationRange[];
 }
 
-export default class StatsGeneration extends React.PureComponent<StatsGenerationProps> {
+const StatsGeneration = React.memo((p: StatsGenerationProps) => {
+   const svgElem = React.useRef<SVGSVGElement|null>(null);
 
-   svg: SVGElement | null = null;
-
-   componentDidMount() {
-      this.draw();
-   }
-
-   componentDidUpdate() {
-      this.draw();
-   }
-
-   color(gen: number) {
-      return d3ScaleChromatic.schemeCategory10[gen % 10];
-   }
-
-   draw() {
-      if (!this.svg) {
+   React.useEffect(() => {
+      if (!svgElem.current) {
          return;
       }
 
-      const width = this.svg.clientWidth;
-      const height = this.svg.clientHeight;
+      const rect = svgElem.current.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
       const margin = 30;
-      const barHeight = height / this.props.ranges.length;
-      const svg = d3Selection.select(this.svg);
+      const barHeight = height / p.ranges.length;
+      const svg = d3Selection.select(svgElem.current);
 
       const x: d3Axis.AxisScale<number> = d3Scale.scaleLinear()
-         .domain([Math.min.apply(null, this.props.ranges.map(d => d[1])),
-                  Math.max.apply(null, this.props.ranges.map(d => d[2]))])
+         .domain([Math.min.apply(null, p.ranges.map(d => d[1])),
+                  Math.max.apply(null, p.ranges.map(d => d[2]))])
          .range([margin, width]);
       const y = d3Scale.scaleLinear()
-         .domain([this.props.ranges[0][0],
-                  this.props.ranges[this.props.ranges.length - 1][0]])
+         .domain([p.ranges[0][0],
+                  p.ranges[p.ranges.length - 1][0]])
          .range([height - margin, barHeight]);
 
       function make_y_axis() {
@@ -67,38 +59,38 @@ export default class StatsGeneration extends React.PureComponent<StatsGeneration
          .call(make_y_axis() as any);
 
       // The bars
-      const r = svg.selectAll('rect').data(this.props.ranges);
+      const r = svg.selectAll('rect').data(p.ranges);
       r.enter().append('rect')
          .merge(r as any)  // update+enter
-         .attr('fill', d => this.color(d[0]))
+         .attr('fill', d => color(d[0]))
          .attr('title', d => d[3])
          .attr('x', d => x(d[1])!)
          .attr('y', d => y(d[0] + 1))
          .attr('width', d => x(d[2])! - x(d[1])!)
          .attr('height', barHeight);
-   }
+   });
 
-   render() {
-      const name = personDisplay(this.props.decujus);
-      return (
-         <Card fluid={true} className="Stats">
-            <Card.Content>
-               <Card.Header>Generations timespan (oldest birth - latest death), in {name}'s tree</Card.Header>
-               <Card.Description>
-                  <svg ref={input => {this.svg = input; }} height="350" width="100%"/>
-               </Card.Description>
-            </Card.Content>
-            <Card.Content extra={true} className="generationsLegend">
-               {
-                  this.props.ranges.slice(0).reverse().map(r => (
-                     <div key={r[0]} id={'gen' + r[0]}>
-                        <span style={{background: this.color(r[0])}}>&nbsp;</span>
-                        {r[3]}
-                     </div>
-                  ))
-               }
-            </Card.Content>
-         </Card>
-      );
-   }
-}
+   const name = personDisplay(p.decujus);
+   return (
+      <Card fluid={true} className="Stats">
+         <Card.Content>
+            <Card.Header>Generations timespan (oldest birth - latest death), in {name}'s tree</Card.Header>
+            <Card.Description>
+               <svg ref={svgElem} height="350" width="100%"/>
+            </Card.Description>
+         </Card.Content>
+         <Card.Content extra={true} className="generationsLegend">
+            {
+               p.ranges.slice(0).reverse().map(r => (
+                  <div key={r[0]} id={'gen' + r[0]}>
+                     <span style={{background: color(r[0])}}>&nbsp;</span>
+                     {r[3]}
+                  </div>
+               ))
+            }
+         </Card.Content>
+      </Card>
+   );
+});
+
+export default StatsGeneration;

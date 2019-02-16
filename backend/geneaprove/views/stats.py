@@ -3,11 +3,14 @@ Statistics
 """
 
 import datetime
-from geneaprove import models
-from geneaprove.utils.date import CalendarGregorian
-from geneaprove.views.graph import global_graph
-from geneaprove.views.persona import extended_personas
-from geneaprove.views.to_json import JSONView
+import logging
+from .. import models
+from ..utils.date import DateRange
+from .graph import global_graph
+from .persona import extended_personas
+from .to_json import JSONView
+
+logger = logging.getLogger('geneaprove.STATS')
 
 
 class StatsView(JSONView):
@@ -17,6 +20,7 @@ class StatsView(JSONView):
         # pylint: disable=redefined-builtin
         # pylint: disable=arguments-differ
 
+        logger.debug('refresh graph')
         id = int(id)
         global_graph.update_if_needed()
 
@@ -30,6 +34,7 @@ class StatsView(JSONView):
         distance = dict()
         decujus = global_graph.node_from_id(id)
 
+        logger.debug('compute birth and death for people')
         allpeople = global_graph.people_in_tree(
             id=decujus.main_id, distance=distance)
         persons = extended_personas(
@@ -40,6 +45,7 @@ class StatsView(JSONView):
                          models.Event_Type.PK_marriage),
             graph=global_graph)
 
+        logger.debug('count persons in tree')
         f = global_graph.fathers(decujus.main_id)
         fathers = global_graph.people_in_tree(
             id=f[0], maxdepthDescendants=0) if f else []
@@ -47,10 +53,9 @@ class StatsView(JSONView):
         mothers = global_graph.people_in_tree(
             id=m[0], maxdepthDescendants=0) if m else []
 
-        cal = CalendarGregorian()
-
         # Group persons by generations
 
+        logger.debug('group by generation')
         generations = dict()  # list of persons for each generation
         for a in allpeople:
             d = distance[a]
@@ -61,12 +66,13 @@ class StatsView(JSONView):
         # Compute birth and death dates for all persons, taking into account
         # the max_age setting
 
+        logger.debug('parse dates')
         current_year = datetime.datetime.now().year
         dates = {}
         for a in allpeople:
             p = persons[a.main_id]
-            b_year = int(p.birthISODate[0:4]) if p.birthISODate else None
-            d_year = int(p.deathISODate[0:4]) if p.deathISODate else None
+            b_year = DateRange(p.birthISODate).year() if p.birthISODate else None
+            d_year = DateRange(p.deathISODate).year() if p.deathISODate else None
             if not d_year and max_age > 0:
                 if b_year:
                     d_year = min(b_year + max_age, current_year)
@@ -78,6 +84,7 @@ class StatsView(JSONView):
 
         # Compute timespans for generations
 
+        logger.debug('compute timespans')
         ranges = []
         for index in sorted(generations):
             births = None
@@ -94,11 +101,18 @@ class StatsView(JSONView):
                     deaths = a[1]
                     gen_range[2] = a[1]
 
-            if index >= 0:
+            if index >= 16:
+                gen_range[3] = "Gen. %02d (%s) %s - %s" \
+                    % (index + 1, len(generations[index]),
+                       gen_range[1], gen_range[2])
+
+            elif index >= 0 and index <= 16:
                 gen_range[3] = "Gen. %02d (%d / %d) %s - %s" \
                     % (index + 1, len(generations[index]), 2 ** index,
                        gen_range[1], gen_range[2])
             else:
+                # No need to count maximum number of persons, this becomes
+                # too large, and irrelevant since there is implex
                 gen_range[3] = "Desc. %02d (%d) %s - %s" \
                     % (-index, len(generations[index]),
                        gen_range[1], gen_range[2])
@@ -122,17 +136,17 @@ class StatsView(JSONView):
 
         # Compute the age pyramid
 
+        logger.debug('group by age')
         ages = []    # date_range, males, females, unknown
         for p in allpeople:
             a = dates[p.main_id]
             if a[0] and a[1]:
-                age = int((a[1] - a[0]) / bar_width)
+                # age could be negative in some invalid files
+                age = max(0, int((a[1] - a[0]) / bar_width))
 
-                if age >= len(ages):
-                    for b in range(len(ages), age + 1):
-                        ages.append([b * bar_width, 0, 0, 0])
+                for b in range(len(ages), age + 1):
+                    ages.append([b * bar_width, 0, 0, 0])
 
-                print(p.sex)
                 if p.sex == "M":
                     ages[age][1] += 1
                 elif p.sex == "F":

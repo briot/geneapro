@@ -10,6 +10,10 @@ import { JSONAges } from '../Server/Stats';
 import { Person, personDisplay } from '../Store/Person';
 import { StatsSettings } from '../Store/Stats';
 
+function color(gen: number) {
+   return d3ScaleChromatic.schemeCategory10[gen % 20];
+}
+
 interface LifeSpan {
    age: number;      // the age
    total: number;
@@ -24,28 +28,15 @@ interface StatsLifespanProps {
    ages: JSONAges[];
 }
 
-export default class StatsLifespan extends React.PureComponent<StatsLifespanProps> {
+const StatsLifespan = React.memo((p: StatsLifespanProps) => {
+   const svgElem = React.useRef<SVGSVGElement|null>(null);
 
-   svg: SVGElement | null = null;
-
-   componentDidMount() {
-      this.draw();
-   }
-
-   componentDidUpdate() {
-      this.draw();
-   }
-
-   color(gen: number) {
-      return d3ScaleChromatic.schemeCategory10[gen % 20];
-   }
-
-   draw() {
-      if (!this.svg) {
+   React.useEffect(() => {
+      if (!svgElem.current) {
          return;
       }
 
-      const remapped: LifeSpan[] = this.props.ages.map(
+      const remapped: LifeSpan[] = p.ages.map(
          (d: JSONAges) => ({
             age: d[0],
             males: d[1],
@@ -58,10 +49,11 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
       const top = 10;
       const left = 80;
       const bottom = 20;
-      const width = this.svg.clientWidth - left;
-      const height = this.svg.clientHeight - top - bottom;
-      const bar_width = this.props.settings.bar_width;
-      const svg = d3Selection.select(this.svg);
+      const rect = svgElem.current.getBoundingClientRect();
+      const width = rect.width - left;
+      const height = rect.height - top - bottom;
+      const bar_width = p.settings.bar_width;
+      const svg = d3Selection.select(svgElem.current);
 
       const maxAge = Math.max.apply(
          null, remapped.map(d => d.age)) + bar_width;
@@ -118,8 +110,8 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
            .enter()
            .append('g')
            .attr('class', 'layer')
-           .style('fill', (d: LifeSpanSeries, i) => this.color(i))
-           .style('stroke', (d, i) => d3Color.rgb(this.color(i)).darker().toString())
+           .style('fill', (d: LifeSpanSeries, i) => color(i))
+           .style('stroke', (d, i) => d3Color.rgb(color(i)).darker().toString())
            .selectAll('rect')
               .data((d: LifeSpanSeries) => d)
               .enter()
@@ -139,7 +131,7 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
                .attr('transform', (d, index) => `translate(${width - 100},${(keys.length - 1 - index) * 20})`);
 
       legend.append('rect')
-         .attr('fill', (d, index) => this.color(index))
+         .attr('fill', (d, index) => color(index))
          .attr('x', 0)
          .attr('width', 18)
          .attr('height', 18);
@@ -148,21 +140,20 @@ export default class StatsLifespan extends React.PureComponent<StatsLifespanProp
          .attr('x', 25)
          .attr('y', 10)
          .text(d => d);
+   });
 
-   }
+   const name = personDisplay(p.decujus);
 
-   render() {
-      const name = personDisplay(this.props.decujus);
+   return (
+      <Card fluid={true} className="Stats">
+         <Card.Content>
+            <Card.Header>Age at death, in {name}'s tree</Card.Header>
+            <Card.Description>
+               <svg ref={svgElem} height="350" width="100%"/>
+            </Card.Description>
+         </Card.Content>
+      </Card>
+   );
+});
 
-      return (
-         <Card fluid={true} className="Stats">
-            <Card.Content>
-               <Card.Header>Age at death, in {name}'s tree</Card.Header>
-               <Card.Description>
-                  <svg ref={input => {this.svg = input; }} height="350" width="100%"/>
-               </Card.Description>
-            </Card.Content>
-         </Card>
-      );
-   }
-}
+export default StatsLifespan;
