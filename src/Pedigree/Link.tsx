@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { PedigreeSettings, LinkStyle, LayoutScheme,
          isVertical } from '../Store/Pedigree';
-import { ColorScheme } from '../Store/ColorTheme';
+import { NO_BOX } from '../Store/ColorTheme';
 import { PersonLayout } from '../Pedigree/types';
 
 interface PedigreeLinkProps {
@@ -31,7 +31,7 @@ export default function PedigreeLink(props: PedigreeLinkProps) {
          case LayoutScheme.BOTTOM_UP:
            return isFrom ? p.y : p.y + p.h;
          default:
-            return p.y + (props.style.colors === ColorScheme.NO_BOX ?
+            return p.y + (props.style.colors === NO_BOX ?
                p.fs + 1 : p.h / 2);
       }
    };
@@ -68,7 +68,7 @@ export default function PedigreeLink(props: PedigreeLinkProps) {
                ' ' + target);
    }
 
-   if (props.style.colors === ColorScheme.NO_BOX) {
+   if (props.style.colors === NO_BOX) {
       d += vertical ?
          'M' + source + 'v-5' :
          'M' + source + 'h' + (-props.from.w);

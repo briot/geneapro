@@ -4,6 +4,7 @@ The URLs supported by geneaprove
 import os
 import logging
 from django.conf.urls import url
+import django.contrib
 from django.shortcuts import render_to_response
 from django.template.context_processors import csrf
 import django.views
@@ -14,6 +15,7 @@ from geneaprove.views.persona import \
 import geneaprove.views.places
 import geneaprove.views.representation
 import geneaprove.views.rules
+from geneaprove.views.themelist import ThemeList
 from geneaprove.views.stats import StatsView
 from geneaprove.views.sources import \
     SourceView, EditSourceCitation, \
@@ -77,6 +79,7 @@ urlpatterns = [
     url(r'^data/legend$', geneaprove.views.rules.getLegend),
     url(r'^data/stats/count$', geneaprove.views.count.CountView.as_view()),
     url(r'^data/stats/(?P<id>\d+)$', StatsView.as_view()),
+    url(r'^data/themelist$', ThemeList.as_view()),
     url(r'^data/import$', GedcomImport.as_view()),
     url(r'^data/citationModel/(?P<model_id>.+)$', CitationModel.as_view()),
     url(r'^data/citationModels$', CitationModels.as_view()),
@@ -89,9 +92,9 @@ urlpatterns = [
     url(r'^data/csrf', send_csrf),
 
     # Fallback to support the path location strategy in URLs
-    url(r'^.*', static, name='index'),
+    # url(r'^.*', static, name='index'),
 
-    # ... below: not moved to angularJS yet
+    # url(r'^merge$', geneaprove.views.merge.view),
 
-    url(r'^merge$', geneaprove.views.merge.view),
+    url(r'^admin', django.contrib.admin.site.urls),
 ]

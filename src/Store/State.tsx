@@ -36,6 +36,10 @@ export interface AppState {
    history: HistoryItem[];    // id of persons recently visited
    csrf: string;              // CSRF token for Django
    researchers: ResearcherSet;
+
+   lastFetchedTheme: number,
+   // id of the last theme used when fetching personas. We might have to
+   // reload when the theme is computed on the server.
 }
 
 export type GPDispatch = Redux.Dispatch<AppState>;

@@ -21,15 +21,13 @@ export default function PedigreeBox(props: PedigreeBoxProps) {
    const p: Person|undefined = props.person;
    const layout = props.layout;
    const translate = `translate(${layout.x},${layout.y})`;
-
    const details = p ? [
       <EventText key="b" isoDate={p.birthISODate} prefix="b" />,
       <EventText key="d" isoDate={p.deathISODate} prefix="d" />
    ] : undefined;
 
    const style = ColorTheme.forPerson(props.style.colors, p, layout);
-   const textStyle = style.combineWith(
-      ColorTheme.forPedigreeName(props.style.colors)).toStr('svgtext');
+   const textStyle = style.toStr('svgtext');
 
    const text = p === undefined ?
       null :

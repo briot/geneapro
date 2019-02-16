@@ -220,8 +220,7 @@ export function FanchartBox(props: FanchartBoxProps) {
       props.settings.colors, props.person, props.layout);
    const styleStr = style.combineWith(
       ColorTheme.forFanchartBox(props.settings.colors)).toStr('svg');
-   const textStyle = style.combineWith(
-      ColorTheme.forPedigreeName(props.settings.colors)).toStr('svgtext');
+   const textStyle = style.toStr('svgtext');
 
    const children: JSX.Element[] = [];
    const diff = props.layout.maxAngle - props.layout.minAngle;
@@ -267,8 +266,7 @@ export function FanchartBox(props: FanchartBoxProps) {
       children.push(
          <path
             className="name"
-            stroke="none"
-            fill="none"
+            style={{stroke: "none", fill: "none"}}
             id={'text' + props.layout.id}
             d={td.toString()}
             key="path"
@@ -282,7 +280,6 @@ export function FanchartBox(props: FanchartBoxProps) {
       children.push(
          <text
             key="text"
-            /* fill={styleStr && styleStr.color} */
             style={textStyle}
          >
             <textPath

@@ -8,7 +8,6 @@ from geneaprove.utils.date import DateRange
 from geneaprove.views.styles import Styles
 from geneaprove.views.persona import extended_personas
 from geneaprove.views.to_json import JSONView, to_json
-from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import global_graph
 import logging
 
@@ -32,6 +31,7 @@ class PedigreeData(JSONView):
 
         max_levels = int(params.get("gens", 5))
         last_descendant_known = int(params.get("desc_known", -1))
+        theme_id = params.get("theme", None)
 
         # The number of generations for which we compute the children.
         maxdepthDescendants = int(params.get("descendant_gens", 1))
@@ -44,7 +44,7 @@ class PedigreeData(JSONView):
 
         decujus = global_graph.node_from_id(id)
 
-        styles = Styles(style_rules(), global_graph, decujus=decujus.main_id)
+        styles = Styles(theme_id, global_graph, decujus=decujus.main_id)
 
         distance = dict()
         people = global_graph.people_in_tree(

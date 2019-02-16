@@ -18,7 +18,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "server": "./python_env/bin/python backend/manage.py runserver 8002",
+    "server": "./python_env/bin/python backend/manage.py migrate && ./python_env/bin/python backend/manage.py runserver 8002",
     "build": "react-scripts build",
     "test": "(cd backend; ../python_env/bin/python ./manage.py test) && (CI=true react-scripts test --env=jsdom)",
     "eject": "react-scripts eject"

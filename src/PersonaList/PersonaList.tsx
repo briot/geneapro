@@ -67,7 +67,9 @@ extends React.PureComponent<PersonaListProps, PersonaListState> {
    readonly cols: Column[] = [ColId, ColLife];
 
    componentDidUpdate(old: PersonaListProps) {
-      if (old.persons !== this.props.persons) {
+      if (old.persons !== this.props.persons ||
+          old.settings.colors !== this.props.settings.colors
+      ) {
          this.setState((s: PersonaListState) => ({
             ...s,
             persons: this.computePersons(this.props.persons, s.filter),

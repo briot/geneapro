@@ -1,5 +1,5 @@
 import { actionCreator } from '../Store/Actions';
-import { ColorScheme } from '../Store/ColorTheme';
+import { ColorScheme, PEDIGREE } from '../Store/ColorTheme';
 
 export enum LayoutScheme {
    LEFT_RIGHT = 0,
@@ -44,7 +44,7 @@ export const defaultPedigree: PedigreeSettings = {
    layout: LayoutScheme.LEFT_RIGHT,
    links: LinkStyle.CURVE,
    sameSize: false,
-   colors: ColorScheme.PEDIGREE,
+   colors: PEDIGREE,
    vertPadding: 5,
    horizSpacing: 30,
    showSourcedEvents: true,

@@ -1,5 +1,5 @@
 import { actionCreator } from '../Store/Actions';
-import { ColorScheme } from '../Store/ColorTheme';
+import { ColorScheme, WHITE } from '../Store/ColorTheme';
 
 export interface RadialSettings {
    colors: ColorScheme;
@@ -15,7 +15,7 @@ export interface RadialSettings {
 }
 
 export const defaultRadial: RadialSettings = {
-   colors: ColorScheme.WHITE,
+   colors: WHITE,
    showText: true,
    sameStyleForText: false,
    generations: 6,

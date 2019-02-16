@@ -24,6 +24,7 @@ from .researcher import Researcher
 from .source import Source, Citation_Part_Type, Citation_Part
 from .surety import Surety_Scheme, Surety_Scheme_Part
 from .base import GeneaProveModel, Part_Type
+from .theme import Theme, Rule, RulePart
 
 
 class Config(GeneaProveModel):

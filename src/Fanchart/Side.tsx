@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
 import { FanchartSettings } from '../Store/Fanchart';
-import { ColorSchemeNames } from '../Store/ColorTheme';
 import { CheckboxField, SliderField, SelectField } from '../Forms';
+import ThemeSelector from '../ThemeSelector';
 
 interface FanchartSideProps {
    settings: FanchartSettings;
@@ -80,8 +80,8 @@ export default function FanchartSide(props: FanchartSideProps) {
                <span>
                   Theme
                   <small>
-                     colors: {ColorSchemeNames[props.settings.colors]},&nbsp;
-                     separators: {ColorSchemeNames[props.settings.sepColors]},&nbsp;
+                     colors: {props.settings.colors.name},&nbsp;
+                     separators: {props.settings.sepColors.name},&nbsp;
                      angle: {props.settings.fullAngle},&nbsp;
                      padding: {props.settings.anglePad}
                   </small>
@@ -98,11 +98,9 @@ export default function FanchartSide(props: FanchartSideProps) {
          content: {
             content: (
                <Form size="tiny">
-                  <SelectField
+                  <ThemeSelector
                      defaultValue={props.settings.colors}
-                     label="Colors"
                      fieldName="colors"
-                     names={ColorSchemeNames}
                      onChange={props.onChange}
                   />
 
@@ -115,11 +113,10 @@ export default function FanchartSide(props: FanchartSideProps) {
                      onChange={props.onChange}
                   />
 
-                  <SelectField
+                  <ThemeSelector
                      defaultValue={props.settings.sepColors}
                      label="Separator colors"
                      fieldName="sepColors"
-                     names={ColorSchemeNames}
                      onChange={props.onChange}
                   />
 

@@ -1,5 +1,5 @@
 import { actionCreator } from '../Store/Actions';
-import { ColorScheme } from '../Store/ColorTheme';
+import { ColorScheme, PEDIGREE } from '../Store/ColorTheme';
 
 export interface FanchartSettings {
    ancestors: number;
@@ -21,8 +21,8 @@ export interface FanchartSettings {
 export const defaultFanchart: FanchartSettings = {
    ancestors: 4,
    descendants: 1,
-   colors: ColorScheme.PEDIGREE,
-   sepColors: ColorScheme.PEDIGREE,
+   colors: PEDIGREE,
+   sepColors: PEDIGREE,
    fullAngle: 200,
    anglePad: 0,
    straightTextThreshold: 4,

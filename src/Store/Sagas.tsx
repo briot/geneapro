@@ -12,6 +12,7 @@ import { fetchCountFromServer, JSONCount } from '../Server/Stats';
 import { AppState, DatabaseObjectsCount } from '../Store/State';
 import { PersonSet } from '../Store/Person';
 import { allSagas, createAsyncAction } from '../Store/Actions';
+import { ColorScheme } from '../Store/ColorTheme';
 import { addEvents, GenealogyEventSet } from '../Store/Event';
 import { ChildrenAndParentsSet } from '../Store/Pedigree';
 
@@ -22,7 +23,8 @@ import { ChildrenAndParentsSet } from '../Store/Pedigree';
 export type fetchPedigreeParams = {
    decujus: number,
    ancestors: number,
-   descendants: number
+   descendants: number,
+   theme: ColorScheme,
 };
 export type fetchPedigreeResult = {
    persons: PersonSet;
@@ -32,10 +34,17 @@ export type fetchPedigreeResult = {
 function _hasPedigree(p: fetchPedigreeParams, state: AppState) {
    return (p.decujus in state.persons &&
            state.persons[p.decujus].knownAncestors >= p.ancestors &&
-           state.persons[p.decujus].knownDescendants >= p.descendants);
+           state.persons[p.decujus].knownDescendants >= p.descendants &&
+
+           // All these persons we have already preloaded might not have
+           // the right theme
+           (p.theme.id === state.lastFetchedTheme || p.theme.id < 0)
+   );
 }
 function* _fetchPedigree(p: fetchPedigreeParams) {
-   return yield call(fetchPedigreeFromServer, p.decujus, p.ancestors, p.descendants);
+   return yield call(
+      fetchPedigreeFromServer, p.decujus, p.ancestors,
+      p.descendants, p.theme);
 }
 export const fetchPedigree = createAsyncAction<fetchPedigreeParams, fetchPedigreeResult>(
    'DATA/PEDIGREE', _fetchPedigree, _hasPedigree);

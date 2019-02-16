@@ -2,8 +2,8 @@ import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
 import { LayoutSchemeNames, LinkStyleNames,
          PedigreeSettings } from '../Store/Pedigree';
-import { ColorSchemeNames } from '../Store/ColorTheme';
 import { CheckboxField, SliderField, SelectField } from '../Forms';
+import ThemeSelector from '../ThemeSelector';
 
 interface PedigreeSideProps {
    settings: PedigreeSettings;
@@ -78,7 +78,7 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                   </small>
                   <small>
                      size: {props.settings.sameSize ? 'constant' : 'decreasing'},&nbsp;
-                     colors: {ColorSchemeNames[props.settings.colors]}
+                     colors: {props.settings.colors.name}
                   </small>
                </span>
             )
@@ -102,11 +102,9 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      onChange={props.onChange}
                   />
 
-                  <SelectField
+                  <ThemeSelector
                      defaultValue={props.settings.colors}
-                     label="Colors"
                      fieldName="colors"
-                     names={ColorSchemeNames}
                      onChange={props.onChange}
                   />
 

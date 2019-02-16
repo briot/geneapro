@@ -72,6 +72,7 @@ export function rootReducer(
       researchers: {},
       count: undefined,
       csrf: '',
+      lastFetchedTheme: -1,
    },
    action: Redux.Action
 ): AppState {
@@ -177,6 +178,7 @@ export function rootReducer(
          }
       }
       return {...state, persons,
+              lastFetchedTheme: action.payload.params.theme.id,
               radial: {...state.radial, loading: false},
               events: {...state.events, ...action.payload.result.events},
               pedigree: {...state.pedigree, loading: false}};

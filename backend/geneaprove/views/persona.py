@@ -8,7 +8,6 @@ from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.to_json import JSONView
 from geneaprove.views.related import JSONResult
-from geneaprove.views.custom_highlight import style_rules
 from geneaprove.views.graph import global_graph
 from geneaprove.views.styles import Styles
 from geneaprove.views.queries import sqlin, sql_prefetch_related_object
@@ -245,13 +244,14 @@ class PersonaList(JSONView):
 
     @transaction.atomic
     def get_json(self, params, decujus=1):
+        theme_name = params.get('theme', '')
+
         global_graph.update_if_needed()
         asserts = []
         if global_graph.is_empty():
             persons = []
         else:
-            # styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
-            styles = Styles(style_rules(), graph=global_graph, decujus=decujus)
+            styles = Styles(theme_name, graph=global_graph, decujus=decujus)
             persons = extended_personas(
                 nodes=None, styles=styles, asserts=asserts,
                 event_types=(models.Event_Type.PK_birth,

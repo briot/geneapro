@@ -4,8 +4,6 @@ Provides a number of simple views for geneaprove
 """
 
 from django.http import HttpResponse
-import geneaprove.views.custom_highlight
-# from geneaprove.views.styles import style_to_css
 from geneaprove.views.to_json import to_json
 
 
@@ -15,10 +13,14 @@ def getLegend(request):
     """
     # pylint: disable=unused-argument
 
-    all_rules = geneaprove.views.custom_highlight.style_rules()
-    rules = []
-    # for name, _, _, style in all_rules:
-    #     rules.append({'name': name, 'css': style_to_css(style)})
+    theme_name = request.GET.get('theme', '')
+    theme = models.Theme.Theme.objects \
+            .prefetch_related('rules', 'rules__parts') \
+            .get(name=theme_name)
+    if theme:
+        rules = theme.as_rule_list()
+    else:
+        rules = []
     return HttpResponse(
         to_json({'rules': rules}),
         content_type='application/json')

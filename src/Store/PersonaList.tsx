@@ -1,12 +1,12 @@
 import { actionCreator } from '../Store/Actions';
-import { ColorScheme } from '../Store/ColorTheme';
+import { ColorScheme, WHITE } from '../Store/ColorTheme';
 
 export interface PersonaListSettings {
    colors: ColorScheme;
 }
 
 export const defaultPersonaList: PersonaListSettings = {
-   colors: ColorScheme.WHITE,
+   colors: WHITE,
 };
 
 /**

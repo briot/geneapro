@@ -2,21 +2,19 @@ import * as d3Color from 'd3-color';
 import Style from '../Store/Styles';
 import { Person } from '../Store/Person';
 
-export enum ColorScheme {
-   PEDIGREE = 0,
-   WHITE = 1,
-   GENERATION = 2,
-   QUARTILE = 3,
-   NO_BOX = 4,
-   CUSTOM = 5,
+export interface ColorScheme{
+   id: number;
+   name: string;
 }
-export const ColorSchemeNames: {[id: number]: string} = {};
-ColorSchemeNames[ColorScheme.PEDIGREE] = 'Pedigree';
-ColorSchemeNames[ColorScheme.WHITE] = 'White';
-ColorSchemeNames[ColorScheme.GENERATION] = 'Generation';
-ColorSchemeNames[ColorScheme.QUARTILE] = 'Quartile';
-ColorSchemeNames[ColorScheme.NO_BOX] = 'No Box';
-ColorSchemeNames[ColorScheme.CUSTOM] = 'Custom';
+export const PEDIGREE: ColorScheme = {id: -5, name: 'Pedigree'};
+export const WHITE: ColorScheme = {id: -4, name: 'White'};
+export const GENERATION: ColorScheme = {id: -3, name: 'Generation'};
+export const QUARTILE: ColorScheme = {id: -2, name: 'Quartile'};
+export const NO_BOX: ColorScheme = {id: -1, name: 'No Box'};
+
+export const predefinedThemes: Array<ColorScheme> = [
+   PEDIGREE, WHITE, GENERATION, QUARTILE, NO_BOX,
+];
 
 export interface BasePersonLayout {
    angle: number;
@@ -40,11 +38,11 @@ const baseQuartileColors = [
    'rgb(252,120,118)',
    'rgb(255,236,88)'];
 
-const STROKE_GREY = new Style({stroke: '#222'});
-const STROKE_GREY_ON_WHITE = new Style({stroke: '#222', fill: '#fff'});
-const NORMAL_BLACK = new Style({fontWeight: 'normal', color: 'black'});
+const DEFAULT = new Style({
+   fontWeight: 'normal', color: 'black', stroke: '#222'});
+const STROKE_GREY_ON_WHITE = new Style({...DEFAULT, fill: '#fff'});
 const BOLD_BLACK = new Style({fontWeight: 'bold', color: 'black'});
-const DEFAULT = new Style({});
+const TEXT_ONLY = new Style({color: 'black'});
 
 export default class ColorTheme {
 
@@ -58,8 +56,8 @@ export default class ColorTheme {
 
       let fillColor: string | undefined;
 
-      switch (colors) {
-         case ColorScheme.PEDIGREE:
+      switch (colors.id) {
+         case PEDIGREE.id:
             if (layout) {
                // Avoid overly saturated colors when displaying few
                // generations.
@@ -68,15 +66,15 @@ export default class ColorTheme {
                   Math.abs(layout.generation) / MAXGEN,
                   1.0);
             }
-            return new Style({stroke: '#222', fill: fillColor});
+            return new Style({...DEFAULT, fill: fillColor});
 
-         case ColorScheme.WHITE:
+         case WHITE.id:
             return STROKE_GREY_ON_WHITE;
 
-         case ColorScheme.NO_BOX:
-            return DEFAULT;
+         case NO_BOX.id:
+            return TEXT_ONLY;
 
-         case ColorScheme.QUARTILE:
+         case QUARTILE.id:
             if (layout && layout.sosa) {
                const maxInGen = Math.pow(2, layout.generation);
                const quartile = Math.floor((layout.sosa - maxInGen) * 4 / maxInGen) % 4;
@@ -84,31 +82,18 @@ export default class ColorTheme {
                   ? undefined
                   : baseQuartileColors[quartile];
             }
-            return new Style({stroke: '#222', fill: fillColor});
+            return new Style({...DEFAULT, fill: fillColor});
 
-         case ColorScheme.GENERATION:
+         case GENERATION.id:
             if (layout) {
                fillColor = Style.hsvStr(
                   180 + 360 * (Math.abs(layout.generation) - 1) / 12,
                   0.4, 1.0);
             }
-            return new Style({stroke: '#222', fill: fillColor});
-
-         case ColorScheme.CUSTOM:
-            return p && p.style ? p.style : STROKE_GREY;
+            return new Style({...DEFAULT, fill: fillColor});
 
          default:
-            return STROKE_GREY;
-      }
-   }
-
-   /**
-    * Default style for pedigree and fanchart text (names)
-    */
-   static forPedigreeName(colors: ColorScheme): Style {
-      switch (colors) {
-         case ColorScheme.CUSTOM: return NORMAL_BLACK;
-         default:                 return BOLD_BLACK;
+            return p && p.style ? p.style : DEFAULT;
       }
    }
 
@@ -116,10 +101,7 @@ export default class ColorTheme {
     * Default for fanchart boxes
     */
    static forFanchartBox(colors: ColorScheme): Style {
-      switch (colors) {
-         case ColorScheme.CUSTOM: return NORMAL_BLACK;
-         default:                 return DEFAULT;
-      }
+      return colors.id == NO_BOX.id ? TEXT_ONLY : DEFAULT;
    }
 
    /**

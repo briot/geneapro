@@ -15,7 +15,7 @@ import FanchartLayout from '../Fanchart/Layout';
 interface PropsFromRoute {
    id: string;
 }
- 
+
 interface FanchartPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    settings: FanchartSettings;
    persons: PersonSet;
@@ -31,22 +31,19 @@ class FanchartPageConnected extends React.PureComponent<FanchartPageConnectedPro
    }
 
    componentDidUpdate(old: FanchartPageConnectedProps) {
-      if (this.props.decujusid !== old.decujusid ||
-          this.props.settings.ancestors !== old.settings.ancestors ||
-          this.props.settings.descendants !== old.settings.descendants
-      ) {
-         this.calculateData();
-      }
+      this.calculateData();
 
       const decujus: Person = this.props.persons[this.props.decujusid];
       this.props.dispatch(addToHistory({person: decujus}));
    }
 
    calculateData() {
+      // will do nothing if we already have data
       this.props.dispatch(fetchPedigree.request({
          decujus: this.props.decujusid,
          ancestors: this.props.settings.ancestors,
          descendants: this.props.settings.descendants,
+         theme: this.props.settings.colors,
       }));
    }
 

@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
-import { ColorSchemeNames } from '../Store/ColorTheme';
 import { PersonaListSettings } from '../Store/PersonaList';
 import { CheckboxField, SliderField, SelectField } from '../Forms';
+import ThemeSelector from '../ThemeSelector';
 
 interface PersonaListSideProps {
    settings: PersonaListSettings;
@@ -18,7 +18,7 @@ export default function PersonaListSide(props: PersonaListSideProps) {
                <span>
                   Theme
                   <small>
-                     colors: {ColorSchemeNames[props.settings.colors]}
+                     colors: {props.settings.colors.name}
                   </small>
                </span>
             )
@@ -26,11 +26,9 @@ export default function PersonaListSide(props: PersonaListSideProps) {
          content: {
             content: (
                <Form>
-                  <SelectField
+                  <ThemeSelector
                      defaultValue={props.settings.colors}
-                     label="Colors"
                      fieldName="colors"
-                     names={ColorSchemeNames}
                      onChange={props.onChange}
                   />
                </Form>

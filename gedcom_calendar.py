@@ -6,7 +6,7 @@ Inspired by http://www.geditcom.com/DateCalculator/index.html#about
 
 import sys
 sys.path.insert(0, "geneaprove/utils")
-from date import DateRange, TimeDelta
+from geneaprove.utils.date import DateRange, TimeDelta
 import gtk
 
 STACK_DEPTH = 20    # Number of lines in the GUI stack. Internally, the

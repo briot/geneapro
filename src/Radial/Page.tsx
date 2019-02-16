@@ -29,20 +29,19 @@ class RadialPageConnected extends React.PureComponent<RadialPageConnectedProps, 
    }
 
    componentDidUpdate(old: RadialPageConnectedProps) {
-      if (this.props.decujusid !== old.decujusid ||
-          this.props.settings.generations !== old.settings.generations) {
-         this.calculateData();
-      }
+      this.calculateData();
 
       const p = this.props.persons[this.props.decujusid];
       this.props.dispatch(addToHistory({person: p}));
    }
 
    calculateData() {
+      // Does nothing if we already have the data
       this.props.dispatch(fetchPedigree.request({
          decujus: this.props.decujusid,
          ancestors: Math.max(0, this.props.settings.generations),
          descendants: Math.abs(Math.min(0, this.props.settings.generations)),
+         theme: this.props.settings.colors,
       }));
    }
 

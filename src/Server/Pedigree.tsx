@@ -1,3 +1,4 @@
+import { ColorScheme } from '../Store/ColorTheme';
 import { jsonPersonsToPerson } from '../Server/Person';
 import { ChildrenAndParentsSet } from '../Store/Pedigree';
 import { fetchPedigreeResult } from '../Store/Sagas';
@@ -23,13 +24,12 @@ interface JSONPedigree {
  * generations.
  */
 export function* fetchPedigreeFromServer(
-   decujus: number, ancestors: number, descendants: number
+   decujus: number, ancestors: number, descendants: number, theme: ColorScheme,
 ) {
 
    const resp: Response = yield window.fetch(
-      '/data/pedigree/' + decujus +
-      '?gens=' + (ancestors + 1) +
-      '&descendant_gens=' + (descendants));
+      `/data/pedigree/${decujus}?gens=${ancestors + 1}&descendant_gens=${descendants}&theme=${theme.id}`
+      );
    if (resp.status !== 200) {
       throw new Error('Server returned an error');
    }

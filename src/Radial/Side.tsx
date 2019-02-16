@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
 import { RadialSettings } from '../Store/Radial';
-import { ColorSchemeNames } from '../Store/ColorTheme';
 import { SliderField, CheckboxField, SelectField } from '../Forms';
+import ThemeSelector from '../ThemeSelector';
 
 interface RadialSideProps {
    settings: RadialSettings;
@@ -47,7 +47,7 @@ export default function RadialSide(props: RadialSideProps) {
                <span>
                   Theme
                   <small>
-                     colors: {ColorSchemeNames[props.settings.colors]},&nbsp;
+                     colors: {props.settings.colors.name},&nbsp;
                      spacing: {props.settings.spacing}px
                      {props.settings.showText ? ', show text' : ''}
                      {props.settings.sameStyleForText ?
@@ -59,11 +59,9 @@ export default function RadialSide(props: RadialSideProps) {
          content: {
             content: (
                <Form size="tiny">
-                  <SelectField
+                  <ThemeSelector
                      defaultValue={props.settings.colors}
-                     label="Colors"
                      fieldName="colors"
-                     names={ColorSchemeNames}
                      onChange={props.onChange}
                   />
 

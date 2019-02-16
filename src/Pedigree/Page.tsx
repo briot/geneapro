@@ -16,77 +16,71 @@ import PedigreeSide from '../Pedigree/Side';
 interface PropsFromRoute {
    decujusId: string;
 }
- 
+
 interface PedigreePageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    settings: PedigreeSettings;
    persons: PersonSet;
    allEvents: GenealogyEventSet;
    allPlaces: PlaceSet;
-   onChange: (diff: Partial<PedigreeSettings>) => void;
    dispatch: GPDispatch;
-   decujusid: number;
 }
 
-class PedigreePageConnected extends React.PureComponent<PedigreePageConnectedProps, {}> {
-   componentDidMount() {
-      this.calculateData();
-   }
+const PedigreePageConnected = (p: PedigreePageConnectedProps) => {
+   const decujusid = Number(p.match.params.decujusId);
 
-   componentDidUpdate(old: PedigreePageConnectedProps) {
-      if (this.props.decujusid !== old.decujusid ||
-          this.props.settings.ancestors !== old.settings.ancestors ||
-          this.props.settings.descendants !== old.settings.descendants
-      ) {
-         this.calculateData();
-      }
-
-      const decujus: Person = this.props.persons[this.props.decujusid];
-      this.props.dispatch(addToHistory({person: decujus}));
-   }
-
-   calculateData() {
-      this.props.dispatch(fetchPedigree.request({
-         decujus: this.props.decujusid,
-         ancestors: this.props.settings.ancestors,
-         descendants: this.props.settings.descendants,
+   // Fetch data from server when some properties change
+   // Always run this, though it will do nothing if we already have the data
+   React.useEffect(() => {
+      //  ??? We only need to reload when colors change if we are using
+      //  custom colors
+      p.dispatch(fetchPedigree.request({
+         decujus: decujusid,
+         ancestors: p.settings.ancestors,
+         descendants: p.settings.descendants,
+         theme: p.settings.colors,
       }));
-   }
+   });
 
-   render() {
-      const decujus = this.props.persons[this.props.decujusid];
-      if (decujus) {
-         document.title = 'Pedigree for ' + personDisplay(decujus);
-      }
+   // Add the person to history
+   const decujus = p.persons[decujusid];
+   React.useEffect(() => {
+      document.title = 'Pedigree for ' + personDisplay(decujus);
+      p.dispatch(addToHistory({person: decujus}));
+   }, [decujus]);
 
-      // ??? Initially, we have no data and yet loading=false
-      // We added special code in Pedigree/Data.tsx to test whether the layout
-      // is known, but that's not elegant.
-      const main = this.props.settings.loading || !decujus ? (
-            <Loader active={true} size="large">Loading</Loader>
-         ) : (
-            <PedigreeLayout
-               settings={this.props.settings}
-               persons={this.props.persons}
-               allEvents={this.props.allEvents}
-               allPlaces={this.props.allPlaces}
-               decujus={this.props.decujusid}
+   const onChange = React.useCallback(
+      (diff: Partial<PedigreeSettings>) =>
+          p.dispatch(changePedigreeSettings({diff})),
+      []);  // p.dispatch never changes
+
+   // ??? Initially, we have no data and yet loading=false
+   // We added special code in Pedigree/Data.tsx to test whether the layout
+   // is known, but that's not elegant.
+   const main = p.settings.loading || !decujus ? (
+      <Loader active={true} size="large">Loading</Loader>
+   ) : (
+      <PedigreeLayout
+         settings={p.settings}
+         persons={p.persons}
+         allEvents={p.allEvents}
+         allPlaces={p.allPlaces}
+         decujus={decujusid}
+      />
+   );
+
+   return (
+      <Page
+         decujus={decujus}
+         leftSide={
+            <PedigreeSide
+               settings={p.settings}
+               onChange={onChange}
             />
-         );
-
-      return (
-         <Page
-            decujus={decujus}
-            leftSide={
-               <PedigreeSide
-                  settings={this.props.settings}
-                  onChange={this.props.onChange}
-               />
-            }
-            main={main}
-         />
-      );
-   }
-}
+         }
+         main={main}
+      />
+   );
+};
 
 const PedigreePage = connect(
    (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
@@ -95,13 +89,9 @@ const PedigreePage = connect(
       persons: state.persons,
       allEvents: state.events,
       allPlaces: state.places,
-      decujusid: Number(props.match.params.decujusId),
    }),
    (dispatch: GPDispatch) => ({
       dispatch,
-      onChange: (diff: Partial<PedigreeSettings>) => {
-         dispatch(changePedigreeSettings({diff}));
-      },
    }),
 )(PedigreePageConnected);
 
