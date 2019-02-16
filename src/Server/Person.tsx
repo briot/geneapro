@@ -1,6 +1,7 @@
 import * as d3Color from 'd3-color';
 import { BasePerson, Person, PersonSet } from '../Store/Person';
 import { Assertion, AssertionList, P2E, P2C, P2P, P2G } from '../Store/Assertion';
+import { ColorScheme } from '../Store/ColorTheme';
 import { GenealogyEventSet } from '../Store/Event';
 import { SourceSet } from '../Store/Source';
 import { sourceFromJSON } from '../Server/Source';
@@ -60,8 +61,9 @@ export function jsonPersonsToPerson(
    return {persons};
 }
 
-export function* fetchPersonsFromServer() {
-   const resp: Response = yield window.fetch('/data/persona/list');
+export function* fetchPersonsFromServer(p: {colors: ColorScheme}) {
+   const resp: Response = yield window.fetch(
+      `/data/persona/list?theme=${p.colors}`);
    if (resp.status !== 200) {
       throw new Error('Server returned an error');
    }

@@ -92,9 +92,11 @@ export const fetchSources = createAsyncAction<fetchSourcesParams, FetchSourcesRe
  * Async Action: fetch all persons from the server
  */
 
-export type fetchPersonsParams = {};
-function* _fetchPersons() {
-   const persons = yield call(fetchPersonsFromServer);
+export type fetchPersonsParams = {
+   colors: ColorScheme,
+};
+function* _fetchPersons(p: fetchPersonsParams) {
+   const persons = yield call(fetchPersonsFromServer, {colors: p.colors});
    return persons;
 }
 export const fetchPersons = createAsyncAction<fetchPersonsParams, FetchPersonsResult>(

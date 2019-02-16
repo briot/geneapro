@@ -78,7 +78,9 @@ extends React.PureComponent<PersonaListProps, PersonaListState> {
    }
 
    componentDidMount() {
-      this.props.dispatch(fetchPersons.request({}));
+      this.props.dispatch(fetchPersons.request({
+         colors: this.props.settings.colors,
+      }));
    }
 
    computePersons(set: PersonSet, filter?: string): Person[] {

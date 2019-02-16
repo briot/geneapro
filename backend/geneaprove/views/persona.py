@@ -244,14 +244,14 @@ class PersonaList(JSONView):
 
     @transaction.atomic
     def get_json(self, params, decujus=1):
-        theme_name = params.get('theme', '')
+        theme_id = params.get('theme', -1)
 
         global_graph.update_if_needed()
         asserts = []
         if global_graph.is_empty():
             persons = []
         else:
-            styles = Styles(theme_name, graph=global_graph, decujus=decujus)
+            styles = Styles(theme_id, graph=global_graph, decujus=decujus)
             persons = extended_personas(
                 nodes=None, styles=styles, asserts=asserts,
                 event_types=(models.Event_Type.PK_birth,
