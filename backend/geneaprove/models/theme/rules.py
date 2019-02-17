@@ -274,21 +274,30 @@ class Implex(RuleChecker):
             raise Exception('Missing `count` argument for Implex')
 
     def precompute(self, graph, decujus, precomputed):
-        def build_implex(counts, main_id):
-            """
-            Store in `counts` the persons that appear in the tree to compute
-            whether a person occurs multiple times.
-            """
+        """
+        Store in `counts` the persons that appear in the tree to compute
+        whether a person occurs multiple times.
+        """
+        # Do not use recusion for very deep trees
+        queue = [
+            graph.node_from_id(self.decujus or decujus).main_id
+        ]
+        counts = {}
+
+        while queue:
+            main_id = queue.pop()
             counts[main_id] = counts.get(main_id, 0) + 1
+
             fathers = graph.fathers(main_id)
             if fathers:
-                build_implex(counts, fathers[0].main_id)
+                for f in fathers:
+                    queue.append(f.main_id)
+
             mothers = graph.mothers(main_id)
             if mothers:
-                build_implex(counts, mothers[0].main_id)
+                for m in mothers:
+                    queue.append(m.main_id)
 
-        counts = {}
-        build_implex(counts, graph.node_from_id(self.decujus or decujus).main_id)
         precomputed[self.id] = (graph, counts)
 
     def initial(self, person, main_id, precomputed, statuses):
