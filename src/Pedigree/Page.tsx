@@ -39,7 +39,7 @@ const PedigreePageConnected = (p: PedigreePageConnectedProps) => {
          descendants: p.settings.descendants,
          theme: p.settings.colors,
       }));
-   });
+   }, [decujusid, p.settings]);
 
    // Add the person to history
    const decujus = p.persons[decujusid];

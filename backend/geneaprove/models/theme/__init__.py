@@ -1,6 +1,6 @@
 from django.db import models
 from ..base import GeneaProveModel
-from .checks import build_check, check_choices
+from .checks import build_check, check_choices, checks_list
 from .rules import RuleChecker
 from .styles import Style
 
@@ -57,6 +57,19 @@ class Rule(GeneaProveModel):
 
     def __str__(self):
         return "(Rule name=%s)" % self.name
+
+    def as_json(self):
+        return {
+            'name': self.name,
+            'type': self.type,
+            'fill': self.style_fill,
+            'color': self.style_color,
+            'stroke': self.style_stroke,
+            'fontWeight': self.style_font_weight,
+            'parts': {p.field: {operator: p.operator, value: p.value}
+                      for p in self.parts.all()},
+            'children': self.children.objects.all(),
+        }
 
     def as_rule_checker(self):
         """

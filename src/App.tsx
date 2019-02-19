@@ -17,6 +17,7 @@ import RadialPage from './Radial/Page';
 import SourcePage from './Source/Page';
 import SourceList from './SourceList';
 import StatsPage from './Stats/Page';
+import ThemeEditor from './ThemeEditor/ThemeEditor';
 import { setPersist, store } from './Store/Store';
 
 interface MainAppState {
@@ -52,6 +53,7 @@ export default class App extends React.PureComponent<{}, MainAppState> {
                      <Route path="/source/:id" component={SourcePage} />
                      <Route path="/place/:id" component={PlacePage} />
                      <Route path="/import" component={ImportPage} />
+                     <Route path="/themeeditor" component={ThemeEditor} />
                      <Route path="/stats/:decujusId" component={StatsPage} />
                      <Route path="/:decujusId?" exact={true} component={DashboardPage} />
                      <Route children={() => <span>No match for route</span>} />

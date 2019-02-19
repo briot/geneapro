@@ -1,7 +1,9 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
+import { Button, DropdownProps, Form, Select } from 'semantic-ui-react';
 import { SelectField } from './Forms';
 import { ColorScheme, predefinedThemes } from './Store/ColorTheme';
-import { DropdownProps, Form, Select } from 'semantic-ui-react';
+import { fetchThemeListFromServer } from './Server/Themes';
 
 interface ThemeSelectorProps {
    defaultValue: ColorScheme;
@@ -22,13 +24,9 @@ export default function ThemeSelector(p: ThemeSelectorProps) {
 
    // Fetch the list of custom themes on mount
    React.useEffect(() => {
-      window.fetch('/data/themelist')
-         .then((r: Response) => r.json())
-         .then((d: JSONThemeList) =>
-            setThemeList(predefinedThemes.concat(
-               Object.entries(d.themes).map(
-                  ([id, name]) => ({id: Number(id), name}))))
-         );
+      fetchThemeListFromServer().then(
+         d => setThemeList(predefinedThemes.concat(d))
+      );
    }, []);
 
    const vals = themeList.map(s => ({text: s.name, value: s.id}));
@@ -41,12 +39,22 @@ export default function ThemeSelector(p: ThemeSelectorProps) {
    return (
       <Form.Field>
          <label>{p.label || 'Colors'}</label>
-         <Select
-            fluid={true}
-            options={vals}
-            onChange={onChange}
-            defaultValue={p.defaultValue.id}
-         />
+         <span>
+            <Select
+               fluid={false}
+               options={vals}
+               onChange={onChange}
+               defaultValue={p.defaultValue.id}
+            />
+            <Link to="/themeeditor">
+               <Button
+                  basic={true}
+                  compact={true}
+                  size="mini"
+                  icon="ellipsis horizontal"
+               />
+            </Link>
+         </span>
       </Form.Field>
    );
 }
