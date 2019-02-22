@@ -63,7 +63,7 @@ export function jsonPersonsToPerson(
 
 export function* fetchPersonsFromServer(p: {colors: ColorScheme}) {
    const resp: Response = yield window.fetch(
-      `/data/persona/list?theme=${p.colors}`);
+      `/data/persona/list?theme=${p.colors.id}`);
    if (resp.status !== 200) {
       throw new Error('Server returned an error');
    }
