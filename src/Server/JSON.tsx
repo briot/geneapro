@@ -13,10 +13,17 @@ export interface Style  {
    fontWeight?: FontWeight;
 }
 
-export interface EventType {
+export interface PartType {
    id: number;
    name: string;  // "birth"
    gedcom: string;
+}
+
+export interface EventType extends PartType {
+}
+
+export interface CharacteristicPartType extends PartType {
+   is_name_part: boolean;
 }
 
 export interface Event {
@@ -26,6 +33,13 @@ export interface Event {
    name: string;
    place?: number;
    type: EventType;
+}
+
+export interface EventTypeRole {
+   id: number;
+   type_id: number|null;  // What event types this role applies to
+                          // `null` for all event types
+   name: string;          // role name
 }
 
 export interface Person {

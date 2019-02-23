@@ -1,5 +1,5 @@
 import { ColorScheme } from '../Store/ColorTheme';
-import { FontWeight } from '../Server/JSON';
+import * as JSON from '../Server/JSON';
 
 interface JSONThemeList {
    themes: {[id: number]: string},
@@ -24,15 +24,20 @@ export interface RuleParts {
    [field: string]: OperatorValue;
 }
 
-export interface ThemeRule {
-   name: string;
+export interface NestedThemeRule {
    type: string;
+   parts: RuleParts;
+   children: NestedThemeRule[];
+}
+
+// Only top-level rules have styles and names. Others (nested in AND and OR)
+// do not have theme.
+export interface ThemeRule extends NestedThemeRule {
+   name: string;
    fill: string;
    color: string;
    stroke: string;
-   fontWeight: FontWeight;
-   parts: RuleParts;
-   children: ThemeRule[];
+   fontWeight: JSON.FontWeight;
 }
 
 export type OperatorString = string;
@@ -45,6 +50,9 @@ export type OperatorList = Array<{
 export interface RuleList {
    rules: ThemeRule[];
    operators: OperatorList;
+   characteristic_types: JSON.CharacteristicPartType[];
+   event_types: JSON.EventType[];
+   event_type_roles: JSON.EventTypeRole[];
 }
 
 export function fetchThemeRulesFromServer(theme_id: number) {

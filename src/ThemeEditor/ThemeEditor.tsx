@@ -7,123 +7,154 @@ import { Button, Checkbox, CheckboxProps,
 import Page from '../Page';
 import { ColorScheme } from '../Store/ColorTheme';
 import { AppState, GPDispatch } from '../Store/State';
-import { FontWeight } from '../Server/JSON';
+import * as GP_JSON from '../Server/JSON';
 import { fetchThemeListFromServer, fetchThemeRulesFromServer,
-         RuleList, ThemeRule, RuleParts, OperatorString, OperatorList,
+         RuleList, NestedThemeRule, ThemeRule, RuleParts,
+         OperatorString, OperatorList,
          OperatorValue } from '../Server/Themes';
 import './ThemeEditor.css';
 
-/**
- * Field, operator and value editor
- */
+const DO_NOTHING_OP = {
+   op: 'ignore',
+   label: 'any',
+   doc: 'Ignorw this attribute',
+};
 
-interface FieldOperatorValueProps {
-   label: string;
-   title?: string;
-   ops: DropdownItemProps[];
-   defaultValue: OperatorValue|undefined;
-   onChange: (p: OperatorValue) => void;
+const DEFAULT_RULE: ThemeRule = {
+   name: '',
+   type: 'default',
+   fill: 'none',
+   color: '#333333',
+   stroke: '#000000',
+   fontWeight: 'normal',
+   parts: {},
+   children: [],
+};
+
+const NEW_NESTED_RULE: NestedThemeRule = {
+   type: 'event',
+   parts: {},
+   children: [],
 }
 
-const FieldOperatorValue = (p: FieldOperatorValueProps) => {
-   if (!p.defaultValue) {
-      p.onChange({operator: '=', value: ''});
-      return null;
-   }
+const NEW_RULE: ThemeRule = {
+   ...NEW_NESTED_RULE,
+   name: '',
+   fill: 'none',
+   color: '#333333',
+   stroke: '#000000',
+   fontWeight: 'normal',
+};
 
-   const onOpChange = (e: any, d: DropdownProps) =>
-      p.onChange({operator: d.value as string, value: p.defaultValue!.value});
-   const onValChange = (e: any, d: InputProps) =>
-      p.onChange({operator: p.defaultValue!.operator, value: d.value});
+const NEW_THEME: ColorScheme = {name: 'New Theme', id: -1};
+
+const FONT_WEIGHT_OPTIONS = [
+    {key: 0, value: 'normal', text: 'normal'},
+    {key: 1, value: 'bold', text: 'bold'},
+];
+
+interface AllOptions {
+   operators: DropdownItemProps[];
+   char_types: DropdownItemProps[];
+   event_types: DropdownItemProps[];
+   event_type_roles: DropdownItemProps[];
+}
+
+interface RuleProps {
+   rule: NestedThemeRule;
+   ops: AllOptions;
+   onChange: (r: NestedThemeRule) => void;
+}
+
+/**
+ * Field, operator and value as string
+ */
+
+interface FieldOperatorValueProps extends RuleProps {
+   label: string;
+   field: string;
+   title?: string;
+
+   choices?: DropdownItemProps[];
+   // If specified, only a limited set of values is possible
+
+   asPerson?: boolean;
+   // If true, the value is a person. Ignored if choices is set.
+
+   forcedOperator?: OperatorString;
+   // If specified, the operator cannot be configured by users
+}
+const FieldOperatorValue = (p: FieldOperatorValueProps) => {
+   const old = p.rule.parts[p.field];
+   const onChange = React.useCallback(
+      (v: OperatorValue) => {
+         const parts = {...p.rule.parts, [p.field]: v};
+
+         if (v.operator == DO_NOTHING_OP.op) {
+            delete parts[p.field];
+         }
+
+         p.onChange({...p.rule, parts});
+      },
+      [p.rule, p.onChange]);
+
+   const onOpChange = React.useCallback(
+      (e: any, data: DropdownProps) => {
+         const d = old
+            ? old.value
+            : (p.choices && p.choices[0]) ? p.choices[0].value as string : '';
+         onChange({operator: data.value as string, value: d});
+      },
+      [onChange]);
+
+   const onValueChange = React.useCallback(
+      (e: any, data: {value?: string|number|boolean|(string|number|boolean)[]|undefined}) =>
+         onChange({operator: old.operator, value: data.value as string}),
+      [onChange]);
 
    // ??? Editing multiple values when operator is "in"
-   // ??? Specify valid values for "value" (list of characteristic type,
-   //    numbers,...)
 
    return (
       <div>
          <span className="name">{p.label}</span>
          <span className="value">
-            <Dropdown
-               defaultValue={p.defaultValue.operator}
-               selection={true}
-               options={p.ops}
-               placeholder="How to compare values"
-               onChange={onOpChange}
-            />
-            <Input
-               defaultValue={p.defaultValue.value}
-               placeholder={"value"}
-               title={p.title}
-               onChange={onValChange}
-            />
+            {
+               !p.forcedOperator &&
+               <Dropdown
+                  defaultValue={old ? old.operator : DO_NOTHING_OP.op}
+                  selection={true}
+                  options={p.ops.operators}
+                  placeholder="How to compare values"
+                  title={p.title}
+                  onChange={onOpChange}
+               />
+            }
+            {
+               old &&
+               (p.choices ? (
+                  <Dropdown
+                     defaultValue={old.value}
+                     selection={true}
+                     options={p.choices}
+                     title={p.title}
+                     onChange={onValueChange}
+                  />
+               ) : p.asPerson ? (
+                  <Input
+                     defaultValue={old.value}
+                     onChange={onValueChange}
+                     placeholder="persoon"
+                  />
+               ) : (
+                  <Input
+                     defaultValue={old.value}
+                     placeholder="value"
+                     title={p.title}
+                     onChange={onValueChange}
+                  />
+               ))
+            }
           </span>
-      </div>
-   );
-};
-
-/**
- * Field as a choice between a set of values
- */
-
-interface FieldChoiceProps {
-   label: string;
-   title?: string;
-   defaultValue: OperatorValue|undefined;
-   choices: DropdownItemProps[];
-   onChange: (p: OperatorValue) => void;
-}
-
-const FieldChoice = (p: FieldChoiceProps) => {
-   const onDropChange = (e: any, data: DropdownProps) =>
-      p.onChange({value: data.value as string, operator: '='});
-
-   if (!p.defaultValue) {
-      p.onChange({value: p.choices[0].value as string, operator: '='});
-      return null;
-   }
-
-   return (
-      <div>
-         <span className="name">{p.label}</span>
-         <span className="value">
-            <Dropdown
-               defaultValue={p.defaultValue.value}
-               selection={true}
-               options={p.choices}
-               title={p.title}
-               onChange={onDropChange}
-            />
-         </span>
-      </div>
-   );
-};
-
-/**
- * Field that selects a person
- */
-
-interface FieldPersonProps {
-   label: string;
-   defaultValue: OperatorValue|undefined;
-   onChange: (p: OperatorValue) => void;
-}
-
-const FieldPerson = (p: FieldPersonProps) => {
-   const onChange = (e: any, data: InputProps) =>
-      p.onChange({value: data.value, operator: '='});
-
-   if (!p.defaultValue) {
-      p.onChange({value: '1', operator: '='});
-      return null;
-   }
-
-   return (
-      <div>
-         <span className="name">{p.label}</span>
-         <span className="value">
-            <Input defaultValue={p.defaultValue.value} onChange={onChange}/>
-         </span>
       </div>
    );
 };
@@ -132,37 +163,25 @@ const FieldPerson = (p: FieldPersonProps) => {
  * RuleAlive
  */
 
-interface RuleProps {
-   rule: ThemeRule;
-   ops: DropdownItemProps[];
-   onChange: (r: ThemeRule) => void;
-}
-
 const RuleAlive = (p: RuleProps) => {
-   const onAliveChange = (v: OperatorValue) =>
-      p.onChange({...p.rule, parts: {...p.rule.parts, alive: v}});
-   const onAgeChange = (v: OperatorValue) =>
-      p.onChange({...p.rule, parts: {...p.rule.parts, age: v}});
-
    const options = [
       {key: 0, value: 'Y', text: 'Currently alive'},
       {key: 1, value: 'N', text: 'Dead, or more than 110 year old'},
    ];
-
    return (
       <>
-         <FieldChoice
+         <FieldOperatorValue
+            {...p}
             label="Alive ?"
+            field="alive"
+            forcedOperator="="
             choices={options}
-            defaultValue={p.rule.parts.alive}
-            onChange={onAliveChange}
          />
          <FieldOperatorValue
-            label="age"
+            {...p}
+            label="Age"
+            field="age"
             title="Comparing current age of the person"
-            ops={p.ops}
-            defaultValue={p.rule.parts.age}
-            onChange={onAgeChange}
          />
       </>
    );
@@ -173,14 +192,13 @@ const RuleAlive = (p: RuleProps) => {
  */
 
 const RuleWithRef = (p: RuleProps, label: string) => {
-   const onRefChange = (v: OperatorValue) =>
-      p.onChange({...p.rule, parts: {...p.rule.parts, ref: v}});
-
    return (
-      <FieldPerson
+      <FieldOperatorValue
+         {...p}
          label={label}
-         defaultValue={p.rule.parts.ref}
-         onChange={onRefChange}
+         field="ref"
+         asPerson={true}
+         forcedOperator="="
       />
    );
 };
@@ -193,11 +211,13 @@ const RuleDescendant = (p: RuleProps) => RuleWithRef(p, 'Descendant of');
  */
 
 const RuleWithSubs = (p: RuleProps, label: string) => {
-   const onChange = (children: ThemeRule[]) =>
+   const onChange = (children: NestedThemeRule[]) =>
       p.onChange({...p.rule, children});
+   const onAddRule = () =>
+      p.onChange({...p.rule, children: [...p.rule.children, NEW_NESTED_RULE]});
 
    if (p.rule.children.length == 0) {
-      p.onChange({...p.rule, children: [NEW_RULE]});
+      onAddRule();
       return null;
    }
 
@@ -208,8 +228,9 @@ const RuleWithSubs = (p: RuleProps, label: string) => {
             <RuleListEditor
                ops={p.ops}
                rules={p.rule.children}
-               withStyle={false}
+               component={NestedRuleEditor}
                onChange={onChange}
+               onAddRule={onAddRule}
             />
          </span>
       </div>
@@ -224,18 +245,17 @@ const RuleOr = (p: RuleProps) => RuleWithSubs(p, 'At least one must match');
  */
 
 const RuleKnown= (p: RuleProps, label: string) => {
-   const onChange = (v: OperatorValue) =>
-      p.onChange({...p.rule, parts: {...p.rule.parts, known: v}});
    const options = [
       {key: 0, value: "true", text: `${label} is known`},
       {key: 1, value: "false", text: `${label} is unknown`},
    ];
    return (
-      <FieldChoice
+      <FieldOperatorValue
+         {...p}
          label="Known ?"
-         defaultValue={p.rule.parts.known}
+         field="known"
+         forcedOperator="="
          choices={options}
-         onChange={onChange}
       />
    );
 };
@@ -248,67 +268,104 @@ const RuleKnownMother = (p: RuleProps) => RuleKnown(p, 'Mother');
  */
 
 const RuleImplex = (p: RuleProps) => {
-   const onRefChange = (v: OperatorValue) =>
-      p.onChange({...p.rule, parts: {...p.rule.parts, ref: v}});
-   const onCountChange = (v: OperatorValue) =>
-      p.onChange({...p.rule, parts: {...p.rule.parts, count: v}});
    return (
       <>
-         <FieldPerson
+         <FieldOperatorValue
+            {...p}
             label="In tree of"
-            defaultValue={p.rule.parts.ref}
-            onChange={onRefChange}
+            field="ref"
+            asPerson={true}
+            forcedOperator="="
          />
          <FieldOperatorValue
-            label="count"
+            {...p}
+            label="Count"
+            field="count"
             title="How many times the person appears in the tree"
-            ops={p.ops}
-            defaultValue={p.rule.parts.count}
-            onChange={onCountChange}
          />
       </>
    );
 };
 
 /**
+ * RuleDefault
+ */
+
+const RuleDefault = (p: RuleProps) => {
+   return null;
+}
+
+/**
  * RuleCharacteristic
  */
 
 const RuleCharacteristic = (p: RuleProps) => {
-   const onTypeChange = (v: OperatorValue) =>
-      p.onChange({...p.rule, parts: {...p.rule.parts, type: v}});
-   const onValueChange = (v: OperatorValue) =>
-      p.onChange({...p.rule, parts: {...p.rule.parts, value: v}});
    return (
       <>
          <FieldOperatorValue
-            label="characteristic"
+            {...p}
+            label="Characteristic"
+            field="typ"
             title="Which characteristic to test"
-            ops={p.ops}
-            defaultValue={p.rule.parts.type}
-            onChange={onTypeChange}
+            choices={p.ops.char_types}
          />
          <FieldOperatorValue
-            label="value"
+            {...p}
+            label="Value"
+            field="value"
             title="What value the characteristic should have"
-            ops={p.ops}
-            defaultValue={p.rule.parts.value}
-            onChange={onValueChange}
          />
       </>
    );
 };
 
-const NEW_THEME: ColorScheme = {name: 'New Theme', id: -1};
-const NEW_RULE: ThemeRule = {
-   name: '',
-   type: 'alive',
-   fill: 'none',
-   color: 'none',
-   stroke: 'none',
-   fontWeight: 'normal',
-   parts: {},
-   children: [],
+/**
+ * RuleEvent
+ */
+
+const RuleEvent = (p: RuleProps) => {
+   return (
+      <>
+         <FieldOperatorValue
+            {...p}
+            label="Event"
+            field="typ"
+            title="Which event to test"
+            choices={p.ops.event_types}
+         />
+         <FieldOperatorValue
+            {...p}
+            label="Count"
+            field="count"
+            title="Number of times this event occurs for the person (for instance number of time she was married)"
+         />
+         <FieldOperatorValue
+            {...p}
+            label="Role"
+            field="role"
+            title="Role the person plays in the event"
+            choices={p.ops.event_type_roles}
+         />
+         <FieldOperatorValue
+            {...p}
+            label="Date"
+            field="date"
+            title="When the event took place"
+         />
+         <FieldOperatorValue
+            {...p}
+            label="Place name"
+            field="place_name"
+            title="Where the event took place"
+         />
+         <FieldOperatorValue
+            {...p}
+            label="Person's age"
+            field="age"
+            title="Age of the person when the event took place"
+         />
+      </>
+   );
 };
 
 interface RuleTypeDescr {
@@ -319,6 +376,11 @@ interface RuleTypeDescr {
 
 // `id` must match the name of rules defined in python and the database
 const RULE_TYPES: {[id: string]: RuleTypeDescr}  = {
+   'characteristic': {name: 'Characteristic',
+                      descr: 'At least one characteristic matches',
+                      component: RuleCharacteristic},
+   'event':          {name: 'Event', descr: 'At least one event matches',
+                      component: RuleEvent},
    'and':            {name: 'And', descr: 'All nested rules must match',
                       component: RuleAnd},
    'or':             {name: 'Or', descr: 'At least one nested rule must match',
@@ -335,16 +397,8 @@ const RULE_TYPES: {[id: string]: RuleTypeDescr}  = {
                       component: RuleDescendant},
    'implex':         {name: 'Implex', descr: 'Multiple times in the tree',
                       component: RuleImplex},
-   'characteristic': {name: 'Characteristic',
-                      descr: 'At least one characteristic matches',
-                      component: RuleCharacteristic},
-   'event': {name: 'Event', descr: 'At least one event matches',
-       component: RuleAlive},
-//    fields: {'count': {type: 'number', descr: 'number of times this rule matches'},
-//             'role': {type: 'string', descr: 'role the person plays in the event'},
-//             'date': {type: 'date', descr: 'when the event took place'},
-//             'place_name': {type: 'string', descr: 'where the event took place'},
-//             'age': {type: 'number', descr: 'age of the person at that time'}}},
+   'default':        {name: 'Always matches', descr: '',
+                      component: RuleDefault},
 };
 
 const RULE_TYPE_OPTIONS = Object.entries(RULE_TYPES).map(([id, r]) =>
@@ -356,99 +410,74 @@ const RULE_TYPE_OPTIONS = Object.entries(RULE_TYPES).map(([id, r]) =>
     }));
 
 /**
- * Rule Editor
- * Editing a rule (and possibly its style and name).
- * This edits the index-th rule in the `rules` array.
+ * Editing colors
  */
 
-const FONT_WEIGHT_OPTIONS = [
-    {key: 0, value: 'normal', text: 'normal'},
-    {key: 1, value: 'bold', text: 'bold'},
-];
-
-interface RuleEditorProps {
-   index: number;
-   rules: ThemeRule[];
-   ops: DropdownItemProps[];
-   onChange: (rules: ThemeRule[]) => void;
-   withStyle?: boolean;
+interface ColorEditorProps {
+   label: string;
+   title?: string;
+   field: 'fill' | 'color' | 'stroke';
+   rule: ThemeRule;
+   onChange: (r: Partial<ThemeRule>) => void;
 }
-const RuleEditor = (p: RuleEditorProps) => {
-   const rule = p.rules[p.index];
+const ColorEditor = (p: ColorEditorProps) => {
+   const onColorChange = React.useCallback(
+      (e: any, d: InputProps) => p.onChange({[p.field]: d.value}),
+      [p.onChange]);
+   const toggleNone = React.useCallback(
+      (e: any, d: CheckboxProps) =>
+         p.onChange({[p.field]: d.checked ? '#000000' : 'none'}),
+      [p.onChange]);
+   return (
+      <span className='color'>
+         <Checkbox
+            checked={p.rule[p.field] !== 'none'}
+            onChange={toggleNone}
+            label={p.label}
+            style={{marginRight: 5}}
+         />
+         {
+            // Complex markup is so that checking/unchecking the checkbox
+            // properly resets the <input> value to #000
+            p.rule[p.field] === 'none' ? (
+               <div className="ui input">
+                  <input type="color" disabled={true}/>
+               </div>
+            ) : (
+               <Input
+                  type="color"
+                  defaultValue={p.rule[p.field]}
+                  onChange={onColorChange}
+                  title={p.title}
+               />
+            )
+         }
+      </span>
+   );
+};
 
-   // Apply partial changes to current rule, and send full list of rules
-   const ruleChange = (diff: Partial<ThemeRule>) => {
-        const tmp = [...p.rules];
-        tmp[p.index] = {...rule, ...diff};
-        p.onChange(tmp);
-   };
+/**
+ * Nested rule editor
+ */
 
-   const onNameChange = (e: any, d: InputProps) => ruleChange({name: d.value});
+interface NestedRuleEditorProps {
+   rule: NestedThemeRule;
+   ops: AllOptions;
+   onChange: (r: NestedThemeRule) => void;
+}
+const NestedRuleEditor = (p: NestedRuleEditorProps) => {
    const onTypeChange = (e: any, d: DropdownProps) =>
-      ruleChange({type: d.value as string, parts: {}, children: []});
-   const onFillChange = (e: any, d: InputProps) => ruleChange({fill: d.value});
-   const onStrokeChange =
-      (e: any, d: InputProps) => ruleChange({stroke: d.value});
-   const onColorChange =
-      (e: any, d: InputProps) => ruleChange({color: d.value});
-   const onFWChange =
-      (e: any, d: DropdownProps) =>
-         ruleChange({fontWeight: d.value as FontWeight});
-   const onPartsChange = (r: ThemeRule) => ruleChange(r);
-
-   const comp = RULE_TYPES[rule.type];
+      p.onChange({type: d.value as string, parts: {}, children: []});
+   const onPartsChange = (r: NestedThemeRule) => p.onChange(r);
+   const comp = RULE_TYPES[p.rule.type];
 
    return (
-      <div className="rule">
-         {p.withStyle &&
-          <div>
-             <span className="name">Description</span>
-             <span className="value">
-                <Input
-                   placeholder="rule description"
-                   fluid={true}
-                   defaultValue={rule.name}
-                   onChange={onNameChange}
-                />
-             </span>
-          </div>
-         }
-         {p.withStyle &&
-          <div>
-             <span className="name">Style</span>
-             <span className="value">
-                <Input
-                   type="color"
-                   defaultValue={rule.color}
-                   onChange={onColorChange}
-                   label="Color"
-                   title="Color for text" />
-                <Input
-                   type="color"
-                   defaultValue={rule.stroke}
-                   onChange={onStrokeChange}
-                   label="Stroke"
-                   title="Color for lines" />
-                <Input
-                   type="color"
-                   defaultValue={rule.fill}
-                   onChange={onFillChange}
-                   label="Fill"
-                   title="fill color for shapes" />
-                <Dropdown
-                   defaultValue={rule.fontWeight}
-                   selection={true}
-                   options={FONT_WEIGHT_OPTIONS}
-                   onChange={onFWChange}
-                />
-             </span>
-          </div>
-         }
+      <>
          <div>
-            <span className="name">Type</span>
+            <span className="name">Rule type</span>
             <span className="value">
                <Dropdown
-                  defaultValue={rule.type}
+                  defaultValue={p.rule.type}
                   selection={true}
                   fluid={true}
                   options={RULE_TYPE_OPTIONS}
@@ -458,9 +487,86 @@ const RuleEditor = (p: RuleEditorProps) => {
             </span>
          </div>
          <comp.component
-            rule={rule}
+            rule={p.rule}
             ops={p.ops}
             onChange={onPartsChange}
+         />
+      </>
+   );
+};
+
+/**
+ * Rule Editor
+ * Editing a rule (and possibly its style and name).
+ * This edits the index-th rule in the `rules` array.
+ */
+
+interface RuleEditorProps {
+   rule: ThemeRule;
+   ops: AllOptions;
+   onChange: (rules: Partial<ThemeRule>) => void;
+}
+const RuleEditor = (p: RuleEditorProps) => {
+   const onNameChange = (e: any, d: InputProps) => p.onChange({name: d.value});
+   const onFillChange = (e: any, d: InputProps) => p.onChange({fill: d.value});
+   const onStrokeChange = (e: any, d: InputProps) =>
+      p.onChange({stroke: d.value});
+   const onFWChange = (e: any, d: DropdownProps) =>
+      p.onChange({fontWeight: d.value as GP_JSON.FontWeight});
+   const onNestedRuleChange = (r: NestedThemeRule) => p.onChange(r);
+
+   return (
+      <div className="rule">
+         <div>
+            <span className="name">Description</span>
+            <span className="value">
+               {
+                  p.rule.type === 'default' ? 'Default colors' :
+                  <Input
+                     placeholder="rule description"
+                     fluid={true}
+                     defaultValue={p.rule.name}
+                     onChange={onNameChange}
+                  />
+               }
+            </span>
+         </div>
+         <div>
+            <span className="name">Style</span>
+            <span className="value">
+               <ColorEditor
+                  label="Color"
+                  field="color"
+                  rule={p.rule}
+                  onChange={p.onChange}
+                  title="Color for text"
+               />
+               <ColorEditor
+                  label="Stroke"
+                  field="stroke"
+                  rule={p.rule}
+                  onChange={p.onChange}
+                  title="Color for lines"
+               />
+               <ColorEditor
+                  label="Fill"
+                  field="fill"
+                  rule={p.rule}
+                  onChange={p.onChange}
+                  title="Fill color for shapes"
+               />
+               <Dropdown
+                  defaultValue={p.rule.fontWeight}
+                  selection={true}
+                  options={FONT_WEIGHT_OPTIONS}
+                  onChange={onFWChange}
+               />
+            </span>
+         </div>
+         <NestedRuleEditor
+            rule={p.rule}
+            ops={p.ops}
+            onChange={onNestedRuleChange}
          />
       </div>
    );
@@ -471,28 +577,36 @@ const RuleEditor = (p: RuleEditorProps) => {
  * Possibility to add new rules, remove some, reorder them,...
  */
 
-interface RuleListEditorProps {
-   rules: ThemeRule[];
-   ops: DropdownItemProps[];
-   onChange: (rules: ThemeRule[]) => void;
-   withStyle: boolean;
+interface RuleListEditorProps<T extends NestedThemeRule> {
+   rules: T[];
+   ops: AllOptions;
+   onChange: (rules: T[]) => void;
+   onAddRule: () => void;
+   component: React.ComponentType<{
+      rule: T;
+      ops: AllOptions;
+      onChange: (r: Partial<T>) => void;
+   }>;
 }
 
-const RuleListEditor = (p: RuleListEditorProps) => {
-   const addRule = () => p.onChange([...p.rules, NEW_RULE]);
+const RuleListEditor = <T extends NestedThemeRule>(
+   p: RuleListEditorProps<T>
+) => {
    return (
       <div>
          {p.rules.map((r, idx) =>
-            <RuleEditor
+            <p.component
                key={idx}
-               index={idx}
-               rules={p.rules}
+               rule={r}
                ops={p.ops}
-               onChange={p.onChange}
-               withStyle={p.withStyle}
+               onChange={(r: Partial<T>) => {
+                  const tmp = [...p.rules];
+                  tmp[idx] = {...tmp[idx], ...r};
+                  p.onChange(tmp);
+               }}
             />)
          }
-         <Button icon="add" onClick={addRule}/>
+         <Button icon="add" onClick={p.onAddRule}/>
       </div>
    );
 };
@@ -509,41 +623,115 @@ interface ThemeEditorProps {
 
 const ThemeEditorConnected = (p: ThemeEditorProps) => {
    const [themeList, setThemeList] = React.useState<ColorScheme[]>([]);
-   const [selected, setSelected] = React.useState<number>(-1);
+   const [selected, setSelected] = React.useState(-1);
+   const [modified, setModified] = React.useState(false);
+   const [name, setName] = React.useState('');
    const [rules, setRules] = React.useState<ThemeRule[]>([]);
-   const [ops, setOps] = React.useState<OperatorList>([]);
+   const [ops, setOps] = React.useState<AllOptions>({
+      operators: [],
+      char_types: [],
+      event_types: [],
+      event_type_roles: [],
+   });
 
-   window.console.log('MANU ', rules);
+   const selectTheme = (index: number) => {
+      for (const t of themeList) {
+         if (t.id == index) {
+            setName(t.name);
+            break;
+         }
+      }
 
-   React.useEffect(() => {
-      fetchThemeListFromServer().then(
-         d => setThemeList([NEW_THEME].concat(d))
-      );
-   }, []);
+      // Will automatically reload rules from server
+      setSelected(index);
+   };
 
-   React.useEffect(() => {
+   const loadThemeList = () => {
+      setModified(false);
+      fetchThemeListFromServer().then(d => {
+         setThemeList([NEW_THEME].concat(d));
+         selectTheme(0);
+      });
+   };
+
+   const loadRuleList = () => {
+      if (themeList.length == 0 || selected == -1) {
+         return;
+      }
+
       fetchThemeRulesFromServer(selected).then((d: RuleList) => {
-         setRules(d.rules);
-         setOps(d.operators);
+         //  ??? These should be a different query, we don't need to resend
+         //  them every time.
+         const typeToName: {[id:number]: string} = {};
+         const operators = [DO_NOTHING_OP, ...d.operators].map(s => ({
+            key: s.op,
+            value: s.op,
+            text: s.label,
+            content: <Header content={s.label} subheader={s.doc} />
+         }));
+         const char_types = d.characteristic_types.map(s => ({
+            key: s.id,
+            value: s.id,
+            text: s.name,
+         }));
+         const event_types = d.event_types.map(s => {
+            typeToName[s.id] = s.name;
+            return {
+               key: s.id,
+               value: s.id,
+               text: s.name,
+            };
+         });
+         const event_type_roles = d.event_type_roles.map(s => {
+            const typ = s.type_id === null ?  'all' : typeToName[s.type_id];
+            const sub = `for ${typ} events`;
+            return {
+               key: s.id,
+               value: s.id,
+               text: s.name,
+               content: <Header content={s.name} subheader={sub} />
+            };
+         });
+
+         setRules(d.rules.length === 0 ? [DEFAULT_RULE] : d.rules);
+         setOps({operators, char_types, event_types, event_type_roles});
       })
-   }, [selected]);
+   };
+
+   React.useEffect(loadThemeList, []);
+   React.useEffect(loadRuleList, [themeList, selected]);
 
    const onChange = React.useCallback(
-      (_: any, data: DropdownProps) => setSelected(data.data as number),
+      (_: any, data: DropdownProps) => selectTheme(data.data as number),
       [themeList]);
 
-   const onRulesChange = (rules: ThemeRule[]) => setRules(rules);
+   const onNameChange = React.useCallback(
+      (_: any, data: InputProps) => {
+         setModified(true);
+         setName(data.value as string);
+      },
+      [setName]);
 
-   const opsOptions: DropdownItemProps[] = ops.map(s =>
-      ({
-         key: s.op,
-         value: s.op,
-         text: s.label,
-         content: <Header content={s.label} subheader={s.doc} />
-       }));
+   const onRulesChange = (rules: ThemeRule[]) => {
+      setModified(true);
+      setRules(rules);
+   };
+
+   const onAddRule = () => {
+      setModified(true);
+      setRules([...rules, NEW_RULE]);
+   };
+   const onCancel = () => loadThemeList();
+
+   const onSave = () => {
+      window.console.log(
+         `/data/rulelist/set?theme=${selected}&name=${name}`,
+         JSON.stringify(rules)
+      );
+   };
 
    const main = (
-      <Form className="colortheme">
+      <div className="colortheme">
          <div>
             <h2>Color Theme</h2>
             <Select
@@ -551,15 +739,39 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                options={themeList.map(s => ({text: s.name, value: s.id}))}
                onChange={onChange}
                defaultValue={selected}
+               disabled={modified}
+            />
+            <Input
+               defaultValue={name}
+               onChange={onNameChange}
+               required={true}
+               error={!name}
+               placeholder='theme name'
+               style={{marginTop: 0}}
             />
          </div>
          <RuleListEditor
             rules={rules}
-            ops={opsOptions}
-            withStyle={true}
+            ops={ops}
             onChange={onRulesChange}
+            onAddRule={onAddRule}
+            component={RuleEditor}
          />
-      </Form>
+         {
+            modified &&
+            <Button.Group floated="right">
+               <Button onClick={onCancel}>Cancel</Button>
+               <Button.Or/>
+               <Button
+                  onClick={onSave}
+                  positive={true}
+                  disabled={!name}
+               >
+                  Save
+               </Button>
+            </Button.Group>
+         }
+      </div>
    );
 
    return (
