@@ -8,5 +8,5 @@ class ThemeList(JSONView):
 
     def get_json(self, params):
         return {
-           'themes': {r.id: r.name for r in models.Theme.objects.all()}
+           "themes": {r.id: r.name for r in models.Theme.objects.all()}
         }

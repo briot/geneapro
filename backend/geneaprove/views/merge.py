@@ -58,7 +58,7 @@ def compare(p1, p2):
                     tmp_debug += " [One date unknown]"
                 elif ev.date_sort == a2.event.date_sort:
                     tmp_score += 20  # Same dates
-                    tmp_debug += " [Same sort %s]" % ev.date_sort
+                    tmp_debug += f" [Same sort {ev.date_sort}]"
 
                     if ev.date == a2.event.date:
                         # Further bonus since both dates are written exactly
@@ -77,8 +77,7 @@ def compare(p1, p2):
 
         if evt_score:
             score += evt_score
-            debug("evt_score (%s) (%s) %s => %d / %d" %
-                  (a2.event, evt_evt, evt_debug, evt_score, score))
+            debug(f"evt_score ({a2.event}) ({evt_evt}) {evt_debug} => {evt_score} / {score}")
 
     # Also compare properties (this also compares names)
     # For UID properties, the score increase is worth more
@@ -100,23 +99,22 @@ def compare(p1, p2):
                 if att.char.date is not None \
                    and att.char.date == a2.char.date:
                     score += 20  # Same date
-                    debug("  char, same date %s %d" % (att.char.date, score))
+                    debug(f"  char, same date {att.char.date} {score}")
 
                 parts = {p.name: p.value for p in att.parts}
                 for p in a2.parts:
                     if p.name in parts \
                        and parts[p.name].lower() == p.value.lower():
                         score += 20  # Same property
-                        debug("   char, same property %s %s %d"
-                              % (p.name, p.value, score))
+                        debug(f"   char, same property {p.name} {p.value} {score}")
 
                         if r in ("_UID",):
                             score += 300  # Same uid, likely same person
-                            debug("   char, same UID %d" % score)
+                            debug(f"   char, same UID {score}")
 
     if place_score:
         score += place_score
-        debug("At least two events in same place => %d " % score)
+        debug(f"At least two events in same place => {score} ")
 
     return score
 
@@ -203,14 +201,12 @@ def find_candidate():
             elif date.year < 1970:
                 continue
             else:
-                # print "Compare %s and %s" % (person.name, a.name)
+                # print(f"Compare {person.name} and {a.name}")
                 comparisons += 1
                 score = compare(a, person)
                 if score >= 150:
                     print(
-                        "%d Might be the same: %d %s and %d %s, score=%d %d" %
-                        (date.year, person.id, person.name, a.id, a.name,
-                         score, compare(person, a)))
+                        f"{date.year} Might be the same: {person.id} {person.name} and {a.id} {a.name}, score={score} {compare(person, a)}")
                     same += 1
 
         alive.append(person)

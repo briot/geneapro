@@ -557,7 +557,7 @@ class CalendarJulian(Calendar):
         self._month_names = MONTH_NAMES
 
     def __str__(self):
-        return u"Julian"
+        return "Julian"
 
     def from_components(self, year=None, month=None, day=None):
         """See inherited doc"""
@@ -613,11 +613,11 @@ class TimeDelta(object):
     def __str__(self):
         result = []
         if self.years != 0:
-            result.append("%dy" % self.years)
+            result.append(f"{self.years}y")
         if self.months != 0:
-            result.append("%dm" % self.months)
+            result.append(f"{self.months}m")
         if self.days != 0:
-            result.append("%dd" % self.days)
+            result.append(f"{self.days}d")
         return " ".join(result)
 
     def __neg__(self):
@@ -807,7 +807,7 @@ class _Date(object):
 
         else:
             cal = calendar or self.calendar
-            result = u""
+            result = ""
 
             if self.precision == PRECISION_ABOUT:
                 result += "~"
@@ -1017,7 +1017,7 @@ class DateRange(object):
                 d2 = None
 
             result = DateRange.__new__(DateRange)
-            result._text = "%s - %s" % (self, date)
+            result._text = f"{self} - {date}"
             result._from = d1
             result._to = d2
             result._span = -1
@@ -1039,7 +1039,7 @@ class DateRange(object):
             d2 = None
 
         result = DateRange.__new__(DateRange)
-        result._text = "%s + %s" % (self, delta)
+        result._text = f"{self} + {delta}"
         result._from = d1
         result._to = d2
         result._span = -1
@@ -1080,7 +1080,7 @@ class DateRange(object):
             d2 = self._to.display(
                 calendar=calendar, year_only=year_only, original=original)
             if self._to is not None:
-                return u"to %s" % d2
+                return f"to {d2}"
             else:
                 return str(self._text)
         else:
@@ -1092,12 +1092,12 @@ class DateRange(object):
                     calendar=calendar, year_only=year_only, original=original)
 
                 if self._span == SPAN_FROM:
-                    return u"from %s to %s" % (d1, d2)
+                    return f"from {d1} to {d2}"
                 else:
-                    return u"between %s and %s" % (d1, d2)
+                    return f"between {d1} and {d2}"
             else:
                 if self._span == SPAN_FROM:
-                    return u"from %s" % d1
+                    return f"from {d1}"
                 else:
                     return d1
 

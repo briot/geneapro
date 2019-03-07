@@ -34,8 +34,7 @@ class DateTestCase(unittest.TestCase):
         self.assertTrue(expected.years == delta.years and
                         expected.months == delta.months and
                         expected.days == delta.days,
-                        "Expected '%s', got '%s' for '%s - %s'" %
-                        (expected, delta, toDate, fromDate))
+                        f"Expected '{expected}', got '{delta}' for '{toDate} - {fromDate}'")
 
     def _assert_date(self, inputdate, day, expected):
         """Ensure that a date was correctly parsed"""
@@ -46,15 +45,15 @@ class DateTestCase(unittest.TestCase):
             # pylint: disable=protected-access
             if isinstance(d, date._Date) or d._to is None:
                 if isinstance(exp, tuple):
-                    return "expected a range, got %s" % d
+                    return f"expected a range, got {d}"
                 elif isinstance(d, date._Date):
                     if d.date != exp:
-                        return "%s != %s" % (d.date, exp)
+                        return f"{d.date} != {exp}"
                 elif d._from.date != exp:
-                    return "%s != %s" % (d._from.date, exp)
+                    return f"{d._from.date} != {exp}"
             else:
                 if not isinstance(exp, tuple):
-                    return "expected a simple date, got %s" % d
+                    return f"expected a simple date, got {d}"
                 return cmp_end(d._from, exp[0]) \
                     or cmp_end(d._to, exp[1])
             return ""
@@ -223,11 +222,11 @@ class DateTestCase(unittest.TestCase):
 
         d1 = date.DateRange("2010-04-30") + date.TimeDelta(months=10, days=1)
         d2 = date.DateRange("2011-03-01")
-        self.assertEqual(d2, d1, "Invalid date: %s != %s" % (d2, d1))
+        self.assertEqual(d2, d1, f"Invalid date: {d2} != {d1}")
 
         d1 = date.DateRange("2010-04-30")
         d2 = date.DateRange("2011-03-01") - date.TimeDelta(months=10, days=1)
-        self.assertEqual(d2, d1, "Invalid date: %s != %s" % (d2, d1))
+        self.assertEqual(d2, d1, f"Invalid date: {d2} != {d1}")
 
         self._assert_delta(
             date.TimeDelta(months=10, days=1),

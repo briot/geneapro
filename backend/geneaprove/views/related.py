@@ -70,7 +70,7 @@ class JSONResult(object):
             'events', 'persons', 'places', 'sources', 'researchers']):
 
             raise Exception(
-                "Duplicate info given to JSONResult: %s" % (extra, ))
+                f"Duplicate info given to JSONResult: {extra}")
 
         # Assertions require their own related entities. We need to
         # handle the case where getRelatedIds would in turn add extra

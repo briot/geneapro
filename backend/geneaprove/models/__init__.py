@@ -212,8 +212,7 @@ def sql_field_name(cls, field_name):
         f = cls._meta.pk
     else:
         f = cls._meta.get_field(field_name)
-    return "%s.%s" % (
-        sql_table_name(cls), connection.ops.quote_name(f.column))
+    return f"{sql_table_name(cls)}.{connection.ops.quote_name(f.column)}"
 
 
 all_fields = {

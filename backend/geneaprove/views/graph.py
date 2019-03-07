@@ -47,13 +47,11 @@ class Persona_node(object):
         return self.__main_id
 
     def __repr__(self):
-        # return "%s-%s" % (self.main_id, self.name.encode("utf-8"))
-        return "Node(%s)" % (self.main_id, )
+        # return f"{self.main_id}-{self.name.encode("utf-8")}"
+        return f"Node({self.main_id})"
 
     def graphviz_label(self):
-        return "%s-%s" % (
-            ",".join("%s" % p for p in sorted(self.ids)),
-            self.name)
+        return f"{','.join(f'{p for p in sorted(self.ids)}')}-{self.name}"
 
 
 class P2P_Link(object):
@@ -77,7 +75,7 @@ class P2P_Link(object):
             raise TypeError
 
     def __repr__(self):
-        return "%s-%s->%s" % (self.fromP, self.kind, self.toP)
+        return f"{self.fromP}-{self.kind}->{self.toP}"
 
     def graphviz_label(self):
         return ""
@@ -181,7 +179,7 @@ class GeneaGraph(Digraph):
                 elif kind == models.Event_Type.PK_marriage:
                     return ShortEventMarriage()
                 else:
-                    raise Exception("Can't handle event kind %s" % kind)
+                    raise Exception(f"Can't handle event kind {kind}")
 
         class ShortEventBirth(ShortEvent):
             child = None
@@ -196,7 +194,7 @@ class GeneaGraph(Digraph):
                 elif role == models.Event_Type_Role.PK_birth__mother:
                     self.mother = person
                 else:
-                    raise Exception("Unknown role for birth %s" % role)
+                    raise Exception(f"Unknown role for birth {role}")
 
             def add_links(self, graph):
                 if self.child and self.father:
@@ -229,7 +227,7 @@ class GeneaGraph(Digraph):
                     else:
                         self.person2 = person
                 else:
-                    raise Exception("Unknown role for marriage %s" % role)
+                    raise Exception(f"Unknown role for marriage {role}")
 
             def add_links(self, graph):
                 if self.person1 and self.person2:
@@ -401,7 +399,7 @@ class GeneaGraph(Digraph):
                             if not subset or n2 in subset:
                                 tmp.setdefault((n2, n.main_id), [n2, n.main_id])
                         else:
-                            raise Exception("Unknown edge in graph: %s" % e.kind)
+                            raise Exception(f"Unknown edge in graph: {e.kind}")
 
                     # Filter events irrelevant to our subset of the graph
                     if subset:
@@ -438,7 +436,7 @@ class GeneaGraph(Digraph):
                 tmp.add_edge(e)
 
         families = __build_families()
-        logger.debug('%s families' % (len(families), ))
+        logger.debug(f'{len(families)} families')
 
         # Using an external library for layout
 
@@ -456,9 +454,9 @@ class GeneaGraph(Digraph):
         g = Graph(V, E)
 
         # for v in V:
-        #     logger.info('%s [label="%s"];' % (v.data.main_id, v.data.name))
+            # logger.info(f'{v.data.main_id} [label="{v.data.name}"];')
         # for e in E:
-        #     logger.info('%s -> %s;' % (e.v[0].data.main_id, e.v[1].data.main_id))
+            # logger.info(f'{e.v[0].data.main_id} -> {e.v[1].data.main_id};')
 
         class defaultview(object):
             w = 10
@@ -470,31 +468,31 @@ class GeneaGraph(Digraph):
         perlayer = []
         persons_to_layer = {}
 
-        logger.debug('%s components in graph' % (len(g.C), ))
+        logger.debug(f'{len(g.C)} components in graph')
 
         for core in g.C:
-           sug = SugiyamaLayout(core)
-           sug.init_all(optimize=True, cons=False)
-           sug.draw()
-           sug.layers.reverse()
+            sug = SugiyamaLayout(core)
+            sug.init_all(optimize=True, cons=False)
+            sug.draw()
+            sug.layers.reverse()
 
-           for layerIndex, layer in enumerate(sug.layers):
-               if layerIndex not in perlayer:
-                   perlayer.extend([[]] * (layerIndex + 1 - len(perlayer)))
+            for layerIndex, layer in enumerate(sug.layers):
+                if layerIndex not in perlayer:
+                    perlayer.extend([[]] * (layerIndex + 1 - len(perlayer)))
 
-               for node in layer:
-                   # ignore dummy vertices
-                   if hasattr(node, "data"):
-                       persons[node.data.main_id] = {
-                           "id": node.data.main_id,
-                           "name": node.data.name,
-                           "sex": node.data.sex,
-                       }
-                       perlayer[layerIndex].append(node.data.main_id)
+                for node in layer:
+                    # ignore dummy vertices
+                    if hasattr(node, "data"):
+                        persons[node.data.main_id] = {
+                            "id": node.data.main_id,
+                            "name": node.data.name,
+                            "sex": node.data.sex,
+                        }
+                        perlayer[layerIndex].append(node.data.main_id)
 
-               for node in layer:
-                   if hasattr(node, "data"):
-                       persons_to_layer[node.data.main_id] = layerIndex
+                for node in layer:
+                    if hasattr(node, "data"):
+                        persons_to_layer[node.data.main_id] = layerIndex
 
         families_by_layer = {}
         for f in families:

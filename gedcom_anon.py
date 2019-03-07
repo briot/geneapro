@@ -28,10 +28,9 @@ for line in gedcom.readlines():
 
     if comps[tag] in ("NAME", "GIVN", "ADDR", "ADR1", "ADR2", "PHON",
                       "NPFX", "NICK", "SPFX", "SURN", "NSFX", "FILE"):
-        value = "anonym%s-%s" % (comps[tag], index)
+        value = f"anonym{comps[tag]}-{index}"
         index += 1
-        sys.stdout.write("%s %s%s %s\n" % (
-           level, xref, comps[tag], value))
+        sys.stdout.write(f"{level} {xref}{comps[tag]} {value}\n")
 
     else:
         sys.stdout.write(line)

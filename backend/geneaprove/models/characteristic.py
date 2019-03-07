@@ -37,7 +37,7 @@ class Characteristic(GeneaProveModel):
         help_text="Date, parsed automatically")
 
     def __str__(self):
-        return "<Characteristic name=%s>" % (self.name, )
+        return f"<Characteristic name={self.name}>"
 
     class Meta:
         """Meta data for the model"""

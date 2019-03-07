@@ -74,7 +74,7 @@ class GedcomImporter(object):
         self._create_ids(filename=filename)
 
         self.execute_bulks()
-        logger.info('Done inserting bulks %s', filename)
+        logger.info(f"Done inserting bulks {filename}")
 
     def _create_ids(self, filename):
         for f in self._data.fields:
@@ -159,16 +159,7 @@ class GedcomImporter(object):
                 self.ignored(f, prefix='HEAD')
 
         date_str = date.strftime('%Y-%m-%d %H:%M:%S %Z') if date else None
-        title = '"%s", %s, exported from %s, created on %s, imported on %s' % (
-            os.path.basename(name),
-            self._researcher.name,
-            created_by,
-            date_str,
-            datetime.datetime.now(
-                django.utils.timezone.get_default_timezone()).
-                strftime('%Y-%m-%d %H:%M:%S %Z')
-        )
-
+        title = f'"{os.path.basename(name)}", {self._researcher.name}, exported from {created_by}, created on {date_str}, imported on {datetime.datetime.now(django.utils.timezone.get_default_timezone()).strftime("%Y-%m-%d %H:%M:%S %Z")}'
         self._source_for_gedcom = models.Source.objects.create(
             jurisdiction_place_id=None,
             researcher=self._researcher,
@@ -360,7 +351,7 @@ class GedcomImporter(object):
 
         p = models.Project.objects.create(
             name='Gedcom import',
-            description='Import from %s' % file.value,
+            description=f'Import from {file.value}',
             scheme=self._surety_scheme)
         models.Researcher_Project.objects.create(
             researcher=researcher,
@@ -369,12 +360,12 @@ class GedcomImporter(object):
         return p
 
     def unexpected(self, field):
-        self.report_error(field, "Unexpected tag %s" % field.tag)
+        self.report_error(field, f"Unexpected tag {field.tag}")
 
     def ignored(self, field, prefix):
         self.report_error(
             field,
-            "Ignored %s%s" % ('%s.' % prefix if prefix else '', field.tag))
+            f"Ignored {prefix + '.' if prefix else ''}{field.tag}")
 
     def ignore_fields(self, field, prefix):
         """
@@ -382,18 +373,17 @@ class GedcomImporter(object):
         `prefix` should not include the name of field itself.
         """
         for a in field.fields:
-            self.ignored(a, prefix='%s.%s' % (prefix, field.tag))
+            self.ignored(a, prefix=f'{prefix}.{field.tag}')
 
     def report_error(self, field, msg):
-        logger.debug('Line %d: %s', field.line, msg)
+        logger.debug(f'Line {field.line}: {msg}')
         self.errors.append((field.line, msg))
 
     def errors_as_string(self):
         self.errors.sort(key=lambda e: e[0] if e[0] is not None else -1)
 
         return "\n".join(
-            'Line %s: %s' % ('???' if line is None else line,
-                              msg)
+            f'Line {"???" if line is None else line}: {msg}'
             for (line, msg) in self.errors)
 
     def _create_enum_cache(self):
@@ -489,18 +479,18 @@ class GedcomImporter(object):
                 name = f.value
             elif f.tag == "RIN":
                 self.ignore_fields(f, prefix="REPO")
-                info.append("Automated record id: %s" % f.value)
+                info.append(f"Automated record id: {f.value}")
             elif f.tag == "REFN":
                 added = False
                 for a in f.fields:
                     if a.tag == "TYPE":
                         self.ignore_fields(f, prefix="REPO.REFN")
                         added = True
-                        info.append("%s: %s" % (a.value, f.value))
+                        info.append(f"{a.value}: {f.value}")
                     else:
                         self.ignored(a, prefix='REPO.REFN')
                 if not added:
-                    info.append("Reference number: %s" % f.value)
+                    info.append(f"Reference number: {f.value}")
             elif f.tag == "CHAN":
                 chan = self._process_CHAN(f)
             elif f.tag == "NOTE":
@@ -560,10 +550,10 @@ class GedcomImporter(object):
 
         if not husb:
             husb = models.Persona.objects.create(
-                name="@Unknown husband in family %s@" % fam.id)
+                name=f"@Unknown husband in family {fam.id}@")
         if not wife:
             wife = models.Persona.objects.create(
-                name="@Unknown wife in family %s@" % fam.id)
+                name=f"@Unknown wife in family {fam.id}@")
 
         # For all events, the list of individuals
 
@@ -637,7 +627,7 @@ class GedcomImporter(object):
                 mother_role = self._adoption__adopting
             else:
                 self.report_error(
-                    child, "Unknown INDI.FAMC.PEDI: %s" % pedi)
+                    child, f"Unknown INDI.FAMC.PEDI: {pedi}")
 
             if stat == "challenged":
                 surety = self._surety_scheme.parts.all()[0]
@@ -650,7 +640,7 @@ class GedcomImporter(object):
                 disproved = False
             else:
                 self.report_error(
-                    child, "Unknown INDI.FAMC.STAT: %s" % stat)
+                    child, f"Unknown INDI.FAMC.STAT: {stat}")
 
             parents = [
                 (husb, father_role),
@@ -965,38 +955,34 @@ class GedcomImporter(object):
                     if a.tag == "EVEN":  # List of events in that source
                         events.append(a)
                     elif a.tag == "AGNC":
-                        self.ignore_fields(a, prefix="%s.DATA" % prefix)
-                        notes.append("Agency: %s" % a.value)
+                        self.ignore_fields(a, prefix=f"{prefix}.DATA")
+                        notes.append(f"Agency: {a.value}")
                     elif a.tag == "NOTE":
-                        self.ignore_fields(a, prefix="%s.DATA" % prefix)
+                        self.ignore_fields(a, prefix=f"{prefix}.DATA")
                         notes.append(a.value)
                     elif a.tag == "DATE":   # for SOURCE_CITATION
-                        self.ignore_fields(a, prefix="%s.DATA" % prefix)
+                        self.ignore_fields(a, prefix=f"{prefix}.DATA")
                         if subject_date:
                             self.report_error(a, "Multiple DATA.DATE")
                         subject_date = a.value
                     elif a.tag == "TEXT":   # for SOURCE_CITATION
-                        self.ignore_fields(a, prefix="%s.DATA" % prefix)
+                        self.ignore_fields(a, prefix=f"{prefix}.DATA")
                         text.append(a.value)
                     else:
-                        self.ignored(a, prefix="%s.DATA" % prefix)
+                        self.ignored(a, prefix=f"{prefix}.DATA")
 
             else:
                 self.ignored(f, prefix=prefix)
 
         attr.sort()  # sort by gedcom name, then value
         if x:
-            a = ', '.join('%s: %s' % n for n in attr)
+            a = f"{', '.join(f'{n[0]}: {n[1]}' for n in attr)}"
             if a:
-                title = "%s (%s)" % (title, a)
-                abbr = "%s (%s)" % (abbr, a)
-                bibl = "%s (%s)" % (bibl, a)
+                title = f"{title} ({a})"
+                abbr = f"{abbr} ({a})"
+                bibl = f"{bibl} ({a})"
 
-        lookup_name = 'TITL=%s ABBR=%s _BIBL=%s %s' % (
-            title,
-            abbr or title,
-            bibl or title,
-            ' '.join('%s=%s' % n for n in attr))
+        lookup_name = f'TITL={title} ABBR={abbr or title} _BIBL={bibl or title} {" ".join(f"{n[0]}={n[1]}" for n in attr)}'
 
         if lookup_name in self._sources:
             # Assume the previous time we saw it it already had the same
@@ -1034,22 +1020,22 @@ class GedcomImporter(object):
                         for b in a.fields:
                             if b.tag == "MEDI":
                                 self.ignore_fields(
-                                    b, prefix="%s.REPO.CALN" % prefix)
+                                    b, prefix=f"{prefix}.REPO.CALN")
                                 medi = b.value
                             else:
                                 self.ignored(
-                                    b, prefix="%s.REPO.CALN" % prefix)
+                                    b, prefix=f"{prefix}.REPO.CALN")
 
                         if medi:
-                            caln.append("%s (%s)" % (a.value, medi))
+                            caln.append(f"{a.value} ({medi})")
                         else:
                             caln.append(a.value)
 
                     elif a.tag == "NOTE":
-                        self.ignore_fields(a, prefix="%s.REPO" % prefix)
+                        self.ignore_fields(a, prefix=f"{prefix}.REPO")
                         notes.append(self._get_note(a))
                     else:
-                        self.ignored(a, prefix="%s.REPO" % prefix)
+                        self.ignored(a, prefix=f"{prefix}.REPO")
 
                 models.Repository_Source.objects.create(
                     repository=self._ids_repo[r.as_xref()],
@@ -1092,12 +1078,12 @@ class GedcomImporter(object):
 
                 for b in a.fields:
                     if b.tag == "DATE":
-                        self.ignore_fields(b, prefix="%s.DATA.EVEN" % prefix)
+                        self.ignore_fields(b, prefix=f"{prefix}.DATA.EVEN")
                         date = b.value
                     elif b.tag in PLAC_OBJE_FIELDS:
                         pass # already handled
                     else:
-                        self.ignored(b, prefix="%s.DATA.EVEN" % prefix)
+                        self.ignored(b, prefix=f"{prefix}.DATA.EVEN")
 
                 types = a.value or "EVEN"
                 for tname in types.split(','):
@@ -1146,7 +1132,7 @@ class GedcomImporter(object):
             if f.tag == "SOUR":
                 x = f.as_xref()
                 source_nodes.append(
-                    self._process_SOUR(f, prefix="%s.SOUR" % parent.tag))
+                    self._process_SOUR(f, prefix=f"{parent.tag}.SOUR"))
             else:
                 # Do not return ignored fields here
                 pass
@@ -1195,17 +1181,17 @@ class GedcomImporter(object):
                         # FORM would in fact tell us how to split the name to
                         # get its various components, which we could use to
                         # initialize the place parts
-                        self.ignore_fields(a, prefix="%s.PLAC" % event.tag)
+                        self.ignore_fields(a, prefix=f"{event.tag}.PLAC")
                         attr.append((a.tag, self._get_note(a)))
                     elif a.tag in ("FONE", "ROMN"):
                         for b in a.fields:
                             if b == "TYPE":   # Appears once
                                 self.ignore_fields(
-                                    b, prefix="%s.PLAC.%s" % (event.tag, a.tag))
+                                    b, prefix=f"{event.tag}.PLAC.{a.tag}")
                                 attr.append((b.value, a.value))
                             else:
                                 self.ignore(
-                                    b, prefix="%s.PLAC.%s" % (event.tag, a.tag))
+                                    b, prefix=f"{event.tag}.PLAC.{a.tag}")
 
                     elif a.tag == "MAP":
                         lat = ''
@@ -1213,16 +1199,16 @@ class GedcomImporter(object):
                         for b in a.fields:
                             if b.tag == "LATI":
                                 self.ignore_fields(
-                                    b, prefix="%s.PLAC.MAP" % event.tag)
+                                    b, prefix=f"{event.tag}.PLAC.MAP")
                                 lat = b.value
                             elif b.tag == "LONG":
                                 self.ignore_fields(
-                                    b, prefix="%s.PLAC.MAP" % event.tag)
+                                    b, prefix=f"{event.tag}.PLAC.MAP")
                                 long = b.value
                             else:
                                 self.ignored(
-                                    b, prefix="%s.PLAC.MAP" % event.tag)
-                        attr.append(('MAP', '%s,%s' % (lat, long)))
+                                    b, prefix=f"{event.tag}.PLAC.MAP")
+                        attr.append((f'MAP', f'{lat},{long}'))
             elif f.tag in ("ADDR", "_ADDR"):
                 addr = f      # name = f.value
                 for a in f.fields:
@@ -1258,7 +1244,7 @@ class GedcomImporter(object):
         # Make up a temporary name using all possible attributes, as a lookup
 
         attr.sort()  # sort by gedcom name, then value
-        lookup_name = name + ' ' + ' '.join('%s=%s' % n for n in attr)
+        lookup_name = f"{name} {' '.join(f'{n[0]}={n[1]}' for n in attr)}"
 
         p = self._places.get(lookup_name, None)
         if not p:
@@ -1272,7 +1258,7 @@ class GedcomImporter(object):
             for gedcom, value in attr:
                 pa = self._place_part_types.get(gedcom, None)
                 if pa is None:
-                    logger.info('Create new place part: %s' % gedcom)
+                    logger.info(f'Create new place part: {gedcom}')
                     pa = self._place_part_types[gedcom] = \
                         models.Place_Part_Type.objects.create(
                             gedcom=gedcom, name=gedcom)
@@ -1399,17 +1385,17 @@ class GedcomImporter(object):
                 self.ignored(f, prefix="OBJE")
 
         attr.sort()
-        lookup_name = "#".join("%s=%s" % n for n in attr)
+        lookup_name = "#".join(f'{n[0]}={n[1]}' for n in attr)
         if lookup_name in unless_in:
             return []
 
         comments = title + \
-                "\n\n".join("%s: %s" % n for n in attr if n != 'TITL')
+                "\n\n".join(f'{n[0]}: {n[1]}' for n in attr if n != "TITL")
 
         # Create a source if necessary, to which all representations will be
         # associated
         if not source:
-            t = 'Media for %s' % place.name if place else title
+            t = f'Media for {place.name if place else title}'
             source = self._sources.get(t, None)
             if source:
                 # No need to add media again
@@ -1431,7 +1417,7 @@ class GedcomImporter(object):
                 file=f[0],
                 mime_type=f[1],
                 comments=comments +
-                   ("\nFormat: %s" % f[2] if f[2] else ""))
+                   (f"\nFormat: {f[2] if f[2] else ''}"))
             for f in files]
 
     def _create_event(self, field, indi_and_role, surety, CHAN=None,
@@ -1477,7 +1463,7 @@ class GedcomImporter(object):
                 pass  # already processed
             elif f.tag == "TYPE":
                 self.ignore_fields(f, prefix=prefix + field.tag)
-                type_descr = ' (%s)' % f.value
+                type_descr = f' (f.value)'
 
                 # In Gramps, an "EVEN" is used to represent events entered as
                 # a person's event, for instance when the partner is not know.
@@ -1511,12 +1497,10 @@ class GedcomImporter(object):
         name = field.value \
                 if field.value and field.value not in ("Y", "N") else ""
         if not name:
-            name = "%s%s -- %s" % (
-                (evt_type_name or evt_type.name).title(), # type of event
-                type_descr,       # More specific information for type
-                " and ".join(p.name for p, role in indi_and_role  # Principals
-                             if p and role == self._principal),
-            )
+            # type of event
+            # More specific information for type
+            # Principals
+            name = f'{(evt_type_name or evt_type.name).title()}{type_descr} -- {" and ".join(p.name for p, role in indi_and_role if p and role == self._principal)}'
 
         # For each source, we duplicate the event.
         # Otherwise, we end up with multiple 'principal', 'mother',...
@@ -1573,7 +1557,7 @@ class GedcomImporter(object):
                                 GedcomRecord(
                                     line=f.line,
                                     tag='TITL',
-                                    value='Media for %s' % indi.name)
+                                    value=f'Media for {indi.name}')
                             ])
                     ])
                 self._create_characteristic(d, indi, CHAN=indi.last_change)
@@ -1688,8 +1672,8 @@ class GedcomFileImporter(geneaprove.importers.Importer):
                 m = GedcomImporter(filename)
             return (True, m.errors_as_string())
         except Invalid_Gedcom as e:
-            logger.error("Exception while parsing GEDCOM:%s", e.msg)
+            logger.error(f"Exception while parsing GEDCOM:{e.msg}")
             return (False, e.msg)
         except Exception as e:
-            logger.error("Unexpected Exception during parsing")
+            logger.error(f"Unexpected Exception during parsing: {e.msg}")
             return (False, traceback.format_exc())

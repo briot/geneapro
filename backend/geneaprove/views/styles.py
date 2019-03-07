@@ -68,7 +68,7 @@ class Styles(object):
                 .get(id=theme_id)
             self.rules = theme.as_rule_list()
         except models.Theme.DoesNotExist:
-            logger.error('Theme not found: %s', theme_id)
+            # logger.error(f'Theme not found: {theme_id}')
             self.rules = []
             return
 

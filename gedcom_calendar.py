@@ -143,14 +143,14 @@ class StackMachine(object):
             dpy = unicode(obj)
 
         if label:
-            return "%s: %s" % (label, dpy)
+            return f"{label}: {dpy}"
         else:
             return dpy
 
     def update(self):
         """Update the display of self"""
         for idx, d in enumerate(self.contents):
-            print "%s: %s" % (chr(ord('a') + idx), self.img(idx))
+            print(f"{chr(ord('a') + idx)}: {self.img(idx)}"
 
 
 class GUIDateCalculator(StackMachine, gtk.Window):
@@ -183,7 +183,7 @@ class GUIDateCalculator(StackMachine, gtk.Window):
             if stackrow == -1:
                 label = gtk.Label("")
             else:
-                label = gtk.Label("%s: " % chr(ord('a') + stackrow))
+                label = gtk.Label(f"{chr(ord('a') + stackrow)}: ")
 
             gr.add_widget(label)
             hbox.pack_start(label, expand=False)
@@ -329,7 +329,7 @@ class GUIDateCalculator(StackMachine, gtk.Window):
         ent, cal = self.stack[0]
         pos = ent.get_position()
         txt = ent.get_text()
-        ent.set_text("%s %s %s" % (txt[0:pos], text, txt[pos:]))
+        ent.set_text(f"{txt[0:pos]} {text} {txt[pos:]}")
         ent.set_position(pos + len(text) + 2)
 
     def set_calendar(self, button, calendar):

@@ -17,7 +17,7 @@ class Theme(GeneaProveModel):
         db_table = "theme"
 
     def __str__(self):
-        return "(Theme name=%s)" % self.name
+        return f"(Theme name={self.name})"
 
     def as_rule_list(self):
         """
@@ -56,7 +56,7 @@ class Rule(GeneaProveModel):
         db_table = "rule"
 
     def __str__(self):
-        return "(Rule name=%s)" % self.name
+        return f"(Rule name={self.name})"
 
     def as_rule_checker(self):
         """

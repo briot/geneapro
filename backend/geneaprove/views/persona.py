@@ -226,15 +226,15 @@ class SuretySchemesList(JSONView):
 
     def get_json(self, params):
         return {
-            'schemes': [
-                {'id': s.id,
-                 'name': s.name,
-                 'description': s.description,
-                 'parts': [
-                     {'id': p.id,
-                      'name': p.name,
-                      'description': p.description,
-                      'sequence': p.sequence_number}
+            "schemes": [
+                {"id": s.id,
+                 "name": s.name,
+                 "description": s.description,
+                 "parts": [
+                     {"id": p.id,
+                      "name": p.name,
+                      "description": p.description,
+                      "sequence": p.sequence_number}
                      for p in s.parts.all()
                  ]} for s in models.Surety_Scheme.objects.all()]}
 
@@ -263,7 +263,7 @@ class PersonaList(JSONView):
                 persons, asserts=asserts)
 
         return {
-            'persons': list(persons.values()),
-            'allstyles': all_styles,    # all needed styles
-            'styles': computed_styles,  # for each person
+            "persons": list(persons.values()),
+            "allstyles": all_styles,    # all needed styles
+            "styles": computed_styles,  # for each person
         }

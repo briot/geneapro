@@ -133,10 +133,10 @@ class PedigreeData(JSONView):
         all_styles, computed_styles = styles.compute(
             persons, asserts=asserts)
 
-        return {'generations': max_levels,
-                'descendants': maxdepthDescendants,
-                'decujus':     decujus.main_id,
-                'persons':     list(persons.values()),
-                'layout':      layout,
-                'allstyles':   all_styles,
-                'styles':      computed_styles}
+        return {"generations": max_levels,
+                "descendants": maxdepthDescendants,
+                "decujus":     decujus.main_id,
+                "persons":     list(persons.values()),
+                "layout":      layout,
+                "allstyles":   all_styles,
+                "styles":      computed_styles}

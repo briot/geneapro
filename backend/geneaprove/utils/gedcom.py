@@ -116,8 +116,7 @@ class _Lexical(object):
         self.prefetch = self._parse_line(l)
         if self.prefetch[1] != 0 or \
            self.prefetch[2] != 'HEAD':
-            self.error("Invalid gedcom file, first line must be '0 HEAD' got %s"
-                       % (l, ),
+            self.error(f"Invalid gedcom file, first line must be '0 HEAD' got {l}",
                        fatal=True)
 
         self._readline()
@@ -131,7 +130,7 @@ class _Lexical(object):
         return value.decode(self.encoding, "replace")
 
     def error(self, msg, fatal=False, line=None):
-        m = "%s:%s %s" % (self.file.name, line or self.line, msg)
+        m = f"{self.file.name}:{line or self.line} {msg}"
         if fatal:
             raise Invalid_Gedcom(m)
         else:
@@ -152,7 +151,7 @@ class _Lexical(object):
         line = self.decode(line).split('\n')[0]
         g = line.split(None, 2)   # Extract first three fields
         if len(g) < 2:
-            self.error("Invalid line '%s'" % line, fatal=True)
+            self.error(f"Invalid line '{line}'", fatal=True)
 
         if g[1][0] == '@':
             # "1 @I0001@ INDI"
@@ -189,17 +188,17 @@ class _Lexical(object):
                 self.encoding = "ascii"
                 self.decode = self.decode_any
             else:
-                self.error('Unknown encoding %s' % (r[4], ))
+                self.error(f'Unknown encoding {r[4]}')
 
         return r
 
     def peek(self):
-        # logger.debug('MANU %s', self.current)
+        # logger.debug(f'MANU {self.current}')
         return self.current
 
     def consume(self):
         c = self.current
-        # logger.debug('MANU %s', self.current)
+        # logger.debug(f'MANU {self.current}')
         self._readline()
         return c
 
@@ -253,7 +252,7 @@ class GedcomRecord(object):
         self.id = id
 
     def __repr__(self):
-        return "GedcomRecord(tag=%s,line=%s)" % (self.tag, self.id)
+        return f"GedcomRecord(tag={self.tag},line={self.id})"
 
     def as_xref(self):
         """
@@ -309,7 +308,7 @@ class F(object):
 
         if self.tag:
             (linenum, level, tag, id, value) = lexical.consume()
-            assert tag == self.tag, '%s != %s' % (tag, self.tag)
+            assert tag == self.tag, f'{tag} != {self.tag}'
         else:
             # special case for toplevel FILE
             linenum = 0
@@ -325,7 +324,7 @@ class F(object):
         if self.text is None:
             if value:
                 lexical.error(
-                    "Unexpected text value after %s" % tag,
+                    f"Unexpected text value after {tag}",
                     line=linenum,
                     fatal=False)
             val = None
@@ -335,7 +334,7 @@ class F(object):
             # The tag should simply not be there in this case
             if value and value not in ("Y", "N"):
                 lexical.error(
-                    "Unexpected text value after %s, expected 'Y'" % tag,
+                    f"Unexpected text value after {tag}, expected 'Y'",
                     line=linenum,
                     fatal=False)
 
@@ -354,7 +353,7 @@ class F(object):
 
             # if has_xref:
             #     lexical.error(
-            #         'Unexpected %s in xref' % ctag,
+            #         f'Unexpected {ctag} in xref',
             #         line=clinenum,
             #         fatal=True)
 
@@ -369,11 +368,11 @@ class F(object):
                 if ctag[0] == '_':
                     # A custom tag is allowed, and should accept anything
                     lexical.error(
-                        "Custom tag ignored: %s" % ctag,
+                        f"Custom tag ignored: {ctag}",
                         line=clinenum)
                 else:
                     lexical.error(
-                        "Unexpected tag: %s" % ctag,
+                        f"Unexpected tag: {ctag}",
                         line=clinenum,
                         fatal=True)
 
@@ -387,7 +386,7 @@ class F(object):
             else:
                 if cdescr.max != unlimited and cdescr.max < count:
                     lexical.error(
-                        'Too many %s in %s (skipped)' % (ctag, tag),
+                        f'Too many {ctag} in {tag} (skipped)',
                         line=clinenum,
                         fatal=False)
                 c = cdescr.parse(lexical)  # read until end of child record
@@ -933,7 +932,7 @@ def parse_gedcom(filename, print_warning=lambda m: print(m)):
     start = time.time()
     result = FILE.parse(
         _Lexical(_File(filename), print_warning=print_warning))
-    logger.info('Parsed in %ss', time.time() - start)
+    logger.info(f'Parsed in {(time.time() - start)}s')
     return result
 
 

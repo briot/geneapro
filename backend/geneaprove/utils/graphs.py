@@ -63,9 +63,7 @@ class Digraph(object):
         return len(self.outedges)
 
     def __repr__(self):
-        return "<graph %s>" % (
-            " ".join(
-                sorted("%s" % (e, ) for e in self.edges())))
+        return f"<graph {' '.join(sorted(f'{(e, ) for e in self.edges()}'))}>"
 
     def is_empty(self):
         """
@@ -554,7 +552,7 @@ class Digraph(object):
         try:
             return node.graphviz_label()
         except AttributeError:
-            return "%s" % node
+            return f"{node}"
 
     def edge_label(self, edge):
         """
@@ -592,15 +590,14 @@ class Digraph(object):
         for index, node in enumerate(nodes):
             label = self.node_label(node)
             if number_nodes:
-                label = u"%d %s" % (index, label)
-            s = u"n_%s [label=<%s>]\n" % (id(node), label)
+                label = f"{index} {label}"
+            s = f"n_{id(node)} [label=<{label}>]\n"
             file.write(s.encode("utf-8"))
 
             for edge in edgeiter(node):
                 label = self.edge_label(edge)
                 if label is not None:
-                    s = u"n_%s -> n_%s [%s]\n" % (
-                        id(edge[0]), id(edge[1]), label)
+                    s = f"n_{id(edge[0])} -> n_{id(edge[1])} [{label}]\n"
                     file.write(s.encode("utf-8"))
 
         file.write("}\n")
@@ -610,7 +607,7 @@ class Digraph(object):
         """Process the graph through graphviz"""
 
         dot = subprocess.Popen(
-            ["dot", "-T%s" % format, "-o%s.%s" % (basename, format)],
+            ["dot", f"-T{format}", f"-o{basename}.{format}"],
             stdin=subprocess.PIPE)
 
         self.write_graphviz(
@@ -619,4 +616,4 @@ class Digraph(object):
 
         status = dot.wait()
         if status != 0:
-            raise Exception("Error when running dot, exit status=%d" % status)
+            raise Exception(f"Error when running dot, exit status={status}")

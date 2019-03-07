@@ -45,7 +45,7 @@ def sqlin(queryset, **kwargs):
     """
     for k in kwargs:
         if not k.endswith('__in'):
-            raise Exception('Invalid parameter %s' % k)
+            raise Exception(f'Invalid parameter {k}')
 
     if len(kwargs) != 1:
         raise Exception('Wrong number of arguments')

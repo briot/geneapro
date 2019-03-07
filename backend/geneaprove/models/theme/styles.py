@@ -12,7 +12,7 @@ class Style(object):
         self._hash = hash((font_weight, color, stroke, fill))
 
     def __repr__(self):
-        return '<Style %s>' % self.to_json()
+        return f'<Style {self.to_json()}>'
 
     def __hash__(self):
         return self._hash
