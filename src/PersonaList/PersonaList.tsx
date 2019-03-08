@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
 import Page from '../Page';
-import { AppState, GPDispatch } from '../Store/State';
+import { AppState, GPDispatch, themeNameGetter } from '../Store/State';
 import { Input, Segment } from 'semantic-ui-react';
+import * as GP_JSON from '../Server/JSON';
 import { Person, PersonSet } from '../Store/Person';
 import { GenealogyEventSet } from '../Store/Event';
 import { PersonaLink } from '../Links';
@@ -50,6 +51,8 @@ interface PersonaListProps {
 
    settings: PersonaListSettings;
    onChange: (diff: Partial<PersonaListSettings>) => void;
+
+   themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
 }
 
 interface PersonaListState {
@@ -78,9 +81,8 @@ extends React.PureComponent<PersonaListProps, PersonaListState> {
    }
 
    componentDidMount() {
-      this.props.dispatch(fetchPersons.request({
-         colors: this.props.settings.colors,
-      }));
+      fetchPersons.execute(
+         this.props.dispatch, {colors: this.props.settings.colors});
    }
 
    computePersons(set: PersonSet, filter?: string): Person[] {
@@ -115,6 +117,7 @@ extends React.PureComponent<PersonaListProps, PersonaListState> {
                <PersonaListSide
                   settings={this.props.settings}
                   onChange={this.props.onChange}
+                  themeNameGet={this.props.themeNameGet}
                />
             }
             main={
@@ -155,6 +158,7 @@ const PersonaList = connect(
       persons: state.persons,
       allEvents: state.events,
       settings: state.personalist,
+      themeNameGet: themeNameGetter(state),
    }),
    (dispatch: GPDispatch) => ({
       dispatch,

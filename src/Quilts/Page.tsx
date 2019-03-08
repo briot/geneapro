@@ -15,7 +15,7 @@ import QuiltsSide from '../Quilts/Side';
 interface PropsFromRoute {
    decujusId: string;
 }
- 
+
 interface QuiltsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    settings: QuiltsSettings;
    allPersons: PersonSet;
@@ -75,10 +75,12 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
    }
 
    private calculateProps() {
-      this.props.dispatch(fetchQuilts.request({
-         decujus: this.props.decujusid,
-         decujusOnly: this.props.settings.decujusTreeOnly,
-      }));
+      fetchQuilts.execute(
+         this.props.dispatch,
+         {
+            decujus: this.props.decujusid,
+            decujusOnly: this.props.settings.decujusTreeOnly,
+         });
    }
 
 }

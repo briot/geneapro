@@ -42,6 +42,26 @@ export interface EventTypeRole {
    name: string;          // role name
 }
 
+export type OperatorString = string;
+export type OperatorList = Array<{
+   op: OperatorString,
+   label: string,
+   doc: string,
+}>;
+
+export type ColorSchemeId = number;
+export interface ColorScheme {
+   id: ColorSchemeId;
+   name: string;
+}
+export interface Metadata {
+   characteristic_types: CharacteristicPartType[];
+   event_types: EventType[];
+   event_type_roles: EventTypeRole[];
+   theme_operators: OperatorList;
+   themes: ColorScheme[];
+}
+
 export interface Person {
    id: number;
    name: string;  // As found in the source document

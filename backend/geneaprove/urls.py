@@ -13,6 +13,7 @@ from .views import events
 from .views import graph
 from .views import importers
 from .views import merge
+from .views import metadata
 from .views import pedigree
 from .views import persona
 from .views import places
@@ -73,7 +74,7 @@ urlpatterns = [
     url(r'^data/legend$', rules.getLegend),
     url(r'^data/stats/count$', count.CountView.as_view()),
     url(r'^data/stats/(?P<id>\d+)$', stats.StatsView.as_view()),
-    url(r'^data/themelist$', themelist.ThemeList.as_view()),
+    url(r'^data/metadata$', metadata.MetadataList.as_view()),
     url(r'^data/rulelist', themelist.RuleList.as_view()),
     url(r'^data/import$', importers.GedcomImport.as_view()),
     url(r'^data/citationModel/(?P<model_id>.+)$',

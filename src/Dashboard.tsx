@@ -23,7 +23,7 @@ interface PersonCardProps {
 
 class PersonCard extends React.PureComponent<PersonCardProps, {}> {
    componentDidMount() {
-      this.props.dispatch(fetchPersonDetails.request({id: this.props.id}));
+      fetchPersonDetails.execute(this.props.dispatch, {id: this.props.id});
    }
 
    render() {
@@ -83,7 +83,7 @@ interface PlaceCardProps {
 
 class PlaceCard extends React.PureComponent<PlaceCardProps, {}> {
    componentDidMount() {
-      this.props.dispatch(fetchPlaceDetails.request({id: this.props.id}));
+      fetchPlaceDetails.execute(this.props.dispatch, {id: this.props.id});
    }
 
    render() {
@@ -150,7 +150,7 @@ interface AllStatsProps {
 
 class AllStats extends React.PureComponent<AllStatsProps> {
    componentDidMount() {
-      this.props.dispatch(fetchCount.request({}));
+      fetchCount.execute(this.props.dispatch, {});
    }
 
    render() {

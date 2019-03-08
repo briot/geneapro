@@ -33,7 +33,7 @@ class SourcePageConnected extends React.PureComponent<SourcePageProps> {
 
    calculateData() {
       if (this.props.id >= 0) {
-         this.props.dispatch(fetchSourceDetails.request({id: this.props.id}));
+         fetchSourceDetails.execute(this.props.dispatch, {id: this.props.id});
       }
    }
 

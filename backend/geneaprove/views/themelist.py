@@ -1,17 +1,5 @@
 from .. import models
-from ..models.theme import checks_list
 from .to_json import JSONView
-
-class ThemeList(JSONView):
-    """
-    List all known color themes
-    """
-
-    def get_json(self, params):
-        return {
-           'themes': {r.id: r.name for r in models.Theme.objects.all()}
-        }
-
 
 class RuleList(JSONView):
     """
@@ -29,9 +17,4 @@ class RuleList(JSONView):
 
         return {
             'rules': rules,
-            'operators': checks_list,
-            'characteristic_types': models.Characteristic_Part_Type
-               .objects.all(),
-            'event_types': models.Event_Type.objects.all(),
-            'event_type_roles': models.Event_Type_Role.objects.all(),
         }

@@ -1,12 +1,13 @@
 import { actionCreator } from '../Store/Actions';
-import { ColorScheme, WHITE } from '../Store/ColorTheme';
+import { WHITE } from '../Store/ColorTheme';
+import * as GP_JSON from '../Server/JSON';
 
 export interface PersonaListSettings {
-   colors: ColorScheme;
+   colors: GP_JSON.ColorSchemeId;
 }
 
 export const defaultPersonaList: PersonaListSettings = {
-   colors: WHITE,
+   colors: WHITE.id,
 };
 
 /**

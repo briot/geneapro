@@ -1,12 +1,11 @@
 import * as d3Color from 'd3-color';
 import { BasePerson, Person, PersonSet } from '../Store/Person';
 import { Assertion, AssertionList, P2E, P2C, P2P, P2G } from '../Store/Assertion';
-import { ColorScheme } from '../Store/ColorTheme';
 import { GenealogyEventSet } from '../Store/Event';
 import { SourceSet } from '../Store/Source';
 import { sourceFromJSON } from '../Server/Source';
 import { PlaceSet } from '../Store/Place';
-import * as JSON from '../Server/JSON';
+import * as GP_JSON from '../Server/JSON';
 import { ResearcherSet } from '../Store/Researcher';
 import Style from '../Store/Styles';
 
@@ -14,13 +13,13 @@ export interface FetchPersonsResult {
    persons: PersonSet;
 }
 
-interface IPersonaListRaw extends JSON.Persons {
-   allstyles: {[index: number]: JSON.Style},
+interface IPersonaListRaw extends GP_JSON.Persons {
+   allstyles: {[index: number]: GP_JSON.Style},
    styles: {[person: number]: number}
 };
 
 export function jsonPersonToPerson(
-   p: JSON.Person,
+   p: GP_JSON.Person,
    style: Style|undefined,
 ): Person {
    return {
@@ -38,8 +37,8 @@ export function jsonPersonToPerson(
 }
 
 export function jsonPersonsToPerson(
-   json: JSON.Persons,
-   allStyles?: {[index: number]: JSON.Style},   // definition for styles
+   json: GP_JSON.Persons,
+   allStyles?: {[index: number]: GP_JSON.Style},   // definition for styles
    styles?: {[pid: number]: number},   // person to style index
 ): FetchPersonsResult {
 
@@ -61,9 +60,9 @@ export function jsonPersonsToPerson(
    return {persons};
 }
 
-export function* fetchPersonsFromServer(p: {colors: ColorScheme}) {
+export function* fetchPersonsFromServer(p: {colors: GP_JSON.ColorSchemeId}) {
    const resp: Response = yield window.fetch(
-      `/data/persona/list?theme=${p.colors.id}`);
+      `/data/persona/list?theme=${p.colors}`);
    if (resp.status !== 200) {
       throw new Error('Server returned an error');
    }
@@ -72,7 +71,7 @@ export function* fetchPersonsFromServer(p: {colors: ColorScheme}) {
    return jsonPersonsToPerson(raw, raw.allstyles, raw.styles);
 }
 
-function p2eFromJSON(e: JSON.P2E) {
+function p2eFromJSON(e: GP_JSON.P2E) {
    return new P2E(
       e.id,
       e.surety /* surety */,
@@ -87,7 +86,7 @@ function p2eFromJSON(e: JSON.P2E) {
    );
 }
 
-function p2cFromJSON(c: JSON.P2C) {
+function p2cFromJSON(c: GP_JSON.P2C) {
    return new P2C(
       c.id,
       c.surety /* surety */,
@@ -102,13 +101,13 @@ function p2cFromJSON(c: JSON.P2C) {
          name: c.p2.char.name,
          placeId: c.p2.char.place,
          parts: c.p2.parts,
-         medias: c.p2.repr ? c.p2.repr.map(m => JSON.toMedia(m)) : undefined,
+         medias: c.p2.repr ? c.p2.repr.map(m => GP_JSON.toMedia(m)) : undefined,
       } /* characteristic */,
       c.source_id /* sourceId */,
    );
 }
 
-function p2pFromJSON(a: JSON.P2P) {
+function p2pFromJSON(a: GP_JSON.P2P) {
    return new P2P(
       a.id,
       a.surety /* surety */,
@@ -123,7 +122,7 @@ function p2pFromJSON(a: JSON.P2P) {
    );
 }
 
-function p2gFromJSON(a: JSON.P2G) {
+function p2gFromJSON(a: GP_JSON.P2G) {
    return new P2G(
       a.id,
       a.surety /* surety */,
@@ -137,22 +136,22 @@ function p2gFromJSON(a: JSON.P2G) {
    );
 }
 
-function isP2E(a: JSON.Assertion): a is JSON.P2E {
-   return (a as JSON.P2E).p1.person !== undefined &&
-          (a as JSON.P2E).p2.event !== undefined;
+function isP2E(a: GP_JSON.Assertion): a is GP_JSON.P2E {
+   return (a as GP_JSON.P2E).p1.person !== undefined &&
+          (a as GP_JSON.P2E).p2.event !== undefined;
 }
 
-function isP2C(a: JSON.Assertion): a is JSON.P2C {
-   return (a as JSON.P2C).p1.person !== undefined &&
-          (a as JSON.P2C).p2.char !== undefined;
+function isP2C(a: GP_JSON.Assertion): a is GP_JSON.P2C {
+   return (a as GP_JSON.P2C).p1.person !== undefined &&
+          (a as GP_JSON.P2C).p2.char !== undefined;
 }
 
-function isP2P(a: JSON.Assertion): a is JSON.P2P {
-   return (a as JSON.P2P).p1.person !== undefined &&
-          (a as JSON.P2P).p2.person !== undefined;
+function isP2P(a: GP_JSON.Assertion): a is GP_JSON.P2P {
+   return (a as GP_JSON.P2P).p1.person !== undefined &&
+          (a as GP_JSON.P2P).p2.person !== undefined;
 }
 
-export function assertionFromJSON(a: JSON.Assertion): Assertion {
+export function assertionFromJSON(a: GP_JSON.Assertion): Assertion {
    if (isP2E(a)) {
       return p2eFromJSON(a);
    } else if (isP2C(a)) {
@@ -160,21 +159,21 @@ export function assertionFromJSON(a: JSON.Assertion): Assertion {
    } else if (isP2P(a)) {
       return p2pFromJSON(a);
    } else {
-      return p2gFromJSON(a as JSON.P2G);
+      return p2gFromJSON(a as GP_JSON.P2G);
    }
 }
 
 export interface AssertionEntitiesJSON {
-   events?: JSON.Event[];  // All events mentioned in the asserts
-   persons?: JSON.Person[];
-   places?: JSON.Place[];
-   researchers?: JSON.Researcher[];
-   sources?: JSON.Source[];
+   events?: GP_JSON.Event[];  // All events mentioned in the asserts
+   persons?: GP_JSON.Person[];
+   places?: GP_JSON.Place[];
+   researchers?: GP_JSON.Researcher[];
+   sources?: GP_JSON.Source[];
 }
 
 interface JSONPersonDetails extends AssertionEntitiesJSON {
    person: BasePerson;
-   asserts: JSON.Assertion[];
+   asserts: GP_JSON.Assertion[];
 }
 
 export interface AssertionEntities {

@@ -1,8 +1,9 @@
 import { actionCreator } from '../Store/Actions';
-import { ColorScheme, WHITE } from '../Store/ColorTheme';
+import { WHITE } from '../Store/ColorTheme';
+import * as GP_JSON from '../Server/JSON';
 
 export interface RadialSettings {
-   colors: ColorScheme;
+   colors: GP_JSON.ColorSchemeId;
    showText: boolean;
 
    sameStyleForText: boolean;
@@ -15,7 +16,7 @@ export interface RadialSettings {
 }
 
 export const defaultRadial: RadialSettings = {
-   colors: WHITE,
+   colors: WHITE.id,
    showText: true,
    sameStyleForText: false,
    generations: 6,

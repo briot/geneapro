@@ -1,6 +1,6 @@
 import { call, put, select, takeEvery, CallEffect, ForkEffect } from 'redux-saga/effects';
 import actionCreatorFactory, { Action } from 'typescript-fsa';
-import { AppState } from '../Store/State';
+import { AppState, GPDispatch } from '../Store/State';
 
 export const actionCreator = actionCreatorFactory('GP' /* prefix */);
 
@@ -12,13 +12,12 @@ export const allSagas: ForkEffect[] = [];
 
 /**
  * Create a new set of async actions.
- *   <result>.request: the action you should dispatch. It will be
- *     intercepted by redux-saga, and perform the async action
+ *   <result>.execute: calls this subprogram to execute the action.
  *   <result>.started: emitted just before the async action starts.
  *   <result>.done: emitted when the async action terminates with
  *     success.
  *   <result>.failed: emitted when the async action failed.
- *   
+ *
  *  @param alreadyKnown
  *     If given, it will be run before the action even starts, and can
  *     be used to check the current state to make sure we don't already
@@ -57,12 +56,16 @@ export function createAsyncAction<Params, Result>(
       }
    }
 
+   function execute(dispatch: GPDispatch, p: Params) {
+      dispatch(request(p));
+   }
+
    allSagas.push(takeEvery(request.type, perform));
 
    return {
       started: actions.started,
       done: actions.done,
       failed: actions.failed,
-      request: request,
+      execute,
    };
 }

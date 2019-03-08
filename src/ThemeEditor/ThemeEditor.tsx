@@ -5,13 +5,9 @@ import { Button, Checkbox, CheckboxProps,
          Form, Header, Input, InputProps,
          Select } from 'semantic-ui-react';
 import Page from '../Page';
-import { ColorScheme } from '../Store/ColorTheme';
 import { AppState, GPDispatch } from '../Store/State';
 import * as GP_JSON from '../Server/JSON';
-import { fetchThemeListFromServer, fetchThemeRulesFromServer,
-         RuleList, NestedThemeRule, ThemeRule, RuleParts,
-         OperatorString, OperatorList,
-         OperatorValue } from '../Server/Themes';
+import * as ServerThemes from '../Server/Themes';
 import './ThemeEditor.css';
 
 const DO_NOTHING_OP = {
@@ -20,7 +16,7 @@ const DO_NOTHING_OP = {
    doc: 'Ignorw this attribute',
 };
 
-const DEFAULT_RULE: ThemeRule = {
+const DEFAULT_RULE: ServerThemes.ThemeRule = {
    name: '',
    type: 'default',
    fill: 'none',
@@ -31,13 +27,13 @@ const DEFAULT_RULE: ThemeRule = {
    children: [],
 };
 
-const NEW_NESTED_RULE: NestedThemeRule = {
+const NEW_NESTED_RULE: ServerThemes.NestedThemeRule = {
    type: 'event',
    parts: {},
    children: [],
 }
 
-const NEW_RULE: ThemeRule = {
+const NEW_RULE: ServerThemes.ThemeRule = {
    ...NEW_NESTED_RULE,
    name: '',
    fill: 'none',
@@ -46,7 +42,7 @@ const NEW_RULE: ThemeRule = {
    fontWeight: 'normal',
 };
 
-const NEW_THEME: ColorScheme = {name: 'New Theme', id: -1};
+const NEW_THEME: GP_JSON.ColorScheme = {name: 'New Theme', id: -1};
 
 const FONT_WEIGHT_OPTIONS = [
     {key: 0, value: 'normal', text: 'normal'},
@@ -61,9 +57,9 @@ interface AllOptions {
 }
 
 interface RuleProps {
-   rule: NestedThemeRule;
+   rule: ServerThemes.NestedThemeRule;
    ops: AllOptions;
-   onChange: (r: NestedThemeRule) => void;
+   onChange: (r: ServerThemes.NestedThemeRule) => void;
 }
 
 /**
@@ -81,13 +77,13 @@ interface FieldOperatorValueProps extends RuleProps {
    asPerson?: boolean;
    // If true, the value is a person. Ignored if choices is set.
 
-   forcedOperator?: OperatorString;
+   forcedOperator?: GP_JSON.OperatorString;
    // If specified, the operator cannot be configured by users
 }
 const FieldOperatorValue = (p: FieldOperatorValueProps) => {
    const old = p.rule.parts[p.field];
    const onChange = React.useCallback(
-      (v: OperatorValue) => {
+      (v: ServerThemes.OperatorValue) => {
          const parts = {...p.rule.parts, [p.field]: v};
 
          if (v.operator == DO_NOTHING_OP.op) {
@@ -211,7 +207,7 @@ const RuleDescendant = (p: RuleProps) => RuleWithRef(p, 'Descendant of');
  */
 
 const RuleWithSubs = (p: RuleProps, label: string) => {
-   const onChange = (children: NestedThemeRule[]) =>
+   const onChange = (children: ServerThemes.NestedThemeRule[]) =>
       p.onChange({...p.rule, children});
    const onAddRule = () =>
       p.onChange({...p.rule, children: [...p.rule.children, NEW_NESTED_RULE]});
@@ -417,8 +413,8 @@ interface ColorEditorProps {
    label: string;
    title?: string;
    field: 'fill' | 'color' | 'stroke';
-   rule: ThemeRule;
-   onChange: (r: Partial<ThemeRule>) => void;
+   rule: ServerThemes.ThemeRule;
+   onChange: (r: Partial<ServerThemes.ThemeRule>) => void;
 }
 const ColorEditor = (p: ColorEditorProps) => {
    const onColorChange = React.useCallback(
@@ -461,14 +457,14 @@ const ColorEditor = (p: ColorEditorProps) => {
  */
 
 interface NestedRuleEditorProps {
-   rule: NestedThemeRule;
+   rule: ServerThemes.NestedThemeRule;
    ops: AllOptions;
-   onChange: (r: NestedThemeRule) => void;
+   onChange: (r: ServerThemes.NestedThemeRule) => void;
 }
 const NestedRuleEditor = (p: NestedRuleEditorProps) => {
    const onTypeChange = (e: any, d: DropdownProps) =>
       p.onChange({type: d.value as string, parts: {}, children: []});
-   const onPartsChange = (r: NestedThemeRule) => p.onChange(r);
+   const onPartsChange = (r: ServerThemes.NestedThemeRule) => p.onChange(r);
    const comp = RULE_TYPES[p.rule.type];
 
    return (
@@ -502,9 +498,9 @@ const NestedRuleEditor = (p: NestedRuleEditorProps) => {
  */
 
 interface RuleEditorProps {
-   rule: ThemeRule;
+   rule: ServerThemes.ThemeRule;
    ops: AllOptions;
-   onChange: (rules: Partial<ThemeRule>) => void;
+   onChange: (rules: Partial<ServerThemes.ThemeRule>) => void;
 }
 const RuleEditor = (p: RuleEditorProps) => {
    const onNameChange = (e: any, d: InputProps) => p.onChange({name: d.value});
@@ -513,7 +509,8 @@ const RuleEditor = (p: RuleEditorProps) => {
       p.onChange({stroke: d.value});
    const onFWChange = (e: any, d: DropdownProps) =>
       p.onChange({fontWeight: d.value as GP_JSON.FontWeight});
-   const onNestedRuleChange = (r: NestedThemeRule) => p.onChange(r);
+   const onNestedRuleChange = (r: ServerThemes.NestedThemeRule) =>
+      p.onChange(r);
 
    return (
       <div className="rule">
@@ -577,7 +574,7 @@ const RuleEditor = (p: RuleEditorProps) => {
  * Possibility to add new rules, remove some, reorder them,...
  */
 
-interface RuleListEditorProps<T extends NestedThemeRule> {
+interface RuleListEditorProps<T extends ServerThemes.NestedThemeRule> {
    rules: T[];
    ops: AllOptions;
    onChange: (rules: T[]) => void;
@@ -589,7 +586,7 @@ interface RuleListEditorProps<T extends NestedThemeRule> {
    }>;
 }
 
-const RuleListEditor = <T extends NestedThemeRule>(
+const RuleListEditor = <T extends ServerThemes.NestedThemeRule>(
    p: RuleListEditorProps<T>
 ) => {
    return (
@@ -619,21 +616,17 @@ const RuleListEditor = <T extends NestedThemeRule>(
 
 interface ThemeEditorProps {
    dispatch: GPDispatch;
+   metadata: GP_JSON.Metadata;
 }
 
 const ThemeEditorConnected = (p: ThemeEditorProps) => {
-   const [themeList, setThemeList] = React.useState<ColorScheme[]>([]);
+   const [themeList, setThemeList] = React.useState<GP_JSON.ColorScheme[]>([]);
    const [selected, setSelected] = React.useState(-1);
    const [modified, setModified] = React.useState(false);
    const [name, setName] = React.useState('');
-   const [rules, setRules] = React.useState<ThemeRule[]>([]);
+   const [rules, setRules] = React.useState<ServerThemes.ThemeRule[]>([]);
    const [ops, setOps] = React.useState<AllOptions>({
-      operators: [],
-      char_types: [],
-      event_types: [],
-      event_type_roles: [],
-   });
-
+      operators: [], char_types: [], event_types: [], event_type_roles: []});
    const selectTheme = (index: number) => {
       for (const t of themeList) {
          if (t.id == index) {
@@ -646,35 +639,39 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
       setSelected(index);
    };
 
-   const loadThemeList = () => {
-      setModified(false);
-      fetchThemeListFromServer().then(d => {
-         setThemeList([NEW_THEME].concat(d));
-         selectTheme(0);
-      });
-   };
+   React.useEffect(
+      () => {
+         setThemeList([...p.metadata.themes, NEW_THEME]);
+         setSelected(0);
+      },
+      [p.metadata.themes]);
 
    const loadRuleList = () => {
       if (themeList.length == 0 || selected == -1) {
          return;
       }
 
-      fetchThemeRulesFromServer(selected).then((d: RuleList) => {
-         //  ??? These should be a different query, we don't need to resend
-         //  them every time.
+      ServerThemes.fetchThemeRulesFromServer(selected)
+      .then((d: ServerThemes.RuleList) => {
+         setRules(d.rules.length === 0 ? [DEFAULT_RULE] : d.rules);
+      })
+   };
+
+   React.useEffect(
+      () => {
          const typeToName: {[id:number]: string} = {};
-         const operators = [DO_NOTHING_OP, ...d.operators].map(s => ({
+         const operators = [DO_NOTHING_OP, ...p.metadata.theme_operators].map(s => ({
             key: s.op,
             value: s.op,
             text: s.label,
             content: <Header content={s.label} subheader={s.doc} />
          }));
-         const char_types = d.characteristic_types.map(s => ({
+         const char_types = p.metadata.characteristic_types.map(s => ({
             key: s.id,
             value: s.id,
             text: s.name,
          }));
-         const event_types = d.event_types.map(s => {
+         const event_types = p.metadata.event_types.map(s => {
             typeToName[s.id] = s.name;
             return {
                key: s.id,
@@ -682,7 +679,7 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                text: s.name,
             };
          });
-         const event_type_roles = d.event_type_roles.map(s => {
+         const event_type_roles = p.metadata.event_type_roles.map(s => {
             const typ = s.type_id === null ?  'all' : typeToName[s.type_id];
             const sub = `for ${typ} events`;
             return {
@@ -692,13 +689,10 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                content: <Header content={s.name} subheader={sub} />
             };
          });
-
-         setRules(d.rules.length === 0 ? [DEFAULT_RULE] : d.rules);
          setOps({operators, char_types, event_types, event_type_roles});
-      })
-   };
+      },
+      [p.metadata]);
 
-   React.useEffect(loadThemeList, []);
    React.useEffect(loadRuleList, [themeList, selected]);
 
    const onChange = React.useCallback(
@@ -712,7 +706,7 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
       },
       [setName]);
 
-   const onRulesChange = (rules: ThemeRule[]) => {
+   const onRulesChange = (rules: ServerThemes.ThemeRule[]) => {
       setModified(true);
       setRules(rules);
    };
@@ -721,7 +715,10 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
       setModified(true);
       setRules([...rules, NEW_RULE]);
    };
-   const onCancel = () => loadThemeList();
+   const onCancel = () => {
+      loadRuleList();
+      setModified(false);
+   };
 
    const onSave = () => {
       window.console.log(
@@ -785,7 +782,9 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
 };
 
 const ThemeEditor = connect(
-   (state: AppState) => ({}),
+   (state: AppState) => ({
+      metadata: state.metadata,
+   }),
    (dispatch: GPDispatch) => ({
       dispatch,
    }),

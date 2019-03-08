@@ -9,10 +9,10 @@ import { fetchSourcesFromServer, FetchSourcesResult,
          fetchSourceDetailsFromServer, FetchSourceDetailsResult } from '../Server/Source';
 import { fetchQuiltsFromServer, QuiltsResult } from '../Server/Quilts';
 import { fetchCountFromServer, JSONCount } from '../Server/Stats';
+import * as GP_JSON from '../Server/JSON';
 import { AppState, DatabaseObjectsCount } from '../Store/State';
 import { PersonSet } from '../Store/Person';
 import { allSagas, createAsyncAction } from '../Store/Actions';
-import { ColorScheme } from '../Store/ColorTheme';
 import { addEvents, GenealogyEventSet } from '../Store/Event';
 import { ChildrenAndParentsSet } from '../Store/Pedigree';
 
@@ -24,7 +24,7 @@ export type fetchPedigreeParams = {
    decujus: number,
    ancestors: number,
    descendants: number,
-   theme: ColorScheme,
+   theme: GP_JSON.ColorSchemeId,
 };
 export type fetchPedigreeResult = {
    persons: PersonSet;
@@ -38,7 +38,7 @@ function _hasPedigree(p: fetchPedigreeParams, state: AppState) {
 
            // All these persons we have already preloaded might not have
            // the right theme
-           (p.theme.id === state.lastFetchedTheme || p.theme.id < 0)
+           (p.theme === state.lastFetchedTheme || p.theme < 0)
    );
 }
 function* _fetchPedigree(p: fetchPedigreeParams) {
@@ -63,6 +63,27 @@ function* _fetchQuilts(p: fetchQuiltsParams) {
 }
 export const fetchQuilts = createAsyncAction<fetchQuiltsParams, fetchQuiltsResult>(
    'DATA/QUILTS', _fetchQuilts);
+
+/**
+ * Async Action: fetch metadata from server
+ */
+interface fetchMetadataParams {
+   force?: boolean;
+}
+function* fetchMetadataFromServer() {
+   const resp = yield window.fetch('/data/metadata');
+   const data: GP_JSON.Metadata = yield resp.json();
+   return data;
+}
+function* _fetchMetaData(p: fetchMetadataParams) {
+   return yield call(fetchMetadataFromServer);
+}
+function _hasMetadata(p: fetchMetadataParams, state: AppState) {
+   return (!p.force && state.metadata.event_types.length > 0);
+}
+export const fetchMetadata = createAsyncAction<
+   fetchMetadataParams, GP_JSON.Metadata
+>('DATA/META', _fetchMetaData, _hasMetadata);
 
 /**
  * Async Action: fetch all places from the server
@@ -93,7 +114,7 @@ export const fetchSources = createAsyncAction<fetchSourcesParams, FetchSourcesRe
  */
 
 export type fetchPersonsParams = {
-   colors: ColorScheme,
+   colors: GP_JSON.ColorSchemeId,
 };
 function* _fetchPersons(p: fetchPersonsParams) {
    const persons = yield call(fetchPersonsFromServer, {colors: p.colors});
