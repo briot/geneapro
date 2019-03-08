@@ -58,7 +58,7 @@ class Rule(GeneaProveModel):
     def __str__(self):
         return "(Rule name=%s)" % self.name
 
-    def as_json(self):
+    def to_json(self):
         return {
             'name': self.name,
             'type': self.type,
@@ -66,9 +66,9 @@ class Rule(GeneaProveModel):
             'color': self.style_color,
             'stroke': self.style_stroke,
             'fontWeight': self.style_font_weight,
-            'parts': {p.field: {operator: p.operator, value: p.value}
+            'parts': {p.field: {'operator': p.operator, 'value': p.value}
                       for p in self.parts.all()},
-            'children': self.children.objects.all(),
+            'children': self.children.all(),
         }
 
     def as_rule_checker(self):

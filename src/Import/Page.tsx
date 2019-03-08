@@ -8,7 +8,6 @@ import { importGEDCOM } from '../Server/Import';
 import './Page.css';
 
 interface ImportPageProps {
-   csrf_token: string;
 }
 
 interface ImportPageState {
@@ -16,11 +15,11 @@ interface ImportPageState {
    errorMsg?: string;
 }
 
-class ImportPageConnected extends React.PureComponent<ImportPageProps, ImportPageState> {
+class ImportPage extends React.PureComponent<ImportPageProps, ImportPageState> {
    state: ImportPageState = {};
 
    doUpload = (files: File[]) => {
-      return importGEDCOM(files, this.props.csrf_token).then(res => {
+      return importGEDCOM(files).then(res => {
          this.setState({errorMsg: res.error, success: res.success});
          return res;
       });
@@ -89,11 +88,5 @@ class ImportPageConnected extends React.PureComponent<ImportPageProps, ImportPag
       );
    }
 }
-
-const ImportPage = connect(
-   (state: AppState) => ({
-      csrf_token: state.csrf,
-   }),
-)(ImportPageConnected);
 
 export default ImportPage;

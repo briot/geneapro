@@ -31,7 +31,7 @@ class PedigreeData(JSONView):
 
         max_levels = int(params.get("gens", 5))
         last_descendant_known = int(params.get("desc_known", -1))
-        theme_id = params.get("theme", None)
+        theme_id = int(params.get("theme", None))
 
         # The number of generations for which we compute the children.
         maxdepthDescendants = int(params.get("descendant_gens", 1))

@@ -35,7 +35,6 @@ export interface AppState {
    events: GenealogyEventSet; // all known events
    sources: SourceSet;
    history: HistoryItem[];    // id of persons recently visited
-   csrf: string;              // CSRF token for Django
    researchers: ResearcherSet;
 
    lastFetchedTheme: number,

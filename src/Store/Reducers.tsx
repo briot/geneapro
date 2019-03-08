@@ -20,6 +20,7 @@ import { defaultPersonaList,
 import { defaultRadial, changeRadialSettings } from '../Store/Radial';
 import { defaultStats, changeStatsSettings } from '../Store/Stats';
 import { defaultQuilts, changeQuiltsSettings } from '../Store/Quilts';
+import * as Server from '../Server/Post';
 
 /**
  * Merge existing data for persons with new data read from an action
@@ -72,7 +73,6 @@ export function rootReducer(
       history: [],
       researchers: {},
       count: undefined,
-      csrf: '',
       lastFetchedTheme: -1,
       metadata: {
          characteristic_types: [],
@@ -277,21 +277,19 @@ export function rootReducer(
 
    } else if (isType(action, rehydrate)) {
 
-      let csrf: string = '';
       const name = 'csrftoken=';
       if (document.cookie) {
          const cookies = document.cookie.split(';');
          for (const c of cookies) {
             if (c.trim().startsWith(name)) {
                const val = c.substring(name.length);
-               csrf = val;
+               Server.setCsrf(val);
                break;
             }
          }
       }
 
       return {...state,
-              csrf: csrf,
               fanchart: {...state.fanchart,
                          ...action.payload.fanchart,
                          loading: false},

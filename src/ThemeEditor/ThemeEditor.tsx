@@ -6,6 +6,7 @@ import { Button, Checkbox, CheckboxProps,
          Select } from 'semantic-ui-react';
 import Page from '../Page';
 import { AppState, GPDispatch } from '../Store/State';
+import { fetchMetadata } from '../Store/Sagas';
 import * as GP_JSON from '../Server/JSON';
 import * as ServerThemes from '../Server/Themes';
 import { createSelector } from '../Hooks';
@@ -108,6 +109,11 @@ const FieldOperatorValue = (p: FieldOperatorValueProps) => {
       (e: any, data: {value?: string|number|boolean|(string|number|boolean)[]|undefined}) =>
          onChange({operator: old.operator, value: data.value as string}),
       [onChange]);
+
+   if (!old && p.forcedOperator) {
+      onOpChange(0, {value: p.forcedOperator});
+      return null;
+   }
 
    // ??? Editing multiple values when operator is "in"
 
@@ -663,31 +669,33 @@ interface ThemeEditorProps {
 
 const ThemeEditorConnected = (p: ThemeEditorProps) => {
    const [themeList, setThemeList] = React.useState<GP_JSON.ColorScheme[]>([]);
-   const [selected, setSelected] = React.useState(-1);
+   const [selected, setSelected] = React.useState(0);
    const [modified, setModified] = React.useState(false);
    const [name, setName] = React.useState('');
    const [rules, setRules] = React.useState<ServerThemes.ThemeRule[]>([]);
    const ops = useMetadataToDropdown(p.metadata); // memoized
 
-   const selectTheme = (index: number) => {
-      for (const t of themeList) {
-         if (t.id == index) {
-            setName(t.name);
-            break;
+   React.useEffect(
+      () => {
+         for (const t of themeList) {
+            if (t.id == selected) {
+               setName(t.name);
+               break;
+            }
          }
-      }
-      setSelected(index); // Will automatically reload rules from server
-   };
+      },
+      [selected, themeList]);
 
    React.useEffect(
       () => {
          setThemeList([...p.metadata.themes, NEW_THEME]);
-         setSelected(0);
+         setSelected(selected);
       },
       [p.metadata.themes]);
 
    const loadRuleList = () => {
       if (themeList.length == 0 || selected == -1) {
+         setRules([DEFAULT_RULE]);
          return;
       }
 
@@ -698,8 +706,12 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
    };
    React.useEffect(loadRuleList, [themeList, selected]);
 
+   React.useEffect(
+      () => fetchMetadata.execute(p.dispatch, {}),
+      []);
+
    const onChange = React.useCallback(
-      (_: any, data: DropdownProps) => selectTheme(data.data as number),
+      (_: any, data: DropdownProps) => setSelected(Number(data.value)),
       [themeList]);
 
    const onNameChange = React.useCallback(
@@ -724,10 +736,11 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
    };
 
    const onSave = () => {
-      window.console.log(
-         `/data/rulelist/set?theme=${selected}&name=${name}`,
-         JSON.stringify(rules)
-      );
+      // Reload list of themes
+      ServerThemes.saveThemeOnServer(selected, name, rules).then(() => {
+         setModified(false);
+         fetchMetadata.execute(p.dispatch, {force: true});
+      });
    };
 
    const main = (
@@ -771,6 +784,7 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                </Button>
             </Button.Group>
          }
+         <p>Missing: reordering rules, multiple values for "in" operator, deleting rules</p>
       </div>
    );
 

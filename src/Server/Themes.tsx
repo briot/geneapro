@@ -1,4 +1,5 @@
 import * as GP_JSON from '../Server/JSON';
+import * as Server from '../Server/Post';
 
 export interface OperatorValue {
    operator: GP_JSON.OperatorString,
@@ -30,7 +31,17 @@ export interface RuleList {
 }
 
 export function fetchThemeRulesFromServer(theme_id: number) {
-   return window.fetch(`/data/rulelist?theme=${theme_id}`)
+   return window.fetch(`/data/theme/${theme_id}/rules`)
       .then(r => r.json())
       .then((raw: RuleList) => raw);
+}
+
+export function saveThemeOnServer(
+   theme_id: number, name: string, rules: ThemeRule[]
+) {
+   const data = {
+      name: name,
+      rules: JSON.stringify(rules)
+   };
+   return Server.post(`/data/theme/${theme_id}/save`, JSON.stringify(data));
 }
