@@ -8,6 +8,7 @@ import Page from '../Page';
 import { AppState, GPDispatch } from '../Store/State';
 import * as GP_JSON from '../Server/JSON';
 import * as ServerThemes from '../Server/Themes';
+import { createSelector } from '../Hooks';
 import './ThemeEditor.css';
 
 const DO_NOTHING_OP = {
@@ -50,8 +51,8 @@ const FONT_WEIGHT_OPTIONS = [
 ];
 
 interface AllOptions {
-   operators: DropdownItemProps[];
-   char_types: DropdownItemProps[];
+   theme_operators: DropdownItemProps[];
+   characteristic_types: DropdownItemProps[];
    event_types: DropdownItemProps[];
    event_type_roles: DropdownItemProps[];
 }
@@ -119,7 +120,7 @@ const FieldOperatorValue = (p: FieldOperatorValueProps) => {
                <Dropdown
                   defaultValue={old ? old.operator : DO_NOTHING_OP.op}
                   selection={true}
-                  options={p.ops.operators}
+                  options={p.ops.theme_operators}
                   placeholder="How to compare values"
                   title={p.title}
                   onChange={onOpChange}
@@ -303,7 +304,7 @@ const RuleCharacteristic = (p: RuleProps) => {
             label="Characteristic"
             field="typ"
             title="Which characteristic to test"
-            choices={p.ops.char_types}
+            choices={p.ops.characteristic_types}
          />
          <FieldOperatorValue
             {...p}
@@ -609,6 +610,47 @@ const RuleListEditor = <T extends ServerThemes.NestedThemeRule>(
 };
 
 /**
+ * Convert the metadata lists to dropdown items, to help create GUI
+ * selectors for them
+ */
+
+const metadataToDropdown = (p: GP_JSON.Metadata): AllOptions => {
+   const typeToName: {[id: number]: string} = {};
+   const theme_operators = [DO_NOTHING_OP, ...p.theme_operators].map(s => ({
+      key: s.op,
+      value: s.op,
+      text: s.label,
+      content: <Header content={s.label} subheader={s.doc} />
+   }));
+   const characteristic_types = p.characteristic_types.map(s => ({
+      key: s.id,
+      value: s.id,
+      text: s.name,
+   }));
+   const event_types = p.event_types.map(s => {
+      typeToName[s.id] = s.name;
+      return {
+         key: s.id,
+         value: s.id,
+         text: s.name,
+      };
+   });
+   const event_type_roles = p.event_type_roles.map(s => {
+      const typ = s.type_id === null ?  'all' : typeToName[s.type_id];
+      const sub = `for ${typ} events`;
+      return {
+         key: s.id,
+         value: s.id,
+         text: s.name,
+         content: <Header content={s.name} subheader={sub} />
+      };
+   });
+   return {theme_operators, characteristic_types,
+           event_types, event_type_roles};
+};
+const useMetadataToDropdown = createSelector(metadataToDropdown);
+
+/**
  * Theme Editor
  * Editing a whole theme, its name and list of rules.
  * This lets you chose which theme to edit.
@@ -625,8 +667,8 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
    const [modified, setModified] = React.useState(false);
    const [name, setName] = React.useState('');
    const [rules, setRules] = React.useState<ServerThemes.ThemeRule[]>([]);
-   const [ops, setOps] = React.useState<AllOptions>({
-      operators: [], char_types: [], event_types: [], event_type_roles: []});
+   const ops = useMetadataToDropdown(p.metadata); // memoized
+
    const selectTheme = (index: number) => {
       for (const t of themeList) {
          if (t.id == index) {
@@ -634,9 +676,7 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
             break;
          }
       }
-
-      // Will automatically reload rules from server
-      setSelected(index);
+      setSelected(index); // Will automatically reload rules from server
    };
 
    React.useEffect(
@@ -656,43 +696,6 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
          setRules(d.rules.length === 0 ? [DEFAULT_RULE] : d.rules);
       })
    };
-
-   React.useEffect(
-      () => {
-         const typeToName: {[id:number]: string} = {};
-         const operators = [DO_NOTHING_OP, ...p.metadata.theme_operators].map(s => ({
-            key: s.op,
-            value: s.op,
-            text: s.label,
-            content: <Header content={s.label} subheader={s.doc} />
-         }));
-         const char_types = p.metadata.characteristic_types.map(s => ({
-            key: s.id,
-            value: s.id,
-            text: s.name,
-         }));
-         const event_types = p.metadata.event_types.map(s => {
-            typeToName[s.id] = s.name;
-            return {
-               key: s.id,
-               value: s.id,
-               text: s.name,
-            };
-         });
-         const event_type_roles = p.metadata.event_type_roles.map(s => {
-            const typ = s.type_id === null ?  'all' : typeToName[s.type_id];
-            const sub = `for ${typ} events`;
-            return {
-               key: s.id,
-               value: s.id,
-               text: s.name,
-               content: <Header content={s.name} subheader={sub} />
-            };
-         });
-         setOps({operators, char_types, event_types, event_type_roles});
-      },
-      [p.metadata]);
-
    React.useEffect(loadRuleList, [themeList, selected]);
 
    const onChange = React.useCallback(

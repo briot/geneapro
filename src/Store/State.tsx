@@ -49,7 +49,7 @@ export type GPDispatch = Redux.Dispatch<AppState>;
 export type GPStore = Redux.Store<AppState>;
 
 /**
- * Selectors
+ * Given an id, returns the name of the corresponding theme.
  */
 export const themeNameGetter = (s: AppState) =>
    (id: GP_JSON.ColorSchemeId): string => {
