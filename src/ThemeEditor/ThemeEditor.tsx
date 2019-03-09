@@ -21,7 +21,7 @@ const DO_NOTHING_OP = {
 const DEFAULT_RULE: ServerThemes.ThemeRule = {
    name: '',
    type: 'default',
-   fill: 'none',
+   fill: null,
    color: '#333333',
    stroke: '#000000',
    fontWeight: 'normal',
@@ -38,7 +38,7 @@ const NEW_NESTED_RULE: ServerThemes.NestedThemeRule = {
 const NEW_RULE: ServerThemes.ThemeRule = {
    ...NEW_NESTED_RULE,
    name: '',
-   fill: 'none',
+   fill: null,
    color: '#333333',
    stroke: '#000000',
    fontWeight: 'normal',
@@ -168,8 +168,8 @@ const FieldOperatorValue = (p: FieldOperatorValueProps) => {
 
 const RuleAlive = (p: RuleProps) => {
    const options = [
-      {key: 0, value: 'Y', text: 'Currently alive'},
-      {key: 1, value: 'N', text: 'Dead, or more than 110 year old'},
+      {key: 0, value: "true", text: 'Currently alive'},
+      {key: 1, value: "false", text: 'Dead, or more than 110 year old'},
    ];
    return (
       <>
@@ -214,10 +214,15 @@ const RuleDescendant = (p: RuleProps) => RuleWithRef(p, 'Descendant of');
  */
 
 const RuleWithSubs = (p: RuleProps, label: string) => {
-   const onChange = (children: ServerThemes.NestedThemeRule[]) =>
-      p.onChange({...p.rule, children});
-   const onAddRule = () =>
-      p.onChange({...p.rule, children: [...p.rule.children, NEW_NESTED_RULE]});
+   const onChange = React.useCallback(
+      (children: ServerThemes.NestedThemeRule[]) =>
+         p.onChange({...p.rule, children}),
+      [p.onChange, p.rule]);
+   const onAddRule = React.useCallback(
+      () =>
+         p.onChange(
+            {...p.rule, children: [...p.rule.children, NEW_NESTED_RULE]}),
+      [p.onChange, p.rule]);
 
    if (p.rule.children.length == 0) {
       onAddRule();
@@ -413,6 +418,52 @@ const RULE_TYPE_OPTIONS = Object.entries(RULE_TYPES).map(([id, r]) =>
     }));
 
 /**
+ * Editing fontWeight
+ */
+
+interface FontWeightEditorProps {
+   label: string;
+   rule: ServerThemes.ThemeRule;
+   onChange: (r: Partial<ServerThemes.ThemeRule>) => void;
+}
+const FontWeightEditor = (p: FontWeightEditorProps) => {
+   const onValueChange = React.useCallback(
+      (e: any, d: DropdownProps) =>
+         p.onChange({fontWeight: d.value as GP_JSON.FontWeight}),
+      [p.onChange]);
+   const toggleNone = React.useCallback(
+      (e: any, d: CheckboxProps) =>
+         p.onChange({fontWeight: d.checked ? 'normal' : null}),
+      [p.onChange]);
+   return (
+      <span className='color'>
+         <Checkbox
+            checked={p.rule.fontWeight !== null}
+            onChange={toggleNone}
+            label={p.label}
+            style={{marginRight: 5}}
+         />
+         {
+            // Complex markup is so that checking/unchecking the checkbox
+            // properly resets the <input> value to #000
+            p.rule.fontWeight === null ? (
+               <div className="ui input">
+                  <input type="color" disabled={true}/>
+               </div>
+            ) : (
+               <Dropdown
+                  defaultValue={p.rule.fontWeight || ''}
+                  selection={true}
+                  options={FONT_WEIGHT_OPTIONS}
+                  onChange={onValueChange}
+               />
+            )
+         }
+      </span>
+   );
+};
+
+/**
  * Editing colors
  */
 
@@ -429,12 +480,12 @@ const ColorEditor = (p: ColorEditorProps) => {
       [p.onChange]);
    const toggleNone = React.useCallback(
       (e: any, d: CheckboxProps) =>
-         p.onChange({[p.field]: d.checked ? '#000000' : 'none'}),
+         p.onChange({[p.field]: d.checked ? '#000000' : null}),
       [p.onChange]);
    return (
       <span className='color'>
          <Checkbox
-            checked={p.rule[p.field] !== 'none'}
+            checked={p.rule[p.field] !== null}
             onChange={toggleNone}
             label={p.label}
             style={{marginRight: 5}}
@@ -442,7 +493,7 @@ const ColorEditor = (p: ColorEditorProps) => {
          {
             // Complex markup is so that checking/unchecking the checkbox
             // properly resets the <input> value to #000
-            p.rule[p.field] === 'none' ? (
+            p.rule[p.field] === null ? (
                <div className="ui input">
                   <input type="color" disabled={true}/>
                </div>
@@ -469,9 +520,13 @@ interface NestedRuleEditorProps {
    onChange: (r: ServerThemes.NestedThemeRule) => void;
 }
 const NestedRuleEditor = (p: NestedRuleEditorProps) => {
-   const onTypeChange = (e: any, d: DropdownProps) =>
-      p.onChange({type: d.value as string, parts: {}, children: []});
-   const onPartsChange = (r: ServerThemes.NestedThemeRule) => p.onChange(r);
+   const onTypeChange = React.useCallback(
+      (e: any, d: DropdownProps) =>
+         p.onChange({type: d.value as string, parts: {}, children: []}),
+      [p.onChange]);
+   const onPartsChange = React.useCallback(
+      (r: ServerThemes.NestedThemeRule) => p.onChange(r),
+      [p.onChange]);
    const comp = RULE_TYPES[p.rule.type];
 
    return (
@@ -510,14 +565,18 @@ interface RuleEditorProps {
    onChange: (rules: Partial<ServerThemes.ThemeRule>) => void;
 }
 const RuleEditor = (p: RuleEditorProps) => {
-   const onNameChange = (e: any, d: InputProps) => p.onChange({name: d.value});
-   const onFillChange = (e: any, d: InputProps) => p.onChange({fill: d.value});
-   const onStrokeChange = (e: any, d: InputProps) =>
-      p.onChange({stroke: d.value});
-   const onFWChange = (e: any, d: DropdownProps) =>
-      p.onChange({fontWeight: d.value as GP_JSON.FontWeight});
-   const onNestedRuleChange = (r: ServerThemes.NestedThemeRule) =>
-      p.onChange(r);
+   const onNameChange = React.useCallback(
+      (e: any, d: InputProps) => p.onChange({name: d.value}),
+      [p.onChange]);
+   const onFillChange = React.useCallback(
+      (e: any, d: InputProps) => p.onChange({fill: d.value}),
+      [p.onChange]);
+   const onStrokeChange = React.useCallback(
+      (e: any, d: InputProps) => p.onChange({stroke: d.value}),
+      [p.onChange]);
+   const onNestedRuleChange = React.useCallback(
+      (r: ServerThemes.NestedThemeRule) => p.onChange(r),
+      [p.onChange]);
 
    return (
       <div className="rule">
@@ -559,11 +618,10 @@ const RuleEditor = (p: RuleEditorProps) => {
                   onChange={p.onChange}
                   title="Fill color for shapes"
                />
-               <Dropdown
-                  defaultValue={p.rule.fontWeight}
-                  selection={true}
-                  options={FONT_WEIGHT_OPTIONS}
-                  onChange={onFWChange}
+               <FontWeightEditor
+                  label=''
+                  rule={p.rule}
+                  onChange={p.onChange}
                />
             </span>
          </div>
@@ -626,7 +684,6 @@ const metadataToDropdown = (p: GP_JSON.Metadata): AllOptions => {
       key: s.op,
       value: s.op,
       text: s.label,
-      content: <Header content={s.label} subheader={s.doc} />
    }));
    const characteristic_types = p.characteristic_types.map(s => ({
       key: s.id,
@@ -721,27 +778,30 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
       },
       [setName]);
 
-   const onRulesChange = (rules: ServerThemes.ThemeRule[]) => {
-      setModified(true);
-      setRules(rules);
-   };
+   const onRulesChange = React.useCallback(
+      (rules: ServerThemes.ThemeRule[]) => {
+         setModified(true);
+         setRules(rules);
+      },
+      []);
 
-   const onAddRule = () => {
-      setModified(true);
-      setRules([...rules, NEW_RULE]);
-   };
-   const onCancel = () => {
-      loadRuleList();
-      setModified(false);
-   };
+   const onAddRule = React.useCallback(
+      () => { setModified(true); setRules([...rules, NEW_RULE])},
+      []);
 
-   const onSave = () => {
-      // Reload list of themes
-      ServerThemes.saveThemeOnServer(selected, name, rules).then(() => {
-         setModified(false);
-         fetchMetadata.execute(p.dispatch, {force: true});
-      });
-   };
+   const onCancel = React.useCallback(
+      () => { loadRuleList(); setModified(false); },
+      []);
+
+   const onSave = React.useCallback(
+      () => {
+         // Reload list of themes
+         ServerThemes.saveThemeOnServer(selected, name, rules).then(() => {
+            setModified(false);
+            fetchMetadata.execute(p.dispatch, {force: true});
+         });
+      },
+      []);
 
    const main = (
       <div className="colortheme">
@@ -763,6 +823,11 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                style={{marginTop: 0}}
             />
          </div>
+         <p>
+            Rules are applied independently for each person. The styles of the
+            matching rules are then applied from top to bottom, and later rules
+            override the style set by earlier ones.
+         </p>
          <RuleListEditor
             rules={rules}
             ops={ops}

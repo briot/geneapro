@@ -1,5 +1,6 @@
 import datetime
 from geneaprove import models
+from .checks import Check_Success, Check_Exact
 
 __slots__ = ["RuleChecker"]
 
@@ -79,13 +80,20 @@ class RuleChecker(object, metaclass=_RuleMeta):
         """
         pass
 
+    def __str__(self):
+        return f"<{self.__class__.__name__} {self.id}>"
+
 class Alive(RuleChecker):
     """Check that the person is still alive"""
-    def __init__(self, *, alive=True, max_age=110, age=None, **kwargs):
+    def __init__(self, *, alive=None, max_age=110, age=None, **kwargs):
         super().__init__(**kwargs)
-        self.age = age   # a Check
-        self.alive = alive
+        self.age = age or Check_Success()
+        self.age.as_int()
+
         self.max_age = max_age
+
+        self.alive = alive or Check_Success()
+        self.alive.as_bool()
 
     def initial(self, person, main_id, precomputed, statuses):
         # If we have no birth date, we could assume it is at least 15 years
@@ -104,11 +112,15 @@ class Alive(RuleChecker):
             b_year = int(birth[0:4])
             alive = current_year - b_year < self.max_age
 
-            if self.age and not self.age.match(current_year - b_year):
+            if not self.age.match(current_year - b_year):
                 statuses[self.id][main_id] = False
                 return
 
-        statuses[self.id][main_id] = (alive == self.alive)
+        statuses[self.id][main_id] = self.alive.match(alive)
+
+    def __str__(self):
+        return (f"<Alive {self.id} age={self.age} alive={self.alive} "
+                f"max_age={self.max_age}>")
 
 
 class _Combine(RuleChecker):
@@ -179,32 +191,34 @@ class Or(_Combine):
 
 class KnownFather(RuleChecker):
     """Check whether the person has a known father"""
-    def __init__(self, known=True, **kwargs):
+    def __init__(self, known=None, **kwargs):
         super().__init__(**kwargs)
-        self.expected = known
+        self.known = known or Check_Success()
+        self.known.as_bool()
 
     def precompute(self, graph, decujus, precomputed):
         precomputed[self.id] = graph
 
     def initial(self, person, main_id, precomputed, statuses):
         graph = precomputed[self.id]
-        statuses[self.id][main_id] = (
-            bool(graph.fathers(person)) == self.expected)
+        statuses[self.id][main_id] = \
+            self.known.match(bool(graph.fathers(person)))
 
 
 class KnownMother(RuleChecker):
     """Check whether the person has a known mother"""
     def __init__(self, known=True, **kwargs):
         super().__init__(**kwargs)
-        self.expected = known
+        self.known = known or Check_Success()
+        self.known.as_bool()
 
     def precompute(self, graph, decujus, precomputed):
         precomputed[self.id] = graph
 
     def initial(self, person, main_id, precomputed, statuses):
         graph = precomputed[self.id]
-        statuses[self.id][main_id] = (
-            bool(graph.mothers(person)) == self.expected)
+        statuses[self.id][main_id] = \
+            self.known.match(bool(graph.mothers(person)))
 
 
 class Ancestor(RuleChecker):
@@ -215,7 +229,13 @@ class Ancestor(RuleChecker):
 
     def __init__(self, *, ref=None, **kwargs):
         super().__init__(**kwargs)
-        self.decujus = ref
+
+        if ref is None or isinstance(ref, int):
+            self.decujus = ref
+        elif isinstance(ref, Check_Exact):
+            self.decujus = int(ref.reference)
+        else:
+            raise Exception
 
     def precompute(self, graph, decujus, precomputed):
         ancestors = set()
@@ -243,7 +263,12 @@ class Descendant(RuleChecker):
 
     def __init__(self, *, ref=None, **kwargs):
         super().__init__(**kwargs)
-        self.decujus = ref
+        if ref is None or isinstance(ref, int):
+            self.decujus = ref
+        elif isinstance(ref, Check_Exact):
+            self.decujus = int(ref.reference)
+        else:
+            raise Exception
 
     def precompute(self, graph, decujus, precomputed):
         descendants = set()
@@ -268,10 +293,18 @@ class Implex(RuleChecker):
 
     def __init__(self, *, ref, count=None, **kwargs):
         super().__init__(**kwargs)
-        self.decujus = ref
+
+        if ref is None or isinstance(ref, int):
+            self.decujus = ref
+        elif isinstance(ref, Check_Exact):
+            self.decujus = int(ref.reference)
+        else:
+            raise Exception
+
         self.count = count
         if self.count is None:
             raise Exception('Missing `count` argument for Implex')
+        self.count.as_int()
 
     def precompute(self, graph, decujus, precomputed):
         """
@@ -310,8 +343,9 @@ class Characteristic(RuleChecker):
     """Check that one characteristic matches multiple criterias"""
     def __init__(self, *, typ=None, value=None, **kwargs):
         super().__init__(**kwargs)
-        self.type = typ   # Should be an integer
-        self.value = value
+        self.type = typ or Check_Success()
+        self.type.as_int()
+        self.value = value or Check_Success()
 
     def merge(self, assertion, main_id, precomputed, statuses):
         current = statuses[self.id].get(main_id, None)
@@ -320,9 +354,9 @@ class Characteristic(RuleChecker):
 
         found = False
         for part in assertion.characteristic.parts.all():
-            if self.type and self.type.match(part.type_id):
+            if self.type.match(part.type_id):
                 found = True
-                if self.value and not self.value.match(part.name):
+                if not self.value.match(part.name):
                     return
 
         if found:
@@ -340,12 +374,22 @@ class Event(RuleChecker):
                  **kwargs):
 
         super().__init__(**kwargs)
-        self.type = typ
+        self.type = typ or Check_Success()
+        self.type.as_int()
+
         self.count = count
-        self.role = role
-        self.date = date
+        if self.count:
+            self.count.as_int()
+
+        self.role = role or Check_Success()
+        self.role.as_int()
+
+        self.date = date or Check_Success()
         self.place_name = place_name
+
         self.age = age
+        if self.age:
+            self.age.as_int()
 
         self.need_p2e = True
         self.need_places = self.place_name is not None
@@ -366,12 +410,9 @@ class Event(RuleChecker):
 
         failed = ( # If we already know the result, don't bother computing
             current is not None or not isinstance(assertion, models.P2E))
-        failed = failed or (
-            self.role and not self.role.match(assertion.role_id))
-        failed = failed or (
-            self.type and not self.type.match(assertion.event.type_id))
-        failed = failed or (
-            self.date and not self.date.match(assertion.event.date_sort))
+        failed = failed or not self.role.match(assertion.role_id)
+        failed = failed or not self.type.match(assertion.event.type_id)
+        failed = failed or not self.date.match(assertion.event.date_sort)
         failed = failed or (
             self.place_name and \
             not self.place_name.match(assertion.event.get_place_part("name")))

@@ -3,7 +3,7 @@ import * as Server from '../Server/Post';
 
 export interface OperatorValue {
    operator: GP_JSON.OperatorString,
-   value: string,
+   value: string|boolean|number,
 }
 
 export interface RuleParts {
@@ -20,10 +20,10 @@ export interface NestedThemeRule {
 // do not have theme.
 export interface ThemeRule extends NestedThemeRule {
    name: string;
-   fill: string;
-   color: string;
-   stroke: string;
-   fontWeight: GP_JSON.FontWeight;
+   fill: string|null;
+   color: string|null;
+   stroke: string|null;
+   fontWeight: GP_JSON.FontWeight|null;
 }
 
 export interface RuleList {

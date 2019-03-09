@@ -12,7 +12,7 @@ class ThemeRules(JSONView):
         try:
             theme = models.Theme.objects\
                 .prefetch_related('rules', 'rules__parts').get(id=theme_id)
-            rules = theme.rules.all()
+            rules = theme.rules.filter(parent=None).all()
         except:
             rules = []
 
@@ -30,12 +30,12 @@ class ThemeSave(JSONView):
         rule = models.Rule.objects.create(
             theme=theme,
             type=r['type'],
-            name=r['name'],
+            name=r.get('name', ''),
             sequence_number=sequence_number,
-            style_fill=r['fill'],
-            style_color=r['color'],
-            style_stroke=r['stroke'],
-            style_font_weight=r['fontWeight'],
+            style_fill=r.get('fill', None),
+            style_color=r.get('color', None),
+            style_stroke=r.get('stroke', None),
+            style_font_weight=r.get('fontWeight', None),
             parent=parent)
 
         children = r.get('children', None)

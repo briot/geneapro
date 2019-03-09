@@ -43,11 +43,10 @@ class Style(object):
 
     def merge(self, second):
         """
-        Merge two styles to create a third one. `self` has priority, and only
-        the properties from `second` that are not set in `self` will be
-        preserved.
+        Merge two styles to create a third one. `second` overrides any property
+        set in self.
         """
-        return Style(font_weight=self.font_weight or second.font_weight,
-                     color=self.color or second.color,
-                     fill=self.fill or second.fill,
-                     stroke=self.stroke or second.stroke)
+        return Style(font_weight=second.font_weight or self.font_weight,
+                     color=second.color or self.color,
+                     fill=second.fill or self.fill,
+                     stroke=second.stroke or self.stroke)

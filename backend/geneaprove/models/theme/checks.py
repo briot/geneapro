@@ -4,8 +4,10 @@ themes.
 """
 
 import abc # abstract base classes
+from collections.abc import Iterable
 
-__slots__ = ["build_check", "check_choices", "checks_list"]
+__slots__ = ["build_check", "check_choices", "checks_list",
+             "Check_Success", "Check_Exact"]
 
 
 class Check(object, metaclass=abc.ABCMeta):
@@ -14,14 +16,30 @@ class Check(object, metaclass=abc.ABCMeta):
     """
 
     def __init__(self, reference):
-        try:
-            self.reference = int(reference)
-        except:
-            self.reference = reference
+        self.reference = reference
 
     @abc.abstractmethod
     def match(self, value):
         raise Exception("Abstract class")
+
+    def __str__(self):
+        return (f"<{self.__class__.__name__} ref={self.reference}"
+                f" ({type(self.reference)}>")
+
+    def as_bool(self):
+        """
+        Expect the value to be a boolean
+        """
+        if isinstance(self.reference, str):
+            self.reference = self.reference.lower() in ("true", "t")
+        else:
+            self.reference = bool(self.reference)
+
+    def as_int(self):
+        """
+        Expect the value to be an int
+        """
+        self.reference = int(self.reference)
 
 
 class ICheck(Check):
@@ -48,6 +66,20 @@ class ICheck(Check):
         """Value is already lower-cased"""
         raise Exception("Abstract method")
 
+
+class Check_Success(Check):
+    """Always matches"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(None)
+
+    def match(self, value):
+        return True
+
+    def as_int(self):
+        pass
+
+    def as_bool(self):
+        pass
 
 class Check_Exact(Check):
     """Equal to"""
@@ -140,7 +172,7 @@ mapping = {
 check_choices = [(n, n) for n in mapping]   # for use in a django models
 
 checks_list = [
-   {'op': name, 'doc': value.__doc__, 'label': name}
+   {'op': name, 'label': value.__doc__}
    for name, value in mapping.items()]
 
 def build_check(operator, value):
