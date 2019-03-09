@@ -8,25 +8,20 @@ import django.contrib
 from django.shortcuts import render_to_response
 from django.template.context_processors import csrf
 import django.views
-from geneaprove.views.pedigree import PedigreeData
-import geneaprove.views.persona
-from geneaprove.views.persona import \
-    PersonaList, PersonaView, SuretySchemesList, GlobalSettings
-import geneaprove.views.places
-import geneaprove.views.representation
-import geneaprove.views.rules
-from geneaprove.views.themelist import ThemeList
-from geneaprove.views.stats import StatsView
-from geneaprove.views.sources import \
-    SourceView, EditSourceCitation, \
-    CitationModels, CitationModel, SourcesList, \
-    SourceRepresentations, AddSourceRepr, DelSourceRepr
-from geneaprove.views.graph import QuiltsView
-import geneaprove.views.events
-import geneaprove.views.merge
-import geneaprove.views.graph
-import geneaprove.views.count
-from geneaprove.views.importers import GedcomImport
+from .views import count
+from .views import events
+from .views import graph
+from .views import importers
+from .views import merge
+from .views import metadata
+from .views import pedigree
+from .views import persona
+from .views import places
+from .views import representation
+from .views import rules
+from .views import sources
+from .views import stats
+from .views import themelist
 import sys
 
 
@@ -62,31 +57,34 @@ def static(request):
 
 urlpatterns = [
     url(r'^$', index, name='index'),
-    url(r'^data/pedigree/(?P<id>\d+)$', PedigreeData.as_view()),
-    url(r'^data/persona/list$', PersonaList.as_view()),
-    url(r'^data/persona/(?P<id>\d+)$', PersonaView.as_view()),
-    url(r'^data/place/(?P<id>\d+)$', geneaprove.views.places.PlaceView.as_view()),
-    url(r'^data/places/list$', geneaprove.views.places.PlaceList.as_view()),
-    url(r'^data/sources/list$', SourcesList.as_view()),
-    url(r'^data/sources/(?P<id>-?\d+)$', SourceView.as_view()),
+    url(r'^data/pedigree/(?P<id>\d+)$', pedigree.PedigreeData.as_view()),
+    url(r'^data/persona/list$', persona.PersonaList.as_view()),
+    url(r'^data/persona/(?P<id>\d+)$', persona.PersonaView.as_view()),
+    url(r'^data/place/(?P<id>\d+)$', places.PlaceView.as_view()),
+    url(r'^data/places/list$', places.PlaceList.as_view()),
+    url(r'^data/sources/list$', sources.SourcesList.as_view()),
+    url(r'^data/sources/(?P<id>-?\d+)$', sources.SourceView.as_view()),
     url(r'^data/sources/(?P<id>-?\d+)/saveparts$',
-        EditSourceCitation.as_view()),
-    url(r'^data/sources/(\d+)/addRepr', AddSourceRepr.as_view()),
-    url(r'^data/sources/(\d+)/allRepr', SourceRepresentations.as_view()),
-    url(r'^data/sources/(\d+)/delRepr/(\d+)', DelSourceRepr.as_view()),
-    url(r'^data/suretySchemes$', SuretySchemesList.as_view()),
-    url(r'^data/event/(\d+)$', geneaprove.views.events.EventDetailsView.as_view()),
-    url(r'^data/legend$', geneaprove.views.rules.getLegend),
-    url(r'^data/stats/count$', geneaprove.views.count.CountView.as_view()),
-    url(r'^data/stats/(?P<id>\d+)$', StatsView.as_view()),
-    url(r'^data/themelist$', ThemeList.as_view()),
-    url(r'^data/import$', GedcomImport.as_view()),
-    url(r'^data/citationModel/(?P<model_id>.+)$', CitationModel.as_view()),
-    url(r'^data/citationModels$', CitationModels.as_view()),
-    url(r'^data/settings', GlobalSettings.as_view()),
+        sources.EditSourceCitation.as_view()),
+    url(r'^data/sources/(\d+)/addRepr', sources.AddSourceRepr.as_view()),
+    url(r'^data/sources/(\d+)/allRepr', sources.SourceRepresentations.as_view()),
+    url(r'^data/sources/(\d+)/delRepr/(\d+)', sources.DelSourceRepr.as_view()),
+    url(r'^data/suretySchemes$', persona.SuretySchemesList.as_view()),
+    url(r'^data/event/(\d+)$', events.EventDetailsView.as_view()),
+    url(r'^data/legend$', rules.getLegend),
+    url(r'^data/stats/count$', count.CountView.as_view()),
+    url(r'^data/stats/(?P<id>\d+)$', stats.StatsView.as_view()),
+    url(r'^data/metadata$', metadata.MetadataList.as_view()),
+    url(r'^data/theme/(?P<theme_id>\d+)/rules', themelist.ThemeRules.as_view()),
+    url(r'^data/theme/(?P<theme_id>\d+)/save', themelist.ThemeSave.as_view()),
+    url(r'^data/import$', importers.GedcomImport.as_view()),
+    url(r'^data/citationModel/(?P<model_id>.+)$',
+        sources.CitationModel.as_view()),
+    url(r'^data/citationModels$', sources.CitationModels.as_view()),
+    url(r'^data/settings', persona.GlobalSettings.as_view()),
     url(r'^data/repr/(?P<id>\d+)(?:/(?P<size>\d+))?$',
-        geneaprove.views.representation.view),
-    url(r'^data/quilts/(?P<id>\d+)$', QuiltsView.as_view()),
+        representation.view),
+    url(r'^data/quilts/(?P<id>\d+)$', graph.QuiltsView.as_view()),
 
     # Getting the CSRF token
     url(r'^data/csrf', send_csrf),

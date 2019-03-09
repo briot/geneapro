@@ -179,9 +179,9 @@ class Or(_Combine):
 
 class KnownFather(RuleChecker):
     """Check whether the person has a known father"""
-    def __init__(self, equal=True, **kwargs):
+    def __init__(self, known=True, **kwargs):
         super().__init__(**kwargs)
-        self.expected = equal
+        self.expected = known
 
     def precompute(self, graph, decujus, precomputed):
         precomputed[self.id] = graph
@@ -194,9 +194,9 @@ class KnownFather(RuleChecker):
 
 class KnownMother(RuleChecker):
     """Check whether the person has a known mother"""
-    def __init__(self, equal=True, **kwargs):
+    def __init__(self, known=True, **kwargs):
         super().__init__(**kwargs)
-        self.expected = equal
+        self.expected = known
 
     def precompute(self, graph, decujus, precomputed):
         precomputed[self.id] = graph
@@ -213,9 +213,9 @@ class Ancestor(RuleChecker):
     (by default looking at current decujus)
     """
 
-    def __init__(self, *, base=None, **kwargs):
+    def __init__(self, *, ref=None, **kwargs):
         super().__init__(**kwargs)
-        self.decujus = base
+        self.decujus = ref
 
     def precompute(self, graph, decujus, precomputed):
         ancestors = set()
@@ -241,9 +241,9 @@ class Descendant(RuleChecker):
     By default uses current decujus
     """
 
-    def __init__(self, *, base=None, **kwargs):
+    def __init__(self, *, ref=None, **kwargs):
         super().__init__(**kwargs)
-        self.decujus = base
+        self.decujus = ref
 
     def precompute(self, graph, decujus, precomputed):
         descendants = set()
@@ -266,9 +266,9 @@ class Descendant(RuleChecker):
 class Implex(RuleChecker):
     """Number of times that a person appears in the ancestors tree"""
 
-    def __init__(self, *, base, count=None, **kwargs):
+    def __init__(self, *, ref, count=None, **kwargs):
         super().__init__(**kwargs)
-        self.decujus = base
+        self.decujus = ref
         self.count = count
         if self.count is None:
             raise Exception('Missing `count` argument for Implex')
@@ -311,7 +311,6 @@ class Characteristic(RuleChecker):
     def __init__(self, *, typ=None, value=None, **kwargs):
         super().__init__(**kwargs)
         self.type = typ   # Should be an integer
-        ...
         self.value = value
 
     def merge(self, assertion, main_id, precomputed, statuses):

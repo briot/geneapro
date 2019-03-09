@@ -1,53 +1,67 @@
 import * as React from 'react';
+import { connect } from 'react-redux';
+import { Link } from 'react-router-dom';
+import { Button, DropdownProps, Form, Select } from 'semantic-ui-react';
 import { SelectField } from './Forms';
-import { ColorScheme, predefinedThemes } from './Store/ColorTheme';
-import { DropdownProps, Form, Select } from 'semantic-ui-react';
+import { predefinedThemes } from './Store/ColorTheme';
+import { fetchMetadata } from './Store/Sagas';
+import { AppState, GPDispatch } from './Store/State';
+import * as GP_JSON from './Server/JSON';
 
 interface ThemeSelectorProps {
-   defaultValue: ColorScheme;
+   dispatch: GPDispatch;
+   defaultValue: GP_JSON.ColorSchemeId;
+   metadata: GP_JSON.Metadata;
 
    label?: string;
 
    fieldName: string;
-   onChange: (diff: Partial<{[name: string]: ColorScheme}>) => void;
+   onChange: (diff: Partial<{[name: string]: GP_JSON.ColorSchemeId}>) => void;
    // on change, a diff with a single field fieldName will be sent
 }
 
-interface JSONThemeList {
-   themes: {[id: number]: string},
-}
-
-export default function ThemeSelector(p: ThemeSelectorProps) {
-   const [themeList, setThemeList] = React.useState<ColorScheme[]>([]);
-
-   // Fetch the list of custom themes on mount
-   React.useEffect(() => {
-      window.fetch('/data/themelist')
-         .then((r: Response) => r.json())
-         .then((d: JSONThemeList) =>
-            setThemeList(predefinedThemes.concat(
-               Object.entries(d.themes).map(
-                  ([id, name]) => ({id: Number(id), name}))))
-         );
-   }, []);
-
-   const vals = themeList.map(s => ({text: s.name, value: s.id}));
-
+function ThemeSelectorConnected(p: ThemeSelectorProps) {
+   const vals = predefinedThemes.concat(p.metadata.themes)
+      .map(s => ({text: s.name, value: s.id}));
    const onChange = React.useCallback(
       (_: any, data: DropdownProps) =>
-        p.onChange({[p.fieldName]: themeList.find((e) => e.id == data.value)}),
-      [p.onChange, p.fieldName, themeList]);
+         p.onChange({[p.fieldName]: data.value as number}),
+      [p.onChange, p.fieldName, p.metadata.themes]);
+
+   React.useEffect(
+      () => fetchMetadata.execute(p.dispatch, {}),
+      []);
 
    return (
       <Form.Field>
          <label>{p.label || 'Colors'}</label>
-         <Select
-            fluid={true}
-            options={vals}
-            onChange={onChange}
-            defaultValue={p.defaultValue.id}
-         />
+         <span>
+            <Select
+               fluid={false}
+               options={vals}
+               onChange={onChange}
+               defaultValue={p.defaultValue}
+            />
+            <Link to="/themeeditor">
+               <Button
+                  basic={true}
+                  compact={true}
+                  size="mini"
+                  icon="ellipsis horizontal"
+               />
+            </Link>
+         </span>
       </Form.Field>
    );
 }
+
+const ThemeSelector = connect(
+   (state: AppState) => ({
+      metadata: state.metadata,
+   }),
+   (dispatch: GPDispatch) => ({
+      dispatch,
+   }),
+)(ThemeSelectorConnected);
+export default ThemeSelector;
 

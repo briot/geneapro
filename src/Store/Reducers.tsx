@@ -6,6 +6,7 @@ import { SourceSet } from '../Store/Source';
 import { addToHistory, HistoryItem, HistoryKind } from '../Store/History';
 import { fetchPedigree, fetchPedigreeResult, fetchPersonDetails, fetchPersons,
          fetchEventDetails, fetchSourceDetails, fetchSources, fetchCount,
+         fetchMetadata,
          fetchPlaces, fetchPlaceDetails, fetchQuilts } from '../Store/Sagas';
 import { addEvents } from '../Store/Event';
 import { EventDetails } from '../Server/Event';
@@ -19,6 +20,7 @@ import { defaultPersonaList,
 import { defaultRadial, changeRadialSettings } from '../Store/Radial';
 import { defaultStats, changeStatsSettings } from '../Store/Stats';
 import { defaultQuilts, changeQuiltsSettings } from '../Store/Quilts';
+import * as Server from '../Server/Post';
 
 /**
  * Merge existing data for persons with new data read from an action
@@ -71,8 +73,14 @@ export function rootReducer(
       history: [],
       researchers: {},
       count: undefined,
-      csrf: '',
       lastFetchedTheme: -1,
+      metadata: {
+         characteristic_types: [],
+         event_types: [],
+         event_type_roles: [],
+         theme_operators: [],
+         themes: [],
+      },
    },
    action: Redux.Action
 ): AppState {
@@ -150,6 +158,9 @@ export function rootReducer(
               researchers: {...state.researchers, ...data.researchers},
               persons: mergePersons(state.persons, data.persons)};
 
+   } else if (isType(action, fetchMetadata.done)) {
+      return {...state, metadata: {...action.payload.result}};
+
    } else if (isType(action, fetchPedigree.started)) {
       return {...state,
               radial: {...state.radial, loading: true},
@@ -178,7 +189,7 @@ export function rootReducer(
          }
       }
       return {...state, persons,
-              lastFetchedTheme: action.payload.params.theme.id,
+              lastFetchedTheme: action.payload.params.theme,
               radial: {...state.radial, loading: false},
               events: {...state.events, ...action.payload.result.events},
               pedigree: {...state.pedigree, loading: false}};
@@ -266,21 +277,19 @@ export function rootReducer(
 
    } else if (isType(action, rehydrate)) {
 
-      let csrf: string = '';
       const name = 'csrftoken=';
       if (document.cookie) {
          const cookies = document.cookie.split(';');
          for (const c of cookies) {
             if (c.trim().startsWith(name)) {
                const val = c.substring(name.length);
-               csrf = val;
+               Server.setCsrf(val);
                break;
             }
          }
       }
 
       return {...state,
-              csrf: csrf,
               fanchart: {...state.fanchart,
                          ...action.payload.fanchart,
                          loading: false},

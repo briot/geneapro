@@ -34,7 +34,7 @@ class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
    }
 
    calculateData() {
-      this.props.dispatch(fetchPersonDetails.request({id: this.props.id}));
+      fetchPersonDetails.execute(this.props.dispatch, {id: this.props.id});
    }
 
    render() {

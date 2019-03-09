@@ -1,0 +1,51 @@
+.colortheme {
+   max-width: 800px;
+}
+
+.colortheme th {
+   text-align: right;
+   min-width: 80px;
+   padding-right: 10px;
+}
+
+.colortheme .rule {
+   background: #eaeaea;
+   margin: 10px 0;
+   padding-left: 10px;
+   border-width: 1px 1px 1px 5px;
+   border-style: solid;
+   border-color: #aaa;
+}
+
+.colortheme .rule .rule {
+   max-width: 100%;
+   background: #dadada;
+}
+
+.colortheme .name {
+   font-weight: bold;
+   width: 9em;
+   display: inline-block;
+   vertical-align: text-top;
+   min-height: 30px;
+}
+
+.colortheme .top {
+   vertical-align: top;
+   padding-top: 20px;
+}
+
+.colortheme .value {
+   width: calc(100% - 9em);
+   display: inline-block;
+}
+
+.colortheme .color {
+   vertical-align: middle;
+   margin-right: 20px;
+}
+
+.colortheme input[type=color] {
+   width: 60px;
+   height: 40px;
+}

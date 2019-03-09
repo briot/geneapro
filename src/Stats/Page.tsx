@@ -54,8 +54,8 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
 
       // Make sure we have the name of the person
       if (!p) {
-         this.props.dispatch(
-            fetchPersonDetails.request({id: this.props.decujusid}));
+         fetchPersonDetails.execute(
+            this.props.dispatch, {id: this.props.decujusid});
       }
    }
 

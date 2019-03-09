@@ -2,13 +2,14 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
+import * as GP_JSON from '../Server/JSON';
 import { Person, personDisplay, PersonSet } from '../Store/Person';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { addToHistory } from '../Store/History';
 import { PedigreeSettings, changePedigreeSettings } from '../Store/Pedigree';
 import { fetchPedigree } from '../Store/Sagas';
-import { AppState, GPDispatch } from '../Store/State';
+import { AppState, GPDispatch, themeNameGetter } from '../Store/State';
 import Page from '../Page';
 import PedigreeLayout from '../Pedigree/Layout';
 import PedigreeSide from '../Pedigree/Side';
@@ -23,6 +24,7 @@ interface PedigreePageConnectedProps extends RouteComponentProps<PropsFromRoute>
    allEvents: GenealogyEventSet;
    allPlaces: PlaceSet;
    dispatch: GPDispatch;
+   themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
 }
 
 const PedigreePageConnected = (p: PedigreePageConnectedProps) => {
@@ -33,13 +35,16 @@ const PedigreePageConnected = (p: PedigreePageConnectedProps) => {
    React.useEffect(() => {
       //  ??? We only need to reload when colors change if we are using
       //  custom colors
-      p.dispatch(fetchPedigree.request({
-         decujus: decujusid,
-         ancestors: p.settings.ancestors,
-         descendants: p.settings.descendants,
-         theme: p.settings.colors,
-      }));
-   });
+      fetchPedigree.execute(
+         p.dispatch,
+         {
+            decujus: decujusid,
+            ancestors: p.settings.ancestors,
+            descendants: p.settings.descendants,
+            theme: p.settings.colors,
+         });
+   }, [decujusid, p.settings.ancestors, p.settings.descendants,
+       p.settings.colors]);
 
    // Add the person to history
    const decujus = p.persons[decujusid];
@@ -75,6 +80,7 @@ const PedigreePageConnected = (p: PedigreePageConnectedProps) => {
             <PedigreeSide
                settings={p.settings}
                onChange={onChange}
+               themeNameGet={p.themeNameGet}
             />
          }
          main={main}
@@ -89,6 +95,7 @@ const PedigreePage = connect(
       persons: state.persons,
       allEvents: state.events,
       allPlaces: state.places,
+      themeNameGet: themeNameGetter(state),
    }),
    (dispatch: GPDispatch) => ({
       dispatch,

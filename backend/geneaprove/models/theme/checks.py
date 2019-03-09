@@ -5,7 +5,7 @@ themes.
 
 import abc # abstract base classes
 
-__slots__ = ["build_check", "check_choices"]
+__slots__ = ["build_check", "check_choices", "checks_list"]
 
 
 class Check(object, metaclass=abc.ABCMeta):
@@ -50,72 +50,72 @@ class ICheck(Check):
 
 
 class Check_Exact(Check):
-    suffix = ""
+    """Equal to"""
     def match(self, value):
         return value == self.reference
 
 class Check_IExact(ICheck):
-    suffix = "__iexact"
+    """Equal to (case insensitive)"""
     def imatch(self, value):
         return value == self.reference
 
 class Check_Different(Check):
-    suffix = "__different"
+    """Different from"""
     def match(self, value):
         return value != self.reference
 
 class Check_IDifferent(ICheck):
-    suffix = "__idifferent"
+    """Different from (case insensitive)"""
     def imatch(self, value):
         return value != self.reference
 
 class Check_In(Check):
-    suffix = "__in"
+    """Value found in list"""
     def match(self, value):
         return value in self.reference
 
 class Check_IIn(ICheck):
-    suffix = "__iin"
+    """Value found in list (case insensitive)"""
     def imatch(self, value):
         return value in self.reference
 
 class Check_Contains(Check):
-    suffix = "__contains"
+    """Contains"""
     def match(self, value):
         return value and self.reference in value
 
 class Check_IContains(ICheck):
-    suffix = "__icontains"
+    """Contains (case insensitive)"""
     def imatch(self, value):
         return value and self.reference in value
 
 class Check_Contains_Not(Check):
-    suffix = "__contains_not"
+    """Does not contain"""
     def match(self, value):
         return value and self.reference not in value
 
 class Check_IContains_Not(ICheck):
-    suffix = "__icontains_not"
+    """Does not contain (case insensitive)"""
     def imatch(self, value):
         return value and self.reference not in value
 
 class Check_Less(Check):
-    suffix = "__lt"
+    """Less than"""
     def match(self, value):
         return value and value < self.reference
 
 class Check_Less_Or_Equal(Check):
-    suffix = "__lte"
+    """Less or equal to"""
     def match(self, value):
         return value and value <= self.reference
 
 class Check_Greater(Check):
-    suffix = "__gt"
+    """Greater than"""
     def match(self, value):
         return value and value > self.reference
 
 class Check_Greater_Or_Equal(Check):
-    suffix = "__gte"
+    """Greater or equal to"""
     def match(self, value):
         return value and value >= self.reference
 
@@ -138,6 +138,10 @@ mapping = {
 }
 
 check_choices = [(n, n) for n in mapping]   # for use in a django models
+
+checks_list = [
+   {'op': name, 'doc': value.__doc__, 'label': name}
+   for name, value in mapping.items()]
 
 def build_check(operator, value):
     """

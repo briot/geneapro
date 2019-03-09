@@ -48,7 +48,7 @@ function EventDetails(props: EventDetailsProps) {
                   return <span key={idx}>Unknown assertion</span>;
                }
             })
-            
+
          }
          </tbody>
       </table>
@@ -69,10 +69,9 @@ interface ConnectedEventProps extends EventProps {
 }
 
 class ConnectedAssertionPartEvent extends React.PureComponent<ConnectedEventProps> {
-   onExpand = () => {
-      this.props.dispatch(fetchEventDetails.request({id: this.props.eventId}));
-   }
-   
+   onExpand = () => fetchEventDetails.execute(
+      this.props.dispatch, {id: this.props.eventId});
+
    render() {
       const e = this.props.events[this.props.eventId];
       return (

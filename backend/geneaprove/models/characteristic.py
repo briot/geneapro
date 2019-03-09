@@ -15,6 +15,7 @@ class Characteristic_Part_Type(Part_Type):
     class Meta:
         """Meta data for the model"""
         db_table = "characteristic_part_type"
+        ordering = ("name", )
 
 
 class Characteristic(GeneaProveModel):

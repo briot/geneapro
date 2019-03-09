@@ -1,18 +1,15 @@
 import * as d3Color from 'd3-color';
 import Style from '../Store/Styles';
 import { Person } from '../Store/Person';
+import * as GP_JSON from '../Server/JSON';
 
-export interface ColorScheme{
-   id: number;
-   name: string;
-}
-export const PEDIGREE: ColorScheme = {id: -5, name: 'Pedigree'};
-export const WHITE: ColorScheme = {id: -4, name: 'White'};
-export const GENERATION: ColorScheme = {id: -3, name: 'Generation'};
-export const QUARTILE: ColorScheme = {id: -2, name: 'Quartile'};
-export const NO_BOX: ColorScheme = {id: -1, name: 'No Box'};
+export const PEDIGREE: GP_JSON.ColorScheme = {id: -5, name: 'Pedigree'};
+export const WHITE: GP_JSON.ColorScheme = {id: -4, name: 'White'};
+export const GENERATION: GP_JSON.ColorScheme = {id: -3, name: 'Generation'};
+export const QUARTILE: GP_JSON.ColorScheme = {id: -2, name: 'Quartile'};
+export const NO_BOX: GP_JSON.ColorScheme = {id: -1, name: 'No Box'};
 
-export const predefinedThemes: Array<ColorScheme> = [
+export const predefinedThemes: Array<GP_JSON.ColorScheme> = [
    PEDIGREE, WHITE, GENERATION, QUARTILE, NO_BOX,
 ];
 
@@ -49,14 +46,14 @@ export default class ColorTheme {
    /**
     * Compute the display style for a person
     */
-   static forPerson(colors: ColorScheme,
+   static forPerson(colors: GP_JSON.ColorSchemeId,
                     p?: Person,
                     layout?: BasePersonLayout,
    ): Style {
 
       let fillColor: string | undefined;
 
-      switch (colors.id) {
+      switch (colors) {
          case PEDIGREE.id:
             if (layout) {
                // Avoid overly saturated colors when displaying few
@@ -100,15 +97,15 @@ export default class ColorTheme {
    /**
     * Default for fanchart boxes
     */
-   static forFanchartBox(colors: ColorScheme): Style {
-      return colors.id == NO_BOX.id ? TEXT_ONLY : DEFAULT;
+   static forFanchartBox(colors: GP_JSON.ColorSchemeId): Style {
+      return colors == NO_BOX.id ? TEXT_ONLY : DEFAULT;
    }
 
    /**
     * Compute the style for the separator above the person.
     * In the fanchart, this is the inter-generation separator.
     */
-   static forSeparator(colors: ColorScheme,
+   static forSeparator(colors: GP_JSON.ColorSchemeId,
                        p?: Person,
                        layout?: BasePersonLayout
    ): Style {

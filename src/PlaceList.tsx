@@ -43,7 +43,7 @@ class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListSt
    }
 
    componentDidMount() {
-      this.props.dispatch(fetchPlaces.request({}));
+      fetchPlaces.execute(this.props.dispatch, {});
    }
 
    computePlaces(set: PlaceSet, filter?: string): Place[] {

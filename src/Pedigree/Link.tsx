@@ -31,7 +31,7 @@ export default function PedigreeLink(props: PedigreeLinkProps) {
          case LayoutScheme.BOTTOM_UP:
            return isFrom ? p.y : p.y + p.h;
          default:
-            return p.y + (props.style.colors === NO_BOX ?
+            return p.y + (props.style.colors === NO_BOX.id ?
                p.fs + 1 : p.h / 2);
       }
    };
@@ -68,7 +68,7 @@ export default function PedigreeLink(props: PedigreeLinkProps) {
                ' ' + target);
    }
 
-   if (props.style.colors === NO_BOX) {
+   if (props.style.colors === NO_BOX.id) {
       d += vertical ?
          'M' + source + 'v-5' :
          'M' + source + 'h' + (-props.from.w);

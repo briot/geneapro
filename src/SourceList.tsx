@@ -43,7 +43,7 @@ class SourceListConnected extends React.PureComponent<SourceListProps, SourceLis
    }
 
    componentDidMount() {
-      this.props.dispatch(fetchSources.request({}));
+      fetchSources.execute(this.props.dispatch, {});
    }
 
    computeSources(set: SourceSet, filter?: string): Source[] {

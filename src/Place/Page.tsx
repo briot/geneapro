@@ -33,7 +33,7 @@ class PlacePageConnected extends React.PureComponent<PlacePageProps> {
 
    calculateData() {
       if (this.props.id >= 0) {
-         this.props.dispatch(fetchPlaceDetails.request({id: this.props.id}));
+         fetchPlaceDetails.execute(this.props.dispatch, {id: this.props.id});
       }
    }
 

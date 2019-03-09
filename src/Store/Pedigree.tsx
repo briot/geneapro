@@ -1,5 +1,6 @@
 import { actionCreator } from '../Store/Actions';
-import { ColorScheme, PEDIGREE } from '../Store/ColorTheme';
+import { PEDIGREE } from '../Store/ColorTheme';
+import * as GP_JSON from '../Server/JSON';
 
 export enum LayoutScheme {
    LEFT_RIGHT = 0,
@@ -28,7 +29,7 @@ export interface PedigreeSettings {
    layout: LayoutScheme;
    links: LinkStyle;
    sameSize: boolean;
-   colors: ColorScheme;
+   colors: GP_JSON.ColorSchemeId;
    vertPadding: number;  // minimum space between two persons at same generation
    horizSpacing: number; // between each generation
    showSourcedEvents: boolean; // add tick for events with a source
@@ -44,7 +45,7 @@ export const defaultPedigree: PedigreeSettings = {
    layout: LayoutScheme.LEFT_RIGHT,
    links: LinkStyle.CURVE,
    sameSize: false,
-   colors: PEDIGREE,
+   colors: PEDIGREE.id,
    vertPadding: 5,
    horizSpacing: 30,
    showSourcedEvents: true,
