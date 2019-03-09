@@ -21,7 +21,7 @@ class ProfileMiddleware(object):
             response = self.get_response(request)
 
             profiler.disable()
-            stamp = f'{request.path.replace("/", "__")}'
+            stamp = request.path.replace("/", "__")
             profiler.dump_stats(f'/tmp/{stamp}.pro')
             print(f"Dumped profile info in /tmp/{stamp}.pro")
 

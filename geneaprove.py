@@ -12,9 +12,9 @@ if __name__ == "__main__":
     
     db = settings.DATABASES['default']['NAME']
     if not os.path.isfile(db):
-        print(f"=======================")
+        print("=======================")
         print(f"Creating a new database {db}")
-        print(f"=======================")
+        print("=======================")
         try:
             os.makedirs(os.path.dirname(db))
         except OSError:

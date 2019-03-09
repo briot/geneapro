@@ -159,7 +159,17 @@ class GedcomImporter(object):
                 self.ignored(f, prefix='HEAD')
 
         date_str = date.strftime('%Y-%m-%d %H:%M:%S %Z') if date else None
-        title = f'"{os.path.basename(name)}", {self._researcher.name}, exported from {created_by}, created on {date_str}, imported on {datetime.datetime.now(django.utils.timezone.get_default_timezone()).strftime("%Y-%m-%d %H:%M:%S %Z")}'
+        imported_date_time = datetime.datetime.now(
+            django.utils.timezone.get_default_timezone()).strftime(
+                "%Y-%m-%d %H:%M:%S %Z")
+
+        title = (
+            f'"{os.path.basename(name)}", '
+            f'{self._researcher.name}, '
+            f'exported from {created_by}, '
+            f'created on {date_str}, '
+            f'imported on {imported_date_time}')
+
         self._source_for_gedcom = models.Source.objects.create(
             jurisdiction_place_id=None,
             researcher=self._researcher,
@@ -365,7 +375,7 @@ class GedcomImporter(object):
     def ignored(self, field, prefix):
         self.report_error(
             field,
-            f"Ignored {prefix + '.' if prefix else ''}{field.tag}")
+            f"Ignored {prefix}{'.' if prefix else ''}{field.tag}")
 
     def ignore_fields(self, field, prefix):
         """
@@ -1417,7 +1427,7 @@ class GedcomImporter(object):
                 file=f[0],
                 mime_type=f[1],
                 comments=comments +
-                   (f"\nFormat: {f[2] if f[2] else ''}"))
+                   (f"\nFormat: {f[2] or ''}"))
             for f in files]
 
     def _create_event(self, field, indi_and_role, surety, CHAN=None,
@@ -1497,10 +1507,16 @@ class GedcomImporter(object):
         name = field.value \
                 if field.value and field.value not in ("Y", "N") else ""
         if not name:
+            # Principals
+            principals = " and ".join(
+                p.name for p, role in indi_and_role
+                if p and role == self._principal)
             # type of event
             # More specific information for type
-            # Principals
-            name = f'{(evt_type_name or evt_type.name).title()}{type_descr} -- {" and ".join(p.name for p, role in indi_and_role if p and role == self._principal)}'
+            name = (
+                f'{(evt_type_name or evt_type.name).title()}'
+                f'{type_descr} -- '
+                f'{principals}')
 
         # For each source, we duplicate the event.
         # Otherwise, we end up with multiple 'principal', 'mother',...

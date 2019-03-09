@@ -169,7 +169,7 @@ class JSONView(View):
         """
         params = JSONViewParams()
         params.update(request.GET)
-        # logger.debug(f'{self.__module__}.{self.__class__.__name__}.get({params})')
+        logger.debug(f'{self.__module__}.{self.__class__.__name__}.get({params})')
         return self.__internal(self.get_json, params, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
@@ -184,5 +184,5 @@ class JSONView(View):
             params.set_from_body(request.body)
         else:
             params.set_files(request.FILES)
-        # logger.debug(f'{self.__module__}.{self.__class__.__name__}.post({params})')
+        logger.debug(f'{self.__module__}.{self.__class__.__name__}.post({params})')
         return self.__internal(self.post_json, params, *args, **kwargs)
