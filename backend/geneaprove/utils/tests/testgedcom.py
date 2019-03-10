@@ -38,7 +38,7 @@ class GedcomTestCase(unittest.TestCase):
         except IOError:
             expected = "OK\n"
         out = '\n'.join(error).replace(self.dir, "<dir>")
-        self.assertEqual(expected, out + '\n', msg="in %s" % filename)
+        self.assertEqual(expected, out + '\n', msg=f"in {filename}")
 
     def _process_dir(self, dir):
         for f in sorted(os.listdir(dir)):

@@ -19,15 +19,14 @@ g = graphs.Digraph(edges=links)
 
 def compare(algo, expect, actual):
     if len(expect) != len(actual):
-        print("%s: Incorrect number of layers: expected=%d, got=%d" % (
-            algo, len(expected), len(actual)))
-        print("%s: result=%s" % (algo, actual))
+        print(f"{algo}: Incorrect number of layers: expected={len(expected)}, got={len(actual)}")
+        print(f"{algo}: result={actual}")
 
     for layer in range(0, len(expect)):
         if sorted(expect[layer]) != sorted(actual[layer]):
-            print("%s: Incorrect layer %s:" % (algo, layer))
-            print("  expected=%s" % sorted(expect[layer]))
-            print("  result  =%s" % sorted(actual[layer]))
+            print(f"{algo}: Incorrect layer {layer}:")
+            print(f"  expected={sorted(expect[layer])}")
+            print(f"  result  ={sorted(actual[layer])}")
 
 # Longest path layering
 # This algorithm does not optimize the length of the paths. For instance,

@@ -23,7 +23,7 @@ class Command(LabelCommand):
         """Process the import command.
            This function is called for each file specified on the command line
         """
-        sys.stdout.write(STYLE('Importing %s' % filename) + '\n')
+        sys.stdout.write(STYLE(f'Importing {filename}\n'))
         start = time.time()
         success, errors = GedcomFileImporter().parse(filename)
         if errors:
@@ -31,7 +31,7 @@ class Command(LabelCommand):
 
         end = time.time()
         sys.stdout.write(
-            STYLE('Done importing (%0.3f s)\n' % (end - start,)))
+            STYLE(f'Done importing ({(end - start):0.3f} s)\n'))
 
         print("\n")
         print("Run 'ANALYZE;' in the database to optimize it")

@@ -23,6 +23,6 @@ class EventDetailsView(JSONView):
         asserts = list(models.P2E.objects.filter(event_id=id))
         r = JSONResult(asserts=asserts)
         return r.to_json({
-            'id': id,
-            'asserts': asserts,
+            "id": id,
+            "asserts": asserts,
         })

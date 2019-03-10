@@ -38,18 +38,18 @@ def check(ranks):
             if previous is not None:
                 sys.stdout.write("\n")
             previous = ranks[r]
-            sys.stdout.write("%2d" % previous)
-        sys.stdout.write(" %s" % r)
+            sys.stdout.write(f"{previous:2}")
+        sys.stdout.write(f" {r}")
     sys.stdout.write("\n")
 
     total = 0
     for n in links:
         slack = ranks[n[1]] - ranks[n[0]] - preferred_length(n)
         if slack < 0:
-            print("Error in link ", n)
+            print(f"Error in link {n}")
         total += slack
 
-    print("Total slack for tree: ", total)
+    print("Total slack for tree: {total}")
 
 
 check(g.rank_longest_path(preferred_length=preferred_length))

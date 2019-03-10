@@ -43,7 +43,7 @@ class Citation_Style(object):
 
         subst = {}
         for part in self.required_parts():
-            subst[part] = 'unknown %s' % part if unknown_as_text else ''
+            subst[part] = f'unknown {part if unknown_as_text else ""}'
 
         if isinstance(source, models.Source):
             subst['_title'] = source.title

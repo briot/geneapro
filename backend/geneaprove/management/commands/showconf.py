@@ -18,8 +18,6 @@ class Command(BaseCommand):
 
     def handle(self, **options):
         sys.stdout.write(
-            "path=%s\n" % (
-                settings.DATABASES['default']['NAME'],))
+            f"path={settings.DATABASES['default']['NAME']}\n")
         sys.stdout.write(
-            "dir=%s\n" % (
-                os.path.dirname(settings.DATABASES['default']['NAME']),))
+            f"dir={os.path.dirname(settings.DATABASES['default']['NAME'])}\n")

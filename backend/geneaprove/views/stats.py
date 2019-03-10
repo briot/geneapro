@@ -102,20 +102,13 @@ class StatsView(JSONView):
                     gen_range[2] = a[1]
 
             if index >= 16:
-                gen_range[3] = "Gen. %02d (%s) %s - %s" \
-                    % (index + 1, len(generations[index]),
-                       gen_range[1], gen_range[2])
-
+                gen_range[3] = f"Gen. {index + 1:02d} ({len(generations[index])}) {gen_range[1]} - {gen_range[2]}"
             elif index >= 0 and index <= 16:
-                gen_range[3] = "Gen. %02d (%d / %d) %s - %s" \
-                    % (index + 1, len(generations[index]), 2 ** index,
-                       gen_range[1], gen_range[2])
+                gen_range[3] = f"Gen. {index + 1:02d} ({len(generations[index])} / {2 ** index}) {gen_range[1]} - {gen_range[2]}"
             else:
                 # No need to count maximum number of persons, this becomes
                 # too large, and irrelevant since there is implex
-                gen_range[3] = "Desc. %02d (%d) %s - %s" \
-                    % (-index, len(generations[index]),
-                       gen_range[1], gen_range[2])
+                gen_range[3] = f"Desc. {-index:02d} ({len(generations[index])}) {gen_range[1]} - {gen_range[2]}"
 
             # Postprocess the ranges:
             #   generation n's earliest date has to be at least 15 years before

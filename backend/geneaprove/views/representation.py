@@ -23,13 +23,13 @@ def create_resized_image(image_name, original_location,
     # Ensure a resized image doesn't already exist in the default
     # MEDIA_ROOT/images/resized
 
-    dir = '%s/images/%d-%d' % (settings.MEDIA_ROOT, xconstrain, yconstrain)
+    dir = f'{settings.MEDIA_ROOT}/images/{xconstrain}-{yconstrain}'
     try:
         os.mkdir(dir)
     except OSError:
         pass
 
-    name = '%s/%s' % (dir, image_name)
+    name = f'{dir}/{image_name}'
 
     if not os.path.exists(name):
         unsized_image = urllib.request.urlretrieve(str(original_location))
@@ -59,6 +59,5 @@ def view(request, id, size=None):
         bin = ''
 
     response = HttpResponse(bin, content_type=repr.mime_type)
-    response['Content-Disposition'] = 'attachment; filename=%s' % (
-        os.path.basename(repr.file))
+    response['Content-Disposition'] = f'attachment; filename={os.path.basename(repr.file)}'
     return response

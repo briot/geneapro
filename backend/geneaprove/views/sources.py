@@ -39,9 +39,9 @@ class CitationModel(JSONView):
         # pylint: disable=arguments-differ
         citation = Citations.get_citation(model_id)
         return {
-            'biblio': citation.biblio,
-            'full': citation.full,
-            'abbrev': citation.short
+            "biblio": citation.biblio,
+            "full": citation.full,
+            "abbrev": citation.short
         }
 
 
@@ -52,8 +52,8 @@ class CitationModels(JSONView):
 
     def get_json(self, params):
         return {
-            'repository_types': models.Repository_Type.objects.all(),
-            'source_types': Citations.source_types()
+            "repository_types": models.Repository_Type.objects.all(),
+            "source_types": Citations.source_types()
         }
 
 
@@ -70,11 +70,11 @@ class SourceView(JSONView):
         asserts = source.get_asserts()
         r = JSONResult(asserts=asserts)
         return r.to_json({
-            'source':  source,
-            'asserts': asserts,
-            'parts': source.get_citations_as_list(),
-            'higher_sources': source.get_higher_sources(),
-            'repr': source.get_representations(),
+            "source":  source,
+            "asserts": asserts,
+            "parts": source.get_citations_as_list(),
+            "higher_sources": source.get_higher_sources(),
+            "repr": source.get_representations(),
         })
 
 
@@ -136,7 +136,7 @@ class EditSourceCitation(JSONView):
             elif key == 'higher_source_id':
                 src.higher_source_id = int(value)
             elif key[0] == '_':
-                raise Exception('Field not processed: %s' % key)
+                raise Exception(f'Field not processed: {key}')
             elif value and (parts is None or key in parts):
                 # A citation part
                 try:
@@ -174,8 +174,8 @@ class SourceRepresentations(JSONView):
         # pylint: disable=redefined-builtin
         source = get_source(id)
         return {
-            'source':  source,
-            'repr':    source.get_representations()
+            "source":  source,
+            "repr":    source.get_representations()
         }
 
 
@@ -190,7 +190,7 @@ class AddSourceRepr(JSONView):
         source = get_source(id)
 
         files = params.files.getlist('file')
-        dir = os.path.join(settings.MEDIA_ROOT, 'S%s' % id)
+        dir = os.path.join(settings.MEDIA_ROOT, f'S{id}')
         try:
             os.makedirs(dir)
         except OSError:
@@ -203,9 +203,9 @@ class AddSourceRepr(JSONView):
             while os.path.isfile(name):
                 name, ext = os.path.splitext(name)
                 if index == 1:
-                    name = '%s_%s%s' % (name, index, ext)
+                    name = f'{name}_{index}{ext}'
                 else:
-                    name = '%s_%s%s' % (name[0:name.rfind('_')], index, ext)
+                    name = f"{name[0:name.rfind('_')]}_{index}{ext}"
                 index += 1
 
             with open(name, "w") as w:
@@ -237,7 +237,7 @@ class DelSourceRepr(JSONView):
             try:
                 os.unlink(repr.file)
             except IOError:
-                error = "Could not delete %s" % (repr.file)
+                error = f"Could not delete {repr.file}"
 
         repr.delete()
 

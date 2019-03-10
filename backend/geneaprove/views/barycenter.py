@@ -9,13 +9,13 @@ def show_matrix():
     sys.stdout.write("  ")
     for l in global_layers:
         for n in l:
-            sys.stdout.write("%2s" % n)
+            sys.stdout.write(f"{n:2}")
         sys.stdout.write("|")
     sys.stdout.write("\n")
 
     for l in global_layers:
         for n in l:
-            sys.stdout.write("%2s " % n)
+            sys.stdout.write(f"{n:2} ")
 
             for l2 in global_layers:
                 for n2 in l2:

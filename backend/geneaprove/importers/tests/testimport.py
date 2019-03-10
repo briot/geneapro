@@ -19,7 +19,7 @@ class GedcomImportTestCase(unittest.TestCase):
 
         try:
             success, msg = gedcomimport.GedcomFileImporter().parse(filename)
-            error = "%s\n%s\n" % ("OK" if success else "FAILED", msg)
+            error = f'{"OK" if success else "FAILED"}\n{msg}\n'
         except gedcom.Invalid_Gedcom as e:
             error = e.msg + "\n" + msg
 
@@ -30,7 +30,7 @@ class GedcomImportTestCase(unittest.TestCase):
         except IOError:
             expected = "OK\n"
         out = error.replace(self.dir, "<dir>")
-        self.assertEqual(expected, out, msg="in %s" % filename)
+        self.assertEqual(expected, out, msg=f"in {filename}")
 
     def _process_dir(self, dir):
         for f in sorted(os.listdir(dir)):
