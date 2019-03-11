@@ -49,3 +49,26 @@
    width: 60px;
    height: 40px;
 }
+
+.colortheme .listItem + .listItem {
+   margin-top: 10px;
+}
+
+.colortheme .listItemButton {
+   position: relative;
+   float: left;
+   left: -40px;
+   margin-right: -40px;
+   visibility: hidden;
+}
+.colortheme .listItemBottom {
+   top: -30px;
+}
+.colortheme .listItem {
+   padding-left: 40px;
+}
+.colortheme .listItem:hover > .listItemButton,
+.colortheme .listItemButton:hover {
+   visibility: visible;
+}
+

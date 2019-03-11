@@ -9,6 +9,7 @@ import { AppState, GPDispatch } from '../Store/State';
 import { fetchMetadata } from '../Store/Sagas';
 import * as GP_JSON from '../Server/JSON';
 import * as ServerThemes from '../Server/Themes';
+import EditableList from '../EditableList';
 import { createSelector } from '../Hooks';
 import './ThemeEditor.css';
 
@@ -82,7 +83,7 @@ interface FieldOperatorValueProps extends RuleProps {
    forcedOperator?: GP_JSON.OperatorString;
    // If specified, the operator cannot be configured by users
 }
-const FieldOperatorValue = (p: FieldOperatorValueProps) => {
+const FieldOperatorValue = React.memo((p: FieldOperatorValueProps) => {
    const old = p.rule.parts[p.field];
    const onChange = React.useCallback(
       (v: ServerThemes.OperatorValue) => {
@@ -124,7 +125,7 @@ const FieldOperatorValue = (p: FieldOperatorValueProps) => {
             {
                !p.forcedOperator &&
                <Dropdown
-                  defaultValue={old ? old.operator : DO_NOTHING_OP.op}
+                  value={old ? old.operator : DO_NOTHING_OP.op}
                   selection={true}
                   options={p.ops.theme_operators}
                   placeholder="How to compare values"
@@ -136,7 +137,7 @@ const FieldOperatorValue = (p: FieldOperatorValueProps) => {
                old &&
                (p.choices ? (
                   <Dropdown
-                     defaultValue={old.value}
+                     value={old.value}
                      selection={true}
                      options={p.choices}
                      title={p.title}
@@ -144,13 +145,13 @@ const FieldOperatorValue = (p: FieldOperatorValueProps) => {
                   />
                ) : p.asPerson ? (
                   <Input
-                     defaultValue={old.value}
+                     value={old.value}
                      onChange={onValueChange}
                      placeholder="persoon"
                   />
                ) : (
                   <Input
-                     defaultValue={old.value}
+                     value={old.value}
                      placeholder="value"
                      title={p.title}
                      onChange={onValueChange}
@@ -160,13 +161,13 @@ const FieldOperatorValue = (p: FieldOperatorValueProps) => {
           </span>
       </div>
    );
-};
+});
 
 /**
  * RuleAlive
  */
 
-const RuleAlive = (p: RuleProps) => {
+const RuleAlive = React.memo((p: RuleProps) => {
    const options = [
       {key: 0, value: "true", text: 'Currently alive'},
       {key: 1, value: "false", text: 'Dead, or more than 110 year old'},
@@ -188,7 +189,7 @@ const RuleAlive = (p: RuleProps) => {
          />
       </>
    );
-};
+});
 
 /**
  * RuleWithRef
@@ -206,26 +207,36 @@ const RuleWithRef = (p: RuleProps, label: string) => {
    );
 };
 
-const RuleAncestor = (p: RuleProps) => RuleWithRef(p, 'Ancestor of');
-const RuleDescendant = (p: RuleProps) => RuleWithRef(p, 'Descendant of');
+const RuleAncestor =
+   React.memo((p: RuleProps) => RuleWithRef(p, 'Ancestor of'));
+const RuleDescendant =
+   React.memo((p: RuleProps) => RuleWithRef(p, 'Descendant of'));
 
 /**
  * RuleWithSubs
  */
 
 const RuleWithSubs = (p: RuleProps, label: string) => {
-   const onChange = React.useCallback(
+   const onListChange = React.useCallback(
       (children: ServerThemes.NestedThemeRule[]) =>
          p.onChange({...p.rule, children}),
       [p.onChange, p.rule]);
-   const onAddRule = React.useCallback(
-      () =>
-         p.onChange(
-            {...p.rule, children: [...p.rule.children, NEW_NESTED_RULE]}),
-      [p.onChange, p.rule]);
+
+   const renderRule = React.useCallback(
+      (r: ServerThemes.NestedThemeRule,
+       onChange: (r: ServerThemes.NestedThemeRule)=>void
+      ) =>
+         <NestedRuleEditor
+            rule={r}
+            ops={p.ops}
+            onChange={onChange}
+         />,
+      [p.ops]);
+
+   const onCreateRule = React.useCallback(() => NEW_NESTED_RULE, []);
 
    if (p.rule.children.length == 0) {
-      onAddRule();
+      onListChange([NEW_NESTED_RULE]);
       return null;
    }
 
@@ -233,20 +244,21 @@ const RuleWithSubs = (p: RuleProps, label: string) => {
       <div>
          <span className="name top">{label}</span>
          <span className="value">
-            <RuleListEditor
-               ops={p.ops}
-               rules={p.rule.children}
-               component={NestedRuleEditor}
-               onChange={onChange}
-               onAddRule={onAddRule}
+            <EditableList
+               list={p.rule.children}
+               render={renderRule}
+               create={onCreateRule}
+               onChange={onListChange}
             />
          </span>
       </div>
    )
 };
 
-const RuleAnd = (p: RuleProps) => RuleWithSubs(p, 'All must match');
-const RuleOr = (p: RuleProps) => RuleWithSubs(p, 'At least one must match');
+const RuleAnd =
+   React.memo((p: RuleProps) => RuleWithSubs(p, 'All must match'));
+const RuleOr =
+   React.memo((p: RuleProps) => RuleWithSubs(p, 'At least one must match'));
 
 /**
  * RuleKnown
@@ -268,14 +280,16 @@ const RuleKnown= (p: RuleProps, label: string) => {
    );
 };
 
-const RuleKnownFather = (p: RuleProps) => RuleKnown(p, 'Father');
-const RuleKnownMother = (p: RuleProps) => RuleKnown(p, 'Mother');
+const RuleKnownFather =
+   React.memo((p: RuleProps) => RuleKnown(p, 'Father'));
+const RuleKnownMother =
+   React.memo((p: RuleProps) => RuleKnown(p, 'Mother'));
 
 /**
  * RuleImplex
  */
 
-const RuleImplex = (p: RuleProps) => {
+const RuleImplex = React.memo((p: RuleProps) => {
    return (
       <>
          <FieldOperatorValue
@@ -293,7 +307,7 @@ const RuleImplex = (p: RuleProps) => {
          />
       </>
    );
-};
+});
 
 /**
  * RuleDefault
@@ -307,7 +321,7 @@ const RuleDefault = (p: RuleProps) => {
  * RuleCharacteristic
  */
 
-const RuleCharacteristic = (p: RuleProps) => {
+const RuleCharacteristic = React.memo((p: RuleProps) => {
    return (
       <>
          <FieldOperatorValue
@@ -325,13 +339,13 @@ const RuleCharacteristic = (p: RuleProps) => {
          />
       </>
    );
-};
+});
 
 /**
  * RuleEvent
  */
 
-const RuleEvent = (p: RuleProps) => {
+const RuleEvent = React.memo((p: RuleProps) => {
    return (
       <>
          <FieldOperatorValue
@@ -374,7 +388,7 @@ const RuleEvent = (p: RuleProps) => {
          />
       </>
    );
-};
+});
 
 interface RuleTypeDescr {
    name: string;
@@ -426,7 +440,7 @@ interface FontWeightEditorProps {
    rule: ServerThemes.ThemeRule;
    onChange: (r: Partial<ServerThemes.ThemeRule>) => void;
 }
-const FontWeightEditor = (p: FontWeightEditorProps) => {
+const FontWeightEditor = React.memo((p: FontWeightEditorProps) => {
    const onValueChange = React.useCallback(
       (e: any, d: DropdownProps) =>
          p.onChange({fontWeight: d.value as GP_JSON.FontWeight}),
@@ -452,7 +466,7 @@ const FontWeightEditor = (p: FontWeightEditorProps) => {
                </div>
             ) : (
                <Dropdown
-                  defaultValue={p.rule.fontWeight || ''}
+                  value={p.rule.fontWeight || ''}
                   selection={true}
                   options={FONT_WEIGHT_OPTIONS}
                   onChange={onValueChange}
@@ -461,7 +475,7 @@ const FontWeightEditor = (p: FontWeightEditorProps) => {
          }
       </span>
    );
-};
+});
 
 /**
  * Editing colors
@@ -474,7 +488,7 @@ interface ColorEditorProps {
    rule: ServerThemes.ThemeRule;
    onChange: (r: Partial<ServerThemes.ThemeRule>) => void;
 }
-const ColorEditor = (p: ColorEditorProps) => {
+const ColorEditor = React.memo((p: ColorEditorProps) => {
    const onColorChange = React.useCallback(
       (e: any, d: InputProps) => p.onChange({[p.field]: d.value}),
       [p.onChange]);
@@ -500,7 +514,7 @@ const ColorEditor = (p: ColorEditorProps) => {
             ) : (
                <Input
                   type="color"
-                  defaultValue={p.rule[p.field]}
+                  value={p.rule[p.field]}
                   onChange={onColorChange}
                   title={p.title}
                />
@@ -508,7 +522,7 @@ const ColorEditor = (p: ColorEditorProps) => {
          }
       </span>
    );
-};
+});
 
 /**
  * Nested rule editor
@@ -530,12 +544,12 @@ const NestedRuleEditor = (p: NestedRuleEditorProps) => {
    const comp = RULE_TYPES[p.rule.type];
 
    return (
-      <>
+      <div className="nestedRule">
          <div>
             <span className="name">Rule type</span>
             <span className="value">
                <Dropdown
-                  defaultValue={p.rule.type}
+                  value={p.rule.type}
                   selection={true}
                   fluid={true}
                   options={RULE_TYPE_OPTIONS}
@@ -549,7 +563,7 @@ const NestedRuleEditor = (p: NestedRuleEditorProps) => {
             ops={p.ops}
             onChange={onPartsChange}
          />
-      </>
+      </div>
    );
 };
 
@@ -564,7 +578,7 @@ interface RuleEditorProps {
    ops: AllOptions;
    onChange: (rules: Partial<ServerThemes.ThemeRule>) => void;
 }
-const RuleEditor = (p: RuleEditorProps) => {
+const RuleEditor = React.memo((p: RuleEditorProps) => {
    const onNameChange = React.useCallback(
       (e: any, d: InputProps) => p.onChange({name: d.value}),
       [p.onChange]);
@@ -588,7 +602,7 @@ const RuleEditor = (p: RuleEditorProps) => {
                   <Input
                      placeholder="rule description"
                      fluid={true}
-                     defaultValue={p.rule.name}
+                     value={p.rule.name}
                      onChange={onNameChange}
                   />
                }
@@ -632,46 +646,7 @@ const RuleEditor = (p: RuleEditorProps) => {
          />
       </div>
    );
-};
-
-/**
- * Editing a list of rules.
- * Possibility to add new rules, remove some, reorder them,...
- */
-
-interface RuleListEditorProps<T extends ServerThemes.NestedThemeRule> {
-   rules: T[];
-   ops: AllOptions;
-   onChange: (rules: T[]) => void;
-   onAddRule: () => void;
-   component: React.ComponentType<{
-      rule: T;
-      ops: AllOptions;
-      onChange: (r: Partial<T>) => void;
-   }>;
-}
-
-const RuleListEditor = <T extends ServerThemes.NestedThemeRule>(
-   p: RuleListEditorProps<T>
-) => {
-   return (
-      <div>
-         {p.rules.map((r, idx) =>
-            <p.component
-               key={idx}
-               rule={r}
-               ops={p.ops}
-               onChange={(r: Partial<T>) => {
-                  const tmp = [...p.rules];
-                  tmp[idx] = {...tmp[idx], ...r};
-                  p.onChange(tmp);
-               }}
-            />)
-         }
-         <Button icon="add" onClick={p.onAddRule}/>
-      </div>
-   );
-};
+});
 
 /**
  * Convert the metadata lists to dropdown items, to help create GUI
@@ -725,7 +700,8 @@ interface ThemeEditorProps {
 }
 
 const ThemeEditorConnected = (p: ThemeEditorProps) => {
-   const [themeList, setThemeList] = React.useState<GP_JSON.ColorScheme[]>([]);
+   const [themeList, setThemeList] = React.useState<GP_JSON.ColorScheme[]>(
+      p.metadata.themes);
    const [selected, setSelected] = React.useState(0);
    const [modified, setModified] = React.useState(false);
    const [name, setName] = React.useState('');
@@ -751,7 +727,7 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
       [p.metadata.themes]);
 
    const loadRuleList = () => {
-      if (themeList.length == 0 || selected == -1) {
+      if (selected == -1) {
          setRules([DEFAULT_RULE]);
          return;
       }
@@ -785,10 +761,6 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
       },
       []);
 
-   const onAddRule = React.useCallback(
-      () => { setModified(true); setRules([...rules, NEW_RULE])},
-      []);
-
    const onCancel = React.useCallback(
       () => { loadRuleList(); setModified(false); },
       []);
@@ -803,6 +775,19 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
       },
       []);
 
+   const renderRule = React.useCallback(
+      (rule: ServerThemes.ThemeRule,
+       onChange: (rule: Partial<ServerThemes.ThemeRule>) => void
+      ) =>
+         <RuleEditor
+            rule={rule}
+            onChange={onChange}
+            ops={ops}
+         />,
+      [ops]);
+
+   const createRule = React.useCallback(() => NEW_RULE, []);
+
    const main = (
       <div className="colortheme">
          <div>
@@ -811,11 +796,11 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                fluid={false}
                options={themeList.map(s => ({text: s.name, value: s.id}))}
                onChange={onChange}
-               defaultValue={selected}
+               value={selected}
                disabled={modified}
             />
             <Input
-               defaultValue={name}
+               value={name}
                onChange={onNameChange}
                required={true}
                error={!name}
@@ -828,12 +813,11 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
             matching rules are then applied from top to bottom, and later rules
             override the style set by earlier ones.
          </p>
-         <RuleListEditor
-            rules={rules}
-            ops={ops}
+         <EditableList
+            list={rules}
+            render={renderRule}
+            create={createRule}
             onChange={onRulesChange}
-            onAddRule={onAddRule}
-            component={RuleEditor}
          />
          {
             modified &&
@@ -849,7 +833,7 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                </Button>
             </Button.Group>
          }
-         <p>Missing: reordering rules, multiple values for "in" operator, deleting rules</p>
+         <p>Missing: reordering rules, multiple values for "in" operator, delete a theme, values are always strings (not boolean), adding rule after another one (not at end), add demo theme to database by default</p>
       </div>
    );
 
