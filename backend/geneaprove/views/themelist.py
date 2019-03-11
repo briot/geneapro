@@ -21,6 +21,16 @@ class ThemeRules(JSONView):
         }
 
 
+class ThemeDelete(JSONView):
+    """
+    Delete an existing theme
+    """
+    def post_json(self, params, theme_id):
+        theme_id = int(theme_id)
+
+        models.Theme.objects.filter(id=theme_id).delete()
+
+
 class ThemeSave(JSONView):
     """
     Create a new theme or edit an existing one
@@ -53,16 +63,20 @@ class ThemeSave(JSONView):
                     value=p['value'])
 
     def post_json(self, params, theme_id):
+        theme_id = int(theme_id)
         name = params['name']
         rules = json.loads(params['rules'])
 
-        theme, created = models.Theme.objects.update_or_create(
-            id=theme_id,
-            defaults={'name': name})
+        if theme_id == -1:
+            theme = models.Theme.objects.create(name=name)
+        else:
+            theme = models.Theme.objects.get(id=theme_id);
+            theme.name = name
 
-        if not created:
             for r in theme.rules.all():
                 r.delete()
 
         for idx, r in enumerate(rules):
             self.create_rule_recursive(theme, r, idx)
+
+        return {'id': theme.id}

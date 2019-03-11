@@ -726,18 +726,20 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
       },
       [p.metadata.themes]);
 
-   const loadRuleList = () => {
-      if (selected == -1) {
-         setRules([DEFAULT_RULE]);
-         return;
-      }
+   const loadRuleList = React.useCallback(
+      () => {
+         if (selected == -1) {
+            setRules([DEFAULT_RULE]);
+            return;
+         }
 
-      ServerThemes.fetchThemeRulesFromServer(selected)
-      .then((d: ServerThemes.RuleList) => {
-         setRules(d.rules.length === 0 ? [DEFAULT_RULE] : d.rules);
-      })
-   };
-   React.useEffect(loadRuleList, [themeList, selected]);
+         ServerThemes.fetchThemeRulesFromServer(selected)
+         .then((d: ServerThemes.RuleList) => {
+            setRules(d.rules.length === 0 ? [DEFAULT_RULE] : d.rules);
+         })
+      },
+      [selected, setRules]);
+   React.useEffect(loadRuleList, [loadRuleList]);
 
    React.useEffect(
       () => fetchMetadata.execute(p.dispatch, {}),
@@ -761,19 +763,31 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
       },
       []);
 
+   const onDeleteTheme = React.useCallback(
+      () => {
+         ServerThemes.deleteThemeOnServer(selected).then(() => {
+            setModified(false);
+            setSelected(-1);
+            fetchMetadata.execute(p.dispatch, {force: true});
+         });
+      },
+      [selected, p.dispatch]);
+
    const onCancel = React.useCallback(
       () => { loadRuleList(); setModified(false); },
-      []);
+      [loadRuleList]);
 
    const onSave = React.useCallback(
       () => {
          // Reload list of themes
-         ServerThemes.saveThemeOnServer(selected, name, rules).then(() => {
-            setModified(false);
-            fetchMetadata.execute(p.dispatch, {force: true});
-         });
+         ServerThemes.saveThemeOnServer(selected, name, rules).then(
+            (theme_id: number) => {
+               setModified(false);
+               fetchMetadata.execute(p.dispatch, {force: true});
+               setSelected(theme_id);
+            });
       },
-      []);
+      [selected, name, rules, p.dispatch]);
 
    const renderRule = React.useCallback(
       (rule: ServerThemes.ThemeRule,
@@ -807,6 +821,14 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                placeholder='theme name'
                style={{marginTop: 0}}
             />
+            {
+               selected != -1 &&
+               <Button
+                  icon="trash"
+                  title="Delete this theme"
+                  onClick={onDeleteTheme}
+               />
+            }
          </div>
          <p>
             Rules are applied independently for each person. The styles of the
@@ -833,7 +855,7 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                </Button>
             </Button.Group>
          }
-         <p>Missing: reordering rules, multiple values for "in" operator, delete a theme, values are always strings (not boolean), adding rule after another one (not at end), add demo theme to database by default</p>
+         <p>Missing: reordering rules, multiple values for "in" operator, add demo theme to database by default</p>
       </div>
    );
 

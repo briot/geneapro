@@ -2,8 +2,8 @@ import * as GP_JSON from '../Server/JSON';
 import * as Server from '../Server/Post';
 
 export interface OperatorValue {
-   operator: GP_JSON.OperatorString,
-   value: string|boolean|number,
+   operator: GP_JSON.OperatorString;
+   value: string;
 }
 
 export interface RuleParts {
@@ -36,6 +36,9 @@ export function fetchThemeRulesFromServer(theme_id: number) {
       .then((raw: RuleList) => raw);
 }
 
+/**
+ * The promise returns the id of the newly created theme
+ */
 export function saveThemeOnServer(
    theme_id: number, name: string, rules: ThemeRule[]
 ) {
@@ -43,5 +46,11 @@ export function saveThemeOnServer(
       name: name,
       rules: JSON.stringify(rules)
    };
-   return Server.post(`/data/theme/${theme_id}/save`, JSON.stringify(data));
+   return Server.post(`/data/theme/${theme_id}/save`, JSON.stringify(data))
+      .then(r => r.json())
+      .then(r => r.id);
+}
+
+export function deleteThemeOnServer(theme_id: number) {
+   return Server.post(`/data/theme/${theme_id}/delete`, undefined);
 }
