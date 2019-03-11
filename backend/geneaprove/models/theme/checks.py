@@ -5,9 +5,67 @@ themes.
 
 import abc # abstract base classes
 from collections.abc import Iterable
+import enum
 
-__slots__ = ["build_check", "check_choices", "checks_list",
-             "Check_Success", "Check_Exact"]
+__slots__ = ["Checker", "Check_Success", "Check_Exact"]
+
+
+class ValueType(enum.Enum):   # Javascript  OperatorTypes
+    INT = 'int'
+    INT_LIST = 'list:int'
+    BOOL = 'bool'
+    STR = 'str'
+    STR_LIST = 'list:str'
+    PERSON = 'person'
+
+    def is_list(self):
+        """
+        Whether we expect a list of values
+        """
+        return self.value.startswith('list:')
+
+    def base_type(self):
+        """
+        For a list, the type of elements in the list.
+        Otherwise self itself
+        """
+        if self == ValueType.INT_LIST:
+            return ValueType.INT
+        elif self == ValueType.STR_LIST:
+            return ValueType.STR
+        else:
+            return self
+
+    def convert(self, value):
+        """
+        Convert value to the appropriate type
+        """
+
+        # Parse lists if needed
+        if self.is_list():
+            # From a string read in the database ?
+            if isinstance(value, str):
+                assert (value[0] == '[' and value[-1] == ']') or \
+                       (value[0] == '(' and value[-1] == ')')
+                value = value[1:-1].split(',')
+
+            assert isinstance(value, list)
+            base = self.base_type()
+            return [base.convert(c) for c in value]
+
+        if self == ValueType.INT:
+            return int(value)
+        elif self == ValueType.PERSON:
+            return int(value)
+        elif self == ValueType.BOOL:
+            if isinstance(value, str):
+                return value.lower() in ('true', 't')
+            return bool(value)
+        elif self == ValueType.STR:
+            assert isinstance(value, str)
+            return value
+        else:
+            raise TypeError(f"Cannot convert {self}")
 
 
 class Check(object, metaclass=abc.ABCMeta):
@@ -26,26 +84,12 @@ class Check(object, metaclass=abc.ABCMeta):
         return (f"<{self.__class__.__name__} ref={self.reference}"
                 f" ({type(self.reference)}>")
 
-    def as_bool(self):
-        """
-        Expect the value to be a boolean
-        """
-        if isinstance(self.reference, str):
-            self.reference = self.reference.lower() in ("true", "t")
-        else:
-            self.reference = bool(self.reference)
-
-    def as_int(self):
-        """
-        Expect the value to be an int
-        """
-        self.reference = int(self.reference)
-
 
 class ICheck(Check):
     """
     Base class for case-insensitive comparisons
     """
+
     @staticmethod
     def to_lower(v):
         if isinstance(v, str):
@@ -75,12 +119,6 @@ class Check_Success(Check):
     def match(self, value):
         return True
 
-    def as_int(self):
-        pass
-
-    def as_bool(self):
-        pass
-
 class Check_Exact(Check):
     """Equal to"""
     def match(self, value):
@@ -102,12 +140,12 @@ class Check_IDifferent(ICheck):
         return value != self.reference
 
 class Check_In(Check):
-    """Value found in list"""
+    """Value in list"""
     def match(self, value):
         return value in self.reference
 
 class Check_IIn(ICheck):
-    """Value found in list (case insensitive)"""
+    """Value in list (case insensitive)"""
     def imatch(self, value):
         return value in self.reference
 
@@ -151,35 +189,72 @@ class Check_Greater_Or_Equal(Check):
     def match(self, value):
         return value and value >= self.reference
 
+class Checker:
 
-mapping = {
-    "=":          Check_Exact,
-    "i=":         Check_IExact,
-    "!=":         Check_Different,
-    "i!=":        Check_IDifferent,
-    "in":         Check_In,
-    "iin":        Check_IIn,
-    "contains":   Check_Contains,
-    "icontains":  Check_IContains,
-    "!contains":  Check_Contains_Not,
-    "!icontains": Check_IContains_Not,
-    "<":          Check_Less,
-    "<=":         Check_Less_Or_Equal,
-    ">=":         Check_Greater_Or_Equal,
-    ">":          Check_Greater
-}
+    # The keys in this dict are saved in the database, and should be changed
+    # with care
+    __MAPPING = {
+        "=":          (Check_Exact, ValueType.STR),
+        "=int":       (Check_Exact, ValueType.INT),
+        "=bool":      (Check_Exact, ValueType.BOOL),
+        "=pers":      (Check_Exact, ValueType.PERSON),
 
-check_choices = [(n, n) for n in mapping]   # for use in a django models
+        "i=":         (Check_IExact, ValueType.STR),
 
-checks_list = [
-   {'op': name, 'label': value.__doc__}
-   for name, value in mapping.items()]
+        "!=":         (Check_Different, ValueType.STR),
+        "!=int":      (Check_Different, ValueType.INT),
+        "!=bool":     (Check_Different, ValueType.BOOL),
 
-def build_check(operator, value):
-    """
-    Given three strings read in the database, return a python object too
-    perform the check
-    """
-    if value[0] == '(' and value[-1] == ')':
-        value = tuple(value[1:-1].split(','))
-    return mapping[operator](value)
+        "i!=":        (Check_IDifferent, ValueType.STR),
+
+        "in":         (Check_In, ValueType.STR_LIST),
+        "in_int":     (Check_In, ValueType.INT_LIST),
+
+        "iin":        (Check_IIn, ValueType.STR),
+
+        "contains":   (Check_Contains, ValueType.STR),
+        "icontains":  (Check_IContains, ValueType.STR),
+        "!contains":  (Check_Contains_Not, ValueType.STR),
+        "!icontains": (Check_IContains_Not, ValueType.STR),
+
+        "<str":       (Check_Less, ValueType.STR),
+        "<=str":      (Check_Less_Or_Equal, ValueType.STR),
+        ">=str":      (Check_Greater_Or_Equal, ValueType.STR),
+        ">str":       (Check_Greater, ValueType.STR),
+
+        "<int":       (Check_Less, ValueType.INT),
+        "<=int":      (Check_Less_Or_Equal, ValueType.INT),
+        ">=int":      (Check_Greater_Or_Equal, ValueType.INT),
+        ">int":       (Check_Greater, ValueType.INT),
+    }
+
+    # List of valid checkers, to send to front-end
+    CHECKS_LIST = [  # Javascript OperatorList
+       {'op': name, 'label': value[0].__doc__,
+        'basetype': value[1].base_type().value,
+        'is_list': value[1].is_list()}
+       for name, value in __MAPPING.items()]
+
+    # List of valid checkers, for use in django models
+    DJANGO_CHOICES = [(n, n) for n in __MAPPING]
+
+    @staticmethod
+    def build_check(part):
+        """
+        :param rules.RulePart part: as read in the database
+        :returntype: Check
+        """
+        descr = Checker.__MAPPING[part.operator]
+        return descr[0](descr[1].convert(part.value))
+
+    @staticmethod
+    def part_to_json(part):
+        """
+        Convert a RulePart instance to a JSON object
+        """
+        descr = Checker.__MAPPING[part.operator]
+        return {  # Javascript's  RulePart
+            "field": part.field,
+            "operator": part.operator,
+            "value": descr[1].convert(part.value),
+        }

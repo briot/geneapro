@@ -5,17 +5,17 @@
 import * as React from 'react';
 import { Button } from 'semantic-ui-react';
 
-interface ListItemProps<T extends {}> {
+interface ListItemProps<T> {
    idx: number;
    item: T;
-   render: (p: T, onChange: (p: Partial<T>) => void) => JSX.Element;
+   render: (p: T, onChange: (p: T) => void) => React.ReactNode;
    onAdd: (idx: number) => void;  // request to add a new element
    onDelete: (idx: number) => void;  // request to delete a new element
    onEdit: (p: T, idx: number) => void;
 }
 class ListItem<T> extends React.PureComponent<ListItemProps<T>> {
 
-   protected onItemChange = (item: Partial<T>) =>
+   protected onItemChange = (item: T) =>
       this.props.onEdit({...this.props.item, ...item}, this.props.idx);
    protected onItemAdd = () => this.props.onAdd(this.props.idx);
    protected onItemDel = () => this.props.onDelete(this.props.idx);
@@ -39,9 +39,9 @@ class ListItem<T> extends React.PureComponent<ListItemProps<T>> {
    }
 }
 
-interface ListProps<T extends {}> {
+interface ListProps<T> {
    list: T[];
-   render: (t: T, onChange: (partial: Partial<T>) => void) => JSX.Element;
+   render: (t: T, onChange: (newValue: T) => void) => React.ReactNode;
    create: () => T; // create a new element
    onChange: (newlist: T[]) => void;
 }

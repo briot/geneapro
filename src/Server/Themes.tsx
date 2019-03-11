@@ -1,13 +1,14 @@
 import * as GP_JSON from '../Server/JSON';
 import * as Server from '../Server/Post';
 
-export interface OperatorValue {
+export interface RulePart {
+   field: string;
    operator: GP_JSON.OperatorString;
-   value: string;
+   value: string|number|boolean|(string|number|boolean)[]|undefined;
 }
 
 export interface RuleParts {
-   [field: string]: OperatorValue;
+   [field: string]: RulePart;
 }
 
 export interface NestedThemeRule {

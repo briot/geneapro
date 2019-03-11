@@ -88,12 +88,8 @@ class Alive(RuleChecker):
     def __init__(self, *, alive=None, max_age=110, age=None, **kwargs):
         super().__init__(**kwargs)
         self.age = age or Check_Success()
-        self.age.as_int()
-
         self.max_age = max_age
-
         self.alive = alive or Check_Success()
-        self.alive.as_bool()
 
     def initial(self, person, main_id, precomputed, statuses):
         # If we have no birth date, we could assume it is at least 15 years
@@ -194,7 +190,6 @@ class KnownFather(RuleChecker):
     def __init__(self, known=None, **kwargs):
         super().__init__(**kwargs)
         self.known = known or Check_Success()
-        self.known.as_bool()
 
     def precompute(self, graph, decujus, precomputed):
         precomputed[self.id] = graph
@@ -210,7 +205,6 @@ class KnownMother(RuleChecker):
     def __init__(self, known=True, **kwargs):
         super().__init__(**kwargs)
         self.known = known or Check_Success()
-        self.known.as_bool()
 
     def precompute(self, graph, decujus, precomputed):
         precomputed[self.id] = graph
@@ -227,10 +221,10 @@ class Ancestor(RuleChecker):
     (by default looking at current decujus)
     """
 
-    def __init__(self, *, ref=None, **kwargs):
+    def __init__(self, *, ref=-1, **kwargs):
         super().__init__(**kwargs)
 
-        if ref is None or isinstance(ref, int):
+        if isinstance(ref, int):
             self.decujus = ref
         elif isinstance(ref, Check_Exact):
             self.decujus = int(ref.reference)
@@ -240,7 +234,7 @@ class Ancestor(RuleChecker):
     def precompute(self, graph, decujus, precomputed):
         ancestors = set()
         for anc in graph.people_in_tree(
-                id=self.decujus or decujus,
+                id=decujus if self.decujus < 0 else self.decujus,
                 maxdepthAncestors=-1,
                 maxdepthDescendants=0):
 
@@ -261,7 +255,7 @@ class Descendant(RuleChecker):
     By default uses current decujus
     """
 
-    def __init__(self, *, ref=None, **kwargs):
+    def __init__(self, *, ref=-1, **kwargs):
         super().__init__(**kwargs)
         if ref is None or isinstance(ref, int):
             self.decujus = ref
@@ -273,7 +267,7 @@ class Descendant(RuleChecker):
     def precompute(self, graph, decujus, precomputed):
         descendants = set()
         for desc in graph.people_in_tree(
-                id=self.decujus or decujus,
+                id=decujus if self.decujus < 0 else self.decujus,
                 maxdepthAncestors=0,
                 maxdepthDescendants=-1):
 
@@ -291,10 +285,10 @@ class Descendant(RuleChecker):
 class Implex(RuleChecker):
     """Number of times that a person appears in the ancestors tree"""
 
-    def __init__(self, *, ref, count=None, **kwargs):
+    def __init__(self, *, ref=-1, count=None, **kwargs):
         super().__init__(**kwargs)
 
-        if ref is None or isinstance(ref, int):
+        if isinstance(ref, int):
             self.decujus = ref
         elif isinstance(ref, Check_Exact):
             self.decujus = int(ref.reference)
@@ -304,7 +298,6 @@ class Implex(RuleChecker):
         self.count = count
         if self.count is None:
             raise Exception('Missing `count` argument for Implex')
-        self.count.as_int()
 
     def precompute(self, graph, decujus, precomputed):
         """
@@ -312,8 +305,9 @@ class Implex(RuleChecker):
         whether a person occurs multiple times.
         """
         # Do not use recusion for very deep trees
+        person = decujus if self.decujus < 0 else self.decujus
         queue = [
-            graph.node_from_id(self.decujus or decujus).main_id
+            graph.node_from_id(person).main_id
         ]
         counts = {}
 
@@ -344,7 +338,6 @@ class Characteristic(RuleChecker):
     def __init__(self, *, typ=None, value=None, **kwargs):
         super().__init__(**kwargs)
         self.type = typ or Check_Success()
-        self.type.as_int()
         self.value = value or Check_Success()
 
     def merge(self, assertion, main_id, precomputed, statuses):
@@ -375,21 +368,11 @@ class Event(RuleChecker):
 
         super().__init__(**kwargs)
         self.type = typ or Check_Success()
-        self.type.as_int()
-
         self.count = count
-        if self.count:
-            self.count.as_int()
-
         self.role = role or Check_Success()
-        self.role.as_int()
-
         self.date = date or Check_Success()
         self.place_name = place_name
-
         self.age = age
-        if self.age:
-            self.age.as_int()
 
         self.need_p2e = True
         self.need_places = self.place_name is not None

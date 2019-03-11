@@ -43,11 +43,14 @@ export interface EventTypeRole {
 }
 
 export type OperatorString = string;
-export type OperatorList = Array<{
+export type OperatorTypes = "int" | "str" | "bool" | "person";
+export interface OperatorDescr {
    op: OperatorString,
    label: string,
-   doc: string,
-}>;
+   basetype: OperatorTypes,
+   is_list: boolean,
+}
+export type OperatorList = Array<OperatorDescr>;
 
 export type ColorSchemeId = number;
 export interface ColorScheme {

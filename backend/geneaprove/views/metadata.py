@@ -1,5 +1,5 @@
 from .. import models
-from ..models.theme import checks_list
+from ..models.theme import Checker
 from .to_json import JSONView
 
 class MetadataList(JSONView):
@@ -14,6 +14,6 @@ class MetadataList(JSONView):
                .objects.all(),
             'event_types': models.Event_Type.objects.all(),
             'event_type_roles': models.Event_Type_Role.objects.all(),
-            'theme_operators': checks_list,
+            'theme_operators': Checker.CHECKS_LIST,
             'themes': models.Theme.objects.all(),
         }

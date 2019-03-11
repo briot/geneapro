@@ -15,7 +15,7 @@ import './ThemeEditor.css';
 
 const DO_NOTHING_OP = {
    op: 'ignore',
-   label: 'any',
+   label: '-',
    doc: 'Ignorw this attribute',
 };
 
@@ -25,7 +25,7 @@ const DEFAULT_RULE: ServerThemes.ThemeRule = {
    fill: null,
    color: '#333333',
    stroke: '#000000',
-   fontWeight: 'normal',
+   fontWeight: null,
    parts: {},
    children: [],
 };
@@ -53,11 +53,125 @@ const FONT_WEIGHT_OPTIONS = [
 ];
 
 interface AllOptions {
-   theme_operators: DropdownItemProps[];
    characteristic_types: DropdownItemProps[];
    event_types: DropdownItemProps[];
    event_type_roles: DropdownItemProps[];
+
+   str_theme_operators: DropdownItemProps[];
+   int_theme_operators: DropdownItemProps[];
+   bool_theme_operators: DropdownItemProps[];
+   person_theme_operators: DropdownItemProps[];
+
+   /** Getting type and is_list from an operator */
+   all_operators: {[id: string /* OperatorString */]: GP_JSON.OperatorDescr};
 }
+
+/**
+ * Convert an operator's type (basically a python type) to a HTML type used
+ * for <input> elements
+ */
+function pythonToHTML(typ: GP_JSON.OperatorTypes) {
+   switch(typ) {
+      case 'int':
+      case 'person': return 'number';
+      case 'str':    return 'text';
+      case 'bool':   return 'text';  // Wrong, but unused
+   }
+}
+
+/**
+ * Editing string or boolean value
+ */
+
+interface ValueBaseProps {
+   ops: AllOptions;
+   title?: string;
+
+   choices?: DropdownItemProps[];
+   // If specified, only a limited set of values is possible. Their 'value'
+   // field should match the type expected by the operator.
+}
+
+type ValueType = number|string|boolean;
+
+interface ValueProps extends ValueBaseProps {
+   operator: GP_JSON.OperatorDescr;
+   value: ValueType|ValueType[]|undefined;
+   onValueChange: (value: ValueType|ValueType[]) => void;
+}
+const Value = (p: ValueProps) => {
+   const onValueChange = React.useCallback(
+      (e: any, data: {value?: ValueType|ValueType[]}) =>
+         p.onValueChange(data.value as ValueType|ValueType[]),
+      [p.onValueChange]);
+
+   const render = (v: ValueType, onValueChange: (nv: ValueType) => void) => {
+      const onListItemChange =
+         (e: any, data: {value?: ValueType}) =>
+            onValueChange(data.value as ValueType);
+
+      return p.operator.basetype == 'person' ? (
+         <Input
+            value={v}
+            onChange={onListItemChange}
+            title="person (-1 for current person)"
+            type="number"
+         />
+      ) : (
+         <Input
+            value={v}
+            placeholder="value"
+            title={p.title}
+            onChange={onListItemChange}
+            type={pythonToHTML(p.operator.basetype)}
+         />
+      );
+   };
+
+   const create = React.useCallback(() => '', []);
+
+   if (p.value === undefined || p.operator === undefined) {
+      return null;
+   }
+
+   const convert = (v: ValueType) => {
+      switch(p.operator.basetype) {
+         case 'int':  return Number(v);
+         case 'bool': return v == true || v == 'true';
+         case 'str':  return v;
+         case 'person': return Number(v);
+      }
+      return v;
+   };
+
+   const v = p.operator.is_list
+      ? (Array.isArray(p.value) ? p.value.map(convert) : [convert(p.value)])
+      : (Array.isArray(p.value) ? convert(p.value[0]) : convert(p.value));
+
+   return p.choices ? (
+      <Dropdown
+         value={v}
+         selection={true}
+         options={p.choices}
+         title={p.title}
+         onChange={onValueChange}
+         multiple={p.operator.is_list}
+      />
+   ) : p.operator.is_list ? (
+      <EditableList
+         list={v as ValueType[]}
+         render={render}
+         create={create}
+         onChange={p.onValueChange}
+      />
+   ) : (
+      render(v as ValueType, p.onValueChange)
+   );
+};
+
+/**
+ * Field, operator and value as string
+ */
 
 interface RuleProps {
    rule: ServerThemes.NestedThemeRule;
@@ -65,28 +179,20 @@ interface RuleProps {
    onChange: (r: ServerThemes.NestedThemeRule) => void;
 }
 
-/**
- * Field, operator and value as string
- */
-
-interface FieldOperatorValueProps extends RuleProps {
+interface FieldOperatorValueProps extends RuleProps, ValueBaseProps {
    label: string;
    field: string;
-   title?: string;
 
-   choices?: DropdownItemProps[];
-   // If specified, only a limited set of values is possible
+   // Which operators can be selected by the user.
+   validOperators: DropdownItemProps[];
 
-   asPerson?: boolean;
-   // If true, the value is a person. Ignored if choices is set.
-
-   forcedOperator?: GP_JSON.OperatorString;
    // If specified, the operator cannot be configured by users
+   forcedOperator?: GP_JSON.OperatorString;
 }
 const FieldOperatorValue = React.memo((p: FieldOperatorValueProps) => {
-   const old = p.rule.parts[p.field];
+   const old: ServerThemes.RulePart = p.rule.parts[p.field];
    const onChange = React.useCallback(
-      (v: ServerThemes.OperatorValue) => {
+      (v: ServerThemes.RulePart) => {
          const parts = {...p.rule.parts, [p.field]: v};
 
          if (v.operator == DO_NOTHING_OP.op) {
@@ -99,24 +205,47 @@ const FieldOperatorValue = React.memo((p: FieldOperatorValueProps) => {
 
    const onOpChange = React.useCallback(
       (e: any, data: DropdownProps) => {
-         const d = old
-            ? old.value
-            : (p.choices && p.choices[0]) ? p.choices[0].value as string : '';
-         onChange({operator: data.value as string, value: d});
+         const op = data.value as GP_JSON.OperatorString;
+         if (!old) {
+            onChange({
+               field: p.field,
+               operator: op,
+               value: (p.choices && p.choices[0])
+                  ? p.choices[0].value as string
+                  : '',
+            });
+         } else {
+            onChange({...old, operator: op});
+         }
       },
-      [onChange]);
+      [onChange, p.ops.all_operators, p.field, p.choices]);
 
    const onValueChange = React.useCallback(
-      (e: any, data: {value?: string|number|boolean|(string|number|boolean)[]|undefined}) =>
-         onChange({operator: old.operator, value: data.value as string}),
+      (value: ValueType|ValueType[]) => onChange({...old, value}),
       [onChange]);
 
    if (!old && p.forcedOperator) {
       onOpChange(0, {value: p.forcedOperator});
       return null;
    }
+   if (!p.ops.all_operators) {
+      // Not loaded yet ?
+      return null;
+   }
 
-   // ??? Editing multiple values when operator is "in"
+   let children: React.ReactNode;
+   if (old === undefined) {
+      children = undefined;
+   } else {
+      children = (
+         <Value
+            {...p}
+            value={old.value}
+            onValueChange={onValueChange}
+            operator={p.ops.all_operators[old.operator]}
+         />
+      );
+   }
 
    return (
       <div>
@@ -127,37 +256,13 @@ const FieldOperatorValue = React.memo((p: FieldOperatorValueProps) => {
                <Dropdown
                   value={old ? old.operator : DO_NOTHING_OP.op}
                   selection={true}
-                  options={p.ops.theme_operators}
+                  options={p.validOperators}
                   placeholder="How to compare values"
                   title={p.title}
                   onChange={onOpChange}
                />
             }
-            {
-               old &&
-               (p.choices ? (
-                  <Dropdown
-                     value={old.value}
-                     selection={true}
-                     options={p.choices}
-                     title={p.title}
-                     onChange={onValueChange}
-                  />
-               ) : p.asPerson ? (
-                  <Input
-                     value={old.value}
-                     onChange={onValueChange}
-                     placeholder="persoon"
-                  />
-               ) : (
-                  <Input
-                     value={old.value}
-                     placeholder="value"
-                     title={p.title}
-                     onChange={onValueChange}
-                  />
-               ))
-            }
+            {children}
           </span>
       </div>
    );
@@ -169,8 +274,8 @@ const FieldOperatorValue = React.memo((p: FieldOperatorValueProps) => {
 
 const RuleAlive = React.memo((p: RuleProps) => {
    const options = [
-      {key: 0, value: "true", text: 'Currently alive'},
-      {key: 1, value: "false", text: 'Dead, or more than 110 year old'},
+      {key: 0, value: true, text: 'Currently alive'},
+      {key: 1, value: false, text: 'Dead, or more than 110 year old'},
    ];
    return (
       <>
@@ -178,13 +283,15 @@ const RuleAlive = React.memo((p: RuleProps) => {
             {...p}
             label="Alive ?"
             field="alive"
-            forcedOperator="="
+            forcedOperator="=bool"
+            validOperators={p.ops.bool_theme_operators}
             choices={options}
          />
          <FieldOperatorValue
             {...p}
             label="Age"
             field="age"
+            validOperators={p.ops.int_theme_operators}
             title="Comparing current age of the person"
          />
       </>
@@ -201,8 +308,8 @@ const RuleWithRef = (p: RuleProps, label: string) => {
          {...p}
          label={label}
          field="ref"
-         asPerson={true}
-         forcedOperator="="
+         validOperators={p.ops.person_theme_operators}
+         forcedOperator="=person"
       />
    );
 };
@@ -266,15 +373,16 @@ const RuleOr =
 
 const RuleKnown= (p: RuleProps, label: string) => {
    const options = [
-      {key: 0, value: "true", text: `${label} is known`},
-      {key: 1, value: "false", text: `${label} is unknown`},
+      {key: 0, value: true, text: `${label} is known`},
+      {key: 1, value: false, text: `${label} is unknown`},
    ];
    return (
       <FieldOperatorValue
          {...p}
          label="Known ?"
          field="known"
-         forcedOperator="="
+         forcedOperator="=bool"
+         validOperators={p.ops.bool_theme_operators}
          choices={options}
       />
    );
@@ -296,13 +404,14 @@ const RuleImplex = React.memo((p: RuleProps) => {
             {...p}
             label="In tree of"
             field="ref"
-            asPerson={true}
-            forcedOperator="="
+            validOperators={p.ops.person_theme_operators}
+            forcedOperator="=person"
          />
          <FieldOperatorValue
             {...p}
             label="Count"
             field="count"
+            validOperators={p.ops.int_theme_operators}
             title="How many times the person appears in the tree"
          />
       </>
@@ -329,12 +438,14 @@ const RuleCharacteristic = React.memo((p: RuleProps) => {
             label="Characteristic"
             field="typ"
             title="Which characteristic to test"
+            validOperators={p.ops.int_theme_operators}
             choices={p.ops.characteristic_types}
          />
          <FieldOperatorValue
             {...p}
             label="Value"
             field="value"
+            validOperators={p.ops.str_theme_operators}
             title="What value the characteristic should have"
          />
       </>
@@ -353,12 +464,14 @@ const RuleEvent = React.memo((p: RuleProps) => {
             label="Event"
             field="typ"
             title="Which event to test"
+            validOperators={p.ops.int_theme_operators}
             choices={p.ops.event_types}
          />
          <FieldOperatorValue
             {...p}
             label="Count"
             field="count"
+            validOperators={p.ops.int_theme_operators}
             title="Number of times this event occurs for the person (for instance number of time she was married)"
          />
          <FieldOperatorValue
@@ -366,24 +479,28 @@ const RuleEvent = React.memo((p: RuleProps) => {
             label="Role"
             field="role"
             title="Role the person plays in the event"
+            validOperators={p.ops.int_theme_operators}
             choices={p.ops.event_type_roles}
          />
          <FieldOperatorValue
             {...p}
             label="Date"
             field="date"
-            title="When the event took place"
+            validOperators={p.ops.str_theme_operators}
+            title="When the event took place (YYYY-MM-DD)"
          />
          <FieldOperatorValue
             {...p}
             label="Place name"
             field="place_name"
+            validOperators={p.ops.str_theme_operators}
             title="Where the event took place"
          />
          <FieldOperatorValue
             {...p}
             label="Person's age"
             field="age"
+            validOperators={p.ops.int_theme_operators}
             title="Age of the person when the event took place"
          />
       </>
@@ -438,17 +555,17 @@ const RULE_TYPE_OPTIONS = Object.entries(RULE_TYPES).map(([id, r]) =>
 interface FontWeightEditorProps {
    label: string;
    rule: ServerThemes.ThemeRule;
-   onChange: (r: Partial<ServerThemes.ThemeRule>) => void;
+   onChange: (r: ServerThemes.ThemeRule) => void;
 }
 const FontWeightEditor = React.memo((p: FontWeightEditorProps) => {
    const onValueChange = React.useCallback(
       (e: any, d: DropdownProps) =>
-         p.onChange({fontWeight: d.value as GP_JSON.FontWeight}),
-      [p.onChange]);
+         p.onChange({...p.rule, fontWeight: d.value as GP_JSON.FontWeight}),
+      [p.onChange, p.rule]);
    const toggleNone = React.useCallback(
       (e: any, d: CheckboxProps) =>
-         p.onChange({fontWeight: d.checked ? 'normal' : null}),
-      [p.onChange]);
+         p.onChange({...p.rule, fontWeight: d.checked ? 'normal' : null}),
+      [p.onChange, p.rule]);
    return (
       <span className='color'>
          <Checkbox
@@ -486,16 +603,16 @@ interface ColorEditorProps {
    title?: string;
    field: 'fill' | 'color' | 'stroke';
    rule: ServerThemes.ThemeRule;
-   onChange: (r: Partial<ServerThemes.ThemeRule>) => void;
+   onChange: (r: ServerThemes.ThemeRule) => void;
 }
 const ColorEditor = React.memo((p: ColorEditorProps) => {
    const onColorChange = React.useCallback(
-      (e: any, d: InputProps) => p.onChange({[p.field]: d.value}),
-      [p.onChange]);
+      (e: any, d: InputProps) => p.onChange({...p.rule, [p.field]: d.value}),
+      [p.onChange, p.rule, p.field]);
    const toggleNone = React.useCallback(
       (e: any, d: CheckboxProps) =>
-         p.onChange({[p.field]: d.checked ? '#000000' : null}),
-      [p.onChange]);
+         p.onChange({...p.rule, [p.field]: d.checked ? '#000000' : null}),
+      [p.onChange, p.rule, p.field]);
    return (
       <span className='color'>
          <Checkbox
@@ -576,21 +693,15 @@ const NestedRuleEditor = (p: NestedRuleEditorProps) => {
 interface RuleEditorProps {
    rule: ServerThemes.ThemeRule;
    ops: AllOptions;
-   onChange: (rules: Partial<ServerThemes.ThemeRule>) => void;
+   onChange: (rules: ServerThemes.ThemeRule) => void;
 }
 const RuleEditor = React.memo((p: RuleEditorProps) => {
    const onNameChange = React.useCallback(
-      (e: any, d: InputProps) => p.onChange({name: d.value}),
-      [p.onChange]);
-   const onFillChange = React.useCallback(
-      (e: any, d: InputProps) => p.onChange({fill: d.value}),
-      [p.onChange]);
-   const onStrokeChange = React.useCallback(
-      (e: any, d: InputProps) => p.onChange({stroke: d.value}),
-      [p.onChange]);
+      (e: any, d: InputProps) => p.onChange({...p.rule, name: d.value}),
+      [p.onChange, p.rule]);
    const onNestedRuleChange = React.useCallback(
-      (r: ServerThemes.NestedThemeRule) => p.onChange(r),
-      [p.onChange]);
+      (r: ServerThemes.NestedThemeRule) => p.onChange({...p.rule, ...r}),
+      [p.onChange, p.rule]);
 
    return (
       <div className="rule">
@@ -655,11 +766,13 @@ const RuleEditor = React.memo((p: RuleEditorProps) => {
 
 const metadataToDropdown = (p: GP_JSON.Metadata): AllOptions => {
    const typeToName: {[id: number]: string} = {};
-   const theme_operators = [DO_NOTHING_OP, ...p.theme_operators].map(s => ({
-      key: s.op,
-      value: s.op,
-      text: s.label,
-   }));
+
+   const build_operators = (typ: GP_JSON.OperatorTypes) => {
+      const f = p.theme_operators.filter(t => t.basetype == typ);
+      return [DO_NOTHING_OP, ...f].map(
+         s => ({key: s.op, value: s.op, text: s.label}));
+   };
+
    const characteristic_types = p.characteristic_types.map(s => ({
       key: s.id,
       value: s.id,
@@ -683,8 +796,17 @@ const metadataToDropdown = (p: GP_JSON.Metadata): AllOptions => {
          content: <Header content={s.name} subheader={sub} />
       };
    });
-   return {theme_operators, characteristic_types,
-           event_types, event_type_roles};
+   const all_operators: {[id: string]: GP_JSON.OperatorDescr} = {}
+   for (const s of p.theme_operators) {
+      all_operators[s.op] = s;
+   }
+
+   return {int_theme_operators: build_operators("int"),
+           str_theme_operators: build_operators("str"),
+           bool_theme_operators: build_operators("bool"),
+           person_theme_operators: build_operators("person"),
+           characteristic_types,
+           event_types, event_type_roles, all_operators};
 };
 const useMetadataToDropdown = createSelector(metadataToDropdown);
 
@@ -791,7 +913,7 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
 
    const renderRule = React.useCallback(
       (rule: ServerThemes.ThemeRule,
-       onChange: (rule: Partial<ServerThemes.ThemeRule>) => void
+       onChange: (rule: ServerThemes.ThemeRule) => void
       ) =>
          <RuleEditor
             rule={rule}
@@ -855,7 +977,7 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                </Button>
             </Button.Group>
          }
-         <p>Missing: reordering rules, multiple values for "in" operator, add demo theme to database by default</p>
+         <p>Missing: reordering rules, add demo theme to database by default</p>
       </div>
    );
 
