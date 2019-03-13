@@ -18,7 +18,6 @@ from .views import pedigree
 from .views import persona
 from .views import places
 from .views import representation
-from .views import rules
 from .views import sources
 from .views import stats
 from .views import themelist
@@ -71,7 +70,6 @@ urlpatterns = [
     url(r'^data/sources/(\d+)/delRepr/(\d+)', sources.DelSourceRepr.as_view()),
     url(r'^data/suretySchemes$', persona.SuretySchemesList.as_view()),
     url(r'^data/event/(\d+)$', events.EventDetailsView.as_view()),
-    url(r'^data/legend$', rules.getLegend),
     url(r'^data/stats/count$', count.CountView.as_view()),
     url(r'^data/stats/(?P<id>\d+)$', stats.StatsView.as_view()),
     url(r'^data/metadata$', metadata.MetadataList.as_view()),
