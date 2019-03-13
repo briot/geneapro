@@ -977,7 +977,7 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                </Button>
             </Button.Group>
          }
-         <p>Missing: reordering rules, add demo theme to database by default</p>
+         <p>Missing: reordering rules</p>
       </div>
    );
 

@@ -31,6 +31,7 @@ class Rule(GeneaProveModel):
     One specific rule within a theme
     """
 
+
     theme = models.ForeignKey(
         Theme, related_name="rules", on_delete=models.CASCADE)
     type = models.TextField(help_text="Type oof rule")
@@ -56,7 +57,14 @@ class Rule(GeneaProveModel):
         db_table = "rule"
 
     def __str__(self):
-        return f"(Rule name={self.name})"
+        return (
+            f"(Rule name={self.name} type={self.type}"
+            f" seq={self.sequence_number}"
+            f" fill={self.style_fill}"
+            f" color={self.style_color}"
+            f" stroke={self.style_stroke}"
+            f" font={self.style_font_weight})"
+        )
 
     def to_json(self):
         return {
@@ -111,3 +119,6 @@ class RulePart(GeneaProveModel):
 
     def to_json(self):
         return Checker.part_to_json(self)
+
+    def __str__(self):
+        return f"(RulePart {self.field} {self.operator} {self.value})"
