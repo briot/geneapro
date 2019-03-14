@@ -10,7 +10,6 @@
 
 .colortheme .rule {
    background: #eaeaea;
-   margin: 10px 0;
    padding-left: 10px;
    border-width: 1px 1px 1px 5px;
    border-style: solid;
@@ -50,6 +49,7 @@
    height: 40px;
 }
 
+/* Only applies for non-reorderable lists */
 .colortheme .listItem + .listItem {
    margin-top: 10px;
 }
@@ -58,22 +58,3 @@
    /* Workaround for improper alignment in semantic-ui */
    top: -8px;
 }
-
-.colortheme .listItemButton {
-   position: relative;
-   float: left;
-   left: -40px;
-   margin-right: -40px;
-   visibility: hidden;
-}
-.colortheme .listItemBottom {
-   top: -20px;
-}
-.colortheme .listItem {
-   padding-left: 40px;
-}
-.colortheme .listItem:hover > .listItemButton,
-.colortheme .listItemButton:hover {
-   visibility: visible;
-}
-

@@ -1,0 +1,43 @@
+/* Buttons go to the left margin of items */
+.editableList .listItemButton {
+   position: relative;
+   float: left;
+   left: -40px;
+   margin-right: -40px;
+   visibility: hidden;
+}
+
+/* Give enough space on the left for buttons */
+.editableList .listItem {
+   padding-left: 40px;
+}
+
+/* The bottom [+] button */
+.editableList .listItemBottom {
+   top: -20px;
+}
+
+/* Show buttons when mouse hovers the item */
+.editableList .listItem:hover > .listItemButton,
+.editableList .listItemButton:hover {
+   visibility: visible;
+}
+
+/* Support for dnd */
+
+.editableList .listItem[draggable] {
+   user-select: none;
+   -webkit-user-drag: element;
+   cursor: move;
+}
+.editableList .listItem.dragged {
+   opacity: 0.4;
+}
+.editableList .listDropTarget {
+   height: 15px;
+}
+.editableList .listDropTarget.listDropOver {
+   background: #CCC;
+}
+
+

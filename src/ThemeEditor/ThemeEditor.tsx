@@ -965,6 +965,7 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
             render={renderRule}
             create={createRule}
             onChange={onRulesChange}
+            orderable={true}
          />
          {
             modified &&
@@ -980,7 +981,6 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
                </Button>
             </Button.Group>
          }
-         <p>Missing: reordering rules</p>
       </div>
    );
 
