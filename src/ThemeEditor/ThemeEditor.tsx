@@ -844,7 +844,10 @@ const ThemeEditorConnected = (p: ThemeEditorProps) => {
    React.useEffect(
       () => {
          setThemeList([...p.metadata.themes, NEW_THEME]);
-         setSelected(selected);
+         const first = p.metadata.themes[0];
+         if (first) {
+            setSelected(first.id);
+         }
       },
       [p.metadata.themes]);
 
