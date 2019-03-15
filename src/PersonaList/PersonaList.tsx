@@ -14,7 +14,6 @@ import { extractYear } from '../Store/Event';
 import { PersonaListSettings,
          changePersonaListSettings } from '../Store/PersonaList';
 import { fetchPersons } from '../Store/Sagas';
-import Style from '../Store/Styles';
 import ColorTheme from '../Store/ColorTheme';
 import './PersonaList.css';
 
@@ -38,7 +37,7 @@ const PersonaListConnected: React.FC<PersonaListProps> = (p => {
    // ??? No need to reload if the colors changed to a built-in theme (<0)
    React.useEffect(
       () => fetchPersons.execute(p.dispatch, {colors: p.settings.colors}),
-      [p.settings.colors]);
+      [p.dispatch, p.settings.colors]);
 
    // Filter the list of persons
    React.useEffect(
@@ -57,7 +56,7 @@ const PersonaListConnected: React.FC<PersonaListProps> = (p => {
    // Called when the filter is modified
    const onFilterChange = React.useCallback(
       useDebounce(
-         (e: any, val: InputProps) => setFilter(val.value as string),
+         (e: {}, val: InputProps) => setFilter(val.value as string),
          250),
       []);
 
@@ -102,7 +101,7 @@ const PersonaListConnected: React.FC<PersonaListProps> = (p => {
                   overscanCount={5}
                >
                   {
-                     ({index, style}: {index: number, style: object}) => {
+                     ({index, style}: {index: number; style: object}) => {
                         const pers = sorted[index];
                         const b = extractYear(pers.birthISODate);
                         const d = extractYear(pers.deathISODate);

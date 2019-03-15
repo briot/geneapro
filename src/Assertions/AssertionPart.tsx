@@ -21,9 +21,9 @@ interface PartState {
 }
 
 export default class AssertionPart extends React.PureComponent<PartProps, PartState> {
-   state: PartState = {expanded: false};
+   public state: PartState = {expanded: false};
 
-   onExpand = () => {
+   protected onExpand = () => {
       if (this.props.expandable) {
          this.setState(old => {
             if (!old.expanded) {
@@ -36,7 +36,7 @@ export default class AssertionPart extends React.PureComponent<PartProps, PartSt
       }
    }
 
-   render() {
+   public render() {
       const p = this.props;
       return (
          <Segment attached={true}>

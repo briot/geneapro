@@ -26,7 +26,7 @@ export interface AppState {
    personalist: PersonaListSettings;
    quilts: QuiltsSettings;
    quiltsLayout: {
-      layout?: QuiltsResult,
+      layout?: QuiltsResult;
    };
    stats: StatsSettings;
    count: DatabaseObjectsCount|undefined;
@@ -37,7 +37,7 @@ export interface AppState {
    history: HistoryItem[];    // id of persons recently visited
    researchers: ResearcherSet;
 
-   lastFetchedTheme: number,
+   lastFetchedTheme: number;
    // id of the last theme used when fetching personas. We might have to
    // reload when the theme is computed on the server.
 

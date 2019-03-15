@@ -121,27 +121,27 @@ interface CitationState {
 export default class SourceCitationi
 extends React.PureComponent<CitationProps, CitationState> {
 
-   manualTitle: string = '';
-   manualAbbrev: string = '';
-   manualBiblio: string = '';
+   public manualTitle: string = '';
+   public manualAbbrev: string = '';
+   public manualBiblio: string = '';
    // manual citations entered by the user (or original citation).
    // These are used in case the user goes back to a CUSTOM model
 
-   state: CitationState = {
+   public state: CitationState = {
       modified: false,
       models: [],
       templateParts: new Set(),
       source: createNewSource(CUSTOM),  // updated in componentDidMount
    };
 
-   async componentDidMount() {
+   public async componentDidMount() {
       let s = await fetchCitationModelsFromServer();
       s.source_types.sort((a, b) => a.type.localeCompare(b.type));
       this.setState({models: s.source_types,
                      source: this._updateSource()});
    }
 
-   componentDidUpdate(old: CitationProps) {
+   public componentDidUpdate(old: CitationProps) {
       if (!old.source) {
          if (this.props.source) {
             this.setState({source: this._updateSource()});
@@ -155,7 +155,7 @@ extends React.PureComponent<CitationProps, CitationState> {
       }
    }
 
-   reset = () => {
+   public reset = () => {
       const source = this.props.source ?
          {...this.props.source} :
          createNewSource(CUSTOM);
@@ -172,7 +172,7 @@ extends React.PureComponent<CitationProps, CitationState> {
     * Take into account a change in the original source. Return the
     * update to be performed on this.state
     */
-   _updateSource(): Source {
+   protected _updateSource(): Source {
       if (!this.props.source) {
          let source = createNewSource(CUSTOM);
          this.manualTitle = '';
@@ -193,7 +193,9 @@ extends React.PureComponent<CitationProps, CitationState> {
    /**
     * Recompute the title/abbrev/biblio citation based on template and parts
     */
-   recomputeCitation(templates: undefined|CitationTemplate, parts: CitationPartSet) {
+   public recomputeCitation(
+      templates: undefined|CitationTemplate, parts: CitationPartSet
+   ) {
       let title = this.manualTitle;
       let abbrev = this.manualAbbrev;
       let biblio = this.manualBiblio;
@@ -221,7 +223,7 @@ extends React.PureComponent<CitationProps, CitationState> {
       return {title: title, abbrev: abbrev, biblio: biblio};
    }
 
-   fetchModel(source: Source, model: string) {
+   public fetchModel(source: Source, model: string) {
       if (model === CUSTOM) {
          this.setState({template: undefined,
                         templateParts: new Set(),
@@ -243,7 +245,7 @@ extends React.PureComponent<CitationProps, CitationState> {
       }
    }
 
-   setPart = (key: string, value: string) => {
+   public setPart = (key: string, value: string) => {
       const p: CitationPartSet = {
          ...this.state.source.parts,
          [key]: {name: key, value: value, fromHigh: false},
@@ -256,12 +258,12 @@ extends React.PureComponent<CitationProps, CitationState> {
                   ...this.recomputeCitation(this.state.template, p)}});
    }
 
-   mediumChange = (e: Event|React.SyntheticEvent, data: DropdownProps) => {
+   public mediumChange = (e: Event|React.SyntheticEvent, data: DropdownProps) => {
       this.setState({modified: true});
       this.fetchModel(this.state.source, '' + data.value || CUSTOM);
    }
 
-   commentsChange = (e: Event|React.SyntheticEvent,
+   public commentsChange = (e: Event|React.SyntheticEvent,
                      data: TextAreaProps
    ) => {
       this.setState({source: {...this.state.source,
@@ -269,7 +271,7 @@ extends React.PureComponent<CitationProps, CitationState> {
                      modified: true});
    }
 
-   titleChange = (e: Event|React.SyntheticEvent,
+   public titleChange = (e: Event|React.SyntheticEvent,
                   data: TextAreaProps|InputOnChangeData
    ) => {
       this.manualTitle = '' + data.value;
@@ -281,7 +283,7 @@ extends React.PureComponent<CitationProps, CitationState> {
                      modified: true});
    }
 
-   abbrevChange = (e: Event|React.SyntheticEvent,
+   public abbrevChange = (e: Event|React.SyntheticEvent,
                    data: TextAreaProps|InputOnChangeData
    ) => {
       this.manualAbbrev = '' + data.value;
@@ -289,7 +291,7 @@ extends React.PureComponent<CitationProps, CitationState> {
                      modified: true});
    }
 
-   biblioChange = (e: Event|React.SyntheticEvent,
+   public biblioChange = (e: Event|React.SyntheticEvent,
                    data: TextAreaProps|InputOnChangeData
    ) => {
       this.manualBiblio = '' + data.value;
@@ -297,22 +299,22 @@ extends React.PureComponent<CitationProps, CitationState> {
                      modified: true});
    }
 
-   jurisdictionPlaceChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+   public jurisdictionPlaceChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
       this.setState({source: {...this.state.source, jurisdictionPlace: e.currentTarget.value},
                      modified: true});
    }
 
-   subjectPlaceChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+   public subjectPlaceChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
       this.setState({source: {...this.state.source, subjectPlace: e.currentTarget.value},
                      modified: true});
    }
 
-   subjectDateChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
+   public subjectDateChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
       this.setState({source: {...this.state.source, subjectDate: e.currentTarget.value},
                      modified: true});
    }
 
-   render() {
+   public render() {
       const s = this.state.source;
       return (
          <Form size="small">

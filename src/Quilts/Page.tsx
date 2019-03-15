@@ -26,11 +26,11 @@ interface QuiltsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
 }
 
 class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, {}> {
-   componentDidMount() {
+   public componentDidMount() {
       this.calculateProps();
    }
 
-   componentDidUpdate(old: QuiltsPageConnectedProps) {
+   public componentDidUpdate(old: QuiltsPageConnectedProps) {
       if (this.props.decujusid !== old.decujusid ||
           this.props.settings.decujusTreeOnly !== old.settings.decujusTreeOnly
       ) {
@@ -41,7 +41,7 @@ class QuiltsPageConnected extends React.PureComponent<QuiltsPageConnectedProps, 
       this.props.dispatch(addToHistory({person: p}));
    }
 
-   render() {
+   public render() {
       const decujus = this.props.allPersons[this.props.decujusid];
       if (decujus) {
          document.title = 'Quilts for ' + personDisplay(decujus);

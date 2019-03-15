@@ -4,7 +4,7 @@ import { AppState, rehydrate } from '../Store/State';
 import { personDisplay, PersonSet } from '../Store/Person';
 import { SourceSet } from '../Store/Source';
 import { addToHistory, HistoryItem, HistoryKind } from '../Store/History';
-import { fetchPedigree, fetchPedigreeResult, fetchPersonDetails, fetchPersons,
+import { fetchPedigree, FetchPedigreeResult, fetchPersonDetails, fetchPersons,
          fetchEventDetails, fetchSourceDetails, fetchSources, fetchCount,
          fetchMetadata,
          fetchPlaces, fetchPlaceDetails, fetchQuilts } from '../Store/Sagas';
@@ -173,7 +173,7 @@ export function rootReducer(
 
    } else if (isType(action, fetchPedigree.done)) {
       let persons = {...state.persons};
-      const data: fetchPedigreeResult = action.payload.result;
+      const data: FetchPedigreeResult = action.payload.result;
       for (let idstr of Object.keys(data.persons)) {
          const id = Number(idstr);
          // Should merge with care ???

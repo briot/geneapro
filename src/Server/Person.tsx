@@ -1,4 +1,3 @@
-import * as d3Color from 'd3-color';
 import { BasePerson, Person, PersonSet } from '../Store/Person';
 import { Assertion, AssertionList, P2E, P2C, P2P, P2G } from '../Store/Assertion';
 import { GenealogyEventSet } from '../Store/Event';
@@ -13,9 +12,9 @@ export interface FetchPersonsResult {
    persons: PersonSet;
 }
 
-interface IPersonaListRaw extends GP_JSON.Persons {
-   allstyles: {[index: number]: GP_JSON.Style},
-   styles: {[person: number]: number}
+interface PersonaListRaw extends GP_JSON.Persons {
+   allstyles: {[index: number]: GP_JSON.Style};
+   styles: {[person: number]: number};
 };
 
 export function jsonPersonToPerson(
@@ -67,7 +66,7 @@ export function* fetchPersonsFromServer(p: {colors: GP_JSON.ColorSchemeId}) {
       throw new Error('Server returned an error');
    }
 
-   const raw: IPersonaListRaw = yield resp.json();
+   const raw: PersonaListRaw = yield resp.json();
    return jsonPersonsToPerson(raw, raw.allstyles, raw.styles);
 }
 

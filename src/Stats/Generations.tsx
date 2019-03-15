@@ -47,26 +47,26 @@ const StatsGeneration = React.memo((p: StatsGenerationProps) => {
       svg.selectAll('g').remove();
       svg.append('g').attr('class', 'grid')
          .attr('transform', `translate(0,${height - margin})`)
-         .call(d3Axis.axisBottom(x).tickSize(-height).tickFormat(_ => '') as any);
+         .call(d3Axis.axisBottom(x).tickSize(-height).tickFormat(() => ''));
       svg.append('g').attr('class', 'grid')
          .attr('transform', `translate(${margin})`)
-         .call(make_y_axis().tickSize(-width).tickFormat(_ => '') as any);
+         .call(make_y_axis().tickSize(-width).tickFormat(() => ''));
       svg.append('g').attr('class', 'axis x-axis')
          .attr('transform', `translate(0,${height - margin})`)
-         .call(d3Axis.axisBottom(x) as any);
+         .call(d3Axis.axisBottom(x));
       svg.append('g').attr('class', 'axis y-axis')
          .attr('transform', `translate(${margin},0)`)
-         .call(make_y_axis() as any);
+         .call(make_y_axis());
 
       // The bars
-      const r = svg.selectAll('rect').data(p.ranges);
-      r.enter().append('rect')
-         .merge(r as any)  // update+enter
+      const r = svg.selectAll<SVGRectElement, JSONGenerationRange>(
+            'rect').data(p.ranges); r.enter().append('rect')
+         .merge(r)  // update+enter
          .attr('fill', d => color(d[0]))
          .attr('title', d => d[3])
-         .attr('x', d => x(d[1])!)
+         .attr('x', d => x(d[1]) || 0)
          .attr('y', d => y(d[0] + 1))
-         .attr('width', d => x(d[2])! - x(d[1])!)
+         .attr('width', d => (x(d[2]) || 0) - (x(d[1]) || 0))
          .attr('height', barHeight);
    });
 
@@ -74,7 +74,7 @@ const StatsGeneration = React.memo((p: StatsGenerationProps) => {
    return (
       <Card fluid={true} className="Stats">
          <Card.Content>
-            <Card.Header>Generations timespan (oldest birth - latest death), in {name}'s tree</Card.Header>
+            <Card.Header>Generations timespan (oldest birth - latest death), in {name}&apos;s tree</Card.Header>
             <Card.Description>
                <svg ref={svgElem} height="350" width="100%"/>
             </Card.Description>

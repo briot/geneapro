@@ -12,7 +12,7 @@ interface PersonProps {
 }
 
 export default class AssertionPartPerson extends React.PureComponent<PersonProps> {
-   render() {
+   public render() {
       return (
          <AssertionPart title={<PersonaLink id={this.props.personId} />} />
       );

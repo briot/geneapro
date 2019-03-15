@@ -13,20 +13,20 @@ export default class Style {
    /**
     * Support for HSV colors
     */
-   static hsv(h: number, s: number, v: number): d3Color.HSLColor {
+   public static hsv(h: number, s: number, v: number): d3Color.HSLColor {
       const ll = (2.0 - s) * v;
       const ss = (s * v) / (ll <= 1 ? ll : 2.0 - ll);
       return d3Color.hsl(h, ss, ll / 2);
    }
 
-   static hsvStr(h: number, s: number, v: number) {
+   public static hsvStr(h: number, s: number, v: number) {
       return Style.hsv(h, s, v).toString();
    }
 
    /**
     * Build from JSON data
     */
-   constructor(s: JSON.Style) {
+   public constructor(s: JSON.Style) {
       this.fill = s.fill;
       this.stroke = s.stroke;
       this.color = s.color;

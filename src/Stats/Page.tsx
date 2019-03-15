@@ -34,14 +34,14 @@ interface StatsPageConnectedState {
 class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
                                                      StatsPageConnectedState> {
 
-   state: StatsPageConnectedState = {};
-   controller: AbortController|undefined;
+   public state: StatsPageConnectedState = {};
+   public controller: AbortController|undefined;
 
-   componentDidMount() {
+   public componentDidMount() {
       this.calculateProps();
    }
 
-   componentDidUpdate(old: StatsPageConnectedProps) {
+   public componentDidUpdate(old: StatsPageConnectedProps) {
       if (this.props.decujusid !== old.decujusid ||
           this.props.settings.max_age !== old.settings.max_age ||
           this.props.settings.bar_width !== old.settings.bar_width
@@ -59,7 +59,7 @@ class StatsPageConnected extends React.PureComponent<StatsPageConnectedProps,
       }
    }
 
-   render() {
+   public render() {
       const decujus = this.props.persons[this.props.decujusid];
       if (decujus) {
          document.title = 'Stats for ' + personDisplay(decujus);

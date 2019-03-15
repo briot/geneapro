@@ -7,7 +7,6 @@ import { FanchartSettings } from '../Store/Fanchart';
 import { GenealogyEventSet } from '../Store/Event';
 import { PersonLayout, PersonLayouts } from '../Fanchart/types';
 import ColorTheme from '../Store/ColorTheme';
-import Style from '../Store/Styles';
 import ScalableSVG from '../SVG.Scalable';
 import { extractYear } from '../Store/Event';
 

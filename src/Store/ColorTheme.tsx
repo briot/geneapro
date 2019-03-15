@@ -1,4 +1,3 @@
-import * as d3Color from 'd3-color';
 import Style from '../Store/Styles';
 import { Person } from '../Store/Person';
 import * as GP_JSON from '../Server/JSON';
@@ -9,7 +8,7 @@ export const GENERATION: GP_JSON.ColorScheme = {id: -3, name: 'Generation'};
 export const QUARTILE: GP_JSON.ColorScheme = {id: -2, name: 'Quartile'};
 export const NO_BOX: GP_JSON.ColorScheme = {id: -1, name: 'No Box'};
 
-export const predefinedThemes: Array<GP_JSON.ColorScheme> = [
+export const predefinedThemes: GP_JSON.ColorScheme[] = [
    PEDIGREE, WHITE, GENERATION, QUARTILE, NO_BOX,
 ];
 
@@ -38,7 +37,6 @@ const baseQuartileColors = [
 const DEFAULT = new Style({
    fontWeight: 'normal', color: 'black', stroke: '#222'});
 const STROKE_GREY_ON_WHITE = new Style({...DEFAULT, fill: '#fff'});
-const BOLD_BLACK = new Style({fontWeight: 'bold', color: 'black'});
 const TEXT_ONLY = new Style({color: 'black'});
 
 export default class ColorTheme {
@@ -46,7 +44,7 @@ export default class ColorTheme {
    /**
     * Compute the display style for a person
     */
-   static forPerson(colors: GP_JSON.ColorSchemeId,
+   public static forPerson(colors: GP_JSON.ColorSchemeId,
                     p?: Person,
                     layout?: BasePersonLayout,
    ): Style {
@@ -97,7 +95,7 @@ export default class ColorTheme {
    /**
     * Default for fanchart boxes
     */
-   static forFanchartBox(colors: GP_JSON.ColorSchemeId): Style {
+   public static forFanchartBox(colors: GP_JSON.ColorSchemeId): Style {
       return colors == NO_BOX.id ? TEXT_ONLY : DEFAULT;
    }
 
@@ -105,7 +103,7 @@ export default class ColorTheme {
     * Compute the style for the separator above the person.
     * In the fanchart, this is the inter-generation separator.
     */
-   static forSeparator(colors: GP_JSON.ColorSchemeId,
+   public static forSeparator(colors: GP_JSON.ColorSchemeId,
                        p?: Person,
                        layout?: BasePersonLayout
    ): Style {

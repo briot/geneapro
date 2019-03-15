@@ -27,10 +27,10 @@ interface QuiltsState {
 
 export default class Quilts extends React.PureComponent<QuiltsProps, QuiltsState> {
 
-   state: QuiltsState = { selected: [] };
-   nextColor: number = 0;
+   public state: QuiltsState = { selected: [] };
+   public nextColor: number = 0;
 
-   addToSelection(p: QuiltsPersonLayout) {
+   public addToSelection(p: QuiltsPersonLayout) {
       // Unselect if it was already selected
       for (let s = 0; s < this.state.selected.length; s++) {
          if (this.state.selected[s].base === p) {
@@ -50,9 +50,9 @@ export default class Quilts extends React.PureComponent<QuiltsProps, QuiltsState
       }));
    }
 
-   render() {
+   public render() {
       const props = this.props;
-   
+
       if (props.settings.loading) {
          return <span>Loading</span>;
       }
@@ -78,7 +78,7 @@ export default class Quilts extends React.PureComponent<QuiltsProps, QuiltsState
                   layer.persons.map((p, index) => (
                      <text
                         key={p.person.id}
-                        onClick={(event) => this.addToSelection(p)}
+                        onClick={() => this.addToSelection(p)}
                         x={MARGIN}
                         y={(1 + index) * LINE_SPACING - 2}
                      >
@@ -102,7 +102,7 @@ export default class Quilts extends React.PureComponent<QuiltsProps, QuiltsState
          const last = layerIndex === layers.length - 1;
 
          // Horizontal lines
-   
+
          layer.persons.forEach((p, pIndex) => {
             if (pIndex === 0) {
                d += `M${last ? layer.left : p.minX} ${p.topY}H${p.maxX}`;
@@ -313,7 +313,7 @@ export default class Quilts extends React.PureComponent<QuiltsProps, QuiltsState
                {
                   // For each family with children in this layer
 
-                  layer.families.map((fam: Family, famIndex) =>
+                  layer.families.map((fam: Family) =>
                      fam.persons.map((playout, index) => {
                         if (playout === undefined) {
                            return null;

@@ -39,7 +39,7 @@ const RadialPageConnected = (p: RadialPageConnectedProps) => {
                theme: p.settings.colors,
             });
       },
-      [p.decujusid, p.settings.generations, p.settings.colors]);
+      [p.decujusid, p.settings.generations, p.settings.colors, p.dispatch]);
 
    React.useEffect(
       () => {
@@ -48,7 +48,7 @@ const RadialPageConnected = (p: RadialPageConnectedProps) => {
             document.title = 'Radial for ' + personDisplay(decujus);
          }
       },
-      [decujus]);
+      [decujus, p]);
 
    const main = p.settings.loading ? (
          <Loader active={true} size="large">Loading</Loader>

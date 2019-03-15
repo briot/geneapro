@@ -22,7 +22,7 @@ function View(props: ConnectedProps) {
    const birthYear = extractYear(p.birthISODate);
    const deathYear = extractYear(p.deathISODate);
 
-   let gender: string = '';
+   let gender = '';
    if (p.asserts) {
       for (const a of p.asserts.get()) {
          // ??? Should compare non-display string, not "sex"

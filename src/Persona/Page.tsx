@@ -20,11 +20,11 @@ interface PersonaPageProps extends RouteComponentProps<PropsFromRoute> {
 }
 
 class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
-   componentDidMount() {
+   public componentDidMount() {
       this.calculateData();
    }
 
-   componentDidUpdate(old: PersonaPageProps) {
+   public componentDidUpdate(old: PersonaPageProps) {
       if (old.id !== this.props.id) {
          this.calculateData();
       }
@@ -33,11 +33,11 @@ class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
       this.props.dispatch(addToHistory({person: p}));
    }
 
-   calculateData() {
+   protected calculateData() {
       fetchPersonDetails.execute(this.props.dispatch, {id: this.props.id});
    }
 
-   render() {
+   public render() {
       const p = this.props.persons[this.props.id];
       document.title = p ? personDisplay(p) : 'Persona';
       return (

@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { RouteComponentProps } from 'react-router';
 import { Loader } from 'semantic-ui-react';
 import * as GP_JSON from '../Server/JSON';
-import { Person, personDisplay, PersonSet } from '../Store/Person';
+import { personDisplay, PersonSet } from '../Store/Person';
 import { GenealogyEventSet } from '../Store/Event';
 import { PlaceSet } from '../Store/Place';
 import { addToHistory } from '../Store/History';
@@ -43,20 +43,19 @@ const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = (p) => {
             descendants: p.settings.descendants,
             theme: p.settings.colors,
          });
-   }, [decujusid, p.settings.ancestors, p.settings.descendants,
-       p.settings.colors]);
+   }, [decujusid, p.settings.ancestors, p.settings.descendants, p.settings.colors, p.dispatch]);
 
    // Add the person to history
    const decujus = p.persons[decujusid];
    React.useEffect(() => {
       document.title = 'Pedigree for ' + personDisplay(decujus);
       p.dispatch(addToHistory({person: decujus}));
-   }, [decujus]);
+   }, [decujus, p]);
 
    const onChange = React.useCallback(
       (diff: Partial<PedigreeSettings>) =>
           p.dispatch(changePedigreeSettings({diff})),
-      []);  // p.dispatch never changes
+      [p]);  // p.dispatch never changes
 
    // ??? Initially, we have no data and yet loading=false
    // We added special code in Pedigree/Data.tsx to test whether the layout

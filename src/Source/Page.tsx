@@ -20,24 +20,24 @@ interface SourcePageProps extends RouteComponentProps<PropsFromRoute> {
 }
 
 class SourcePageConnected extends React.PureComponent<SourcePageProps> {
-   componentDidMount() {
+   public componentDidMount() {
       this.calculateData();
    }
 
-   componentDidUpdate(old: SourcePageProps) {
+   public componentDidUpdate(old: SourcePageProps) {
       if (old.id !== this.props.id) {
          this.calculateData();
       }
       this.props.dispatch(addToHistory({source: this.props.source}));
    }
 
-   calculateData() {
+   public calculateData() {
       if (this.props.id >= 0) {
          fetchSourceDetails.execute(this.props.dispatch, {id: this.props.id});
       }
    }
 
-   render() {
+   public render() {
       const s = this.props.source;
       document.title = s ?  s.abbrev : 'New Source';
       return (

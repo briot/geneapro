@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import ColorTheme from '../Store/ColorTheme';
-import Style from '../Store/Styles';
 import { Person } from '../Store/Person';
 import { PedigreeSettings } from '../Store/Pedigree';
 import { GenealogyEventSet } from '../Store/Event';

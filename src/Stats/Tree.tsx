@@ -64,7 +64,7 @@ export default function StatsTree(props: StatsTreeProps) {
                      <Icon name="user" size="small"/>
                      {props.fatherAncestors}
                   </Statistic.Value>
-                  <Statistic.Label>Father's ancestors</Statistic.Label>
+                  <Statistic.Label>Father&apos;s ancestors</Statistic.Label>
                </Statistic>
             </Card.Content>
          </Card>
@@ -76,7 +76,7 @@ export default function StatsTree(props: StatsTreeProps) {
                      <Icon name="user" size="small"/>
                      {props.motherAncestors}
                   </Statistic.Value>
-                  <Statistic.Label>Mother's ancestors</Statistic.Label>
+                  <Statistic.Label>Mother&apos;s ancestors</Statistic.Label>
                </Statistic>
             </Card.Content>
          </Card>

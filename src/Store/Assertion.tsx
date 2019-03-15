@@ -17,7 +17,7 @@ export interface Characteristic {
 }
 
 export abstract class Assertion {
-   constructor(
+   public constructor(
       public id:          number,
       public surety:      number,
       public researcher:  number,  // xref
@@ -32,7 +32,7 @@ export abstract class Assertion {
     * Return the sort order for timelines. The format of the date should
     * be ISO: yyyy-mm-dd
     */
-   getSortDate(events: GenealogyEventSet): string|null {
+   public getSortDate(events: GenealogyEventSet): string|null { // eslint-disable-line @typescript-eslint/no-unused-vars
       return null;
    }
 
@@ -40,12 +40,12 @@ export abstract class Assertion {
     * Return a key to use when sorting assertions. This is the secondary key
     * in timelines, where the dates have been checked first
     */
-   abstract getSortKey(events: GenealogyEventSet): string;
+   public abstract getSortKey(events: GenealogyEventSet): string;
 
 }
 
 export class P2P extends Assertion {
-   constructor(
+   public constructor(
       public id:          number,
       public surety:      number,
       public researcher:  number,  // xref
@@ -61,13 +61,13 @@ export class P2P extends Assertion {
    }
 
    /** overriding */
-   getSortKey(_: GenealogyEventSet): string {
+   public getSortKey(): string {
       return 'same as';
    }
 }
 
 export class P2G extends Assertion {
-   constructor(
+   public constructor(
       public id:          number,
       public surety:      number,
       public researcher:  number,  // xref
@@ -82,13 +82,13 @@ export class P2G extends Assertion {
    }
 
    /** overriding */
-   getSortKey(_: GenealogyEventSet): string {
+   public getSortKey(): string {
       return 'group';
    }
 }
 
 export class P2C extends Assertion {
-   constructor(
+   public constructor(
       public id:             number,
       public surety:         number,
       public researcher:     number,  // xref
@@ -103,18 +103,18 @@ export class P2C extends Assertion {
    }
 
    /** overriding */
-   getSortDate(_: GenealogyEventSet): string|null {
+   public getSortDate(): string|null {
       return this.characteristic.date_sort || null;
    }
 
    /** overriding */
-   getSortKey(_: GenealogyEventSet): string {
+   public getSortKey(): string {
       return this.characteristic.name;
    }
 }
 
 export class P2E extends Assertion {
-   constructor(
+   public constructor(
       public id:          number,
       public surety:        number,
       public researcher:    number,  // xref
@@ -130,33 +130,33 @@ export class P2E extends Assertion {
    }
 
    /** overriding */
-   getSortDate(events: GenealogyEventSet): string|null {
+   public getSortDate(events: GenealogyEventSet): string|null {
       const e = events[this.eventId];
       return e ? e.date_sort || null : null;
    }
 
    /** overriding */
-   getSortKey(events: GenealogyEventSet): string {
+   public getSortKey(events: GenealogyEventSet): string {
       const e = events[this.eventId];
       return e && e.type ? e.type.name : '';
    }
 }
 
 export class AssertionList {
-   constructor(private asserts: Assertion[]) {
+   public constructor(private asserts: Assertion[]) {
    }
 
-   get(): Assertion[] {
+   public get(): Assertion[] {
       return this.asserts;
    }
 
-   sortStrings(s1: string|null, s2: string|null): number {
+   public sortStrings(s1: string|null, s2: string|null): number {
       return !s1 ? (!s2 ? 0 : -1) :
              !s2 ?  1 :
              s1.localeCompare(s2);
    }
 
-   sortByDate(events: GenealogyEventSet) {
+   public sortByDate(events: GenealogyEventSet) {
       this.asserts.sort((a, b) => {
          let result = this.sortStrings(
             a.getSortDate(events), b.getSortDate(events));

@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { Accordion, AccordionTitleProps, Icon,
-         Segment, Step } from 'semantic-ui-react';
+import { Accordion, Icon, Segment, Step } from 'semantic-ui-react';
 import { Source } from '../Store/Source';
 import SourceCitation from '../Source/Citation';
 import SourceMedias from '../Source/Media';
@@ -19,42 +18,41 @@ interface SourceState {
 }
 
 export default class SourceDetails extends React.PureComponent<SourceProps, SourceState> {
-   state: SourceState = {
+   public state: SourceState = {
       title: undefined,
       showCitation: false,
       showMedia: true,
       showAssertions: true,
    };
 
-   static getDerivedStateFromProps(nextProps: SourceProps, prevState: SourceState) {
+   public static getDerivedStateFromProps(
+      nextProps: SourceProps, prevState: SourceState
+   ) {
       return {...prevState,
               showCitation: !nextProps.source || !nextProps.source.title,
       };
    }
 
-   toggleCitation = (e: Event|React.SyntheticEvent,
-                     props2: AccordionTitleProps) => {
+   public toggleCitation = () => {
       const show = !this.state.showCitation;
       this.setState({showCitation: show});
    }
 
-   toggleMedia = (e: Event|React.SyntheticEvent,
-                  props2: AccordionTitleProps) => {
+   public toggleMedia = () => {
       const show = !this.state.showMedia;
       this.setState({showMedia: show});
    }
 
-   toggleAssertions = (e: Event|React.SyntheticEvent,
-                       props2: AccordionTitleProps) => {
+   public toggleAssertions = () => {
       const show = !this.state.showAssertions;
       this.setState({showAssertions: show});
    }
 
-   onTitleChanged = (title: JSX.Element | JSX.Element[]) => {
+   public onTitleChanged = (title: JSX.Element | JSX.Element[]) => {
       this.setState({title: title});
    }
 
-   render() {
+   public render() {
       const s = this.props.source;
       const step: number = !s ? 1 : 2;
       const step1Complete = !!s;

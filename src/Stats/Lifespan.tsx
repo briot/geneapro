@@ -81,19 +81,19 @@ const StatsLifespan = React.memo((p: StatsLifespanProps) => {
       svg.append('g')
          .attr('class', 'grid forgrid')
          .attr('transform', `translate(${left},${top + height})`)
-         .call(make_x_axis().tickSize(-height).tickFormat(_ => '') as any);
+         .call(make_x_axis().tickSize(-height).tickFormat(() => ''));
       svg.append('g')
          .attr('class', 'grid forgrid')
          .attr('transform', `translate(${left},${top})`)
-         .call(make_y_axis().tickSize(-width).tickFormat(_ => '') as any);
+         .call(make_y_axis().tickSize(-width).tickFormat(() => ''));
       svg.append('g')
          .attr('class', 'axis x-axis forgrid')
          .attr('transform', `translate(${left},${top + height})`)
-         .call(make_x_axis() as any);
+         .call(make_x_axis());
       svg.append('g')
          .attr('class', 'axis y-axis forgrid')
          .attr('transform', `translate(${left},${top})`)
-         .call(make_y_axis() as any);
+         .call(make_y_axis());
 
       svg.selectAll('g.bars').remove();
       const g = svg.append('g')
@@ -105,8 +105,8 @@ const StatsLifespan = React.memo((p: StatsLifespanProps) => {
           // [0:y0, 1:y1, data:LifeSpan, key:String, index:number]
 
       const stacked: LifeSpanSeries[] = stack(remapped);
-      const bandwidth = x(bar_width)! - x(0)!;
-      const layer = g.selectAll('g.layer').data(stacked)
+      const bandwidth = x(bar_width) - x(0);
+      g.selectAll('g.layer').data(stacked)
            .enter()
            .append('g')
            .attr('class', 'layer')
@@ -147,7 +147,7 @@ const StatsLifespan = React.memo((p: StatsLifespanProps) => {
    return (
       <Card fluid={true} className="Stats">
          <Card.Content>
-            <Card.Header>Age at death, in {name}'s tree</Card.Header>
+            <Card.Header>Age at death, in {name}&apos;s tree</Card.Header>
             <Card.Description>
                <svg ref={svgElem} height="350" width="100%"/>
             </Card.Description>

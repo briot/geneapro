@@ -2,7 +2,6 @@ import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
 import * as GP_JSON from '../Server/JSON';
 import { PersonaListSettings } from '../Store/PersonaList';
-import { CheckboxField, SliderField, SelectField } from '../Forms';
 import ThemeSelector from '../ThemeSelector';
 
 interface PersonaListSideProps {

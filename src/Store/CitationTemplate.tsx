@@ -13,13 +13,15 @@ interface Substitute {
 
 export default class CitationTemplate {
 
-   full: string;   // expanded
-   biblio: string; // expanded
-   abbrev: string; // expanded
+   public full: string;   // expanded
+   public biblio: string; // expanded
+   public abbrev: string; // expanded
 
-   constructor(private _full: string,
-               private _biblio: string,
-               private _abbrev: string) {
+   public constructor(
+      protected _full: string,
+      protected _biblio: string,
+      protected _abbrev: string
+   ) {
       this.full = '';
       this.biblio = '';
       this.abbrev = '';
@@ -28,7 +30,7 @@ export default class CitationTemplate {
    /**
     * Change all keyword/value and expand the templates
     */
-   setParts(parts: Substitute) {
+   public setParts(parts: Substitute) {
       this.full = this._substitute(this._full, parts);
       this.biblio = this._substitute(this._biblio, parts);
       this.abbrev = this._substitute(this._abbrev, parts);
@@ -37,8 +39,8 @@ export default class CitationTemplate {
    /**
     * Return the list of all special keywords in the templates
     */
-   getParts(): Set<string> {
-      let parts: Set<string> = new Set;
+   public getParts(): Set<string> {
+      let parts: Set<string> = new Set();
       const addParts = (s: string) => {
          const parsed = this._parse(s, [['{', '}']]);
          for (const c of parsed) {
@@ -58,7 +60,7 @@ export default class CitationTemplate {
    /**
     * Expand a string into a series of HTML elements to show bold, italics,...
     */
-   html(s: string): JSX.Element[] {
+   public html(s: string): JSX.Element[] {
       return this._parse(s, [['<i>', '</i>'],
                              ['<b>', '</b>'],
                              ['<small>', '</small>']])
@@ -108,7 +110,7 @@ export default class CitationTemplate {
             if (marker === -1) {
                current ++;
             }
-   
+
          } else if (s.startsWith(markers[marker][1], current)) {
             result.push({
                s: s.slice(start, current),
@@ -117,12 +119,12 @@ export default class CitationTemplate {
             current += markers[marker][1].length;
             start = current;
             marker = -1;
-   
+
          } else {
             current ++;
          }
       }
-   
+
       if (start !== s.length) {
          result.push({
             s: s.slice(start, s.length),

@@ -1,6 +1,6 @@
 import { jsonPersonsToPerson } from '../Server/Person';
 import { ChildrenAndParentsSet } from '../Store/Pedigree';
-import { fetchPedigreeResult } from '../Store/Sagas';
+import { FetchPedigreeResult } from '../Store/Sagas';
 import * as GP_JSON from './JSON';
 
 /**
@@ -35,7 +35,7 @@ export function* fetchPedigreeFromServer(
    }
 
    const data: JSONPedigree = yield resp.json();
-   const result: fetchPedigreeResult = {
+   const result: FetchPedigreeResult = {
       ...jsonPersonsToPerson(
          data,
          data.allstyles,

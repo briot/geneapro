@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { Button, Checkbox, CheckboxProps,
          Dropdown, DropdownItemProps, DropdownProps,
-         Form, Header, Input, InputProps,
+         Header, Input, InputProps,
          Select } from 'semantic-ui-react';
 import Page from '../Page';
 import { AppState, GPDispatch } from '../Store/State';
@@ -101,13 +101,13 @@ interface ValueProps extends ValueBaseProps {
 }
 const Value: React.FC<ValueProps> = (p) => {
    const onValueChange = React.useCallback(
-      (e: any, data: {value?: ValueType|ValueType[]}) =>
+      (e: {}, data: {value?: ValueType|ValueType[]}) =>
          p.onValueChange(data.value as ValueType|ValueType[]),
-      [p.onValueChange]);
+      [p]);
 
    const render = (v: ValueType, onValueChange: (nv: ValueType) => void) => {
       const onListItemChange =
-         (e: any, data: {value?: ValueType}) =>
+         (e: {}, data: {value?: ValueType}) =>
             onValueChange(data.value as ValueType);
 
       return p.operator.basetype == 'person' ? (
@@ -201,10 +201,10 @@ const FieldOperatorValue = React.memo((p: FieldOperatorValueProps) => {
 
          p.onChange({...p.rule, parts});
       },
-      [p.rule, p.onChange]);
+      [p]);
 
    const onOpChange = React.useCallback(
-      (e: any, data: DropdownProps) => {
+      (e: {}, data: DropdownProps) => {
          const op = data.value as GP_JSON.OperatorString;
          if (!old) {
             onChange({
@@ -218,11 +218,11 @@ const FieldOperatorValue = React.memo((p: FieldOperatorValueProps) => {
             onChange({...old, operator: op});
          }
       },
-      [onChange, p.ops.all_operators, p.field, p.choices]);
+      [old, onChange, p.field, p.choices]);
 
    const onValueChange = React.useCallback(
       (value: ValueType|ValueType[]) => onChange({...old, value}),
-      [onChange]);
+      [old, onChange]);
 
    if (!old && p.forcedOperator) {
       onOpChange(0, {value: p.forcedOperator});
@@ -327,11 +327,11 @@ const RuleWithSubs = (p: RuleProps, label: string) => {
    const onListChange = React.useCallback(
       (children: ServerThemes.NestedThemeRule[]) =>
          p.onChange({...p.rule, children}),
-      [p.onChange, p.rule]);
+      [p]);
 
    const renderRule = React.useCallback(
       (r: ServerThemes.NestedThemeRule,
-       onChange: (r: ServerThemes.NestedThemeRule)=>void
+       onChange: (r: ServerThemes.NestedThemeRule) => void
       ) =>
          <NestedRuleEditor
             rule={r}
@@ -422,7 +422,7 @@ const RuleImplex = React.memo((p: RuleProps) => {
  * RuleDefault
  */
 
-const RuleDefault: React.FC<RuleProps> = (p) => {
+const RuleDefault: React.FC<RuleProps> = () => {
    return null;
 }
 
@@ -559,13 +559,13 @@ interface FontWeightEditorProps {
 }
 const FontWeightEditor = React.memo((p: FontWeightEditorProps) => {
    const onValueChange = React.useCallback(
-      (e: any, d: DropdownProps) =>
+      (e: {}, d: DropdownProps) =>
          p.onChange({...p.rule, fontWeight: d.value as GP_JSON.FontWeight}),
-      [p.onChange, p.rule]);
+      [p]);
    const toggleNone = React.useCallback(
-      (e: any, d: CheckboxProps) =>
+      (e: {}, d: CheckboxProps) =>
          p.onChange({...p.rule, fontWeight: d.checked ? 'normal' : null}),
-      [p.onChange, p.rule]);
+      [p]);
    return (
       <span className='color'>
          <Checkbox
@@ -607,12 +607,12 @@ interface ColorEditorProps {
 }
 const ColorEditor = React.memo((p: ColorEditorProps) => {
    const onColorChange = React.useCallback(
-      (e: any, d: InputProps) => p.onChange({...p.rule, [p.field]: d.value}),
-      [p.onChange, p.rule, p.field]);
+      (e: {}, d: InputProps) => p.onChange({...p.rule, [p.field]: d.value}),
+      [p]);
    const toggleNone = React.useCallback(
-      (e: any, d: CheckboxProps) =>
+      (e: {}, d: CheckboxProps) =>
          p.onChange({...p.rule, [p.field]: d.checked ? '#000000' : null}),
-      [p.onChange, p.rule, p.field]);
+      [p]);
    return (
       <span className='color'>
          <Checkbox
@@ -652,12 +652,12 @@ interface NestedRuleEditorProps {
 }
 const NestedRuleEditor: React.FC<NestedRuleEditorProps> = (p) => {
    const onTypeChange = React.useCallback(
-      (e: any, d: DropdownProps) =>
+      (e: {}, d: DropdownProps) =>
          p.onChange({type: d.value as string, parts: {}, children: []}),
-      [p.onChange]);
+      [p]);
    const onPartsChange = React.useCallback(
       (r: ServerThemes.NestedThemeRule) => p.onChange(r),
-      [p.onChange]);
+      [p]);
    const comp = RULE_TYPES[p.rule.type];
 
    return (
@@ -697,11 +697,11 @@ interface RuleEditorProps {
 }
 const RuleEditor = React.memo((p: RuleEditorProps) => {
    const onNameChange = React.useCallback(
-      (e: any, d: InputProps) => p.onChange({...p.rule, name: d.value}),
-      [p.onChange, p.rule]);
+      (e: {}, d: InputProps) => p.onChange({...p.rule, name: d.value}),
+      [p]);
    const onNestedRuleChange = React.useCallback(
       (r: ServerThemes.NestedThemeRule) => p.onChange({...p.rule, ...r}),
-      [p.onChange, p.rule]);
+      [p]);
 
    return (
       <div className="rule">
@@ -868,14 +868,14 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = (p) => {
 
    React.useEffect(
       () => fetchMetadata.execute(p.dispatch, {}),
-      []);
+      [p.dispatch]);
 
    const onChange = React.useCallback(
-      (_: any, data: DropdownProps) => setSelected(Number(data.value)),
-      [themeList]);
+      (e: {}, data: DropdownProps) => setSelected(Number(data.value)),
+      []);
 
    const onNameChange = React.useCallback(
-      (_: any, data: InputProps) => {
+      (e: {}, data: InputProps) => {
          setModified(true);
          setName(data.value as string);
       },

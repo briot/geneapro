@@ -54,9 +54,8 @@ export interface Layer {
    families: Family[];  // Families with at least one children in this layer
 }
 
-interface JSONFamily extends Array<number> {
-   // [father, mother, child1, child2,...]
-}
+type JSONFamily = number[];
+// [father, mother, child1, child2,...]
 
 interface JSONQuilts {
    persons: { [id: number]: JSONQuiltsPerson };
@@ -71,10 +70,10 @@ interface JSONQuilts {
 }
 
 export class QuiltsResult {
-   layers: Layer[];
-   persons: { [id: number]: JSONQuiltsPerson };
+   public layers: Layer[];
+   public persons: { [id: number]: JSONQuiltsPerson };
 
-   constructor(data: JSONQuilts,
+   public constructor(data: JSONQuilts,
                isVisible: (personId: JSONQuiltsPerson) => boolean,
    ) {
       let personToLayout: {[id: number]: QuiltsPersonLayout} = {};
@@ -284,7 +283,7 @@ export function* fetchQuiltsFromServer(decujus: number, decujusOnly: boolean) {
    }
 
    const data: JSONQuilts = yield resp.json();
-   const filtered: boolean = false;
+   const filtered = false;
    const selected: {[id: number]: boolean} = {};
    if (!data.perlayer) {
       return undefined;

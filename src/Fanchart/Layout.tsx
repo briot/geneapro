@@ -23,7 +23,7 @@ export default class FanchartLayout extends React.PureComponent<FanchartLayoutPr
    /**
     * Create the layout for all persons
     */
-   setLayout(): PersonLayouts {
+   public setLayout(): PersonLayouts {
       const spaceBetweenGens =
          this.props.settings.showMarriages ?
             12 : this.props.settings.gapBetweenGens ?  8 : 0;
@@ -95,7 +95,7 @@ export default class FanchartLayout extends React.PureComponent<FanchartLayoutPr
                   }
                }
             }
-           
+
             if (parents && generation < this.props.settings.ancestors) {
                const len = parents.length;
                const step = (toAngle - fromAngle - (len - 1) * pad) / len;
@@ -170,7 +170,7 @@ export default class FanchartLayout extends React.PureComponent<FanchartLayoutPr
       return layouts;
    }
 
-   render() {
+   public render() {
       const layouts: PersonLayouts = this.setLayout();
       return (
          <Fanchart

@@ -20,18 +20,18 @@ import { ChildrenAndParentsSet } from '../Store/Pedigree';
  * Async Action: fetch ancestors data from the server
  */
 
-export type fetchPedigreeParams = {
-   decujus: number,
-   ancestors: number,
-   descendants: number,
-   theme: GP_JSON.ColorSchemeId,
-};
-export type fetchPedigreeResult = {
+export interface FetchPedigreeParams {
+   decujus: number;
+   ancestors: number;
+   descendants: number;
+   theme: GP_JSON.ColorSchemeId;
+}
+export interface FetchPedigreeResult {
    persons: PersonSet;
    events: GenealogyEventSet;
    layout: ChildrenAndParentsSet;
-};
-function _hasPedigree(p: fetchPedigreeParams, state: AppState) {
+}
+function _hasPedigree(p: FetchPedigreeParams, state: AppState) {
    return (p.decujus in state.persons &&
            state.persons[p.decujus].knownAncestors >= p.ancestors &&
            state.persons[p.decujus].knownDescendants >= p.descendants &&
@@ -41,33 +41,34 @@ function _hasPedigree(p: fetchPedigreeParams, state: AppState) {
            (p.theme === state.lastFetchedTheme || p.theme < 0)
    );
 }
-function* _fetchPedigree(p: fetchPedigreeParams) {
+function* _fetchPedigree(p: FetchPedigreeParams) {
    return yield call(
       fetchPedigreeFromServer, p.decujus, p.ancestors,
       p.descendants, p.theme);
 }
-export const fetchPedigree = createAsyncAction<fetchPedigreeParams, fetchPedigreeResult>(
+export const fetchPedigree = createAsyncAction<FetchPedigreeParams, FetchPedigreeResult>(
    'DATA/PEDIGREE', _fetchPedigree, _hasPedigree);
 
 /**
  * Async Action: fetch quilts data from the server
  */
 
-export type fetchQuiltsParams = {
-   decujus: number,
+export interface FetchQuiltsParams {
+   decujus: number;
    decujusOnly: boolean;
-};
+}
 export type fetchQuiltsResult = QuiltsResult;
-function* _fetchQuilts(p: fetchQuiltsParams) {
+function* _fetchQuilts(p: FetchQuiltsParams) {
    return yield call(fetchQuiltsFromServer, p.decujus, p.decujusOnly);
 }
-export const fetchQuilts = createAsyncAction<fetchQuiltsParams, fetchQuiltsResult>(
-   'DATA/QUILTS', _fetchQuilts);
+export const fetchQuilts = createAsyncAction<
+   FetchQuiltsParams, fetchQuiltsResult
+>('DATA/QUILTS', _fetchQuilts);
 
 /**
  * Async Action: fetch metadata from server
  */
-interface fetchMetadataParams {
+interface FetchMetadataParams {
    force?: boolean;
 }
 function* fetchMetadataFromServer() {
@@ -75,62 +76,60 @@ function* fetchMetadataFromServer() {
    const data: GP_JSON.Metadata = yield resp.json();
    return data;
 }
-function* _fetchMetaData(p: fetchMetadataParams) {
+function* _fetchMetaData() {
    return yield call(fetchMetadataFromServer);
 }
-function _hasMetadata(p: fetchMetadataParams, state: AppState) {
+function _hasMetadata(p: FetchMetadataParams, state: AppState) {
    return (!p.force && state.metadata.event_types.length > 0);
 }
 export const fetchMetadata = createAsyncAction<
-   fetchMetadataParams, GP_JSON.Metadata
+   FetchMetadataParams, GP_JSON.Metadata
 >('DATA/META', _fetchMetaData, _hasMetadata);
 
 /**
  * Async Action: fetch all places from the server
  */
 
-export type fetchPlacesParams = {};
 function* _fetchPlaces() {
    const places = yield call(fetchPlacesFromServer);
    return places;
 }
-export const fetchPlaces = createAsyncAction<fetchPlacesParams, FetchPlacesResult>(
+export const fetchPlaces = createAsyncAction<{}, FetchPlacesResult>(
    'DATA/PLACES', _fetchPlaces);
 
 /**
  * Async Action: fetch all sources from the server
  */
 
-export type fetchSourcesParams = {};
 function* _fetchSources() {
    const sources = yield call(fetchSourcesFromServer);
    return sources;
 }
-export const fetchSources = createAsyncAction<fetchSourcesParams, FetchSourcesResult>(
+export const fetchSources = createAsyncAction<{}, FetchSourcesResult>(
    'DATA/SOURCES', _fetchSources);
 
 /**
  * Async Action: fetch all persons from the server
  */
 
-export type fetchPersonsParams = {
-   colors: GP_JSON.ColorSchemeId,
-};
-function* _fetchPersons(p: fetchPersonsParams) {
+export interface FetchPersonsParams {
+   colors: GP_JSON.ColorSchemeId;
+}
+function* _fetchPersons(p: FetchPersonsParams) {
    const persons = yield call(fetchPersonsFromServer, {colors: p.colors});
    return persons;
 }
-export const fetchPersons = createAsyncAction<fetchPersonsParams, FetchPersonsResult>(
+export const fetchPersons = createAsyncAction<FetchPersonsParams, FetchPersonsResult>(
    'DATA/PERSONS', _fetchPersons);
 
 /**
  * Async Action: fetch details for one specific person
  */
 
-export type fetchPersonDetailsParams = {
+export interface FetchPersonDetailsParams {
    id: number;
-};
-function* _fetchPersonDetails(p: fetchPersonDetailsParams) {
+}
+function* _fetchPersonDetails(p: FetchPersonDetailsParams) {
    const res: DetailsResult = yield call(fetchPersonDetailsFromServer, p.id);
 
    // Register all events
@@ -145,14 +144,14 @@ export const fetchPersonDetails = createAsyncAction(
  * Async Action: fetch details for one event
  */
 
-export type fetchEventDetailsParams = {
+export interface FetchEventDetailsParams {
    id: number;
-};
-function _hasEventDetails(p: fetchEventDetailsParams, state: AppState) {
+}
+function _hasEventDetails(p: FetchEventDetailsParams, state: AppState) {
    return (p.id in state.events &&
            state.events[p.id].asserts !== undefined);
 }
-function* _fetchEventDetails(p: fetchEventDetailsParams) {
+function* _fetchEventDetails(p: FetchEventDetailsParams) {
    const res: EventDetails = yield call(fetchEventFromServer, p.id);
    return res;
 }
@@ -163,14 +162,14 @@ export const fetchEventDetails = createAsyncAction(
  * Async Action: fetch details for one place
  */
 
-export type fetchPlaceDetailsParams = {
+export interface FetchPlaceDetailsParams {
    id: number;
-};
-function _hasPlaceDetails(p: fetchPlaceDetailsParams, state: AppState) {
+}
+function _hasPlaceDetails(p: FetchPlaceDetailsParams, state: AppState) {
    return (p.id in state.places &&
            state.places[p.id].asserts !== undefined);
 }
-function* _fetchPlaceDetails(p: fetchPlaceDetailsParams) {
+function* _fetchPlaceDetails(p: FetchPlaceDetailsParams) {
    const res: PlaceDetails = yield call(fetchPlaceFromServer, p.id);
    return res;
 }
@@ -181,13 +180,13 @@ export const fetchPlaceDetails = createAsyncAction(
  * Async Action: fetch details for one source
  */
 
-export type fetchSourceDetailsParams = {
+export interface FetchSourceDetailsParams {
    id: number;
-};
-function _hasSourceDetails(p: fetchSourceDetailsParams, state: AppState) {
+}
+function _hasSourceDetails() {
    return false;
 }
-function* _fetchSourceDetails(p: fetchSourceDetailsParams) {
+function* _fetchSourceDetails(p: FetchSourceDetailsParams) {
    const res: FetchSourceDetailsResult = yield call(fetchSourceDetailsFromServer, p.id);
    return res;
 }

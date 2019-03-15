@@ -1,31 +1,26 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
-import { AppState } from '../Store/State';
 import Page from '../Page';
 import { UploadForm } from './Upload';
 import { importGEDCOM } from '../Server/Import';
 
 import './Page.css';
 
-interface ImportPageProps {
-}
-
 interface ImportPageState {
    success?: boolean;
    errorMsg?: string;
 }
 
-class ImportPage extends React.PureComponent<ImportPageProps, ImportPageState> {
-   state: ImportPageState = {};
+class ImportPage extends React.PureComponent<{}, ImportPageState> {
+   public state: ImportPageState = {};
 
-   doUpload = (files: File[]) => {
+   protected doUpload = (files: File[]) => {
       return importGEDCOM(files).then(res => {
          this.setState({errorMsg: res.error, success: res.success});
          return res;
       });
    }
 
-   render() {
+   public render() {
       let error: undefined|JSX.Element|JSX.Element[] = undefined;
 
       if (this.state.success === true) {

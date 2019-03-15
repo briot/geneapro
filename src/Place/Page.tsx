@@ -20,24 +20,24 @@ interface PlacePageProps extends RouteComponentProps<PropsFromRoute> {
 }
 
 class PlacePageConnected extends React.PureComponent<PlacePageProps> {
-   componentDidMount() {
+   public componentDidMount() {
       this.calculateData();
    }
 
-   componentDidUpdate(old: PlacePageProps) {
+   public componentDidUpdate(old: PlacePageProps) {
       if (old.id !== this.props.id) {
          this.calculateData();
       }
       this.props.dispatch(addToHistory({place: this.props.place}));
    }
 
-   calculateData() {
+   protected calculateData() {
       if (this.props.id >= 0) {
          fetchPlaceDetails.execute(this.props.dispatch, {id: this.props.id});
       }
    }
 
-   render() {
+   public render() {
       const p = this.props.place;
       document.title = p ? p.name : 'Place';
       return (

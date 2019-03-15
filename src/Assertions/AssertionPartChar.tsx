@@ -14,7 +14,7 @@ interface CharProps {
 }
 
 export default class AssertionPartCharacteristic extends React.PureComponent<CharProps> {
-   render() {
+   public render() {
       const c = this.props.characteristic;
       return (
          <AssertionPart

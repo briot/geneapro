@@ -6,7 +6,7 @@ let csrf: string|undefined;
 
 export const setCsrf = (token: string) => csrf = token;
 
-export const post = (url: string, data: any) => {
+export const post = (url: string, data?: string|FormData) => {
    return window.fetch(
       url,
       {

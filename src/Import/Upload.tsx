@@ -24,13 +24,13 @@ interface UploadFormState {
 
 export class UploadForm extends React.PureComponent<UploadFormProps, UploadFormState> {
 
-   fileInput: HTMLInputElement|null = null;
-   state: UploadFormState = {
+   public fileInput: HTMLInputElement|null = null;
+   public state: UploadFormState = {
       files: [],
       uploading: false,
    };
 
-   send(files: File[]) {
+   public send(files: File[]) {
       window.console.log('MANU sending files', files);
       this.setState({uploading: true});
       this.props.doUpload(files).then((res: {success: boolean}) => {
@@ -42,7 +42,7 @@ export class UploadForm extends React.PureComponent<UploadFormProps, UploadFormS
       });
    }
 
-   addFiles(files: FileList|null) {
+   protected addFiles(files: FileList|null) {
       if (files && files.length) {
          let tmp = this.props.multiple ? [...this.state.files] : [];
          for (let f = 0; f < files.length; f++) {
@@ -59,33 +59,33 @@ export class UploadForm extends React.PureComponent<UploadFormProps, UploadFormS
       }
    }
 
-   onFileAdded = () => {
+   protected onFileAdded = () => {
       if (this.fileInput) {
          this.addFiles(this.fileInput.files);
       }
    }
 
-   onDragEnter = (e: DragEvent) => {
+   protected onDragEnter = (e: DragEvent) => {
       this.cancelEvent(e);
    }
 
-   onDragLeave = (e: DragEvent) => {
+   protected onDragLeave = (e: DragEvent) => {
       this.cancelEvent(e);
    }
 
-   onDrop = (e: DragEvent) => {
+   protected onDrop = (e: DragEvent) => {
       this.onDragLeave(e);
       if (e.dataTransfer) {
          this.addFiles(e.dataTransfer.files);
       }
    }
 
-   cancelEvent = (e: Event) => {
+   protected cancelEvent = (e: Event) => {
       e.preventDefault();
       e.stopPropagation();
    }
 
-   render() {
+   public render() {
       const hasFiles = this.state.files.length !== 0;
       const fileList: JSX.Element = hasFiles ? (
          <ul className="files">

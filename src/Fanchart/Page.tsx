@@ -29,18 +29,18 @@ interface FanchartPageConnectedProps extends RouteComponentProps<PropsFromRoute>
 }
 
 class FanchartPageConnected extends React.PureComponent<FanchartPageConnectedProps> {
-   componentDidMount() {
+   public componentDidMount() {
       this.calculateData();
    }
 
-   componentDidUpdate(old: FanchartPageConnectedProps) {
+   public componentDidUpdate() {
       this.calculateData();
 
       const decujus: Person = this.props.persons[this.props.decujusid];
       this.props.dispatch(addToHistory({person: decujus}));
    }
 
-   calculateData() {
+   protected calculateData() {
       // will do nothing if we already have data
       fetchPedigree.execute(
          this.props.dispatch,
@@ -52,7 +52,7 @@ class FanchartPageConnected extends React.PureComponent<FanchartPageConnectedPro
          });
    }
 
-   render() {
+   public render() {
       const decujus: Person = this.props.persons[this.props.decujusid];
 
       if (decujus) {

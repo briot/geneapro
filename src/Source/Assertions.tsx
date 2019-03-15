@@ -8,7 +8,7 @@ interface SourceAssertionsProps {
 
 export default class SourceAssertions extends React.PureComponent<SourceAssertionsProps, {}> {
 
-   render() {
+   public render() {
       return <AssertionTimeline asserts={this.props.source.asserts} />;
    }
 }

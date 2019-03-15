@@ -15,11 +15,11 @@ export interface PersonLayout extends BasePersonLayout {
    parents: (PersonLayout|undefined)[];
    children: (PersonLayout|undefined)[];
    parentsMarriage?: {
-      x: number,  // Position of the start/middle of the text (see align)
-      y: number,  // Position of the top of the text
-      text: string,
-      fs: number,
-      alignX?: string|undefined, // How to align text with respect to 'x'
+      x: number;  // Position of the start/middle of the text (see align)
+      y: number;  // Position of the top of the text
+      text: string;
+      fs: number;
+      alignX?: string|undefined; // How to align text with respect to 'x'
    };
 }
 
@@ -37,7 +37,7 @@ export abstract class Sizing {
    private dummyId: number = 0;
    private vertical: boolean = false;
 
-   init(settings: PedigreeSettings) {
+   public init(settings: PedigreeSettings) {
       this.vertical = isVertical(settings);
       this.start = [];
       let l = 0;
@@ -73,7 +73,7 @@ export abstract class Sizing {
    /*
     * Create a partial layout for a box at the given generation
     */
-   createXLayout(generation: number, sosa: number, angle: number, id?: number): PersonLayout {
+   public createXLayout(generation: number, sosa: number, angle: number, id?: number): PersonLayout {
       return {
          id: id || --this.dummyId,
          x: this.vertical ? NaN : this.start[generation],

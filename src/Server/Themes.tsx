@@ -33,7 +33,7 @@ export interface RuleList {
 
 export function fetchThemeRulesFromServer(theme_id: number) {
    return window.fetch(`/data/theme/${theme_id}/rules`)
-      .then(r => r.json())
+      .then((r: Response) => r.json())
       .then((raw: RuleList) => raw);
 }
 
@@ -53,5 +53,5 @@ export function saveThemeOnServer(
 }
 
 export function deleteThemeOnServer(theme_id: number) {
-   return Server.post(`/data/theme/${theme_id}/delete`, undefined);
+   return Server.post(`/data/theme/${theme_id}/delete`);
 }

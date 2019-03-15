@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
 import * as GP_JSON from '../Server/JSON';
 import { RadialSettings } from '../Store/Radial';
-import { SliderField, CheckboxField, SelectField } from '../Forms';
+import { SliderField, CheckboxField } from '../Forms';
 import ThemeSelector from '../ThemeSelector';
 
 interface RadialSideProps {

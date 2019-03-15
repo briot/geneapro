@@ -19,8 +19,7 @@ export interface PartType {
    gedcom: string;
 }
 
-export interface EventType extends PartType {
-}
+type EventType = PartType;
 
 export interface CharacteristicPartType extends PartType {
    is_name_part: boolean;
@@ -45,12 +44,12 @@ export interface EventTypeRole {
 export type OperatorString = string;
 export type OperatorTypes = "int" | "str" | "bool" | "person";
 export interface OperatorDescr {
-   op: OperatorString,
-   label: string,
-   basetype: OperatorTypes,
-   is_list: boolean,
+   op: OperatorString;
+   label: string;
+   basetype: OperatorTypes;
+   is_list: boolean;
 }
-export type OperatorList = Array<OperatorDescr>;
+export type OperatorList = OperatorDescr[];
 
 export type ColorSchemeId = number;
 export interface ColorScheme {
@@ -148,7 +147,7 @@ export interface P2C extends Assertion {
    p1: {person: number};
    p2: {char: Characteristic;
         repr: SourceRepr[] | undefined;   // when char.name=="image" only
-        parts: CharPart[]};
+        parts: CharPart[];};
 }
 
 export interface P2P extends Assertion {

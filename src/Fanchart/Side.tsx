@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Accordion, Form } from 'semantic-ui-react';
 import * as GP_JSON from '../Server/JSON';
 import { FanchartSettings } from '../Store/Fanchart';
-import { CheckboxField, SliderField, SelectField } from '../Forms';
+import { CheckboxField, SliderField } from '../Forms';
 import ThemeSelector from '../ThemeSelector';
 
 interface FanchartSideProps {

@@ -8,21 +8,21 @@ import { PersonLayout, PersonLayouts, Sizing } from '../Pedigree/types';
 
 // Maximum fontSize (in pixels). After this, we start displaying more
 // information, rather than increase the font size
-const maxFontSize: number = 20;
+const maxFontSize = 20;
 
 class SameSize extends Sizing {
    private horizSpacing: number = 0;
 
-   init(settings: PedigreeSettings) {
+   public init(settings: PedigreeSettings) {
       this.horizSpacing = settings.horizSpacing;
       super.init(settings);
    }
 
-   boxWidth() { return 200; }
-   boxHeight() { return 60; }
-   textHeight() { return 15; }
-   radius() { return 6; }
-   padding() { return this.horizSpacing; }
+   public boxWidth() { return 200; }
+   public boxHeight() { return 60; }
+   public textHeight() { return 15; }
+   public radius() { return 6; }
+   public padding() { return this.horizSpacing; }
 }
 
 class ProportionalSize extends Sizing {
@@ -37,7 +37,7 @@ class ProportionalSize extends Sizing {
    private readonly baseBoxWidth = 200;
    private readonly baseRadius = 6;
 
-   constructor() {
+   public constructor() {
       super();
       this.heights = [this.baseBoxHeight];
       this.fs = [this.baseTextHeight];
@@ -45,7 +45,7 @@ class ProportionalSize extends Sizing {
       this.paddings = [0];
    }
 
-   init(settings: PedigreeSettings) {
+   public init(settings: PedigreeSettings) {
       // Maximum generation for which we apply ratios. Later generations will
       // all have the same size.
       // Keep reducing until we reach 10% of the original size
@@ -74,23 +74,23 @@ class ProportionalSize extends Sizing {
 
    }
 
-   boxWidth(generation: number): number {
+   public boxWidth(generation: number): number {
       return this.widths[Math.abs(generation)];
    }
 
-   boxHeight(generation: number): number {
+   public boxHeight(generation: number): number {
       return this.heights[Math.abs(generation)];
    }
 
-   padding(afterGeneration: number): number {
+   public padding(afterGeneration: number): number {
       return this.paddings[Math.abs(afterGeneration)];
    }
 
-   textHeight(generation: number): number {
+   public textHeight(generation: number): number {
       return this.fs[Math.abs(generation)];
    }
 
-   radius(generation: number): number {
+   public radius(generation: number): number {
       return this.baseRadius * Math.pow(this.ratio, generation);
    }
 }
@@ -107,23 +107,26 @@ class CompactLayout implements PedigreeLayoutAlgo {
     * @param genIncrease should be 1 if the "parents" returned by getParents
     *   are the ancestors, -1 otherwise.
     */
-   constructor(public settings: PedigreeSettings,
-               public getParents: (p: PersonLayout) => (PersonLayout|undefined)[],
-               public genIncrease: number
-              ) {
+   public constructor(
+      public settings: PedigreeSettings,
+      public getParents: (p: PersonLayout) => (PersonLayout|undefined)[],
+      public genIncrease: number
+   ) {
    }
 
    /**
     * Starting from person decujus, compute its own layout and its parent
     * nodes layouts, and modify layouts accordingly, up to maxGen levels.
     */
-   compute(decujus: number, layouts: PersonLayouts, maxGen: number): void {
-      let maxY: number = 0;
+   public compute(
+      decujus: number, layouts: PersonLayouts, maxGen: number
+   ): void {
+      let maxY = 0;
 
       const recurseLeftRight = (p: PersonLayout, gen: number) => {
          if (Math.abs(gen) < maxGen) {
             let min: number|undefined = undefined;
-            let max: number = 0;
+            let max = 0;
             for (const p2 of this.getParents(p)) {
                if (p2) {
                   recurseLeftRight(p2, gen + this.genIncrease);
@@ -157,7 +160,7 @@ class CompactLayout implements PedigreeLayoutAlgo {
       const recurseTopDown = (p: PersonLayout, gen: number) => {
          if (Math.abs(gen) < maxGen) {
             let min: number|undefined = undefined;
-            let max: number = 0;
+            let max = 0;
             for (const p2 of this.getParents(p)) {
                if (p2) {
                   recurseTopDown(p2, gen + this.genIncrease);
@@ -190,13 +193,15 @@ class CompactLayout implements PedigreeLayoutAlgo {
 }
 
 class ExpandedLayout extends CompactLayout {
-   constructor(private sizing: Sizing,
+   public constructor(private sizing: Sizing,
                settings: PedigreeSettings,
                getParents: (p: PersonLayout) => (PersonLayout|undefined)[]) {
       super(settings, getParents, 1 /* genIncrease */);
    }
 
-   compute(decujus: number, layouts: PersonLayouts, maxGen: number): void {
+   public compute(
+      decujus: number, layouts: PersonLayouts, maxGen: number
+   ): void {
       // Add dummy layout for all missing persons
 
       const recurse = (p: PersonLayout) => {
@@ -235,7 +240,7 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
     * This also computes data like generation, sosa and angle which are
     * necessary when drawing.
     */
-   initLayout(sizing: Sizing): PersonLayouts {
+   public initLayout(sizing: Sizing): PersonLayouts {
       const layout: PersonLayouts = {};
       const recurse = (p: number, sosa: number,
                        generation: number,
@@ -289,7 +294,7 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
       return layout;
    }
 
-   render(): JSX.Element {
+   public render(): JSX.Element {
       const decujus = this.props.decujus;
       const sizing: Sizing = this.props.settings.sameSize ?
          new SameSize() :
@@ -354,20 +359,20 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
                   (father.x + father.w + mother.x) / 2 :
                   lay.x + lay.w / 2);
 
-               if (f && f.marriageISODate) {
+               if (father && f && f.marriageISODate) {
                   lay.parentsMarriage = {
                      x: middle,
-                     y: father!.y - sizing.padding(father!.generation - 1) / 3,
+                     y: father.y - sizing.padding(father.generation - 1) / 3,
                      text: f.marriageISODate,
-                     fs: father!.fs,
+                     fs: father.fs,
                      alignX: 'middle',
                   };
-               } else if (m && m.marriageISODate) {
+               } else if (mother && m && m.marriageISODate) {
                   lay.parentsMarriage = {
                      x: middle,
-                     y: mother!.y - sizing.padding(mother!.generation - 1) / 3,
+                     y: mother.y - sizing.padding(mother.generation - 1) / 3,
                      text: m.marriageISODate,
-                     fs: mother!.fs,
+                     fs: mother.fs,
                      alignX: 'middle',
                   };
                }
@@ -377,19 +382,19 @@ export default class PedigreeLayout extends React.PureComponent<PedigreeLayoutPr
                   (father.y + father.h + mother.y) / 2 :
                   lay.y + lay.h / 2);
 
-               if (f && f.marriageISODate) {
+               if (father && f && f.marriageISODate) {
                   lay.parentsMarriage = {
-                     x: father!.x - sizing.padding(father!.generation) / 3,
+                     x: father.x - sizing.padding(father.generation) / 3,
                      y: middle,
                      text: f.marriageISODate,
-                     fs: father!.fs,
+                     fs: father.fs,
                   };
-               } else if (m && m.marriageISODate) {
+               } else if (mother && m && m.marriageISODate) {
                   lay.parentsMarriage = {
-                     x: mother!.x - sizing.padding(mother!.generation) / 3,
+                     x: mother.x - sizing.padding(mother.generation) / 3,
                      y: middle,
                      text: m.marriageISODate,
-                     fs: mother!.fs,
+                     fs: mother.fs,
                   };
                }
             }

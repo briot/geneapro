@@ -69,10 +69,10 @@ interface ConnectedEventProps extends EventProps {
 }
 
 class ConnectedAssertionPartEvent extends React.PureComponent<ConnectedEventProps> {
-   onExpand = () => fetchEventDetails.execute(
+   protected onExpand = () => fetchEventDetails.execute(
       this.props.dispatch, {id: this.props.eventId});
 
-   render() {
+   public render() {
       const e = this.props.events[this.props.eventId];
       return (
          <AssertionPart

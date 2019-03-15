@@ -6,7 +6,6 @@ import { RadialSettings } from '../Store/Radial';
 import { Person, personDisplay } from '../Store/Person';
 import ScalableSVG from '../SVG.Scalable';
 import ColorTheme, { BasePersonLayout } from '../Store/ColorTheme';
-import Style from '../Store/Styles';
 import './Radial.css';
 
 interface RadialLayout extends BasePersonLayout {
