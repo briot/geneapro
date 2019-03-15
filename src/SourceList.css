@@ -1,8 +1,4 @@
-.SourceList table {
+.SourceList {
+   max-width: 900px;
    background: white;
-}
-
-.SourceList thead th > div {
-    background-color: #f6f7f8;
-    background-image: linear-gradient(#fff, #efefef);
 }

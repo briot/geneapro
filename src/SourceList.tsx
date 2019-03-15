@@ -1,112 +1,91 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+import { FixedSizeList } from 'react-window';
+import { Input, InputProps, Segment } from 'semantic-ui-react';
 import Page from './Page';
 import { AppState, GPDispatch } from './Store/State';
-import { Input, Segment } from 'semantic-ui-react';
 import { Source, SourceSet } from './Store/Source';
+import { useComponentSize, useDebounce } from './Hooks';
 import { SourceLink } from './Links';
 import { fetchSources } from './Store/Sagas';
-import SmartTable, { ColumnDescr } from './SmartTable';
 import './SourceList.css';
-
-const colName: ColumnDescr<Source, number> = {
-   headerName: 'Name',
-   get: (s: Source) => s.id,
-   format: (sid: number) => <SourceLink id={sid} showAbbrev={true}/>,
-};
 
 interface SourceListProps {
    allSources: SourceSet;
    dispatch: GPDispatch;
 }
+const SourceListConnected: React.FC<SourceListProps> = (p => {
+   const container = React.useRef<HTMLDivElement>(null);
+   const [filter, setFilter] = React.useState('');
+   const [sorted, setSorted] = React.useState<Source[]>([]);
+   const size = useComponentSize(container);
 
-interface SourceListState {
-   filter?: string;
-   sources: Source[];
-}
+   React.useEffect(
+      () => fetchSources.execute(p.dispatch, {}),
+      []);
 
-class SourceListConnected extends React.PureComponent<SourceListProps, SourceListState> {
-   state: SourceListState = {
-      filter: '',
-      sources: [],
-   };
+   React.useEffect(
+      () => {
+         let list = Object.values(p.allSources);
+         if (filter) {
+            const lc_filter = filter.toLowerCase();
+            list = list.filter(
+               p2 => p2.title.toLowerCase().indexOf(lc_filter) >= 0);
+         }
+         setSorted(list.sort((p1, p2) => p1.abbrev.localeCompare(p2.abbrev)));
+      },
+      [p.allSources, filter],
+   );
 
-   readonly cols: ColumnDescr<Source, number>[] = [colName];
+   const onFilterChange = React.useCallback(
+      useDebounce(
+         (e: any, val: InputProps) => setFilter(val.value as string),
+         250),
+      []);
 
-   componentDidUpdate(old: SourceListProps) {
-      if (old.allSources !== this.props.allSources) {
-         this.setState((s: SourceListState) => ({
-            ...s,
-            sources: this.computeSources(this.props.allSources, s.filter),
-         }));
-      }
-   }
+   document.title = 'List of sources';
 
-   componentDidMount() {
-      fetchSources.execute(this.props.dispatch, {});
-   }
-
-   computeSources(set: SourceSet, filter?: string): Source[] {
-      let list = Object.entries(set)
-         .map(
-            ([key, val]: [string, Source]) => val).sort(
-            (p1: Source, p2: Source) => p1.title.localeCompare(p2.title));
-
-      if (filter) {
-         list = list.filter(
-            (p: Source) => p.title.toLowerCase().indexOf(filter) >= 0
-         );
-      }
-
-      list.sort((s1, s2) => s1.abbrev.localeCompare(s2.abbrev));
-      return list;
-   }
-
-   filterChange = (e: React.FormEvent<HTMLElement>, val: {value: string}) => {
-      this.setState({
-         filter: val.value,
-         sources: this.computeSources(this.props.allSources, val.value),
-      });
-   }
-
-   render() {
-      const width = 900;
-      document.title = 'List of sources';
-
-      const sources = this.state.sources;
-
-      return (
-         <Page
-            main={
-               <div className="SourceList List">
-                  <Segment
-                     style={{width: width}}
-                     color="blue"
-                     attached={true}
-                  >
-                     <span>
-                        {sources.length} / {Object.keys(this.props.allSources).length} Sources
-                     </span>
-                     <Input
-                        icon="search"
-                        placeholder="Filter..."
-                        onChange={this.filterChange}
-                        style={{position: 'absolute', right: '5px', top: '5px'}}
-                     />
-                  </Segment>
-
-                  <SmartTable
-                     width={width}
-                     rowHeight={30}
-                     rows={sources}
-                     columns={this.cols}
+   return (
+      <Page
+         main={
+            <div className="SourceList List" ref={container}>
+               <Segment
+                  style={{width: size.width}}
+                  color="blue"
+                  attached={true}
+               >
+                  <span>
+                     {sorted.length} / {Object.keys(p.allSources).length} Sources
+                  </span>
+                  <Input
+                     icon="search"
+                     placeholder="Filter..."
+                     onChange={onFilterChange}
+                     style={{position: 'absolute', right: '5px', top: '5px'}}
                   />
-               </div>
-            }
-         />
-      );
-   }
-}
+               </Segment>
+               <FixedSizeList
+                  width={size.width}
+                  height={size.height}
+                  itemCount={sorted.length}
+                  itemSize={30}
+               >
+                  {
+                     ({index, style}: {index: number, style: object}) => (
+                         <div style={style}>
+                            <SourceLink
+                              id={sorted[index].id}
+                              showAbbrev={true}
+                            />
+                         </div>
+                     )
+                  }
+               </FixedSizeList>
+            </div>
+         }
+      />
+   );
+});
 
 const SourceList = connect(
    (state: AppState) => ({

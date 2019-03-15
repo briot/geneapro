@@ -1,6 +1,60 @@
 import * as React from 'react';
 
-/*
+/**
+ * Get a components size, and monitor changes
+ */
+export function useComponentSize<T extends Element>(
+   ref: React.RefObject<T>
+) {
+   const [size, setSize] = React.useState({width: 0, height: 0});
+   const onResize = React.useCallback(
+      () => ref.current && setSize(ref.current.getBoundingClientRect()),
+      [ref]);
+
+   React.useLayoutEffect(
+      () => {
+         if (!ref.current) {
+            return;
+         }
+
+         onResize();
+
+         // if (typeof window.ResizeObserver === 'function') {
+         //    const obs = new ResizeObserver(onResize);
+         //    obs.observe(ref.current);
+         //    return () => obs.disconnect(ref.current);
+         // }
+
+         window.addEventListener('resize', onResize);
+         return () => window.removeEventListener('resize', onResize);
+      },
+      [ref.current]);
+
+   return size;
+}
+
+/**
+ * Avoid firing callbacks too often,k for instance on every keystroke
+ */
+export function useDebounce<
+   T extends (...args: any[]) => any,
+>(callback: T, delayms=250) {
+   const timeout = React.useRef<number|undefined>(undefined);
+   const debounced = (...args: any[]) => {
+      window.clearTimeout(timeout.current);
+      timeout.current = window.setTimeout(
+         () => {
+            callback(...args);
+            window.clearTimeout(timeout.current);
+            timeout.current = undefined;
+         },
+         delayms);
+   };
+   return debounced;
+}
+
+
+/**
  * Hook similar to redux's reselect.
  * Makes it easier to use useMemo, without having to duplicate the list of
  * dependencies (those are now the list of parameters to the function.

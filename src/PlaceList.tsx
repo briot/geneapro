@@ -1,110 +1,87 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+import { FixedSizeList } from 'react-window';
+import { Input, InputProps, Segment } from 'semantic-ui-react';
 import Page from './Page';
 import { AppState, GPDispatch } from './Store/State';
-import { Input, Segment } from 'semantic-ui-react';
 import { Place, PlaceSet } from './Store/Place';
+import { useComponentSize, useDebounce } from './Hooks';
 import { PlaceLink } from './Links';
 import { fetchPlaces } from './Store/Sagas';
-import SmartTable, { ColumnDescr } from './SmartTable';
 import './PlaceList.css';
-
-const ColName: ColumnDescr<Place, Place> = {
-   headerName: 'Name',
-   get: (p: Place) => p,
-   format: (p: Place) => <PlaceLink id={p.id} />,
-};
 
 interface PlaceListProps {
    allPlaces: PlaceSet;
    dispatch: GPDispatch;
 }
+const PlaceListConnected: React.FC<PlaceListProps> = (p => {
+   const container = React.useRef<HTMLDivElement>(null);
+   const [filter, setFilter] = React.useState('');
+   const [sorted, setSorted] = React.useState<Place[]>([]);
+   const size = useComponentSize(container);
 
-interface PlaceListState {
-   filter?: string;
-   places: Place[];
-}
+   React.useEffect(
+      () => fetchPlaces.execute(p.dispatch, {}),
+      []);
 
-class PlaceListConnected extends React.PureComponent<PlaceListProps, PlaceListState> {
-   state: PlaceListState = {
-      filter: '',
-      places: [],
-   };
+   React.useEffect(
+      () => {
+         let list = Object.values(p.allPlaces);
+         if (filter) {
+            const lc_filter = filter.toLowerCase();
+            list = list.filter(
+               p2 => p2.name.toLowerCase().indexOf(lc_filter) >= 0);
+         }
+         setSorted(list.sort((p1, p2) => p1.name.localeCompare(p2.name)));
+      },
+      [p.allPlaces, filter],
+   );
 
-   readonly cols: ColumnDescr<Place, Place>[] = [ColName];
+   const onFilterChange = React.useCallback(
+      useDebounce(
+         (e: any, val: InputProps) => setFilter(val.value as string),
+         250),
+      []);
 
-   componentDidUpdate(old: PlaceListProps) {
-      if (old.allPlaces !== this.props.allPlaces) {
-         this.setState((s: PlaceListState) => ({
-            ...s,
-            places: this.computePlaces(this.props.allPlaces, s.filter),
-         }));
-      }
-   }
+   document.title = 'List of places';
 
-   componentDidMount() {
-      fetchPlaces.execute(this.props.dispatch, {});
-   }
-
-   computePlaces(set: PlaceSet, filter?: string): Place[] {
-      let list = Object.entries(set)
-         .map(
-            ([key, val]: [string, Place]) => val).sort(
-            (p1: Place, p2: Place) => p1.name.localeCompare(p2.name));
-
-      if (filter) {
-         list = list.filter(
-            (p: Place) => p.name.toLowerCase().indexOf(filter) >= 0
-         );
-      }
-
-      return list;
-   }
-
-   filterChange = (e: React.FormEvent<HTMLElement>, val: {value: string}) => {
-      this.setState({
-         filter: val.value,
-         places: this.computePlaces(this.props.allPlaces, val.value),
-      });
-   }
-
-   render() {
-      const width = 900;
-      document.title = 'List of places';
-
-      const places = this.state.places;
-
-      return (
-         <Page
-            main={
-               <div className="PlaceList List">
-                  <Segment
-                     style={{width: width}}
-                     color="blue"
-                     attached={true}
-                  >
-                     <span>
-                        {places.length} / {Object.keys(this.props.allPlaces).length} Places
-                     </span>
-                     <Input
-                        icon="search"
-                        placeholder="Filter..."
-                        onChange={this.filterChange}
-                        style={{position: 'absolute', right: '5px', top: '5px'}}
-                     />
-                  </Segment>
-                  <SmartTable
-                     width={width}
-                     rowHeight={30}
-                     rows={places}
-                     columns={this.cols}
+   return (
+      <Page
+         main={
+            <div className="PlaceList List" ref={container}>
+               <Segment
+                  color="blue"
+                  attached={true}
+               >
+                  <span>
+                     {sorted.length} / {Object.keys(p.allPlaces).length} Places
+                  </span>
+                  <Input
+                     icon="search"
+                     placeholder="Filter..."
+                     onChange={onFilterChange}
+                     style={{position: 'absolute', right: '5px', top: '5px'}}
                   />
-               </div>
-            }
-         />
-      );
-   }
-}
+               </Segment>
+               <FixedSizeList
+                  width={size.width}
+                  height={size.height}
+                  itemCount={sorted.length}
+                  itemSize={30}
+               >
+                  {
+                     ({index, style}: {index: number, style: object}) => (
+                         <div style={style}>
+                            <PlaceLink id={sorted[index].id} />
+                         </div>
+                     )
+                  }
+               </FixedSizeList>
+            </div>
+         }
+      />
+   );
+});
 
 const PlaceList = connect(
    (state: AppState) => ({

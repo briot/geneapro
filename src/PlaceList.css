@@ -1,8 +1,4 @@
-.PlaceList table {
+.PlaceList {
+   max-width: 900px;
    background: white;
-}
-
-.PlaceList thead th > div {
-    background-color: #f6f7f8;
-    background-image: linear-gradient(#fff, #efefef);
 }

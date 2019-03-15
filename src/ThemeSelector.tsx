@@ -13,7 +13,7 @@ import * as ServerThemes from './Server/Themes';
 interface ThemeLegendProps {
    theme: GP_JSON.ColorSchemeId;
 }
-const ThemeLegend = (p: ThemeLegendProps) => {
+const ThemeLegend: React.FC<ThemeLegendProps> = (p) => {
    const [rules, setRules] = React.useState<ServerThemes.ThemeRule[]>([]);
 
    React.useEffect(
@@ -64,7 +64,7 @@ interface ThemeSelectorProps {
    // on change, a diff with a single field fieldName will be sent
 }
 
-function ThemeSelectorConnected(p: ThemeSelectorProps) {
+const ThemeSelectorConnected: React.FC<ThemeSelectorProps> = (p) => {
    const [showLegend, setLegend] = React.useState(false);
 
    const vals = predefinedThemes.concat(p.metadata.themes)

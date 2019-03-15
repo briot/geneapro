@@ -27,7 +27,7 @@ interface PedigreePageConnectedProps extends RouteComponentProps<PropsFromRoute>
    themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
 }
 
-const PedigreePageConnected = (p: PedigreePageConnectedProps) => {
+const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = (p) => {
    const decujusid = Number(p.match.params.decujusId);
 
    // Fetch data from server when some properties change

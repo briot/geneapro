@@ -99,7 +99,7 @@ interface ValueProps extends ValueBaseProps {
    value: ValueType|ValueType[]|undefined;
    onValueChange: (value: ValueType|ValueType[]) => void;
 }
-const Value = (p: ValueProps) => {
+const Value: React.FC<ValueProps> = (p) => {
    const onValueChange = React.useCallback(
       (e: any, data: {value?: ValueType|ValueType[]}) =>
          p.onValueChange(data.value as ValueType|ValueType[]),
@@ -422,7 +422,7 @@ const RuleImplex = React.memo((p: RuleProps) => {
  * RuleDefault
  */
 
-const RuleDefault = (p: RuleProps) => {
+const RuleDefault: React.FC<RuleProps> = (p) => {
    return null;
 }
 
@@ -650,7 +650,7 @@ interface NestedRuleEditorProps {
    ops: AllOptions;
    onChange: (r: ServerThemes.NestedThemeRule) => void;
 }
-const NestedRuleEditor = (p: NestedRuleEditorProps) => {
+const NestedRuleEditor: React.FC<NestedRuleEditorProps> = (p) => {
    const onTypeChange = React.useCallback(
       (e: any, d: DropdownProps) =>
          p.onChange({type: d.value as string, parts: {}, children: []}),
@@ -821,7 +821,7 @@ interface ThemeEditorProps {
    metadata: GP_JSON.Metadata;
 }
 
-const ThemeEditorConnected = (p: ThemeEditorProps) => {
+const ThemeEditorConnected: React.FC<ThemeEditorProps> = (p) => {
    const [themeList, setThemeList] = React.useState<GP_JSON.ColorScheme[]>(
       p.metadata.themes);
    const [selected, setSelected] = React.useState(0);

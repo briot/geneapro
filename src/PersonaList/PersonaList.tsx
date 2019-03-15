@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+import { FixedSizeList } from 'react-window';
 import Page from '../Page';
 import { AppState, GPDispatch, themeNameGetter } from '../Store/State';
-import { Input, Segment } from 'semantic-ui-react';
+import { Input, InputProps, Segment } from 'semantic-ui-react';
 import * as GP_JSON from '../Server/JSON';
 import { Person, PersonSet } from '../Store/Person';
 import { GenealogyEventSet } from '../Store/Event';
+import { useComponentSize, useDebounce } from '../Hooks';
 import { PersonaLink } from '../Links';
 import PersonaListSide from '../PersonaList/Side';
 import { extractYear } from '../Store/Event';
@@ -13,36 +15,8 @@ import { PersonaListSettings,
          changePersonaListSettings } from '../Store/PersonaList';
 import { fetchPersons } from '../Store/Sagas';
 import Style from '../Store/Styles';
-import SmartTable, { ColumnDescr } from '../SmartTable';
 import ColorTheme from '../Store/ColorTheme';
 import './PersonaList.css';
-
-type Column = ColumnDescr<Person, Person, PersonaListSettings|undefined>;
-
-const ColId: Column = {
-   headerName: 'Id',
-   get: (p: Person) => p,
-   format: (p: Person) => <PersonaLink id={p.id} />,
-   inlineStyle: (p: Person, settings: PersonaListSettings|undefined) =>
-      settings && ColorTheme.forPerson(settings.colors, p).toStr('dom'),
-};
-
-const ColLife: Column = {
-   headerName: 'Lifespan',
-   defaultWidth: 20,
-   get: (p: Person) => p,
-   format: (p: Person) => {
-      const b = extractYear(p.birthISODate);
-      const d = extractYear(p.deathISODate);
-      return (
-         <span className="lifespan">
-            <span>{b}</span>
-            {(b || d) ? ' - ' : ''}
-            <span>{d}</span>
-         </span>
-      );
-   },
-};
 
 interface PersonaListProps {
    persons: PersonSet;
@@ -54,104 +28,101 @@ interface PersonaListProps {
 
    themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
 }
+const PersonaListConnected: React.FC<PersonaListProps> = (p => {
+   const container = React.useRef<HTMLDivElement>(null);
+   const [filter, setFilter] = React.useState('');
+   const [sorted, setSorted] = React.useState<Person[]>([]);
+   const size = useComponentSize(container);
 
-interface PersonaListState {
-   filter?: string;
-   persons: Person[];  // sorted
-}
+   // Fetch the list of persons, using current color theme
+   // ??? No need to reload if the colors changed to a built-in theme (<0)
+   React.useEffect(
+      () => fetchPersons.execute(p.dispatch, {colors: p.settings.colors}),
+      [p.settings.colors]);
 
-class PersonaListConnected
-extends React.PureComponent<PersonaListProps, PersonaListState> {
-   state: PersonaListState = {
-      filter: '',
-      persons: [],
-   };
+   // Filter the list of persons
+   React.useEffect(
+      () => {
+         let list = Object.values(p.persons);
+         if (filter) {
+            const lc_filter = filter.toLowerCase();
+            list = list.filter(
+               p2 => p2.name.toLowerCase().indexOf(lc_filter) >= 0);
+         }
+         setSorted(list.sort((p1, p2) => p1.name.localeCompare(p2.name)));
+      },
+      [p.persons, filter]
+   );
 
-   readonly cols: Column[] = [ColId, ColLife];
+   // Called when the filter is modified
+   const onFilterChange = React.useCallback(
+      useDebounce(
+         (e: any, val: InputProps) => setFilter(val.value as string),
+         250),
+      []);
 
-   componentDidUpdate(old: PersonaListProps) {
-      if (old.persons !== this.props.persons ||
-          old.settings.colors !== this.props.settings.colors
-      ) {
-         this.setState((s: PersonaListState) => ({
-            ...s,
-            persons: this.computePersons(this.props.persons, s.filter),
-         }));
-      }
-   }
+   document.title = 'List of persons';
 
-   componentDidMount() {
-      fetchPersons.execute(
-         this.props.dispatch, {colors: this.props.settings.colors});
-   }
-
-   computePersons(set: PersonSet, filter?: string): Person[] {
-      let list = Object.values(set)
-         .sort((p1, p2) => p1.name.localeCompare(p2.name));
-
-      if (filter) {
-         list = list.filter(
-            (p: Person) => p.name.toLowerCase().indexOf(filter) >= 0
-         );
-      }
-
-      return list;
-   }
-
-   filterChange = (e: React.FormEvent<HTMLElement>, val: {value: string}) => {
-      this.setState({
-         filter: val.value,
-         persons: this.computePersons(this.props.persons, val.value),
-      });
-   }
-
-   render() {
-      const width = 900;
-      document.title = 'List of persons';
-
-      const persons = this.state.persons;
-
-      return (
-         <Page
-            leftSide={
-               <PersonaListSide
-                  settings={this.props.settings}
-                  onChange={this.props.onChange}
-                  themeNameGet={this.props.themeNameGet}
-               />
-            }
-            main={
-               <div className="PersonaList List">
-                  <Segment
-                     style={{width: width}}
-                     color="blue"
-                     attached={true}
-                  >
-                     <span>
-                        {persons.length} / {Object.keys(this.props.persons).length} Persons
-                     </span>
-                     <Input
-                        icon="search"
-                        placeholder="Filter..."
-                        onChange={this.filterChange}
-                        style={{position: 'absolute', right: '5px', top: '5px'}}
-                     />
-                  </Segment>
-
-                  <SmartTable<Person, Person, PersonaListSettings>
-                     width={width}
-                     rowHeight={30}
-                     rows={persons}
-                     data={this.props.settings}
-                     columns={this.cols}
-                     resizableColumns={true}
+   return (
+      <Page
+         leftSide={
+            <PersonaListSide
+               settings={p.settings}
+               onChange={p.onChange}
+               themeNameGet={p.themeNameGet}
+            />
+         }
+         main={
+            <div className="PersonaList List" ref={container}>
+               <Segment
+                  color="blue"
+                  attached={true}
+               >
+                  <span>
+                     {sorted.length} / {Object.keys(p.persons).length} Persons
+                  </span>
+                  <Input
+                     icon="search"
+                     placeholder="Filter..."
+                     onChange={onFilterChange}
+                     style={{position: 'absolute', right: '5px', top: '5px'}}
                   />
-               </div>
-            }
-         />
-      );
-   }
-}
+               </Segment>
+
+               <FixedSizeList
+                   width={size.width}
+                   height={size.height}
+                   itemCount={sorted.length}
+                   itemSize={30}
+               >
+                  {
+                     ({index, style}: {index: number, style: object}) => {
+                        const pers = sorted[index];
+                        const b = extractYear(pers.birthISODate);
+                        const d = extractYear(pers.deathISODate);
+                        return (
+                           <div style={style} className="person">
+                              <span
+                                 style={ColorTheme.forPerson(
+                                    p.settings.colors, pers).toStr('dom')}
+                              >
+                                 <PersonaLink id={pers.id} />
+                              </span>
+                              <span className="lifespan">
+                                 <span>{b}</span>
+                                    {(b || d) ? ' - ' : ''}
+                                 <span>{d}</span>
+                              </span>
+                           </div>
+                        );
+                     }
+                  }
+               </FixedSizeList>
+            </div>
+         }
+      />
+   );
+});
 
 const PersonaList = connect(
    (state: AppState) => ({
