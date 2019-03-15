@@ -29,7 +29,7 @@ class Characteristic(GeneaProveModel):
         help_text="Name of the characteristic. This could be guessed from"
         " its parts only if there is one of the latter, so we store"
         " it here""")
-    place = models.ForeignKey(Place, null=True)
+    place = models.ForeignKey(Place, null=True, on_delete=models.CASCADE)
     date = models.CharField(
         max_length=100, null=True,
         help_text="Date as read in the original source")
@@ -65,8 +65,8 @@ class Characteristic_Part(GeneaProveModel):
     characteristic, and therefore various parts might be needed.
     """
 
-    characteristic = models.ForeignKey(Characteristic, related_name="parts")
-    type = models.ForeignKey(Characteristic_Part_Type)
+    characteristic = models.ForeignKey(Characteristic, related_name="parts", on_delete=models.CASCADE)
+    type = models.ForeignKey(Characteristic_Part_Type, on_delete=models.CASCADE)
     name = models.TextField()
     sequence_number = models.IntegerField(default=1)
 

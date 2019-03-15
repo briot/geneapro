@@ -41,14 +41,15 @@ class Assertion(GeneaProveModel):
     personas (Persona,Persona).
     """
 
-    surety = models.ForeignKey(Surety_Scheme_Part)
-    researcher = models.ForeignKey(Researcher, null=False)
+    surety = models.ForeignKey(Surety_Scheme_Part, on_delete=models.CASCADE)
+    researcher = models.ForeignKey(Researcher, null=False, on_delete=models.CASCADE)
     source = models.ForeignKey(
         Source, null=True,
         help_text="An assertion comes from no more than one source. It can"
         " also come from one or more other assertions through the"
         " assertion_assertion table, in which case source_id is"
-        " null")
+        " null",
+        on_delete=models.CASCADE)
     rationale = models.TextField(
         null=True,
         help_text="Explains why the assertion (deduction, comments,...)")
@@ -108,9 +109,9 @@ class P2P(Assertion):
     """Persona-to-Persona assertions, to represent the Persona.sameAs
        relationship.
     """
-    person1 = models.ForeignKey(Persona, related_name="p2p_from")
-    person2 = models.ForeignKey(Persona, related_name="p2p_to")
-    type = models.ForeignKey(P2P_Type)
+    person1 = models.ForeignKey(Persona, related_name="p2p_from", on_delete=models.CASCADE)
+    person2 = models.ForeignKey(Persona, related_name="p2p_to", on_delete=models.CASCADE)
+    type = models.ForeignKey(P2P_Type, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "p2p"
@@ -135,8 +136,8 @@ class P2P(Assertion):
 class P2C(Assertion):
     """Persona-to-Characteristic assertions"""
 
-    person = models.ForeignKey(Persona, related_name="p2c")
-    characteristic = models.ForeignKey(Characteristic, related_name="persons")
+    person = models.ForeignKey(Persona, related_name="p2c", on_delete=models.CASCADE)
+    characteristic = models.ForeignKey(Characteristic, related_name="persons", on_delete=models.CASCADE)
 
     class Meta:
         """Meta data for the model"""
@@ -177,9 +178,9 @@ class P2C(Assertion):
 class P2E(Assertion):
     """Persona-to-Event assertions"""
 
-    person = models.ForeignKey(Persona, related_name="events")
-    event = models.ForeignKey(Event, related_name="actors")
-    role = models.ForeignKey(Event_Type_Role, null=True)
+    person = models.ForeignKey(Persona, related_name="events", on_delete=models.CASCADE)
+    event = models.ForeignKey(Event, related_name="actors", on_delete=models.CASCADE)
+    role = models.ForeignKey(Event_Type_Role, null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         role = f" (as {self.role_id if self.role_id else ''})"
@@ -208,9 +209,9 @@ class P2E(Assertion):
 
 class P2G(Assertion):
     """Persona-to-Group assertions"""
-    person = models.ForeignKey(Persona, related_name="groups")
-    group = models.ForeignKey(Group, related_name="personas")
-    role = models.ForeignKey(Group_Type_Role, null=True)
+    person = models.ForeignKey(Persona, related_name="groups", on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, related_name="personas", on_delete=models.CASCADE)
+    role = models.ForeignKey(Group_Type_Role, null=True, on_delete=models.CASCADE)
 
     class Meta:
         """Meta data for the model"""
@@ -236,12 +237,12 @@ class P2G(Assertion):
 #       Such assertions are not part of the GENTECH super-statement, but
 #       are used in particular to store event notes imported from GEDCOM
 #    """
-#   event      = models.ForeignKey (Event, related_name="characteristics")
-#   characteristic = models.ForeignKey (Characteristic, related_name="events")
+#   event      = models.ForeignKey (Event, related_name="characteristics", on_delete=models.CASCADE)
+#   characteristic = models.ForeignKey (Characteristic, related_name="events", on_delete=models.CASCADE)
 
 #class Assertion_Assertion (GeneaProveModel):
-#    original = models.ForeignKey(Assertion, related_name="leads_to")
-#    deduction = models.ForeignKey(Assertion, related_name="deducted_from")
+#    original = models.ForeignKey(Assertion, related_name="leads_to", on_delete=models.CASCADE)
+#    deduction = models.ForeignKey(Assertion, related_name="deducted_from", on_delete=models.CASCADE)
 #    sequence_number = models.IntegerField(default=1)
 #
 #    class Meta:

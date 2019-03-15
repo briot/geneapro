@@ -21,7 +21,7 @@ class Group_Type_Role(GeneaProveModel):
     The role a person can have in a group
     """
 
-    type = models.ForeignKey(Group_Type, related_name="roles")
+    type = models.ForeignKey(Group_Type, related_name="roles", on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     sequence_number = models.IntegerField(default=1)
 
@@ -36,8 +36,8 @@ class Group(GeneaProveModel):
     The groups as found in our various sources
     """
 
-    type = models.ForeignKey(Group_Type)
-    place = models.ForeignKey(Place, null=True)
+    type = models.ForeignKey(Group_Type, on_delete=models.CASCADE)
+    place = models.ForeignKey(Place, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     date = models.CharField(
         max_length=100, null=True,

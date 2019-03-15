@@ -28,7 +28,7 @@ class Surety_Scheme_Part(GeneaProveModel):
     An element of a Surety_Scheme
     """
 
-    scheme = models.ForeignKey(Surety_Scheme, related_name="parts")
+    scheme = models.ForeignKey(Surety_Scheme, related_name="parts", on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.TextField(null=True, blank=True)
     sequence_number = models.IntegerField(default=1)
