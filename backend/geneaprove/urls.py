@@ -92,6 +92,4 @@ urlpatterns = [
     # url(r'^.*', static, name='index'),
 
     # url(r'^merge$', geneaprove.views.merge.view),
-
-    url(r'^admin', django.contrib.admin.site.urls),
 ]
