@@ -10,7 +10,7 @@ class Representation(GeneaProveModel):
     """
 
     mime_type = models.CharField(max_length=40)
-    source = models.ForeignKey(Source, related_name="representations")
+    source = models.ForeignKey(Source, related_name="representations", on_delete=models.CASCADE)
     file = models.TextField(null=True)
     comments = models.TextField(null=True)
 

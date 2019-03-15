@@ -54,7 +54,7 @@ class Project (GeneaProveModel):
                                          through="Researcher_Project")
     name = models.CharField(max_length=100)
     description = models.TextField(null=True)
-    scheme = models.ForeignKey(Surety_Scheme, default=1)
+    scheme = models.ForeignKey(Surety_Scheme, default=1, on_delete=models.CASCADE)
     client_data = models.TextField(
         null=True,
         help_text="The client for which the project is undertaken. In general"
@@ -76,8 +76,8 @@ class Researcher_Project (GeneaProveModel):
     given researcher might be working simulatenously on several projects.
     """
 
-    researcher = models.ForeignKey(Researcher, null=False)
-    project = models.ForeignKey(Project)
+    researcher = models.ForeignKey(Researcher, null=False, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
     role = models.TextField(
         null=True,
         help_text="Role that the researcher plays for that project")
@@ -98,7 +98,7 @@ class Research_Objective (GeneaProveModel):
     An objective is accomplished in terms of activities.
     """
 
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     description = models.TextField(null=True)
     sequence_number = models.IntegerField(default=1)
@@ -120,7 +120,7 @@ class Activity (GeneaProveModel):
     """
 
     objectives = models.ManyToManyField(Research_Objective)
-    researcher = models.ForeignKey(Researcher, null=True)
+    researcher = models.ForeignKey(Researcher, null=True, on_delete=models.CASCADE)
     scheduled_date = models.DateField(null=True)
     completed_date = models.DateField(null=True)
     is_admin = models.BooleanField(
@@ -148,9 +148,9 @@ class Repository_Source (GeneaProveModel):
     all the possible repositories where they are found
     """
 
-    repository = models.ForeignKey(Repository)
-    source = models.ForeignKey(Source)
-    activity = models.ForeignKey(Activity, null=True)
+    repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
+    source = models.ForeignKey(Source, on_delete=models.CASCADE)
+    activity = models.ForeignKey(Activity, null=True, on_delete=models.CASCADE)
     call_number = models.CharField(max_length=200, null=True)
     description = models.TextField(null=True)
 
@@ -168,13 +168,14 @@ class Search (GeneaProveModel):
     necessarily, if for instance this is an unexpected opportunity
     """
 
-    activity = models.ForeignKey(Activity, null=True)
+    activity = models.ForeignKey(Activity, null=True, on_delete=models.CASCADE)
     source = models.ForeignKey(
         Source, null=True,
         help_text="The source in which the search was conducted. It could"
         " be null if this was a general search in a repository for"
-        " instance")
-    repository = models.ForeignKey(Repository)
+        " instance",
+        on_delete=models.CASCADE)
+    repository = models.ForeignKey(Repository, on_delete=models.CASCADE)
     searched_for = models.TextField(null=True)
 
     class Meta:

@@ -9,7 +9,7 @@ class Researcher(GeneaProveModel):
     """
 
     name = models.CharField(max_length=100)
-    place = models.ForeignKey(Place, null=True)
+    place = models.ForeignKey(Place, null=True, on_delete=models.CASCADE)
     comment = models.TextField(
         null=True,
         help_text="Contact information for this researcher, like email"

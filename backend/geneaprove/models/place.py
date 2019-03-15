@@ -21,7 +21,8 @@ class Place(GeneaProveModel):
 
     parent_place = models.ForeignKey(
         'self', null=True,
-        help_text="The parent place, that contains this one")
+        help_text="The parent place, that contains this one",
+        on_delete=models.CASCADE)
     name = models.CharField(
         max_length=100, help_text="Short description of the place")
 
@@ -85,8 +86,8 @@ class Place_Part(GeneaProveModel):
     # ??? Should the existence date be a place_part as well, or a field in
     # a place part, so that the same place with different names results in
     # a single id
-    place = models.ForeignKey(Place, related_name="parts")
-    type = models.ForeignKey(Place_Part_Type)
+    place = models.ForeignKey(Place, related_name="parts", on_delete=models.CASCADE)
+    type = models.ForeignKey(Place_Part_Type, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     sequence_number = models.PositiveSmallIntegerField(
         "Sequence number", default=1)

@@ -21,17 +21,20 @@ class Source(GeneaProveModel):
         related_name="sources",
         through="Repository_Source")
     higher_source = models.ForeignKey(
-        "self", related_name="lower_sources", null=True)
+        "self", related_name="lower_sources", null=True,
+        on_delete=models.CASCADE)
     subject_place = models.ForeignKey(
         Place, null=True, related_name="sources",
-        help_text="Where the event described in the source takes place")
+        help_text="Where the event described in the source takes place",
+        on_delete=models.CASCADE)
     jurisdiction_place = models.ForeignKey(
         Place, null=True,
         related_name="jurisdiction_for",
         help_text="Example: a record in North Carolina describes a person"
         " and their activities in Georgia. Georgia is the subject"
-        " place, whereas NC is the jurisdiction place")
-    researcher = models.ForeignKey(Researcher, null=False)
+        " place, whereas NC is the jurisdiction place",
+        on_delete=models.CASCADE)
+    researcher = models.ForeignKey(Researcher, null=False, on_delete=models.CASCADE)
     subject_date = models.CharField(
         max_length=100, null=True,
         help_text="the date of the subject. Note that the dates might be" +
@@ -185,8 +188,8 @@ class Citation_Part(GeneaProveModel):
     Stores the citation for a source, such as author, title,...
     """
 
-    source = models.ForeignKey(Source, related_name='parts')
-    type = models.ForeignKey(Citation_Part_Type)
+    source = models.ForeignKey(Source, related_name='parts', on_delete=models.CASCADE)
+    type = models.ForeignKey(Citation_Part_Type, on_delete=models.CASCADE)
     value = models.TextField()
 
     class Meta:

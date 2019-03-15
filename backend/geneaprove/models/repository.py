@@ -28,9 +28,9 @@ class Repository(GeneaProveModel):
     A repository might also be a person you interviewed one or more times
     """
 
-    place = models.ForeignKey(Place, null=True)
+    place = models.ForeignKey(Place, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
-    type = models.ForeignKey(Repository_Type, null=True)
+    type = models.ForeignKey(Repository_Type, null=True, on_delete=models.CASCADE)
     info = models.TextField(null=True)
     addr = models.TextField(null=True)
 

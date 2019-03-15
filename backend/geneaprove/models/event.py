@@ -27,7 +27,8 @@ class Event_Type_Role(GeneaProveModel):
     type = models.ForeignKey(
         Event_Type, null=True, blank=True,
         help_text="The event type for which the role is defined. If unset,"
-        " this applies to all events")
+        " this applies to all events",
+        on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
 
     class Meta:
@@ -55,8 +56,8 @@ class Event(GeneaProveModel):
     assertion.
     """
 
-    type = models.ForeignKey(Event_Type)
-    place = models.ForeignKey(Place, null=True)
+    type = models.ForeignKey(Event_Type, on_delete=models.CASCADE)
+    place = models.ForeignKey(Place, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     date = models.CharField(
         max_length=100, null=True,
