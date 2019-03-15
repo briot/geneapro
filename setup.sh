@@ -47,7 +47,7 @@ else
    fi
 fi
 
-pip install django==1.10.6 pillow grandalf django-prepared-query appdirs
+pip install django>=2.1 pillow grandalf django-prepared-query appdirs
 
 if [ "$DEVELOPER" != "no" ]; then
    # Some useful tools for developers. 
