@@ -43,6 +43,10 @@ const SourceListConnected: React.FC<SourceListProps> = (p => {
          250),
       []);
 
+   const itemKey = React.useCallback(
+      (index: number) => sorted[index].id,
+      [sorted]);
+
    document.title = 'List of sources';
 
    return (
@@ -68,7 +72,9 @@ const SourceListConnected: React.FC<SourceListProps> = (p => {
                   width={size.width}
                   height={size.height}
                   itemCount={sorted.length}
+                  itemKey={itemKey}
                   itemSize={30}
+                  overscanCount={5}
                >
                   {
                      ({index, style}: {index: number, style: object}) => (

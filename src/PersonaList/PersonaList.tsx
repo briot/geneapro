@@ -61,6 +61,10 @@ const PersonaListConnected: React.FC<PersonaListProps> = (p => {
          250),
       []);
 
+   const itemKey = React.useCallback(
+      (index: number) => sorted[index].id,
+      [sorted]);
+
    document.title = 'List of persons';
 
    return (
@@ -90,10 +94,12 @@ const PersonaListConnected: React.FC<PersonaListProps> = (p => {
                </Segment>
 
                <FixedSizeList
-                   width={size.width}
-                   height={size.height}
-                   itemCount={sorted.length}
-                   itemSize={30}
+                  width={size.width}
+                  height={size.height}
+                  itemCount={sorted.length}
+                  itemKey={itemKey}
+                  itemSize={30}
+                  overscanCount={5}
                >
                   {
                      ({index, style}: {index: number, style: object}) => {

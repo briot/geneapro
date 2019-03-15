@@ -43,6 +43,10 @@ const PlaceListConnected: React.FC<PlaceListProps> = (p => {
          250),
       []);
 
+   const itemKey = React.useCallback(
+      (index: number) => sorted[index].id,
+      [sorted]);
+
    document.title = 'List of places';
 
    return (
@@ -67,7 +71,9 @@ const PlaceListConnected: React.FC<PlaceListProps> = (p => {
                   width={size.width}
                   height={size.height}
                   itemCount={sorted.length}
+                  itemKey={itemKey}
                   itemSize={30}
+                  overscanCount={5}
                >
                   {
                      ({index, style}: {index: number, style: object}) => (
