@@ -179,13 +179,16 @@ class PersonaView(JSONView):
     def get_json(self, params, id):
         global_graph.update_if_needed()
 
+        try:
+            node = global_graph.node_from_id(id)
+        except KeyError:
+            return {"person": None, "asserts": []}
+
         asserts = []
         p = extended_personas(
-            nodes=set([global_graph.node_from_id(id)]),
+            nodes=set([node]),
             asserts=asserts,
             styles=None, graph=global_graph, schemes=None)
-
-        node = global_graph.node_from_id(id)
 
         asserts.extend(models.P2P.objects.filter(
             Q(person1__in=node.ids.union(node.different)) |
