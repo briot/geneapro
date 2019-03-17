@@ -23,10 +23,11 @@ export function jsonPersonToPerson(
 ): Person {
    return {
       id: p.id,
-      name: p.name,
+      display_name: p.display_name,
       birthISODate: p.birthISODate,
       deathISODate: p.deathISODate,
       marriageISODate: p.marriageISODate,
+      sex: p.sex,
       knownAncestors: 0,
       knownDescendants: 0,
       parents: p.parents,
@@ -59,9 +60,18 @@ export function jsonPersonsToPerson(
    return {persons};
 }
 
-export function* fetchPersonsFromServer(p: {colors: GP_JSON.ColorSchemeId}) {
-   const resp: Response = yield window.fetch(
-      `/data/persona/list?theme=${p.colors}`);
+export interface FetchPersonsParams {
+   colors: GP_JSON.ColorSchemeId;
+   limit?: number; // maximum number of persons to return
+   offset?: number;
+}
+
+export function* fetchPersonsFromServer(p: FetchPersonsParams) {
+   const url = `/data/persona/list?theme=${p.colors}` +
+      (p.offset ? `&offset=${p.offset}` : '') +
+      (p.limit ? `&limit=${p.limit}` : '');
+
+   const resp: Response = yield window.fetch(url);
    if (resp.status !== 200) {
       throw new Error('Server returned an error');
    }
@@ -221,7 +231,7 @@ export function setAssertionEntities(
       for (const p of entities.persons) {
          into.persons[p.id] = {
             id: p.id,
-            name: p.name,
+            display_name: p.display_name,
             knownAncestors: 0,
             knownDescendants: 0,
          };

@@ -36,7 +36,11 @@ const PersonaListConnected: React.FC<PersonaListProps> = (p => {
    // Fetch the list of persons, using current color theme
    // ??? No need to reload if the colors changed to a built-in theme (<0)
    React.useEffect(
-      () => fetchPersons.execute(p.dispatch, {colors: p.settings.colors}),
+      () => fetchPersons.execute(p.dispatch, {
+         colors: p.settings.colors,
+         // limit: 50,
+         // offset: 5000,
+      }),
       [p.dispatch, p.settings.colors]);
 
    // Filter the list of persons
@@ -46,9 +50,10 @@ const PersonaListConnected: React.FC<PersonaListProps> = (p => {
          if (filter) {
             const lc_filter = filter.toLowerCase();
             list = list.filter(
-               p2 => p2.name.toLowerCase().indexOf(lc_filter) >= 0);
+               p2 => p2.display_name.toLowerCase().indexOf(lc_filter) >= 0);
          }
-         setSorted(list.sort((p1, p2) => p1.name.localeCompare(p2.name)));
+         setSorted(list.sort((p1, p2) =>
+            p1.display_name.localeCompare(p2.display_name)));
       },
       [p.persons, filter]
    );
@@ -114,6 +119,7 @@ const PersonaListConnected: React.FC<PersonaListProps> = (p => {
                                  <PersonaLink id={pers.id} />
                               </span>
                               <span className="lifespan">
+                                 {pers.sex}
                                  <span>{b}</span>
                                     {(b || d) ? ' - ' : ''}
                                  <span>{d}</span>

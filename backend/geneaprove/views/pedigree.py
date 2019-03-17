@@ -69,7 +69,9 @@ class PedigreeData(JSONView):
         all_person_nodes = set(ancestors).union(descendants)
         if all_person_nodes:
             persons = extended_personas(
-                all_person_nodes, styles, asserts=asserts,
+                nodes=all_person_nodes,
+                styles=styles,
+                asserts=asserts,
                 event_types=(models.Event_Type.PK_birth,
                              models.Event_Type.PK_death,
                              models.Event_Type.PK_marriage),

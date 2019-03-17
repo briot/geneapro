@@ -2,8 +2,9 @@
 Various views related to displaying the pedgree of a person graphically
 """
 
-from django.db.models import Min, Q
-from django.db import transaction
+from django.db.models import Min, Q, F, Subquery
+from django.db.models.expressions import RawSQL
+from django.db import connection, transaction
 from geneaprove import models
 from geneaprove.utils.date import DateRange
 from geneaprove.views.to_json import JSONView
@@ -16,210 +17,198 @@ import logging
 logger = logging.getLogger('geneaprove.PERSONA')
 
 
-def __add_default_person_attributes(person):
-    """
-    Add the default computed attributes for the person.
-    PERSON is an instance of Persona.
-    """
-
-    person.birthISODate = None
-    person.deathISODate = None
-    person.marriageISODate = None
-    person.sex = None
-
-
 def extended_personas(
-        nodes, styles, graph, asserts=None,
-        event_types=None, schemes=None,
-        query_groups=True):
+        asserts=None,
+        query_groups=True,
+        ids=None, offset=None, limit=None):
     """
-    Compute the events for the various persons in `nodes` (all all persons in
-    the database if None)
+    Fetch a number of persons from the database.
+    The exact set of persons depends on the following parameters:
+        - if nodes is specified, all persons in that iterable are fetched.
+        - otherwise, if offset and/or minLength are specified, a subset of
+          persons are fetched.
+        - otherwise, all persons in the database are returned, which could take
+          a long time.
+
     Return a dict indexed on id containing extended instances of Persona,
     with additional fields for the birth, the death,...
 
-       :param nodes:
-           A set of graph.Persona_node, or None to get all persons from the
-           database.
-       :param graph: an instance of Graph, which is used to compute whether
-          two ids represent the same person.
-       :param event_types: restricts the types of events that are retrieved
-       :param list asserts: All assertions
-       :return: list of persons:
+       :param list ids:
+           A list of person ids
+       :param list|None asserts:
+          if a list is given, all found assertions are added to that list.
+          Otherwise, assertions are discarded.
+       :return: dict of persons:
           * persons is a dictionary of Persona instances, indexed on persona_id
 
-       SCHEMES is the list of ids of Surety_Scheme that are used. You
-          should pass a set() if you are interested in this. Otherwise, it is
-          just discarded.
     """
-    if nodes:
-        ids = [a.main_id for a in nodes]
-    else:
-        ids = None
-
-    roles = dict()  # role_id  -> name
-
-    assert schemes is None or isinstance(schemes, set)
-
-    # Get the role names
-
-    for role in models.Event_Type_Role.objects.all():
-        roles[role.id] = role.name
 
     ##############
     # Create the personas that will be returned.
     ##############
 
-    persons = dict()  # id -> person
+    # This query is much slower than the one below, though it returns a real
+    # manager that we can further manipulate.
+    # person_manager = models.Persona.objects \
+    #     .order_by('display_name') \
+    #     .annotate(sex=RawSQL(
+    #         "SELECT c.name FROM characteristic_part c, p2c, persona p "
+    #         "WHERE c.characteristic_id=p2c.characteristic_id "
+    #         "AND c.type_id=%s "
+    #         "AND p2c.person_id=p.id "
+    #         "AND p.main_id=persona.id",
+    #         (models.Characteristic_Part_Type.PK_sex,)
+    #     ))
+    #
+    # ??? Doesn't wor, second instance of persona disappears
+    # person_manager = models.Persona.objects \
+    #     .order_by('display_name') \
+    #     .extra(
+    #             select={'sex': 'characteristic_part.name', 'foo': 't2.id'},
+    #         tables=['characteristic_part', 'p2c', 'persona'],
+    #         where=["characteristic_part.characteristic_id=p2c.characteristic_id",
+    #                "characteristic_part.type_id=%s",
+    #                "p2c.person_id=t2.id",
+    #                "t2.main_id=persona.id"],
+    #         params=(models.Characteristic_Part_Type.PK_sex,),
+    #     )
+
     if ids:
-        for qs in sqlin(models.Persona.objects, id__in=ids):
-            for p in qs.all():
-                # p.id is always the main_id, since that's how ids was built
-                persons[p.id] = p
-                __add_default_person_attributes(p)
+        # Convert from ids to main ids
+        ids = ','.join('%d' % n for n in ids)
+        id_to_main = (
+            f"persona.id IN ("
+            f"SELECT p.main_id FROM persona p WHERE p.id IN ({ids}))")
     else:
-        for p in models.Persona.objects.all():
-            mid = graph.node_from_id(p.id).main_id
-            if mid not in persons:
-                persons[mid] = p
-                __add_default_person_attributes(p)
+        id_to_main = "persona.main_id=persona.id"
 
-    ################
-    # Check all events that the persons were involved in.
-    ################
+    person_manager = models.Persona.objects.raw(
+        ("SELECT persona.*, sub1.sex "
+         "FROM persona "
+             "LEFT JOIN ("
+                "SELECT p.main_id, c.name AS sex "
+                "FROM characteristic_part c, p2c, persona p "
+                "WHERE c.characteristic_id=p2c.characteristic_id "
+                "AND c.type_id=%s"
+                "AND p2c.person_id=p.id "
+                "GROUP BY p.main_id) sub1 "
+             "ON sub1.main_id=persona.id "
+        f"WHERE {id_to_main} ") +
+        ("ORDER BY persona.name ASC ") +
+        (f"LIMIT {limit} " if limit else "") +
+        (f"OFFSET {offset} " if offset else ""),
+        (models.Characteristic_Part_Type.PK_sex, ),
+        )
 
-    related = ['event', 'event__type', *models.P2E.related_json_fields()]
-    if styles and styles.need_place_parts:
-        related = ['event__place']
+    persons = {p.id: p for p in person_manager.iterator()}
+    return persons
 
-    events = models.P2E.objects.select_related(*related)
+
+def fetch_p2e(persons, asserts, schemes=None, event_types=None, styles=None):
+    """
+    Fetch all person-to-event relationships for the persons, add those
+    assertions to asserts.
+    As a side-effect, this sets the birth, death and marriage dates for the
+    persons.
+
+    :param event_types: restricts the types of events that are retrieved
+    :params schemes:
+       List of ids of Surety_Scheme that are used. You
+       should pass a set() if you are interested in this. Otherwise, it is
+       just discarded.
+    """
+    assert schemes is None or isinstance(schemes, set)
+
+    related = ['event', *models.P2E.related_json_fields()]
+    if styles and styles.need_places:
+        related = related + ['event__place']
+
+    events = models.P2E.objects. \
+        annotate(person_main_id=F('person__main_id'),
+                 event_type=F('event__type_id'))
     if event_types:
         events = events.filter(event__type__in=event_types)
 
-    all_ids = None
-    if nodes:
-        all_ids = set()
-        for p in nodes:
-            all_ids.update(p.ids)
-
-    # Also query the 'principal' for each events, so that we can provide
-    # that information graphically.
-
-    for qs in sqlin(events, person__in=all_ids):
-        for p2e in qs.all():
-            e = p2e.event
-            p_node = graph.node_from_id(p2e.person_id)
-            person = persons[p_node.main_id]
-
-            if asserts is not None:
-                asserts.append(p2e)
+    for qs in sqlin(events, person__main_id__in=persons.keys()):
+        for p2e in sql_prefetch_related_object(qs.all(), *related):
+            asserts.append(p2e)
 
             if schemes is not None:
                 schemes.add(p2e.surety.scheme_id)
 
             if not p2e.disproved \
                and p2e.role_id == models.Event_Type_Role.PK_principal:
+
+                e = p2e.event
+                person = persons.get(p2e.person_main_id, None)
+
                 if not e.date_sort:
                     pass
-                elif e.type_id == models.Event_Type.PK_birth:
+                elif p2e.event_type == models.Event_Type.PK_birth:
                     if person.birthISODate is None or \
                             e.date_sort < person.birthISODate:
                         person.birthISODate = e.date_sort
-                elif e.type_id == models.Event_Type.PK_death:
+                elif p2e.event_type == models.Event_Type.PK_death:
                     if person.deathISODate is None or \
                             e.date_sort > person.deathISODate:
                         person.deathISODate = e.date_sort
-                elif e.type_id == models.Event_Type.PK_marriage:
+                elif p2e.event_type == models.Event_Type.PK_marriage:
                     person.marriageISODate = e.date_sort
 
-    #########
-    # Get all groups to which the personas belong
-    #########
 
-#    if query_groups:
-#        groups = models.P2G.objects.select_related(
-#            *models.P2G.related_json_fields())
-#
-#        for gr in sql_in(groups, "person", all_ids):
-#            p_node = graph.node_from_id(gr.person_id)
-#            person = persons[p_node.main_id]
-#
-#            if asserts is not None:
-#                asserts.append(gr)
-#
-#            if schemes is not None:
-#                schemes.add(gr.surety.scheme_id)
+def fetch_p2c(persons, asserts):
+    """
+    Fetch all person-to-characteristic assertions for the given list of
+    persons. Append them to asserts.
+    Each assertion receives an extra `person_main_id` field.
 
-    #########
-    # Get all characteristics of these personas
-    #########
+    :param dict persons:
+       must be indexed on main id
+    """
 
-    for p2c_set in sqlin(
-          models.P2C.objects.select_related(*models.P2C.related_json_fields()),
-          person__in=all_ids):
+    pm = models.P2C.objects \
+        .prefetch_related(*models.P2C.related_json_fields()) \
+        .annotate(person_main_id=F('person__main_id'))
 
-        p2cs = sql_prefetch_related_object(
-            p2c_set.all(), 'characteristic__parts')
+    for p2c_set in sqlin(pm, person__main_id__in=persons.keys()):
+        asserts.extend(
+            sql_prefetch_related_object(
+                p2c_set.all(), 'characteristic__parts'))
 
-        if asserts is not None:
-            asserts.extend(p2cs)
 
-        for p2c in p2cs:
-            person = persons[graph.node_from_id(p2c.person_id).main_id]
-            for p in p2c.characteristic.parts.all():
-                if p.type_id == models.Characteristic_Part_Type.PK_sex:
-                    person.sex = p.name
+def fetch_p2p(persons, asserts):
+    """
+    Fetch all person-to-person relationships for the given list of persons.
+    This includes relationships for any of the related based personas (so the
+    set of p2p is the one that was used to compute the main persona)
+    """
+    # It is enough to test either person1 or person2, since they both have
+    # the same main_id
+    pm = models.P2P.objects \
+        .filter(person1__in=models.Persona.objects
+                   .filter(main_id__in=persons.keys())) \
+        .select_related(*models.P2P.related_json_fields())
 
-    return persons
+    asserts.extend(pm)
 
 
 class PersonaView(JSONView):
     """Display all details known about persona ID"""
 
     def get_json(self, params, id):
-        global_graph.update_if_needed()
-
-        try:
-            node = global_graph.node_from_id(id)
-        except KeyError:
-            return {"person": None, "asserts": []}
-
         asserts = []
-        p = extended_personas(
-            nodes=set([node]),
-            asserts=asserts,
-            styles=None, graph=global_graph, schemes=None)
+        persons = extended_personas(ids=[int(id)], asserts=asserts)
+        fetch_p2c(persons, asserts)
+        fetch_p2p(persons, asserts)
 
-        asserts.extend(models.P2P.objects.filter(
-            Q(person1__in=node.ids.union(node.different)) |
-            Q(person2__in=node.ids.union(node.different))
-        ).select_related(
-                *models.P2P.related_json_fields()
-            )
-        )
-
-        decujus = p[node.main_id]
+        main_id = next(iter(persons))  # only one person in dict
+        print(f'MANU main_id {main_id} for {id}')
 
         r = JSONResult(asserts=asserts)
         return r.to_json({
-            "person": decujus,
+            "person": persons[main_id],
             "asserts": asserts,
         })
-
-
-class GlobalSettings(JSONView):
-    """
-    Return the user settings. These include the following fields:
-    * defaultPerson
-      id of the person to show when the user connects initially.
-      It returns -1 if the database is currently empty.
-    """
-
-    def get_json(self, params):
-        p = models.Persona.objects.aggregate(Min('id'))
-        return {
-            "defaultPerson": p['id__min'] if p else -1
-        }
 
 
 class SuretySchemesList(JSONView):
@@ -248,22 +237,24 @@ class PersonaList(JSONView):
     @transaction.atomic
     def get_json(self, params, decujus=1):
         theme_id = params.get('theme', -1)
+        offset = params.get('offset', None)
+        limit = params.get('limit', None)
 
-        global_graph.update_if_needed()
         asserts = []
-        if global_graph.is_empty():
-            persons = []
-        else:
-            styles = Styles(theme_id, graph=global_graph, decujus=decujus)
-            persons = extended_personas(
-                nodes=None, styles=styles, asserts=asserts,
-                event_types=(models.Event_Type.PK_birth,
-                             models.Event_Type.PK_death,
-                             models.Event_Type.PK_marriage),
-                graph=global_graph)
+        styles = Styles(theme_id, graph=global_graph, decujus=decujus)
+        persons = extended_personas(
+            offset=int(offset) if offset else None,
+            limit=int(limit) if limit else None)
 
-            all_styles, computed_styles = styles.compute(
-                persons, asserts=asserts)
+        fetch_p2e(
+            persons, asserts=asserts,
+            styles=styles,
+            event_types=(models.Event_Type.PK_birth,
+                         models.Event_Type.PK_death,
+                         models.Event_Type.PK_marriage))
+
+        all_styles, computed_styles = styles.compute(
+            persons, asserts=asserts)
 
         return {
             "persons": list(persons.values()),

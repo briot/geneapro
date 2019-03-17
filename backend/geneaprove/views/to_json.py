@@ -1,14 +1,15 @@
 """Convert data to JSON"""
 
-import json
+from django.conf import settings
+from django.core.serializers.json import DjangoJSONEncoder
+from django.http import HttpResponse, QueryDict
+from django.views.generic import View
+from geneaprove.utils.date import DateRange
 import datetime
 import django.db.models.query
-from django.conf import settings
-from django.views.generic import View
-from django.http import HttpResponse, QueryDict
-from django.core.serializers.json import DjangoJSONEncoder
-from geneaprove.utils.date import DateRange
+import json
 import logging
+import time
 
 logger = logging.getLogger('geneaprove.JSON')
 
@@ -152,6 +153,8 @@ class JSONView(View):
         internal implementation
         """
 
+        start = time.perf_counter()
+
         # Always convert an "id" parameter to integer
         if 'id' in kwargs:
             kwargs['id'] = int(kwargs['id'])
@@ -160,7 +163,7 @@ class JSONView(View):
         # Can't use JsonResponse since we want our own converter
         logger.debug('convert to json')
         result = self.to_json(resp)
-        logger.debug('send response')
+        logger.debug(f'send response, total {time.perf_counter() - start}s')
         return HttpResponse(result, content_type='application/json')
 
     def get(self, request, *args, **kwargs):

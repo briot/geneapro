@@ -82,10 +82,6 @@ class Styles(object):
             r.precompute(
                 graph=graph, decujus=decujus, precomputed=self.precomputed)
 
-    def need_place_parts(self):
-        """Whether we need extra SQL queries for the place parts"""
-        return self.need_places
-
     def compute(self, persons, asserts=None):
         """
         Returns the styles to apply to the persons.

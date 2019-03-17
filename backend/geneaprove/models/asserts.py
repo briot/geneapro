@@ -146,9 +146,9 @@ class P2C(Assertion):
     def __str__(self):
         return f"<P2C person={self.person_id} char={self.characteristic}>"
 
-    @staticmethod
-    def related_json_fields():
-        return Assertion.related_json_fields() + ['characteristic']
+    # @staticmethod
+    # def related_json_fields():
+    #     return Assertion.related_json_fields() + ['characteristic']
 
     def getRelatedIds(self, into):
         super().getRelatedIds(into)
@@ -189,10 +189,6 @@ class P2E(Assertion):
     class Meta:
         """Meta data for the model"""
         db_table = "p2e"
-
-    @staticmethod
-    def related_json_fields():
-        return Assertion.related_json_fields() + ['role']
 
     def getRelatedIds(self, into):
         super().getRelatedIds(into)

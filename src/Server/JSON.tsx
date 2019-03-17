@@ -66,13 +66,13 @@ export interface Metadata {
 
 export interface Person {
    id: number;
-   name: string;  // As found in the source document
+   display_name: string;  // As found in the source document
    parents?: (number|null)[];
    children?: (number|null)[];
    birthISODate?: string;
    deathISODate?: string;
    marriageISODate?: string;
-   //style?: number;  // index into the styles array
+   sex?: string;
 }
 
 export interface Persons {

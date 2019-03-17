@@ -4,11 +4,12 @@ import Style from '../Store/Styles';
 // The base type is only needed until the server returns a proper Person.
 export interface BasePerson {
    id: number;
-   name: string;             // as found in the source document
+   display_name: string;             // as found in the source document
 
    birthISODate?: string;    // dates, using the 'date_sort' from the database
    deathISODate?: string;
    marriageISODate?: string;
+   sex?: string;
 
    knownAncestors: number;     // number of known ancestors generations in store
    knownDescendants: number;   // number of known descendants gens in store
@@ -40,6 +41,6 @@ export interface PersonSet {
  */
 export function personDisplay(p?: Person, withId?: boolean) {
    return p ?
-      (withId ? `${p.name} (${p.id})` : p.name) :
+      (withId ? `${p.display_name} (${p.id})` : p.display_name) :
       '';
 }

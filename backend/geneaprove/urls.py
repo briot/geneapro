@@ -80,7 +80,6 @@ urlpatterns = [
     url(r'^data/citationModel/(?P<model_id>.+)$',
         sources.CitationModel.as_view()),
     url(r'^data/citationModels$', sources.CitationModels.as_view()),
-    url(r'^data/settings', persona.GlobalSettings.as_view()),
     url(r'^data/repr/(?P<id>\d+)(?:/(?P<size>\d+))?$',
         representation.view),
     url(r'^data/quilts/(?P<id>\d+)$', graph.QuiltsView.as_view()),

@@ -1,6 +1,7 @@
 import { all, call, put } from 'redux-saga/effects';
 import { fetchPedigreeFromServer } from '../Server/Pedigree';
 import { fetchPersonsFromServer, fetchPersonDetailsFromServer,
+         FetchPersonsParams,
          FetchPersonsResult, DetailsResult } from '../Server/Person';
 import { fetchEventFromServer, EventDetails } from '../Server/Event';
 import { fetchPlaceFromServer, PlaceDetails } from '../Server/Place';
@@ -112,11 +113,8 @@ export const fetchSources = createAsyncAction<{}, FetchSourcesResult>(
  * Async Action: fetch all persons from the server
  */
 
-export interface FetchPersonsParams {
-   colors: GP_JSON.ColorSchemeId;
-}
 function* _fetchPersons(p: FetchPersonsParams) {
-   const persons = yield call(fetchPersonsFromServer, {colors: p.colors});
+   const persons = yield call(fetchPersonsFromServer, p);
    return persons;
 }
 export const fetchPersons = createAsyncAction<FetchPersonsParams, FetchPersonsResult>(
