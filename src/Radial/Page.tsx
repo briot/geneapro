@@ -19,36 +19,36 @@ interface PropsFromRoute {
 interface RadialPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    settings: RadialSettings;
    persons: PersonSet;
-   onChange: (diff: Partial<RadialSettings>) => void;
    dispatch: GPDispatch;
-   decujusid: number;
    themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
 }
 
 const RadialPageConnected = (p: RadialPageConnectedProps) => {
-   const decujus = p.persons[p.decujusid];
+   const decujusid = Number(p.match.params.decujusId);
+   const decujus = p.persons[decujusid];
+
+   React.useEffect(
+      () => fetchPedigree.execute(
+         p.dispatch,
+         {
+            decujus: decujusid,
+            ancestors: Math.max(0, p.settings.generations),
+            descendants: Math.abs(Math.min(0, p.settings.generations)),
+            theme: p.settings.colors,
+         }),
+      [decujusid, p.settings.generations, p.settings.colors, p.dispatch]);
 
    React.useEffect(
       () => {
-         fetchPedigree.execute(
-            p.dispatch,
-            {
-               decujus: p.decujusid,
-               ancestors: Math.max(0, p.settings.generations),
-               descendants: Math.abs(Math.min(0, p.settings.generations)),
-               theme: p.settings.colors,
-            });
+         document.title = 'Radial for ' + personDisplay(decujus);
+         p.dispatch(addToHistory({person: decujus}));
       },
-      [p.decujusid, p.settings.generations, p.settings.colors, p.dispatch]);
+      [decujus, p.dispatch]);
 
-   React.useEffect(
-      () => {
-         if (decujus) {
-            p.dispatch(addToHistory({person: decujus}));
-            document.title = 'Radial for ' + personDisplay(decujus);
-         }
-      },
-      [decujus, p]);
+   const onChange = React.useCallback(
+      (diff: Partial<RadialSettings>) =>
+         p.dispatch(changeRadialSettings({diff})),
+      [p.dispatch]);
 
    const main = p.settings.loading ? (
          <Loader active={true} size="large">Loading</Loader>
@@ -56,7 +56,7 @@ const RadialPageConnected = (p: RadialPageConnectedProps) => {
          <Radial
             settings={p.settings}
             persons={p.persons}
-            decujus={p.decujusid}
+            decujus={decujusid}
          />
       );
 
@@ -66,7 +66,7 @@ const RadialPageConnected = (p: RadialPageConnectedProps) => {
          leftSide={
             <RadialSide
                settings={p.settings}
-               onChange={p.onChange}
+               onChange={onChange}
                themeNameGet={p.themeNameGet}
             />
          }
@@ -80,14 +80,10 @@ const RadialPage = connect(
       ...props,
       settings: state.radial,
       persons: state.persons,
-      decujusid: Number(props.match.params.decujusId),
       themeNameGet: themeNameGetter(state),
    }),
    (dispatch: GPDispatch) => ({
       dispatch,
-      onChange: (diff: Partial<RadialSettings>) => {
-         dispatch(changeRadialSettings({diff}));
-      },
    }),
 )(RadialPageConnected);
 

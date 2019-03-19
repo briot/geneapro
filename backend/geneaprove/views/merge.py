@@ -6,7 +6,7 @@ Handles merging of personas.
 import heapq
 import datetime
 from geneaprove.views.graph import global_graph
-from geneaprove.views.persona import extended_personas
+from geneaprove.views.queries import PersonSet
 
 
 # Maximum number of years in a typical lifespan, when we have to guess

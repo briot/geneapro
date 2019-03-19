@@ -37,6 +37,7 @@ import datetime
 from geneaprove.utils.date import DateRange
 from geneaprove import models
 from geneaprove.models.theme import Style
+from .queries import PersonSet
 import logging
 
 logger = logging.getLogger('geneaprove.styles')
@@ -50,14 +51,13 @@ class Styles(object):
     by caching data when appropriate.
     """
 
-    def __init__(self, theme_id, graph, decujus):
+    def __init__(self, theme_id, decujus):
         """Rules specifies the rules to use for the highlighting.
         """
         super().__init__()
 
         # Preprocess the rules for faster computation
 
-        self.graph = graph
         self.need_p2e = False
         self.need_p2c = False
         self.need_places = False
@@ -79,20 +79,16 @@ class Styles(object):
             self.need_p2e = self.need_p2e or r.need_p2e # ??? Should be a list of types
             self.need_p2c = self.need_p2c or r.need_p2c # ??? Should be a list of types
             self.need_places = self.need_places or r.need_places
-            r.precompute(
-                graph=graph, decujus=decujus, precomputed=self.precomputed)
+            r.precompute(decujus=decujus, precomputed=self.precomputed)
 
-    def compute(self, persons, asserts=None):
+    def compute(self, persons):
         """
         Returns the styles to apply to the persons.
 
-        :param dict persons:
-            maps main ids to Person instance
-        :param list asserts:
-            all assertions applying to any of the personas
         :returntype: dict
             maps main_id to a style object
         """
+        assert isinstance(persons, PersonSet)
 
         if not self.rules:
             return {}, {}
@@ -101,16 +97,16 @@ class Styles(object):
         status = defaultdict(dict)
 
         for r in self.rules:
-            for main_id, p in persons.items():
-                r.initial(p, main_id, self.precomputed, status)
+            for p in persons.persons.values():
+                r.initial(p, self.precomputed, status)
 
         # Apply each assertions
-        for a in asserts:
-            main_id = self.graph.node_from_id(a.person_id).main_id
+        for a in persons.asserts:
+            p = persons.get_from_id(a.person_id)
             for r in self.rules:
                 r.merge(
                     assertion=a,
-                    main_id=main_id,
+                    person=p,
                     precomputed=self.precomputed,
                     statuses=status)
 
@@ -122,7 +118,7 @@ class Styles(object):
         all_styles[Style()] = 0  # default style
         style_id = 1
 
-        for main_id in persons:
+        for main_id in persons.persons:
             s = Style()
             for r in self.rules:
                 if status[r.id].get(main_id, None) == True:

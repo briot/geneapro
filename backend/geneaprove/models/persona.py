@@ -28,6 +28,7 @@ class Persona(GeneaProveModel):
     deathISODate = None    # string, precomputed via extended_personas
     marriageISODate = None # string, precomputed via extended_personas
     sex = None             # string, precomputed via extended_personas
+    generation = None      # int, precomputed via PedigreeData
 
     main = models.ForeignKey(
         "self", null=True, on_delete=models.CASCADE,
@@ -38,19 +39,6 @@ class Persona(GeneaProveModel):
     # recompute this field.
     # This is left to null for one persona per full person. All personas point
     # to a persona with a null main_id.
-    #
-    # Can be recomputed with:
-    # with recursive mains as (
-    #       select id, id as main_id from persona
-    #       union
-    #       select mains.id,
-    #              case when mains.main_id=p2p.person1_id
-    #              then p2p.person2_id else p2p.person1_id end
-    #       from mains, p2p
-    #       where mains.main_id in (p2p.person1_id, p2p.person2_id)),
-    #    main as (select id, min(main_id) as main_id from mains group by id)
-    # update persona
-    # set main_id=(select main.main_id from main where main.id=persona.id);
 
     def __repr__(self):
         return f'Persona({self.id},{self.display_name})'
@@ -62,3 +50,21 @@ class Persona(GeneaProveModel):
         """Meta data for the model"""
         db_table = "persona"
 
+    def to_json(self):
+        result = {
+            'id': self.id,
+            'display_name': self.display_name,
+        }
+        if self.description:
+            result['description'] = self.description
+        if self.birthISODate is not None:
+            result['birthISODate'] = self.birthISODate
+        if self.deathISODate is not None:
+            result['deathISODate'] = self.deathISODate
+        if self.marriageISODate is not None:
+            result['marriageISODate'] = self.marriageISODate
+        if self.sex is not None:
+            result['sex'] = self.sex
+        if self.generation is not None:
+            result['generation'] = self.generation
+        return result

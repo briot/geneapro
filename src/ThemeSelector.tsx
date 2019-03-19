@@ -28,8 +28,8 @@ const ThemeLegend: React.FC<ThemeLegendProps> = (p) => {
          <table>
             <tbody>
             {
-               rules.map(r =>
-                  <tr>
+               rules.map((r, idx) =>
+                  <tr key={idx}>
                      <td>
                         <span
                             style={{background: r.fill || undefined,

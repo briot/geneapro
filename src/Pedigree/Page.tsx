@@ -29,33 +29,37 @@ interface PedigreePageConnectedProps extends RouteComponentProps<PropsFromRoute>
 
 const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = (p) => {
    const decujusid = Number(p.match.params.decujusId);
+   const decujus = p.persons[decujusid];
 
    // Fetch data from server when some properties change
    // Always run this, though it will do nothing if we already have the data
-   React.useEffect(() => {
-      //  ??? We only need to reload when colors change if we are using
-      //  custom colors
-      fetchPedigree.execute(
+   React.useEffect(
+      () => fetchPedigree.execute(
+         //  ??? We only need to reload when colors change if we are using
+         //  custom colors
+         //  ??? Should avoid fetching known generations again
          p.dispatch,
          {
             decujus: decujusid,
             ancestors: p.settings.ancestors,
             descendants: p.settings.descendants,
             theme: p.settings.colors,
-         });
-   }, [decujusid, p.settings.ancestors, p.settings.descendants, p.settings.colors, p.dispatch]);
+         }),
+      [decujusid, p.settings.ancestors, p.settings.descendants,
+       p.settings.colors, p.dispatch]);
 
    // Add the person to history
-   const decujus = p.persons[decujusid];
-   React.useEffect(() => {
-      document.title = 'Pedigree for ' + personDisplay(decujus);
-      p.dispatch(addToHistory({person: decujus}));
-   }, [decujus, p]);
+   React.useEffect(
+      () => {
+         document.title = 'Pedigree for ' + personDisplay(decujus);
+         p.dispatch(addToHistory({person: decujus}));
+      },
+      [decujus, p.dispatch]);
 
    const onChange = React.useCallback(
       (diff: Partial<PedigreeSettings>) =>
           p.dispatch(changePedigreeSettings({diff})),
-      [p]);  // p.dispatch never changes
+      [p.dispatch]);
 
    // ??? Initially, we have no data and yet loading=false
    // We added special code in Pedigree/Data.tsx to test whether the layout

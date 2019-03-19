@@ -2,12 +2,13 @@
 Statistics
 """
 
+import collections
 import datetime
+from django.db.models import Count, F
 import logging
 from .. import models
 from ..utils.date import DateRange
-from .graph import global_graph
-from .persona import extended_personas
+from .queries import PersonSet
 from .to_json import JSONView
 
 logger = logging.getLogger('geneaprove.STATS')
@@ -20,10 +21,6 @@ class StatsView(JSONView):
         # pylint: disable=redefined-builtin
         # pylint: disable=arguments-differ
 
-        logger.debug('refresh graph')
-        id = int(id)
-        global_graph.update_if_needed()
-
         max_age = int(params.get('max_age', '0'))
         bar_width = int(params.get('bar_width', '5'))
 
@@ -31,37 +28,14 @@ class StatsView(JSONView):
         # gedcom import for the purpose of preserving families. Will be fixed
         # when we store children differently (for instance in a group)
 
-        distance = dict()
-        decujus = global_graph.node_from_id(id)
-
-        logger.debug('compute birth and death for people')
-        allpeople = global_graph.people_in_tree(
-            id=decujus.main_id, distance=distance)
-        persons = extended_personas(
-            nodes=allpeople,
-            styles=None,
-            event_types=(models.Event_Type.PK_birth,
-                         models.Event_Type.PK_death,
-                         models.Event_Type.PK_marriage),
-            graph=global_graph)
+        persons = PersonSet()
+        persons.add_ancestors(person_id=int(id))
+        persons.add_descendants(person_id=int(id))
+        persons.fetch_p2e()   # compute births and deaths
 
         logger.debug('count persons in tree')
-        f = global_graph.fathers(decujus.main_id)
-        fathers = global_graph.people_in_tree(
-            id=f[0], maxdepthDescendants=0) if f else []
-        m = global_graph.mothers(decujus.main_id)
-        mothers = global_graph.people_in_tree(
-            id=m[0], maxdepthDescendants=0) if m else []
-
-        # Group persons by generations
-
-        logger.debug('group by generation')
-        generations = dict()  # list of persons for each generation
-        for a in allpeople:
-            d = distance[a]
-            if d not in generations:
-                generations[d] = []
-            generations[d].append(a)
+        fathers = [p for p in persons.persons.values() if p.sex == 'M']
+        mothers = [p for p in persons.persons.values() if p.sex == 'F']
 
         # Compute birth and death dates for all persons, taking into account
         # the max_age setting
@@ -69,10 +43,11 @@ class StatsView(JSONView):
         logger.debug('parse dates')
         current_year = datetime.datetime.now().year
         dates = {}
-        for a in allpeople:
-            p = persons[a.main_id]
-            b_year = DateRange(p.birthISODate).year() if p.birthISODate else None
-            d_year = DateRange(p.deathISODate).year() if p.deathISODate else None
+        for p in persons.persons.values():
+            b_year = DateRange(p.birthISODate).year() \
+                if p.birthISODate else None
+            d_year = DateRange(p.deathISODate).year() \
+                if p.deathISODate else None
             if not d_year and max_age > 0:
                 if b_year:
                     d_year = min(b_year + max_age, current_year)
@@ -80,7 +55,15 @@ class StatsView(JSONView):
                     # no birth nor death known
                     pass
 
-            dates[a.main_id] = [b_year, d_year]
+            dates[p.main_id] = [b_year, d_year]
+
+        # Group persons by generations. Do not use a recursive approach, since
+        # it will fail with large numbers of generations
+
+        distance = persons.compute_generations(gen_0_ids=[int(id)])
+        generations = collections.defaultdict(list)
+        for main_id, gen in distance.items():
+            generations[gen].append(main_id)
 
         # Compute timespans for generations
 
@@ -90,8 +73,8 @@ class StatsView(JSONView):
             births = None
             deaths = None
             gen_range = [index + 1, "?", "?", ""]  # gen, min, max, legend
-            for p in generations[index]:
-                a = dates[p.main_id]
+            for main_id in generations[index]:
+                a = dates[main_id]
 
                 if a[0] and (births is None or a[0] < births):
                     births = a[0]
@@ -131,8 +114,8 @@ class StatsView(JSONView):
 
         logger.debug('group by age')
         ages = []    # date_range, males, females, unknown
-        for p in allpeople:
-            a = dates[p.main_id]
+        for main_id in persons.persons:
+            a = dates[main_id]
             if a[0] and a[1]:
                 # age could be negative in some invalid files
                 age = max(0, int((a[1] - a[0]) / bar_width))
@@ -140,6 +123,7 @@ class StatsView(JSONView):
                 for b in range(len(ages), age + 1):
                     ages.append([b * bar_width, 0, 0, 0])
 
+                p = persons.get_from_id(main_id)
                 if p.sex == "M":
                     ages[age][1] += 1
                 elif p.sex == "F":
@@ -147,13 +131,17 @@ class StatsView(JSONView):
                 else:
                     ages[age][3] += 1
 
+        total_in_db = models.Persona.objects \
+            .filter(id=F('main_id')).aggregate(count=Count('id'))
+        decujus = persons.get_from_id(int(id))
+
         return {
-            "total_ancestors": len(allpeople),
+            "total_ancestors": len(persons.persons),
             "total_father":    len(fathers),
             "total_mother":    len(mothers),
-            "total_persons":   len(global_graph),
+            "total_persons":   int(total_in_db['count']),
             "ranges":          ranges,
             "ages":            ages,
             "decujus":         decujus.main_id,
-            "decujus_name":    persons[decujus.main_id].name,
+            "decujus_name":    decujus.display_name,
         }

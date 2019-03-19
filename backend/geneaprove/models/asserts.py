@@ -109,8 +109,10 @@ class P2P(Assertion):
     """Persona-to-Persona assertions, to represent the Persona.sameAs
        relationship.
     """
-    person1 = models.ForeignKey(Persona, related_name="p2p_from", on_delete=models.CASCADE)
-    person2 = models.ForeignKey(Persona, related_name="p2p_to", on_delete=models.CASCADE)
+    person1 = models.ForeignKey(
+        Persona, related_name="p2p_from", on_delete=models.CASCADE)
+    person2 = models.ForeignKey(
+        Persona, related_name="p2p_to", on_delete=models.CASCADE)
     type = models.ForeignKey(P2P_Type, on_delete=models.CASCADE)
 
     class Meta:

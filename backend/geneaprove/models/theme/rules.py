@@ -1,6 +1,8 @@
+import collections
 import datetime
 from geneaprove import models
 from .checks import Check_Success, Check_Exact
+from geneaprove.views.queries import PersonSet
 
 __slots__ = ["RuleChecker"]
 
@@ -50,7 +52,7 @@ class RuleChecker(object, metaclass=_RuleMeta):
         self.descr = descr
         self.style = style
 
-    def precompute(self, graph, decujus, precomputed):
+    def precompute(self, decujus, precomputed):
         """
         Some rules require some pre-processing for faster
         computation (like pre-compute the list of ancestors for instance).
@@ -59,7 +61,7 @@ class RuleChecker(object, metaclass=_RuleMeta):
         """
         pass
 
-    def initial(self, person, main_id, precomputed, statuses):
+    def initial(self, person, precomputed, statuses):
         """
         Compute the initial status, for the given person
         Must not modify `self`
@@ -68,15 +70,15 @@ class RuleChecker(object, metaclass=_RuleMeta):
         """
         pass
 
-    def merge(self, assertion, main_id, precomputed, statuses):
+    def merge(self, assertion, person, precomputed, statuses):
         """
         A new assertion was seen for the person. Check the rule, and combine
         with `current` to return a new status
         Must not modify `self`
 
-        :param int main_id:  main id of assertion.person
+        :param Persona person:  assertion.person, precomputed
         :param dict precomputed: indexed on rule id
-        :param dict statuses: indexed on rule_id, then on main_id
+        :param dict statuses: indexed on rule_id, then on person.main_id
         """
         pass
 
@@ -91,7 +93,7 @@ class Alive(RuleChecker):
         self.max_age = max_age
         self.alive = alive or Check_Success()
 
-    def initial(self, person, main_id, precomputed, statuses):
+    def initial(self, person, precomputed, statuses):
         # If we have no birth date, we could assume it is at least 15 years
         # before the first child's birth date (recursively). But that becomes
         # more expensive to compute
@@ -109,10 +111,10 @@ class Alive(RuleChecker):
             alive = current_year - b_year < self.max_age
 
             if not self.age.match(current_year - b_year):
-                statuses[self.id][main_id] = False
+                statuses[self.id][person.main_id] = False
                 return
 
-        statuses[self.id][main_id] = self.alive.match(alive)
+        statuses[self.id][person.main_id] = self.alive.match(alive)
 
     def __str__(self):
         return (f"<Alive {self.id} age={self.age} alive={self.alive} "
@@ -131,29 +133,29 @@ class _Combine(RuleChecker):
             self.need_p2e = self.need_p2e or rule.need_p2e
             self.need_places = self.need_places or rule.need_places
 
-    def precompute(self, graph, decujus, precomputed):
+    def precompute(self, decujus, precomputed):
         for rule in self.rules:
-            rule.precompute(graph, decujus, precomputed)
+            rule.precompute(decujus, precomputed)
 
     def _combine(self, values):
         pass
 
-    def initial(self, person, main_id, precomputed, statuses):
+    def initial(self, person, precomputed, statuses):
         for rule in self.rules:
-            rule.initial(person, main_id, precomputed, statuses)
-        statuses[self.id][main_id] = self._combine(
-            statuses[r.id].get(main_id, None) for r in self.rules)
+            rule.initial(person, precomputed, statuses)
+        statuses[self.id][person.main_id] = self._combine(
+            statuses[r.id].get(person.main_id, None) for r in self.rules)
 
-    def merge(self, assertion, main_id, precomputed, statuses):
-        current = statuses[self.id].get(main_id, None)
+    def merge(self, assertion, person, precomputed, statuses):
+        current = statuses[self.id].get(person.main_id, None)
         if current is not None:
             return
 
         for rule in self.rules:
-            rule.merge(assertion, main_id, precomputed, statuses)
+            rule.merge(assertion, person, precomputed, statuses)
 
-        statuses[self.id][main_id] = self._combine(
-            statuses[r.id].get(main_id, None) for r in self.rules)
+        statuses[self.id][person.main_id] = self._combine(
+            statuses[r.id].get(person.main_id, None) for r in self.rules)
 
 
 class And(_Combine):
@@ -191,13 +193,14 @@ class KnownFather(RuleChecker):
         super().__init__(**kwargs)
         self.known = known or Check_Success()
 
-    def precompute(self, graph, decujus, precomputed):
-        precomputed[self.id] = graph
+    def precompute(self, decujus, precomputed):
+        if 'knownancestors' not in precomputed:
+            precomputed['knownancestors'] = PersonSet.has_known_parent()
 
-    def initial(self, person, main_id, precomputed, statuses):
-        graph = precomputed[self.id]
-        statuses[self.id][main_id] = \
-            self.known.match(bool(graph.fathers(person)))
+    def initial(self, person, precomputed, statuses):
+        knownp = precomputed['knownancestors']
+        has_father = 'M' in knownp[person.main_id]
+        statuses[self.id][person.main_id] = self.known.match(has_father)
 
 
 class KnownMother(RuleChecker):
@@ -206,13 +209,14 @@ class KnownMother(RuleChecker):
         super().__init__(**kwargs)
         self.known = known or Check_Success()
 
-    def precompute(self, graph, decujus, precomputed):
-        precomputed[self.id] = graph
+    def precompute(self, decujus, precomputed):
+        if 'knownancestors' not in precomputed:
+            precomputed['knownancestors'] = PersonSet.has_known_parent()
 
-    def initial(self, person, main_id, precomputed, statuses):
-        graph = precomputed[self.id]
-        statuses[self.id][main_id] = \
-            self.known.match(bool(graph.mothers(person)))
+    def initial(self, person, precomputed, statuses):
+        knownp = precomputed['knownancestors']
+        has_mother = 'F' in knownp[person.main_id]
+        statuses[self.id][person.main_id] = self.known.match(has_mother)
 
 
 class Ancestor(RuleChecker):
@@ -231,22 +235,15 @@ class Ancestor(RuleChecker):
         else:
             raise Exception
 
-    def precompute(self, graph, decujus, precomputed):
-        ancestors = set()
-        for anc in graph.people_in_tree(
-                id=decujus if self.decujus < 0 else self.decujus,
-                maxdepthAncestors=-1,
-                maxdepthDescendants=0):
+    def precompute(self, decujus, precomputed):
+        ancestors = PersonSet.get_ancestors(
+            person_id=decujus if self.decujus < 0 else self.decujus)
+        precomputed[self.id] = set( # Do not insert the decujus himself
+            a.main_id for a in ancestors if a.generation != 0)
 
-            # Do not insert the decujus himself
-            if self.decujus not in anc.ids:
-                ancestors.update(anc.ids)
-
-        precomputed[self.id] = ancestors
-
-    def initial(self, person, main_id, precomputed, statuses):
+    def initial(self, person, precomputed, statuses):
         ancestors = precomputed[self.id]
-        statuses[self.id][main_id] = main_id in ancestors
+        statuses[self.id][person.main_id] = person.main_id in ancestors
 
 
 class Descendant(RuleChecker):
@@ -264,22 +261,15 @@ class Descendant(RuleChecker):
         else:
             raise Exception
 
-    def precompute(self, graph, decujus, precomputed):
-        descendants = set()
-        for desc in graph.people_in_tree(
-                id=decujus if self.decujus < 0 else self.decujus,
-                maxdepthAncestors=0,
-                maxdepthDescendants=-1):
+    def precompute(self, decujus, precomputed):
+        desc = PersonSet.get_descendants(
+            person_id=decujus if self.decujus < 0 else self.decujus)
+        precomputed[self.id] = set( # Do not insert the decujus himself
+            a.main_id for a in desc if a.generation != 0)
 
-            # Do not insert the decujus himself
-            if self.decujus not in desc.ids:
-                descendants.update(desc.ids)
-
-        precomputed[self.id] = descendants
-
-    def initial(self, person, main_id, precomputed, statuses):
+    def initial(self, person, precomputed, statuses):
         descendants = precomputed[self.id]
-        statuses[self.id][main_id] = main_id in descendants
+        statuses[self.id][person.main_id] = person.main_id in descendants
 
 
 class Implex(RuleChecker):
@@ -299,38 +289,31 @@ class Implex(RuleChecker):
         if self.count is None:
             raise Exception('Missing `count` argument for Implex')
 
-    def precompute(self, graph, decujus, precomputed):
+    def precompute(self, decujus, precomputed):
         """
         Store in `counts` the persons that appear in the tree to compute
         whether a person occurs multiple times.
         """
-        # Do not use recusion for very deep trees
-        person = decujus if self.decujus < 0 else self.decujus
-        queue = [
-            graph.node_from_id(person).main_id
-        ]
-        counts = {}
+        count = collections.defaultdict(int)
 
-        while queue:
-            main_id = queue.pop()
-            counts[main_id] = counts.get(main_id, 0) + 1
+        ancestors = PersonSet.get_ancestors(
+            person_id=decujus if self.decujus < 0 else self.decujus)
+        for a in ancestors:
+            if a.generation != 0:
+                count[a.main_id] += 1
 
-            fathers = graph.fathers(main_id)
-            if fathers:
-                for f in fathers:
-                    queue.append(f.main_id)
+        desc = PersonSet.get_descendants(
+            person_id=decujus if self.decujus < 0 else self.decujus)
+        for a in desc:
+            if a.generation != 0:
+                count[a.main_id] += 1
 
-            mothers = graph.mothers(main_id)
-            if mothers:
-                for m in mothers:
-                    queue.append(m.main_id)
+        precomputed[self.id] = count
 
-        precomputed[self.id] = (graph, counts)
-
-    def initial(self, person, main_id, precomputed, statuses):
-        graph, counts = precomputed[self.id]
-        main_id = graph.node_from_id(person.id).main_id
-        statuses[self.id][main_id] = self.count.match(counts.get(main_id, 0))
+    def initial(self, person, precomputed, statuses):
+        count = precomputed[self.id]
+        statuses[self.id][person.main_id] = self.count.match(
+            count[person.main_id])
 
 
 class Characteristic(RuleChecker):
@@ -340,8 +323,8 @@ class Characteristic(RuleChecker):
         self.type = typ or Check_Success()
         self.value = value or Check_Success()
 
-    def merge(self, assertion, main_id, precomputed, statuses):
-        current = statuses[self.id].get(main_id, None)
+    def merge(self, assertion, person, precomputed, statuses):
+        current = statuses[self.id].get(person.main_id, None)
         if current is not None or not isinstance(assertion, models.P2C):
             return
 
@@ -353,7 +336,7 @@ class Characteristic(RuleChecker):
                     return
 
         if found:
-            statuses[self.id][main_id] = True
+            statuses[self.id][person.main_id] = True
 
 
 class Event(RuleChecker):
@@ -377,19 +360,19 @@ class Event(RuleChecker):
         self.need_p2e = True
         self.need_places = self.place_name is not None
 
-    def precompute(self, graph, decujus, precomputed):
+    def precompute(self, decujus, precomputed):
         precomputed[self.id] = {}   # for each person, her birth date
 
-    def initial(self, person, main_id, precomputed, statuses):
+    def initial(self, person, precomputed, statuses):
         births = precomputed[self.id]
         birth = person.birthISODate
         if birth:
-            births[main_id] = [int(birth[0:4]), 0]
+            births[person.main_id] = [int(birth[0:4]), 0]
         else:
-            births[main_id] = [None, 0]
+            births[person.main_id] = [None, 0]
 
-    def merge(self, assertion, main_id, precomputed, statuses):
-        current = statuses[self.id].get(main_id, None)
+    def merge(self, assertion, person, precomputed, statuses):
+        current = statuses[self.id].get(person.main_id, None)
 
         failed = ( # If we already know the result, don't bother computing
             current is not None or not isinstance(assertion, models.P2E))
@@ -404,7 +387,7 @@ class Event(RuleChecker):
             return   # this event doesn't match, maybe another will
 
         births = precomputed[self.id]
-        birth = births.get(main_id, None)
+        birth = births.get(person.main_id, None)
 
         if self.age and birth:
             if birth[0] and assertion.event.date_sort:
@@ -423,10 +406,10 @@ class Event(RuleChecker):
             if not self.count.match(birth[1]):
                 return
 
-        statuses[self.id][main_id] = True
+        statuses[self.id][person.main_id] = True
 
 
 class Default(RuleChecker):
     """Always matches, should in general be last in the list"""
-    def initial(self, person, main_id, precomputed, statuses):
-        statuses[self.id][main_id] = True
+    def initial(self, person, precomputed, statuses):
+        statuses[self.id][person.main_id] = True

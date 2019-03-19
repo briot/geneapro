@@ -10,13 +10,12 @@ from django.template.context_processors import csrf
 import django.views
 from .views import count
 from .views import events
-from .views import graph
 from .views import importers
-from .views import merge
 from .views import metadata
 from .views import pedigree
 from .views import persona
 from .views import places
+from .views import quilts
 from .views import representation
 from .views import sources
 from .views import stats
@@ -82,7 +81,7 @@ urlpatterns = [
     url(r'^data/citationModels$', sources.CitationModels.as_view()),
     url(r'^data/repr/(?P<id>\d+)(?:/(?P<size>\d+))?$',
         representation.view),
-    url(r'^data/quilts/(?P<id>\d+)$', graph.QuiltsView.as_view()),
+    url(r'^data/quilts/(?P<id>\d+)$', quilts.QuiltsView.as_view()),
 
     # Getting the CSRF token
     url(r'^data/csrf', send_csrf),

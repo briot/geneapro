@@ -1,6 +1,6 @@
 from geneaprove.importers.gedcomimport import GedcomFileImporter
-from geneaprove.views.graph import global_graph
-from geneaprove.views.to_json import JSONView
+from .to_json import JSONView
+from .queries import PersonSet
 import logging
 
 logger = logging.getLogger('geneaprove.importers')
@@ -19,5 +19,6 @@ class GedcomImport(JSONView):
                 errors.append(err)
             success = success and suc
 
-        global_graph.mark_as_invalid()   # Will need a refresh
+        PersonSet.recompute_main_ids()
+
         return {'error': "\n\n".join(errors), 'success': success}

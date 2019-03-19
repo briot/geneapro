@@ -4,13 +4,8 @@ export const LINE_SPACING = 16;
 export const MARGIN = 0;
 export const F_HEIGHT = 16;  // height of the row with "F" (families)
 
-interface JSONQuiltsPerson extends BasePerson {
-   // Only  id, name are set
-   sex: string;
-}
-
 export interface QuiltsPersonLayout {
-   person: JSONQuiltsPerson;
+   person: BasePerson;
 
    layer: number;
    index: number;   // index in layer
@@ -58,23 +53,22 @@ type JSONFamily = number[];
 // [father, mother, child1, child2,...]
 
 interface JSONQuilts {
-   persons: { [id: number]: JSONQuiltsPerson };
+   persons: { [id: number]: BasePerson };
    perlayer: number[][]; // For each layer the person id
    families: JSONFamily[][]; // For each layer, [parent1, parent2, child...]
       // ??? Should be sent as a simple list, independent of layers. The
       // layout will need to duplicate the family for each layer where one of
       // children occurs, and hide families with no visible children
-   decujusOnly: boolean; // If true, persons are only from decujus's tree
    decujus_name: string;
    decujus:      number;  // id of the decujus
 }
 
 export class QuiltsResult {
    public layers: Layer[];
-   public persons: { [id: number]: JSONQuiltsPerson };
+   public persons: { [id: number]: BasePerson };
 
    public constructor(data: JSONQuilts,
-               isVisible: (personId: JSONQuiltsPerson) => boolean,
+               isVisible: (personId: BasePerson) => boolean,
    ) {
       let personToLayout: {[id: number]: QuiltsPersonLayout} = {};
       this.persons = data.persons;
@@ -290,6 +284,6 @@ export function* fetchQuiltsFromServer(decujus: number, decujusOnly: boolean) {
    } else {
       return new QuiltsResult(
          data,
-         (p: JSONQuiltsPerson) => !filtered || selected[p.id]);
+         (p: BasePerson) => !filtered || selected[p.id]);
    }
 }

@@ -309,7 +309,7 @@ const RuleWithRef = (p: RuleProps, label: string) => {
          label={label}
          field="ref"
          validOperators={p.ops.person_theme_operators}
-         forcedOperator="=person"
+         forcedOperator="=pers"
       />
    );
 };
@@ -405,7 +405,7 @@ const RuleImplex = React.memo((p: RuleProps) => {
             label="In tree of"
             field="ref"
             validOperators={p.ops.person_theme_operators}
-            forcedOperator="=person"
+            forcedOperator="=pers"
          />
          <FieldOperatorValue
             {...p}

@@ -8,12 +8,10 @@ import * as GP_JSON from './JSON';
  */
 
 interface JSONPedigree {
-   decujus: number;
-   generations: number;  // including decujus
-   descendants: number;
+   decujus: number;  // main_id for the request person, in case the user
+                     // provided the id of a base persona instead
    persons: GP_JSON.Person[];
    layout: ChildrenAndParentsSet;
-
    allstyles?: {[id: number]: GP_JSON.Style};  // all used styles
    styles?: {[person: number]: number};   // person-to-style mapping
 }
@@ -44,7 +42,7 @@ export function* fetchPedigreeFromServer(
       layout: data.layout,
    };
 
-   result.persons[data.decujus].knownAncestors = data.generations;
-   result.persons[data.decujus].knownDescendants = data.descendants;
+   result.persons[data.decujus].knownAncestors = ancestors;
+   result.persons[data.decujus].knownDescendants = descendants;
    return result;
 }
