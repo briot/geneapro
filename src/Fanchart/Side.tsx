@@ -41,7 +41,7 @@ export default function FanchartSide(props: FanchartSideProps) {
                      label="Ancestors"
                      fieldName="ancestors"
                      min={0}
-                     max={12}
+                     max={20}
                      onChange={props.onChange}
                   />
 
@@ -50,7 +50,7 @@ export default function FanchartSide(props: FanchartSideProps) {
                      label="Descendants"
                      fieldName="descendants"
                      min={0}
-                     max={12}
+                     max={20}
                      onChange={props.onChange}
                   />
 

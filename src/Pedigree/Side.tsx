@@ -42,7 +42,7 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      label="Ancestors"
                      fieldName="ancestors"
                      min={0}
-                     max={12}
+                     max={20}
                      onChange={props.onChange}
                   />
 
@@ -51,7 +51,7 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      label="Descendants"
                      fieldName="descendants"
                      min={0}
-                     max={12}
+                     max={20}
                      onChange={props.onChange}
                   />
 
