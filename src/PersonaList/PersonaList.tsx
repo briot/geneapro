@@ -122,7 +122,6 @@ const PersonaListConnected: React.FC<PersonaListProps> = p => {
                               <PersonaLink id={pers.id} />
                            </span>
                            <span className="lifespan">
-                              {pers.sex}
                               <span>{b}</span>
                               {b || d ? " - " : ""}
                               <span>{d}</span>
