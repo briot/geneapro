@@ -1,13 +1,13 @@
-import * as React from 'react';
-import { Person } from '../Store/Person';
-import { PedigreeSettings } from '../Store/Pedigree';
-import { GenealogyEventSet } from '../Store/Event';
-import { PlaceSet } from '../Store/Place';
-import PedigreeBox from './Box';
-import { PersonLayout, PersonLayouts, Sizing } from '../Pedigree/types';
-import PedigreeLink from '../Pedigree/Link';
-import ScalableSVG from '../SVG.Scalable';
-import './Pedigree.css';
+import * as React from "react";
+import { Person } from "../Store/Person";
+import { PedigreeSettings } from "../Store/Pedigree";
+import { GenealogyEventSet } from "../Store/Event";
+import { PlaceSet } from "../Store/Place";
+import PedigreeBox from "./Box";
+import { PersonLayout, PersonLayouts, Sizing } from "../Pedigree/types";
+import PedigreeLink from "../Pedigree/Link";
+import ScalableSVG from "../SVG.Scalable";
+import "./Pedigree.css";
 
 interface PedigreeProps {
    settings: PedigreeSettings;
@@ -15,22 +15,24 @@ interface PedigreeProps {
    allEvents: GenealogyEventSet;
    allPlaces: PlaceSet;
    sizing: Sizing;
-   persons: {[id: number]: Person};
+   persons: { [id: number]: Person };
    decujus: number;
 }
 
 export default function Pedigree(props: PedigreeProps) {
    const defs: JSX.Element[] = [];
-   for (let gen = -props.settings.descendants;
-        gen <= props.settings.ancestors;
-        gen++) {
+   for (
+      let gen = -props.settings.descendants;
+      gen <= props.settings.ancestors;
+      gen++
+   ) {
       defs.push(
-         <clipPath id={'clipGen' + gen} key={gen}>
+         <clipPath id={"clipGen" + gen} key={gen}>
             <rect
                width={props.sizing.boxWidth(gen)}
                height={props.sizing.boxHeight(gen)}
-               rx={props.sizing.radius(gen) + 'px'}
-               ry={props.sizing.radius(gen) + 'px'}
+               rx={props.sizing.radius(gen) + "px"}
+               ry={props.sizing.radius(gen) + "px"}
             />
          </clipPath>
       );
@@ -40,11 +42,11 @@ export default function Pedigree(props: PedigreeProps) {
    const links: JSX.Element[] = [];
    const marriages: JSX.Element[] = [];
 
-   const seen: {[id: number]: boolean} = {};
+   const seen: { [id: number]: boolean } = {};
    const recurse = (pl: PersonLayout) => {
       if (!seen[pl.id]) {
          seen[pl.id] = true;
-         const p: Person|undefined = props.persons[pl.id];
+         const p: Person | undefined = props.persons[pl.id];
          boxes.push(
             <PedigreeBox
                person={p}
@@ -75,7 +77,7 @@ export default function Pedigree(props: PedigreeProps) {
             if (p2) {
                recurse(p2);
 
-               const lId = pl.id + '-' + p2.id;
+               const lId = pl.id + "-" + p2.id;
                links.push(
                   <PedigreeLink
                      from={pl}
@@ -91,9 +93,14 @@ export default function Pedigree(props: PedigreeProps) {
             if (p2) {
                recurse(p2);
 
-               const lId = pl.id + '-' + p2.id;
+               const lId = pl.id + "-" + p2.id;
                links.push(
-                  <PedigreeLink to={pl} from={p2} style={props.settings} key={lId} />
+                  <PedigreeLink
+                     to={pl}
+                     from={p2}
+                     style={props.settings}
+                     key={lId}
+                  />
                );
             }
          }
@@ -103,9 +110,7 @@ export default function Pedigree(props: PedigreeProps) {
 
    return (
       <ScalableSVG className="Pedigree">
-         <defs>
-            {defs}
-         </defs>
+         <defs>{defs}</defs>
          {boxes}
          {marriages}
          {links}

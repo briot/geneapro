@@ -1,34 +1,31 @@
-import * as React from 'react';
+import * as React from "react";
 
 /**
  * Get a components size, and monitor changes
  */
-export function useComponentSize<T extends Element>(
-   ref: React.RefObject<T>
-) {
-   const [size, setSize] = React.useState({width: 0, height: 0});
+export function useComponentSize<T extends Element>(ref: React.RefObject<T>) {
+   const [size, setSize] = React.useState({ width: 0, height: 0 });
    const onResize = React.useCallback(
       () => ref.current && setSize(ref.current.getBoundingClientRect()),
-      [ref]);
+      [ref]
+   );
 
-   React.useLayoutEffect(
-      () => {
-         if (!ref.current) {
-            return;
-         }
+   React.useLayoutEffect(() => {
+      if (!ref.current) {
+         return;
+      }
 
-         onResize();
+      onResize();
 
-         // if (typeof window.ResizeObserver === 'function') {
-         //    const obs = new ResizeObserver(onResize);
-         //    obs.observe(ref.current);
-         //    return () => obs.disconnect(ref.current);
-         // }
+      // if (typeof window.ResizeObserver === 'function') {
+      //    const obs = new ResizeObserver(onResize);
+      //    obs.observe(ref.current);
+      //    return () => obs.disconnect(ref.current);
+      // }
 
-         window.addEventListener('resize', onResize);
-         return () => window.removeEventListener('resize', onResize);
-      },
-      [ref.current]);
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
+   }, [ref.current]);
 
    return size;
 }
@@ -36,23 +33,21 @@ export function useComponentSize<T extends Element>(
 /**
  * Avoid firing callbacks too often,k for instance on every keystroke
  */
-export function useDebounce<
-   T extends (...args: any[]) => any,
->(callback: T, delayms=250) {
-   const timeout = React.useRef<number|undefined>(undefined);
+export function useDebounce<T extends (...args: any[]) => any>(
+   callback: T,
+   delayms = 250
+) {
+   const timeout = React.useRef<number | undefined>(undefined);
    const debounced = (...args: any[]) => {
       window.clearTimeout(timeout.current);
-      timeout.current = window.setTimeout(
-         () => {
-            callback(...args);
-            window.clearTimeout(timeout.current);
-            timeout.current = undefined;
-         },
-         delayms);
+      timeout.current = window.setTimeout(() => {
+         callback(...args);
+         window.clearTimeout(timeout.current);
+         timeout.current = undefined;
+      }, delayms);
    };
    return debounced;
 }
-
 
 /**
  * Hook similar to redux's reselect.
@@ -67,20 +62,28 @@ export function useDebounce<
  *
  * from https://github.com/Andarist/react-selector-hooks
  */
-function createMemoSelector<P1, V>(resolver: (p1: P1)=>V): (p1: P1)=>V;
-function createMemoSelector<P1, P2, V>(resolver: (p1: P1, p2: P2)=>V): (p1: P1, p2: P2)=>V;
-function createMemoSelector<P1, P2, P3, V>(resolver: (p1: P1, p2: P2, p3: P3)=>V): (p1: P1, p2: P2, p3: P3)=>V;
-function createMemoSelector<V>(resolver: (...p: any[])=>V) {
+function createMemoSelector<P1, V>(resolver: (p1: P1) => V): (p1: P1) => V;
+function createMemoSelector<P1, P2, V>(
+   resolver: (p1: P1, p2: P2) => V
+): (p1: P1, p2: P2) => V;
+function createMemoSelector<P1, P2, P3, V>(
+   resolver: (p1: P1, p2: P2, p3: P3) => V
+): (p1: P1, p2: P2, p3: P3) => V;
+function createMemoSelector<V>(resolver: (...p: any[]) => V) {
    return (dependencies: any[]) =>
       React.useMemo(() => resolver(...dependencies), dependencies);
 }
 
-export function createSelector<P1, V>(resolve: (p1: P1)=>V): (p1: P1)=>V;
-export function createSelector<P1, P2, V>(resolve: (p1: P1, p2: P2)=>V): (p1: P1, p2: P2)=>V;
-export function createSelector<P1, P2, P3, V>(resolve: (p1: P1, p2: P2, p3: P3)=>V): (p1: P1, p2: P2, p3: P3)=>V;
-export function createSelector<V>(resolver: (...p: any[])=>V) {
-  const selector = createMemoSelector(resolver);
-  return (...dependencies: any[]) => selector(dependencies);
+export function createSelector<P1, V>(resolve: (p1: P1) => V): (p1: P1) => V;
+export function createSelector<P1, P2, V>(
+   resolve: (p1: P1, p2: P2) => V
+): (p1: P1, p2: P2) => V;
+export function createSelector<P1, P2, P3, V>(
+   resolve: (p1: P1, p2: P2, p3: P3) => V
+): (p1: P1, p2: P2, p3: P3) => V;
+export function createSelector<V>(resolver: (...p: any[]) => V) {
+   const selector = createMemoSelector(resolver);
+   return (...dependencies: any[]) => selector(dependencies);
 }
 
 /**

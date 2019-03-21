@@ -1,8 +1,8 @@
-import * as React from 'react';
-import { Accordion, Form } from 'semantic-ui-react';
-import * as GP_JSON from '../Server/JSON';
-import { PersonaListSettings } from '../Store/PersonaList';
-import ThemeSelector from '../ThemeSelector';
+import * as React from "react";
+import { Accordion, Form } from "semantic-ui-react";
+import * as GP_JSON from "../Server/JSON";
+import { PersonaListSettings } from "../Store/PersonaList";
+import ThemeSelector from "../ThemeSelector";
 
 interface PersonaListSideProps {
    settings: PersonaListSettings;
@@ -13,7 +13,7 @@ interface PersonaListSideProps {
 export default function PersonaListSide(props: PersonaListSideProps) {
    const panels = [
       {
-         key: 'theme',
+         key: "theme",
          title: {
             content: (
                <span>
@@ -36,7 +36,6 @@ export default function PersonaListSide(props: PersonaListSideProps) {
             )
          }
       }
-
    ];
 
    return (

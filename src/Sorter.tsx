@@ -50,17 +50,22 @@ export class NumberSorter implements Sorter<number> {
 
    compare(a: number, b: number) {
       switch (this.kind) {
-      case 0: return (isNaN(a) ? -1 : isNaN(b) ? 1 : a - b);
-      case 1: return (isNaN(a) ? 1 : isNaN(b) ? -1 : b - a);
-      default:
-         return -1;
+         case 0:
+            return isNaN(a) ? -1 : isNaN(b) ? 1 : a - b;
+         case 1:
+            return isNaN(a) ? 1 : isNaN(b) ? -1 : b - a;
+         default:
+            return -1;
       }
    }
 
    formatHeader(str: string) {
       switch (this.kind) {
-      case 0: case 1:   return str;
-      default: return '';
+         case 0:
+         case 1:
+            return str;
+         default:
+            return "";
       }
    }
 }

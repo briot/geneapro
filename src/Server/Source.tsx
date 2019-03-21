@@ -1,8 +1,12 @@
-import { Source, SourceSet } from '../Store/Source';
-import { AssertionList } from '../Store/Assertion';
-import { AssertionEntities, AssertionEntitiesJSON,
-         assertionFromJSON, setAssertionEntities } from '../Server/Person';
-import * as JSON from '../Server/JSON';
+import { Source, SourceSet } from "../Store/Source";
+import { AssertionList } from "../Store/Assertion";
+import {
+   AssertionEntities,
+   AssertionEntitiesJSON,
+   assertionFromJSON,
+   setAssertionEntities
+} from "../Server/Person";
+import * as JSON from "../Server/JSON";
 
 interface JSONResult extends AssertionEntitiesJSON {
    source: JSON.Source;
@@ -29,15 +33,15 @@ export function sourceFromJSON(s: JSON.Source) {
       lastChange: new Date(s.last_change),
       subjectDate: s.subject_date,
       subjectPlace: s.subject_place,
-      parts: {},
+      parts: {}
    };
    return result;
 }
 
 export function* fetchSourceDetailsFromServer(id: number) {
-   const resp: Response = yield window.fetch('/data/sources/' + id);
+   const resp: Response = yield window.fetch("/data/sources/" + id);
    if (resp.status !== 200) {
-      throw new Error('Server returned an error');
+      throw new Error("Server returned an error");
    }
    const data: JSONResult = yield resp.json();
 
@@ -47,9 +51,11 @@ export function* fetchSourceDetailsFromServer(id: number) {
       persons: {},
       places: {},
       sources: {},
-      researchers: {},
+      researchers: {}
    };
-   r.source.asserts = new AssertionList(data.asserts.map(a => assertionFromJSON(a)));
+   r.source.asserts = new AssertionList(
+      data.asserts.map(a => assertionFromJSON(a))
+   );
    r.source.medias = data.repr.map(m => JSON.toMedia(m));
 
    for (const p of data.parts) {
@@ -64,13 +70,13 @@ export interface FetchSourcesResult {
 }
 
 export function* fetchSourcesFromServer() {
-   const resp: Response = yield window.fetch('/data/sources/list');
+   const resp: Response = yield window.fetch("/data/sources/list");
    if (resp.status !== 200) {
-      throw new Error('Server returned an error');
+      throw new Error("Server returned an error");
    }
    const data: JSON.Source[] = yield resp.json();
    const result: FetchSourcesResult = {
-      sources: {},
+      sources: {}
    };
    for (const s of data) {
       result.sources[s.id] = sourceFromJSON(s);

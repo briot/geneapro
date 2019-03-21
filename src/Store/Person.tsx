@@ -1,46 +1,44 @@
-import { AssertionList } from '../Store/Assertion';
-import Style from '../Store/Styles';
+import { AssertionList } from "../Store/Assertion";
+import Style from "../Store/Styles";
 
 // The base type is only needed until the server returns a proper Person.
 export interface BasePerson {
    id: number;
-   display_name: string;             // as found in the source document
+   display_name: string; // as found in the source document
 
-   birthISODate?: string;    // dates, using the 'date_sort' from the database
+   birthISODate?: string; // dates, using the 'date_sort' from the database
    deathISODate?: string;
    marriageISODate?: string;
    sex?: string;
 
-   knownAncestors: number;     // number of known ancestors generations in store
-   knownDescendants: number;   // number of known descendants gens in store
-      // The above two fields are also set while the background loading occurs,
-      // so they do not reflect the exact current state of the store.
+   knownAncestors: number; // number of known ancestors generations in store
+   knownDescendants: number; // number of known descendants gens in store
+   // The above two fields are also set while the background loading occurs,
+   // so they do not reflect the exact current state of the store.
 
-   style?: Style;      // custom style specified by user
+   style?: Style; // custom style specified by user
 }
 
 export interface Person extends BasePerson {
    // Those are only known after asking for a person's pedigree
-   parents?: (number|null)[];
-   children?: (number|null)[];
+   parents?: (number | null)[];
+   children?: (number | null)[];
 
    // Those are only known after asking for a person's details
    asserts?: AssertionList;
 }
 
 export interface PersonSet {
-  [id: number]: Person;
-  // A given person might be known by several ids (one for each person that
-  // makes it up). We have an entry for each id, and share the data. This
-  // means that we might be downloading information multiple times if we
-  // do not already know about the id, of course.
+   [id: number]: Person;
+   // A given person might be known by several ids (one for each person that
+   // makes it up). We have an entry for each id, and share the data. This
+   // means that we might be downloading information multiple times if we
+   // do not already know about the id, of course.
 }
 
 /**
  * Return the display name for the person
  */
 export function personDisplay(p?: Person, withId?: boolean) {
-   return p ?
-      (withId ? `${p.display_name} (${p.id})` : p.display_name) :
-      '';
+   return p ? (withId ? `${p.display_name} (${p.id})` : p.display_name) : "";
 }

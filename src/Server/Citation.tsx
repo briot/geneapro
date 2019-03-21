@@ -2,7 +2,7 @@
  * Sent back by the server
  */
 
-import CitationTemplate from '../Store/CitationTemplate';
+import CitationTemplate from "../Store/CitationTemplate";
 
 export interface CitationModel {
    id: string;
@@ -28,23 +28,27 @@ interface JSONCitationTemplate {
 }
 
 export function fetchCitationModelsFromServer(): Promise<JSONCitationModels> {
-   return window.fetch('/data/citationModels')
-      .then(resp => {
-         if (resp.status !== 200) {
-            throw new Error('Server returned an error');
-         }
-         return resp.json();
-      });
+   return window.fetch("/data/citationModels").then(resp => {
+      if (resp.status !== 200) {
+         throw new Error("Server returned an error");
+      }
+      return resp.json();
+   });
 }
 
-export function fetchModelTemplateFromServer(model: string): Promise<CitationTemplate> {
-   return window.fetch('/data/citationModel/' + model)
+export function fetchModelTemplateFromServer(
+   model: string
+): Promise<CitationTemplate> {
+   return window
+      .fetch("/data/citationModel/" + model)
       .then(resp => {
          if (resp.status !== 200) {
-            throw new Error('Server returned an error');
+            throw new Error("Server returned an error");
          }
          return resp.json();
       })
-      .then((tmplt: JSONCitationTemplate) =>
-            new CitationTemplate(tmplt.full, tmplt.biblio, tmplt.abbrev));
+      .then(
+         (tmplt: JSONCitationTemplate) =>
+            new CitationTemplate(tmplt.full, tmplt.biblio, tmplt.abbrev)
+      );
 }

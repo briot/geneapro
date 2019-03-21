@@ -1,8 +1,8 @@
-import * as React from 'react';
-import { Segment } from 'semantic-ui-react';
-import { Place } from '../Store/Place';
-import AssertionTimeline from '../Assertions/AssertionTimeline';
-import './PlaceDetails.css';
+import * as React from "react";
+import { Segment } from "semantic-ui-react";
+import { Place } from "../Store/Place";
+import AssertionTimeline from "../Assertions/AssertionTimeline";
+import "./PlaceDetails.css";
 
 interface PlaceProps {
    place?: Place;
@@ -16,9 +16,7 @@ export default function PlaceDetails(props: PlaceProps) {
             {p && p.name}
          </Segment>
          <Segment attached={true} className="pageContent">
-            <AssertionTimeline
-               asserts={p ? p.asserts : undefined}
-            />
+            <AssertionTimeline asserts={p ? p.asserts : undefined} />
          </Segment>
       </div>
    );

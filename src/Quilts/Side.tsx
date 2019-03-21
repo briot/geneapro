@@ -1,7 +1,7 @@
-import * as React from 'react';
-import { Accordion, Form } from 'semantic-ui-react';
-import { QuiltsSettings } from '../Store/Quilts';
-import { CheckboxField, SliderField } from '../Forms';
+import * as React from "react";
+import { Accordion, Form } from "semantic-ui-react";
+import { QuiltsSettings } from "../Store/Quilts";
+import { CheckboxField, SliderField } from "../Forms";
 
 interface QuiltsSideProps {
    settings: QuiltsSettings;
@@ -11,14 +11,14 @@ interface QuiltsSideProps {
 export default function QuiltsSide(props: QuiltsSideProps) {
    const panels = [
       {
-         key: 'theme',
+         key: "theme",
          title: {
             content: (
                <span>
                   Theme
                   <small>
-                  ancestors: {props.settings.ancestors},&nbsp;
-                  restrict: {props.settings.decujusTreeOnly ? 'yes' : 'no'}
+                     ancestors: {props.settings.ancestors},&nbsp; restrict:{" "}
+                     {props.settings.decujusTreeOnly ? "yes" : "no"}
                   </small>
                </span>
             )
@@ -45,7 +45,6 @@ export default function QuiltsSide(props: QuiltsSideProps) {
             )
          }
       }
-
    ];
 
    return (

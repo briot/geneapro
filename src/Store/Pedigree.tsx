@@ -1,28 +1,28 @@
-import { actionCreator } from '../Store/Actions';
-import { PEDIGREE } from '../Store/ColorTheme';
-import * as GP_JSON from '../Server/JSON';
+import { actionCreator } from "../Store/Actions";
+import { PEDIGREE } from "../Store/ColorTheme";
+import * as GP_JSON from "../Server/JSON";
 
 export enum LayoutScheme {
    LEFT_RIGHT = 0,
    RIGHT_LEFT = 1,
    TOP_DOWN = 2,
-   BOTTOM_UP = 3,
+   BOTTOM_UP = 3
 }
-export const LayoutSchemeNames: {[id: number]: string} = {};
-LayoutSchemeNames[LayoutScheme.LEFT_RIGHT] = 'left-to-right';
-LayoutSchemeNames[LayoutScheme.RIGHT_LEFT] = 'right-to-left';
-LayoutSchemeNames[LayoutScheme.TOP_DOWN] = 'top-down';
-LayoutSchemeNames[LayoutScheme.BOTTOM_UP] = 'bottom-up';
+export const LayoutSchemeNames: { [id: number]: string } = {};
+LayoutSchemeNames[LayoutScheme.LEFT_RIGHT] = "left-to-right";
+LayoutSchemeNames[LayoutScheme.RIGHT_LEFT] = "right-to-left";
+LayoutSchemeNames[LayoutScheme.TOP_DOWN] = "top-down";
+LayoutSchemeNames[LayoutScheme.BOTTOM_UP] = "bottom-up";
 
 export enum LinkStyle {
    STRAIGHT = 0,
    ORTHOGONAL = 1,
    CURVE = 2
 }
-export const LinkStyleNames: {[id: number]: string} = {};
-LinkStyleNames[LinkStyle.STRAIGHT] = 'Straight';
-LinkStyleNames[LinkStyle.ORTHOGONAL] = 'Orthogonal';
-LinkStyleNames[LinkStyle.CURVE] = 'Curve';
+export const LinkStyleNames: { [id: number]: string } = {};
+LinkStyleNames[LinkStyle.STRAIGHT] = "Straight";
+LinkStyleNames[LinkStyle.ORTHOGONAL] = "Orthogonal";
+LinkStyleNames[LinkStyle.CURVE] = "Curve";
 
 export interface PedigreeSettings {
    showUnknown: boolean;
@@ -30,11 +30,11 @@ export interface PedigreeSettings {
    links: LinkStyle;
    sameSize: boolean;
    colors: GP_JSON.ColorSchemeId;
-   vertPadding: number;  // minimum space between two persons at same generation
+   vertPadding: number; // minimum space between two persons at same generation
    horizSpacing: number; // between each generation
    showSourcedEvents: boolean; // add tick for events with a source
    showMarriages: boolean;
-   ancestors: number;  // number of ancestor generations to show
+   ancestors: number; // number of ancestor generations to show
    descendants: number; // number of descendant generations to show
 
    loading: boolean; // true while loading pedigree data
@@ -52,12 +52,12 @@ export const defaultPedigree: PedigreeSettings = {
    showMarriages: true,
    ancestors: 4,
    descendants: 1,
-   loading: false,
+   loading: false
 };
 
 interface ChildrenAndParents {
-   children: number[];   // ids of children
-   parents: number[];    // ids of parents
+   children: number[]; // ids of children
+   parents: number[]; // ids of parents
 }
 
 export interface ChildrenAndParentsSet {
@@ -69,12 +69,15 @@ export interface ChildrenAndParentsSet {
  */
 
 export function isVertical(settings: PedigreeSettings) {
-   return settings.layout === LayoutScheme.BOTTOM_UP ||
-      settings.layout === LayoutScheme.TOP_DOWN;
+   return (
+      settings.layout === LayoutScheme.BOTTOM_UP ||
+      settings.layout === LayoutScheme.TOP_DOWN
+   );
 }
 
 /**
  * Action: change one or more pedigree settings
  */
-export const changePedigreeSettings = actionCreator<
-   {diff: Partial<PedigreeSettings>}>('PEDIGREE/SETTINGS');
+export const changePedigreeSettings = actionCreator<{
+   diff: Partial<PedigreeSettings>;
+}>("PEDIGREE/SETTINGS");

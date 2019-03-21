@@ -1,15 +1,19 @@
-import Style from '../Store/Styles';
-import { Person } from '../Store/Person';
-import * as GP_JSON from '../Server/JSON';
+import Style from "../Store/Styles";
+import { Person } from "../Store/Person";
+import * as GP_JSON from "../Server/JSON";
 
-export const PEDIGREE: GP_JSON.ColorScheme = {id: -5, name: 'Pedigree'};
-export const WHITE: GP_JSON.ColorScheme = {id: -4, name: 'White'};
-export const GENERATION: GP_JSON.ColorScheme = {id: -3, name: 'Generation'};
-export const QUARTILE: GP_JSON.ColorScheme = {id: -2, name: 'Quartile'};
-export const NO_BOX: GP_JSON.ColorScheme = {id: -1, name: 'No Box'};
+export const PEDIGREE: GP_JSON.ColorScheme = { id: -5, name: "Pedigree" };
+export const WHITE: GP_JSON.ColorScheme = { id: -4, name: "White" };
+export const GENERATION: GP_JSON.ColorScheme = { id: -3, name: "Generation" };
+export const QUARTILE: GP_JSON.ColorScheme = { id: -2, name: "Quartile" };
+export const NO_BOX: GP_JSON.ColorScheme = { id: -1, name: "No Box" };
 
 export const predefinedThemes: GP_JSON.ColorScheme[] = [
-   PEDIGREE, WHITE, GENERATION, QUARTILE, NO_BOX,
+   PEDIGREE,
+   WHITE,
+   GENERATION,
+   QUARTILE,
+   NO_BOX
 ];
 
 export interface BasePersonLayout {
@@ -29,26 +33,29 @@ export interface BasePersonLayout {
 
 const MAXGEN = 12;
 const baseQuartileColors = [
-   'rgb(127,229,252)',
-   'rgb(185,253,130)',
-   'rgb(252,120,118)',
-   'rgb(255,236,88)'];
+   "rgb(127,229,252)",
+   "rgb(185,253,130)",
+   "rgb(252,120,118)",
+   "rgb(255,236,88)"
+];
 
 const DEFAULT = new Style({
-   fontWeight: 'normal', color: 'black', stroke: '#222'});
-const STROKE_GREY_ON_WHITE = new Style({...DEFAULT, fill: '#fff'});
-const TEXT_ONLY = new Style({color: 'black'});
+   fontWeight: "normal",
+   color: "black",
+   stroke: "#222"
+});
+const STROKE_GREY_ON_WHITE = new Style({ ...DEFAULT, fill: "#fff" });
+const TEXT_ONLY = new Style({ color: "black" });
 
 export default class ColorTheme {
-
    /**
     * Compute the display style for a person
     */
-   public static forPerson(colors: GP_JSON.ColorSchemeId,
-                    p?: Person,
-                    layout?: BasePersonLayout,
+   public static forPerson(
+      colors: GP_JSON.ColorSchemeId,
+      p?: Person,
+      layout?: BasePersonLayout
    ): Style {
-
       let fillColor: string | undefined;
 
       switch (colors) {
@@ -59,9 +66,10 @@ export default class ColorTheme {
                fillColor = Style.hsvStr(
                   (layout.angle || 0) * 360,
                   Math.abs(layout.generation) / MAXGEN,
-                  1.0);
+                  1.0
+               );
             }
-            return new Style({...DEFAULT, fill: fillColor});
+            return new Style({ ...DEFAULT, fill: fillColor });
 
          case WHITE.id:
             return STROKE_GREY_ON_WHITE;
@@ -72,20 +80,24 @@ export default class ColorTheme {
          case QUARTILE.id:
             if (layout && layout.sosa) {
                const maxInGen = Math.pow(2, layout.generation);
-               const quartile = Math.floor((layout.sosa - maxInGen) * 4 / maxInGen) % 4;
-               fillColor = layout.generation < 0
-                  ? undefined
-                  : baseQuartileColors[quartile];
+               const quartile =
+                  Math.floor(((layout.sosa - maxInGen) * 4) / maxInGen) % 4;
+               fillColor =
+                  layout.generation < 0
+                     ? undefined
+                     : baseQuartileColors[quartile];
             }
-            return new Style({...DEFAULT, fill: fillColor});
+            return new Style({ ...DEFAULT, fill: fillColor });
 
          case GENERATION.id:
             if (layout) {
                fillColor = Style.hsvStr(
-                  180 + 360 * (Math.abs(layout.generation) - 1) / 12,
-                  0.4, 1.0);
+                  180 + (360 * (Math.abs(layout.generation) - 1)) / 12,
+                  0.4,
+                  1.0
+               );
             }
-            return new Style({...DEFAULT, fill: fillColor});
+            return new Style({ ...DEFAULT, fill: fillColor });
 
          default:
             return p && p.style ? p.style : DEFAULT;
@@ -103,9 +115,10 @@ export default class ColorTheme {
     * Compute the style for the separator above the person.
     * In the fanchart, this is the inter-generation separator.
     */
-   public static forSeparator(colors: GP_JSON.ColorSchemeId,
-                       p?: Person,
-                       layout?: BasePersonLayout
+   public static forSeparator(
+      colors: GP_JSON.ColorSchemeId,
+      p?: Person,
+      layout?: BasePersonLayout
    ): Style {
       return ColorTheme.forPerson(colors, p, layout).darker(0.3);
    }

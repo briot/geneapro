@@ -1,25 +1,32 @@
-import { BasePerson, Person, PersonSet } from '../Store/Person';
-import { Assertion, AssertionList, P2E, P2C, P2P, P2G } from '../Store/Assertion';
-import { GenealogyEventSet } from '../Store/Event';
-import { SourceSet } from '../Store/Source';
-import { sourceFromJSON } from '../Server/Source';
-import { PlaceSet } from '../Store/Place';
-import * as GP_JSON from '../Server/JSON';
-import { ResearcherSet } from '../Store/Researcher';
-import Style from '../Store/Styles';
+import { BasePerson, Person, PersonSet } from "../Store/Person";
+import {
+   Assertion,
+   AssertionList,
+   P2E,
+   P2C,
+   P2P,
+   P2G
+} from "../Store/Assertion";
+import { GenealogyEventSet } from "../Store/Event";
+import { SourceSet } from "../Store/Source";
+import { sourceFromJSON } from "../Server/Source";
+import { PlaceSet } from "../Store/Place";
+import * as GP_JSON from "../Server/JSON";
+import { ResearcherSet } from "../Store/Researcher";
+import Style from "../Store/Styles";
 
 export interface FetchPersonsResult {
    persons: PersonSet;
 }
 
 interface PersonaListRaw extends GP_JSON.Persons {
-   allstyles: {[index: number]: GP_JSON.Style};
-   styles: {[person: number]: number};
-};
+   allstyles: { [index: number]: GP_JSON.Style };
+   styles: { [person: number]: number };
+}
 
 export function jsonPersonToPerson(
    p: GP_JSON.Person,
-   style: Style|undefined,
+   style: Style | undefined
 ): Person {
    return {
       id: p.id,
@@ -32,17 +39,16 @@ export function jsonPersonToPerson(
       knownDescendants: 0,
       parents: p.parents,
       children: p.children,
-      style: style,
+      style: style
    };
 }
 
 export function jsonPersonsToPerson(
    json: GP_JSON.Persons,
-   allStyles?: {[index: number]: GP_JSON.Style},   // definition for styles
-   styles?: {[pid: number]: number},   // person to style index
+   allStyles?: { [index: number]: GP_JSON.Style }, // definition for styles
+   styles?: { [pid: number]: number } // person to style index
 ): FetchPersonsResult {
-
-   let allS: {[id: number]: Style|undefined} = {};
+   let allS: { [id: number]: Style | undefined } = {};
    if (allStyles && styles) {
       for (const [id, s] of Object.entries(allStyles)) {
          allS[Number(id)] = new Style(s);
@@ -53,11 +59,11 @@ export function jsonPersonsToPerson(
    for (const jp of json.persons) {
       persons[jp.id] = jsonPersonToPerson(
          jp,
-         styles ? allS[styles[jp.id]] : undefined /* style */,
+         styles ? allS[styles[jp.id]] : undefined /* style */
       );
    }
 
-   return {persons};
+   return { persons };
 }
 
 export interface FetchPersonsParams {
@@ -67,13 +73,14 @@ export interface FetchPersonsParams {
 }
 
 export function* fetchPersonsFromServer(p: FetchPersonsParams) {
-   const url = `/data/persona/list?theme=${p.colors}` +
-      (p.offset ? `&offset=${p.offset}` : '') +
-      (p.limit ? `&limit=${p.limit}` : '');
+   const url =
+      `/data/persona/list?theme=${p.colors}` +
+      (p.offset ? `&offset=${p.offset}` : "") +
+      (p.limit ? `&limit=${p.limit}` : "");
 
    const resp: Response = yield window.fetch(url);
    if (resp.status !== 200) {
-      throw new Error('Server returned an error');
+      throw new Error("Server returned an error");
    }
 
    const raw: PersonaListRaw = yield resp.json();
@@ -110,9 +117,9 @@ function p2cFromJSON(c: GP_JSON.P2C) {
          name: c.p2.char.name,
          placeId: c.p2.char.place,
          parts: c.p2.parts,
-         medias: c.p2.repr ? c.p2.repr.map(m => GP_JSON.toMedia(m)) : undefined,
+         medias: c.p2.repr ? c.p2.repr.map(m => GP_JSON.toMedia(m)) : undefined
       } /* characteristic */,
-      c.source_id /* sourceId */,
+      c.source_id /* sourceId */
    );
 }
 
@@ -127,7 +134,7 @@ function p2pFromJSON(a: GP_JSON.P2P) {
       a.p1.person /* person1Id */,
       a.p2.person /* person2Id */,
       a.type /* relation */,
-      a.source_id /* sourceId */,
+      a.source_id /* sourceId */
    );
 }
 
@@ -141,23 +148,29 @@ function p2gFromJSON(a: GP_JSON.P2G) {
       new Date(a.last_change) /* lastChanged */,
       a.p1.person /* personId */,
       -1 /* groupId */,
-      a.source_id /* sourceId */,
+      a.source_id /* sourceId */
    );
 }
 
 function isP2E(a: GP_JSON.Assertion): a is GP_JSON.P2E {
-   return (a as GP_JSON.P2E).p1.person !== undefined &&
-          (a as GP_JSON.P2E).p2.event !== undefined;
+   return (
+      (a as GP_JSON.P2E).p1.person !== undefined &&
+      (a as GP_JSON.P2E).p2.event !== undefined
+   );
 }
 
 function isP2C(a: GP_JSON.Assertion): a is GP_JSON.P2C {
-   return (a as GP_JSON.P2C).p1.person !== undefined &&
-          (a as GP_JSON.P2C).p2.char !== undefined;
+   return (
+      (a as GP_JSON.P2C).p1.person !== undefined &&
+      (a as GP_JSON.P2C).p2.char !== undefined
+   );
 }
 
 function isP2P(a: GP_JSON.Assertion): a is GP_JSON.P2P {
-   return (a as GP_JSON.P2P).p1.person !== undefined &&
-          (a as GP_JSON.P2P).p2.person !== undefined;
+   return (
+      (a as GP_JSON.P2P).p1.person !== undefined &&
+      (a as GP_JSON.P2P).p2.person !== undefined
+   );
 }
 
 export function assertionFromJSON(a: GP_JSON.Assertion): Assertion {
@@ -173,7 +186,7 @@ export function assertionFromJSON(a: GP_JSON.Assertion): Assertion {
 }
 
 export interface AssertionEntitiesJSON {
-   events?: GP_JSON.Event[];  // All events mentioned in the asserts
+   events?: GP_JSON.Event[]; // All events mentioned in the asserts
    persons?: GP_JSON.Person[];
    places?: GP_JSON.Place[];
    researchers?: GP_JSON.Researcher[];
@@ -199,14 +212,13 @@ export interface DetailsResult extends AssertionEntities {
 
 export function setAssertionEntities(
    entities: AssertionEntitiesJSON,
-   into: AssertionEntities,
-
+   into: AssertionEntities
 ) {
    if (entities.places) {
       for (const p of entities.places) {
          into.places[p.id] = {
             id: p.id,
-            name: p.name,
+            name: p.name
             // p.date,
             // p.date_sort,
             // p.parent_place_id,
@@ -222,7 +234,7 @@ export function setAssertionEntities(
             date_sort: e.date_sort,
             name: e.name,
             placeId: e.place,
-            type: e.type,
+            type: e.type
          };
       }
    }
@@ -233,7 +245,7 @@ export function setAssertionEntities(
             id: p.id,
             display_name: p.display_name,
             knownAncestors: 0,
-            knownDescendants: 0,
+            knownDescendants: 0
          };
       }
    }
@@ -246,28 +258,29 @@ export function setAssertionEntities(
 
    if (entities.researchers) {
       for (const r of entities.researchers) {
-         into.researchers[r.id] = {name: r.name};
+         into.researchers[r.id] = { name: r.name };
       }
    }
 }
 
 export function* fetchPersonDetailsFromServer(id: number) {
-   const resp: Response = yield window.fetch('/data/persona/' + id);
+   const resp: Response = yield window.fetch("/data/persona/" + id);
    if (resp.status !== 200) {
-      throw new Error('Server returned an error');
+      throw new Error("Server returned an error");
    }
    const data: JSONPersonDetails = yield resp.json();
    let r: DetailsResult = {
-      person: {...data.person,
-               asserts: data.asserts ? new AssertionList(
-                  data.asserts.map(a => assertionFromJSON(a))) :
-                  undefined,
-              },
+      person: {
+         ...data.person,
+         asserts: data.asserts
+            ? new AssertionList(data.asserts.map(a => assertionFromJSON(a)))
+            : undefined
+      },
       persons: {},
       events: {},
       places: {},
       sources: {},
-      researchers: {},
+      researchers: {}
    };
    setAssertionEntities(data, r);
    return r;

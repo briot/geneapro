@@ -1,14 +1,14 @@
-import { BasePerson, personDisplay } from '../Store/Person';
+import { BasePerson, personDisplay } from "../Store/Person";
 
 export const LINE_SPACING = 16;
 export const MARGIN = 0;
-export const F_HEIGHT = 16;  // height of the row with "F" (families)
+export const F_HEIGHT = 16; // height of the row with "F" (families)
 
 export interface QuiltsPersonLayout {
    person: BasePerson;
 
    layer: number;
-   index: number;   // index in layer
+   index: number; // index in layer
 
    // Horizontal line for this person extends from the position of its
    // child box to the right-most parent box:
@@ -24,16 +24,16 @@ export interface QuiltsPersonLayout {
    topY: number;
    bottomY: number;
 
-   childFamilies: Family[];  // all families where this person is a child
+   childFamilies: Family[]; // all families where this person is a child
    parentFamilies: Family[]; // all families where this person is a parent
 }
 
 // A family: parents + all children
 export interface Family {
-   persons: (QuiltsPersonLayout|undefined)[]; // [parent1, parent2, child1, child2,...]
-   left: number;      // left coordinate for the rectangle of this family
-   leftMinY: number;  // top-left
-   leftMaxY: number;  // bottom-left
+   persons: (QuiltsPersonLayout | undefined)[]; // [parent1, parent2, child1, child2,...]
+   left: number; // left coordinate for the rectangle of this family
+   leftMinY: number; // top-left
+   leftMaxY: number; // bottom-left
    rightMinY: number; // top-right
    rightMaxY: number; // bottom-right
 }
@@ -41,12 +41,12 @@ export interface Family {
 // One block of persons displayed together.
 // Layers are displayed in decreasing index (layer 5, then 4, ...)
 export interface Layer {
-   left: number;   // left coordinate
-   right: number;  // right coordinate
-   top: number;    // top coordinate
+   left: number; // left coordinate
+   right: number; // right coordinate
+   top: number; // top coordinate
    height: number; // total height
-   persons: QuiltsPersonLayout[];  // Visible persons in the layer
-   families: Family[];  // Families with at least one children in this layer
+   persons: QuiltsPersonLayout[]; // Visible persons in the layer
+   families: Family[]; // Families with at least one children in this layer
 }
 
 type JSONFamily = number[];
@@ -56,21 +56,22 @@ interface JSONQuilts {
    persons: { [id: number]: BasePerson };
    perlayer: number[][]; // For each layer the person id
    families: JSONFamily[][]; // For each layer, [parent1, parent2, child...]
-      // ??? Should be sent as a simple list, independent of layers. The
-      // layout will need to duplicate the family for each layer where one of
-      // children occurs, and hide families with no visible children
+   // ??? Should be sent as a simple list, independent of layers. The
+   // layout will need to duplicate the family for each layer where one of
+   // children occurs, and hide families with no visible children
    decujus_name: string;
-   decujus:      number;  // id of the decujus
+   decujus: number; // id of the decujus
 }
 
 export class QuiltsResult {
    public layers: Layer[];
    public persons: { [id: number]: BasePerson };
 
-   public constructor(data: JSONQuilts,
-               isVisible: (personId: BasePerson) => boolean,
+   public constructor(
+      data: JSONQuilts,
+      isVisible: (personId: BasePerson) => boolean
    ) {
-      let personToLayout: {[id: number]: QuiltsPersonLayout} = {};
+      let personToLayout: { [id: number]: QuiltsPersonLayout } = {};
       this.persons = data.persons;
       this.layers = data.perlayer.map(
          (persons: number[], layerIndex: number) => ({
@@ -78,9 +79,10 @@ export class QuiltsResult {
             right: 0,
             top: 0,
             height: 0,
-            persons: persons.filter(p => isVisible(data.persons[p])).map(
-               (p: number, index) => {
-                  return personToLayout[p] = {
+            persons: persons
+               .filter(p => isVisible(data.persons[p]))
+               .map((p: number, index) => {
+                  return (personToLayout[p] = {
                      person: data.persons[p],
                      layer: layerIndex,
                      index: index,
@@ -89,27 +91,27 @@ export class QuiltsResult {
                      topY: NaN,
                      bottomY: NaN,
                      childFamilies: [],
-                     parentFamilies: [],
-                  };
+                     parentFamilies: []
+                  });
                }),
-            families: [],  // set later
-      }));
+            families: [] // set later
+         })
+      );
 
       // After all person layouts have been created, edit the families
 
       this.layers.forEach((layer, layerIndex) => {
-          layer.families = data.families[layerIndex] === undefined ?
-             [] :
-             data.families[layerIndex].map(
-                (fams: JSONFamily) => ({
-                   persons: fams.map(pid => personToLayout[pid]),
-                   left: 0,
-                   leftMinY: 0,
-                   leftMaxY: 0,
-                   rightMinY: 0,
-                   rightMaxY: 0,
-                })
-            );
+         layer.families =
+            data.families[layerIndex] === undefined
+               ? []
+               : data.families[layerIndex].map((fams: JSONFamily) => ({
+                    persons: fams.map(pid => personToLayout[pid]),
+                    left: 0,
+                    leftMinY: 0,
+                    leftMaxY: 0,
+                    rightMinY: 0,
+                    rightMaxY: 0
+                 }));
       });
 
       this.computeSizeAndPos();
@@ -140,7 +142,7 @@ export class QuiltsResult {
    /**
     * Compute the width of a string on the screen
     */
-   private computeWidth(txt: string|undefined) {
+   private computeWidth(txt: string | undefined) {
       // ??? Needs improvement
       // With the canvas, we were using ctx.measureText(txt).width
       return txt === undefined ? 0 : Math.max((txt.length + 1) * 8, 100);
@@ -152,8 +154,8 @@ export class QuiltsResult {
     * because computing the size of text is relatively expensive).
     */
    private computeSizeAndPos() {
-      let layerX = 0;         // top-left corner of current layer
-      let layerY = 0;         // top-left corner of current layer
+      let layerX = 0; // top-left corner of current layer
+      let layerY = 0; // top-left corner of current layer
 
       // Traverse in reverse order, so that parents are on the left of the
       // chart
@@ -162,8 +164,8 @@ export class QuiltsResult {
          const l: Layer = this.layers[layer];
          const maxWidth = Math.max.apply(
             null,
-            l.persons.map(p => this.computeWidth(
-               personDisplay(p.person))));
+            l.persons.map(p => this.computeWidth(personDisplay(p.person)))
+         );
 
          l.top = layerY;
          l.left = layerX;
@@ -171,18 +173,18 @@ export class QuiltsResult {
          l.height = l.persons.length * LINE_SPACING + 2 * MARGIN;
 
          if (layer > 0) {
-            layerX = l.right +
-               this.layers[layer - 1].families.length * LINE_SPACING;
+            layerX =
+               l.right + this.layers[layer - 1].families.length * LINE_SPACING;
             layerY = l.top + l.height + F_HEIGHT /* for marriages */;
          }
 
          l.persons.forEach((p, index) => {
-            p.topY = index === 0 ?
-               l.top :
-               l.top + index * LINE_SPACING + MARGIN;
-            p.bottomY = index === l.persons.length - 1 ?
-               l.top + l.height :
-               l.top + (index + 1) * LINE_SPACING + MARGIN;
+            p.topY =
+               index === 0 ? l.top : l.top + index * LINE_SPACING + MARGIN;
+            p.bottomY =
+               index === l.persons.length - 1
+                  ? l.top + l.height
+                  : l.top + (index + 1) * LINE_SPACING + MARGIN;
             p.minX = l.left;
             p.maxX = l.right;
          });
@@ -197,15 +199,14 @@ export class QuiltsResult {
          // First pass: Compute the minimal extent for the vertical lines
 
          layer.families.forEach((fam: Family, famIndex: number) => {
-            fam.left = this.layers[layerIndex + 1].right + famIndex * LINE_SPACING;
-            fam.rightMinY = Math.min.apply(
-               null,
-               fam.persons.map(p => p && p.topY)
-                          .filter(y => y !== undefined)   as number[]);
-            fam.rightMaxY = Math.max.apply(
-               null,
-               fam.persons.map(p => p && p.bottomY)
-                          .filter(y => y !== undefined)   as number[]);
+            fam.left =
+               this.layers[layerIndex + 1].right + famIndex * LINE_SPACING;
+            fam.rightMinY = Math.min.apply(null, fam.persons
+               .map(p => p && p.topY)
+               .filter(y => y !== undefined) as number[]);
+            fam.rightMaxY = Math.max.apply(null, fam.persons
+               .map(p => p && p.bottomY)
+               .filter(y => y !== undefined) as number[]);
          });
 
          // Second pass: the vertical lines are in fact between two families,
@@ -227,11 +228,14 @@ export class QuiltsResult {
 
       this.layers.slice(0, -1).forEach((layer: Layer, layerIndex: number) => {
          layer.families.forEach((fam: Family) => {
-            fam.persons.forEach((p: QuiltsPersonLayout|undefined, pIndex: number) => {
-               if (p && pIndex < 2) { // a parent
-                  p.maxX = Math.max(p.maxX, fam.left + LINE_SPACING);
+            fam.persons.forEach(
+               (p: QuiltsPersonLayout | undefined, pIndex: number) => {
+                  if (p && pIndex < 2) {
+                     // a parent
+                     p.maxX = Math.max(p.maxX, fam.left + LINE_SPACING);
+                  }
                }
-            });
+            );
          });
 
          // Fourth pass: compute the X range for horizontal lines, which must
@@ -270,20 +274,21 @@ export class QuiltsResult {
  */
 export function* fetchQuiltsFromServer(decujus: number, decujusOnly: boolean) {
    const resp: Response = yield window.fetch(
-      '/data/quilts/' + decujus +
-      '?decujus_tree=' + decujusOnly);
+      "/data/quilts/" + decujus + "?decujus_tree=" + decujusOnly
+   );
    if (resp.status !== 200) {
-      throw new Error('Server returned an error');
+      throw new Error("Server returned an error");
    }
 
    const data: JSONQuilts = yield resp.json();
    const filtered = false;
-   const selected: {[id: number]: boolean} = {};
+   const selected: { [id: number]: boolean } = {};
    if (!data.perlayer) {
       return undefined;
    } else {
       return new QuiltsResult(
          data,
-         (p: BasePerson) => !filtered || selected[p.id]);
+         (p: BasePerson) => !filtered || selected[p.id]
+      );
    }
 }

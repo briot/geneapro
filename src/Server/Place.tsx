@@ -1,18 +1,21 @@
-import { PlaceSet } from '../Store/Place';
-import { AssertionList } from '../Store/Assertion';
-import { AssertionEntities, AssertionEntitiesJSON,
-         assertionFromJSON,
-         setAssertionEntities } from '../Server/Person';
-import * as JSON from '../Server/JSON';
+import { PlaceSet } from "../Store/Place";
+import { AssertionList } from "../Store/Assertion";
+import {
+   AssertionEntities,
+   AssertionEntitiesJSON,
+   assertionFromJSON,
+   setAssertionEntities
+} from "../Server/Person";
+import * as JSON from "../Server/JSON";
 
 export interface FetchPlacesResult {
    places: PlaceSet;
 }
 
 export function* fetchPlacesFromServer() {
-   const resp: Response = yield window.fetch('/data/places/list');
+   const resp: Response = yield window.fetch("/data/places/list");
    if (resp.status !== 200) {
-      throw new Error('Server returned an error');
+      throw new Error("Server returned an error");
    }
 
    const data: JSON.Place[] = yield resp.json();
@@ -20,10 +23,10 @@ export function* fetchPlacesFromServer() {
    for (const p of data) {
       places[p.id] = {
          id: p.id,
-         name: p.name,
+         name: p.name
       };
    }
-   return {places};
+   return { places };
 }
 
 export interface PlaceDetails extends AssertionEntities {
@@ -35,9 +38,9 @@ interface JSONResult extends AssertionEntitiesJSON {
 }
 
 export function* fetchPlaceFromServer(id: number) {
-   const resp: Response = yield window.fetch('/data/place/' + id);
+   const resp: Response = yield window.fetch("/data/place/" + id);
    if (resp.status !== 200) {
-      throw new Error('Server returned an error');
+      throw new Error("Server returned an error");
    }
 
    const data: JSONResult = yield resp.json();
@@ -48,7 +51,7 @@ export function* fetchPlaceFromServer(id: number) {
       persons: {},
       places: {},
       sources: {},
-      researchers: {},
+      researchers: {}
    };
    setAssertionEntities(data, result);
 

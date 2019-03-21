@@ -1,12 +1,12 @@
-import { SourceMedia } from '../Store/Source';
+import { SourceMedia } from "../Store/Source";
 
-export type FontWeight = number|'bold'|'normal'|'lighter'|'bolder';
+export type FontWeight = number | "bold" | "normal" | "lighter" | "bolder";
 
 /**
  * The data sent by the server
  */
 
-export interface Style  {
+export interface Style {
    fill?: string;
    stroke?: string;
    color?: string;
@@ -15,7 +15,7 @@ export interface Style  {
 
 export interface PartType {
    id: number;
-   name: string;  // "birth"
+   name: string; // "birth"
    gedcom: string;
 }
 
@@ -36,9 +36,9 @@ export interface Event {
 
 export interface EventTypeRole {
    id: number;
-   type_id: number|null;  // What event types this role applies to
-                          // `null` for all event types
-   name: string;          // role name
+   type_id: number | null; // What event types this role applies to
+   // `null` for all event types
+   name: string; // role name
 }
 
 export type OperatorString = string;
@@ -66,9 +66,9 @@ export interface Metadata {
 
 export interface Person {
    id: number;
-   display_name: string;  // As found in the source document
-   parents?: (number|null)[];
-   children?: (number|null)[];
+   display_name: string; // As found in the source document
+   parents?: (number | null)[];
+   children?: (number | null)[];
    birthISODate?: string;
    deathISODate?: string;
    marriageISODate?: string;
@@ -88,14 +88,14 @@ export interface Researcher {
 export interface CitationPart {
    name: string;
    value: string;
-   fromHigh: boolean;  // true if from a higher level source
+   fromHigh: boolean; // true if from a higher level source
 }
 
 export interface Source {
    id: number;
-   abbrev: string;  // abbreviated citation
-   biblio: string;  // bibliographic citation
-   title: string;   // full citation
+   abbrev: string; // abbreviated citation
+   biblio: string; // bibliographic citation
+   title: string; // full citation
    comments: string;
    higher_source_id: number | null;
    jurisdiction_place?: string;
@@ -122,10 +122,10 @@ export interface CharPart {
 export interface SourceRepr {
    comments: string;
    id: number;
-   file: string;        // path to the file
-   mime: string;        // type of the image
-   source_id: number;   // ??? Not needed
-   url: string;         // how to get the image from the server
+   file: string; // path to the file
+   mime: string; // type of the image
+   source_id: number; // ??? Not needed
+   url: string; // how to get the image from the server
 }
 
 export interface Assertion {
@@ -139,32 +139,34 @@ export interface Assertion {
 }
 
 export interface P2E extends Assertion {
-   p1: {person: number};
-   p2: {role: string; event: number};
+   p1: { person: number };
+   p2: { role: string; event: number };
 }
 
 export interface P2C extends Assertion {
-   p1: {person: number};
-   p2: {char: Characteristic;
-        repr: SourceRepr[] | undefined;   // when char.name=="image" only
-        parts: CharPart[];};
+   p1: { person: number };
+   p2: {
+      char: Characteristic;
+      repr: SourceRepr[] | undefined; // when char.name=="image" only
+      parts: CharPart[];
+   };
 }
 
 export interface P2P extends Assertion {
-   p1: {person: number};
-   p2: {person: number};
-   type: string;   // type of relationship
+   p1: { person: number };
+   p2: { person: number };
+   type: string; // type of relationship
 }
 
 export interface P2G extends Assertion {
-   p1: {person: number};
+   p1: { person: number };
 }
 
 export interface Place {
    id: number;
    name: string;
-   date: string|null;
-   date_sort: string|null;
+   date: string | null;
+   date_sort: string | null;
    parent_place_id: number;
 }
 
@@ -178,6 +180,6 @@ export function toMedia(r: SourceRepr): SourceMedia {
       comments: r.comments,
       file: r.file,
       mime: r.mime,
-      url: r.url,
+      url: r.url
    };
 }

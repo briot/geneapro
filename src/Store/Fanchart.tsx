@@ -1,6 +1,6 @@
-import { actionCreator } from '../Store/Actions';
-import { PEDIGREE } from '../Store/ColorTheme';
-import * as GP_JSON from '../Server/JSON';
+import { actionCreator } from "../Store/Actions";
+import { PEDIGREE } from "../Store/ColorTheme";
+import * as GP_JSON from "../Server/JSON";
 
 export interface FanchartSettings {
    ancestors: number;
@@ -8,7 +8,7 @@ export interface FanchartSettings {
    colors: GP_JSON.ColorSchemeId;
    sepColors: GP_JSON.ColorSchemeId;
    fullAngle: number; // full opening angle, in degrees
-   anglePad: number;  // between couples
+   anglePad: number; // between couples
    straightTextThreshold: number; // generation after which the text is along the axis
    readableText: boolean;
    gapBetweenGens: boolean;
@@ -16,7 +16,7 @@ export interface FanchartSettings {
    showMissingPersons: boolean;
    showSourcedEvents: boolean; // add tick for events with a source
 
-   loading: boolean;  // true while loading pedigree data
+   loading: boolean; // true while loading pedigree data
 }
 
 export const defaultFanchart: FanchartSettings = {
@@ -32,11 +32,12 @@ export const defaultFanchart: FanchartSettings = {
    showMarriages: false,
    showMissingPersons: true,
    showSourcedEvents: true,
-   loading: false,
+   loading: false
 };
 
 /**
  * Action: change one or more fanchart settings
  */
-export const changeFanchartSettings = actionCreator<
-   {diff: Partial<FanchartSettings>}>('FANCHART/SETTINGS');
+export const changeFanchartSettings = actionCreator<{
+   diff: Partial<FanchartSettings>;
+}>("FANCHART/SETTINGS");

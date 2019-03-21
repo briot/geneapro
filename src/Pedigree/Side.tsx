@@ -1,10 +1,13 @@
-import * as React from 'react';
-import { Accordion, Form } from 'semantic-ui-react';
-import * as GP_JSON from '../Server/JSON';
-import { LayoutSchemeNames, LinkStyleNames,
-         PedigreeSettings } from '../Store/Pedigree';
-import { CheckboxField, SliderField, SelectField } from '../Forms';
-import ThemeSelector from '../ThemeSelector';
+import * as React from "react";
+import { Accordion, Form } from "semantic-ui-react";
+import * as GP_JSON from "../Server/JSON";
+import {
+   LayoutSchemeNames,
+   LinkStyleNames,
+   PedigreeSettings
+} from "../Store/Pedigree";
+import { CheckboxField, SliderField, SelectField } from "../Forms";
+import ThemeSelector from "../ThemeSelector";
 
 interface PedigreeSideProps {
    settings: PedigreeSettings;
@@ -15,16 +18,18 @@ interface PedigreeSideProps {
 export default function PedigreeSide(props: PedigreeSideProps) {
    const panels = [
       {
-         key: 'generations',
+         key: "generations",
          title: {
             content: (
                <span>
                   Generations
                   <small>
-                     ancestors: {props.settings.ancestors},&nbsp;
-                     descendants: {props.settings.descendants}
-                     {props.settings.showMarriages ? ', marriages ' : ''}
-                     {props.settings.showSourcedEvents ? ', sourced events' : ''}
+                     ancestors: {props.settings.ancestors},&nbsp; descendants:{" "}
+                     {props.settings.descendants}
+                     {props.settings.showMarriages ? ", marriages " : ""}
+                     {props.settings.showSourcedEvents
+                        ? ", sourced events"
+                        : ""}
                   </small>
                </span>
             )
@@ -68,19 +73,19 @@ export default function PedigreeSide(props: PedigreeSideProps) {
          }
       },
       {
-         key: 'theme',
+         key: "theme",
          title: {
             content: (
                <span>
                   Theme
                   <small>
-                     {props.settings.showUnknown ? 'Expanded' : 'Compact'},&nbsp;
-                     layout: {LayoutSchemeNames[props.settings.layout]},&nbsp;
-                     links: {LinkStyleNames[props.settings.links]}
+                     {props.settings.showUnknown ? "Expanded" : "Compact"}
+                     ,&nbsp; layout: {LayoutSchemeNames[props.settings.layout]}
+                     ,&nbsp; links: {LinkStyleNames[props.settings.links]}
                   </small>
                   <small>
-                     size: {props.settings.sameSize ? 'constant' : 'decreasing'},&nbsp;
-                     colors: {props.themeNameGet(props.settings.colors)}
+                     size: {props.settings.sameSize ? "constant" : "decreasing"}
+                     ,&nbsp; colors: {props.themeNameGet(props.settings.colors)}
                   </small>
                </span>
             )
@@ -145,7 +150,6 @@ export default function PedigreeSide(props: PedigreeSideProps) {
             )
          }
       }
-
    ];
 
    return (

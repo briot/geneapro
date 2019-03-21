@@ -1,20 +1,23 @@
-import * as React from 'react';
-import { Button, Image } from 'semantic-ui-react';
-import { SourceMedia } from './Store/Source';
-import './MediaList.css';
+import * as React from "react";
+import { Button, Image } from "semantic-ui-react";
+import { SourceMedia } from "./Store/Source";
+import "./MediaList.css";
 
 interface MediasProps {
    medias?: SourceMedia[];
 }
 
 interface MediasState {
-   selected?: number;  // index of selected image, if any
+   selected?: number; // index of selected image, if any
 }
 
-export default class Medias extends React.PureComponent<MediasProps, MediasState> {
+export default class Medias extends React.PureComponent<
+   MediasProps,
+   MediasState
+> {
    state: MediasState = {};
-   imageGroup: HTMLDivElement|undefined;
-   scrollLeft: number|undefined;
+   imageGroup: HTMLDivElement | undefined;
+   scrollLeft: number | undefined;
 
    componentDidUpdate() {
       if (this.scrollLeft !== undefined && this.imageGroup) {
@@ -28,8 +31,8 @@ export default class Medias extends React.PureComponent<MediasProps, MediasState
       if (selected !== undefined && this.imageGroup) {
          this.scrollLeft = this.imageGroup.scrollLeft;
       }
-      this.setState({selected: selected});
-   }
+      this.setState({ selected: selected });
+   };
 
    render() {
       if (!this.props.medias) {
@@ -41,13 +44,8 @@ export default class Medias extends React.PureComponent<MediasProps, MediasState
          return (
             <div className="medialistSingle">
                <span>
-                  <legend>
-                     {m.comments}
-                  </legend>
-                  <Button
-                     size="mini"
-                     onClick={() => this.selectImage()}
-                  >
+                  <legend>{m.comments}</legend>
+                  <Button size="mini" onClick={() => this.selectImage()}>
                      X
                   </Button>
                </span>
@@ -55,7 +53,7 @@ export default class Medias extends React.PureComponent<MediasProps, MediasState
                   fluid={true}
                   src={m.url}
                   alt={m.file}
-                  title={m.comments + '\n\n' + m.file}
+                  title={m.comments + "\n\n" + m.file}
                />
             </div>
          );
@@ -64,24 +62,22 @@ export default class Medias extends React.PureComponent<MediasProps, MediasState
       return (
          <div
             className="medialist"
-            ref={(r: HTMLDivElement) => this.imageGroup = r}
+            ref={(r: HTMLDivElement) => (this.imageGroup = r)}
          >
-            {
-               this.props.medias.map((m, idx) => (
-                  <div className="image" key={m.id}>
-                     <Image
-                        src={m.url}
-                        size="small"
-                        bordered={true}
-                        alt={m.file}
-                        title={m.comments + '\n\n' + m.file}
-                        style={{minWidth: 50}}
-                        onClick={() => this.selectImage(idx)}
-                     />
-                     <legend>{m.comments}</legend>
-                  </div>
-               ))
-            }
+            {this.props.medias.map((m, idx) => (
+               <div className="image" key={m.id}>
+                  <Image
+                     src={m.url}
+                     size="small"
+                     bordered={true}
+                     alt={m.file}
+                     title={m.comments + "\n\n" + m.file}
+                     style={{ minWidth: 50 }}
+                     onClick={() => this.selectImage(idx)}
+                  />
+                  <legend>{m.comments}</legend>
+               </div>
+            ))}
          </div>
       );
    }

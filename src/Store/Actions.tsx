@@ -1,8 +1,15 @@
-import { call, put, select, takeEvery, CallEffect, ForkEffect } from 'redux-saga/effects';
-import actionCreatorFactory, { Action } from 'typescript-fsa';
-import { AppState, GPDispatch } from '../Store/State';
+import {
+   call,
+   put,
+   select,
+   takeEvery,
+   CallEffect,
+   ForkEffect
+} from "redux-saga/effects";
+import actionCreatorFactory, { Action } from "typescript-fsa";
+import { AppState, GPDispatch } from "../Store/State";
 
-export const actionCreator = actionCreatorFactory('GP' /* prefix */);
+export const actionCreator = actionCreatorFactory("GP" /* prefix */);
 
 /**
  * All registered sagas
@@ -26,11 +33,11 @@ export const allSagas: ForkEffect[] = [];
 
 export function createAsyncAction<Params, Result>(
    type: string,
-   func: (p: Params) => Iterable<CallEffect|Result>,
-   alreadyKnown?: (p: Params, state: AppState) => boolean,
+   func: (p: Params) => Iterable<CallEffect | Result>,
+   alreadyKnown?: (p: Params, state: AppState) => boolean
 ) {
    const actions = actionCreator.async<Params, Result, {}>(type);
-   const request = actionCreator<Params>(type + '_REQUEST');
+   const request = actionCreator<Params>(type + "_REQUEST");
 
    function* perform(action: Action<Params>) {
       if (alreadyKnown) {
@@ -43,16 +50,20 @@ export function createAsyncAction<Params, Result>(
       yield put(actions.started(action.payload));
       try {
          const res: Result = yield call(func, action.payload);
-         yield put(actions.done({
-            params: action.payload,
-            result: res
-         }));
+         yield put(
+            actions.done({
+               params: action.payload,
+               result: res
+            })
+         );
       } catch (e) {
-         window.console.error('Unexpected exception ', e);
-         yield put(actions.failed({
-            params: action.payload,
-            error: e
-         }));
+         window.console.error("Unexpected exception ", e);
+         yield put(
+            actions.failed({
+               params: action.payload,
+               error: e
+            })
+         );
       }
    }
 
@@ -66,6 +77,6 @@ export function createAsyncAction<Params, Result>(
       started: actions.started,
       done: actions.done,
       failed: actions.failed,
-      execute,
+      execute
    };
 }

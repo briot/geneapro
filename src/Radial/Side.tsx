@@ -1,9 +1,9 @@
-import * as React from 'react';
-import { Accordion, Form } from 'semantic-ui-react';
-import * as GP_JSON from '../Server/JSON';
-import { RadialSettings } from '../Store/Radial';
-import { SliderField, CheckboxField } from '../Forms';
-import ThemeSelector from '../ThemeSelector';
+import * as React from "react";
+import { Accordion, Form } from "semantic-ui-react";
+import * as GP_JSON from "../Server/JSON";
+import { RadialSettings } from "../Store/Radial";
+import { SliderField, CheckboxField } from "../Forms";
+import ThemeSelector from "../ThemeSelector";
 
 interface RadialSideProps {
    settings: RadialSettings;
@@ -14,15 +14,17 @@ interface RadialSideProps {
 export default function RadialSide(props: RadialSideProps) {
    const panels = [
       {
-         key: 'generations',
+         key: "generations",
          title: {
             content: (
                <span>
                   Generations
                   <small>
-                  {props.settings.generations > 0 ?
-                     'ancestors' : 'descendants'}:&nbsp;
-                  {Math.abs(props.settings.generations)}
+                     {props.settings.generations > 0
+                        ? "ancestors"
+                        : "descendants"}
+                     :&nbsp;
+                     {Math.abs(props.settings.generations)}
                   </small>
                </span>
             )
@@ -43,7 +45,7 @@ export default function RadialSide(props: RadialSideProps) {
          }
       },
       {
-         key: 'theme',
+         key: "theme",
          title: {
             content: (
                <span>
@@ -51,9 +53,10 @@ export default function RadialSide(props: RadialSideProps) {
                   <small>
                      colors: {props.themeNameGet(props.settings.colors)},&nbsp;
                      spacing: {props.settings.spacing}px
-                     {props.settings.showText ? ', show text' : ''}
-                     {props.settings.sameStyleForText ?
-                           ', same color for text' : ''}
+                     {props.settings.showText ? ", show text" : ""}
+                     {props.settings.sameStyleForText
+                        ? ", same color for text"
+                        : ""}
                   </small>
                </span>
             )
@@ -90,7 +93,7 @@ export default function RadialSide(props: RadialSideProps) {
                </Form>
             )
          }
-      },
+      }
    ];
    return (
       <Accordion styled={true} exclusive={false} fluid={true} panels={panels} />

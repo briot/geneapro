@@ -1,16 +1,16 @@
-import * as React from 'react';
-import { arc } from 'd3-shape';
-import { path } from 'd3-path';
-import { Link } from 'react-router-dom';
-import { Person, PersonSet } from '../Store/Person';
-import { FanchartSettings } from '../Store/Fanchart';
-import { GenealogyEventSet } from '../Store/Event';
-import { PersonLayout, PersonLayouts } from '../Fanchart/types';
-import ColorTheme from '../Store/ColorTheme';
-import ScalableSVG from '../SVG.Scalable';
-import { extractYear } from '../Store/Event';
+import * as React from "react";
+import { arc } from "d3-shape";
+import { path } from "d3-path";
+import { Link } from "react-router-dom";
+import { Person, PersonSet } from "../Store/Person";
+import { FanchartSettings } from "../Store/Fanchart";
+import { GenealogyEventSet } from "../Store/Event";
+import { PersonLayout, PersonLayouts } from "../Fanchart/types";
+import ColorTheme from "../Store/ColorTheme";
+import ScalableSVG from "../SVG.Scalable";
+import { extractYear } from "../Store/Event";
 
-import './Fanchart.css';
+import "./Fanchart.css";
 
 interface FanchartProps {
    settings: FanchartSettings;
@@ -39,12 +39,13 @@ export function Fanchart(props: FanchartProps) {
       .outerRadius(p => p.maxRadius + props.layouts.spaceBetweenGens);
 
    const recurse = (pl: PersonLayout) => {
-      if (seen.has(pl.id)) { // Implex
+      if (seen.has(pl.id)) {
+         // Implex
          return;
       }
       seen.add(pl.id);
 
-      const p: Person|undefined = props.persons[pl.id];
+      const p: Person | undefined = props.persons[pl.id];
 
       boxes.push(
          <FanchartBox
@@ -58,12 +59,11 @@ export function Fanchart(props: FanchartProps) {
 
       if (props.layouts.spaceBetweenGens !== 0) {
          const d = separatorArc(pl) as string;
-         const style = ColorTheme.forSeparator(
-            props.settings.sepColors, p, pl);
+         const style = ColorTheme.forSeparator(props.settings.sepColors, p, pl);
          seps.push(
             <path
                className="separator"
-               {...style.toStr('svg')}
+               {...style.toStr("svg")}
                d={d}
                key={pl.id}
             />
@@ -81,7 +81,6 @@ export function Fanchart(props: FanchartProps) {
          );
       }
 
-
       for (let p2 of pl.parents) {
          if (p2) {
             recurse(p2);
@@ -92,7 +91,7 @@ export function Fanchart(props: FanchartProps) {
 
    const recurseChildren = (pl: PersonLayout) => {
       for (let c of pl.children) {
-         const p: Person|undefined = props.persons[c.id];
+         const p: Person | undefined = props.persons[c.id];
          boxes.push(
             <g transform="translate(0,10)" key={c.id}>
                <FanchartBox
@@ -101,17 +100,18 @@ export function Fanchart(props: FanchartProps) {
                   allEvents={props.allEvents}
                   settings={props.settings}
                />
-               {
-                  props.layouts.spaceBetweenGens !== 0 && (
-                     <path
-                        className="separator"
-                        style={ColorTheme.forSeparator(
-                           props.settings.sepColors, p, c).toStr('svg')}
-                        d={separatorArc(c) as string}
-                        key={c.id}
-                     />
-                  )
-               }
+               {props.layouts.spaceBetweenGens !== 0 && (
+                  <path
+                     className="separator"
+                     style={ColorTheme.forSeparator(
+                        props.settings.sepColors,
+                        p,
+                        c
+                     ).toStr("svg")}
+                     d={separatorArc(c) as string}
+                     key={c.id}
+                  />
+               )}
             </g>
          );
 
@@ -120,7 +120,8 @@ export function Fanchart(props: FanchartProps) {
    };
    recurseChildren(props.layouts[props.decujus]);
 
-   const transform = `translate(${props.layouts.centerX + 10},${props.layouts.centerY + 10})`;
+   const transform = `translate(${props.layouts.centerX + 10},${props.layouts
+      .centerY + 10})`;
    return (
       <ScalableSVG className="Fanchart">
          <g transform={transform}>
@@ -138,7 +139,7 @@ export function Fanchart(props: FanchartProps) {
  */
 function modulo(a: number, b: number): number {
    const r = a % b;
-   return (r * b < 0) ? r + b : r;
+   return r * b < 0 ? r + b : r;
 }
 
 /**
@@ -166,24 +167,17 @@ export function FanchartMarriage(props: FanchartMarriageProps) {
    let M = props.layout.maxAngle - Math.PI / 2;
 
    const td = path();
-   td.arc(
-      0, 0,
-      props.layout.maxRadius + props.gapHeight / 2,
-      m, M);
+   td.arc(0, 0, props.layout.maxRadius + props.gapHeight / 2, m, M);
 
    return (
       <g className="marriage">
-         <path
-            fill="none"
-            id={'marr' + props.layout.id}
-            d={td.toString()}
-         />
+         <path fill="none" id={"marr" + props.layout.id} d={td.toString()} />
          <text>
             <textPath
                startOffset="50%"
                textAnchor="middle"
                alignmentBaseline="middle"
-               xlinkHref={'#marr' + props.layout.id}
+               xlinkHref={"#marr" + props.layout.id}
             >
                {props.layout.parentsMarriage.text}
             </textPath>
@@ -204,42 +198,51 @@ const fanarc = arc<PersonLayout>()
    .outerRadius(p => p.maxRadius);
 
 interface FanchartBoxProps {
-   person: Person|undefined;
+   person: Person | undefined;
    layout: PersonLayout;
    settings: FanchartSettings;
    allEvents: GenealogyEventSet;
 }
 
-const MIN_ANGLE_STRAIGHT_TEXT = 15 * Math.PI / 180;
+const MIN_ANGLE_STRAIGHT_TEXT = (15 * Math.PI) / 180;
 
 export function FanchartBox(props: FanchartBoxProps) {
    const d = fanarc(props.layout) as string;
 
    const style = ColorTheme.forPerson(
-      props.settings.colors, props.person, props.layout);
-   const styleStr = style.combineWith(
-      ColorTheme.forFanchartBox(props.settings.colors)).toStr('svg');
-   const textStyle = style.toStr('svgtext');
+      props.settings.colors,
+      props.person,
+      props.layout
+   );
+   const styleStr = style
+      .combineWith(ColorTheme.forFanchartBox(props.settings.colors))
+      .toStr("svg");
+   const textStyle = style.toStr("svgtext");
 
    const children: JSX.Element[] = [];
    const diff = props.layout.maxAngle - props.layout.minAngle;
 
    const td = path();
-   if (Math.abs(props.layout.generation) >= props.settings.straightTextThreshold
-       || Math.abs(diff) < MIN_ANGLE_STRAIGHT_TEXT
+   if (
+      Math.abs(props.layout.generation) >=
+         props.settings.straightTextThreshold ||
+      Math.abs(diff) < MIN_ANGLE_STRAIGHT_TEXT
    ) {
-      const a = standardAngle(
-         (props.layout.minAngle + props.layout.maxAngle) / 2) - Math.PI / 2;
+      const a =
+         standardAngle((props.layout.minAngle + props.layout.maxAngle) / 2) -
+         Math.PI / 2;
       const ca = Math.cos(a);
       const sa = Math.sin(a);
       let r = props.layout.minRadius;
       let R = props.layout.maxRadius;
-      if (props.settings.readableText && (a < -Math.PI / 2 || a > Math.PI / 2)) {
+      if (
+         props.settings.readableText &&
+         (a < -Math.PI / 2 || a > Math.PI / 2)
+      ) {
          [r, R] = [R, r];
       }
       td.moveTo(r * ca, r * sa);
       td.lineTo(R * ca, R * sa);
-
    } else {
       const m = props.layout.minAngle - Math.PI / 2;
       const M = props.layout.maxAngle - Math.PI / 2;
@@ -265,26 +268,23 @@ export function FanchartBox(props: FanchartBoxProps) {
       children.push(
          <path
             className="name"
-            style={{stroke: "none", fill: "none"}}
-            id={'text' + props.layout.id}
+            style={{ stroke: "none", fill: "none" }}
+            id={"text" + props.layout.id}
             d={td.toString()}
             key="path"
          />
       );
 
-      const birth = extractYear(props.person.birthISODate) || '';
-      const death = extractYear(props.person.deathISODate) || '';
+      const birth = extractYear(props.person.birthISODate) || "";
+      const death = extractYear(props.person.deathISODate) || "";
       const dates = `${birth} - ${death}`;
 
       children.push(
-         <text
-            key="text"
-            style={textStyle}
-         >
+         <text key="text" style={textStyle}>
             <textPath
                startOffset="50%"
                textAnchor="middle"
-               xlinkHref={'#text' + props.layout.id}
+               xlinkHref={"#text" + props.layout.id}
             >
                <tspan dy="0em" className="name">
                   {props.person.display_name}
@@ -293,24 +293,22 @@ export function FanchartBox(props: FanchartBoxProps) {
             <textPath
                startOffset="50%"
                textAnchor="middle"
-               xlinkHref={'#text' + props.layout.id}
+               xlinkHref={"#text" + props.layout.id}
             >
-               <tspan dy="1.3em" className="details">{dates}</tspan>
+               <tspan dy="1.3em" className="details">
+                  {dates}
+               </tspan>
             </textPath>
          </text>
       );
    }
 
-   const link = props.person ?  '/fanchart/' + props.person.id : '#';
+   const link = props.person ? "/fanchart/" + props.person.id : "#";
 
    return (
       <Link to={link}>
          <g>
-            <path
-               className="background"
-               {...styleStr}
-               d={d}
-            />
+            <path className="background" {...styleStr} d={d} />
             {children}
          </g>
       </Link>

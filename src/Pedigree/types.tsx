@@ -1,25 +1,25 @@
-import { BasePersonLayout } from '../Store/ColorTheme';
-import { PedigreeSettings, LayoutScheme, isVertical } from '../Store/Pedigree';
+import { BasePersonLayout } from "../Store/ColorTheme";
+import { PedigreeSettings, LayoutScheme, isVertical } from "../Store/Pedigree";
 
 export interface PersonLayout extends BasePersonLayout {
-   id: number;  // id of the person (negative if dummy box)
+   id: number; // id of the person (negative if dummy box)
    x: number;
    y: number;
-   maxY: number;  // The bottom-most coordinate for the ancestors.
-                  // This leaves space to display more information in some
-                  // layouts.
+   maxY: number; // The bottom-most coordinate for the ancestors.
+   // This leaves space to display more information in some
+   // layouts.
    w: number;
    h: number;
-   fs: number;  // font size
+   fs: number; // font size
    radius: number;
-   parents: (PersonLayout|undefined)[];
-   children: (PersonLayout|undefined)[];
+   parents: (PersonLayout | undefined)[];
+   children: (PersonLayout | undefined)[];
    parentsMarriage?: {
-      x: number;  // Position of the start/middle of the text (see align)
-      y: number;  // Position of the top of the text
+      x: number; // Position of the start/middle of the text (see align)
+      y: number; // Position of the top of the text
       text: string;
       fs: number;
-      alignX?: string|undefined; // How to align text with respect to 'x'
+      alignX?: string | undefined; // How to align text with respect to 'x'
    };
 }
 
@@ -44,25 +44,41 @@ export abstract class Sizing {
 
       switch (settings.layout) {
          case LayoutScheme.TOP_DOWN:
-            for (let gen = -settings.descendants; gen <= settings.ancestors + 1; gen++) {
+            for (
+               let gen = -settings.descendants;
+               gen <= settings.ancestors + 1;
+               gen++
+            ) {
                this.start[gen] = l;
                l += this.boxHeight(gen) + this.padding(gen);
             }
             break;
          case LayoutScheme.BOTTOM_UP:
-            for (let gen = settings.ancestors + 1; gen >= -settings.descendants; gen--) {
+            for (
+               let gen = settings.ancestors + 1;
+               gen >= -settings.descendants;
+               gen--
+            ) {
                this.start[gen] = l;
                l += this.boxHeight(gen) + this.padding(gen);
             }
             break;
          case LayoutScheme.LEFT_RIGHT:
-            for (let gen = -settings.descendants; gen <= settings.ancestors + 1; gen++) {
+            for (
+               let gen = -settings.descendants;
+               gen <= settings.ancestors + 1;
+               gen++
+            ) {
                this.start[gen] = l;
                l += this.boxWidth(gen) + this.padding(gen);
             }
             break;
-        default:
-            for (let gen = settings.ancestors + 1; gen >= -settings.descendants; gen--) {
+         default:
+            for (
+               let gen = settings.ancestors + 1;
+               gen >= -settings.descendants;
+               gen--
+            ) {
                this.start[gen] = l;
                l += this.boxWidth(gen) + this.padding(gen);
             }
@@ -73,12 +89,17 @@ export abstract class Sizing {
    /*
     * Create a partial layout for a box at the given generation
     */
-   public createXLayout(generation: number, sosa: number, angle: number, id?: number): PersonLayout {
+   public createXLayout(
+      generation: number,
+      sosa: number,
+      angle: number,
+      id?: number
+   ): PersonLayout {
       return {
          id: id || --this.dummyId,
          x: this.vertical ? NaN : this.start[generation],
          y: this.vertical ? this.start[generation] : NaN,
-         maxY: NaN,  // computed later
+         maxY: NaN, // computed later
          w: this.boxWidth(generation),
          h: this.boxHeight(generation),
          fs: this.textHeight(generation),
@@ -87,7 +108,7 @@ export abstract class Sizing {
          angle: angle,
          radius: this.radius(generation),
          parents: [], // computed later
-         children: [], // computed later
+         children: [] // computed later
       };
    }
 

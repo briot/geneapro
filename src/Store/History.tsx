@@ -1,12 +1,12 @@
-import { actionCreator } from '../Store/Actions';
-import { Person } from '../Store/Person';
-import { Source } from '../Store/Source';
-import { Place } from '../Store/Place';
+import { actionCreator } from "../Store/Actions";
+import { Person } from "../Store/Person";
+import { Source } from "../Store/Source";
+import { Place } from "../Store/Place";
 
 export enum HistoryKind {
    PERSON = 0,
    PLACE = 1,
-   SOURCE = 2,
+   SOURCE = 2
 }
 
 export interface HistoryItem {
@@ -18,7 +18,7 @@ export interface HistoryItem {
 /**
  * Return the ID of the last visited person
  */
-export function lastVisitedPerson(hist: HistoryItem[]): number|undefined {
+export function lastVisitedPerson(hist: HistoryItem[]): number | undefined {
    for (const h of hist) {
       if (h.kind === HistoryKind.PERSON) {
          return h.id;
@@ -34,4 +34,4 @@ export const addToHistory = actionCreator<{
    person?: Person;
    source?: Source;
    place?: Place;
-}>('DATA/HISTORY');
+}>("DATA/HISTORY");

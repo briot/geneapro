@@ -1,35 +1,33 @@
-import * as React from 'react';
-import { Accordion, Form } from 'semantic-ui-react';
-import { CheckboxField, SliderField } from '../Forms';
-import { StatsSettings } from '../Store/Stats';
+import * as React from "react";
+import { Accordion, Form } from "semantic-ui-react";
+import { CheckboxField, SliderField } from "../Forms";
+import { StatsSettings } from "../Store/Stats";
 
 interface StatsSideProps {
    settings: StatsSettings;
    onChange: (diff: Partial<StatsSettings>) => void;
-
 }
 
 export default function StatsSide(props: StatsSideProps) {
    const panels = [
       {
-         key: 'stats',
+         key: "stats",
          title: {
             content: (
                <span>
                   Stats
                   <small>
-                     {props.settings.max_age ?
-                         'max age:' + props.settings.max_age :
-                         'ignore persons with no explicit death'
-                     },
-                     every {props.settings.bar_width} years,
-                     {props.settings.show_treestats ? ' show ' : ' hide '}
+                     {props.settings.max_age
+                        ? "max age:" + props.settings.max_age
+                        : "ignore persons with no explicit death"}
+                     , every {props.settings.bar_width} years,
+                     {props.settings.show_treestats ? " show " : " hide "}
                      stats,
-                     {props.settings.show_generations ? ' show ' : ' hide '}
+                     {props.settings.show_generations ? " show " : " hide "}
                      generations,
-                     {props.settings.show_lifespan ? ' show ' : ' hide '}
+                     {props.settings.show_lifespan ? " show " : " hide "}
                      lifespan
-                   </small>
+                  </small>
                </span>
             )
          },
@@ -43,9 +41,11 @@ export default function StatsSide(props: StatsSideProps) {
                      min={0}
                      max={130}
                      onChange={props.onChange}
-                     doc={'If 0, ignore people with no explicit death date,' +
-                          'otherwise assume they do not live longer than' +
-                          'this value'}
+                     doc={
+                        "If 0, ignore people with no explicit death date," +
+                        "otherwise assume they do not live longer than" +
+                        "this value"
+                     }
                   />
 
                   <SliderField
@@ -80,7 +80,8 @@ export default function StatsSide(props: StatsSideProps) {
                </Form>
             )
          }
-      }];
+      }
+   ];
 
    return (
       <Accordion styled={true} exclusive={false} fluid={true} panels={panels} />

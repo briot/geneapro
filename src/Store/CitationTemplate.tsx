@@ -1,19 +1,18 @@
-import * as React from 'react';
+import * as React from "react";
 
 interface Chunk {
    s: string;
-   marker: number;    // index into the markers, or -1 if outside of markers
+   marker: number; // index into the markers, or -1 if outside of markers
 }
 
-type Marker = [string, string];   // open and close of a special section
+type Marker = [string, string]; // open and close of a special section
 
 interface Substitute {
    [key: string]: string;
 }
 
 export default class CitationTemplate {
-
-   public full: string;   // expanded
+   public full: string; // expanded
    public biblio: string; // expanded
    public abbrev: string; // expanded
 
@@ -22,9 +21,9 @@ export default class CitationTemplate {
       protected _biblio: string,
       protected _abbrev: string
    ) {
-      this.full = '';
-      this.biblio = '';
-      this.abbrev = '';
+      this.full = "";
+      this.biblio = "";
+      this.abbrev = "";
    }
 
    /**
@@ -42,7 +41,7 @@ export default class CitationTemplate {
    public getParts(): Set<string> {
       let parts: Set<string> = new Set();
       const addParts = (s: string) => {
-         const parsed = this._parse(s, [['{', '}']]);
+         const parsed = this._parse(s, [["{", "}"]]);
          for (const c of parsed) {
             if (c.marker === 0) {
                parts.add(c.s);
@@ -61,15 +60,20 @@ export default class CitationTemplate {
     * Expand a string into a series of HTML elements to show bold, italics,...
     */
    public html(s: string): JSX.Element[] {
-      return this._parse(s, [['<i>', '</i>'],
-                             ['<b>', '</b>'],
-                             ['<small>', '</small>']])
-      .map(
-         (sub, index) =>
-            sub.marker === -1 ? <span key={index}>{sub.s}</span> :
-            sub.marker === 0 ?  <i key={index}>{sub.s}</i> :
-            sub.marker === 1 ?  <b key={index}>{sub.s}</b> :
-                                <small key={index}>{sub.s}</small>
+      return this._parse(s, [
+         ["<i>", "</i>"],
+         ["<b>", "</b>"],
+         ["<small>", "</small>"]
+      ]).map((sub, index) =>
+         sub.marker === -1 ? (
+            <span key={index}>{sub.s}</span>
+         ) : sub.marker === 0 ? (
+            <i key={index}>{sub.s}</i>
+         ) : sub.marker === 1 ? (
+            <b key={index}>{sub.s}</b>
+         ) : (
+            <small key={index}>{sub.s}</small>
+         )
       );
    }
 
@@ -78,11 +82,12 @@ export default class CitationTemplate {
     * from parts.
     */
    private _substitute(s: string, parts: Substitute): string {
-      return this._parse(s, [['{', '}']]).reduce(
-         (str, c) => str + (
-            c.marker === 0 ? (parts[c.s] || `<small>${c.s}</small>`) :
-            c.s),
-         '');
+      return this._parse(s, [["{", "}"]]).reduce(
+         (str, c) =>
+            str +
+            (c.marker === 0 ? parts[c.s] || `<small>${c.s}</small>` : c.s),
+         ""
+      );
    }
 
    /**
@@ -93,13 +98,13 @@ export default class CitationTemplate {
       let result: Chunk[] = [];
       let start = 0;
       let marker = -1;
-      for (let current = 0; current < s.length;) {
+      for (let current = 0; current < s.length; ) {
          if (marker === -1) {
             for (let m = 0; m < markers.length; m++) {
                if (s.startsWith(markers[m][0], current)) {
                   result.push({
                      s: s.slice(start, current),
-                     marker: -1,
+                     marker: -1
                   });
                   current += markers[m][0].length;
                   start = current;
@@ -108,27 +113,25 @@ export default class CitationTemplate {
                }
             }
             if (marker === -1) {
-               current ++;
+               current++;
             }
-
          } else if (s.startsWith(markers[marker][1], current)) {
             result.push({
                s: s.slice(start, current),
-               marker: marker,
+               marker: marker
             });
             current += markers[marker][1].length;
             start = current;
             marker = -1;
-
          } else {
-            current ++;
+            current++;
          }
       }
 
       if (start !== s.length) {
          result.push({
             s: s.slice(start, s.length),
-            marker: -1,
+            marker: -1
          });
       }
       return result;

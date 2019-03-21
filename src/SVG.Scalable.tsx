@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from "react";
 
 interface Point {
    left: number;
@@ -14,28 +14,33 @@ interface ScalableSVGState {
    scale: number;
 }
 
-export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, ScalableSVGState> {
+export default class ScalableSVG extends React.PureComponent<
+   ScalableSVGProps,
+   ScalableSVGState
+> {
    state: ScalableSVGState = {
       scale: 1,
-      translate: {left: 0, top: 0},
+      translate: { left: 0, top: 0 }
    };
 
    zoomExtent: [number, number] = [1 / 6, 6];
    // Maximum levels of zoom (in and out)
 
-   private origin: undefined|{
-      clickX: number,
-      clickY: number,
-      translate: Point,
-   };
+   private origin:
+      | undefined
+      | {
+           clickX: number;
+           clickY: number;
+           translate: Point;
+        };
    // Where the mouseDown occurred, only set during a drag
 
-   private svgRef: SVGSVGElement|null = null;
+   private svgRef: SVGSVGElement | null = null;
 
    render() {
       return (
          <svg
-            ref={(ref: SVGSVGElement) => this.svgRef = ref}
+            ref={(ref: SVGSVGElement) => (this.svgRef = ref)}
             {...this.props}
             preserveAspectRatio="xMinYMin meet"
             onMouseDown={this.onMouseDown}
@@ -44,7 +49,9 @@ export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, S
             <g
                transform={
                   `scale(${this.state.scale})` +
-                  `translate(${-this.state.translate.left},${-this.state.translate.top})`}
+                  `translate(${-this.state.translate.left},${-this.state
+                     .translate.top})`
+               }
             >
                {this.props.children}
             </g>
@@ -59,19 +66,19 @@ export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, S
             clickY: e.pageY,
             translate: this.state.translate
          };
-         document.addEventListener('mouseup', this.onMouseUp);
-         document.addEventListener('mousemove', this.onMouseMove);
+         document.addEventListener("mouseup", this.onMouseUp);
+         document.addEventListener("mousemove", this.onMouseMove);
          e.preventDefault();
          e.stopPropagation();
       }
-   }
+   };
 
    onMouseUp = (e: MouseEvent) => {
-      document.removeEventListener('mouseup', this.onMouseUp);
-      document.removeEventListener('mousemove', this.onMouseMove);
+      document.removeEventListener("mouseup", this.onMouseUp);
+      document.removeEventListener("mousemove", this.onMouseMove);
       e.preventDefault();
       e.stopPropagation();
-   }
+   };
 
    onMouseMove = (e: MouseEvent) => {
       const offsetX = (e.pageX - this.origin!.clickX) / this.state.scale;
@@ -79,10 +86,10 @@ export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, S
       this.setState({
          translate: {
             left: this.origin!.translate.left - offsetX,
-            top: this.origin!.translate.top - offsetY,
+            top: this.origin!.translate.top - offsetY
          }
       });
-   }
+   };
 
    /**
     * Change scaling factor, keeping `preserve` at the same location on
@@ -90,20 +97,23 @@ export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, S
     * `preserve` is given in canvas coordinates
     */
    scaleBy(factor: number, preserve: Point) {
-      this.setState((oldState: ScalableSVGState): ScalableSVGState => {
-         const newScale = Math.max(
-            Math.min(oldState.scale * factor, this.zoomExtent[1]),
-            this.zoomExtent[0]);
-         const preserveScreen = this.toScreen(preserve);
-         const newTrans: Point = {
-            left: preserve.left - preserveScreen.left / newScale,
-            top: preserve.top - preserveScreen.top / newScale
-         };
-         return {
-            scale: newScale,
-            translate: newTrans
-         };
-      });
+      this.setState(
+         (oldState: ScalableSVGState): ScalableSVGState => {
+            const newScale = Math.max(
+               Math.min(oldState.scale * factor, this.zoomExtent[1]),
+               this.zoomExtent[0]
+            );
+            const preserveScreen = this.toScreen(preserve);
+            const newTrans: Point = {
+               left: preserve.left - preserveScreen.left / newScale,
+               top: preserve.top - preserveScreen.top / newScale
+            };
+            return {
+               scale: newScale,
+               translate: newTrans
+            };
+         }
+      );
    }
 
    /**
@@ -131,11 +141,14 @@ export default class ScalableSVG extends React.PureComponent<ScalableSVGProps, S
     */
    wheeled = (e: React.WheelEvent<SVGSVGElement>) => {
       const rect = this.svgRef!.getBoundingClientRect();
-      const escreen = this.toCanvas(
-         {left: e.clientX - rect.left, top: e.clientY - rect.top});
+      const escreen = this.toCanvas({
+         left: e.clientX - rect.left,
+         top: e.clientY - rect.top
+      });
       this.scaleBy(
          Math.pow(2, 0.002 * -e.deltaY * (e.deltaMode ? 120 : 1)) /* factor */,
-         escreen /* preserve */);
+         escreen /* preserve */
+      );
       e.preventDefault();
-   }
+   };
 }

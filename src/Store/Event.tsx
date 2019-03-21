@@ -1,19 +1,19 @@
-import { actionCreator } from '../Store/Actions';
-import { AssertionList } from '../Store/Assertion';
+import { actionCreator } from "../Store/Actions";
+import { AssertionList } from "../Store/Assertion";
 
 interface EventType {
    id: number;
-   name: string;    // e.g. "birth"
-   gedcom: string;  // e.g. "BIRT"
+   name: string; // e.g. "birth"
+   gedcom: string; // e.g. "BIRT"
 }
 
 export interface GenealogyEvent {
    id: number;
    name: string;
    date?: string;
-   date_sort?: string;  // computed from date, computer-friendly
-   placeId?: number;    // points to a place in the state
-   sources?: number[];  // ??? Incorrect type
+   date_sort?: string; // computed from date, computer-friendly
+   placeId?: number; // points to a place in the state
+   sources?: number[]; // ??? Incorrect type
    type?: EventType;
 
    // Only available after we fetched the details
@@ -29,7 +29,7 @@ export interface GenealogyEventSet {
  */
 export const addEvents = actionCreator<{
    events: GenealogyEventSet;
-}>('DATA/EVENTS');
+}>("DATA/EVENTS");
 
 /**
  * Display the event on the screen
@@ -40,25 +40,27 @@ export const addEvents = actionCreator<{
  *   Ignored when not using useDateSort
  */
 
-export function event_to_string(e?: GenealogyEvent,
-                                showSources?: boolean,
-                                useDateSort: boolean = false,
-                                yearOnly: boolean = false) {
+export function event_to_string(
+   e?: GenealogyEvent,
+   showSources?: boolean,
+   useDateSort: boolean = false,
+   yearOnly: boolean = false
+) {
    if (e) {
-      let s = (useDateSort ? e.date_sort : e.date) || '';
+      let s = (useDateSort ? e.date_sort : e.date) || "";
       if (yearOnly && useDateSort) {
          s = s.substring(0, 4);
       }
 
       if (s && showSources) {
-         s += (e.sources ? ' \u2713' : ' \u2717');
+         s += e.sources ? " \u2713" : " \u2717";
       }
       return s;
    } else {
-      return '';
+      return "";
    }
 }
 
-export function extractYear(isoDate: string|undefined): number|undefined {
+export function extractYear(isoDate: string | undefined): number | undefined {
    return isoDate ? Number(isoDate.substring(0, 4)) : undefined;
 }

@@ -1,4 +1,4 @@
-import { AssertionList } from '../Store/Assertion';
+import { AssertionList } from "../Store/Assertion";
 
 export interface Place {
    id: number;

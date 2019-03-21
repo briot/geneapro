@@ -1,9 +1,9 @@
-import * as React from 'react';
-import { Accordion, Form } from 'semantic-ui-react';
-import * as GP_JSON from '../Server/JSON';
-import { FanchartSettings } from '../Store/Fanchart';
-import { CheckboxField, SliderField } from '../Forms';
-import ThemeSelector from '../ThemeSelector';
+import * as React from "react";
+import { Accordion, Form } from "semantic-ui-react";
+import * as GP_JSON from "../Server/JSON";
+import { FanchartSettings } from "../Store/Fanchart";
+import { CheckboxField, SliderField } from "../Forms";
+import ThemeSelector from "../ThemeSelector";
 
 interface FanchartSideProps {
    settings: FanchartSettings;
@@ -14,17 +14,21 @@ interface FanchartSideProps {
 export default function FanchartSide(props: FanchartSideProps) {
    const panels = [
       {
-         key: 'generations',
+         key: "generations",
          title: {
             content: (
                <span>
                   Generations
                   <small>
-                     ancestors: {props.settings.ancestors},
-                     descendants: {props.settings.descendants},
-                     {props.settings.showMissingPersons ? ', show missing persons' : ''}
-                     {props.settings.showSourcedEvents ? ', sourced events' : ''}
-                     {props.settings.showMarriages ? ', show marriages' : ''}
+                     ancestors: {props.settings.ancestors}, descendants:{" "}
+                     {props.settings.descendants},
+                     {props.settings.showMissingPersons
+                        ? ", show missing persons"
+                        : ""}
+                     {props.settings.showSourcedEvents
+                        ? ", sourced events"
+                        : ""}
+                     {props.settings.showMarriages ? ", show marriages" : ""}
                   </small>
                </span>
             )
@@ -70,29 +74,30 @@ export default function FanchartSide(props: FanchartSideProps) {
                      fieldName="showSourcedEvents"
                      onChange={props.onChange}
                   />
-
                </Form>
             )
          }
       },
       {
-         key: 'theme',
+         key: "theme",
          title: {
             content: (
                <span>
                   Theme
                   <small>
                      colors: {props.themeNameGet(props.settings.colors)},&nbsp;
-                     separators: {props.themeNameGet(props.settings.sepColors)},&nbsp;
-                     angle: {props.settings.fullAngle},&nbsp;
-                     padding: {props.settings.anglePad}
+                     separators: {props.themeNameGet(props.settings.sepColors)}
+                     ,&nbsp; angle: {props.settings.fullAngle},&nbsp; padding:{" "}
+                     {props.settings.anglePad}
                   </small>
                   <small>
                      text threshold: {props.settings.straightTextThreshold}
-                     {props.settings.readableText ? ', text kept readable' : ''}
+                     {props.settings.readableText ? ", text kept readable" : ""}
                   </small>
                   <small>
-                     {props.settings.gapBetweenGens ? 'gap between generations' : ''}
+                     {props.settings.gapBetweenGens
+                        ? "gap between generations"
+                        : ""}
                   </small>
                </span>
             )

@@ -1,4 +1,4 @@
-import { StatsSettings } from '../Store/Stats';
+import { StatsSettings } from "../Store/Stats";
 
 /**
  * Sent back by the server
@@ -32,34 +32,38 @@ export interface JSONStats {
 export function fetchStatsFromServer(
    decujus: number,
    settings: StatsSettings,
-   signal?: AbortSignal,
+   signal?: AbortSignal
 ): Promise<JSONStats> {
-   return window.fetch(
-      '/data/stats/' + decujus
-      + '?max_age=' + settings.max_age
-      + '&bar_width=' + settings.bar_width,
-      {signal}
-   ).then(resp => {
+   return window
+      .fetch(
+         "/data/stats/" +
+            decujus +
+            "?max_age=" +
+            settings.max_age +
+            "&bar_width=" +
+            settings.bar_width,
+         { signal }
+      )
+      .then(resp => {
          if (resp.status !== 200) {
-            throw new Error('Server returned an error');
+            throw new Error("Server returned an error");
          }
          return resp.json();
       });
 }
 
 export interface JSONCount {
-   places: number;   // number of distinct places in database
-   sources: number;  // number of distinct sources in database
+   places: number; // number of distinct places in database
+   sources: number; // number of distinct sources in database
    personas: number; // number of basic persons in database
-   persons: number;  // number of persons (grouped by sameAs)
+   persons: number; // number of persons (grouped by sameAs)
 }
 
 export function fetchCountFromServer(): Promise<JSONCount> {
-   return window.fetch('/data/stats/count')
-      .then(resp => {
-         if (resp.status !== 200) {
-            throw new Error('Server returned an error');
-         }
-         return resp.json();
-      });
+   return window.fetch("/data/stats/count").then(resp => {
+      if (resp.status !== 200) {
+         throw new Error("Server returned an error");
+      }
+      return resp.json();
+   });
 }

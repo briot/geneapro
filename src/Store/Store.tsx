@@ -1,16 +1,14 @@
-import * as Redux from 'redux';
-import createSagaMiddleware from 'redux-saga';
-import { persistStore, autoRehydrate } from 'redux-persist';
-import { AppState, GPStore } from '../Store/State';
-import { rootReducer } from '../Store/Reducers';
-import { rootSaga } from '../Store/Sagas';
+import * as Redux from "redux";
+import createSagaMiddleware from "redux-saga";
+import { persistStore, autoRehydrate } from "redux-persist";
+import { AppState, GPStore } from "../Store/State";
+import { rootReducer } from "../Store/Reducers";
+import { rootSaga } from "../Store/Sagas";
 
 // Use generators as reducers
 const sagaMiddleware = createSagaMiddleware();
 
-const middlewares: Redux.Middleware[] = [
-   sagaMiddleware,
-];
+const middlewares: Redux.Middleware[] = [sagaMiddleware];
 
 if (process.env.NODE_ENV === `development`) {
    // Log actions to the console
@@ -18,19 +16,23 @@ if (process.env.NODE_ENV === `development`) {
    // performance impact (extra 14s to display the list of persons with
    // 10000 individuals).
    // eslint-disable-next-line @typescript-eslint/no-var-requires
-   const { createLogger } = require('redux-logger');
+   const { createLogger } = require("redux-logger");
    middlewares.push(
-      createLogger({collapsed: true,
-                    duration: true,
-                    timestamp: true,
-                    diff: false}));   // log actions in the console
+      createLogger({
+         collapsed: true,
+         duration: true,
+         timestamp: true,
+         diff: false
+      })
+   ); // log actions in the console
 }
 
 export const store: GPStore = Redux.createStore<AppState>(
    rootReducer /* reducer */,
-   Redux.compose(  /* enhancer */
+   Redux.compose(
+      /* enhancer */
       Redux.applyMiddleware(...middlewares) as Redux.StoreEnhancer<AppState>,
-      autoRehydrate<AppState>({log: false}) // load from persistent storage
+      autoRehydrate<AppState>({ log: false }) // load from persistent storage
    )
 );
 
@@ -42,13 +44,20 @@ sagaMiddleware.run(rootSaga);
  * and thus avoid displaying the default settings.
  */
 export function setPersist(whenDone: () => void) {
-   if (process.env.NODE_ENV !== 'test') {
+   if (process.env.NODE_ENV !== "test") {
       persistStore(
          store,
          {
             // ??? Should not save pedigree.loading
-            whitelist: ['pedigree', 'fanchart', 'radial', 'quilts', 'history',
-                        'stats', 'personalist'],
+            whitelist: [
+               "pedigree",
+               "fanchart",
+               "radial",
+               "quilts",
+               "history",
+               "stats",
+               "personalist"
+            ]
          },
          whenDone
       );

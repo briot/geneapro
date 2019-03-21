@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { Icon, Segment } from 'semantic-ui-react';
+import * as React from "react";
+import { Icon, Segment } from "semantic-ui-react";
 
 /**
  * Assertion Part
@@ -7,7 +7,7 @@ import { Icon, Segment } from 'semantic-ui-react';
  */
 
 interface PartProps {
-   title: JSX.Element;    // The always-visible content
+   title: JSX.Element; // The always-visible content
 
    onExpand?: () => void;
    expanded?: JSX.Element; // The expanded content
@@ -20,8 +20,11 @@ interface PartState {
    expanded: boolean;
 }
 
-export default class AssertionPart extends React.PureComponent<PartProps, PartState> {
-   public state: PartState = {expanded: false};
+export default class AssertionPart extends React.PureComponent<
+   PartProps,
+   PartState
+> {
+   public state: PartState = { expanded: false };
 
    protected onExpand = () => {
       if (this.props.expandable) {
@@ -31,28 +34,24 @@ export default class AssertionPart extends React.PureComponent<PartProps, PartSt
                   this.props.onExpand();
                }
             }
-            return {expanded: !old.expanded};
+            return { expanded: !old.expanded };
          });
       }
-   }
+   };
 
    public render() {
       const p = this.props;
       return (
          <Segment attached={true}>
             <div className="expander" onClick={this.onExpand}>
-               {
-                  p.expandable &&
-                     <Icon name={this.state.expanded ? 'dropdown' : 'triangle right'} />
-               }
+               {p.expandable && (
+                  <Icon
+                     name={this.state.expanded ? "dropdown" : "triangle right"}
+                  />
+               )}
             </div>
-            <div className="assertionTitle">
-               {p.title}
-            </div>
-            {
-               (!p.expandable || this.state.expanded) &&
-               <div>{p.expanded}</div>
-            }
+            <div className="assertionTitle">{p.title}</div>
+            {(!p.expandable || this.state.expanded) && <div>{p.expanded}</div>}
          </Segment>
       );
    }

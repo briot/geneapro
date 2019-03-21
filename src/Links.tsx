@@ -1,19 +1,19 @@
-import * as React from 'react';
-import { connect } from 'react-redux';
-import { AppState } from './Store/State';
-import { Link } from 'react-router-dom';
-import { Icon } from 'semantic-ui-react';
-import { Place } from './Store/Place';
-import { Source } from './Store/Source';
-import { personDisplay, Person } from './Store/Person';
-import './Links.css';
+import * as React from "react";
+import { connect } from "react-redux";
+import { AppState } from "./Store/State";
+import { Link } from "react-router-dom";
+import { Icon } from "semantic-ui-react";
+import { Place } from "./Store/Place";
+import { Source } from "./Store/Source";
+import { personDisplay, Person } from "./Store/Person";
+import "./Links.css";
 
 /**
  * persona links
  */
 
 export function urlPersona(id: number) {
-   return '/persona/' + id;
+   return "/persona/" + id;
 }
 
 interface PersonaLinkProps {
@@ -21,17 +21,13 @@ interface PersonaLinkProps {
    hideIcon?: boolean;
 }
 interface ConnectedPersonaLinkProps extends PersonaLinkProps {
-   person: Person|undefined;
+   person: Person | undefined;
 }
 
 function ConnectedPersonaLink(props: ConnectedPersonaLinkProps) {
    const s = personDisplay(props.person);
    return (
-      <Link
-         to={urlPersona(props.id)}
-         className="link persona"
-         title={s}
-      >
+      <Link to={urlPersona(props.id)} className="link persona" title={s}>
          {!props.hideIcon && <Icon name="user" />}
          {s}
          <span className="id">{props.id}</span>
@@ -41,8 +37,8 @@ function ConnectedPersonaLink(props: ConnectedPersonaLinkProps) {
 export const PersonaLink = connect(
    (state: AppState, props: PersonaLinkProps) => ({
       ...props,
-      person: state.persons[props.id],
-   }),
+      person: state.persons[props.id]
+   })
 )(ConnectedPersonaLink);
 
 /**
@@ -50,11 +46,11 @@ export const PersonaLink = connect(
  */
 
 export function urlSource(id: number) {
-   return '/source/' + id;
+   return "/source/" + id;
 }
 
 interface SourceLinkProps {
-   id: number|undefined;
+   id: number | undefined;
    showAbbrev?: boolean;
 }
 interface ConnectedSourceLinkProps extends SourceLinkProps {
@@ -74,10 +70,11 @@ function ConnectedSourceLink(props: ConnectedSourceLinkProps) {
          title={s ? s.title : undefined}
       >
          <Icon name="book" />
-         {s && props.showAbbrev ?
-            <span className="title">{s.abbrev}</span> : 
+         {s && props.showAbbrev ? (
+            <span className="title">{s.abbrev}</span>
+         ) : (
             <span className="notitle" />
-         }
+         )}
          <span className="id">{props.id}</span>
       </Link>
    );
@@ -85,7 +82,7 @@ function ConnectedSourceLink(props: ConnectedSourceLinkProps) {
 export const SourceLink = connect(
    (state: AppState, props: SourceLinkProps) => ({
       ...props,
-      source: props.id === undefined ? undefined : state.sources[props.id],
+      source: props.id === undefined ? undefined : state.sources[props.id]
    })
 )(ConnectedSourceLink);
 
@@ -94,7 +91,7 @@ export const SourceLink = connect(
  */
 
 export function urlPlace(id: number) {
-   return '/place/' + id;
+   return "/place/" + id;
 }
 
 interface PlaceLinkProps {
@@ -108,14 +105,12 @@ export function ConnectedPlaceLink(props: ConnectedPlaceLinkProps) {
    return (
       <Link to={urlPlace(props.id)} className="link  place">
          <Icon name="globe" />
-         {props.place ? props.place.name : 'Unnamed place'}
+         {props.place ? props.place.name : "Unnamed place"}
       </Link>
    );
 }
 
-export const PlaceLink = connect(
-   (state: AppState, props: PlaceLinkProps) => ({
-      ...props,
-      place: state.places[props.id],
-   }),
-)(ConnectedPlaceLink);
+export const PlaceLink = connect((state: AppState, props: PlaceLinkProps) => ({
+   ...props,
+   place: state.places[props.id]
+}))(ConnectedPlaceLink);

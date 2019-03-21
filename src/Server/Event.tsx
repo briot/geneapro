@@ -1,7 +1,11 @@
-import * as JSON from '../Server/JSON';
-import { AssertionList } from '../Store/Assertion';
-import { AssertionEntities, AssertionEntitiesJSON,
-         setAssertionEntities, assertionFromJSON } from '../Server/Person';
+import * as JSON from "../Server/JSON";
+import { AssertionList } from "../Store/Assertion";
+import {
+   AssertionEntities,
+   AssertionEntitiesJSON,
+   setAssertionEntities,
+   assertionFromJSON
+} from "../Server/Person";
 
 export interface EventDetails extends AssertionEntities {
    id: number;
@@ -14,9 +18,9 @@ interface JSONEventDetails extends AssertionEntitiesJSON {
 }
 
 export function* fetchEventFromServer(id: number) {
-   const resp: Response = yield window.fetch('/data/event/' + id);
+   const resp: Response = yield window.fetch("/data/event/" + id);
    if (resp.status !== 200) {
-      throw new Error('Server returned an error');
+      throw new Error("Server returned an error");
    }
 
    const data: JSONEventDetails = yield resp.json();
@@ -27,7 +31,7 @@ export function* fetchEventFromServer(id: number) {
       events: {},
       places: {},
       sources: {},
-      researchers: {},
+      researchers: {}
    };
    setAssertionEntities(data, result /* into */);
    return result;

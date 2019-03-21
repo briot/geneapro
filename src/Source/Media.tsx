@@ -1,6 +1,6 @@
-import * as React from 'react';
-import { Source } from '../Store/Source';
-import Medias from '../MediaList';
+import * as React from "react";
+import { Source } from "../Store/Source";
+import Medias from "../MediaList";
 
 interface SourceMediasProps {
    source: Source;

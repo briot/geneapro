@@ -1,16 +1,27 @@
-import * as React from 'react';
-import { connect } from 'react-redux';
-import { AppState, DatabaseObjectsCount, GPDispatch } from './Store/State';
-import { PersonSet } from './Store/Person';
-import { PlaceSet } from './Store/Place';
-import { P2C } from './Store/Assertion';
-import { fetchCount, fetchPersonDetails, fetchPlaceDetails } from './Store/Sagas';
-import { extractYear } from './Store/Event';
-import { RouteComponentProps } from 'react-router';
-import { Card, Header, Icon, Image, SemanticICONS, Statistic } from 'semantic-ui-react';
-import { HistoryKind, HistoryItem } from './Store/History';
-import { PersonaLink, PlaceLink } from './Links';
-import Page from './Page';
+import * as React from "react";
+import { connect } from "react-redux";
+import { AppState, DatabaseObjectsCount, GPDispatch } from "./Store/State";
+import { PersonSet } from "./Store/Person";
+import { PlaceSet } from "./Store/Place";
+import { P2C } from "./Store/Assertion";
+import {
+   fetchCount,
+   fetchPersonDetails,
+   fetchPlaceDetails
+} from "./Store/Sagas";
+import { extractYear } from "./Store/Event";
+import { RouteComponentProps } from "react-router";
+import {
+   Card,
+   Header,
+   Icon,
+   Image,
+   SemanticICONS,
+   Statistic
+} from "semantic-ui-react";
+import { HistoryKind, HistoryItem } from "./Store/History";
+import { PersonaLink, PlaceLink } from "./Links";
+import Page from "./Page";
 
 const DEFAULT_DECUJUS = 1;
 const MAX_PER_CATEGORY = 9;
@@ -23,7 +34,7 @@ interface PersonCardProps {
 
 class PersonCard extends React.PureComponent<PersonCardProps, {}> {
    componentDidMount() {
-      fetchPersonDetails.execute(this.props.dispatch, {id: this.props.id});
+      fetchPersonDetails.execute(this.props.dispatch, { id: this.props.id });
    }
 
    render() {
@@ -32,14 +43,21 @@ class PersonCard extends React.PureComponent<PersonCardProps, {}> {
          return null;
       }
 
-      let img: JSX.Element|undefined;
+      let img: JSX.Element | undefined;
       if (p.asserts) {
          for (const a of p.asserts.get()) {
-            if (a instanceof P2C
-                && a.characteristic.medias
-                && a.characteristic.medias[0]
+            if (
+               a instanceof P2C &&
+               a.characteristic.medias &&
+               a.characteristic.medias[0]
             ) {
-               img = <Image floated="right" size="tiny" src={a.characteristic.medias[0].url} />;
+               img = (
+                  <Image
+                     floated="right"
+                     size="tiny"
+                     src={a.characteristic.medias[0].url}
+                  />
+               );
                break;
             }
          }
@@ -50,18 +68,25 @@ class PersonCard extends React.PureComponent<PersonCardProps, {}> {
             <Card.Content>
                {img}
                <Card.Header>
-                  <PersonaLink id={this.props.id} hideIcon={true}/>
+                  <PersonaLink id={this.props.id} hideIcon={true} />
                </Card.Header>
-               <Card.Meta>{extractYear(p.birthISODate)} - {extractYear(p.deathISODate)}</Card.Meta>
+               <Card.Meta>
+                  {extractYear(p.birthISODate)} - {extractYear(p.deathISODate)}
+               </Card.Meta>
             </Card.Content>
          </Card>
       );
    }
 }
 
-function RecentPersons(props: {items: HistoryItem[], persons: PersonSet, dispatch: GPDispatch}) {
-   const p = props.items.filter(
-      h => h.kind === HistoryKind.PERSON).slice(0, MAX_PER_CATEGORY);
+function RecentPersons(props: {
+   items: HistoryItem[];
+   persons: PersonSet;
+   dispatch: GPDispatch;
+}) {
+   const p = props.items
+      .filter(h => h.kind === HistoryKind.PERSON)
+      .slice(0, MAX_PER_CATEGORY);
    if (!p.length) {
       return null;
    }
@@ -69,7 +94,9 @@ function RecentPersons(props: {items: HistoryItem[], persons: PersonSet, dispatc
       <>
          <Header size="medium">Recently viewed persons</Header>
          <Card.Group>
-         {p.map(h => <PersonCard key={h.id} id={h.id} {...props}/>)}
+            {p.map(h => (
+               <PersonCard key={h.id} id={h.id} {...props} />
+            ))}
          </Card.Group>
       </>
    );
@@ -83,7 +110,7 @@ interface PlaceCardProps {
 
 class PlaceCard extends React.PureComponent<PlaceCardProps, {}> {
    componentDidMount() {
-      fetchPlaceDetails.execute(this.props.dispatch, {id: this.props.id});
+      fetchPlaceDetails.execute(this.props.dispatch, { id: this.props.id });
    }
 
    render() {
@@ -99,9 +126,14 @@ class PlaceCard extends React.PureComponent<PlaceCardProps, {}> {
    }
 }
 
-function RecentPlaces(props: {items: HistoryItem[], places: PlaceSet, dispatch: GPDispatch}) {
-   const p = props.items.filter(
-      h => h.kind === HistoryKind.PLACE).slice(0, MAX_PER_CATEGORY);
+function RecentPlaces(props: {
+   items: HistoryItem[];
+   places: PlaceSet;
+   dispatch: GPDispatch;
+}) {
+   const p = props.items
+      .filter(h => h.kind === HistoryKind.PLACE)
+      .slice(0, MAX_PER_CATEGORY);
    if (!p.length) {
       return null;
    }
@@ -109,7 +141,9 @@ function RecentPlaces(props: {items: HistoryItem[], places: PlaceSet, dispatch: 
       <>
          <Header size="medium">Recently viewed places</Header>
          <Card.Group>
-         {p.map(h => <PlaceCard key={h.id} id={h.id} {...props}/>)}
+            {p.map(h => (
+               <PlaceCard key={h.id} id={h.id} {...props} />
+            ))}
          </Card.Group>
       </>
    );
@@ -124,19 +158,20 @@ interface StatCardProps {
 
 class StatCard extends React.PureComponent<StatCardProps, {}> {
    render() {
-      const icon =
-         this.props.icon &&
-         (<Icon name={this.props.icon} size="small"/>);
+      const icon = this.props.icon && (
+         <Icon name={this.props.icon} size="small" />
+      );
       return (
          <Card>
             <Card.Content>
                <Statistic>
-                  <Statistic.Value>{icon}{this.props.value}</Statistic.Value>
+                  <Statistic.Value>
+                     {icon}
+                     {this.props.value}
+                  </Statistic.Value>
                   <Statistic.Label>{this.props.label}</Statistic.Label>
                </Statistic>
-               <Card.Description>
-                  {this.props.descr}
-               </Card.Description>
+               <Card.Description>{this.props.descr}</Card.Description>
             </Card.Content>
          </Card>
       );
@@ -145,7 +180,7 @@ class StatCard extends React.PureComponent<StatCardProps, {}> {
 
 interface AllStatsProps {
    dispatch: GPDispatch;
-   count: DatabaseObjectsCount|undefined;
+   count: DatabaseObjectsCount | undefined;
 }
 
 class AllStats extends React.PureComponent<AllStatsProps> {
@@ -167,8 +202,16 @@ class AllStats extends React.PureComponent<AllStatsProps> {
                   icon="user"
                   descr={`Using ${this.props.count.personas} basic personas`}
                />
-               <StatCard value={`${this.props.count.places}`} label="Places" icon="globe" />
-               <StatCard value={`${this.props.count.sources}`} label="Sources" icon="book" />
+               <StatCard
+                  value={`${this.props.count.places}`}
+                  label="Places"
+                  icon="globe"
+               />
+               <StatCard
+                  value={`${this.props.count.sources}`}
+                  label="Sources"
+                  icon="book"
+               />
             </Card.Group>
          </>
       );
@@ -181,7 +224,7 @@ interface PropsFromRoute {
 interface ConnectedDashboardProps extends RouteComponentProps<PropsFromRoute> {
    persons: PersonSet;
    places: PlaceSet;
-   count: DatabaseObjectsCount|undefined;
+   count: DatabaseObjectsCount | undefined;
    decujusid: number;
    items: HistoryItem[];
    dispatch: GPDispatch;
@@ -190,7 +233,7 @@ interface ConnectedDashboardProps extends RouteComponentProps<PropsFromRoute> {
 class ConnectedDashboard extends React.PureComponent<ConnectedDashboardProps> {
    render() {
       const decujus = this.props.persons[this.props.decujusid];
-      document.title = 'Dashboard';
+      document.title = "Dashboard";
       return (
          <Page
             main={
@@ -213,10 +256,10 @@ const DashboardPage = connect(
       places: state.places,
       items: state.history,
       count: state.count,
-      decujusid: Number(props.match.params.decujusId) || DEFAULT_DECUJUS,
+      decujusid: Number(props.match.params.decujusId) || DEFAULT_DECUJUS
    }),
    (dispatch: GPDispatch) => ({
-      dispatch,
-   }),
+      dispatch
+   })
 )(ConnectedDashboard);
 export default DashboardPage;
