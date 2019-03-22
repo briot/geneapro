@@ -19,7 +19,7 @@ import {
 } from "../Store/Sagas";
 import { addEvents } from "../Store/Event";
 import { EventDetails } from "../Server/Event";
-import { DetailsResult, FetchPersonsResult } from "../Server/Person";
+import { DetailsResult } from "../Server/Person";
 import { FetchSourcesResult, FetchSourceDetailsResult } from "../Server/Source";
 import { FetchPlacesResult, PlaceDetails } from "../Server/Place";
 import { defaultPedigree, changePedigreeSettings } from "../Store/Pedigree";

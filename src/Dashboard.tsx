@@ -33,11 +33,11 @@ interface PersonCardProps {
 }
 
 class PersonCard extends React.PureComponent<PersonCardProps, {}> {
-   componentDidMount() {
+   public componentDidMount() {
       fetchPersonDetails.execute(this.props.dispatch, { id: this.props.id });
    }
 
-   render() {
+   public render() {
       const p = this.props.persons[this.props.id];
       if (!p) {
          return null;
@@ -109,11 +109,11 @@ interface PlaceCardProps {
 }
 
 class PlaceCard extends React.PureComponent<PlaceCardProps, {}> {
-   componentDidMount() {
+   public componentDidMount() {
       fetchPlaceDetails.execute(this.props.dispatch, { id: this.props.id });
    }
 
-   render() {
+   public render() {
       return (
          <Card>
             <Card.Content>
@@ -157,7 +157,7 @@ interface StatCardProps {
 }
 
 class StatCard extends React.PureComponent<StatCardProps, {}> {
-   render() {
+   public render() {
       const icon = this.props.icon && (
          <Icon name={this.props.icon} size="small" />
       );
@@ -184,11 +184,11 @@ interface AllStatsProps {
 }
 
 class AllStats extends React.PureComponent<AllStatsProps> {
-   componentDidMount() {
+   public componentDidMount() {
       fetchCount.execute(this.props.dispatch, {});
    }
 
-   render() {
+   public render() {
       if (!this.props.count) {
          return null;
       }
@@ -231,7 +231,7 @@ interface ConnectedDashboardProps extends RouteComponentProps<PropsFromRoute> {
 }
 
 class ConnectedDashboard extends React.PureComponent<ConnectedDashboardProps> {
-   render() {
+   public render() {
       const decujus = this.props.persons[this.props.decujusid];
       document.title = "Dashboard";
       return (

@@ -15,18 +15,18 @@ export default class Medias extends React.PureComponent<
    MediasProps,
    MediasState
 > {
-   state: MediasState = {};
-   imageGroup: HTMLDivElement | undefined;
-   scrollLeft: number | undefined;
+   public state: MediasState = {};
+   protected imageGroup: HTMLDivElement | undefined;
+   protected scrollLeft: number | undefined;
 
-   componentDidUpdate() {
+   public componentDidUpdate() {
       if (this.scrollLeft !== undefined && this.imageGroup) {
          this.imageGroup.scrollLeft = this.scrollLeft;
          this.scrollLeft = undefined;
       }
    }
 
-   selectImage = (selected?: number) => {
+   protected selectImage = (selected?: number) => {
       // Save current scrolling position, so that we can restore it
       if (selected !== undefined && this.imageGroup) {
          this.scrollLeft = this.imageGroup.scrollLeft;
@@ -34,7 +34,7 @@ export default class Medias extends React.PureComponent<
       this.setState({ selected: selected });
    };
 
-   render() {
+   public render() {
       if (!this.props.medias) {
          return null;
       }

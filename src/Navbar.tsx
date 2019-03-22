@@ -5,7 +5,7 @@ import { Person } from "./Store/Person";
 import "./Logo.css";
 
 class Logo extends React.PureComponent<{}, {}> {
-   render() {
+   public render() {
       return (
          <div className="Logo">
             <div>Geneaprove</div>

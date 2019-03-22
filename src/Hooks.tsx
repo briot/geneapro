@@ -25,7 +25,7 @@ export function useComponentSize<T extends Element>(ref: React.RefObject<T>) {
 
       window.addEventListener("resize", onResize);
       return () => window.removeEventListener("resize", onResize);
-   }, [ref.current]);
+   }, [ref.current, onResize]);
 
    return size;
 }

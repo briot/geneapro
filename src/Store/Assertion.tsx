@@ -31,8 +31,8 @@ export abstract class Assertion {
     * Return the sort order for timelines. The format of the date should
     * be ISO: yyyy-mm-dd
     */
+   // eslint-disable-next-line @typescript-eslint/no-unused-vars
    public getSortDate(events: GenealogyEventSet): string | null {
-      // eslint-disable-line @typescript-eslint/no-unused-vars
       return null;
    }
 

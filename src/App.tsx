@@ -25,15 +25,15 @@ interface MainAppState {
 }
 
 export default class App extends React.PureComponent<{}, MainAppState> {
-   state: MainAppState = { rehydrated: false };
+   public state: MainAppState = { rehydrated: false };
 
-   componentDidMount() {
+   public componentDidMount() {
       setPersist(() => {
          this.setState({ rehydrated: true });
       });
    }
 
-   render() {
+   public render() {
       if (!this.state.rehydrated) {
          return <div>Loading...</div>;
       }
@@ -60,7 +60,9 @@ export default class App extends React.PureComponent<{}, MainAppState> {
                      exact={true}
                      component={DashboardPage}
                   />
-                  <Route children={() => <span>No match for route</span>} />
+                  <Route>
+                     {() => <span>No match for route</span>}
+                  </Route>
                </Switch>
             </BrowserRouter>
          </Provider>

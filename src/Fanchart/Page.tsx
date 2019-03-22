@@ -40,6 +40,7 @@ const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
          }),
       [
          decujusid,
+         p.dispatch,
          p.settings.ancestors,
          p.settings.descendants,
          p.settings.colors

@@ -19,7 +19,7 @@ interface SideNavItemProps {
 const LINK_STYLE = { color: "inherit" };
 
 class SideNavItem extends React.PureComponent<SideNavItemProps> {
-   render() {
+   public render() {
       const link = this.props.to ? (
          <Link to={this.props.to} style={LINK_STYLE}>
             {this.props.label}
@@ -63,7 +63,7 @@ interface SideNavProps {
 }
 
 class SideNavConnected extends React.PureComponent<SideNavProps> {
-   render(): JSX.Element {
+   public render(): JSX.Element {
       const hist: JSX.Element[] = this.props.history.map(
          ({ id, display, kind }: HistoryItem) => (
             <SideNavItem

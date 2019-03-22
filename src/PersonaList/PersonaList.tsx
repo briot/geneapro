@@ -50,6 +50,41 @@ const PersonaListConnected: React.FC<PersonaListProps> = p => {
    // Set to undefined when we never requested its loading
    const [rows, setRows] = React.useState<(Person|boolean|undefined)[]>([]);
 
+   // Fetch the list of persons, using current color theme
+   const loadMoreItems = React.useCallback(
+      (rg: IndexRange) => {
+         // Prepare the list of rows to indicate which ones we are loading,
+         // and thus avoid double-loading
+         setRows(s => {
+            const result = new Array(Math.max(s.length, rg.stopIndex));
+            s.forEach((p, idx) => result[idx] = p);
+            for (let idx = rg.startIndex; idx <= rg.stopIndex; idx++) {
+               if (result[idx - 1] === undefined) {
+                  result[idx - 1] = false;
+               }
+            }
+            return result;
+         });
+
+         // Fetch rows
+         return fetchPersonsFromServer({
+            colors: p.settings.colors,
+            filter: filter,
+            offset: rg.startIndex,
+            limit: rg.stopIndex - rg.startIndex + 1
+         }).then(newPersons => {
+            setRows(s => {
+               const result = [...s];
+               newPersons.forEach((p, idx) => result[idx + rg.startIndex] = p);
+               return result;
+            });
+         }).catch(reason => {
+            alert('Error while loading persons\n' + reason);
+         });
+      },
+      [p.settings.colors, filter]
+   );
+
    const reset = () => {
       window.fetch(`/data/persona/count?filter=${encodeURI(filter)}`)
          .then((r: Response) => r.json())
@@ -114,41 +149,6 @@ const PersonaListConnected: React.FC<PersonaListProps> = p => {
          );
       },
       [rows, p.settings]
-   );
-
-   // Fetch the list of persons, using current color theme
-   const loadMoreItems = React.useCallback(
-      (rg: IndexRange) => {
-         // Prepare the list of rows to indicate which ones we are loading,
-         // and thus avoid double-loading
-         setRows(s => {
-            const result = new Array(Math.max(s.length, rg.stopIndex));
-            s.forEach((p, idx) => result[idx] = p);
-            for (let idx = rg.startIndex; idx <= rg.stopIndex; idx++) {
-               if (result[idx - 1] === undefined) {
-                  result[idx - 1] = false;
-               }
-            }
-            return result;
-         });
-
-         // Fetch rows
-         return fetchPersonsFromServer({
-            colors: p.settings.colors,
-            filter: filter,
-            offset: rg.startIndex,
-            limit: rg.stopIndex - rg.startIndex + 1
-         }).then(newPersons => {
-            setRows(s => {
-               const result = [...s];
-               newPersons.forEach((p, idx) => result[idx + rg.startIndex] = p);
-               return result;
-            });
-         }).catch(reason => {
-            alert('Error while loading persons\n' + reason);
-         });
-      },
-      [p.settings.colors, filter]
    );
 
    const renderList = React.useCallback(

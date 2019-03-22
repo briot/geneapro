@@ -23,7 +23,7 @@ const SourceListConnected: React.FC<SourceListProps> = p => {
    const [sorted, setSorted] = React.useState<Source[]>([]);
    const size = useComponentSize(container);
 
-   React.useEffect(() => fetchSources.execute(p.dispatch, {}), []);
+   React.useEffect(() => fetchSources.execute(p.dispatch, {}), [p.dispatch]);
 
    React.useEffect(() => {
       let list = Object.values(p.allSources);
@@ -38,15 +38,15 @@ const SourceListConnected: React.FC<SourceListProps> = p => {
 
    const onFilterChange = React.useCallback(
       useDebounce(
-         (e: any, val: InputProps) => setFilter(val.value as string),
+         (e: {}, val: InputProps) => setFilter(val.value as string),
          250
       ),
       []
    );
 
    const renderRow: ListRowRenderer = React.useCallback(
-      ({ index, isScrolling, key, style }) => (
-         <div style={style}>
+      ({ index, key, style }) => (
+         <div style={style} key={key}>
             <SourceLink id={sorted[index].id} showAbbrev={true} />
          </div>
       ),

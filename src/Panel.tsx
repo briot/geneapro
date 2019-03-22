@@ -8,7 +8,7 @@ interface PanelProps {
 }
 
 export default class Panel extends React.PureComponent<PanelProps, {}> {
-   render() {
+   public render() {
       const header = this.props.header && (
          <Header size="medium" block={true} attached={true}>
             {this.props.header}

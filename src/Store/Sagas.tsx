@@ -1,9 +1,7 @@
 import { all, call, put } from "redux-saga/effects";
 import { fetchPedigreeFromServer } from "../Server/Pedigree";
 import {
-   fetchPersonsFromServer,
    fetchPersonDetailsFromServer,
-   FetchPersonsResult,
    DetailsResult
 } from "../Server/Person";
 import { fetchEventFromServer, EventDetails } from "../Server/Event";

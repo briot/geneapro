@@ -2,7 +2,6 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { Button, DropdownProps, Form, Select } from "semantic-ui-react";
-import { SelectField } from "./Forms";
 import { predefinedThemes } from "./Store/ColorTheme";
 import { fetchMetadata } from "./Store/Sagas";
 import { AppState, GPDispatch } from "./Store/State";
@@ -69,16 +68,16 @@ const ThemeSelectorConnected: React.FC<ThemeSelectorProps> = p => {
       .concat(p.metadata.themes)
       .map(s => ({ text: s.name, value: s.id }));
    const onChange = React.useCallback(
-      (_: any, data: DropdownProps) =>
+      (_: {}, data: DropdownProps) =>
          p.onChange({ [p.fieldName]: data.value as number }),
-      [p.onChange, p.fieldName, p.metadata.themes]
+      [p.onChange, p.fieldName]
    );
 
    const toggleLegend = React.useCallback(() => setLegend(!showLegend), [
       showLegend
    ]);
 
-   React.useEffect(() => fetchMetadata.execute(p.dispatch, {}), []);
+   React.useEffect(() => fetchMetadata.execute(p.dispatch, {}), [p.dispatch]);
 
    return (
       <Form.Field>

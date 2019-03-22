@@ -18,12 +18,12 @@ export default class ScalableSVG extends React.PureComponent<
    ScalableSVGProps,
    ScalableSVGState
 > {
-   state: ScalableSVGState = {
+   public state: ScalableSVGState = {
       scale: 1,
       translate: { left: 0, top: 0 }
    };
 
-   zoomExtent: [number, number] = [1 / 6, 6];
+   public zoomExtent: [number, number] = [1 / 6, 6];
    // Maximum levels of zoom (in and out)
 
    private origin:
@@ -37,7 +37,7 @@ export default class ScalableSVG extends React.PureComponent<
 
    private svgRef: SVGSVGElement | null = null;
 
-   render() {
+   public render() {
       return (
          <svg
             ref={(ref: SVGSVGElement) => (this.svgRef = ref)}
@@ -59,7 +59,7 @@ export default class ScalableSVG extends React.PureComponent<
       );
    }
 
-   onMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+   protected onMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
       if (e.button === 0) {
          this.origin = {
             clickX: e.pageX,
@@ -73,14 +73,14 @@ export default class ScalableSVG extends React.PureComponent<
       }
    };
 
-   onMouseUp = (e: MouseEvent) => {
+   protected onMouseUp = (e: MouseEvent) => {
       document.removeEventListener("mouseup", this.onMouseUp);
       document.removeEventListener("mousemove", this.onMouseMove);
       e.preventDefault();
       e.stopPropagation();
    };
 
-   onMouseMove = (e: MouseEvent) => {
+   protected onMouseMove = (e: MouseEvent) => {
       const offsetX = (e.pageX - this.origin!.clickX) / this.state.scale;
       const offsetY = (e.pageY - this.origin!.clickY) / this.state.scale;
       this.setState({
@@ -96,7 +96,7 @@ export default class ScalableSVG extends React.PureComponent<
     * the screen.
     * `preserve` is given in canvas coordinates
     */
-   scaleBy(factor: number, preserve: Point) {
+   public scaleBy(factor: number, preserve: Point) {
       this.setState(
          (oldState: ScalableSVGState): ScalableSVGState => {
             const newScale = Math.max(
@@ -119,7 +119,7 @@ export default class ScalableSVG extends React.PureComponent<
    /**
     * Convert from screen coordinates to canvas coordinates
     */
-   toCanvas(p: Point): Point {
+   public toCanvas(p: Point): Point {
       return {
          left: p.left / this.state.scale + this.state.translate.left,
          top: p.top / this.state.scale + this.state.translate.top
@@ -129,7 +129,7 @@ export default class ScalableSVG extends React.PureComponent<
    /**
     * Convert from canvas coordinates to screen
     */
-   toScreen(p: Point): Point {
+   public toScreen(p: Point): Point {
       return {
          left: (p.left - this.state.translate.left) * this.state.scale,
          top: (p.top - this.state.translate.top) * this.state.scale
@@ -139,7 +139,7 @@ export default class ScalableSVG extends React.PureComponent<
    /**
     * React to wheel events (zoom in)
     */
-   wheeled = (e: React.WheelEvent<SVGSVGElement>) => {
+   protected wheeled = (e: React.WheelEvent<SVGSVGElement>) => {
       const rect = this.svgRef!.getBoundingClientRect();
       const escreen = this.toCanvas({
          left: e.clientX - rect.left,

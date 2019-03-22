@@ -29,9 +29,7 @@ class ListItem<T> extends React.PureComponent<ListItemProps<T>, ListItemState> {
       e.dataTransfer.setData(DND_DATA, "" + this.props.idx);
       this.setState({ dragged: true });
    };
-   protected onItemDragEnd = (e: React.DragEvent) => {
-      this.setState({ dragged: false });
-   };
+   protected onItemDragEnd = () => this.setState({ dragged: false });
 
    public constructor(props: ListItemProps<T>) {
       super(props);
@@ -69,19 +67,21 @@ interface DropTargetProps {
 const DropTarget = (p: DropTargetProps) => {
    const [over, setOver] = React.useState(false);
 
-   const isDroppable = (e: React.DragEvent) => {
-      const idx = e.dataTransfer.getData(DND_DATA);
-      return idx && Number(idx) != p.at && Number(idx + 1) != p.at;
-   };
+   const isDroppable = React.useCallback(
+      (e: React.DragEvent) => {
+         const idx = e.dataTransfer.getData(DND_DATA);
+         return idx && Number(idx) != p.at && Number(idx + 1) != p.at;
+      },
+      [p.at]);
 
    const onDragEnter = React.useCallback(
       (e: React.DragEvent) => isDroppable(e) && setOver(true),
-      []
+      [isDroppable]
    );
    const onDragLeave = React.useCallback(() => setOver(false), []);
    const onDragOver = React.useCallback(
       (e: React.DragEvent) => isDroppable(e) && e.preventDefault(),
-      []
+      [isDroppable]
    );
    const onDrop = React.useCallback(
       (e: React.DragEvent) => {
@@ -151,7 +151,7 @@ export default class EditableList<T> extends React.PureComponent<ListProps<T>> {
          ...this.props.list.slice(idx + 1)
       ]);
 
-   render() {
+   public render() {
       return (
          <div className="editableList">
             {this.props.list.map((r, idx) => (

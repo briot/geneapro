@@ -23,7 +23,7 @@ const PlaceListConnected: React.FC<PlaceListProps> = p => {
    const [sorted, setSorted] = React.useState<Place[]>([]);
    const size = useComponentSize(container);
 
-   React.useEffect(() => fetchPlaces.execute(p.dispatch, {}), []);
+   React.useEffect(() => fetchPlaces.execute(p.dispatch, {}), [p.dispatch]);
 
    React.useEffect(() => {
       let list = Object.values(p.allPlaces);
@@ -38,14 +38,14 @@ const PlaceListConnected: React.FC<PlaceListProps> = p => {
 
    const onFilterChange = React.useCallback(
       useDebounce(
-         (e: any, val: InputProps) => setFilter(val.value as string),
+         (e: {}, val: InputProps) => setFilter(val.value as string),
          250
       ),
       []
    );
 
    const renderRow: ListRowRenderer = React.useCallback(
-      ({ index, isScrolling, key, style }) => (
+      ({ index, key, style }) => (
          <div style={style} key={key}>
             <PlaceLink id={sorted[index].id} />
          </div>
