@@ -64,9 +64,10 @@ class PersonaList(JSONView):
     """View the list of all personas"""
 
     def get_json(self, params, decujus=1):
-        persons = PersonSet(
-            styles=Styles(params.get('theme', -1), decujus=decujus))
+        theme_id = int(params.get('theme', -1))
+        persons = PersonSet(styles=Styles(theme_id, decujus=decujus))
         persons.add_ids(
+            compute_sex=theme_id >= 0,
             namefilter=params.get('filter', None),
             offset=params.get('offset', None),
             limit=params.get('limit', None))

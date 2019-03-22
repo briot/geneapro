@@ -44,7 +44,8 @@ class PersonSet(object):
                              models.Event_Type.PK_death,
                              models.Event_Type.PK_marriage)
 
-    def add_ids(self, ids=None, namefilter=None, offset=None, limit=None):
+    def add_ids(self, ids=None, namefilter=None, offset=None, limit=None,
+                compute_sex=True):
         """
         Append to the list all persons for which one of the base personas has
         an id in `ids`.
@@ -92,12 +93,19 @@ class PersonSet(object):
         if namefilter:
             args.append(f"%{namefilter}%")
 
+        if compute_sex:
+            sex_field = "sub1.sex"
+            sex_query = (
+                f"LEFT JOIN ({self._query_get_sex()}) sub1 ON "
+                f"sub1.main_id=persona.id "
+            )
+        else:
+            sex_field = "'?' as sex"
+            sex_query = ""
+
         pm = models.Persona.objects.raw(
-            "SELECT persona.*, sub1.sex "
-            "FROM persona "
-                "LEFT JOIN (" +
-                    self._query_get_sex() +
-                ") sub1 ON sub1.main_id=persona.id "
+            f"SELECT persona.*, {sex_field} "
+            f"FROM persona {sex_query}"
             f"WHERE {id_to_main} " +
             (f"AND persona.name LIKE %s " if namefilter else "") +
             "ORDER BY lower(persona.name) ASC " +
