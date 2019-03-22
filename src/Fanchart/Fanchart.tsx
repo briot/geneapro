@@ -38,6 +38,9 @@ export function Fanchart(props: FanchartProps) {
       .innerRadius(p => p.maxRadius)
       .outerRadius(p => p.maxRadius + props.layouts.spaceBetweenGens);
 
+   const maxgen = Math.max(
+      props.settings.ancestors, props.settings.descendants);
+
    const recurse = (pl: PersonLayout) => {
       if (seen.has(pl.id)) {
          // Implex
@@ -59,7 +62,8 @@ export function Fanchart(props: FanchartProps) {
 
       if (props.layouts.spaceBetweenGens !== 0) {
          const d = separatorArc(pl) as string;
-         const style = ColorTheme.forSeparator(props.settings.sepColors, p, pl);
+         const style = ColorTheme.forSeparator(
+            props.settings.sepColors, maxgen, p, pl);
          seps.push(
             <path
                className="separator"
@@ -104,10 +108,8 @@ export function Fanchart(props: FanchartProps) {
                   <path
                      className="separator"
                      style={ColorTheme.forSeparator(
-                        props.settings.sepColors,
-                        p,
-                        c
-                     ).toStr("svg")}
+                        props.settings.sepColors, maxgen, p, c).toStr("svg")
+                     }
                      d={separatorArc(c) as string}
                      key={c.id}
                   />
@@ -211,6 +213,7 @@ export function FanchartBox(props: FanchartBoxProps) {
 
    const style = ColorTheme.forPerson(
       props.settings.colors,
+      Math.max(props.settings.ancestors, props.settings.descendants),
       props.person,
       props.layout
    );

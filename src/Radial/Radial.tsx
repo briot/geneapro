@@ -25,7 +25,8 @@ function circle(
    node: d3Hierarchy.HierarchyPointNode<RadialLayout>,
    settings: RadialSettings
 ) {
-   const style = ColorTheme.forPerson(settings.colors, node.data.p, node.data);
+   const style = ColorTheme.forPerson(
+      settings.colors, settings.generations, node.data.p, node.data);
    const textStyle = settings.sameStyleForText
       ? style.toStr("svgtext2") // same as style, with no stroke
       : style.toStr("svgtext");

@@ -135,6 +135,7 @@ const PersonaListConnected: React.FC<PersonaListProps> = p => {
                <span
                   style={ColorTheme.forPerson(
                      p.settings.colors,
+                     1 /* maxgen */,
                      pers
                   ).toStr("dom")}
                >

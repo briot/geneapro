@@ -31,7 +31,7 @@ export interface BasePersonLayout {
    // This is negative for descendants.
 }
 
-const MAXGEN = 12;
+export const MAXGEN = 20;
 const baseQuartileColors = [
    "rgb(127,229,252)",
    "rgb(185,253,130)",
@@ -50,9 +50,11 @@ const TEXT_ONLY = new Style({ color: "black" });
 export default class ColorTheme {
    /**
     * Compute the display style for a person
+    * :param maxgen: maximum number of generations we might have computed
     */
    public static forPerson(
       colors: GP_JSON.ColorSchemeId,
+      maxgen: number,
       p?: Person,
       layout?: BasePersonLayout
    ): Style {
@@ -65,7 +67,7 @@ export default class ColorTheme {
                // generations.
                fillColor = Style.hsvStr(
                   (layout.angle || 0) * 360,
-                  Math.abs(layout.generation) / MAXGEN,
+                  Math.abs(layout.generation) / maxgen,
                   1.0
                );
             }
@@ -117,9 +119,10 @@ export default class ColorTheme {
     */
    public static forSeparator(
       colors: GP_JSON.ColorSchemeId,
+      maxgen: number,
       p?: Person,
       layout?: BasePersonLayout
    ): Style {
-      return ColorTheme.forPerson(colors, p, layout).darker(0.3);
+      return ColorTheme.forPerson(colors, maxgen, p, layout).darker(0.3);
    }
 }

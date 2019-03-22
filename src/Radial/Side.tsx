@@ -5,6 +5,8 @@ import { RadialSettings } from "../Store/Radial";
 import { SliderField, CheckboxField } from "../Forms";
 import ThemeSelector from "../ThemeSelector";
 
+const MAXGEN = 20;
+
 interface RadialSideProps {
    settings: RadialSettings;
    onChange: (diff: Partial<RadialSettings>) => void;
@@ -36,8 +38,8 @@ export default function RadialSide(props: RadialSideProps) {
                      defaultValue={props.settings.generations}
                      label="Generations"
                      fieldName="generations"
-                     min={-20}
-                     max={20}
+                     min={-MAXGEN}
+                     max={MAXGEN}
                      onChange={props.onChange}
                   />
                </Form>

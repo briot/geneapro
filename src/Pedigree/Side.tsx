@@ -8,6 +8,7 @@ import {
 } from "../Store/Pedigree";
 import { CheckboxField, SliderField, SelectField } from "../Forms";
 import ThemeSelector from "../ThemeSelector";
+import { MAXGEN } from '../Store/ColorTheme';
 
 interface PedigreeSideProps {
    settings: PedigreeSettings;
@@ -42,7 +43,7 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      label="Ancestors"
                      fieldName="ancestors"
                      min={0}
-                     max={20}
+                     max={MAXGEN}
                      onChange={props.onChange}
                   />
 
@@ -51,7 +52,7 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      label="Descendants"
                      fieldName="descendants"
                      min={0}
-                     max={20}
+                     max={MAXGEN}
                      onChange={props.onChange}
                   />
 
