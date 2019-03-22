@@ -25,9 +25,10 @@ class PersonSet(object):
     persons.
     """
 
-    BMD = (models.Event_Type.PK_birth,
-           models.Event_Type.PK_death,
-           models.Event_Type.PK_marriage)
+    BMD = None
+    # Will be set to the list of events for birth-marriage-death.
+    # Cannot be computed immediately, since it needs a database lookup, and
+    # the database might not event exist yet.
 
     def __init__(self, styles=None):
         self.asserts = [] # All Assertions that were used to compute persons
@@ -37,6 +38,11 @@ class PersonSet(object):
         # main_id -> parents and children
         self.layout = collections.defaultdict(
             lambda: {'children': [], 'parents': []})
+
+        if PersonSet.BMD is None:
+            PersonSet.BMD = (models.Event_Type.PK_birth,
+                             models.Event_Type.PK_death,
+                             models.Event_Type.PK_marriage)
 
     def add_ids(self, ids=None, offset=None, limit=None):
         """
@@ -149,12 +155,13 @@ class PersonSet(object):
         :returntype: list of AncestorInfo
            This includes person_id itself, at generation 0
         """
+        assert isinstance(person_id, int)
 
         with django.db.connection.cursor() as cur:
             initial = f"VALUES({person_id},0)"
             md = f"AND ancestors.generation<={max_depth} " if max_depth else ""
             sk = f"WHERE ancestors.generation>{skip} " if skip else ""
-            cur.execute(
+            q = (
                 "WITH RECURSIVE parents(main_id, parent) AS (" +
                     cls._query_get_parents() +
                 "), ancestors(main_id,generation) as ("
@@ -174,6 +181,7 @@ class PersonSet(object):
                 f"{sk}"
                 "GROUP BY ancestors.main_id, ancestors.generation"
             )
+            cur.execute(q)
             return [
                 AncestorInfo(
                     main_id,
@@ -229,6 +237,7 @@ class PersonSet(object):
         Omit all persons with a generation less than `skip`, assuming the
         front-end already has that information.
         """
+        assert isinstance(person_id, int)
         ancestors = self.get_ancestors(person_id, max_depth, skip)
         self.add_ids(ids=(a.main_id for a in ancestors))
         for a in ancestors:
@@ -241,6 +250,7 @@ class PersonSet(object):
         Omit all persons with a generation less than `skip`, assuming the
         front-end already has that information.
         """
+        assert isinstance(person_id, int)
         desc = self.get_descendants(person_id, max_depth, skip)
         self.add_ids(ids=(a.main_id for a in desc))
         for a in desc:

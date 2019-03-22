@@ -18,13 +18,12 @@ class CountView(JSONView):
             .filter(id=F('main_id')) \
             .aggregate(count=Count('id'))
 
-        persons = PersonSet()
-        persons.add_ancestors(person_id=...)
-        person.add_descendants(person_id=...)
+        personas_count = models.Persona.objects \
+            .aggregate(count=Count('id'))
 
         return {
             "places": models.Place.objects.count(),
             "sources": models.Source.objects.count(),
-            "personas": models.Persona.objects.count(),
+            "personas": int(personas_count['count']),
             "persons": int(total_persons['count']),
         }
