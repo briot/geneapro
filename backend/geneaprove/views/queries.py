@@ -32,7 +32,7 @@ class PersonSet(object):
 
     def __init__(self, styles=None):
         self.asserts = [] # All Assertions that were used to compute persons
-        self.persons = {} # main_id -> Persona instance
+        self.persons = collections.OrderedDict() # main_id -> Persona instance
         self.styles = styles
 
         # main_id -> parents and children
@@ -44,7 +44,7 @@ class PersonSet(object):
                              models.Event_Type.PK_death,
                              models.Event_Type.PK_marriage)
 
-    def add_ids(self, ids=None, offset=None, limit=None):
+    def add_ids(self, ids=None, namefilter=None, offset=None, limit=None):
         """
         Append to the list all persons for which one of the base personas has
         an id in `ids`.
@@ -88,16 +88,22 @@ class PersonSet(object):
         else:
             id_to_main = "persona.main_id=persona.id"
 
+        args = []
+        if namefilter:
+            args.append(f"%{namefilter}%")
+
         pm = models.Persona.objects.raw(
             "SELECT persona.*, sub1.sex "
             "FROM persona "
                 "LEFT JOIN (" +
                     self._query_get_sex() +
                 ") sub1 ON sub1.main_id=persona.id "
-            f"WHERE {id_to_main} "
-            "ORDER BY persona.name ASC " +
-            (f"LIMIT {int(limit)} " if limit else "") +
-            (f"OFFSET {int(offset)} " if offset else ""))
+            f"WHERE {id_to_main} " +
+            (f"AND persona.name LIKE %s " if namefilter else "") +
+            "ORDER BY lower(persona.name) ASC " +
+            (f"LIMIT {int(limit)} " if limit is not None else "") +
+            (f"OFFSET {int(offset)} " if offset else ""),
+            args)
 
         self.persons.update({p.id: p for p in pm.iterator()})
 

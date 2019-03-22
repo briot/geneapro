@@ -14,3 +14,7 @@
    display: inline-block;
    width: 30px;
 }
+.PersonaList .loading {
+   color: #999;
+   text-size: 0.6em;
+}

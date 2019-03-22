@@ -57,6 +57,7 @@ urlpatterns = [
     url(r'^$', index, name='index'),
     url(r'^data/pedigree/(?P<id>\d+)$', pedigree.PedigreeData.as_view()),
     url(r'^data/persona/list$', persona.PersonaList.as_view()),
+    url(r'^data/persona/count$', persona.PersonCount.as_view()),
     url(r'^data/persona/(?P<id>\d+)$', persona.PersonaView.as_view()),
     url(r'^data/place/(?P<id>\d+)$', places.PlaceView.as_view()),
     url(r'^data/places/list$', places.PlaceList.as_view()),

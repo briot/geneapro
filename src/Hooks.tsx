@@ -31,7 +31,7 @@ export function useComponentSize<T extends Element>(ref: React.RefObject<T>) {
 }
 
 /**
- * Avoid firing callbacks too often,k for instance on every keystroke
+ * Avoid firing callbacks too often, for instance on every keystroke
  */
 export function useDebounce<T extends (...args: any[]) => any>(
    callback: T,

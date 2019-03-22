@@ -1,6 +1,9 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import { FixedSizeList } from "react-window";
+import {
+   List,
+   ListRowRenderer
+} from "react-virtualized";
 import { Input, InputProps, Segment } from "semantic-ui-react";
 import Page from "./Page";
 import { AppState, GPDispatch } from "./Store/State";
@@ -41,9 +44,14 @@ const SourceListConnected: React.FC<SourceListProps> = p => {
       []
    );
 
-   const itemKey = React.useCallback((index: number) => sorted[index].id, [
-      sorted
-   ]);
+   const renderRow: ListRowRenderer = React.useCallback(
+      ({ index, isScrolling, key, style }) => (
+         <div style={style}>
+            <SourceLink id={sorted[index].id} showAbbrev={true} />
+         </div>
+      ),
+      [sorted]
+   );
 
    document.title = "List of sources";
 
@@ -67,20 +75,14 @@ const SourceListConnected: React.FC<SourceListProps> = p => {
                      style={{ position: "absolute", right: "5px", top: "5px" }}
                   />
                </Segment>
-               <FixedSizeList
+               <List
                   width={size.width}
                   height={size.height}
-                  itemCount={sorted.length}
-                  itemKey={itemKey}
-                  itemSize={30}
+                  rowCount={sorted.length}
+                  rowHeight={30}
                   overscanCount={5}
-               >
-                  {({ index, style }: { index: number; style: object }) => (
-                     <div style={style}>
-                        <SourceLink id={sorted[index].id} showAbbrev={true} />
-                     </div>
-                  )}
-               </FixedSizeList>
+                  rowRenderer={renderRow}
+               />
             </div>
          }
       />

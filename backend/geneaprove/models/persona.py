@@ -67,4 +67,5 @@ class Persona(GeneaProveModel):
             result['sex'] = self.sex
         if self.generation is not None:
             result['generation'] = self.generation
+
         return result

@@ -2,6 +2,7 @@
 Various views related to displaying the pedgree of a person graphically
 """
 
+from django.db.models import F, Count
 from .. import models
 from .to_json import JSONView
 from .related import JSONResult
@@ -43,6 +44,22 @@ class SuretySchemesList(JSONView):
                  ]} for s in models.Surety_Scheme.objects.all()]}
 
 
+class PersonCount(JSONView):
+    """Number of persons in the database"""
+
+    def get_json(self, params):
+        namefilter = params.get('filter')
+
+        r = models.Persona.objects \
+            .filter(id=F('main_id')) \
+
+        if namefilter:
+            r = r.filter(display_name__icontains=namefilter)
+
+        r = r.aggregate(count=Count('id'))
+        return int(r['count'])
+
+
 class PersonaList(JSONView):
     """View the list of all personas"""
 
@@ -50,6 +67,7 @@ class PersonaList(JSONView):
         persons = PersonSet(
             styles=Styles(params.get('theme', -1), decujus=decujus))
         persons.add_ids(
+            namefilter=params.get('filter', None),
             offset=params.get('offset', None),
             limit=params.get('limit', None))
         persons.fetch_p2e()

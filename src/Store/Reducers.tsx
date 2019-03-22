@@ -8,7 +8,6 @@ import {
    fetchPedigree,
    FetchPedigreeResult,
    fetchPersonDetails,
-   fetchPersons,
    fetchEventDetails,
    fetchSourceDetails,
    fetchSources,
@@ -216,9 +215,6 @@ export function rootReducer(
          events: { ...state.events, ...action.payload.result.events },
          pedigree: { ...state.pedigree, loading: false }
       };
-   } else if (isType(action, fetchPersons.done)) {
-      const data = action.payload.result as FetchPersonsResult;
-      return { ...state, persons: mergePersons(state.persons, data.persons) };
    } else if (isType(action, fetchPersonDetails.done)) {
       const data: DetailsResult = action.payload.result as DetailsResult;
 

@@ -152,13 +152,12 @@ class JSONView(View):
         """
         internal implementation
         """
-
         start = time.perf_counter()
 
         # Always convert an "id" parameter to integer
         if 'id' in kwargs:
             kwargs['id'] = int(kwargs['id'])
-        resp = method(params, *args, **kwargs) or {"success": True}
+        resp = method(params, *args, **kwargs)
 
         # Can't use JsonResponse since we want our own converter
         logger.debug('convert to json')

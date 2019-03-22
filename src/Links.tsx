@@ -17,27 +17,29 @@ export function urlPersona(id: number) {
 }
 
 interface PersonaLinkProps {
-   id: number;
+   id?: number;   // either id or person must be specified
    hideIcon?: boolean;
+   person?: Person;
 }
-interface ConnectedPersonaLinkProps extends PersonaLinkProps {
-   person: Person | undefined;
-}
+function ConnectedPersonaLink(p: PersonaLinkProps) {
+   if (!p.person) {
+      return <span>Unknown person</span>;
+   }
 
-function ConnectedPersonaLink(props: ConnectedPersonaLinkProps) {
-   const s = personDisplay(props.person);
+   const s = personDisplay(p.person);
    return (
-      <Link to={urlPersona(props.id)} className="link persona" title={s}>
-         {!props.hideIcon && <Icon name="user" />}
+      <Link to={urlPersona(p.person.id)} className="link persona" title={s}>
+         {!p.hideIcon && <Icon name="user" />}
          {s}
-         <span className="id">{props.id}</span>
+         <span className="id">{p.person.id}</span>
       </Link>
    );
 }
 export const PersonaLink = connect(
    (state: AppState, props: PersonaLinkProps) => ({
       ...props,
-      person: state.persons[props.id]
+      person: props.person ||
+         (props.id !== undefined && state.persons[props.id])
    })
 )(ConnectedPersonaLink);
 

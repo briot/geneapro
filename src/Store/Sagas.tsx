@@ -3,7 +3,6 @@ import { fetchPedigreeFromServer } from "../Server/Pedigree";
 import {
    fetchPersonsFromServer,
    fetchPersonDetailsFromServer,
-   FetchPersonsParams,
    FetchPersonsResult,
    DetailsResult
 } from "../Server/Person";
@@ -128,19 +127,6 @@ export const fetchSources = createAsyncAction<{}, FetchSourcesResult>(
    "DATA/SOURCES",
    _fetchSources
 );
-
-/**
- * Async Action: fetch all persons from the server
- */
-
-function* _fetchPersons(p: FetchPersonsParams) {
-   const persons = yield call(fetchPersonsFromServer, p);
-   return persons;
-}
-export const fetchPersons = createAsyncAction<
-   FetchPersonsParams,
-   FetchPersonsResult
->("DATA/PERSONS", _fetchPersons);
 
 /**
  * Async Action: fetch details for one specific person

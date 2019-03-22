@@ -43,18 +43,25 @@ export function jsonPersonToPerson(
    };
 }
 
-export function jsonPersonsToPerson(
-   json: GP_JSON.Persons,
+function prepareStyles(
    allStyles?: { [index: number]: GP_JSON.Style }, // definition for styles
    styles?: { [pid: number]: number } // person to style index
-): FetchPersonsResult {
+) {
    let allS: { [id: number]: Style | undefined } = {};
    if (allStyles && styles) {
       for (const [id, s] of Object.entries(allStyles)) {
          allS[Number(id)] = new Style(s);
       }
    }
+   return allS;
+}
 
+export function jsonPersonsToPerson(
+   json: GP_JSON.Persons,
+   allStyles?: { [index: number]: GP_JSON.Style }, // definition for styles
+   styles?: { [pid: number]: number } // person to style index
+): FetchPersonsResult {
+   const allS = prepareStyles(allStyles, styles);
    let persons: PersonSet = {};
    for (const jp of json.persons) {
       persons[jp.id] = jsonPersonToPerson(
@@ -66,25 +73,27 @@ export function jsonPersonsToPerson(
    return { persons };
 }
 
-export interface FetchPersonsParams {
+interface FetchPersonsParams {
    colors: GP_JSON.ColorSchemeId;
    limit?: number; // maximum number of persons to return
    offset?: number;
+   filter?: string;
 }
-
-export function* fetchPersonsFromServer(p: FetchPersonsParams) {
+export function fetchPersonsFromServer(p: FetchPersonsParams): Promise<Person[]> {
    const url =
       `/data/persona/list?theme=${p.colors}` +
+      (p.filter ? `&filter=${encodeURI(p.filter)}` : "") +
       (p.offset ? `&offset=${p.offset}` : "") +
       (p.limit ? `&limit=${p.limit}` : "");
-
-   const resp: Response = yield window.fetch(url);
-   if (resp.status !== 200) {
-      throw new Error("Server returned an error");
-   }
-
-   const raw: PersonaListRaw = yield resp.json();
-   return jsonPersonsToPerson(raw, raw.allstyles, raw.styles);
+   return window.fetch(url)
+      .then((resp: Response) => resp.json())
+      .then((raw: PersonaListRaw) => {
+         const allS = prepareStyles(raw.allstyles, raw.styles);
+         return raw.persons.map(jp => jsonPersonToPerson(
+            jp,
+            raw.styles ? allS[raw.styles[jp.id]] : undefined
+         ));
+      });
 }
 
 function p2eFromJSON(e: GP_JSON.P2E) {
