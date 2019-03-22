@@ -233,7 +233,7 @@ class GedcomImporter(object):
 
         # The name to use is the first one in the list of names
         p = models.Persona.objects.create(
-            name=name, description=None,
+            display_name=name, description=None,
             last_change=chan or django.utils.timezone.now())
         p._gedcom_id = indi.id
         return p
@@ -560,10 +560,10 @@ class GedcomImporter(object):
 
         if not husb:
             husb = models.Persona.objects.create(
-                name=f"@Unknown husband in family {fam.id}@")
+                display_name=f"@Unknown husband in family {fam.id}@")
         if not wife:
             wife = models.Persona.objects.create(
-                name=f"@Unknown wife in family {fam.id}@")
+                display_name=f"@Unknown wife in family {fam.id}@")
 
         # For all events, the list of individuals
 
@@ -758,7 +758,7 @@ class GedcomImporter(object):
                 return p
 
         ind = models.Persona.objects.create(
-            name=indi.name,
+            display_name=indi.display_name,
             description='',  # was set for the first persona already
             last_change=indi.last_change)
 
@@ -1109,7 +1109,7 @@ class GedcomImporter(object):
                         name=t.name,
                         date=date)
                     anonymous = models.Persona.objects.create(
-                        name="Anonymous from gedcom source",
+                        display_name="Anonymous from gedcom source",
                         description="Created automatically by importer",
                         last_change=last_change)
                     self._all_p2e.append(
@@ -1509,7 +1509,7 @@ class GedcomImporter(object):
         if not name:
             # Principals
             principals = " and ".join(
-                p.name for p, role in indi_and_role
+                p.display_name for p, role in indi_and_role
                 if p and role == self._principal)
             # type of event
             # More specific information for type
@@ -1573,7 +1573,7 @@ class GedcomImporter(object):
                                 GedcomRecord(
                                     line=f.line,
                                     tag='TITL',
-                                    value=f'Media for {indi.name}')
+                                    value=f'Media for {indi.display_name}')
                             ])
                     ])
                 self._create_characteristic(d, indi, CHAN=indi.last_change)
@@ -1691,5 +1691,5 @@ class GedcomFileImporter(geneaprove.importers.Importer):
             logger.error(f"Exception while parsing GEDCOM:{e.msg}")
             return (False, e.msg)
         except Exception as e:
-            logger.error(f"Unexpected Exception during parsing: {e.msg}")
+            logger.error(f"Unexpected Exception during parsing: {e}")
             return (False, traceback.format_exc())
