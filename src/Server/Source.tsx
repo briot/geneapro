@@ -65,21 +65,18 @@ export function* fetchSourceDetailsFromServer(id: number) {
    return r;
 }
 
-export interface FetchSourcesResult {
-   sources: SourceSet;
-}
-
-export function* fetchSourcesFromServer() {
-   const resp: Response = yield window.fetch("/data/sources/list");
-   if (resp.status !== 200) {
-      throw new Error("Server returned an error");
+export function fetchSourcesFromServer(
+   p: {
+      offset?: number;
+      limit?: number;
+      filter?: string;
    }
-   const data: JSON.Source[] = yield resp.json();
-   const result: FetchSourcesResult = {
-      sources: {}
-   };
-   for (const s of data) {
-      result.sources[s.id] = sourceFromJSON(s);
-   }
-   return result;
+): Promise<Source[]> {
+   const url =
+      '/data/sources/list?' +
+      (p.filter ? `&filter=${encodeURI(p.filter)}` : '') +
+      (p.offset ? `&offset=${p.offset}` : '') +
+      (p.limit ? `&limit=${p.limit}` : '');
+   return window.fetch(url)
+      .then((resp: Response) => resp.json());
 }

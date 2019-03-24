@@ -21,6 +21,7 @@ class PedigreeData(JSONView):
     def get_json(self, params, id):
         logger.debug('get pedigree data')
 
+        id = int(id)
         theme_id = int(params.get("theme", -1))
 
         persons = PersonSet(styles=Styles(theme_id, decujus=id))

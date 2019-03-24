@@ -10,10 +10,8 @@ import {
    fetchPersonDetails,
    fetchEventDetails,
    fetchSourceDetails,
-   fetchSources,
    fetchCount,
    fetchMetadata,
-   fetchPlaces,
    fetchPlaceDetails,
    fetchQuilts
 } from "../Store/Sagas";
@@ -239,9 +237,6 @@ export function rootReducer(
          sources: mergeSources(state.sources, data.sources),
          persons
       };
-   } else if (isType(action, fetchPlaces.done)) {
-      const data = action.payload.result as FetchPlacesResult;
-      return { ...state, places: { ...state.places, ...data.places } };
    } else if (isType(action, fetchPlaceDetails.done)) {
       const data: PlaceDetails = action.payload.result as PlaceDetails;
       return {
@@ -290,9 +285,6 @@ export function rootReducer(
          researchers: { ...state.researchers, ...data.researchers },
          persons: mergePersons(state.persons, data.persons)
       };
-   } else if (isType(action, fetchSources.done)) {
-      const data = action.payload.result as FetchSourcesResult;
-      return { ...state, sources: mergeSources(state.sources, data.sources) };
    } else if (isType(action, rehydrate)) {
       const name = "csrftoken=";
       if (document.cookie) {

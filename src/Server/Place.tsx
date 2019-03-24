@@ -12,21 +12,22 @@ export interface FetchPlacesResult {
    places: PlaceSet;
 }
 
-export function* fetchPlacesFromServer() {
-   const resp: Response = yield window.fetch("/data/places/list");
-   if (resp.status !== 200) {
-      throw new Error("Server returned an error");
-   }
+interface FetchPlacesFromServerArgs {
+   limit?: number;
+   offset?: number;
+   filter?: string;
+}
 
-   const data: JSON.Place[] = yield resp.json();
-   let places: PlaceSet = {};
-   for (const p of data) {
-      places[p.id] = {
-         id: p.id,
-         name: p.name
-      };
-   }
-   return { places };
+export function fetchPlacesFromServer(
+   p: FetchPlacesFromServerArgs
+): Promise<JSON.Place[]> {
+   const url =
+      '/data/places/list?' +
+      (p.filter ? `&filter=${encodeURI(p.filter)}` : '') +
+      (p.offset ? `&offset=${p.offset}` : '') +
+      (p.limit ? `&limit=${p.limit}` : '');
+   return window.fetch(url)
+      .then((resp: Response) => resp.json());
 }
 
 export interface PlaceDetails extends AssertionEntities {

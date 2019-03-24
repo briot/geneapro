@@ -327,6 +327,8 @@ class PersonSet(object):
         Retrieve a person given the id of one of its base persons.
         If possible this is retrieved from the current set of persons
         """
+        assert isinstance(id, int)
+
         p = self.persons.get(id, None)
         if p is not None:
             return p

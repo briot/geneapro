@@ -52,22 +52,18 @@ export function urlSource(id: number) {
 }
 
 interface SourceLinkProps {
-   id: number | undefined;
+   id?: number;
    showAbbrev?: boolean;
+   source?: Source;
 }
-interface ConnectedSourceLinkProps extends SourceLinkProps {
-   source: Source;
-}
-
-function ConnectedSourceLink(props: ConnectedSourceLinkProps) {
-   if (props.id === undefined) {
-      return null;
-   }
-
+function ConnectedSourceLink(props: SourceLinkProps) {
    const s = props.source;
+   if (!s) {
+      return <span>Unknown source</span>;
+   }
    return (
       <Link
-         to={urlSource(props.id)}
+         to={urlSource(s.id)}
          className="link source"
          title={s ? s.title : undefined}
       >
@@ -77,14 +73,15 @@ function ConnectedSourceLink(props: ConnectedSourceLinkProps) {
          ) : (
             <span className="notitle" />
          )}
-         <span className="id">{props.id}</span>
+         <span className="id">{s.id}</span>
       </Link>
    );
 }
 export const SourceLink = connect(
    (state: AppState, props: SourceLinkProps) => ({
       ...props,
-      source: props.id === undefined ? undefined : state.sources[props.id]
+      source: props.source ||
+         (props.id === undefined ? undefined : state.sources[props.id])
    })
 )(ConnectedSourceLink);
 
@@ -97,15 +94,15 @@ export function urlPlace(id: number) {
 }
 
 interface PlaceLinkProps {
-   id: number;
-}
-interface ConnectedPlaceLinkProps extends PlaceLinkProps {
+   id?: number;
    place?: Place;
 }
-
-export function ConnectedPlaceLink(props: ConnectedPlaceLinkProps) {
+export function ConnectedPlaceLink(props: PlaceLinkProps) {
+   if (!props.place) {
+      return <span>Unknown place</span>;
+   }
    return (
-      <Link to={urlPlace(props.id)} className="link  place">
+      <Link to={urlPlace(props.place.id)} className="link  place">
          <Icon name="globe" />
          {props.place ? props.place.name : "Unnamed place"}
       </Link>
@@ -114,5 +111,5 @@ export function ConnectedPlaceLink(props: ConnectedPlaceLinkProps) {
 
 export const PlaceLink = connect((state: AppState, props: PlaceLinkProps) => ({
    ...props,
-   place: state.places[props.id]
+   place: props.place || (props.id !== undefined && state.places[props.id])
 }))(ConnectedPlaceLink);

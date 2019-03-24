@@ -1,95 +1,38 @@
 import * as React from "react";
-import { connect } from "react-redux";
-import {
-   List,
-   ListRowRenderer
-} from "react-virtualized";
-import { Input, InputProps, Segment } from "semantic-ui-react";
+import InfiniteList, { InfiniteRowRenderer } from './InfiniteList';
 import Page from "./Page";
-import { AppState, GPDispatch } from "./Store/State";
-import { Place, PlaceSet } from "./Store/Place";
-import { useComponentSize, useDebounce } from "./Hooks";
+import { Place } from "./Store/Place";
 import { PlaceLink } from "./Links";
-import { fetchPlaces } from "./Store/Sagas";
+import { fetchPlacesFromServer } from "./Server/Place";
 import "./PlaceList.css";
 
-interface PlaceListProps {
-   allPlaces: PlaceSet;
-   dispatch: GPDispatch;
-}
-const PlaceListConnected: React.FC<PlaceListProps> = p => {
-   const container = React.useRef<HTMLDivElement>(null);
-   const [filter, setFilter] = React.useState("");
-   const [sorted, setSorted] = React.useState<Place[]>([]);
-   const size = useComponentSize(container);
+const fetchCount = (p: {filter: string}) =>
+   fetch(`/data/places/count?filter=${encodeURI(p.filter)}`)
+   .then((r: Response) => r.json());
 
-   React.useEffect(() => fetchPlaces.execute(p.dispatch, {}), [p.dispatch]);
+const fetchRows = (p: {filter: string, offset: number, limit: number}) =>
+   fetchPlacesFromServer(p);
 
-   React.useEffect(() => {
-      let list = Object.values(p.allPlaces);
-      if (filter) {
-         const lc_filter = filter.toLowerCase();
-         list = list.filter(
-            p2 => p2.name.toLowerCase().indexOf(lc_filter) >= 0
-         );
-      }
-      setSorted(list.sort((p1, p2) => p1.name.localeCompare(p2.name)));
-   }, [p.allPlaces, filter]);
+const renderRow: InfiniteRowRenderer<Place> = (p) => (
+   <div style={p.style} key={p.key}>
+      <PlaceLink place={p.row} />
+   </div>
+);
 
-   const onFilterChange = React.useCallback(
-      useDebounce(
-         (e: {}, val: InputProps) => setFilter(val.value as string),
-         250
-      ),
-      []
-   );
-
-   const renderRow: ListRowRenderer = React.useCallback(
-      ({ index, key, style }) => (
-         <div style={style} key={key}>
-            <PlaceLink id={sorted[index].id} />
-         </div>
-      ),
-      [sorted]
-   );
-
+const PlaceList: React.FC<{}> = () => {
    document.title = "List of places";
-
    return (
       <Page
          main={
-            <div className="PlaceList List" ref={container}>
-               <Segment color="blue" attached={true}>
-                  <span>
-                     {sorted.length} / {Object.keys(p.allPlaces).length} Places
-                  </span>
-                  <Input
-                     icon="search"
-                     placeholder="Filter..."
-                     onChange={onFilterChange}
-                     style={{ position: "absolute", right: "5px", top: "5px" }}
-                  />
-               </Segment>
-               <List
-                  width={size.width}
-                  height={size.height}
-                  rowCount={sorted.length}
-                  rowHeight={30}
-                  overscanCount={5}
-                  rowRenderer={renderRow}
-               />
-            </div>
+            <InfiniteList
+               title="Place"
+               fetchRows={fetchRows}
+               fetchCount={fetchCount}
+               renderRow={renderRow}
+            />
          }
       />
    );
 };
 
-const PlaceList = connect(
-   (state: AppState) => ({
-      allPlaces: state.places
-   }),
-   (dispatch: GPDispatch) => ({
-      dispatch
-   })
-)(PlaceListConnected);
 export default PlaceList;

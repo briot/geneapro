@@ -8,8 +8,6 @@ import { fetchEventFromServer, EventDetails } from "../Server/Event";
 import { fetchPlaceFromServer, PlaceDetails } from "../Server/Place";
 import { fetchPlacesFromServer, FetchPlacesResult } from "../Server/Place";
 import {
-   fetchSourcesFromServer,
-   FetchSourcesResult,
    fetchSourceDetailsFromServer,
    FetchSourceDetailsResult
 } from "../Server/Source";
@@ -99,32 +97,6 @@ export const fetchMetadata = createAsyncAction<
    FetchMetadataParams,
    GP_JSON.Metadata
 >("DATA/META", _fetchMetaData, _hasMetadata);
-
-/**
- * Async Action: fetch all places from the server
- */
-
-function* _fetchPlaces() {
-   const places = yield call(fetchPlacesFromServer);
-   return places;
-}
-export const fetchPlaces = createAsyncAction<{}, FetchPlacesResult>(
-   "DATA/PLACES",
-   _fetchPlaces
-);
-
-/**
- * Async Action: fetch all sources from the server
- */
-
-function* _fetchSources() {
-   const sources = yield call(fetchSourcesFromServer);
-   return sources;
-}
-export const fetchSources = createAsyncAction<{}, FetchSourcesResult>(
-   "DATA/SOURCES",
-   _fetchSources
-);
 
 /**
  * Async Action: fetch details for one specific person

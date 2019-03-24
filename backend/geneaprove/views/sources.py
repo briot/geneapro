@@ -3,6 +3,8 @@ Source-related views
 """
 
 import os
+from django.db.models import Count
+from django.db.models.functions import Lower
 from django.conf import settings
 from geneaprove.views.to_json import JSONView
 from geneaprove.views.related import JSONResult
@@ -153,15 +155,44 @@ class EditSourceCitation(JSONView):
         return SourceCitation().get_json(params, id=src.id)
 
 
+class SourcesCount(JSONView):
+
+    def get_json(self, params):
+        namefilter = params.get('filter', None)
+
+        pm = models.Source.objects.all()
+        if namefilter:
+            pm = pm.filter(abbrev__icontains=namefilter)
+        pm = pm.aggregate(count=Count('id'))
+        return int(pm['count'])
+
+
 class SourcesList(JSONView):
     """
     View the list of all sources
     """
 
     def get_json(self, params):
-        return models.Source.objects.order_by(
-            'abbrev', 'title').select_related(
-                'subject_place', 'jurisdiction_place')
+        offset = params.get('offset', None)
+        limit = params.get('limit', None)
+        namefilter = params.get('filter', None)
+
+        pm = models.Source.objects \
+            .order_by(Lower('abbrev'), Lower('title')) \
+            .select_related( 'subject_place', 'jurisdiction_place')
+
+        if namefilter:
+            pm = pm.filter(abbrev__icontains=namefilter)
+
+        if limit:
+            li = int(limit)
+            if offset:
+                off = int(offset)
+                pm = pm[off:off + li]
+            else:
+                pm = pm[:li]
+
+        return pm.all()
 
 
 class SourceRepresentations(JSONView):
