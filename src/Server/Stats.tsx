@@ -51,19 +51,3 @@ export function fetchStatsFromServer(
          return resp.json();
       });
 }
-
-export interface JSONCount {
-   places: number; // number of distinct places in database
-   sources: number; // number of distinct sources in database
-   personas: number; // number of basic persons in database
-   persons: number; // number of persons (grouped by sameAs)
-}
-
-export function fetchCountFromServer(): Promise<JSONCount> {
-   return window.fetch("/data/stats/count").then(resp => {
-      if (resp.status !== 200) {
-         throw new Error("Server returned an error");
-      }
-      return resp.json();
-   });
-}

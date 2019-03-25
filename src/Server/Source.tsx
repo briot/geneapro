@@ -80,3 +80,11 @@ export function fetchSourcesFromServer(
    return window.fetch(url)
       .then((resp: Response) => resp.json());
 }
+
+/**
+ * Fetch the total number of sources matching the filter
+ */
+export const fetchSourcesCount = (p: {filter: string}): Promise<number> =>
+   fetch(`/data/sources/count?filter=${encodeURI(p.filter)}`)
+   .then((r: Response) => r.json());
+

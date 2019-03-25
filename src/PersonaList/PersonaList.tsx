@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import InfiniteList, { InfiniteRowRenderer } from '../InfiniteList';
 import Page from "../Page";
 import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
-import { fetchPersonsFromServer } from '../Server/Person';
+import { fetchPersonsCount, fetchPersonsFromServer } from '../Server/Person';
 import * as GP_JSON from "../Server/JSON";
 import { Person } from "../Store/Person";
 import { GenealogyEventSet } from "../Store/Event";
@@ -16,13 +16,6 @@ import {
 } from "../Store/PersonaList";
 import ColorTheme from "../Store/ColorTheme";
 import "./PersonaList.css";
-
-const fetchCount = (p: PersonaListSettings) =>
-   fetch(`/data/persona/count?filter=${encodeURI(p.filter)}`)
-   .then((r: Response) => r.json());
-
-const fetchRows = (p: PersonaListSettings & {offset: number, limit: number}) =>
-   fetchPersonsFromServer(p);
 
 const renderRow: InfiniteRowRenderer<Person, PersonaListSettings> = (p) => {
    const b = extractYear(p.row.birthISODate);
@@ -72,8 +65,8 @@ const PersonaList: React.FC<PersonaListProps> = p => {
          main={
             <InfiniteList
                title="Person"
-               fetchRows={fetchRows}
-               fetchCount={fetchCount}
+               fetchRows={fetchPersonsFromServer}
+               fetchCount={fetchPersonsCount}
                renderRow={renderRow}
                settings={p.settings}
                onSettingsChange={onSettingsChange}

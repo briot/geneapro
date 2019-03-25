@@ -9,15 +9,8 @@ import {
    changePlaceListSettings
 } from "./Store/Place";
 import { PlaceLink } from "./Links";
-import { fetchPlacesFromServer } from "./Server/Place";
+import { fetchPlacesCount, fetchPlacesFromServer } from "./Server/Place";
 import "./PlaceList.css";
-
-const fetchCount = (p: PlaceListSettings) =>
-   fetch(`/data/places/count?filter=${encodeURI(p.filter)}`)
-   .then((r: Response) => r.json());
-
-const fetchRows = (p: PlaceListSettings & {offset: number, limit: number}) =>
-   fetchPlacesFromServer(p);
 
 const renderRow: InfiniteRowRenderer<Place, PlaceListSettings> = (p) => (
    <div style={p.style} key={p.key}>
@@ -44,8 +37,8 @@ const PlaceList: React.FC<PlaceListProps> = (p) => {
          main={
             <InfiniteList
                title="Place"
-               fetchRows={fetchRows}
-               fetchCount={fetchCount}
+               fetchRows={fetchPlacesFromServer}
+               fetchCount={fetchPlacesCount}
                renderRow={renderRow}
                settings={p.settings}
                onSettingsChange={onSettingsChange}

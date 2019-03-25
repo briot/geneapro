@@ -78,11 +78,13 @@ interface FetchPersonsParams {
    limit?: number; // maximum number of persons to return
    offset?: number;
    filter?: string;
+   ids?: number[];
 }
 export function fetchPersonsFromServer(p: FetchPersonsParams): Promise<Person[]> {
    const url =
       `/data/persona/list?theme=${p.colors}` +
       (p.filter ? `&filter=${encodeURI(p.filter)}` : "") +
+      (p.ids ? `&ids=${p.ids.join(',')}` : "") +
       (p.offset ? `&offset=${p.offset}` : "") +
       (p.limit ? `&limit=${p.limit}` : "");
    return window.fetch(url)
@@ -95,6 +97,13 @@ export function fetchPersonsFromServer(p: FetchPersonsParams): Promise<Person[]>
          ));
       });
 }
+
+/**
+ * Retrieve the total number of persons matching the filter
+ */
+export const fetchPersonsCount = (p: {filter: string}): Promise<number> =>
+   fetch(`/data/persona/count?filter=${encodeURI(p.filter)}`)
+   .then((r: Response) => r.json());
 
 function p2eFromJSON(e: GP_JSON.P2E) {
    return new P2E(

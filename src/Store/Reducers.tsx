@@ -10,7 +10,6 @@ import {
    fetchPersonDetails,
    fetchEventDetails,
    fetchSourceDetails,
-   fetchCount,
    fetchMetadata,
    fetchPlaceDetails,
    fetchQuilts
@@ -85,8 +84,6 @@ export function rootReducer(
       sources: {},
       history: [],
       researchers: {},
-      count: undefined,
-      lastFetchedTheme: -1,
       metadata: {
          characteristic_types: [],
          event_types: [],
@@ -172,8 +169,6 @@ export function rootReducer(
       };
    } else if (isType(action, changeStatsSettings)) {
       return { ...state, stats: { ...state.stats, ...action.payload.diff } };
-   } else if (isType(action, fetchCount.done)) {
-      return { ...state, count: action.payload.result };
    } else if (isType(action, fetchEventDetails.done)) {
       const data = action.payload.result as EventDetails;
       return {
@@ -222,7 +217,6 @@ export function rootReducer(
       return {
          ...state,
          persons,
-         lastFetchedTheme: action.payload.params.theme,
          radial: { ...state.radial, loading: false },
          events: { ...state.events, ...action.payload.result.events },
          pedigree: { ...state.pedigree, loading: false }

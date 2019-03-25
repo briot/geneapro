@@ -65,8 +65,11 @@ class PersonaList(JSONView):
 
     def get_json(self, params, decujus=1):
         theme_id = int(params.get('theme', -1))
+        ids = params.get('ids', None)
+
         persons = PersonSet(styles=Styles(theme_id, decujus=decujus))
         persons.add_ids(
+            ids=[int(d) for d in ids.split(',')] if ids else None,
             compute_sex=theme_id >= 0,
             namefilter=params.get('filter', None),
             offset=params.get('offset', None),

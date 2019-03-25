@@ -9,15 +9,8 @@ import {
    changeSourceListSettings
 } from "./Store/Source";
 import { SourceLink } from "./Links";
-import { fetchSourcesFromServer } from "./Server/Source";
+import { fetchSourcesCount, fetchSourcesFromServer } from "./Server/Source";
 import "./SourceList.css";
-
-const fetchCount = (p: SourceListSettings) =>
-   fetch(`/data/sources/count?filter=${encodeURI(p.filter)}`)
-   .then((r: Response) => r.json());
-
-const fetchRows = (p: SourceListSettings & {offset: number, limit: number}) =>
-   fetchSourcesFromServer(p);
 
 const renderRow: InfiniteRowRenderer<Source, SourceListSettings> = (p) => (
    <div style={p.style} key={p.key}>
@@ -44,8 +37,8 @@ const SourceList: React.FC<SourceListProps> = (p) => {
          main={
             <InfiniteList
                title="Source"
-               fetchRows={fetchRows}
-               fetchCount={fetchCount}
+               fetchRows={fetchSourcesFromServer}
+               fetchCount={fetchSourcesCount}
                renderRow={renderRow}
                settings={p.settings}
                onSettingsChange={onSettingsChange}

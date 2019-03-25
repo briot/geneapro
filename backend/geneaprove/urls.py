@@ -8,7 +8,6 @@ import django.contrib
 from django.shortcuts import render_to_response
 from django.template.context_processors import csrf
 import django.views
-from .views import count
 from .views import events
 from .views import importers
 from .views import metadata
@@ -72,7 +71,6 @@ urlpatterns = [
     url(r'^data/sources/(\d+)/delRepr/(\d+)', sources.DelSourceRepr.as_view()),
     url(r'^data/suretySchemes$', persona.SuretySchemesList.as_view()),
     url(r'^data/event/(\d+)$', events.EventDetailsView.as_view()),
-    url(r'^data/stats/count$', count.CountView.as_view()),
     url(r'^data/stats/(?P<id>\d+)$', stats.StatsView.as_view()),
     url(r'^data/metadata$', metadata.MetadataList.as_view()),
     url(r'^data/theme/(?P<theme_id>\d+)/rules', themelist.ThemeRules.as_view()),

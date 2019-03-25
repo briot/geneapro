@@ -15,11 +15,13 @@ class PlaceList(JSONView):
         offset = params.get('offset', None)
         limit = params.get('limit', None)
         namefilter = params.get('filter', None)
-
+        ids = params.get('ids', None)
         pm = models.Place.objects.order_by(Lower('name'))
 
         if namefilter:
             pm = pm.filter(name__icontains=namefilter)
+        if ids:
+            pm = pm.filter(id__in=ids.split(','))
 
         if limit:
             li = int(limit)

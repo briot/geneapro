@@ -16,36 +16,29 @@ import { PlaceSet } from "../Store/Place";
 import { QuiltsResult } from "../Server/Quilts";
 import { ResearcherSet } from "../Store/Researcher";
 import { StatsSettings } from "../Store/Stats";
-import { JSONCount } from "../Server/Stats";
 import * as GP_JSON from "../Server/JSON";
 
-export type DatabaseObjectsCount = JSONCount;
-
 export interface AppState {
-   pedigree: PedigreeSettings;
    fanchart: FanchartSettings;
-   radial: RadialSettings;
+   pedigree: PedigreeSettings;
    personalist: PersonaListSettings;
-   sourcelist: SourceListSettings;
    placelist: PlaceListSettings;
    quilts: QuiltsSettings;
+   radial: RadialSettings;
+   sourcelist: SourceListSettings;
+   stats: StatsSettings;
+
+   metadata: GP_JSON.Metadata;
+
    quiltsLayout: {
       layout?: QuiltsResult;
    };
-   stats: StatsSettings;
-   count: DatabaseObjectsCount | undefined;
    persons: PersonSet; // details for all persons
    places: PlaceSet; // details for all places
    events: GenealogyEventSet; // all known events
    sources: SourceSet;
    history: HistoryItem[]; // id of persons recently visited
    researchers: ResearcherSet;
-
-   lastFetchedTheme: number;
-   // id of the last theme used when fetching personas. We might have to
-   // reload when the theme is computed on the server.
-
-   metadata: GP_JSON.Metadata;
 }
 
 export type GPDispatch = Redux.Dispatch<AppState>;

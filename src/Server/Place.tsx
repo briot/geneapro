@@ -16,6 +16,7 @@ interface FetchPlacesFromServerArgs {
    limit?: number;
    offset?: number;
    filter?: string;
+   ids?: number[];
 }
 
 export function fetchPlacesFromServer(
@@ -24,11 +25,19 @@ export function fetchPlacesFromServer(
    const url =
       '/data/places/list?' +
       (p.filter ? `&filter=${encodeURI(p.filter)}` : '') +
+      (p.ids ? `&ids=${p.ids.join(',')}` : '') +
       (p.offset ? `&offset=${p.offset}` : '') +
       (p.limit ? `&limit=${p.limit}` : '');
    return window.fetch(url)
       .then((resp: Response) => resp.json());
 }
+
+/**
+ * Fetch the number of places matching the filter
+ */
+export const fetchPlacesCount = (p: {filter: string}): Promise<number> =>
+   fetch(`/data/places/count?filter=${encodeURI(p.filter)}`)
+   .then((r: Response) => r.json());
 
 export interface PlaceDetails extends AssertionEntities {
    asserts: AssertionList;
