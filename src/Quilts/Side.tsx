@@ -17,8 +17,7 @@ export default function QuiltsSide(props: QuiltsSideProps) {
                <span>
                   Theme
                   <small>
-                     ancestors: {props.settings.ancestors},&nbsp; restrict:{" "}
-                     {props.settings.decujusTreeOnly ? "yes" : "no"}
+                     ancestors: {props.settings.ancestors}
                   </small>
                </span>
             )
@@ -32,13 +31,6 @@ export default function QuiltsSide(props: QuiltsSideProps) {
                      fieldName="ancestors"
                      min={1}
                      max={60}
-                     onChange={props.onChange}
-                  />
-
-                  <CheckboxField
-                     defaultChecked={props.settings.decujusTreeOnly}
-                     label="Restrict to tree"
-                     fieldName="decujusTreeOnly"
                      onChange={props.onChange}
                   />
                </Form>

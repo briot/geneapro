@@ -13,7 +13,6 @@ import { predefinedThemes } from "../Store/ColorTheme";
 import { GenealogyEventSet } from "../Store/Event";
 import { PersonaListSettings } from "../Store/PersonaList";
 import { PlaceSet } from "../Store/Place";
-import { QuiltsResult } from "../Server/Quilts";
 import { ResearcherSet } from "../Store/Researcher";
 import { StatsSettings } from "../Store/Stats";
 import * as GP_JSON from "../Server/JSON";
@@ -30,9 +29,6 @@ export interface AppState {
 
    metadata: GP_JSON.Metadata;
 
-   quiltsLayout: {
-      layout?: QuiltsResult;
-   };
    persons: PersonSet; // details for all persons
    places: PlaceSet; // details for all places
    events: GenealogyEventSet; // all known events

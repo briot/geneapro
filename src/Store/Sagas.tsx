@@ -11,7 +11,6 @@ import {
    fetchSourceDetailsFromServer,
    FetchSourceDetailsResult
 } from "../Server/Source";
-import { fetchQuiltsFromServer, QuiltsResult } from "../Server/Quilts";
 import * as GP_JSON from "../Server/JSON";
 import { AppState } from "../Store/State";
 import { PersonSet } from "../Store/Person";
@@ -57,23 +56,6 @@ export const fetchPedigree = createAsyncAction<
    FetchPedigreeParams,
    FetchPedigreeResult
 >("DATA/PEDIGREE", _fetchPedigree, _hasPedigree);
-
-/**
- * Async Action: fetch quilts data from the server
- */
-
-export interface FetchQuiltsParams {
-   decujus: number;
-   decujusOnly: boolean;
-}
-export type fetchQuiltsResult = QuiltsResult;
-function* _fetchQuilts(p: FetchQuiltsParams) {
-   return yield call(fetchQuiltsFromServer, p.decujus, p.decujusOnly);
-}
-export const fetchQuilts = createAsyncAction<
-   FetchQuiltsParams,
-   fetchQuiltsResult
->("DATA/QUILTS", _fetchQuilts);
 
 /**
  * Async Action: fetch metadata from server

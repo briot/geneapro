@@ -65,10 +65,6 @@ export default class Quilts extends React.PureComponent<
    public render() {
       const props = this.props;
 
-      if (props.settings.loading) {
-         return <span>Loading</span>;
-      }
-
       const layout: QuiltsResult | undefined = props.layout;
       if (layout === undefined) {
          return <span>No data in database</span>;

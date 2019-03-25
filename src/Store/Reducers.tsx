@@ -11,8 +11,7 @@ import {
    fetchEventDetails,
    fetchSourceDetails,
    fetchMetadata,
-   fetchPlaceDetails,
-   fetchQuilts
+   fetchPlaceDetails
 } from "../Store/Sagas";
 import { addEvents } from "../Store/Event";
 import { EventDetails } from "../Server/Event";
@@ -78,7 +77,6 @@ export function rootReducer(
       placelist: { filter: '' },
       sourcelist: { filter: '' },
       quilts: defaultQuilts,
-      quiltsLayout: {},
       stats: defaultStats,
       places: {},
       sources: {},
@@ -255,25 +253,6 @@ export function rootReducer(
          researchers: { ...state.researchers, ...data.researchers },
          persons: mergePersons(state.persons, data.persons)
       };
-   } else if (isType(action, fetchQuilts.started)) {
-      return { ...state, quilts: { ...state.quilts, loading: true } };
-   } else if (isType(action, fetchQuilts.failed)) {
-      return { ...state, quilts: { ...state.quilts, loading: false } };
-   } else if (isType(action, fetchQuilts.done)) {
-      // Update decujus info, so that the name is correctly displayed in side
-      // panel
-      const ps = action.payload.result.persons;
-      let persons = { ...state.persons };
-      for (let [id, p] of Object.entries(ps)) {
-         const n = Number(id);
-         persons[n] = { ...persons[n], ...p };
-      }
-      return {
-         ...state,
-         persons,
-         quiltsLayout: { ...state.quiltsLayout, layout: action.payload.result },
-         quilts: { ...state.quilts, loading: false }
-      };
    } else if (isType(action, fetchSourceDetails.done)) {
       const data = action.payload.result as FetchSourceDetailsResult;
       const sources = mergeSources(state.sources, data.sources);
@@ -314,7 +293,7 @@ export function rootReducer(
             loading: false
          },
          radial: { ...state.radial, ...action.payload.radial, loading: false },
-         quilts: { ...state.quilts, ...action.payload.quilts, loading: false },
+         quilts: { ...state.quilts, ...action.payload.quilts },
          pedigree: {
             ...state.pedigree,
             ...action.payload.pedigree,

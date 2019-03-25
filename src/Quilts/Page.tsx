@@ -4,9 +4,8 @@ import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
 import { PersonSet, personDisplay } from "../Store/Person";
 import { QuiltsSettings, changeQuiltsSettings } from "../Store/Quilts";
-import { fetchQuilts } from "../Store/Sagas";
 import { AppState, GPDispatch } from "../Store/State";
-import { QuiltsResult } from "../Server/Quilts";
+import { fetchQuiltsFromServer, QuiltsResult } from "../Server/Quilts";
 import { addToHistory } from "../Store/History";
 import Page from "../Page";
 import Quilts from "../Quilts/Quilts";
@@ -16,92 +15,77 @@ interface PropsFromRoute {
    decujusId: string;
 }
 
-interface QuiltsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
+interface QuiltsPageProps extends RouteComponentProps<PropsFromRoute> {
    settings: QuiltsSettings;
-   allPersons: PersonSet;
-   onChange: (diff: Partial<QuiltsSettings>) => void;
-   layout: QuiltsResult | undefined;
    dispatch: GPDispatch;
-   decujusid: number;
 }
+const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
+   const [loading, setLoading] = React.useState(false);
+   const [layout, setLayout] = React.useState<QuiltsResult|undefined>(undefined);
 
-class QuiltsPageConnected extends React.PureComponent<
-   QuiltsPageConnectedProps,
-   {}
-> {
-   public componentDidMount() {
-      this.calculateProps();
-   }
+   const decujusid = Number(p.match.params.decujusId);
+   const decujus = layout && layout.persons[decujusid];
+   const onSettingsChange = React.useCallback(
+      (diff: Partial<QuiltsSettings>) =>
+         p.dispatch(changeQuiltsSettings({ diff })),
+      [p.dispatch]
+   );
 
-   public componentDidUpdate(old: QuiltsPageConnectedProps) {
-      if (
-         this.props.decujusid !== old.decujusid ||
-         this.props.settings.decujusTreeOnly !== old.settings.decujusTreeOnly
-      ) {
-         this.calculateProps();
-      }
-
-      const p = this.props.allPersons[this.props.decujusid];
-      this.props.dispatch(addToHistory({ person: p }));
-   }
-
-   public render() {
-      const decujus = this.props.allPersons[this.props.decujusid];
-      if (decujus) {
-         document.title = "Quilts for " + personDisplay(decujus);
-      }
-
-      // ??? Initially, we have no data and yet loading=false
-      // We added special code in Quilts/Data.tsx to test whether the layout
-      // is known, but that's not elegant.
-      const main = this.props.settings.loading ? (
-         <Loader active={true} size="large">
-            Loading
-         </Loader>
-      ) : (
-         <Quilts
-            settings={this.props.settings}
-            layout={this.props.layout}
-            decujus={this.props.decujusid}
-         />
-      );
-
-      return (
-         <Page
-            decujus={decujus}
-            leftSide={
-               <QuiltsSide
-                  settings={this.props.settings}
-                  onChange={this.props.onChange}
-               />
+   React.useEffect(
+      () => {
+         setLoading(true);
+         fetchQuiltsFromServer({
+            decujus: decujusid,
+         }).then((ps: QuiltsResult|undefined) => {
+            if (ps) {
+               setLayout(ps);
             }
-            main={main}
-         />
-      );
-   }
+            setLoading(false);
+         });
+      },
+      [decujusid],
+   );
 
-   private calculateProps() {
-      fetchQuilts.execute(this.props.dispatch, {
-         decujus: this.props.decujusid,
-         decujusOnly: this.props.settings.decujusTreeOnly
-      });
-   }
+   React.useEffect(
+      () => {
+         if (decujus) {
+            p.dispatch(addToHistory({ person: decujus }));
+            document.title = "Quilts for " + personDisplay(decujus);
+         }
+      },
+      [decujus, p.dispatch]
+   );
+
+   const main = loading ? (
+      <Loader active={true} size="large">
+         Loading
+      </Loader>
+   ) : (
+      <Quilts
+         settings={p.settings}
+         layout={layout}
+         decujus={decujusid}
+      />
+   );
+
+   return (
+      <Page
+         decujus={decujus}
+         leftSide={
+            <QuiltsSide
+               settings={p.settings}
+               onChange={onSettingsChange}
+            />
+         }
+         main={main}
+      />
+   );
 }
 
-const QuiltsPage = connect(
+export default connect(
    (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
       ...props,
       settings: state.quilts,
-      layout: state.quiltsLayout ? state.quiltsLayout.layout : undefined,
-      allPersons: state.persons,
-      decujusid: Number(props.match.params.decujusId)
    }),
-   (dispatch: GPDispatch) => ({
-      dispatch,
-      onChange: (diff: Partial<QuiltsSettings>) => {
-         dispatch(changeQuiltsSettings({ diff }));
-      }
-   })
-)(QuiltsPageConnected);
-
-export default QuiltsPage;
+   (dispatch: GPDispatch) => ({ dispatch, })
+)(QuiltsPage);

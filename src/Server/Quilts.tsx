@@ -69,7 +69,6 @@ export class QuiltsResult {
 
    public constructor(
       data: JSONQuilts,
-      isVisible: (personId: BasePerson) => boolean
    ) {
       let personToLayout: { [id: number]: QuiltsPersonLayout } = {};
       this.persons = data.persons;
@@ -80,7 +79,6 @@ export class QuiltsResult {
             top: 0,
             height: 0,
             persons: persons
-               .filter(p => isVisible(data.persons[p]))
                .map((p: number, index) => {
                   return (personToLayout[p] = {
                      person: data.persons[p],
@@ -272,23 +270,9 @@ export class QuiltsResult {
  * get pedigree information for `decujus`, up to a number of
  * generations.
  */
-export function* fetchQuiltsFromServer(decujus: number, decujusOnly: boolean) {
-   const resp: Response = yield window.fetch(
-      "/data/quilts/" + decujus + "?decujus_tree=" + decujusOnly
-   );
-   if (resp.status !== 200) {
-      throw new Error("Server returned an error");
-   }
-
-   const data: JSONQuilts = yield resp.json();
-   const filtered = false;
-   const selected: { [id: number]: boolean } = {};
-   if (!data.perlayer) {
-      return undefined;
-   } else {
-      return new QuiltsResult(
-         data,
-         (p: BasePerson) => !filtered || selected[p.id]
-      );
-   }
-}
+export const fetchQuiltsFromServer = (p: {
+   decujus: number;
+}): Promise<QuiltsResult|undefined> =>
+   window.fetch(`/data/quilts/${p.decujus}`)
+   .then((r: Response) => r.json())
+   .then((q: JSONQuilts) => q.perlayer ? new QuiltsResult(q) : undefined);
