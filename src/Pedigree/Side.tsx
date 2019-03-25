@@ -45,6 +45,7 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      min={0}
                      max={MAXGEN}
                      onChange={props.onChange}
+                     debounce={250}
                   />
 
                   <SliderField
@@ -54,6 +55,7 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      min={0}
                      max={MAXGEN}
                      onChange={props.onChange}
+                     debounce={250}
                   />
 
                   <CheckboxField
@@ -123,6 +125,7 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      min={0}
                      max={200}
                      onChange={props.onChange}
+                     debounce={50}
                   />
 
                   <SliderField
@@ -132,6 +135,7 @@ export default function PedigreeSide(props: PedigreeSideProps) {
                      min={0}
                      max={30}
                      onChange={props.onChange}
+                     debounce={50}
                   />
 
                   <CheckboxField

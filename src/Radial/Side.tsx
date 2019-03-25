@@ -41,6 +41,7 @@ export default function RadialSide(props: RadialSideProps) {
                      min={-MAXGEN}
                      max={MAXGEN}
                      onChange={props.onChange}
+                     debounce={250}
                   />
                </Form>
             )
@@ -79,6 +80,7 @@ export default function RadialSide(props: RadialSideProps) {
                      min={5}
                      max={200}
                      onChange={props.onChange}
+                     debounce={100}
                   />
                   <CheckboxField
                      defaultChecked={props.settings.showText}

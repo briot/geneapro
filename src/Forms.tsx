@@ -6,6 +6,7 @@ import {
    Form,
    Select
 } from "semantic-ui-react";
+import { useDebounce } from './Hooks';
 
 /**
  * SelectField
@@ -54,12 +55,20 @@ export const SliderField = React.memo(
       max: number;
       onChange: (diff: Partial<{ [name: string]: number }>) => void;
       doc?: string;
+
+      debounce?: number;
+      // How long to wait before executing onChange. This should be around
+      // 250ms if the result of the change is going to be a slow operation
+
    }) => {
-      const onChange = React.useCallback(
-         (data: { target: { value: string } }) =>
-            p.onChange({ [p.fieldName]: Number(data.target.value) }),
-         [p.onChange, p.fieldName]
-      );
+      const reportChange = React.useCallback(
+         useDebounce(
+            (val: number) => p.onChange({ [p.fieldName]: val}),
+            p.debounce || 0),
+         [p.onChange, p.fieldName, p.debounce]);
+
+      const onChange = (data: { target: { value: string } }) =>
+         reportChange(Number(data.target.value));
 
       return (
          <Form.Field>

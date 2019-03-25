@@ -44,6 +44,7 @@ export default function FanchartSide(props: FanchartSideProps) {
                      min={0}
                      max={MAXGEN}
                      onChange={props.onChange}
+                     debounce={250}
                   />
 
                   <SliderField
@@ -53,6 +54,7 @@ export default function FanchartSide(props: FanchartSideProps) {
                      min={0}
                      max={MAXGEN}
                      onChange={props.onChange}
+                     debounce={250}
                   />
 
                   <CheckboxField
@@ -119,6 +121,7 @@ export default function FanchartSide(props: FanchartSideProps) {
                      min={90}
                      max={360}
                      onChange={props.onChange}
+                     debounce={100}
                   />
 
                   <ThemeSelector
@@ -135,6 +138,7 @@ export default function FanchartSide(props: FanchartSideProps) {
                      min={0}
                      max={60}
                      onChange={props.onChange}
+                     debounce={100}
                   />
 
                   <SliderField
@@ -144,6 +148,7 @@ export default function FanchartSide(props: FanchartSideProps) {
                      min={1}
                      max={props.settings.ancestors + 1}
                      onChange={props.onChange}
+                     debounce={100}
                   />
 
                   <CheckboxField
