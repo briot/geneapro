@@ -17,55 +17,48 @@ import {
 import ColorTheme from "../Store/ColorTheme";
 import "./PersonaList.css";
 
-const fetchCount = (p: {filter: string}) =>
+const fetchCount = (p: PersonaListSettings) =>
    fetch(`/data/persona/count?filter=${encodeURI(p.filter)}`)
    .then((r: Response) => r.json());
+
+const fetchRows = (p: PersonaListSettings & {offset: number, limit: number}) =>
+   fetchPersonsFromServer(p);
+
+const renderRow: InfiniteRowRenderer<Person, PersonaListSettings> = (p) => {
+   const b = extractYear(p.row.birthISODate);
+   const d = extractYear(p.row.deathISODate);
+   return (
+      <div style={p.style} className="person" key={p.key}>
+         <span
+            style={
+               ColorTheme.forPerson(p.settings.colors, 1 /* maxgen */, p.row)
+               .toStr("dom")
+            }
+         >
+            <PersonaLink person={p.row} />
+         </span>
+         <span className="lifespan">
+            <span>{b || ''}</span>
+            {b || d ? " - " : ""}
+            <span>{d || ''}</span>
+         </span>
+      </div>
+   );
+};
 
 interface PersonaListProps {
    dispatch: GPDispatch;
    settings: PersonaListSettings;
    themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
 }
-const PersonaListConnected: React.FC<PersonaListProps> = p => {
+const PersonaList: React.FC<PersonaListProps> = p => {
    const onSettingsChange = React.useCallback(
       (diff: Partial<PersonaListSettings>) =>
          p.dispatch(changePersonaListSettings({ diff })),
       [p.dispatch]
    );
 
-   const fetchRows = React.useCallback(
-      (params: {filter: string, offset: number, limit: number}) =>
-         fetchPersonsFromServer({ colors: p.settings.colors, ...params }),
-      [p.settings.colors]
-   );
-
    document.title = 'List of persons';
-
-   const renderRow: InfiniteRowRenderer<Person> = React.useCallback(
-      (params) => {
-         const b = extractYear(params.row.birthISODate);
-         const d = extractYear(params.row.deathISODate);
-         return (
-            <div style={params.style} className="person" key={params.key}>
-               <span
-                  style={ColorTheme.forPerson(
-                     p.settings.colors,
-                     1 /* maxgen */,
-                     params.row
-                  ).toStr("dom")}
-               >
-                  <PersonaLink person={params.row} />
-               </span>
-               <span className="lifespan">
-                  <span>{b || ''}</span>
-                  {b || d ? " - " : ""}
-                  <span>{d || ''}</span>
-               </span>
-            </div>
-         );
-      },
-      [p.settings]
-   );
 
    return (
       <Page
@@ -82,7 +75,8 @@ const PersonaListConnected: React.FC<PersonaListProps> = p => {
                fetchRows={fetchRows}
                fetchCount={fetchCount}
                renderRow={renderRow}
-               resetOn={[p.settings.colors]}
+               settings={p.settings}
+               onSettingsChange={onSettingsChange}
             />
          }
       />
@@ -95,4 +89,4 @@ export default connect(
       themeNameGet: themeNameGetter(state)
    }),
    (dispatch: GPDispatch) => ({ dispatch })
-)(PersonaListConnected);
+)(PersonaList);

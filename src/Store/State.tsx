@@ -5,7 +5,8 @@ import { PedigreeSettings } from "../Store/Pedigree";
 import { RadialSettings } from "../Store/Radial";
 import { QuiltsSettings } from "../Store/Quilts";
 import { PersonSet } from "../Store/Person";
-import { SourceSet } from "../Store/Source";
+import { SourceSet, SourceListSettings } from "../Store/Source";
+import { PlaceListSettings } from '../Store/Place';
 import { HistoryItem } from "../Store/History";
 import { actionCreator } from "../Store/Actions";
 import { predefinedThemes } from "../Store/ColorTheme";
@@ -25,6 +26,8 @@ export interface AppState {
    fanchart: FanchartSettings;
    radial: RadialSettings;
    personalist: PersonaListSettings;
+   sourcelist: SourceListSettings;
+   placelist: PlaceListSettings;
    quilts: QuiltsSettings;
    quiltsLayout: {
       layout?: QuiltsResult;

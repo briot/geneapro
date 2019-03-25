@@ -4,10 +4,12 @@ import * as GP_JSON from "../Server/JSON";
 
 export interface PersonaListSettings {
    colors: GP_JSON.ColorSchemeId;
+   filter: string;
 }
 
 export const defaultPersonaList: PersonaListSettings = {
-   colors: WHITE.id
+   colors: WHITE.id,
+   filter: '',
 };
 
 /**

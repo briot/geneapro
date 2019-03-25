@@ -1,26 +1,44 @@
 import * as React from "react";
+import { connect } from "react-redux";
 import InfiniteList, { InfiniteRowRenderer } from './InfiniteList';
+import { AppState, GPDispatch } from "./Store/State";
 import Page from "./Page";
-import { Place } from "./Store/Place";
+import {
+   Place,
+   PlaceListSettings,
+   changePlaceListSettings
+} from "./Store/Place";
 import { PlaceLink } from "./Links";
 import { fetchPlacesFromServer } from "./Server/Place";
 import "./PlaceList.css";
 
-const fetchCount = (p: {filter: string}) =>
+const fetchCount = (p: PlaceListSettings) =>
    fetch(`/data/places/count?filter=${encodeURI(p.filter)}`)
    .then((r: Response) => r.json());
 
-const fetchRows = (p: {filter: string, offset: number, limit: number}) =>
+const fetchRows = (p: PlaceListSettings & {offset: number, limit: number}) =>
    fetchPlacesFromServer(p);
 
-const renderRow: InfiniteRowRenderer<Place> = (p) => (
+const renderRow: InfiniteRowRenderer<Place, PlaceListSettings> = (p) => (
    <div style={p.style} key={p.key}>
       <PlaceLink place={p.row} />
    </div>
 );
 
-const PlaceList: React.FC<{}> = () => {
+interface PlaceListProps {
+   dispatch: GPDispatch;
+   settings: PlaceListSettings;
+}
+
+const PlaceList: React.FC<PlaceListProps> = (p) => {
    document.title = "List of places";
+
+   const onSettingsChange = React.useCallback(
+      (diff: Partial<PlaceListSettings>) =>
+         p.dispatch(changePlaceListSettings({ diff })),
+      [p.dispatch]
+   );
+
    return (
       <Page
          main={
@@ -29,10 +47,15 @@ const PlaceList: React.FC<{}> = () => {
                fetchRows={fetchRows}
                fetchCount={fetchCount}
                renderRow={renderRow}
+               settings={p.settings}
+               onSettingsChange={onSettingsChange}
             />
          }
       />
    );
 };
 
-export default PlaceList;
+export default connect(
+   (state: AppState) => ({ settings: state.placelist }),
+   (dispatch: GPDispatch) => ({ dispatch })
+)(PlaceList);

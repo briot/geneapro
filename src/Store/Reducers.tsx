@@ -18,7 +18,7 @@ import {
 import { addEvents } from "../Store/Event";
 import { EventDetails } from "../Server/Event";
 import { DetailsResult } from "../Server/Person";
-import { FetchSourcesResult, FetchSourceDetailsResult } from "../Server/Source";
+import { FetchSourceDetailsResult } from "../Server/Source";
 import { FetchPlacesResult, PlaceDetails } from "../Server/Place";
 import { defaultPedigree, changePedigreeSettings } from "../Store/Pedigree";
 import { defaultFanchart, changeFanchartSettings } from "../Store/Fanchart";
@@ -26,6 +26,8 @@ import {
    defaultPersonaList,
    changePersonaListSettings
 } from "../Store/PersonaList";
+import { changePlaceListSettings } from '../Store/Place';
+import { changeSourceListSettings } from '../Store/Source';
 import { defaultRadial, changeRadialSettings } from "../Store/Radial";
 import { defaultStats, changeStatsSettings } from "../Store/Stats";
 import { defaultQuilts, changeQuiltsSettings } from "../Store/Quilts";
@@ -74,6 +76,8 @@ export function rootReducer(
       fanchart: defaultFanchart,
       radial: defaultRadial,
       personalist: defaultPersonaList,
+      placelist: { filter: '' },
+      sourcelist: { filter: '' },
       quilts: defaultQuilts,
       quiltsLayout: {},
       stats: defaultStats,
@@ -152,10 +156,20 @@ export function rootReducer(
          ...state,
          personalist: { ...state.personalist, ...action.payload.diff }
       };
+   } else if (isType(action, changePlaceListSettings)) {
+      return {
+         ...state,
+         placelist: { ...state.placelist, ...action.payload.diff }
+      };
    } else if (isType(action, changeQuiltsSettings)) {
       return { ...state, quilts: { ...state.quilts, ...action.payload.diff } };
    } else if (isType(action, changeRadialSettings)) {
       return { ...state, radial: { ...state.radial, ...action.payload.diff } };
+   } else if (isType(action, changeSourceListSettings)) {
+      return {
+         ...state,
+         sourcelist: { ...state.sourcelist, ...action.payload.diff }
+      };
    } else if (isType(action, changeStatsSettings)) {
       return { ...state, stats: { ...state.stats, ...action.payload.diff } };
    } else if (isType(action, fetchCount.done)) {

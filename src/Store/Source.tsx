@@ -1,3 +1,4 @@
+import { actionCreator } from "../Store/Actions";
 import { AssertionList } from "../Store/Assertion";
 
 export interface SourceMedia {
@@ -53,3 +54,14 @@ export function createNewSource(medium: string): Source {
       parts: {}
    };
 }
+
+export interface SourceListSettings {
+   filter: string;
+}
+
+/**
+ * Action: change one or more settings
+ */
+export const changeSourceListSettings = actionCreator<{
+   diff: Partial<SourceListSettings>;
+}>("SOURCELIST/SETTINGS");
