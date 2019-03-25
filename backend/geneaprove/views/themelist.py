@@ -72,6 +72,7 @@ class ThemeSave(JSONView):
         else:
             theme = models.Theme.objects.get(id=theme_id);
             theme.name = name
+            theme.save()
 
             for r in theme.rules.all():
                 r.delete()

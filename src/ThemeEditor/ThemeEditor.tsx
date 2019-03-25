@@ -876,7 +876,7 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {
    const [themeList, setThemeList] = React.useState<GP_JSON.ColorScheme[]>(
       p.metadata.themes
    );
-   const [selected, setSelected] = React.useState(0);
+   const [selected, setSelected] = React.useState(NEW_THEME.id);
    const [modified, setModified] = React.useState(false);
    const [name, setName] = React.useState("");
    const [rules, setRules] = React.useState<ServerThemes.ThemeRule[]>([]);
@@ -893,10 +893,6 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {
 
    React.useEffect(() => {
       setThemeList([...p.metadata.themes, NEW_THEME]);
-      const first = p.metadata.themes[0];
-      if (first) {
-         setSelected(first.id);
-      }
    }, [p.metadata.themes]);
 
    const loadRuleList = React.useCallback(() => {
@@ -939,7 +935,7 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {
    const onDeleteTheme = React.useCallback(() => {
       ServerThemes.deleteThemeOnServer(selected).then(() => {
          setModified(false);
-         setSelected(-1);
+         setSelected(NEW_THEME.id);
          fetchMetadata.execute(p.dispatch, { force: true });
       });
    }, [selected, p.dispatch]);
@@ -954,8 +950,8 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {
       ServerThemes.saveThemeOnServer(selected, name, rules).then(
          (theme_id: number) => {
             setModified(false);
-            fetchMetadata.execute(p.dispatch, { force: true });
-            setSelected(theme_id);
+            fetchMetadata.execute( p.dispatch, { force: true });
+            setSelected(theme_id); //  ??? Only once we have reloaded
          }
       );
    }, [selected, name, rules, p.dispatch]);
