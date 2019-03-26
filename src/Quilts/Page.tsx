@@ -6,7 +6,7 @@ import { PersonSet, personDisplay } from "../Store/Person";
 import { QuiltsSettings, changeQuiltsSettings } from "../Store/Quilts";
 import { AppState, GPDispatch } from "../Store/State";
 import { fetchQuiltsFromServer, QuiltsResult } from "../Server/Quilts";
-import { addToHistory } from "../Store/History";
+import { addToHistory, HistoryKind } from "../Store/History";
 import Page from "../Page";
 import Quilts from "../Quilts/Quilts";
 import QuiltsSide from "../Quilts/Side";
@@ -48,8 +48,10 @@ const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
 
    React.useEffect(
       () => {
+         p.dispatch(addToHistory({
+            kind: HistoryKind.PERSON, id: decujusid
+         }));
          if (decujus) {
-            p.dispatch(addToHistory({ person: decujus }));
             document.title = "Quilts for " + personDisplay(decujus);
          }
       },
@@ -70,7 +72,7 @@ const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
 
    return (
       <Page
-         decujus={decujus}
+         decujusid={decujusid}
          leftSide={
             <QuiltsSide
                settings={p.settings}

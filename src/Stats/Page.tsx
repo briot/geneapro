@@ -7,7 +7,7 @@ import { fetchPersonDetails } from "../Store/Sagas";
 import { AppState, GPDispatch } from "../Store/State";
 import { StatsSettings, changeStatsSettings } from "../Store/Stats";
 import { PersonSet, personDisplay } from "../Store/Person";
-import { addToHistory } from "../Store/History";
+import { addToHistory, HistoryKind } from "../Store/History";
 import StatsGeneration from "../Stats/Generations";
 import StatsLifespan from "../Stats/Lifespan";
 import StatsSide from "../Stats/Side";
@@ -51,10 +51,11 @@ class StatsPageConnected extends React.PureComponent<
          this.calculateProps();
       }
 
-      const p = this.props.persons[this.props.decujusid];
-      this.props.dispatch(addToHistory({ person: p }));
+      this.props.dispatch(addToHistory({
+         kind: HistoryKind.PERSON, id: this.props.decujusid }));
 
       // Make sure we have the name of the person
+      const p = this.props.persons[this.props.decujusid];
       if (!p) {
          fetchPersonDetails.execute(this.props.dispatch, {
             id: this.props.decujusid
@@ -103,7 +104,7 @@ class StatsPageConnected extends React.PureComponent<
 
       return (
          <Page
-            decujus={decujus}
+            decujusid={this.props.decujusid}
             main={main}
             leftSide={
                <StatsSide

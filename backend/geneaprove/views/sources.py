@@ -176,6 +176,7 @@ class SourcesList(JSONView):
         offset = params.get('offset', None)
         limit = params.get('limit', None)
         namefilter = params.get('filter', None)
+        ids = params.get('ids', None)
 
         pm = models.Source.objects \
             .order_by(Lower('abbrev'), Lower('title')) \
@@ -183,6 +184,8 @@ class SourcesList(JSONView):
 
         if namefilter:
             pm = pm.filter(abbrev__icontains=namefilter)
+        if ids is not None:
+            pm = pm.filter(id__in=ids.split(','))
 
         if limit:
             li = int(limit)

@@ -1,13 +1,22 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import { Header, List, SemanticICONS } from "semantic-ui-react";
+import { Header, List, Menu, SemanticICONS } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 import { AppState } from "./Store/State";
 import { Person, PersonSet, personDisplay } from "./Store/Person";
+import { Place } from './Store/Place';
+import { Source } from './Store/Source';
+import {
+   useHistoryPersons,
+   useHistoryPlaces,
+   useHistorySources
+} from './History';
 import { HistoryItem, HistoryKind, lastVisitedPerson } from "./Store/History";
 import { urlPersona, urlSource, urlPlace } from "./Links";
 import Panel from "./Panel";
 import "./SideNav.css";
+
+const LINK_STYLE = { color: "inherit" };
 
 interface SideNavItemProps {
    icon?: SemanticICONS;
@@ -15,194 +24,176 @@ interface SideNavItemProps {
    disabled?: boolean;
    to?: string;
 }
+const SideNavItem: React.FC<SideNavItemProps> = (p) => {
+   return (
+      <List.Item disabled={p.disabled} className="hideOverflow">
+         <List.Icon name={p.icon} />
+         <List.Content title={p.label}>
+            {
+               p.to ?
+                  <Link to={p.to} style={LINK_STYLE}>{p.label}</Link>
+                 : p.label
+            }
+         </List.Content>
+      </List.Item>
+   );
+};
 
-const LINK_STYLE = { color: "inherit" };
+const SideNavItemPerson: React.FC<{person?: Person}> = (p) =>
+   p.person ? <SideNavItem
+      icon="user"
+      label={personDisplay(p.person)}
+      to={urlPersona(p.person.id)}
+   /> : null;
 
-class SideNavItem extends React.PureComponent<SideNavItemProps> {
-   public render() {
-      const link = this.props.to ? (
-         <Link to={this.props.to} style={LINK_STYLE}>
-            {this.props.label}
-         </Link>
-      ) : (
-         this.props.label
-      );
+const SideNavItemPlace: React.FC<{place?: Place}> = (p) =>
+   p.place ? <SideNavItem
+      icon="globe"
+      label={p.place.name}
+      to={urlPlace(p.place.id)}
+   /> : null;
 
-      return (
-         <List.Item disabled={this.props.disabled} className="hideOverflow">
-            <List.Icon name={this.props.icon} />
-            <List.Content title={this.props.label}>{link}</List.Content>
-         </List.Item>
-      );
-   }
-}
+const SideNavItemSource: React.FC<{source?: Source}> = (p) =>
+   p.source ? <SideNavItem
+      icon="book"
+      label={p.source.abbrev}
+      to={urlSource(p.source.id)}
+   /> : null;
 
 interface SideNavCategoryProps {
    label: React.ReactNode;
    linkTo?: string;
 }
-
-function SideNavCategory(props: SideNavCategoryProps) {
+const SideNavCategory: React.FC<SideNavCategoryProps> = (p) => {
    return (
       <Header size="small" sub={true} className="hideOverflow">
-         {props.linkTo ? (
-            <Link to={props.linkTo} style={LINK_STYLE}>
-               {props.label}
-            </Link>
-         ) : (
-            props.label
-         )}
+         {
+            p.linkTo ?
+               <Link to={p.linkTo} style={LINK_STYLE}>{p.label} </Link>
+              : p.label
+         }
       </Header>
+   );
+};
+
+interface SideNavProps {
+   decujus?: number;
+   history: HistoryItem[];
+}
+const SideNav: React.FC<SideNavProps> = (p) => {
+   const persons = useHistoryPersons(p.history);
+   const places = useHistoryPlaces(p.history);
+   const sources = useHistorySources(p.history);
+
+   const decujusid = p.decujus || lastVisitedPerson(p.history) || '';
+
+   const hist = p.history.map(
+      ({ id, kind }: HistoryItem) => (
+         kind === HistoryKind.PERSON
+         ? <SideNavItemPerson person={persons[id]} key={`P${id}`} />
+         : kind === HistoryKind.PLACE
+         ? <SideNavItemPlace place={places[id]} key={`L${id}`} />
+         : kind === HistoryKind.SOURCE
+         ? <SideNavItemSource source={sources[id]} key={`S${id}`} />
+         : null
+      ));
+
+   return (
+      <Panel className="SideNav">
+         <List>
+            <SideNavCategory label="Views" />
+            <SideNavItem
+               icon="dashboard"
+               label="Dashboard"
+               to={"/" + decujusid}
+            />
+            <SideNavItem
+               icon="folder open"
+               label="Import Gedcom"
+               to="/import"
+            />
+
+            <SideNavItem
+               icon="users"
+               label="All persons"
+               to="/persona/list/"
+            />
+            <SideNavItem icon="globe" label="All places" to="/place/list/" />
+            <SideNavItem
+               icon="book"
+               label="Bibliography"
+               to="/source/list/"
+            />
+            <SideNavItem
+               icon="image"
+               label="Media Manager"
+               disabled={true}
+               to="/media"
+            />
+
+            <SideNavItem
+               icon="pie chart"
+               label="Stats"
+               to={"/stats/" + decujusid}
+            />
+            <SideNavItem
+               icon="calendar times"
+               label="Timeline"
+               disabled={true}
+               to="/timeline"
+            />
+            <SideNavItem
+               icon="list ul"
+               label="Ancestor Tree"
+               disabled={true}
+               to="/ancestortree"
+            />
+            <SideNavItem
+               icon="address book outline"
+               label="Family Dictionary"
+               disabled={true}
+               to="/familyDict"
+            />
+
+            {decujusid !== '' && [
+               <SideNavCategory
+                  key="category"
+                  label={personDisplay(persons[decujusid])}
+                  linkTo={urlPersona(decujusid)}
+               />,
+               <SideNavItem
+                  key="pedigree"
+                  icon="sitemap"
+                  label="Pedigree"
+                  to={"/pedigree/" + decujusid}
+               />,
+               <SideNavItem
+                  key="fanchart"
+                  icon="wifi"
+                  label="Fan chart"
+                  to={"/fanchart/" + decujusid}
+               />,
+               <SideNavItem
+                  key="asterisk"
+                  icon="asterisk"
+                  label="Radial chart"
+                  to={"/radial/" + decujusid}
+               />,
+               <SideNavItem
+                  key="quilts"
+                  icon="server"
+                  label="Quilts"
+                  to={"/quilts/" + decujusid}
+               />
+            ]}
+
+            <SideNavCategory label="History" />
+            {hist}
+         </List>
+      </Panel>
    );
 }
 
-interface SideNavProps {
-   decujus?: Person;
-   history: HistoryItem[];
-   persons: PersonSet;
-}
-
-class SideNavConnected extends React.PureComponent<SideNavProps> {
-   public render(): JSX.Element {
-      const hist: JSX.Element[] = this.props.history.map(
-         ({ id, display, kind }: HistoryItem) => (
-            <SideNavItem
-               key={kind + " " + id}
-               icon={
-                  kind === HistoryKind.PERSON
-                     ? "user"
-                     : kind === HistoryKind.PLACE
-                     ? "globe"
-                     : kind === HistoryKind.SOURCE
-                     ? "book"
-                     : undefined
-               }
-               label={
-                  kind === HistoryKind.PERSON
-                     ? personDisplay(this.props.persons[id]) || display
-                     : display
-               }
-               to={
-                  kind === HistoryKind.PERSON
-                     ? urlPersona(id)
-                     : kind === HistoryKind.PLACE
-                     ? urlPlace(id)
-                     : kind === HistoryKind.SOURCE
-                     ? urlSource(id)
-                     : "#"
-               }
-            />
-         )
-      );
-
-      const lastVisited = lastVisitedPerson(this.props.history);
-      const decujusStr: string =
-         this.props.decujus !== undefined
-            ? this.props.decujus.id.toString()
-            : lastVisited !== undefined
-            ? lastVisited.toString()
-            : "";
-
-      return (
-         <Panel className="SideNav">
-            <List>
-               <SideNavCategory label="Views" />
-               <SideNavItem
-                  icon="dashboard"
-                  label="Dashboard"
-                  to={"/" + decujusStr}
-               />
-               <SideNavItem
-                  icon="folder open"
-                  label="Import Gedcom"
-                  to="/import"
-               />
-
-               <SideNavItem
-                  icon="users"
-                  label="All persons"
-                  to="/persona/list/"
-               />
-               <SideNavItem icon="globe" label="All places" to="/place/list/" />
-               <SideNavItem
-                  icon="book"
-                  label="Bibliography"
-                  to="/source/list/"
-               />
-               <SideNavItem
-                  icon="image"
-                  label="Media Manager"
-                  disabled={true}
-                  to="/media"
-               />
-
-               <SideNavItem
-                  icon="pie chart"
-                  label="Stats"
-                  to={"/stats/" + decujusStr}
-               />
-               <SideNavItem
-                  icon="calendar times"
-                  label="Timeline"
-                  disabled={true}
-                  to="/timeline"
-               />
-               <SideNavItem
-                  icon="list ul"
-                  label="Ancestor Tree"
-                  disabled={true}
-                  to="/ancestortree"
-               />
-               <SideNavItem
-                  icon="address book outline"
-                  label="Family Dictionary"
-                  disabled={true}
-                  to="/familyDict"
-               />
-
-               {this.props.decujus !== undefined && [
-                  <SideNavCategory
-                     key="category"
-                     label={personDisplay(this.props.decujus)}
-                     linkTo={urlPersona(this.props.decujus.id)}
-                  />,
-                  <SideNavItem
-                     key="pedigree"
-                     icon="sitemap"
-                     label="Pedigree"
-                     to={"/pedigree/" + decujusStr}
-                  />,
-                  <SideNavItem
-                     key="fanchart"
-                     icon="wifi"
-                     label="Fan chart"
-                     to={"/fanchart/" + decujusStr}
-                  />,
-                  <SideNavItem
-                     key="asterisk"
-                     icon="asterisk"
-                     label="Radial chart"
-                     to={"/radial/" + decujusStr}
-                  />,
-                  <SideNavItem
-                     key="quilts"
-                     icon="server"
-                     label="Quilts"
-                     to={"/quilts/" + decujusStr}
-                  />
-               ]}
-
-               <SideNavCategory label="History" />
-               {hist}
-            </List>
-         </Panel>
-      );
-   }
-}
-
-const SideNav = connect((state: AppState) => ({
+export default connect((state: AppState) => ({
    history: state.history,
-   persons: state.persons
-}))(SideNavConnected);
-
-export default SideNav;
+}))(SideNav);

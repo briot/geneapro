@@ -1,33 +1,10 @@
 import * as React from "react";
-import { Link } from "react-router-dom";
 import { Container, Menu, Search } from "semantic-ui-react";
-import { Person } from "./Store/Person";
-import "./Logo.css";
 
-class Logo extends React.PureComponent<{}, {}> {
-   public render() {
-      return (
-         <div className="Logo">
-            <div>Geneaprove</div>
-            <span className="tagline">Evidence your genealogy</span>
-         </div>
-      );
-   }
-}
-
-interface NavbarProps {
-   decujus?: Person;
-}
-
-export default function Navbar(props: NavbarProps) {
+export const Navbar = (p: {}) => {
    return (
-      <Menu attached={true} inverted={true}>
-         <Container>
-            <Menu.Item as="span" header={true}>
-               <Link to={"/" + (props.decujus ? props.decujus.id : "")}>
-                  <Logo />
-               </Link>
-            </Menu.Item>
+      <Menu attached={true} inverted={true} size="mini" >
+         <Container fluid={true} >
             <Menu.Item position="right">
                <Search placeholder="search" />
             </Menu.Item>

@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Loader } from "semantic-ui-react";
 import { RouteComponentProps } from "react-router";
 import { AppState, GPDispatch } from "../Store/State";
-import { addToHistory } from "../Store/History";
+import { addToHistory, HistoryKind } from "../Store/History";
 import { fetchSourceDetails } from "../Store/Sagas";
 import { Source } from "../Store/Source";
 import Page from "../Page";
@@ -28,7 +28,8 @@ class SourcePageConnected extends React.PureComponent<SourcePageProps> {
       if (old.id !== this.props.id) {
          this.calculateData();
       }
-      this.props.dispatch(addToHistory({ source: this.props.source }));
+      this.props.dispatch(addToHistory({
+         kind: HistoryKind.SOURCE, id: this.props.id }));
    }
 
    public calculateData() {
@@ -42,7 +43,7 @@ class SourcePageConnected extends React.PureComponent<SourcePageProps> {
       document.title = s ? s.abbrev : "New Source";
       return (
          <Page
-            decujus={undefined}
+            decujusid={undefined}
             main={
                s || this.props.id < 0 ? (
                   <SourceDetails source={s} />

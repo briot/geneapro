@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
 import { PersonSet, personDisplay } from "../Store/Person";
-import { addToHistory } from "../Store/History";
+import { addToHistory, HistoryKind } from "../Store/History";
 import { AppState, GPDispatch } from "../Store/State";
 import { fetchPersonDetails } from "../Store/Sagas";
 import Page from "../Page";
@@ -28,9 +28,8 @@ class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
       if (old.id !== this.props.id) {
          this.calculateData();
       }
-
-      const p = this.props.persons[this.props.id];
-      this.props.dispatch(addToHistory({ person: p }));
+      this.props.dispatch(addToHistory(
+         { kind: HistoryKind.PERSON, id: this.props.id }));
    }
 
    protected calculateData() {
@@ -42,7 +41,7 @@ class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
       document.title = p ? personDisplay(p) : "Persona";
       return (
          <Page
-            decujus={p}
+            decujusid={this.props.id}
             main={
                p ? (
                   <Persona person={p} />

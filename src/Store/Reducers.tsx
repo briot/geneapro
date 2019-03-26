@@ -99,34 +99,18 @@ export function rootReducer(
       };
    } else if (isType(action, addToHistory)) {
       const MAX_HISTORY_SIZE = 30;
-      let item: HistoryItem;
+      const item: HistoryItem = {...action.payload};
+      const idx = state.history.findIndex((h: HistoryItem) => h.id === item.id);
 
-      const p = action.payload.person;
-      const s = action.payload.source;
-      const pl = action.payload.place;
-      if (p) {
-         item = {
-            id: p.id,
-            display: personDisplay(p),
-            kind: HistoryKind.PERSON
-         };
-      } else if (s) {
-         item = {
-            id: s.id,
-            display: s.abbrev,
-            kind: HistoryKind.SOURCE
-         };
-      } else if (pl) {
-         item = {
-            id: pl.id,
-            display: pl.name,
-            kind: HistoryKind.PLACE
-         };
-      } else {
+      // Do no change if the first item is already the correct one, to avoid
+      // refreshing all pages and getting data from the server again.
+      if (state.history &&
+          state.history[0].id == item.id &&
+          state.history[0].kind == item.kind
+      ) {
          return state;
       }
 
-      const idx = state.history.findIndex((h: HistoryItem) => h.id === item.id);
       return {
          ...state,
          history:

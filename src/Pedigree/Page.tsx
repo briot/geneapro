@@ -6,7 +6,7 @@ import * as GP_JSON from "../Server/JSON";
 import { personDisplay, PersonSet } from "../Store/Person";
 import { GenealogyEventSet } from "../Store/Event";
 import { PlaceSet } from "../Store/Place";
-import { addToHistory } from "../Store/History";
+import { addToHistory, HistoryKind } from "../Store/History";
 import { PedigreeSettings, changePedigreeSettings } from "../Store/Pedigree";
 import { fetchPedigree } from "../Store/Sagas";
 import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
@@ -60,7 +60,7 @@ const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
    // Add the person to history
    React.useEffect(() => {
       document.title = "Pedigree for " + personDisplay(decujus);
-      p.dispatch(addToHistory({ person: decujus }));
+      p.dispatch(addToHistory({ kind: HistoryKind.PERSON, id: decujusid }));
    }, [decujus, p.dispatch]);
 
    const onChange = React.useCallback(
@@ -89,7 +89,7 @@ const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
 
    return (
       <Page
-         decujus={decujus}
+         decujusid={decujusid}
          leftSide={
             <PedigreeSide
                settings={p.settings}

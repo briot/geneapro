@@ -72,12 +72,12 @@ const RecentPersons: React.FC<RecentPersonsProps> = (p) => {
    const [persons, setPersons] = React.useState<Person[]>([]);
    React.useEffect(
       () => {
-         const items = p.items
+         const ids = p.items
             .filter(h => h.kind === HistoryKind.PERSON)
             .slice(0, MAX_PER_CATEGORY)
             .map(f => f.id);
-         if (items.length) {
-            fetchPersonsFromServer({ids: items, colors: -1}).then(setPersons);
+         if (ids.length) {
+            fetchPersonsFromServer({ids}).then(setPersons);
          }
       },
       [p.items]
@@ -213,16 +213,7 @@ interface DashboardProps extends RouteComponentProps<PropsFromRoute> {
 }
 const Dashboard: React.FC<DashboardProps> = (p) => {
    const [decujus, setDecujus] = React.useState<Person|undefined>(undefined);
-
    const decujusid = Number(p.match.params.decujusId) || DEFAULT_DECUJUS;
-   React.useEffect(
-      () => {
-         fetchPersonsFromServer({colors: -1, ids: [decujusid] })
-            .then(s => setDecujus(s[0]));
-      },
-      [decujusid]
-   );
-
    document.title = "Dashboard";
    return (
       <Page
@@ -233,7 +224,7 @@ const Dashboard: React.FC<DashboardProps> = (p) => {
                <AllStats />
             </div>
          }
-         decujus={decujus}
+         decujusid={decujusid}
       />
    );
 };

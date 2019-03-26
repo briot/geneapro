@@ -74,7 +74,7 @@ export function jsonPersonsToPerson(
 }
 
 interface FetchPersonsParams {
-   colors: GP_JSON.ColorSchemeId;
+   colors?: GP_JSON.ColorSchemeId;
    limit?: number; // maximum number of persons to return
    offset?: number;
    filter?: string;
@@ -82,7 +82,7 @@ interface FetchPersonsParams {
 }
 export function fetchPersonsFromServer(p: FetchPersonsParams): Promise<Person[]> {
    const url =
-      `/data/persona/list?theme=${p.colors}` +
+      `/data/persona/list?theme=${p.colors || -1}` +
       (p.filter ? `&filter=${encodeURI(p.filter)}` : "") +
       (p.ids ? `&ids=${p.ids.join(',')}` : "") +
       (p.offset ? `&offset=${p.offset}` : "") +

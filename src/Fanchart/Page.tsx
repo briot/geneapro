@@ -4,7 +4,7 @@ import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
 import * as GP_JSON from "../Server/JSON";
 import { Person, PersonSet, personDisplay } from "../Store/Person";
-import { addToHistory } from "../Store/History";
+import { addToHistory, HistoryKind } from "../Store/History";
 import { FanchartSettings, changeFanchartSettings } from "../Store/Fanchart";
 import { fetchPedigree } from "../Store/Sagas";
 import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
@@ -49,7 +49,7 @@ const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
 
    React.useEffect(() => {
       document.title = "Fanchart for " + personDisplay(decujus);
-      p.dispatch(addToHistory({ person: decujus }));
+      p.dispatch(addToHistory({kind: HistoryKind.PERSON, id: decujusid }));
    }, [decujus, p.dispatch]);
 
    const main =
@@ -74,7 +74,7 @@ const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
 
    return (
       <Page
-         decujus={decujus}
+         decujusid={decujusid}
          leftSide={
             <FanchartSide
                settings={p.settings}

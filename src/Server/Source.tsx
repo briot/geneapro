@@ -70,13 +70,15 @@ export function fetchSourcesFromServer(
       offset?: number;
       limit?: number;
       filter?: string;
+      ids?: number[];
    }
 ): Promise<Source[]> {
    const url =
       '/data/sources/list?' +
       (p.filter ? `&filter=${encodeURI(p.filter)}` : '') +
       (p.offset ? `&offset=${p.offset}` : '') +
-      (p.limit ? `&limit=${p.limit}` : '');
+      (p.limit ? `&limit=${p.limit}` : '') +
+      (p.ids ? `&ids=${p.ids.join(',')}` : '');
    return window.fetch(url)
       .then((resp: Response) => resp.json());
 }

@@ -4,7 +4,7 @@ import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
 import * as GP_JSON from "../Server/JSON";
 import { PersonSet, personDisplay } from "../Store/Person";
-import { addToHistory } from "../Store/History";
+import { addToHistory, HistoryKind } from "../Store/History";
 import { RadialSettings, changeRadialSettings } from "../Store/Radial";
 import { fetchPedigree } from "../Store/Sagas";
 import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
@@ -40,8 +40,9 @@ const RadialPageConnected = (p: RadialPageConnectedProps) => {
 
    React.useEffect(() => {
       document.title = "Radial for " + personDisplay(decujus);
-      p.dispatch(addToHistory({ person: decujus }));
-   }, [decujus, p.dispatch]);
+      p.dispatch(addToHistory({
+         kind: HistoryKind.PERSON, id: decujusid }));
+   }, [decujus, decujusid, p.dispatch]);
 
    const onChange = React.useCallback(
       (diff: Partial<RadialSettings>) =>
@@ -59,7 +60,7 @@ const RadialPageConnected = (p: RadialPageConnectedProps) => {
 
    return (
       <Page
-         decujus={decujus}
+         decujusid={decujusid}
          leftSide={
             <RadialSide
                settings={p.settings}

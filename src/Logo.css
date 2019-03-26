@@ -1,5 +1,9 @@
 .Logo {
+   position: absolute;
    font-style: italic;
+   color: white;
+   line-height: 1em;
+   margin: 10px;
 }
 
 .Logo > .tagline {

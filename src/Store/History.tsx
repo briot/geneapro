@@ -11,7 +11,6 @@ export enum HistoryKind {
 
 export interface HistoryItem {
    id: number;
-   display: string;
    kind: HistoryKind;
 }
 
@@ -31,7 +30,6 @@ export function lastVisitedPerson(hist: HistoryItem[]): number | undefined {
  * Action: add an element to the history of visited persons
  */
 export const addToHistory = actionCreator<{
-   person?: Person;
-   source?: Source;
-   place?: Place;
+   kind: HistoryKind;
+   id: number;
 }>("DATA/HISTORY");

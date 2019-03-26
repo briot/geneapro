@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Loader } from "semantic-ui-react";
 import { RouteComponentProps } from "react-router";
 import { AppState, GPDispatch } from "../Store/State";
-import { addToHistory } from "../Store/History";
+import { addToHistory, HistoryKind } from "../Store/History";
 import { fetchPlaceDetails } from "../Store/Sagas";
 import { Place } from "../Store/Place";
 import PlaceDetails from "../Place/PlaceDetails";
@@ -28,7 +28,9 @@ class PlacePageConnected extends React.PureComponent<PlacePageProps> {
       if (old.id !== this.props.id) {
          this.calculateData();
       }
-      this.props.dispatch(addToHistory({ place: this.props.place }));
+      this.props.dispatch(addToHistory({
+         kind: HistoryKind.PLACE, id: this.props.id
+      }));
    }
 
    protected calculateData() {
@@ -42,7 +44,7 @@ class PlacePageConnected extends React.PureComponent<PlacePageProps> {
       document.title = p ? p.name : "Place";
       return (
          <Page
-            decujus={undefined}
+            decujusid={undefined}
             main={
                p || this.props.id < 0 ? (
                   <PlaceDetails place={p} />

@@ -53,7 +53,7 @@ class PlaceView(JSONView):
 
     def get_json(self, params, id):
         place = models.Place.objects.get(id=id)
-        asserts = place.get_asserts()
+        asserts = models.Place.get_asserts(ids=[id])
         r = JSONResult(asserts=asserts)
         return r.to_json({
            "asserts": asserts,
