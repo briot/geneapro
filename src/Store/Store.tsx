@@ -50,13 +50,15 @@ export function setPersist(whenDone: () => void) {
          {
             // ??? Should not save pedigree.loading
             whitelist: [
-               "pedigree",
                "fanchart",
-               "radial",
-               "quilts",
                "history",
-               "stats",
-               "personalist"
+               "pedigree",
+               "personalist",
+               "placelist",
+               "quilts",
+               "radial",
+               "sourcelist",
+               "stats"
             ]
          },
          whenDone

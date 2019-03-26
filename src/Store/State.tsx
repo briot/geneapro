@@ -4,7 +4,7 @@ import { FanchartSettings } from "../Store/Fanchart";
 import { PedigreeSettings } from "../Store/Pedigree";
 import { RadialSettings } from "../Store/Radial";
 import { QuiltsSettings } from "../Store/Quilts";
-import { PersonSet } from "../Store/Person";
+import { Person, PersonSet } from "../Store/Person";
 import { SourceSet, SourceListSettings } from "../Store/Source";
 import { PlaceListSettings } from '../Store/Place';
 import { HistoryItem } from "../Store/History";
@@ -19,6 +19,7 @@ import * as GP_JSON from "../Server/JSON";
 
 export interface AppState {
    fanchart: FanchartSettings;
+   history: HistoryItem[]; // id of persons recently visited
    pedigree: PedigreeSettings;
    personalist: PersonaListSettings;
    placelist: PlaceListSettings;
@@ -33,7 +34,6 @@ export interface AppState {
    places: PlaceSet; // details for all places
    events: GenealogyEventSet; // all known events
    sources: SourceSet;
-   history: HistoryItem[]; // id of persons recently visited
    researchers: ResearcherSet;
 }
 

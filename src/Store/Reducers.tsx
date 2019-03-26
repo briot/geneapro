@@ -283,6 +283,10 @@ export function rootReducer(
             ...action.payload.pedigree,
             loading: false
          },
+         history: [ ...state.history, ...action.payload.history ],
+         placelist: { ...state.placelist, ...action.payload.placelist },
+         personalist: { ...state.personalist, ...action.payload.personalist },
+         sourcelist: { ...state.sourcelist, ...action.payload.sourcelist },
          stats: { ...state.stats, ...action.payload.stats }
       };
    }
