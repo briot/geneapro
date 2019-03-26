@@ -1,9 +1,10 @@
 import * as React from "react";
 import { Card, Icon, Statistic } from "semantic-ui-react";
 import { PersonaLink } from "../Links";
+import { Person } from "../Store/Person";
 
 interface StatsTreeProps {
-   decujus: number;
+   decujus: Person;
    totalInDatabase: number;
    totalInTree: number;
    fatherAncestors: number;
@@ -51,7 +52,7 @@ export default function StatsTree(props: StatsTreeProps) {
                      </Statistic.Value>
                      <Statistic.Label>
                         In tree:&nbsp;
-                        <PersonaLink id={props.decujus} />
+                        <PersonaLink person={props.decujus} />
                      </Statistic.Label>
                   </Statistic>
                </Card.Content>

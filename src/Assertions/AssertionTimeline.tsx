@@ -1,9 +1,13 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import { AppState } from "../Store/State";
+import { AppState, GPDispatch } from "../Store/State";
 import { Icon } from "semantic-ui-react";
 import { AssertionList } from "../Store/Assertion";
 import { GenealogyEventSet } from "../Store/Event";
+import { PlaceSet } from "../Store/Place";
+import { PersonSet } from "../Store/Person";
+import { SourceSet } from "../Store/Source";
+import { ResearcherSet } from "../Store/Researcher";
 import AssertionView from "../Assertions/Assertion";
 import "./AssertionTimeline.css";
 
@@ -27,25 +31,29 @@ interface TimelineProps {
    //  "age" will be displayed relative to that date
 }
 
-interface ConnectedProps extends TimelineProps {
+interface ConnectedTimelineProps extends TimelineProps {
    events: GenealogyEventSet;
+   persons: PersonSet;
+   places: PlaceSet;
+   sources: SourceSet;
+   researchers: ResearcherSet;
+   dispatch: GPDispatch;
 }
-
-function ConnectedAssertionTimeline(props: ConnectedProps) {
-   if (!props.asserts) {
+const AssertionTimeline: React.FC<ConnectedTimelineProps> = (p) => {
+   if (!p.asserts) {
       return null;
    }
 
-   props.asserts.sortByDate(props.events);
+   p.asserts.sortByDate(p.events);
 
-   const list = props.asserts.get();
+   const list = p.asserts.get();
    let prev: string | null = "@#@";
 
    return (
       <table className="AssertionTimeline">
          <tbody>
             {list.map(a => {
-               const d = a.getSortDate(props.events);
+               const d = a.getSortDate(p.events);
                const year = d ? d.substring(0, 4) : null;
                const isSame = year === prev;
                prev = year;
@@ -60,17 +68,14 @@ function ConnectedAssertionTimeline(props: ConnectedProps) {
                            <div>
                               {year}
                               <span className="age">
-                                 {ageAtDate(props.refYear, d)}
+                                 {ageAtDate(p.refYear, d)}
                               </span>
                               <Icon name="circle" />
                            </div>
                         )}
                      </td>
                      <td>
-                        <AssertionView
-                           assert={a}
-                           hidePersonIf={props.hidePersonIf}
-                        />
+                        <AssertionView {...p} assert={a} />
                      </td>
                   </tr>
                );
@@ -80,8 +85,14 @@ function ConnectedAssertionTimeline(props: ConnectedProps) {
    );
 }
 
-const AssertionTimeline = connect((state: AppState, props: TimelineProps) => ({
-   ...props,
-   events: state.events
-}))(ConnectedAssertionTimeline);
-export default AssertionTimeline;
+export default connect(
+   (state: AppState, props: TimelineProps) => ({
+      ...props,
+      events: state.events,
+      persons: state.persons,
+      places: state.places,
+      sources: state.sources,
+      researchers: state.researchers
+   }),
+   (dispatch) => ({ dispatch })
+)(AssertionTimeline);

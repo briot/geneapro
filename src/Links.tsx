@@ -1,6 +1,4 @@
 import * as React from "react";
-import { connect } from "react-redux";
-import { AppState } from "./Store/State";
 import { Link } from "react-router-dom";
 import { Icon } from "semantic-ui-react";
 import { Place } from "./Store/Place";
@@ -17,11 +15,10 @@ export function urlPersona(id: number) {
 }
 
 interface PersonaLinkProps {
-   id?: number;   // either id or person must be specified
+   person: Person|undefined;
    hideIcon?: boolean;
-   person?: Person;
 }
-function ConnectedPersonaLink(p: PersonaLinkProps) {
+export const PersonaLink: React.FC<PersonaLinkProps> = (p) => {
    if (!p.person) {
       return <span>Unknown person</span>;
    }
@@ -35,13 +32,6 @@ function ConnectedPersonaLink(p: PersonaLinkProps) {
       </Link>
    );
 }
-export const PersonaLink = connect(
-   (state: AppState, props: PersonaLinkProps) => ({
-      ...props,
-      person: props.person ||
-         (props.id !== undefined && state.persons[props.id])
-   })
-)(ConnectedPersonaLink);
 
 /**
  * source links
@@ -52,38 +42,27 @@ export function urlSource(id: number) {
 }
 
 interface SourceLinkProps {
-   id?: number;
+   source: Source|undefined;
    showAbbrev?: boolean;
-   source?: Source;
 }
-function ConnectedSourceLink(props: SourceLinkProps) {
-   const s = props.source;
-   if (!s) {
-      return <span>Unknown source</span>;
-   }
-   return (
-      <Link
-         to={urlSource(s.id)}
-         className="link source"
-         title={s ? s.title : undefined}
-      >
-         <Icon name="book" />
-         {s && props.showAbbrev ? (
-            <span className="title">{s.abbrev}</span>
-         ) : (
-            <span className="notitle" />
-         )}
-         <span className="id">{s.id}</span>
-      </Link>
-   );
+export const SourceLink: React.FC<SourceLinkProps> = (p) => {
+   return p.source
+      ? (
+         <Link
+            to={urlSource(p.source.id)}
+            className="link source"
+            title={p.source.title}
+         >
+            <Icon name="book" />
+            {p.showAbbrev ? (
+               <span className="title">{p.source.abbrev}</span>
+            ) : (
+               <span className="notitle" />
+            )}
+            <span className="id">{p.source.id}</span>
+         </Link>
+      ) : <span>Unknown source</span>;
 }
-export const SourceLink = connect(
-   (state: AppState, props: SourceLinkProps) => ({
-      ...props,
-      source: props.source ||
-         (props.id === undefined ? undefined : state.sources[props.id])
-   })
-)(ConnectedSourceLink);
 
 /**
  * Place links
@@ -94,22 +73,14 @@ export function urlPlace(id: number) {
 }
 
 interface PlaceLinkProps {
-   id?: number;
-   place?: Place;
+   place: Place|undefined;
 }
-export function ConnectedPlaceLink(props: PlaceLinkProps) {
-   if (!props.place) {
-      return <span>Unknown place</span>;
-   }
-   return (
-      <Link to={urlPlace(props.place.id)} className="link  place">
-         <Icon name="globe" />
-         {props.place ? props.place.name : "Unnamed place"}
-      </Link>
-   );
+export const PlaceLink: React.FC<PlaceLinkProps> = (p) => {
+   return p.place
+      ? (
+         <Link to={urlPlace(p.place.id)} className="link place">
+            <Icon name="globe" />
+            {p.place.name}
+         </Link>
+      ) : <span>Unknown place</span>;
 }
-
-export const PlaceLink = connect((state: AppState, props: PlaceLinkProps) => ({
-   ...props,
-   place: props.place || (props.id !== undefined && state.places[props.id])
-}))(ConnectedPlaceLink);

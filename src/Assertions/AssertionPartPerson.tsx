@@ -1,6 +1,7 @@
 import * as React from "react";
 import AssertionPart from "../Assertions/AssertionPart";
 import { PersonaLink } from "../Links";
+import { Person } from "../Store/Person";
 
 /**
  * Person Part
@@ -8,13 +9,9 @@ import { PersonaLink } from "../Links";
  */
 
 interface PersonProps {
-   personId: number;
+   person: Person;
 }
-
-export default class AssertionPartPerson extends React.PureComponent<
-   PersonProps
-> {
-   public render() {
-      return <AssertionPart title={<PersonaLink id={this.props.personId} />} />;
-   }
+const AssertionPartPerson: React.FC<PersonProps> = (p) => {
+   return <AssertionPart title={<PersonaLink person={p.person} />} />;
 }
+export default AssertionPartPerson;

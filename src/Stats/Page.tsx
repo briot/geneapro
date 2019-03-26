@@ -77,7 +77,7 @@ class StatsPageConnected extends React.PureComponent<
          <div>
             {this.props.settings.show_treestats && (
                <StatsTree
-                  decujus={this.props.decujusid}
+                  decujus={decujus}
                   totalInDatabase={this.state.data.total_persons}
                   totalInTree={this.state.data.total_ancestors}
                   fatherAncestors={this.state.data.total_father}

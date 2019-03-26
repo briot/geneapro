@@ -5,6 +5,9 @@ import { fetchEventDetails } from "../Store/Sagas";
 import { Loader, Rating } from "semantic-ui-react";
 import { PersonaLink, SourceLink, PlaceLink } from "../Links";
 import { GenealogyEvent, GenealogyEventSet } from "../Store/Event";
+import { PersonSet } from '../Store/Person';
+import { PlaceSet } from '../Store/Place';
+import { SourceSet } from '../Store/Source';
 import AssertionPart from "../Assertions/AssertionPart";
 import { P2E } from "../Store/Assertion";
 
@@ -14,29 +17,34 @@ import { P2E } from "../Store/Assertion";
 
 interface EventDetailsProps {
    event?: GenealogyEvent;
+   persons: PersonSet;
+   sources: SourceSet;
 }
-
-function EventDetails(props: EventDetailsProps) {
-   if (props.event === undefined || props.event.asserts === undefined) {
+const EventDetails: React.FC<EventDetailsProps> = (p) => {
+   if (p.event === undefined || p.event.asserts === undefined) {
       return (
          <Loader active={true} size="small">
             Loading
          </Loader>
       );
    }
+
    return (
       <table className="eventDetails">
          <tbody>
-            {props.event.asserts.get().map((a, idx) => {
+            {p.event.asserts.get().map((a, idx) => {
                if (a instanceof P2E) {
                   return [
                      <tr key={idx}>
                         <td>{a.role}</td>
                         <td className="name">
-                           <PersonaLink id={a.personId} />
+                           <PersonaLink person={p.persons[a.personId]} />
                         </td>
                         <td>
-                           <SourceLink id={a.sourceId} />
+                           {
+                              a.sourceId &&
+                              <SourceLink source={p.sources[a.sourceId]} />
+                           }
                         </td>
                         <td>
                            <Rating
@@ -70,58 +78,46 @@ function EventDetails(props: EventDetailsProps) {
 
 interface EventProps {
    eventId: number;
-}
-interface ConnectedEventProps extends EventProps {
    events: GenealogyEventSet;
    dispatch: GPDispatch;
+   places: PlaceSet;
+   sources: SourceSet;
+   persons: PersonSet;
 }
+const AssertionPartEvent: React.FC<EventProps> = (p) => {
+   const onExpand = React.useCallback(
+      () => fetchEventDetails.execute(p.dispatch, { id: p.eventId }),
+      [p.dispatch, p.eventId]);
 
-class ConnectedAssertionPartEvent extends React.PureComponent<
-   ConnectedEventProps
-> {
-   protected onExpand = () =>
-      fetchEventDetails.execute(this.props.dispatch, {
-         id: this.props.eventId
-      });
-
-   public render() {
-      const e = this.props.events[this.props.eventId];
-      return (
-         <AssertionPart
-            title={
-               <div>
-                  <div className="dateAndTag">
-                     <div>
-                        {e.date && <span title={e.date_sort}>{e.date}</span>}
-                     </div>
-                     <div>{e.type ? e.type.name : "Unknown"}</div>
+   const e = p.events[p.eventId];
+   const place = e.placeId ? p.places[e.placeId] : undefined;
+   return (
+      <AssertionPart
+         title={
+            <div>
+               <div className="dateAndTag">
+                  <div>
+                     {e.date && <span title={e.date_sort}>{e.date}</span>}
                   </div>
-                  <div
-                     className={
-                        "nameAndPlace " +
-                        (e.name || e.placeId ? "bordered " : "")
-                     }
-                  >
-                     <div>{e.name}</div>
-                     <div>{e.placeId && <PlaceLink id={e.placeId} />}</div>
-                  </div>
+                  <div>{e.type ? e.type.name : "Unknown"}</div>
                </div>
-            }
-            expandable={true}
-            expanded={<EventDetails event={e} />}
-            onExpand={this.onExpand}
-         />
-      );
-   }
+               <div
+                  className={
+                     "nameAndPlace " + (e.name || place ? "bordered " : "")
+                  }
+               >
+                  <div>{e.name}</div>
+                  <div>{place && <PlaceLink place={place} />}</div>
+               </div>
+            </div>
+         }
+         expandable={true}
+         expanded={<EventDetails
+                      event={e}
+                      persons={p.persons}
+                      sources={p.sources} />}
+         onExpand={onExpand}
+      />
+   );
 }
-
-const AssertionPartEvent = connect(
-   (state: AppState, props: EventProps) => ({
-      ...props,
-      events: state.events
-   }),
-   (dispatch: GPDispatch) => ({
-      dispatch
-   })
-)(ConnectedAssertionPartEvent);
 export default AssertionPartEvent;
