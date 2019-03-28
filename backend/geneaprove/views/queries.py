@@ -5,12 +5,24 @@ Support for writing custom SQL queries
 import collections
 import django.db
 from django.db.models import F, prefetch_related_objects
+from django.conf import settings
 import logging
 from .. import models
 
 
 logger = logging.getLogger(__name__)
 
+
+database_in_use = settings.DATABASES['default']['ENGINE'].split('.')[-1]
+logger.debug(f"django.core.management DATABASE engine: {database_in_use}")
+
+# Add max query size for other database backends
+if 'sqlite' in database_in_use:
+    CHUNK_SIZE = 996
+elif 'postgresql' in database_in_use:
+    CHUNK_SIZE = 8900
+else:
+    CHUNK_SIZE = 996
 
 AncestorInfo = collections.namedtuple(
     'AncestorInfo', "main_id generation parents")
@@ -127,7 +139,7 @@ class PersonSet(object):
             f"AND c.type_id={models.Characteristic_Part_Type.PK_sex} "
             "AND p2c.person_id=p.id "
             "AND NOT p2c.disproved "
-            "GROUP BY p.main_id")
+            "GROUP BY p.main_id, c.name")
 
     @staticmethod
     def _query_get_parents():
@@ -172,13 +184,19 @@ class PersonSet(object):
         assert isinstance(person_id, int)
 
         with django.db.connection.cursor() as cur:
-            initial = f"VALUES({person_id},0)"
+            # ??? group_concat doesn't exist in postgres
+            if 'postgresql' in database_in_use:
+                initial = f"VALUES({person_id}::bigint, 0::bigint)"
+                group_concat = "string_agg(parents.parent::text, ',') AS parents "
+            else:
+                initial = f"VALUES({person_id},0)"
+                group_concat = "group_concat(parents.parent) AS parents "
             md = f"AND ancestors.generation<={max_depth} " if max_depth else ""
             sk = f"WHERE ancestors.generation>{skip} " if skip else ""
             q = (
                 "WITH RECURSIVE parents(main_id, parent) AS (" +
                     cls._query_get_parents() +
-                "), ancestors(main_id,generation) as ("
+                "), ancestors(main_id,generation) AS ("
                     f"{initial} "
                     "UNION "
                     "SELECT parents.parent, ancestors.generation + 1 "
@@ -186,16 +204,15 @@ class PersonSet(object):
                     "WHERE parents.main_id = ancestors.main_id "
                     f"{md}"
                 ") SELECT ancestors.main_id, ancestors.generation, "
-
-                # ??? group_concat doesn't exist in postgres
-                "group_concat(parents.parent) as parents "
-
+                f"{group_concat}"
                 "FROM ancestors LEFT JOIN parents "
                 "ON parents.main_id=ancestors.main_id "
                 f"{sk}"
                 "GROUP BY ancestors.main_id, ancestors.generation"
             )
+            logger.debug(f'get_ancestors() query: {q}')
             cur.execute(q)
+
             return [
                 AncestorInfo(
                     main_id,
@@ -211,12 +228,18 @@ class PersonSet(object):
            This includes person_id itself, at generation 0
         """
         with django.db.connection.cursor() as cur:
-            initial = f"VALUES({person_id},0)"
+            # ??? group_concat doesn't exist in postgres
+            if 'postgresql' in database_in_use:
+                initial = f"VALUES({person_id}::bigint, 0::bigint)"
+                group_concat = "string_agg(children.child::text, ',') AS children "
+            else:
+                initial = f"VALUES({person_id},0)"
+                group_concat = "group_concat(children.child) AS children "
             md = (
                 f"AND descendants.generation<={max_depth} "
                 if max_depth else "")
             sk = f"WHERE descendants.generation>{skip} " if skip else ""
-            cur.execute(
+            q = (
                 "WITH RECURSIVE children(main_id, child) AS (" +
                     cls._query_get_children() +
                 "), descendants(main_id,generation) as ("
@@ -227,15 +250,15 @@ class PersonSet(object):
                     "WHERE children.main_id = descendants.main_id "
                     f"{md}"
                 ") SELECT descendants.main_id, descendants.generation, "
-
-                # ??? group_concat doesn't exist in postgres
-                "group_concat(children.child) as children "
-
+                f"{group_concat}"
                 "FROM descendants LEFT JOIN children "
                 "ON children.main_id=descendants.main_id "
                 f"{sk}"
                 "GROUP BY descendants.main_id, descendants.generation"
             )
+            logger.debug(f'get_descendants() query: {q}')
+            cur.execute(q)
+
             return [
                 DescendantInfo(
                     main_id,
@@ -444,7 +467,7 @@ class PersonSet(object):
             .select_related(*models.P2P.related_json_fields())
         self.asserts.extend(pm)
 
-    def _sql_split(self, ids, chunk_size=900):
+    def _sql_split(self, ids, chunk_size=CHUNK_SIZE):
         """
         Generate multiple tuples to split a long list of ids into more
         manageable chunks for Sqlite
