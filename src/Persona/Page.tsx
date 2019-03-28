@@ -4,8 +4,9 @@ import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
 import { PersonSet, personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
-import { AppState, GPDispatch } from "../Store/State";
-import { fetchPersonDetails } from "../Store/Sagas";
+import { AppState, GPDispatch, MetadataDict } from "../Store/State";
+import { fetchMetadata, fetchPersonDetails } from "../Store/Sagas";
+import { GenealogyEventSet } from "../Store/Event";
 import Page from "../Page";
 import Persona from "../Persona/Persona";
 
@@ -14,57 +15,66 @@ interface PropsFromRoute {
 }
 
 interface PersonaPageProps extends RouteComponentProps<PropsFromRoute> {
-   id: number;
-   persons: PersonSet;
    dispatch: GPDispatch;
+   events: GenealogyEventSet;
+   metadata: MetadataDict;
+   persons: PersonSet;
 }
 
-class PersonaPageConnected extends React.PureComponent<PersonaPageProps> {
-   public componentDidMount() {
-      this.calculateData();
-   }
+const PersonaPage: React.FC<PersonaPageProps> = (p) => {
+   const id = Number(p.match.params.id);
+   const pers = p.persons[id];
 
-   public componentDidUpdate(old: PersonaPageProps) {
-      if (old.id !== this.props.id) {
-         this.calculateData();
-      }
-      this.props.dispatch(addToHistory(
-         { kind: HistoryKind.PERSON, id: this.props.id }));
-   }
+   React.useEffect(
+      () => fetchMetadata.execute(p.dispatch, {}),
+      [p.dispatch]
+   );
 
-   protected calculateData() {
-      fetchPersonDetails.execute(this.props.dispatch, { id: this.props.id });
-   }
+   React.useEffect(
+      () => {
+          document.title = pers ? personDisplay(pers) : "Persona";
+      },
+      [pers]
+   );
 
-   public render() {
-      const p = this.props.persons[this.props.id];
-      document.title = p ? personDisplay(p) : "Persona";
-      return (
-         <Page
-            decujusid={this.props.id}
-            main={
-               p ? (
-                  <Persona person={p} />
-               ) : (
-                  <Loader active={true} size="large">
-                     Loading
-                  </Loader>
-               )
-            }
-         />
-      );
-   }
-}
+   React.useEffect(
+      () => {
+          p.dispatch(addToHistory({ kind: HistoryKind.PERSON, id }));
+      },
+      [id, p.dispatch ]
+   );
 
-const PersonaPage = connect(
+   React.useEffect(
+      () => fetchPersonDetails.execute(p.dispatch, { id }),
+      [id, p.dispatch]
+   );
+
+   return (
+      <Page
+         decujusid={id}
+         main={
+            pers ? (
+               <Persona
+                  person={pers}
+                  metadata={p.metadata}
+                  events={p.events}
+               />
+            ) : (
+               <Loader active={true} size="large">
+                  Loading
+               </Loader>
+            )
+         }
+      />
+   );
+};
+
+export default connect(
    (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
       ...props,
       persons: state.persons,
-      id: Number(props.match.params.id)
+      events: state.events,
+      metadata: state.metadata,
    }),
-   (dispatch: GPDispatch) => ({
-      dispatch
-   })
-)(PersonaPageConnected);
-
-export default PersonaPage;
+   (dispatch: GPDispatch) => ({ dispatch })
+)(PersonaPage);

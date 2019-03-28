@@ -37,7 +37,7 @@ import datetime
 from geneaprove.utils.date import DateRange
 from geneaprove import models
 from geneaprove.models.theme import Style
-from .queries import PersonSet
+from ..sql import PersonSet
 import logging
 
 logger = logging.getLogger('geneaprove.styles')

@@ -1,5 +1,7 @@
 import * as React from "react";
-import { Characteristic, CharacteristicPart } from "../Store/Assertion";
+import * as GP_JSON from '../Server/JSON';
+import { MetadataDict } from '../Store/State';
+import { Characteristic } from "../Store/Assertion";
 import { PlaceSet } from '../Store/Place';
 import AssertionPart from "../Assertions/AssertionPart";
 import { PlaceLink } from "../Links";
@@ -13,10 +15,18 @@ import Media from "../MediaList";
 interface CharProps {
    characteristic: Characteristic;
    places: PlaceSet;
+   metadata: MetadataDict;
 }
 const AssertionPartCharacteristic: React.FC<CharProps> = (p) => {
    const c = p.characteristic;
-   const place = c.placeId ? p.places[c.placeId] : undefined;
+   const place = c.place ? p.places[c.place] : undefined;
+   const part_name = (part: GP_JSON.CharacteristicPart) => {
+      const n = p.metadata.char_part_types_dict[part.type];
+      return n ?
+         (n.name === c.name ? "" : `${n.name}: `)
+         : c.name;
+   };
+
    return (
       <AssertionPart
          title={
@@ -33,19 +43,22 @@ const AssertionPartCharacteristic: React.FC<CharProps> = (p) => {
                <div
                   className={
                      "nameAndPlace " +
-                     (c.date && (c.placeId || c.parts.length)
+                     (c.date && (place || c.parts.length)
                         ? "bordered"
                         : "")
                   }
                >
                   <div>{place && <PlaceLink place={place} />}</div>
                   <div>
-                     {c.parts.map((p: CharacteristicPart, idx: number) => (
-                        <div key={idx} className="preLine">
-                           {p.name === c.name ? "" : p.name + ": "}
-                           {p.value}
-                        </div>
-                     ))}
+                     {
+                        c.parts.map(
+                           (p: GP_JSON.CharacteristicPart, idx: number) => (
+                              <div key={idx} className="preLine">
+                                 {part_name(p)}
+                                 {p.value}
+                              </div>
+                           ))
+                     }
                   </div>
                   <Media medias={c.medias} />
                </div>

@@ -10,7 +10,7 @@ import * as JSON from "../Server/JSON";
 
 interface JSONResult extends AssertionEntitiesJSON {
    source: JSON.Source;
-   higher_sources: JSON.Source[] | null;
+   higher_sources: number[];
    asserts: JSON.Assertion[];
    repr: JSON.SourceRepr[];
    parts: JSON.CitationPart[];
@@ -46,21 +46,21 @@ export function* fetchSourceDetailsFromServer(id: number) {
    const data: JSONResult = yield resp.json();
 
    let r: FetchSourceDetailsResult = {
-      source: sourceFromJSON(data.source),
+      source: {
+         ...sourceFromJSON(data.source),
+         asserts: new AssertionList(
+            data.asserts.map(a => assertionFromJSON(a))),
+         medias: data.repr,
+         parts: data.parts ? data.parts.reduce(
+            (val, part) => ({...val, [part.name]: part}), {})
+            : {},
+      },
       events: {},
       persons: {},
       places: {},
       sources: {},
-      researchers: {}
    };
-   r.source.asserts = new AssertionList(
-      data.asserts.map(a => assertionFromJSON(a))
-   );
-   r.source.medias = data.repr.map(m => JSON.toMedia(m));
 
-   for (const p of data.parts) {
-      r.source.parts[p.name] = p;
-   }
    setAssertionEntities(data, r);
    return r;
 }

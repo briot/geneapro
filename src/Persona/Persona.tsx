@@ -1,7 +1,8 @@
 import * as React from "react";
 import { connect } from "react-redux";
 import { Icon } from "semantic-ui-react";
-import { AppState } from "../Store/State";
+import * as GP_JSON from "../Server/JSON";
+import { AppState, GPDispatch, MetadataDict } from "../Store/State";
 import { P2C } from "../Store/Assertion";
 import { Segment } from "semantic-ui-react";
 import { Person, personDisplay } from "../Store/Person";
@@ -9,32 +10,24 @@ import { GenealogyEventSet, extractYear } from "../Store/Event";
 import AssertionTimeline from "../Assertions/AssertionTimeline";
 import "./Persona.css";
 
-interface Props {
+interface PersonaProps {
    person: Person;
-}
-
-interface ConnectedProps extends Props {
    events: GenealogyEventSet;
+   metadata: MetadataDict;
 }
 
-function View(props: ConnectedProps) {
+function Persona(props: PersonaProps) {
    const p: Person = props.person;
    const birthYear = extractYear(p.birthISODate);
    const deathYear = extractYear(p.deathISODate);
 
    let gender = "";
    if (p.asserts) {
-      for (const a of p.asserts.get()) {
-         // ??? Should compare non-display string, not "sex"
-         if (a instanceof P2C && a.characteristic.name === "sex") {
-            for (const part of a.characteristic.parts) {
-               if (part.name === "sex") {
-                  gender = part.value;
-               }
-            }
-            break;
-         }
-      }
+      gender = p.asserts.get()
+         .filter(a => a instanceof P2C)
+         .flatMap(a => (a as P2C).characteristic.parts)
+         .filter(part => part.type === props.metadata.char_part_SEX)
+         .map(p => p.value)[0] || '';
    }
 
    return (
@@ -65,9 +58,4 @@ function View(props: ConnectedProps) {
       </div>
    );
 }
-
-const Persona = connect((state: AppState, props: Props) => ({
-   ...props,
-   events: state.events
-}))(View);
 export default Persona;

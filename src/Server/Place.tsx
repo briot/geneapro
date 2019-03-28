@@ -61,7 +61,6 @@ export function* fetchPlaceFromServer(id: number) {
       persons: {},
       places: {},
       sources: {},
-      researchers: {}
    };
    setAssertionEntities(data, result);
 

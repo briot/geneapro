@@ -1,10 +1,10 @@
 import * as React from "react";
 import { Button, Image } from "semantic-ui-react";
-import { SourceMedia } from "./Store/Source";
+import * as GP_JSON from './Server/JSON';
 import "./MediaList.css";
 
 interface MediasProps {
-   medias?: SourceMedia[];
+   medias?: GP_JSON.SourceRepr[];
 }
 
 interface MediasState {

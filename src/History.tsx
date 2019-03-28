@@ -12,6 +12,9 @@ interface IndexedById<T> {
    [id: number]: T;
 }
 
+export const to_dict = <T extends WithId, S extends IndexedById<T>>
+   (list: T[]): S => list.reduce((r, a) => ({...r, [a.id]: a}), {} as S);
+
 /**
  * Retrieve all persons/places/sources needed to display the history items.
  */
@@ -25,9 +28,7 @@ const useHistory = <T extends WithId, S extends IndexedById<T>> (
          () => {
             const ids = hist.filter(h => h.kind === kind).map(f => f.id);
             if (ids.length) {
-               fetch({ids})
-               .then(s =>
-                  setData(s.reduce((r, a) => ({...r, [a.id]: a}), {} as S)));
+               fetch({ids}).then(s => setData(to_dict(s) as S));
             }
          },
          [hist]

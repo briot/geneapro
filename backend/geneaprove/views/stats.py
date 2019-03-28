@@ -8,7 +8,7 @@ from django.db.models import Count, F
 import logging
 from .. import models
 from ..utils.date import DateRange
-from .queries import PersonSet
+from ..sql import PersonSet
 from .to_json import JSONView
 
 logger = logging.getLogger('geneaprove.STATS')

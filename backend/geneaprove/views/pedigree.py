@@ -5,10 +5,10 @@ Various views related to displaying the pedgree of a person graphically
 from geneaprove import models
 from django.db import transaction
 from geneaprove.utils.date import DateRange
-from geneaprove.views.styles import Styles
-from geneaprove.views.queries import PersonSet
-from geneaprove.views.related import JSONResult
-from geneaprove.views.to_json import JSONView, to_json
+from ..sql import PersonSet
+from .related import JSONResult
+from .styles import Styles
+from .to_json import JSONView, to_json
 import logging
 
 logger = logging.getLogger('geneaprove.pedigree')

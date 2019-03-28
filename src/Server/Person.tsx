@@ -105,71 +105,6 @@ export const fetchPersonsCount = (p: {filter: string}): Promise<number> =>
    fetch(`/data/persona/count?filter=${encodeURI(p.filter)}`)
    .then((r: Response) => r.json());
 
-function p2eFromJSON(e: GP_JSON.P2E) {
-   return new P2E(
-      e.id,
-      e.surety /* surety */,
-      e.researcher /* researcher */,
-      e.rationale /* rationale */,
-      e.disproved /* disproved */,
-      new Date(e.last_change) /* lastChanged */,
-      e.p1.person /* personId */,
-      e.p2.event /* eventId */,
-      e.p2.role /* role */,
-      e.source_id /* sourceId */
-   );
-}
-
-function p2cFromJSON(c: GP_JSON.P2C) {
-   return new P2C(
-      c.id,
-      c.surety /* surety */,
-      c.researcher /* researcher */,
-      c.rationale /* rationale */,
-      c.disproved /* disproved */,
-      new Date(c.last_change) /* lastChanged */,
-      c.p1.person /* personId */,
-      {
-         date: c.p2.char.date,
-         date_sort: c.p2.char.date_sort,
-         name: c.p2.char.name,
-         placeId: c.p2.char.place,
-         parts: c.p2.parts,
-         medias: c.p2.repr ? c.p2.repr.map(m => GP_JSON.toMedia(m)) : undefined
-      } /* characteristic */,
-      c.source_id /* sourceId */
-   );
-}
-
-function p2pFromJSON(a: GP_JSON.P2P) {
-   return new P2P(
-      a.id,
-      a.surety /* surety */,
-      a.researcher /* researcher */,
-      a.rationale /* rationale */,
-      a.disproved /* disproved */,
-      new Date(a.last_change) /* lastChanged */,
-      a.p1.person /* person1Id */,
-      a.p2.person /* person2Id */,
-      a.type /* relation */,
-      a.source_id /* sourceId */
-   );
-}
-
-function p2gFromJSON(a: GP_JSON.P2G) {
-   return new P2G(
-      a.id,
-      a.surety /* surety */,
-      a.researcher /* researcher */,
-      a.rationale /* rationale */,
-      a.disproved /* disproved */,
-      new Date(a.last_change) /* lastChanged */,
-      a.p1.person /* personId */,
-      -1 /* groupId */,
-      a.source_id /* sourceId */
-   );
-}
-
 function isP2E(a: GP_JSON.Assertion): a is GP_JSON.P2E {
    return (
       (a as GP_JSON.P2E).p1.person !== undefined &&
@@ -193,13 +128,13 @@ function isP2P(a: GP_JSON.Assertion): a is GP_JSON.P2P {
 
 export function assertionFromJSON(a: GP_JSON.Assertion): Assertion {
    if (isP2E(a)) {
-      return p2eFromJSON(a);
+      return new P2E(a);
    } else if (isP2C(a)) {
-      return p2cFromJSON(a);
+      return new P2C(a);
    } else if (isP2P(a)) {
-      return p2pFromJSON(a);
+      return new P2P(a);
    } else {
-      return p2gFromJSON(a as GP_JSON.P2G);
+      return new P2G(a as GP_JSON.P2G);
    }
 }
 
@@ -207,7 +142,6 @@ export interface AssertionEntitiesJSON {
    events?: GP_JSON.Event[]; // All events mentioned in the asserts
    persons?: GP_JSON.Person[];
    places?: GP_JSON.Place[];
-   researchers?: GP_JSON.Researcher[];
    sources?: GP_JSON.Source[];
 }
 
@@ -221,7 +155,6 @@ export interface AssertionEntities {
    persons: PersonSet;
    places: PlaceSet;
    sources: SourceSet;
-   researchers: ResearcherSet;
 }
 
 export interface DetailsResult extends AssertionEntities {
@@ -273,12 +206,6 @@ export function setAssertionEntities(
          into.sources[s.id] = sourceFromJSON(s);
       }
    }
-
-   if (entities.researchers) {
-      for (const r of entities.researchers) {
-         into.researchers[r.id] = { name: r.name };
-      }
-   }
 }
 
 export function* fetchPersonDetailsFromServer(id: number) {
@@ -298,7 +225,6 @@ export function* fetchPersonDetailsFromServer(id: number) {
       events: {},
       places: {},
       sources: {},
-      researchers: {}
    };
    setAssertionEntities(data, r);
    return r;

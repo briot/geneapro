@@ -17,6 +17,14 @@ import { ResearcherSet } from "../Store/Researcher";
 import { StatsSettings } from "../Store/Stats";
 import * as GP_JSON from "../Server/JSON";
 
+export interface MetadataDict extends GP_JSON.Metadata {
+   p2p_types_dict: {[id: number]: GP_JSON.P2PType};
+   event_type_roles_dict: {[id: number]: GP_JSON.EventTypeRole};
+   researchers_dict: {[id: number]: GP_JSON.Researcher};
+   char_part_types_dict: {[id: number]: GP_JSON.CharacteristicPartType};
+   char_part_SEX: number;  // the one corresponding to 'sex'
+}
+
 export interface AppState {
    fanchart: FanchartSettings;
    history: HistoryItem[]; // id of persons recently visited
@@ -28,13 +36,15 @@ export interface AppState {
    sourcelist: SourceListSettings;
    stats: StatsSettings;
 
-   metadata: GP_JSON.Metadata;
+   metadata: MetadataDict;
 
+   // ??? Those should be replaced with local data in the various views, to
+   // reduce long-term memory usage. The caching is not really useful, since
+   // views are fetching them anyway.
    persons: PersonSet; // details for all persons
    places: PlaceSet; // details for all places
    events: GenealogyEventSet; // all known events
    sources: SourceSet;
-   researchers: ResearcherSet;
 }
 
 export type GPDispatch = Redux.Dispatch<AppState>;

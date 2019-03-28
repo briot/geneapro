@@ -4,9 +4,10 @@ Support for writing custom SQL queries
 
 import collections
 import django.db
-from django.db.models import F, prefetch_related_objects
+from django.db.models import F
 import logging
 from .. import models
+from .sqlsets import SQLSet
 
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ DescendantInfo = collections.namedtuple(
     'DescendantInfo', "main_id generation children")
 
 
-class PersonSet(object):
+class PersonSet(SQLSet):
     """
     Contains a set of persons, made up of low-level personas.
     This class provides various support to efficiently fetch such
@@ -387,8 +388,8 @@ class PersonSet(object):
         if event_types:
             events = events.filter(event__type__in=event_types)
 
-        for qs in self._sqlin(events, person__main_id__in=self.persons.keys()):
-            for p2e in self._prefetch_related_object(qs.all(), *related):
+        for qs in self.sqlin(events, person__main_id__in=self.persons.keys()):
+            for p2e in self.prefetch_related(qs.all(), *related):
                 self.asserts.append(p2e)
 
                 if schemes is not None:
@@ -424,10 +425,9 @@ class PersonSet(object):
             .filter(disproved=False) \
             .annotate(person_main_id=F('person__main_id'))
 
-        for p2c_set in self._sqlin(pm, person__main_id__in=self.persons.keys()):
+        for p2c_set in self.sqlin(pm, person__main_id__in=self.persons.keys()):
             self.asserts.extend(
-                self._prefetch_related_object(
-                    p2c_set.all(), 'characteristic__parts'))
+                self.prefetch_related(p2c_set.all(), 'characteristic__parts'))
 
     def fetch_p2p(self):
         """
@@ -443,54 +443,6 @@ class PersonSet(object):
                        .filter(main_id__in=self.persons.keys())) \
             .select_related(*models.P2P.related_json_fields())
         self.asserts.extend(pm)
-
-    def _sql_split(self, ids, chunk_size=900):
-        """
-        Generate multiple tuples to split a long list of ids into more
-        manageable chunks for Sqlite
-        """
-        if ids is None:
-            yield None
-        else:
-            ids = list(ids)  # need a list to extract parts of it
-            for i in range(0, len(ids), chunk_size):
-                yield ids[i:i + chunk_size]
-
-    def _prefetch_related_object(self, objects, *attrs):
-        """
-        Performs a prefetch_related_objects on the list, and splits into chunks
-        to make it compatible with sqlite.
-        Returns `objects` again, as a list, after updating related objects.
-        """
-        obj = list(objects)
-        for chunk in self._sql_split(obj):
-            prefetch_related_objects(chunk, *attrs)
-        return obj
-
-    def _sqlin(self, queryset, **kwargs):
-        """
-        Return one or more querysets, after adding additional:
-             WHERE  param_name IN param_value
-        As opposed to django's builtin support, this works wiith sqlite even
-        when there are more than 1000 values.
-
-        example:
-            for q in sqlin(model.Table.objects, ids__in=[...]):
-                for row in q.all();
-                   ...
-        """
-        assert len(kwargs) == 1
-
-        for k in kwargs:
-            if not k.endswith('__in'):
-                raise Exception(f'Invalid parameter {k}')
-
-        for k, v in kwargs.items():
-            if v is None:
-                yield queryset
-            else:
-                for chunk in self._sql_split(v):
-                    yield queryset.filter(**{k: chunk})
 
     @classmethod
     def recompute_main_ids(cls):

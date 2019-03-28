@@ -1,6 +1,7 @@
 import * as Redux from "redux";
 import { isType } from "typescript-fsa";
 import { AppState, rehydrate } from "../Store/State";
+import { to_dict } from '../History';
 import { personDisplay, PersonSet } from "../Store/Person";
 import { SourceSet } from "../Store/Source";
 import { addToHistory, HistoryItem, HistoryKind } from "../Store/History";
@@ -81,13 +82,19 @@ export function rootReducer(
       places: {},
       sources: {},
       history: [],
-      researchers: {},
       metadata: {
+         char_part_SEX: -1,
+         char_part_types_dict: {},
          characteristic_types: [],
-         event_types: [],
          event_type_roles: [],
+         event_type_roles_dict: {},
+         event_types: [],
+         p2p_types: [],
+         p2p_types_dict: {},
+         researchers: [],
+         researchers_dict: {},
          theme_operators: [],
-         themes: []
+         themes: [],
       }
    },
    action: Redux.Action
@@ -104,7 +111,7 @@ export function rootReducer(
 
       // Do no change if the first item is already the correct one, to avoid
       // refreshing all pages and getting data from the server again.
-      if (state.history &&
+      if (state.history.length &&
           state.history[0].id == item.id &&
           state.history[0].kind == item.kind
       ) {
@@ -161,11 +168,20 @@ export function rootReducer(
          },
          places: { ...state.places, ...data.places },
          sources: mergeSources(state.sources, data.sources),
-         researchers: { ...state.researchers, ...data.researchers },
          persons: mergePersons(state.persons, data.persons)
       };
    } else if (isType(action, fetchMetadata.done)) {
-      return { ...state, metadata: { ...action.payload.result } };
+      const m = action.payload.result;
+      return { ...state,
+              metadata: {
+                 ...m,
+                 p2p_types_dict: to_dict(m.p2p_types),
+                 event_type_roles_dict: to_dict(m.event_type_roles),
+                 researchers_dict: to_dict(m.researchers),
+                 char_part_types_dict: to_dict(m.characteristic_types),
+                 char_part_SEX: m.characteristic_types
+                    .filter(c => c.name === "sex").map(c => c.id)[0],
+              }};
    } else if (isType(action, fetchPedigree.started)) {
       return {
          ...state,
@@ -223,7 +239,6 @@ export function rootReducer(
          ...state,
          events: { ...state.events, ...data.events },
          places: { ...state.places, ...data.places },
-         researchers: { ...state.researchers, ...data.researchers },
          sources: mergeSources(state.sources, data.sources),
          persons
       };
@@ -234,7 +249,6 @@ export function rootReducer(
          events: { ...state.events, ...data.events },
          places: { ...state.places, ...data.places },
          sources: mergeSources(state.sources, data.sources),
-         researchers: { ...state.researchers, ...data.researchers },
          persons: mergePersons(state.persons, data.persons)
       };
    } else if (isType(action, fetchSourceDetails.done)) {
@@ -253,7 +267,6 @@ export function rootReducer(
          events: { ...state.events, ...data.events },
          sources,
          places: { ...state.places, ...data.places },
-         researchers: { ...state.researchers, ...data.researchers },
          persons: mergePersons(state.persons, data.persons)
       };
    } else if (isType(action, rehydrate)) {

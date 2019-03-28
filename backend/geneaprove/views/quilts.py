@@ -4,7 +4,7 @@ from geneaprove import models
 from grandalf.graphs import Vertex,Edge,Graph
 from grandalf.layouts import SugiyamaLayout
 from .to_json import JSONView
-from .queries import PersonSet
+from ..sql import PersonSet
 
 
 class BirthEvent:

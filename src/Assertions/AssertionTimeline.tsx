@@ -1,6 +1,6 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import { AppState, GPDispatch } from "../Store/State";
+import { AppState, GPDispatch, MetadataDict } from "../Store/State";
 import { Icon } from "semantic-ui-react";
 import { AssertionList } from "../Store/Assertion";
 import { GenealogyEventSet } from "../Store/Event";
@@ -36,8 +36,8 @@ interface ConnectedTimelineProps extends TimelineProps {
    persons: PersonSet;
    places: PlaceSet;
    sources: SourceSet;
-   researchers: ResearcherSet;
    dispatch: GPDispatch;
+   metadata: MetadataDict;
 }
 const AssertionTimeline: React.FC<ConnectedTimelineProps> = (p) => {
    if (!p.asserts) {
@@ -92,7 +92,7 @@ export default connect(
       persons: state.persons,
       places: state.places,
       sources: state.sources,
-      researchers: state.researchers
+      metadata: state.metadata,
    }),
    (dispatch) => ({ dispatch })
 )(AssertionTimeline);

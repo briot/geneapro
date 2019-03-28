@@ -87,68 +87,20 @@ documents the citation styles.""")
             "last_change": self.last_change,
             "comments": self.comments}
 
-    def compute_medium(self):
-        """
-        Return the medium type for Self. This could be inherited from higher
-        sources.
-        """
-        if self.medium:
-            return self.medium
-        elif self.higher_source:
-            # ??? bug in pylint
-            # pylint: disable=no-member
-            return self.higher_source.compute_medium()
-        else:
-            return ""
-
-    def get_asserts(self):
-        """
-        Return all assertions related to the given source.
-        Only the id is retrieved for some related fields like persons and
-        events. Further queries are needed to retrieve them.
-        """
-        from .asserts import Assertion, P2P, P2C, P2E, P2G
-        if self.id == -1:
-            return []
-        asserts = []
-        schemes = set()
-        for table in (P2E, P2C, P2P, P2G):
-            for c in table.objects.select_related(
-                *table.related_json_fields()
-            ).filter(source=self):
-                asserts.append(c)
-                schemes.add(c.surety.scheme_id)
-        return asserts
-
-    def get_citations(self):
-        """
-        :return: {name: (value, fromHigher) }
-           A dict of all the parts of the source citation, including those
-           of the higher-level source.
-           `from_higher` is true when the part comes from a higher-level
-           source and was not overridden.
-        """
-
-        if self.higher_source:
-            result = {
-                k: {"value": v, "fromHigh": True}
-                for k, v in self.higher_source.get_citations().items()}
-        else:
-            result = {}
-
-        for part in self.parts.select_related(*Citation_Part.related_json_fields()).all():
-            result[part.type.name] = {"value": part.value, "fromHigh": False}
-
-        return result
-
-    def get_citations_as_list(self):
-        """
-        :return: [{name:..., value:..., fromHigh:...}]
-           Similar to get_citations, but returns a list
-        """
-        parts = self.get_citations()
-        return list(dict(name=k, **v) for k, v in parts.items())
-
+#    def compute_medium(self):
+#        """
+#        Return the medium type for Self. This could be inherited from higher
+#        sources.
+#        """
+#        if self.medium:
+#            return self.medium
+#        elif self.higher_source:
+#            # ??? bug in pylint
+#            # pylint: disable=no-member
+#            return self.higher_source.compute_medium()
+#        else:
+#            return ""
+#
     def get_representations(self):
         """
         :return: [models.Representation]
@@ -156,21 +108,6 @@ documents the citation styles.""")
         """
         from .representation import Representation
         return Representation.objects.filter(source=self)
-
-    def get_higher_sources(self):
-        """
-        :return: the list of higher level sources, recursively.
-           The first element is the direct parent, the last is the top-most
-           source.
-        """
-        if self.higher_source is not None:
-            a = [self.higher_source]
-
-            # ??? bug in pylint
-            # pylint: disable=no-member
-            a.extend(self.higher_source.get_higher_sources())
-            return a
-        return []
 
 
 class Citation_Part_Type(Part_Type):
@@ -188,7 +125,8 @@ class Citation_Part(GeneaProveModel):
     Stores the citation for a source, such as author, title,...
     """
 
-    source = models.ForeignKey(Source, related_name='parts', on_delete=models.CASCADE)
+    source = models.ForeignKey(
+        Source, related_name='parts', on_delete=models.CASCADE)
     type = models.ForeignKey(Citation_Part_Type, on_delete=models.CASCADE)
     value = models.TextField()
 

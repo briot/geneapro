@@ -2,7 +2,7 @@ import collections
 import datetime
 from geneaprove import models
 from .checks import Check_Success, Check_Exact
-from geneaprove.views.queries import PersonSet
+from geneaprove.sql import PersonSet
 
 __slots__ = ["RuleChecker"]
 

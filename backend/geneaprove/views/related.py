@@ -19,7 +19,6 @@ class JSONResult(object):
                  event_ids=[],
                  person_ids=[],
                  place_ids=[],
-                 researcher_ids=[],
                  source_ids=[]):
         """
         Builds a response for the client.
@@ -35,7 +34,6 @@ class JSONResult(object):
         self.event_ids = set(event_ids)
         self.person_ids = set(person_ids)
         self.place_ids = set(place_ids)
-        self.researcher_ids = set(researcher_ids)
         self.source_ids = set(source_ids)
 
     def update(self,
@@ -43,7 +41,6 @@ class JSONResult(object):
                event_ids=[],
                person_ids=[],
                place_ids=[],
-               researcher_ids=[],
                source_ids=[]):
         """
         Add some ids to be fetched
@@ -52,7 +49,6 @@ class JSONResult(object):
         self.event_ids.update(event_ids)
         self.person_ids.update(person_ids)
         self.place_ids.update(place_ids)
-        self.researcher_ids.update(researcher_ids)
         self.source_ids.update(source_ids)
 
     def to_json(self, extra=dict()):
@@ -63,11 +59,12 @@ class JSONResult(object):
            same dictionary. Exceptions are raised if they duplicate keys
            from the fields that are added automatically.
         """
+        logger.debug('JSONResult.to_json')
 
         # Check arguments
 
         if not extra.keys().isdisjoint([
-            'events', 'persons', 'places', 'sources', 'researchers']):
+            'events', 'persons', 'places', 'sources']):
 
             raise Exception(
                 f"Duplicate info given to JSONResult: {extra}")
@@ -84,7 +81,8 @@ class JSONResult(object):
 
         # Fetch related entities
 
-        logger.debug('fetching related entities')
+        logger.debug('fetching related entities events=%s',
+                     self.event_ids)
 
         result = dict(extra)
 
@@ -103,10 +101,6 @@ class JSONResult(object):
         if self.source_ids:
             result['sources'] = list(
                 models.Source.objects.filter(id__in=self.source_ids))
-
-        if self.researcher_ids:
-            result['researchers'] = list(
-                models.Researcher.objects.filter(id__in=self.researcher_ids))
 
         logger.debug('done fetching related entities')
 

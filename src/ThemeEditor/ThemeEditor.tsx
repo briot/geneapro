@@ -13,7 +13,7 @@ import {
    Select
 } from "semantic-ui-react";
 import Page from "../Page";
-import { AppState, GPDispatch } from "../Store/State";
+import { AppState, GPDispatch, MetadataDict } from "../Store/State";
 import { fetchMetadata } from "../Store/Sagas";
 import * as GP_JSON from "../Server/JSON";
 import * as ServerThemes from "../Server/Themes";
@@ -808,7 +808,7 @@ const RuleEditor = React.memo((p: RuleEditorProps) => {
  * selectors for them
  */
 
-const metadataToDropdown = (p: GP_JSON.Metadata): AllOptions => {
+const metadataToDropdown = (p: MetadataDict): AllOptions => {
    const typeToName: { [id: number]: string } = {};
 
    const build_operators = (typ: GP_JSON.OperatorTypes) => {
@@ -869,7 +869,7 @@ const useMetadataToDropdown = createSelector(metadataToDropdown);
 
 interface ThemeEditorProps {
    dispatch: GPDispatch;
-   metadata: GP_JSON.Metadata;
+   metadata: MetadataDict;
 }
 
 const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {

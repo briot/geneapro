@@ -1,13 +1,6 @@
 import { actionCreator } from "../Store/Actions";
 import { AssertionList } from "../Store/Assertion";
-
-export interface SourceMedia {
-   id: number;
-   comments: string;
-   file: string; // path to the file
-   mime: string; // type of the image
-   url: string; // how to get the image from the server
-}
+import * as GP_JSON from '../Server/JSON';
 
 export interface CitationPart {
    name: string;
@@ -34,7 +27,7 @@ export interface Source {
    jurisdictionPlace?: string;
    lastChange?: Date;
 
-   medias?: SourceMedia[];
+   medias?: GP_JSON.SourceRepr[];
    asserts?: AssertionList;
    parts: CitationPartSet;
 }

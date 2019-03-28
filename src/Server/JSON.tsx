@@ -1,5 +1,3 @@
-import { SourceMedia } from "../Store/Source";
-
 export type FontWeight = number | "bold" | "normal" | "lighter" | "bolder";
 
 /**
@@ -41,6 +39,17 @@ export interface EventTypeRole {
    name: string; // role name
 }
 
+export interface P2PType {
+   id: number;
+   name: string;
+}
+
+export interface Researcher {
+   id: number;
+   name: string;
+   comment: string;
+}
+
 export type OperatorString = string;
 export type OperatorTypes = "int" | "str" | "bool" | "person";
 export interface OperatorDescr {
@@ -60,6 +69,8 @@ export interface Metadata {
    characteristic_types: CharacteristicPartType[];
    event_types: EventType[];
    event_type_roles: EventTypeRole[];
+   p2p_types: P2PType[];
+   researchers: Researcher[];
    theme_operators: OperatorList;
    themes: ColorScheme[];
 }
@@ -79,14 +90,8 @@ export interface Persons {
    persons: Person[];
 }
 
-export interface Researcher {
-   id: number;
-   name: string;
-   comment: string;
-}
-
 export interface CitationPart {
-   name: string;
+   name: number;  // pointer to CitationPartTypes
    value: string;
    fromHigh: boolean; // true if from a higher level source
 }
@@ -101,21 +106,20 @@ export interface Source {
    jurisdiction_place?: string;
    last_change: string;
    medium: string;
-   researcher: number;
+   researcher: number;  // pointer to researcher
    subject_date?: string;
    subject_place?: string;
 }
 
 export interface Characteristic {
    date?: string;
-   date_sort?: string;
+   date_sort?: string|null;
    name: string;
-   place?: number;
-   sources: Source[];
+   place?: number;  // points to a Place
 }
 
-export interface CharPart {
-   name: string;
+export interface CharacteristicPart {
+   type: number;   // points to a CharacteristicPartType
    value: string;
 }
 
@@ -124,7 +128,6 @@ export interface SourceRepr {
    id: number;
    file: string; // path to the file
    mime: string; // type of the image
-   source_id: number; // ??? Not needed
    url: string; // how to get the image from the server
 }
 
@@ -140,7 +143,7 @@ export interface Assertion {
 
 export interface P2E extends Assertion {
    p1: { person: number };
-   p2: { role: string; event: number };
+   p2: { role: number; event: number };
 }
 
 export interface P2C extends Assertion {
@@ -148,18 +151,19 @@ export interface P2C extends Assertion {
    p2: {
       char: Characteristic;
       repr: SourceRepr[] | undefined; // when char.name=="image" only
-      parts: CharPart[];
+      parts: CharacteristicPart[];
    };
 }
 
 export interface P2P extends Assertion {
-   p1: { person: number };
-   p2: { person: number };
-   type: string; // type of relationship
+   p1: { person: number};
+   p2: { person: number};
+   type: number; // type of relationship
 }
 
 export interface P2G extends Assertion {
    p1: { person: number };
+   p2: { group: number; role: number };
 }
 
 export interface Place {
@@ -168,18 +172,4 @@ export interface Place {
    date: string | null;
    date_sort: string | null;
    parent_place_id: number;
-}
-
-/*****************************
- * Converters to store types *
- *****************************/
-
-export function toMedia(r: SourceRepr): SourceMedia {
-   return {
-      id: r.id,
-      comments: r.comments,
-      file: r.file,
-      mime: r.mime,
-      url: r.url
-   };
 }

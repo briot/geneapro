@@ -49,12 +49,11 @@ class Characteristic(GeneaProveModel):
         super().save(**kwargs)
 
     def to_json(self):
-        d = self.date_sort
         return {
             "name": self.name,
-            "sources": list(self.sources if hasattr(self, 'sources') else []),
             "date": self.date,
-            "date_sort": None if not d else DateRange(d),
+            "date_sort": None
+                if not self.date_sort else DateRange(self.date_sort),
             "place": self.place_id}
 
 

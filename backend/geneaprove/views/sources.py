@@ -2,14 +2,19 @@
 Source-related views
 """
 
+import logging
 import os
 from django.db.models import Count
 from django.db.models.functions import Lower
 from django.conf import settings
-from geneaprove.views.to_json import JSONView
-from geneaprove.views.related import JSONResult
-from geneaprove import models
-from geneaprove.utils.citations import Citations
+from .to_json import JSONView, to_json
+from .related import JSONResult
+from .. import models
+from ..utils.citations import Citations
+from ..sql import SourceSet
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_source(id):
@@ -65,18 +70,32 @@ class SourceView(JSONView):
     """
 
     def get_json(self, params, id):
-        # pylint: disable=arguments-differ
-        # pylint: disable=redefined-builtin
-        source = get_source(id)
+        logger.debug('SourceView, fetch sources and asserts')
+        sources = SourceSet()
+        sources.add_ids(ids=[id])
+        sources.fetch_asserts()
+        logger.debug('SourceView, done fetch sources and asserts')
 
-        asserts = source.get_asserts()
-        r = JSONResult(asserts=asserts)
+        source = sources.sources[id]
+
+        logger.debug('MANU getcitations')
+        citations = sources.get_citations(source)
+
+        logger.debug('MANU get higher sources')
+        higher = sources.get_higher_sources(source)
+
+        logger.debug('MANU get representations')
+        repres = source.get_representations()
+
+        logger.debug('MANU create JSONResult')
+        # ??? Will fetch events and sources again
+        r = JSONResult(asserts=sources.asserts)
         return r.to_json({
             "source":  source,
-            "asserts": asserts,
-            "parts": source.get_citations_as_list(),
-            "higher_sources": source.get_higher_sources(),
-            "repr": source.get_representations(),
+            "asserts": sources.asserts,
+            "parts": citations,
+            "higher_sources": higher,
+            "repr": repres,
         })
 
 

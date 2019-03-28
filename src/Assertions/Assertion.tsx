@@ -1,6 +1,6 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import { AppState, GPDispatch } from "../Store/State";
+import { AppState, GPDispatch, MetadataDict } from "../Store/State";
 import { Rating } from "semantic-ui-react";
 import { Segment } from "semantic-ui-react";
 import { Assertion } from "../Store/Assertion";
@@ -21,12 +21,13 @@ interface BoxProps {
    p1?: JSX.Element;
    p2?: JSX.Element;
    role?: string; // Separator between the two parts of the assertion
-   researchers: ResearcherSet;
    sources: SourceSet;
+   metadata: MetadataDict;
 }
 const AssertionBox: React.FC<BoxProps> = (p) => {
    const a = p.assert;
    const source = a.sourceId ? p.sources[a.sourceId] : undefined;
+   const research = p.metadata.researchers_dict[a.researcher];
    return (
       <div className={"Assertion " + (a.disproved ? "disproved" : "")}>
          {p.p1}
@@ -52,7 +53,7 @@ const AssertionBox: React.FC<BoxProps> = (p) => {
                <i>Rationale:</i> {a.rationale}
             </div>
             <div className="researcher">
-               Research: {p.researchers[a.researcher].name}
+               Research: {research ? research.name : ''}
                &nbsp;({a.lastChanged.toDateString()})
             </div>
          </Segment>
@@ -65,7 +66,7 @@ interface AssertionProps {
    places: PlaceSet;
    events: GenealogyEventSet;
    dispatch: GPDispatch;
-   researchers: ResearcherSet;
+   metadata: MetadataDict;
    sources: SourceSet;
    persons: PersonSet;
 
@@ -75,6 +76,7 @@ interface AssertionProps {
 const AssertionView: React.FC<AssertionProps> = (p) => {
    const a = p.assert;
    if (a instanceof P2E) {
+      const role= p.metadata.event_type_roles_dict[a.role];
       return (
          <AssertionBox
             assert={a}
@@ -93,9 +95,9 @@ const AssertionView: React.FC<AssertionProps> = (p) => {
                    places={p.places}
                    sources={p.sources}
                 />}
-            role={" as " + a.role}
+            role={` as ${role ? role.name : ''}`}
             sources={p.sources}
-            researchers={p.researchers}
+            metadata={p.metadata}
          />
       );
    } else if (a instanceof P2C) {
@@ -113,11 +115,12 @@ const AssertionView: React.FC<AssertionProps> = (p) => {
                <AssertionPartCharacteristic
                   places={p.places}
                   characteristic={a.characteristic}
+                  metadata={p.metadata}
                />
             }
             role={a.characteristic.name}
             sources={p.sources}
-            researchers={p.researchers}
+            metadata={p.metadata}
          />
       );
    } else if (a instanceof P2P) {
@@ -138,9 +141,9 @@ const AssertionView: React.FC<AssertionProps> = (p) => {
                   <AssertionPartPerson person={p.persons[a.person2Id]} />
                )
             }
-            role={a.relation}
+            role={p.metadata.p2p_types_dict[a.relation].name}
             sources={p.sources}
-            researchers={p.researchers}
+            metadata={p.metadata}
          />
       );
    } else {

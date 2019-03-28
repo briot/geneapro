@@ -31,7 +31,6 @@ export function* fetchEventFromServer(id: number) {
       events: {},
       places: {},
       sources: {},
-      researchers: {}
    };
    setAssertionEntities(data, result /* into */);
    return result;

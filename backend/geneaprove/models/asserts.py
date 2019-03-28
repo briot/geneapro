@@ -42,7 +42,8 @@ class Assertion(GeneaProveModel):
     """
 
     surety = models.ForeignKey(Surety_Scheme_Part, on_delete=models.CASCADE)
-    researcher = models.ForeignKey(Researcher, null=False, on_delete=models.CASCADE)
+    researcher = models.ForeignKey(
+        Researcher, null=False, on_delete=models.CASCADE)
     source = models.ForeignKey(
         Source, null=True,
         help_text="An assertion comes from no more than one source. It can"
@@ -85,8 +86,7 @@ class Assertion(GeneaProveModel):
         """
         :param geneaprove.views.related.JSONResult into: where to add the ids
         """
-        into.update(researcher_ids=[self.researcher_id],
-                    source_ids=[self.source_id])
+        into.update(source_ids=[self.source_id])
 
 
 class P2P_Type(GeneaProveModel):
@@ -118,11 +118,6 @@ class P2P(Assertion):
     class Meta:
         db_table = "p2p"
 
-    @staticmethod
-    def related_json_fields():
-        """What select_related() to use if we want to export to JSON"""
-        return Assertion.related_json_fields() + ['type']
-
     def getRelatedIds(self, into):
         super().getRelatedIds(into)
         into.update(person_ids=[self.person1_id, self.person2_id])
@@ -131,15 +126,17 @@ class P2P(Assertion):
         res = super().to_json()
         res['p1'] = {'person': self.person1_id}
         res['p2'] = {'person': self.person2_id}
-        res['type'] = self.type.name
+        res['type'] = self.type_id
         return res
 
 
 class P2C(Assertion):
     """Persona-to-Characteristic assertions"""
 
-    person = models.ForeignKey(Persona, related_name="p2c", on_delete=models.CASCADE)
-    characteristic = models.ForeignKey(Characteristic, related_name="persons", on_delete=models.CASCADE)
+    person = models.ForeignKey(
+        Persona, related_name="p2c", on_delete=models.CASCADE)
+    characteristic = models.ForeignKey(
+        Characteristic, related_name="persons", on_delete=models.CASCADE)
 
     class Meta:
         """Meta data for the model"""
@@ -148,9 +145,10 @@ class P2C(Assertion):
     def __str__(self):
         return f"<P2C person={self.person_id} char={self.characteristic}>"
 
-    # @staticmethod
-    # def related_json_fields():
-    #     return Assertion.related_json_fields() + ['characteristic']
+    @staticmethod
+    def related_json_fields():
+        return Assertion.related_json_fields() + [
+            'characteristic', 'characteristic__parts']
 
     def getRelatedIds(self, into):
         super().getRelatedIds(into)
@@ -161,12 +159,15 @@ class P2C(Assertion):
         res = super().to_json()
         fetch_image = False
 
+        logger.debug('P2C.to_json')
         # ??? Could be slow, and result in a lot of queries
         parts = []
-        for p in self.characteristic.parts.select_related():
-            parts.append({'name': p.type.name, 'value': p.name})
-            if p.type.gedcom == "_IMG":
-                fetch_image = True
+        for p in self.characteristic.parts.all():
+            parts.append({'type': p.type_id, 'value': p.name})
+
+            # ??? should test on type_id
+            #if p.type.gedcom == "_IMG":
+            #    fetch_image = True
 
         res['p1'] = {'person': self.person_id}
         res['p2'] = {'char': self.characteristic,
@@ -174,15 +175,19 @@ class P2C(Assertion):
                          if fetch_image and self.source
                          else None,
                      'parts': parts}
+        logger.debug('done P2C.to_json')
         return res
 
 
 class P2E(Assertion):
     """Persona-to-Event assertions"""
 
-    person = models.ForeignKey(Persona, related_name="events", on_delete=models.CASCADE)
-    event = models.ForeignKey(Event, related_name="actors", on_delete=models.CASCADE)
-    role = models.ForeignKey(Event_Type_Role, null=True, on_delete=models.CASCADE)
+    person = models.ForeignKey(
+        Persona, related_name="events", on_delete=models.CASCADE)
+    event = models.ForeignKey(
+        Event, related_name="actors", on_delete=models.CASCADE)
+    role = models.ForeignKey(
+        Event_Type_Role, null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         role = f" (as {self.role_id if self.role_id else ''})"
@@ -191,6 +196,11 @@ class P2E(Assertion):
     class Meta:
         """Meta data for the model"""
         db_table = "p2e"
+
+    @staticmethod
+    def related_json_fields():
+        """What select_related() to use if we want to export to JSON"""
+        return ['event']   # needed for getRelatedIds
 
     def getRelatedIds(self, into):
         super().getRelatedIds(into)
@@ -201,23 +211,22 @@ class P2E(Assertion):
     def to_json(self):
         res = super().to_json()
         res['p1'] = {'person': self.person_id}
-        res['p2'] = {'event': self.event_id, 'role': self.role.name}
+        res['p2'] = {'event': self.event_id, 'role': self.role_id}
         return res
 
 
 class P2G(Assertion):
     """Persona-to-Group assertions"""
-    person = models.ForeignKey(Persona, related_name="groups", on_delete=models.CASCADE)
-    group = models.ForeignKey(Group, related_name="personas", on_delete=models.CASCADE)
-    role = models.ForeignKey(Group_Type_Role, null=True, on_delete=models.CASCADE)
+    person = models.ForeignKey(
+        Persona, related_name="groups", on_delete=models.CASCADE)
+    group = models.ForeignKey(
+        Group, related_name="personas", on_delete=models.CASCADE)
+    role = models.ForeignKey(
+        Group_Type_Role, null=True, on_delete=models.CASCADE)
 
     class Meta:
         """Meta data for the model"""
         db_table = "p2g"
-
-    @staticmethod
-    def related_json_fields():
-        return Assertion.related_json_fields() + ['role']
 
     def getRelatedIds(self, into):
         super().getRelatedIds(into)
@@ -226,7 +235,7 @@ class P2G(Assertion):
     def to_json(self):
         res = super().to_json()
         res['p1'] = {'person': self.person_id}
-        res['p2'] = {'group': self.group_id, 'role': self.role.name}
+        res['p2'] = {'group': self.group_id, 'role': self.role_id}
         return res
 
 

@@ -187,7 +187,7 @@ LOGGING = {
 
         # Those are disabled in gedcomimport.py
         'django.db.backends': {   # Logging SQL queries
-            'handlers': ['consolegray'],
+            'handlers': ['console'],
             'level': 'DEBUG' if DEBUG else 'ERROR',
             'propagate': False,
         }
