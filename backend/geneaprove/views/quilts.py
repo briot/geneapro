@@ -44,8 +44,8 @@ class QuiltsView(JSONView):
 
     def get_json(self, params, id):
         persons = PersonSet()
-        persons.add_ancestors(int(id))
-        persons.add_descendants(int(id))
+        persons.add_folks(int(id), 'ancestors')
+        persons.add_folks(int(id), 'descendants')
         persons.fetch_p2e(
             event_types=(models.Event_Type.PK_birth,
                          models.Event_Type.PK_marriage))

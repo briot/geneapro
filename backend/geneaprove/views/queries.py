@@ -11,11 +11,8 @@ from .. import models
 
 logger = logging.getLogger(__name__)
 
-
-AncestorInfo = collections.namedtuple(
-    'AncestorInfo', "main_id generation parents")
-DescendantInfo = collections.namedtuple(
-    'DescendantInfo', "main_id generation children")
+FolkLore = collections.namedtuple(
+    'FolkLore', "main_id generation folks")
 
 
 class PersonSet(object):
@@ -166,7 +163,7 @@ class PersonSet(object):
     @classmethod
     def get_ancestors(cls, person_id, max_depth=None, skip=0):
         """
-        :returntype: list of AncestorInfo
+        :returntype: list of FolkLore
            This includes person_id itself, at generation 0
         """
         assert isinstance(person_id, int)
@@ -197,7 +194,7 @@ class PersonSet(object):
             )
             cur.execute(q)
             return [
-                AncestorInfo(
+                FolkLore(
                     main_id,
                     generation,
                     [] if not p else [int(a) for a in p.split(',')]
@@ -237,38 +234,31 @@ class PersonSet(object):
                 "GROUP BY descendants.main_id, descendants.generation"
             )
             return [
-                DescendantInfo(
+                FolkLore(
                     main_id,
                     generation,
                     [] if not c else [int(a) for a in c.split(',')]
                 )
                 for main_id, generation, c in cur.fetchall()]
 
-    def add_ancestors(self, person_id, max_depth=None, skip=0):
+    def add_folks(self, person_id, relationship, max_depth=None, skip=0):
         """
-        Fetch the list of all ancestors of `person_id`, up until the
-        `max_depth` generation.
+        Fetch the list of all ancestors or descendants of `person_id`, up
+        until the `max_depth` generation.
         Omit all persons with a generation less than `skip`, assuming the
         front-end already has that information.
         """
         assert isinstance(person_id, int)
-        ancestors = self.get_ancestors(person_id, max_depth, skip)
-        self.add_ids(ids=(a.main_id for a in ancestors))
-        for a in ancestors:
-            self.layout[a.main_id]['parents'] = a.parents
+        if relationship is 'ancestors':
+            folks = self.get_ancestors(person_id, max_depth, skip)
+            key = 'parents'
+        elif relationship is 'descendants':
+            folks = self.get_descendants(person_id, max_depth, skip)
+            key = 'children'
 
-    def add_descendants(self, person_id, max_depth=None, skip=0):
-        """
-        Fetch the list of all descendants of `person_id`, up until the
-        `max_depth` generation.
-        Omit all persons with a generation less than `skip`, assuming the
-        front-end already has that information.
-        """
-        assert isinstance(person_id, int)
-        desc = self.get_descendants(person_id, max_depth, skip)
-        self.add_ids(ids=(a.main_id for a in desc))
-        for a in desc:
-            self.layout[a.main_id]['children'] = a.children
+        self.add_ids(ids=(f.main_id for f in folks))
+        for f in folks:
+            self.layout[f.main_id][key] = f.folks
 
     def get_unique_person(self):
         """
@@ -346,8 +336,7 @@ class PersonSet(object):
         Compute the generation number for all persons in self, assuming that
         people in `gen_0_ids` are at generation 0 (parents are one generation
         above, children one below.
-        This assumes you have called `add_ancestors` or `add_descendants` to
-        add the persons.
+        This assumes you have called `add_folks()`to add the persons.
         """
         generations = {}
         queue = [(self.get_from_id(g).main_id, 0) for g in gen_0_ids]
