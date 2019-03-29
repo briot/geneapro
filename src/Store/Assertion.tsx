@@ -41,6 +41,12 @@ export abstract class Assertion {
     */
    public abstract getSortKey(
       events: GenealogyEventSet, meta: MetadataDict): string;
+
+   /**
+    * Return the role to display in lists of assertions
+    */
+   public abstract getRole(meta: MetadataDict): string;
+
 }
 
 export class P2P extends Assertion {
@@ -59,6 +65,12 @@ export class P2P extends Assertion {
    public getSortKey(): string {
       return "same as";
    }
+
+   /** overriding */
+   public getRole(meta: MetadataDict): string {
+      const n = meta.p2p_types_dict[this.relation];
+      return n ? n.name : '';
+   }
 }
 
 export class P2G extends Assertion {
@@ -75,6 +87,11 @@ export class P2G extends Assertion {
 
    /** overriding */
    public getSortKey(): string {
+      return "group";
+   }
+
+   /** overriding */
+   public getRole(meta: MetadataDict): string {
       return "group";
    }
 }
@@ -102,6 +119,11 @@ export class P2C extends Assertion {
    public getSortKey(): string {
       return this.characteristic.name;
    }
+
+   /** overriding */
+   public getRole(meta: MetadataDict): string {
+      return this.characteristic.name.toLowerCase();
+   }
 }
 
 export class P2E extends Assertion {
@@ -127,6 +149,11 @@ export class P2E extends Assertion {
       const e = events[this.eventId];
       const t = e && e.type !== undefined && meta.event_types_dict[e.type];
       return t ? t.name : "";
+   }
+
+   public getRole(meta: MetadataDict): string {
+      const role = meta.event_type_roles_dict[this.role];
+      return `as ${role ? role.name : ''}`;
    }
 }
 

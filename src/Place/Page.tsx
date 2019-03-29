@@ -2,7 +2,8 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { Loader } from "semantic-ui-react";
 import { RouteComponentProps } from "react-router";
-import { AppState, GPDispatch } from "../Store/State";
+import { AssertionEntities } from "../Server/Person";
+import { AppState, getEntities, GPDispatch, MetadataDict } from "../Store/State";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { fetchPlaceDetails } from "../Store/Sagas";
 import { Place } from "../Store/Place";
@@ -16,61 +17,64 @@ interface PropsFromRoute {
 interface PlacePageProps extends RouteComponentProps<PropsFromRoute> {
    id: number;
    place: Place | undefined;
+   entities: AssertionEntities;
+   metadata: MetadataDict;
    dispatch: GPDispatch;
 }
 
-class PlacePageConnected extends React.PureComponent<PlacePageProps> {
-   public componentDidMount() {
-      this.calculateData();
-   }
+const PlacePage: React.FC<PlacePageProps> = (p) => {
+   React.useEffect(
+      () => { document.title = p.place ? p.place.name : "Place"; },
+      [p.place]
+   );
 
-   public componentDidUpdate(old: PlacePageProps) {
-      if (old.id !== this.props.id) {
-         this.calculateData();
-      }
-      this.props.dispatch(addToHistory({
-         kind: HistoryKind.PLACE, id: this.props.id
-      }));
-   }
+   React.useEffect(
+      () => {
+         p.id >= 0 && fetchPlaceDetails.execute(p.dispatch, { id: p.id });
+      },
+      [p.dispatch, p.id],
+   );
 
-   protected calculateData() {
-      if (this.props.id >= 0) {
-         fetchPlaceDetails.execute(this.props.dispatch, { id: this.props.id });
-      }
-   }
+   React.useEffect(
+      () =>  {
+         p.dispatch(addToHistory({
+            kind: HistoryKind.PLACE, id: p.id
+         }));
+      },
+      [p.dispatch, p.id]
+   );
 
-   public render() {
-      const p = this.props.place;
-      document.title = p ? p.name : "Place";
-      return (
-         <Page
-            decujusid={undefined}
-            main={
-               p || this.props.id < 0 ? (
-                  <PlaceDetails place={p} />
-               ) : (
-                  <Loader active={true} size="large">
-                     Loading
-                  </Loader>
-               )
-            }
-         />
-      );
-   }
+   return (
+      <Page
+         decujusid={undefined}
+         main={
+            p.place || p.id < 0 ? (
+               <PlaceDetails
+                  dispatch={p.dispatch}
+                  entities={p.entities}
+                  metadata={p.metadata}
+                  place={p.place}
+               />
+            ) : (
+               <Loader active={true} size="large">
+                  Loading
+               </Loader>
+            )
+         }
+      />
+   );
 }
 
-const PlacePage = connect(
+export default connect(
    (state: AppState, props: RouteComponentProps<PropsFromRoute>) => {
       const id = Number(props.match.params.id);
       return {
          ...props,
          id,
+         entities: getEntities(state),
+         metadata: state.metadata,
          place: state.places[id] as Place | undefined
       };
    },
-   (dispatch: GPDispatch) => ({
-      dispatch
-   })
-)(PlacePageConnected);
-
-export default PlacePage;
+   (dispatch: GPDispatch) => ({ dispatch })
+)(PlacePage);

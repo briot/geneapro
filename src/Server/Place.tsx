@@ -54,8 +54,7 @@ export function* fetchPlaceFromServer(id: number) {
    }
 
    const data: JSONResult = yield resp.json();
-
-   let result: PlaceDetails = {
+   const result: PlaceDetails = {
       asserts: new AssertionList(data.asserts.map(a => assertionFromJSON(a))),
       events: {},
       persons: {},

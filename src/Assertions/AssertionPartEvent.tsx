@@ -5,6 +5,7 @@ import { fetchEventDetails } from "../Store/Sagas";
 import { Loader, Rating } from "semantic-ui-react";
 import { PersonaLink, SourceLink, PlaceLink } from "../Links";
 import { GenealogyEvent, GenealogyEventSet } from "../Store/Event";
+import { AssertionEntities } from "../Server/Person";
 import { PersonSet } from '../Store/Person';
 import { PlaceSet } from '../Store/Place';
 import { SourceSet } from '../Store/Source';
@@ -17,8 +18,7 @@ import { P2E } from "../Store/Assertion";
 
 interface EventDetailsProps {
    event?: GenealogyEvent;
-   persons: PersonSet;
-   sources: SourceSet;
+   entities: AssertionEntities;
 }
 const EventDetails: React.FC<EventDetailsProps> = (p) => {
    if (p.event === undefined || p.event.asserts === undefined) {
@@ -38,12 +38,16 @@ const EventDetails: React.FC<EventDetailsProps> = (p) => {
                      <tr key={idx}>
                         <td>{a.role}</td>
                         <td className="name">
-                           <PersonaLink person={p.persons[a.personId]} />
+                           <PersonaLink
+                              person={p.entities.persons[a.personId]}
+                           />
                         </td>
                         <td>
                            {
                               a.sourceId &&
-                              <SourceLink source={p.sources[a.sourceId]} />
+                              <SourceLink
+                                 source={p.entities.sources[a.sourceId]}
+                              />
                            }
                         </td>
                         <td>
@@ -78,11 +82,8 @@ const EventDetails: React.FC<EventDetailsProps> = (p) => {
 
 interface EventProps {
    eventId: number;
-   events: GenealogyEventSet;
    dispatch: GPDispatch;
-   places: PlaceSet;
-   sources: SourceSet;
-   persons: PersonSet;
+   entities: AssertionEntities;
    metadata: MetadataDict;
 }
 const AssertionPartEvent: React.FC<EventProps> = (p) => {
@@ -90,8 +91,8 @@ const AssertionPartEvent: React.FC<EventProps> = (p) => {
       () => fetchEventDetails.execute(p.dispatch, { id: p.eventId }),
       [p.dispatch, p.eventId]);
 
-   const e = p.events[p.eventId];
-   const place = e.placeId ? p.places[e.placeId] : undefined;
+   const e = p.entities.events[p.eventId];
+   const place = e.placeId ? p.entities.places[e.placeId] : undefined;
    const typ = e.type ? p.metadata.event_types_dict[e.type] : undefined;
    return (
       <AssertionPart
@@ -114,10 +115,7 @@ const AssertionPartEvent: React.FC<EventProps> = (p) => {
             </div>
          }
          expandable={true}
-         expanded={<EventDetails
-                      event={e}
-                      persons={p.persons}
-                      sources={p.sources} />}
+         expanded={<EventDetails event={e} entities={p.entities} />}
          onExpand={onExpand}
       />
    );

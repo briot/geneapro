@@ -59,3 +59,12 @@ class SQLSet(object):
             else:
                 for chunk in self.sql_split(v):
                     yield queryset.filter(**{k: chunk})
+
+    def limit_offset(self, queryset, *, offset=None, limit=None):
+        if limit is not None:
+            if offset is not None:
+                return queryset[int(offset):int(offset) + int(limit)]
+            else:
+                return queryset[:int(limit)]
+        return queryset
+

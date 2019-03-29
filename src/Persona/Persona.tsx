@@ -5,15 +5,17 @@ import * as GP_JSON from "../Server/JSON";
 import { AppState, GPDispatch, MetadataDict } from "../Store/State";
 import { P2C } from "../Store/Assertion";
 import { Segment } from "semantic-ui-react";
+import { AssertionEntities } from "../Server/Person";
 import { Person, personDisplay } from "../Store/Person";
 import { GenealogyEventSet, extractYear } from "../Store/Event";
-import AssertionTimeline from "../Assertions/AssertionTimeline";
+import { AssertionTimelineFromList } from "../Assertions/AssertionTimeline";
 import "./Persona.css";
 
 interface PersonaProps {
-   person: Person;
-   events: GenealogyEventSet;
+   dispatch: GPDispatch;
+   entities: AssertionEntities;
    metadata: MetadataDict;
+   person: Person;
 }
 
 function Persona(props: PersonaProps) {
@@ -49,11 +51,17 @@ function Persona(props: PersonaProps) {
             </span>
          </Segment>
          <Segment attached={true} className="pageContent">
-            <AssertionTimeline
-               asserts={p.asserts}
-               refYear={birthYear}
-               hidePersonIf={p.id}
-            />
+            {
+               p.asserts &&
+               <AssertionTimelineFromList
+                  asserts={p.asserts}
+                  dispatch={props.dispatch}
+                  entities={props.entities}
+                  metadata={props.metadata}
+                  refYear={birthYear}
+                  hidePersonIf={p.id}
+               />
+            }
          </Segment>
       </div>
    );

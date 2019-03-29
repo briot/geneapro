@@ -143,6 +143,7 @@ export interface AssertionEntitiesJSON {
    persons?: GP_JSON.Person[];
    places?: GP_JSON.Place[];
    sources?: GP_JSON.Source[];
+   asserts: GP_JSON.Assertion[];
 }
 
 interface JSONPersonDetails extends AssertionEntitiesJSON {
@@ -158,6 +159,7 @@ export interface AssertionEntities {
 }
 
 export interface DetailsResult extends AssertionEntities {
+   asserts: AssertionList;
    person: Person;
 }
 
@@ -169,7 +171,8 @@ export function setAssertionEntities(
       for (const p of entities.places) {
          into.places[p.id] = {
             id: p.id,
-            name: p.name
+            name: p.name,
+            asserts: new AssertionList([]),
             // p.date,
             // p.date_sort,
             // p.parent_place_id,
@@ -208,6 +211,29 @@ export function setAssertionEntities(
    }
 }
 
+function mergeSet<T extends {id: number}>(
+   set1: {[id: number]: T},
+   set2: {[id: number]: T}
+) {
+   let result = { ...set1 };
+   for (const [id, p] of Object.entries(set2)) {
+      const n = Number(id);
+      result[n] = { ...result[n], ...p };
+   }
+   return result;
+}
+
+export function mergeAssertionEntities(
+   e1: AssertionEntities, e2: AssertionEntities
+): AssertionEntities {
+   return {
+      events: mergeSet(e1.events, e2.events),
+      places: mergeSet(e1.places, e2.places ),
+      sources: mergeSet(e1.sources, e2.sources),
+      persons: mergeSet(e1.persons, e2.persons)
+   };
+}
+
 export function* fetchPersonDetailsFromServer(id: number) {
    const resp: Response = yield window.fetch("/data/persona/" + id);
    if (resp.status !== 200) {
@@ -221,6 +247,7 @@ export function* fetchPersonDetailsFromServer(id: number) {
             ? new AssertionList(data.asserts.map(a => assertionFromJSON(a)))
             : undefined
       },
+      asserts: new AssertionList([]),
       persons: {},
       events: {},
       places: {},

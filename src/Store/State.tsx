@@ -1,5 +1,6 @@
 import * as Redux from "redux";
 import { REHYDRATE } from "redux-persist/constants";
+import { AssertionEntities } from "../Server/Person";
 import { FanchartSettings } from "../Store/Fanchart";
 import { PedigreeSettings } from "../Store/Pedigree";
 import { RadialSettings } from "../Store/Radial";
@@ -59,6 +60,28 @@ export const themeNameGetter = (s: AppState) => (
 ): string => {
    const m = predefinedThemes.concat(s.metadata.themes).find(e => e.id == id);
    return m ? m.name : "";
+};
+
+/**
+ * Get all entities required to display assertions. Apply some caching to avoid
+ * creating a new record every time.
+ */
+let oldEntities: AssertionEntities = {
+   events: {}, places: {}, persons: {}, sources: {}};
+export const getEntities = (s: AppState) => {
+   if (s.events !== oldEntities.events ||
+       s.places !== oldEntities.places ||
+       s.persons !== oldEntities.persons ||
+       s.sources !== oldEntities.sources
+   ) {
+      oldEntities = {
+         events: s.events,
+         places: s.places,
+         persons: s.persons,
+         sources: s.sources,
+      };
+   }
+   return oldEntities;
 };
 
 /**

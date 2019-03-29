@@ -1,4 +1,5 @@
 import * as React from "react";
+import { CellMeasurer, CellMeasurerCache } from 'react-virtualized';
 import {
    Index,
    IndexRange,
@@ -10,47 +11,42 @@ import {
 import { Input, InputProps, Segment } from "semantic-ui-react";
 import { useComponentSize, useDebounce } from "./Hooks";
 
-interface BaseSettings {
-   filter: string;
-}
+export type InfiniteRowRenderer<T> =
+   (p: ListRowProps & {row: T; prevRow: T|undefined}) => React.ReactNode;
 
-export type InfiniteRowRenderer<T, Settings extends BaseSettings> =
-   (p: {row: T, settings: Settings;
-        key: string, style: React.CSSProperties, isVisible: boolean }
-   ) => React.ReactNode;
+export type InfiniteRowFetcher<T> =
+   (p: {offset: number, limit: number}) => Promise<T[]>;
 
-export type InfiniteRowFetcher<T, Settings extends BaseSettings> =
-   (p: Settings & {offset: number, limit: number}) => Promise<T[]>;
-
-interface InfiniteListProps<T, Settings extends BaseSettings> {
+interface InfiniteListProps<T> {
    // Minimum number of elements to fetch per query
    minBatchSize?: number;
 
    // Fetch more rows
-   fetchRows: InfiniteRowFetcher<T, Settings>;
+   // When this changes, the whole cache is invalidated and rows are fetched
+   // again.
+   fetchRows: InfiniteRowFetcher<T>;
 
-   // Fetch the total row count
-   fetchCount: (p: Settings) => Promise<number>;
+   // Total number of rows. If this is set to a greater value than the total
+   // rows already fetched, this will result in dynamic loading.
+   rowCount: number;
 
    // How to render one row
-   renderRow: InfiniteRowRenderer<T, Settings>;
+   renderRow: InfiniteRowRenderer<T>;
 
-   // Called when the filter changes. Any change in the settings clears the
-   // rows cache and forces a reload.
-   settings: Settings;
-   onSettingsChange: (p: Partial<BaseSettings>) => void;
-
-   title: string;
+   rowHeight?: number | 'dynamic';
 };
 
-const InfiniteList = <T, Settings extends BaseSettings>(
-   p: InfiniteListProps<T, Settings>
-) => {
+export const InfiniteList = <T extends {}>(p: InfiniteListProps<T>) => {
    const minBatchSize = p.minBatchSize || 300;
    const container = React.useRef<HTMLDivElement>(null);
    const size = useComponentSize(container);
-   const [itemCount, setItemCount] = React.useState(0);
    const infiniteLoaderRef = React.useRef<InfiniteLoader>(null);
+   const cache = React.useRef<CellMeasurerCache|null>(null);
+
+   if (cache.current === null) {
+      cache.current = new CellMeasurerCache(
+         { fixedWidth: true, minHeight: 10, defaultHeight: 200 });
+   }
 
    // Set to a T when it has finished loading.
    // Set to 'false' while loading.
@@ -73,27 +69,29 @@ const InfiniteList = <T, Settings extends BaseSettings>(
          });
 
          return p.fetchRows({
-            ...p.settings,
             offset: rg.startIndex,
             limit: rg.stopIndex - rg.startIndex + 1
          }).then((t: T[]) => {
             setRows(s => {
                const result = [...s];
-               t.forEach((p, idx) => result[idx + rg.startIndex] = p);
+               t.forEach((p, idx) => {
+                  result[idx + rg.startIndex] = p;
+                  cache.current!.clear(idx + rg.startIndex, 0);
+               });
                return result;
             });
          }).catch(reason => {
             alert('Error while loading \n' + reason);
          });
       },
-      [p.settings, p.fetchRows]
+      [p.fetchRows]
    );
 
    // Reset
    React.useEffect(
       () => {
-         p.fetchCount(p.settings).then((count: number) => setItemCount(count));
          setRows([]);
+         cache.current!.clearAll();
          if (infiniteLoaderRef.current) {
             //  Do not let infinite loader auto-reload. If we had scrolled
             //  down, it would still be requesting items 2000..3000, even
@@ -102,7 +100,7 @@ const InfiniteList = <T, Settings extends BaseSettings>(
             loadMoreItems({startIndex: 0, stopIndex: minBatchSize});
          }
       },
-      [p.settings, minBatchSize]
+      [p.fetchRows, minBatchSize]
    );
 
    const isRowLoaded = React.useCallback(
@@ -110,17 +108,7 @@ const InfiniteList = <T, Settings extends BaseSettings>(
       [rows]
    );
 
-   // Called when the filter is modified
-   const onFilterChange = React.useCallback(
-      useDebounce(
-         (e: {}, val: InputProps) =>
-            p.onSettingsChange({ filter: val.value as string }),
-         250
-      ),
-      [p.onSettingsChange]
-   );
-
-   const renderRow = React.useCallback(
+   const userRenderRow = React.useCallback(
       (params: ListRowProps) => {
          const row = rows[params.index];
          if (!row) {
@@ -130,51 +118,98 @@ const InfiniteList = <T, Settings extends BaseSettings>(
                </div>
             );
          }
-         return p.renderRow({ ...params, row, settings: p.settings});
+         const prevRow = rows[params.index - 1] || undefined;
+         return p.renderRow({ ...params, row, prevRow});
       },
-      [rows, p.renderRow, p.settings]
+      [rows, p.renderRow]
    );
 
-
-   const renderList = React.useCallback(
-      ({onRowsRendered, registerChild}: InfiniteLoaderChildProps) => (
-         <List
-            width={size.width}
-            height={size.height}
-            rowCount={itemCount}
-            rowHeight={30}
-            rowRenderer={renderRow}
-            onRowsRendered={onRowsRendered}
-            ref={registerChild}
-         />
+   const measureRenderRow = React.useCallback(
+      (params: ListRowProps) => (
+         <CellMeasurer
+            key={params.key}
+            cache={cache.current!}
+            rowIndex={params.index}
+            parent={params.parent}
+         >
+            {
+               ({ measure }) => userRenderRow(params)
+            }
+         </CellMeasurer>
       ),
-      [itemCount, size, renderRow]
+      [userRenderRow]
    );
+
+   const renderRow = p.rowHeight === 'dynamic'
+       ? measureRenderRow : userRenderRow;
 
    return (
-      <div className={`${p.title}List List`} ref={container}>
-         <Segment color="blue" attached={true}>
-            <span>{itemCount} {p.title}s</span>
-            <Input
-               icon="search"
-               placeholder="Filter..."
-               onChange={onFilterChange}
-               defaultValue={p.settings.filter}
-               style={{ position: "absolute", right: "5px", top: "5px" }}
-            />
-         </Segment>
+      <div ref={container} className="List">
          <InfiniteLoader
             isRowLoaded={isRowLoaded}
-            rowCount={itemCount}
             loadMoreRows={loadMoreItems}
             minimumBatchSize={minBatchSize}
-            threshold={minBatchSize / 2}
             ref={infiniteLoaderRef}
+            rowCount={p.rowCount}
+            threshold={minBatchSize / 2}
          >
-            {renderList}
+            {
+            ({onRowsRendered, registerChild}: InfiniteLoaderChildProps) => (
+               <List
+                  width={size.width}
+                  height={size.height}
+                  deferredMeasurementCache={
+                     p.rowHeight === 'dynamic' ? cache.current! : undefined
+                  }
+                  rowCount={p.rowCount}
+                  rowHeight={
+                     p.rowHeight === 'dynamic'
+                        ? cache.current!.rowHeight
+                        : p.rowHeight || 30
+                  }
+                  rowRenderer={renderRow}
+                  onRowsRendered={onRowsRendered}
+                  ref={registerChild}
+               />
+            )
+            }
          </InfiniteLoader>
       </div>
    );
 };
 
-export default InfiniteList;
+
+interface InfiniteListFilterProps<T> extends InfiniteListProps<T> {
+   title: string;
+   filter: string;
+   onFilterChange: (newfilter: string) => void;
+}
+
+export const InfiniteListFilter =
+   <T extends {}> (p: InfiniteListFilterProps<T>) => {
+
+   // Called when the filter is modified
+   const onFilterChange = React.useCallback(
+      useDebounce(
+         (e: {}, val: InputProps) => p.onFilterChange(val.value as string),
+         250
+      ),
+      [p.onFilterChange]
+   );
+
+   return (
+      <div className={`${p.title}List`}>
+         <Segment color="blue" attached={true}>
+            <span>{p.rowCount} {p.title && `${p.title}s`}</span>
+               <Input
+                  defaultValue={p.filter}
+                  icon="search"
+                  onChange={onFilterChange}
+                  placeholder="Filter..."
+                  style={{ position: "absolute", right: "5px", top: "5px" }}
+               />
+         </Segment>
+         <InfiniteList {...p} />
+      </div>
+   );
+};

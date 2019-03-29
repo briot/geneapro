@@ -63,27 +63,36 @@ class CitationModels(JSONView):
         }
 
 
+class SourceAsserts(JSONView):
+    """
+    Retrieve all asserts for a view
+    """
+
+    def get_json(self, params, id):
+        sources = SourceSet()
+        sources.add_ids(ids=[id])
+        sources.fetch_asserts(
+            offset=params.get('offset', None),
+            limit=params.get('limit', None)
+        )
+        return sources.asserts.to_json()  # fetch related entities
+
+
 class SourceView(JSONView):
     """
     View a specific source by id
     """
 
     def get_json(self, params, id):
-        logger.debug('SourceView, fetch sources and asserts')
         sources = SourceSet()
         sources.add_ids(ids=[id])
-        sources.fetch_asserts()
-        logger.debug('SourceView, done fetch sources and asserts')
 
         source = sources.sources[id]
-
         return {
             "source":  source,
-            "asserts": sources.asserts,
             "parts":  sources.get_citations(source),
             "higher_sources": sources.get_higher_sources(source),
-            "repr": source.get_representations(),
-            **sources.asserts.to_json(),  # fetch related entities
+            "repr": source.get_representations()
         }
 
 

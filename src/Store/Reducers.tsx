@@ -3,7 +3,7 @@ import { isType } from "typescript-fsa";
 import { AppState, rehydrate } from "../Store/State";
 import { to_dict } from '../History';
 import { personDisplay, PersonSet } from "../Store/Person";
-import { SourceSet } from "../Store/Source";
+import { Source, SourceSet } from "../Store/Source";
 import { addToHistory, HistoryItem, HistoryKind } from "../Store/History";
 import {
    fetchPedigree,
@@ -16,8 +16,7 @@ import {
 } from "../Store/Sagas";
 import { addEvents } from "../Store/Event";
 import { EventDetails } from "../Server/Event";
-import { DetailsResult } from "../Server/Person";
-import { FetchSourceDetailsResult } from "../Server/Source";
+import { DetailsResult, mergeAssertionEntities } from "../Server/Person";
 import { FetchPlacesResult, PlaceDetails } from "../Server/Place";
 import { defaultPedigree, changePedigreeSettings } from "../Store/Pedigree";
 import { defaultFanchart, changeFanchartSettings } from "../Store/Fanchart";
@@ -25,40 +24,12 @@ import {
    defaultPersonaList,
    changePersonaListSettings
 } from "../Store/PersonaList";
-import { changePlaceListSettings } from '../Store/Place';
+import { changePlaceListSettings, PlaceSet } from '../Store/Place';
 import { changeSourceListSettings } from '../Store/Source';
 import { defaultRadial, changeRadialSettings } from "../Store/Radial";
 import { defaultStats, changeStatsSettings } from "../Store/Stats";
 import { defaultQuilts, changeQuiltsSettings } from "../Store/Quilts";
 import * as Server from "../Server/Post";
-
-/**
- * Merge existing data for persons with new data read from an action
- */
-
-function mergePersons(state: PersonSet, action: PersonSet) {
-   let result: PersonSet = { ...state };
-
-   for (const [id, p] of Object.entries(action)) {
-      const n = Number(id);
-      result[n] = { ...result[n], ...p };
-   }
-
-   return result;
-}
-
-/**
- * Merge existing data for sources
- */
-
-function mergeSources(state: SourceSet, action: SourceSet) {
-   let result: SourceSet = { ...state };
-   for (const [id, p] of Object.entries(action)) {
-      const n = Number(id);
-      result[n] = { ...result[n], ...p };
-   }
-   return result;
-}
 
 /**
  * Global reducer
@@ -162,16 +133,9 @@ export function rootReducer(
       return { ...state, stats: { ...state.stats, ...action.payload.diff } };
    } else if (isType(action, fetchEventDetails.done)) {
       const data = action.payload.result as EventDetails;
-      return {
-         ...state,
-         events: {
-            ...state.events,
-            [data.id]: { ...state.events[data.id], asserts: data.asserts }
-         },
-         places: { ...state.places, ...data.places },
-         sources: mergeSources(state.sources, data.sources),
-         persons: mergePersons(state.persons, data.persons)
-      };
+      const s = { ...state, ...mergeAssertionEntities(state, data) };
+      s.events[data.id].asserts = data.asserts;
+      return s;
    } else if (isType(action, fetchMetadata.done)) {
       const m = action.payload.result;
       return { ...state,
@@ -222,53 +186,29 @@ export function rootReducer(
       };
    } else if (isType(action, fetchPersonDetails.done)) {
       const data: DetailsResult = action.payload.result as DetailsResult;
-
-      // ??? Should merge
-      const persons = {
-         ...state.persons,
-         ...data.persons,
-         [data.person.id]: data.person
-      };
+      const s = {...state, ...mergeAssertionEntities(state, data) };
+      s.persons[data.person.id] = data.person;
 
       // Create an alias if necessary, in case the person was referenced
       // by one of its personas
       if (action.payload.params.id !== data.person.id) {
-         persons[action.payload.params.id] = persons[data.person.id];
+         s.persons[action.payload.params.id] = s.persons[data.person.id];
       }
-
-      return {
-         ...state,
-         events: { ...state.events, ...data.events },
-         places: { ...state.places, ...data.places },
-         sources: mergeSources(state.sources, data.sources),
-         persons
-      };
+      return s;
    } else if (isType(action, fetchPlaceDetails.done)) {
       const data: PlaceDetails = action.payload.result as PlaceDetails;
-      return {
-         ...state,
-         events: { ...state.events, ...data.events },
-         places: { ...state.places, ...data.places },
-         sources: mergeSources(state.sources, data.sources),
-         persons: mergePersons(state.persons, data.persons)
-      };
+      return { ...state, ...mergeAssertionEntities(state, data) };
    } else if (isType(action, fetchSourceDetails.done)) {
-      const data = action.payload.result as FetchSourceDetailsResult;
-      const sources = mergeSources(state.sources, data.sources);
-      if (data.source.id in sources) {
-         sources[data.source.id] = {
-            ...sources[data.source.id],
-            ...data.source
-         };
-      } else {
-         sources[data.source.id] = data.source;
-      }
+      const source: Source = action.payload.result;
       return {
          ...state,
-         events: { ...state.events, ...data.events },
-         sources,
-         places: { ...state.places, ...data.places },
-         persons: mergePersons(state.persons, data.persons)
+         sources: {
+            ...state.sources,
+            [source.id]:
+               source.id in state.sources
+               ? { ...state.sources[source.id], ...source }
+               : source
+         }
       };
    } else if (isType(action, rehydrate)) {
       const name = "csrftoken=";

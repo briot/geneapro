@@ -1,5 +1,7 @@
 import * as React from "react";
 import { Accordion, Icon, Segment, Step } from "semantic-ui-react";
+import { AssertionEntities } from "../Server/Person";
+import { GPDispatch, MetadataDict } from "../Store/State";
 import { Source } from "../Store/Source";
 import SourceCitation from "../Source/Citation";
 import SourceMedias from "../Source/Media";
@@ -7,6 +9,8 @@ import SourceAssertions from "../Source/Assertions";
 import "./Source.css";
 
 interface SourceProps {
+   dispatch: GPDispatch;
+   metadata: MetadataDict;
    source: Source | undefined;
 }
 
@@ -164,7 +168,12 @@ export default class SourceDetails extends React.PureComponent<
                      Assertions
                   </Accordion.Title>
                   <Accordion.Content active={this.state.showAssertions}>
-                     <SourceAssertions source={s} />
+                     <SourceAssertions
+                        filter={""}
+                        dispatch={this.props.dispatch}
+                        metadata={this.props.metadata}
+                        source={s}
+                     />
                   </Accordion.Content>
                </Accordion>
             ) : null}

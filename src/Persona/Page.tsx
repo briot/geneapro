@@ -2,9 +2,15 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
+import { AssertionEntities } from "../Server/Person";
 import { PersonSet, personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
-import { AppState, GPDispatch, MetadataDict } from "../Store/State";
+import {
+   AppState,
+   getEntities,
+   GPDispatch,
+   MetadataDict
+} from "../Store/State";
 import { fetchPersonDetails } from "../Store/Sagas";
 import { GenealogyEventSet } from "../Store/Event";
 import Page from "../Page";
@@ -16,14 +22,13 @@ interface PropsFromRoute {
 
 interface PersonaPageProps extends RouteComponentProps<PropsFromRoute> {
    dispatch: GPDispatch;
-   events: GenealogyEventSet;
+   entities: AssertionEntities;
    metadata: MetadataDict;
-   persons: PersonSet;
 }
 
 const PersonaPage: React.FC<PersonaPageProps> = (p) => {
    const id = Number(p.match.params.id);
-   const pers = p.persons[id];
+   const pers = p.entities.persons[id];
 
    React.useEffect(
       () => {
@@ -50,9 +55,10 @@ const PersonaPage: React.FC<PersonaPageProps> = (p) => {
          main={
             pers ? (
                <Persona
+                  dispatch={p.dispatch}
+                  entities={p.entities}
                   person={pers}
                   metadata={p.metadata}
-                  events={p.events}
                />
             ) : (
                <Loader active={true} size="large">
@@ -67,8 +73,7 @@ const PersonaPage: React.FC<PersonaPageProps> = (p) => {
 export default connect(
    (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
       ...props,
-      persons: state.persons,
-      events: state.events,
+      entities: getEntities(state),
       metadata: state.metadata,
    }),
    (dispatch: GPDispatch) => ({ dispatch })

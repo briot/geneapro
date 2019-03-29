@@ -1,21 +1,48 @@
-table.AssertionTimeline {
-   table-layout: fixed;
-   border-spacing: 0;
+.AssertionTimeline {
+   --date-col-width: 60px;
+   --col-sep-width: 20px;
+
    width: 100%;
 }
 
-.AssertionTimeline > tbody > tr > td {
-   padding-bottom: 20px;
+.AssertionTimeline .assertRow {
+   overflow-y: hidden;
+   display: flex;
+}
+.AssertionTimeline .assertRow > .date + div {
+   flex-grow: 1;
+   margin-left: var(--col-sep-width);
+   margin-top: 0.6em;
+   margin-right: 5px;  /* make sure we have no scroll bars */
 }
 
 .AssertionTimeline .date {
-   width: 60px;
+   width: var(--date-col-width);
    border-right: 2px solid black;
-   padding-right: 10px;
+   padding-right: 10px; /* so that date doesn't overlap line */
    font-size: 0.8em;
    text-align: right;
    vertical-align: top;
    position: relative;
+}
+
+.AssertionTimeline .role {
+   position: relative;
+}
+.AssertionTimeline .role > span {
+   position: absolute;
+   left: 10px;
+   z-index: 1000;
+   text-align: left;
+   font-size: 0.8em;
+   top: -10px;
+
+   background: white;
+   padding: 0 5px;
+   color: #999;
+   font-weight: normal;
+   border-radius: 5px;
+   border: 1px solid #ddd;
 }
 
 .AssertionTimeline .age {
@@ -28,8 +55,4 @@ table.AssertionTimeline {
    top: 0;
    right: -11px;
    font-size: 1.1em;
-}
-
-.AssertionTimeline .date + td {
-   padding-left: 20px;
 }

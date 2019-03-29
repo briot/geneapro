@@ -8,16 +8,15 @@ import {
 } from "../Server/Person";
 import * as JSON from "../Server/JSON";
 
-interface JSONResult extends AssertionEntitiesJSON {
+interface JSONResult {
    source: JSON.Source;
    higher_sources: number[];
-   asserts: JSON.Assertion[];
    repr: JSON.SourceRepr[];
    parts: JSON.CitationPart[];
 }
 
-export interface FetchSourceDetailsResult extends AssertionEntities {
-   source: Source;
+interface SourceAsserts extends AssertionEntities {
+   asserts: AssertionList;
 }
 
 export function sourceFromJSON(s: JSON.Source) {
@@ -44,25 +43,25 @@ export function* fetchSourceDetailsFromServer(id: number) {
       throw new Error("Server returned an error");
    }
    const data: JSONResult = yield resp.json();
-
-   let r: FetchSourceDetailsResult = {
-      source: {
-         ...sourceFromJSON(data.source),
-         asserts: new AssertionList(
-            data.asserts.map(a => assertionFromJSON(a))),
-         medias: data.repr,
-         parts: data.parts ? data.parts.reduce(
-            (val, part) => ({...val, [part.name]: part}), {})
-            : {},
-      },
-      events: {},
-      persons: {},
-      places: {},
-      sources: {},
+   let r: Source = {
+      ...sourceFromJSON(data.source),
+      asserts: new AssertionList([]),
+      medias: data.repr,
+      parts: data.parts ? data.parts.reduce(
+         (val, part) => ({...val, [part.name]: part}), {})
+         : {},
    };
-
-   setAssertionEntities(data, r);
    return r;
+}
+
+export function fetchSourceAsserts(p: {
+   id: number, limit?: number, offset?: number
+}): Promise<AssertionEntitiesJSON> {
+   return fetch(
+      `/data/sources/asserts/${p.id}?` +
+      (p.limit ? `limit=${p.limit}&` : '') +
+      (p.offset !== undefined ? `offset=${p.offset}&` : '')
+   ).then(r => r.json());
 }
 
 export function fetchSourcesFromServer(

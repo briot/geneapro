@@ -1,5 +1,6 @@
 import collections
 import django.db
+from django.db.models import F, IntegerField, TextField, Value
 import logging
 from .. import models
 from .sqlsets import SQLSet
@@ -29,11 +30,7 @@ class SourceSet(SQLSet):
         assert ids is None or isinstance(ids, collections.abc.Iterable)
 
         pm = models.Source.objects.select_related()
-        if limit:
-            if offset is not None:
-                pm = pm[int(offset):int(offset) + int(limit)]
-            else:
-                pm = pm[:int(limit)]
+        pm = self.limit_offset(pm, offset=offset, limit=limit)
 
         for chunk in self.sqlin(pm, id__in=ids):
             for s in chunk:
@@ -73,15 +70,41 @@ class SourceSet(SQLSet):
             for s, parent in cur.fetchall():
                 self._higher[s].append(parent)
 
-    def fetch_asserts(self):
+    def fetch_asserts(self, offset=None, limit=None):
         """
         Fetch all assertions for all sources
         """
+        assert len(self.sources) == 1
         logger.debug('SourceSet.fetch_asserts')
-        for table in (models.P2E, models.P2C, models.P2P, models.P2G):
-            prefetch = table.related_json_fields()
-            for c in self.sqlin(table.objects.all(), source__in=self.sources):
-                self.asserts.extend(self.prefetch_related(c, *prefetch))
+
+        sid = next(iter(self.sources))
+
+        kinds = [
+            (models.P2E, F('event__date_sort')),
+            (models.P2C, F('characteristic__date_sort')),
+            (models.P2P, Value("", TextField())),
+            (models.P2G, Value("", TextField())),
+        ]
+
+        pm = None
+        for idx, (table, date) in enumerate(kinds):
+            a = table.objects \
+                .values('id') \
+                .annotate(kind=Value(idx, IntegerField()),
+                          date_sort=date) \
+                .filter(source=sid)
+            pm = a if pm is None else pm.union(a)
+
+        pm = pm.order_by('date_sort')
+        pm = self.limit_offset(pm, offset=offset, limit=limit)
+
+        asserts = list(pm)
+        for idx, (table, date) in enumerate(kinds):
+            ids = [a['id'] for a in asserts if a['kind'] == idx]
+            if ids:
+                prefetch = table.related_json_fields()
+                for chunk in self.sqlin(table.objects, id__in=ids):
+                    self.asserts.extend(self.prefetch_related(chunk, *prefetch))
 
     def fetch_citations(self):
         """

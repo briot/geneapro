@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as GP_JSON from '../Server/JSON';
+import { AssertionEntities } from '../Server/Person';
 import { MetadataDict } from '../Store/State';
 import { Characteristic } from "../Store/Assertion";
 import { PlaceSet } from '../Store/Place';
@@ -14,12 +15,12 @@ import Media from "../MediaList";
 
 interface CharProps {
    characteristic: Characteristic;
-   places: PlaceSet;
+   entities: AssertionEntities;
    metadata: MetadataDict;
 }
 const AssertionPartCharacteristic: React.FC<CharProps> = (p) => {
    const c = p.characteristic;
-   const place = c.place ? p.places[c.place] : undefined;
+   const place = c.place ? p.entities.places[c.place] : undefined;
    const part_name = (part: GP_JSON.CharacteristicPart) => {
       const n = p.metadata.char_part_types_dict[part.type];
       return n ?

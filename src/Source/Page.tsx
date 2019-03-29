@@ -2,7 +2,13 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { Loader } from "semantic-ui-react";
 import { RouteComponentProps } from "react-router";
-import { AppState, GPDispatch } from "../Store/State";
+import {
+   AppState,
+   getEntities,
+   GPDispatch,
+   MetadataDict
+} from "../Store/State";
+import { AssertionEntities } from "../Server/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { fetchSourceDetails } from "../Store/Sagas";
 import { Source } from "../Store/Source";
@@ -14,6 +20,7 @@ interface PropsFromRoute {
 }
 
 interface SourcePageProps extends RouteComponentProps<PropsFromRoute> {
+   metadata: MetadataDict;
    source: Source | undefined;
    dispatch: GPDispatch;
 }
@@ -49,7 +56,11 @@ const SourcePage: React.FC<SourcePageProps> = (p) => {
          decujusid={undefined}
          main={
             s || id < 0 ? (
-               <SourceDetails source={s} />
+               <SourceDetails
+                  dispatch={p.dispatch}
+                  metadata={p.metadata}
+                  source={s}
+               />
             ) : (
                <Loader active={true} size="large">
                   Loading
@@ -63,6 +74,7 @@ const SourcePage: React.FC<SourcePageProps> = (p) => {
 export default connect(
    (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
       ...props,
+      metadata: state.metadata,
       source: state.sources[Number(props.match.params.id)] as Source | undefined
    }),
    (dispatch: GPDispatch) => ({ dispatch })

@@ -1,5 +1,6 @@
 import * as React from "react";
 import { connect } from "react-redux";
+import * as GP_JSON from "./Server/JSON";
 import { AppState } from "./Store/State";
 import { Person } from "./Store/Person";
 import { Place, } from "./Store/Place";
@@ -124,7 +125,8 @@ const RecentPlaces: React.FC<RecentPlaces> = (p) => {
                .slice(0, MAX_PER_CATEGORY)
                .map(s => s.id);
          if (items.length) {
-            fetchPlacesFromServer({ ids: items }).then(setPlaces);
+            fetchPlacesFromServer({ ids: items })
+               .then((a: GP_JSON.Place[]) => setPlaces(a));
          }
       },
       [p.items]

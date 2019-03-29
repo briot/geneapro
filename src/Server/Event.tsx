@@ -14,7 +14,6 @@ export interface EventDetails extends AssertionEntities {
 
 interface JSONEventDetails extends AssertionEntitiesJSON {
    id: number;
-   asserts: JSON.Assertion[];
 }
 
 export function* fetchEventFromServer(id: number) {

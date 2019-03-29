@@ -8,10 +8,10 @@ import { fetchEventFromServer, EventDetails } from "../Server/Event";
 import { fetchPlaceFromServer, PlaceDetails } from "../Server/Place";
 import { fetchPlacesFromServer, FetchPlacesResult } from "../Server/Place";
 import {
-   fetchSourceDetailsFromServer,
-   FetchSourceDetailsResult
+   fetchSourceDetailsFromServer
 } from "../Server/Source";
 import * as GP_JSON from "../Server/JSON";
+import { Source } from "../Store/Source";
 import { AppState } from "../Store/State";
 import { PersonSet } from "../Store/Person";
 import { allSagas, createAsyncAction } from "../Store/Actions";
@@ -127,7 +127,8 @@ export interface FetchPlaceDetailsParams {
    id: number;
 }
 function _hasPlaceDetails(p: FetchPlaceDetailsParams, state: AppState) {
-   return p.id in state.places && state.places[p.id].asserts !== undefined;
+   const pl = state.places[p.id];
+   return pl && pl.asserts !== undefined && pl.asserts.get().length !== 0;
 }
 function* _fetchPlaceDetails(p: FetchPlaceDetailsParams) {
    const res: PlaceDetails = yield call(fetchPlaceFromServer, p.id);
@@ -150,10 +151,7 @@ function _hasSourceDetails() {
    return false;
 }
 function* _fetchSourceDetails(p: FetchSourceDetailsParams) {
-   const res: FetchSourceDetailsResult = yield call(
-      fetchSourceDetailsFromServer,
-      p.id
-   );
+   const res: Source = yield call(fetchSourceDetailsFromServer, p.id);
    return res;
 }
 export const fetchSourceDetails = createAsyncAction(

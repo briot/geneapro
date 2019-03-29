@@ -15,24 +15,6 @@
 	border-top: 0;
 }
 
-.Assertion .role {
-	position: absolute;
-	z-index: 1000;
-	width: 100%;
-	text-align: left;
-	margin-top: -0.9em;
-	font-size: 0.8em;
-}
-.Assertion .role > span {
-	margin-left: 10px;
-	background: white;
-	padding: 0 5px;
-   color: #999;
-   font-weight: normal;
-	border-radius: 5px;
-	border: 1px solid #ddd;
-}
-
 .Assertion .expander {
    float: left;
    height: 100%;
