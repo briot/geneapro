@@ -89,7 +89,7 @@ class QuiltsView(JSONView):
 
         for core in g.C:
             sug = SugiyamaLayout(core)
-            sug.init_all(optimize=True, cons=False)
+            sug.init_all(optimize=True)
             sug.draw()
 
             for layerIndex, layer in enumerate(sug.layers):
