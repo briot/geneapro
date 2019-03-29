@@ -3,7 +3,6 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { Button, DropdownProps, Form, Select } from "semantic-ui-react";
 import { predefinedThemes } from "./Store/ColorTheme";
-import { fetchMetadata } from "./Store/Sagas";
 import { AppState, GPDispatch, MetadataDict } from "./Store/State";
 import * as GP_JSON from "./Server/JSON";
 import * as ServerThemes from "./Server/Themes";
@@ -76,8 +75,6 @@ const ThemeSelectorConnected: React.FC<ThemeSelectorProps> = p => {
    const toggleLegend = React.useCallback(() => setLegend(!showLegend), [
       showLegend
    ]);
-
-   React.useEffect(() => fetchMetadata.execute(p.dispatch, {}), [p.dispatch]);
 
    return (
       <Form.Field>

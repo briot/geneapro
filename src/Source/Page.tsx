@@ -4,7 +4,7 @@ import { Loader } from "semantic-ui-react";
 import { RouteComponentProps } from "react-router";
 import { AppState, GPDispatch } from "../Store/State";
 import { addToHistory, HistoryKind } from "../Store/History";
-import { fetchMetadata, fetchSourceDetails } from "../Store/Sagas";
+import { fetchSourceDetails } from "../Store/Sagas";
 import { Source } from "../Store/Source";
 import Page from "../Page";
 import SourceDetails from "../Source/Source";
@@ -20,11 +20,6 @@ interface SourcePageProps extends RouteComponentProps<PropsFromRoute> {
 const SourcePage: React.FC<SourcePageProps> = (p) => {
    const id = Number(p.match.params.id);
    const s = p.source;
-
-   React.useEffect(
-      () => fetchMetadata.execute(p.dispatch, {}),
-      [p.dispatch]
-   );
 
    React.useEffect(
       () => {

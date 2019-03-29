@@ -5,7 +5,7 @@ import { Loader } from "semantic-ui-react";
 import { PersonSet, personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { AppState, GPDispatch, MetadataDict } from "../Store/State";
-import { fetchMetadata, fetchPersonDetails } from "../Store/Sagas";
+import { fetchPersonDetails } from "../Store/Sagas";
 import { GenealogyEventSet } from "../Store/Event";
 import Page from "../Page";
 import Persona from "../Persona/Persona";
@@ -24,11 +24,6 @@ interface PersonaPageProps extends RouteComponentProps<PropsFromRoute> {
 const PersonaPage: React.FC<PersonaPageProps> = (p) => {
    const id = Number(p.match.params.id);
    const pers = p.persons[id];
-
-   React.useEffect(
-      () => fetchMetadata.execute(p.dispatch, {}),
-      [p.dispatch]
-   );
 
    React.useEffect(
       () => {

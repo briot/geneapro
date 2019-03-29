@@ -909,8 +909,6 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {
    }, [selected, setRules]);
    React.useEffect(loadRuleList, [loadRuleList]);
 
-   React.useEffect(() => fetchMetadata.execute(p.dispatch, {}), [p.dispatch]);
-
    const onChange = React.useCallback(
       (e: {}, data: DropdownProps) => setSelected(Number(data.value)),
       []
