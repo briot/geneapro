@@ -4,8 +4,8 @@ Event-related views
 
 from django.http import HttpResponse
 from geneaprove import models
+from ..sql import AssertList
 from geneaprove.views.to_json import JSONView
-from geneaprove.views.related import JSONResult
 
 
 def extended_events(ids):
@@ -20,9 +20,8 @@ class EventDetailsView(JSONView):
     def get_json(self, params, id):
         """JSON data for a specific event"""
 
-        asserts = list(models.P2E.objects.filter(event_id=id))
-        r = JSONResult(asserts=asserts)
-        return r.to_json({
+        asserts = AssertList(models.P2E.objects.filter(event_id=id))
+        return {
             "id": id,
-            "asserts": asserts,
-        })
+            **asserts.to_json()
+        }

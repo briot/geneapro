@@ -7,6 +7,7 @@ import django.db
 from django.db.models import F
 import logging
 from .. import models
+from .asserts import AssertList
 from .sqlsets import SQLSet
 
 
@@ -32,7 +33,7 @@ class PersonSet(SQLSet):
     # the database might not event exist yet.
 
     def __init__(self, styles=None):
-        self.asserts = [] # All Assertions that were used to compute persons
+        self.asserts = AssertList() # All Assertions used to compute persons
         self.persons = collections.OrderedDict() # main_id -> Persona instance
         self.styles = styles
 
@@ -115,6 +116,9 @@ class PersonSet(SQLSet):
             args)
 
         self.persons.update({p.id: p for p in pm.iterator()})
+
+        # Do not fetch them again
+        self.asserts.add_known(persons=self.persons.values())
 
     @staticmethod
     def _query_get_sex():
@@ -363,20 +367,14 @@ class PersonSet(SQLSet):
 
         return generations
 
-    def fetch_p2e(self, schemes=None, event_types=BMD):
+    def fetch_p2e(self, event_types=BMD):
         """
         Fetch all person-to-event relationships for the persons.
         As a side-effect, this sets the birth, death and marriage dates for the
         persons.
 
         :param event_types: restricts the types of events that are retrieved
-        :params schemes:
-           List of ids of Surety_Scheme that are used. You
-           should pass a set() if you are interested in this. Otherwise, it is
-           just discarded.
         """
-        assert schemes is None or isinstance(schemes, set)
-
         related = ['event', 'role', *models.P2E.related_json_fields()]
         if self.styles and self.styles.need_places:
             related.append('event__place')
@@ -390,10 +388,7 @@ class PersonSet(SQLSet):
 
         for qs in self.sqlin(events, person__main_id__in=self.persons.keys()):
             for p2e in self.prefetch_related(qs.all(), *related):
-                self.asserts.append(p2e)
-
-                if schemes is not None:
-                    schemes.add(p2e.surety.scheme_id)
+                self.asserts.add(p2e)
 
                 if not p2e.disproved \
                    and p2e.role_id == models.Event_Type_Role.PK_principal:

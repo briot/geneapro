@@ -44,7 +44,7 @@ class SQLSet(object):
 
         example:
             for q in sqlin(model.Table.objects, ids__in=[...]):
-                for row in q.all();
+                for row in q;
                    ...
         """
         assert len(kwargs) == 1

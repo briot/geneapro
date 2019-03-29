@@ -89,6 +89,7 @@ export function rootReducer(
          event_type_roles: [],
          event_type_roles_dict: {},
          event_types: [],
+         event_types_dict: {},
          p2p_types: [],
          p2p_types_dict: {},
          researchers: [],
@@ -107,7 +108,6 @@ export function rootReducer(
    } else if (isType(action, addToHistory)) {
       const MAX_HISTORY_SIZE = 30;
       const item: HistoryItem = {...action.payload};
-      const idx = state.history.findIndex((h: HistoryItem) => h.id === item.id);
 
       // Do no change if the first item is already the correct one, to avoid
       // refreshing all pages and getting data from the server again.
@@ -118,6 +118,8 @@ export function rootReducer(
          return state;
       }
 
+      const idx = state.history.findIndex(
+         (h: HistoryItem) => h.id === item.id && h.kind == item.kind);
       return {
          ...state,
          history:
@@ -176,11 +178,10 @@ export function rootReducer(
               metadata: {
                  ...m,
                  p2p_types_dict: to_dict(m.p2p_types),
+                 event_types_dict: to_dict(m.event_types),
                  event_type_roles_dict: to_dict(m.event_type_roles),
                  researchers_dict: to_dict(m.researchers),
                  char_part_types_dict: to_dict(m.characteristic_types),
-                 char_part_SEX: m.characteristic_types
-                    .filter(c => c.name === "sex").map(c => c.id)[0],
               }};
    } else if (isType(action, fetchPedigree.started)) {
       return {

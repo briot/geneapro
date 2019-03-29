@@ -1,5 +1,6 @@
 import { GenealogyEventSet } from "../Store/Event";
 import * as GP_JSON from '../Server/JSON';
+import { MetadataDict } from '../Store/State';
 
 export interface Characteristic extends GP_JSON.Characteristic {
    parts: GP_JSON.CharacteristicPart[];
@@ -38,7 +39,8 @@ export abstract class Assertion {
     * Return a key to use when sorting assertions. This is the secondary key
     * in timelines, where the dates have been checked first
     */
-   public abstract getSortKey(events: GenealogyEventSet): string;
+   public abstract getSortKey(
+      events: GenealogyEventSet, meta: MetadataDict): string;
 }
 
 export class P2P extends Assertion {
@@ -121,9 +123,10 @@ export class P2E extends Assertion {
    }
 
    /** overriding */
-   public getSortKey(events: GenealogyEventSet): string {
+   public getSortKey(events: GenealogyEventSet, meta: MetadataDict): string {
       const e = events[this.eventId];
-      return e && e.type ? e.type.name : "";
+      const t = e && e.type !== undefined && meta.event_types_dict[e.type];
+      return t ? t.name : "";
    }
 }
 
@@ -138,7 +141,7 @@ export class AssertionList {
       return !s1 ? (!s2 ? 0 : -1) : !s2 ? 1 : s1.localeCompare(s2);
    }
 
-   public sortByDate(events: GenealogyEventSet) {
+   public sortByDate(events: GenealogyEventSet, meta: MetadataDict) {
       this.asserts.sort((a, b) => {
          let result = this.sortStrings(
             a.getSortDate(events),
@@ -146,8 +149,8 @@ export class AssertionList {
          );
          if (result === 0) {
             result = this.sortStrings(
-               a.getSortKey(events),
-               b.getSortKey(events)
+               a.getSortKey(events, meta),
+               b.getSortKey(events, meta)
             );
          }
          if (result === 0) {

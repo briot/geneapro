@@ -4,9 +4,9 @@ Event-related views
 
 from django.db.models import Count
 from django.db.models.functions import Lower
-from geneaprove import models
-from geneaprove.views.to_json import JSONView
-from geneaprove.views.related import JSONResult
+from .. import models
+from ..sql import AssertList
+from .to_json import JSONView
 
 class PlaceList(JSONView):
     """View the list of a all known places"""
@@ -54,7 +54,5 @@ class PlaceView(JSONView):
     def get_json(self, params, id):
         place = models.Place.objects.get(id=id)
         asserts = models.Place.get_asserts(ids=[id])
-        r = JSONResult(asserts=asserts)
-        return r.to_json({
-           "asserts": asserts,
-        })
+        asserts.add_known(places=(place, ))
+        return asserts.to_json()

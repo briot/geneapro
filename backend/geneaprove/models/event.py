@@ -86,7 +86,7 @@ class Event(GeneaProveModel):
         return {
             "id": self.id,
             "name": self.name,
-            "type": self.type,
+            "type": self.type_id,
             "place": self.place_id,
             "date": self.date,
             "date_sort": self.date_sort

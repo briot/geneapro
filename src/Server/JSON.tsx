@@ -17,7 +17,7 @@ export interface PartType {
    gedcom: string;
 }
 
-type EventType = PartType;
+export type EventType = PartType;
 
 export interface CharacteristicPartType extends PartType {
    is_name_part: boolean;
@@ -29,7 +29,7 @@ export interface Event {
    date_sort: string;
    name: string;
    place?: number;
-   type: EventType;
+   type: number;  // pointer to EventType
 }
 
 export interface EventTypeRole {
@@ -67,6 +67,7 @@ export interface ColorScheme {
 }
 export interface Metadata {
    characteristic_types: CharacteristicPartType[];
+   char_part_SEX: number;
    event_types: EventType[];
    event_type_roles: EventTypeRole[];
    p2p_types: P2PType[];

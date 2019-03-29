@@ -3,6 +3,7 @@ import django.db
 import logging
 from .. import models
 from .sqlsets import SQLSet
+from .asserts import AssertList
 
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ class SourceSet(SQLSet):
 
     def __init__(self):
         self.sources = collections.OrderedDict()  # id -> Source
-        self.asserts = []
+        self.asserts = AssertList()
         self._higher = None  # id -> list of higher source ids, recursively
         self._citations = None  # id -> list of CitationDetails
 
@@ -40,6 +41,8 @@ class SourceSet(SQLSet):
 
         self._higher = None
         self._citations = None
+        self.asserts.add_known(
+            sources=self.sources.values()) # Do not fetch them again
 
     def fetch_higher_sources(self):
         """

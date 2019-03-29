@@ -12,10 +12,11 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 import appdirs
+import sys
+from traceback import format_stack
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
@@ -141,9 +142,38 @@ STATICFILES_DIRS = [
     GENEAPROVE_STATIC_ROOT
 ]
 
+class WithStacktrace(object):
+    "https://blog.ionelmc.ro/2013/12/10/adding-stacktraces-to-log-messages/"
+    def __init__(self, skip=(), limit=5):
+        self.skip = [__name__, 'logging']
+        self.skip.extend(skip)
+        self.limit = limit
+
+    def filter(self, record):
+        if not hasattr(record, 'stack_patched'):
+            frame = sys._getframe(1)
+            if self.skip:
+                while frame.f_back and [
+                    skip for skip in self.skip
+                    if frame.f_globals.get('__name__', '').startswith(skip)
+                ]:
+                    frame = frame.f_back
+
+            bt = ''.join(format_stack(f=frame, limit=self.limit)).rstrip()
+            record.msg += f" -- Stack: \n{bt}"
+            record.stack_patched = True
+        return True
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+        'add_stack': {
+            '()': WithStacktrace,
+            'skip': ("django.db", "south.", "__main__"),
+            'limit': 1   # just one frame
+        }
+    },
     'formatters': {
         'verbose': {
             'format': '%(asctime)s %(module)s %(process)d %(thread)d %(message)s'
@@ -189,7 +219,9 @@ LOGGING = {
         'django.db.backends': {   # Logging SQL queries
             'handlers': ['console'],
             'level': 'DEBUG' if DEBUG else 'ERROR',
+            'filters': ['add_stack'],
             'propagate': False,
         }
     }
 }
+

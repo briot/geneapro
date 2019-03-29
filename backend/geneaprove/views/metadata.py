@@ -12,6 +12,7 @@ class MetadataList(JSONView):
         return {
             'characteristic_types': models.Characteristic_Part_Type
                .objects.all(),
+            'char_part_SEX': models.Characteristic_Part_Type.PK_sex,
             'event_types': models.Event_Type.objects.all(),
             'event_type_roles': models.Event_Type_Role.objects.all(),
             'p2p_types': models.P2P_Type.objects.all(),

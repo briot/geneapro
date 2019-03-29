@@ -19,6 +19,7 @@ import * as GP_JSON from "../Server/JSON";
 
 export interface MetadataDict extends GP_JSON.Metadata {
    p2p_types_dict: {[id: number]: GP_JSON.P2PType};
+   event_types_dict: {[id: number]: GP_JSON.EventType};
    event_type_roles_dict: {[id: number]: GP_JSON.EventTypeRole};
    researchers_dict: {[id: number]: GP_JSON.Researcher};
    char_part_types_dict: {[id: number]: GP_JSON.CharacteristicPartType};

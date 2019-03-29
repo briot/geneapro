@@ -1,5 +1,6 @@
 from django.db import models
 from .base import GeneaProveModel, compute_sort_date, Part_Type
+from ..sql import AssertList
 
 
 class Place(GeneaProveModel):
@@ -53,17 +54,12 @@ class Place(GeneaProveModel):
         assert isinstance(ids, list)
 
         from .asserts import P2C, P2E
-        asserts = []
+        asserts = AssertList(
+            P2C.objects.select_related(*P2C.related_json_fields()) \
+            .filter(characteristic__place_id__in=ids))
         asserts.extend(
-            P2C.objects.select_related(
-                *P2C.related_json_fields()
-            ).filter(characteristic__place_id__in=ids))
-
-        asserts.extend(
-            P2E.objects.select_related(
-                *P2E.related_json_fields()
-            ).filter(event__place_id__in=ids))
-
+            P2E.objects.select_related(*P2E.related_json_fields()) \
+            .filter(event__place_id__in=ids))
         return asserts
 
 

@@ -44,7 +44,7 @@ const AssertionTimeline: React.FC<ConnectedTimelineProps> = (p) => {
       return null;
    }
 
-   p.asserts.sortByDate(p.events);
+   p.asserts.sortByDate(p.events, p.metadata);
 
    const list = p.asserts.get();
    let prev: string | null = "@#@";

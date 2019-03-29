@@ -1,6 +1,6 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import { AppState, GPDispatch } from "../Store/State";
+import { AppState, GPDispatch, MetadataDict } from "../Store/State";
 import { fetchEventDetails } from "../Store/Sagas";
 import { Loader, Rating } from "semantic-ui-react";
 import { PersonaLink, SourceLink, PlaceLink } from "../Links";
@@ -83,6 +83,7 @@ interface EventProps {
    places: PlaceSet;
    sources: SourceSet;
    persons: PersonSet;
+   metadata: MetadataDict;
 }
 const AssertionPartEvent: React.FC<EventProps> = (p) => {
    const onExpand = React.useCallback(
@@ -91,6 +92,7 @@ const AssertionPartEvent: React.FC<EventProps> = (p) => {
 
    const e = p.events[p.eventId];
    const place = e.placeId ? p.places[e.placeId] : undefined;
+   const typ = e.type ? p.metadata.event_types_dict[e.type] : undefined;
    return (
       <AssertionPart
          title={
@@ -99,7 +101,7 @@ const AssertionPartEvent: React.FC<EventProps> = (p) => {
                   <div>
                      {e.date && <span title={e.date_sort}>{e.date}</span>}
                   </div>
-                  <div>{e.type ? e.type.name : "Unknown"}</div>
+                  <div>{typ ? typ.name : "Unknown"}</div>
                </div>
                <div
                   className={

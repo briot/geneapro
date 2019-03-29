@@ -7,11 +7,10 @@ import os
 from django.db.models import Count
 from django.db.models.functions import Lower
 from django.conf import settings
-from .to_json import JSONView, to_json
-from .related import JSONResult
 from .. import models
-from ..utils.citations import Citations
 from ..sql import SourceSet
+from ..utils.citations import Citations
+from .to_json import JSONView, to_json
 
 
 logger = logging.getLogger(__name__)
@@ -78,25 +77,14 @@ class SourceView(JSONView):
 
         source = sources.sources[id]
 
-        logger.debug('MANU getcitations')
-        citations = sources.get_citations(source)
-
-        logger.debug('MANU get higher sources')
-        higher = sources.get_higher_sources(source)
-
-        logger.debug('MANU get representations')
-        repres = source.get_representations()
-
-        logger.debug('MANU create JSONResult')
-        # ??? Will fetch events and sources again
-        r = JSONResult(asserts=sources.asserts)
-        return r.to_json({
+        return {
             "source":  source,
             "asserts": sources.asserts,
-            "parts": citations,
-            "higher_sources": higher,
-            "repr": repres,
-        })
+            "parts":  sources.get_citations(source),
+            "higher_sources": sources.get_higher_sources(source),
+            "repr": source.get_representations(),
+            **sources.asserts.to_json(),  # fetch related entities
+        }
 
 
 class EditSourceCitation(JSONView):

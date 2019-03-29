@@ -14,7 +14,7 @@ export interface GenealogyEvent {
    date_sort?: string; // computed from date, computer-friendly
    placeId?: number; // points to a place in the state
    sources?: number[]; // ??? Incorrect type
-   type?: EventType;
+   type?: number;  // points to an event type
 
    // Only available after we fetched the details
    asserts?: AssertionList;

@@ -4,9 +4,8 @@ Various views related to displaying the pedgree of a person graphically
 
 from django.db.models import F, Count
 from .. import models
-from ..sql import PersonSet
+from ..sql import AssertList, PersonSet
 from .to_json import JSONView
-from .related import JSONResult
 from .styles import Styles
 
 class PersonaView(JSONView):
@@ -18,10 +17,10 @@ class PersonaView(JSONView):
         persons.fetch_p2e(event_types=None)
         persons.fetch_p2c()
         persons.fetch_p2p()
-        return JSONResult(asserts=persons.asserts).to_json({
+        return {
             "person": persons.get_unique_person(),
-            "asserts": persons.asserts,
-        })
+            **persons.asserts.to_json()  # fetch related
+        }
 
 
 class SuretySchemesList(JSONView):

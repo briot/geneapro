@@ -9,6 +9,7 @@ class Characteristic_Part_Type(Part_Type):
     is_name_part = models.BooleanField(default=False)
 
     PK_sex = lazy_lookup(gedcom='SEX')
+    PK_img = lazy_lookup(gedcom='_IMG')
     PK_given_name = lazy_lookup(gedcom='GIVN')
     PK_surname = lazy_lookup(gedcom='SURN')
 
@@ -64,8 +65,10 @@ class Characteristic_Part(GeneaProveModel):
     characteristic, and therefore various parts might be needed.
     """
 
-    characteristic = models.ForeignKey(Characteristic, related_name="parts", on_delete=models.CASCADE)
-    type = models.ForeignKey(Characteristic_Part_Type, on_delete=models.CASCADE)
+    characteristic = models.ForeignKey(
+        Characteristic, related_name="parts", on_delete=models.CASCADE)
+    type = models.ForeignKey(
+        Characteristic_Part_Type, on_delete=models.CASCADE)
     name = models.TextField()
     sequence_number = models.IntegerField(default=1)
 

@@ -1,8 +1,9 @@
+import collections
 from django.db import models
 import django.utils.timezone
 import logging
 from .base import GeneaProveModel
-from .characteristic import Characteristic
+from .characteristic import Characteristic, Characteristic_Part_Type
 from .event import Event, Event_Type_Role
 from .group import Group, Group_Type_Role
 from .persona import Persona
@@ -14,6 +15,10 @@ from .representation import Representation
 
 
 logger = logging.getLogger('geneaprove.asserts')
+
+# Ids of entities related to the assertions. Each item is a set
+RelatedIds = collections.namedtuple(
+    'RelatedIds', 'persons events places sources')
 
 
 class Assertion(GeneaProveModel):
@@ -84,9 +89,9 @@ class Assertion(GeneaProveModel):
 
     def getRelatedIds(self, into):
         """
-        :param geneaprove.views.related.JSONResult into: where to add the ids
+        :param AssertList into:
         """
-        into.update(source_ids=[self.source_id])
+        into.add_missing(sources=(self.source_id, ))
 
 
 class P2P_Type(GeneaProveModel):
@@ -120,7 +125,7 @@ class P2P(Assertion):
 
     def getRelatedIds(self, into):
         super().getRelatedIds(into)
-        into.update(person_ids=[self.person1_id, self.person2_id])
+        into.add_missing(persons=(self.person1_id, self.person2_id))
 
     def to_json(self):
         res = super().to_json()
@@ -147,27 +152,23 @@ class P2C(Assertion):
 
     @staticmethod
     def related_json_fields():
-        return Assertion.related_json_fields() + [
-            'characteristic', 'characteristic__parts']
+        return Assertion.related_json_fields() + ['characteristic']
 
     def getRelatedIds(self, into):
         super().getRelatedIds(into)
-        into.update(person_ids=[self.person_id],
-                    place_ids=[self.characteristic.place_id])
+        into.add_missing(persons=(self.person_id, ),
+                         places=(self.characteristic.place_id, ))
 
     def to_json(self):
         res = super().to_json()
         fetch_image = False
 
-        logger.debug('P2C.to_json')
         # ??? Could be slow, and result in a lot of queries
         parts = []
         for p in self.characteristic.parts.all():
             parts.append({'type': p.type_id, 'value': p.name})
-
-            # ??? should test on type_id
-            #if p.type.gedcom == "_IMG":
-            #    fetch_image = True
+            if p.type_id == Characteristic_Part_Type.PK_img:
+                fetch_image = True
 
         res['p1'] = {'person': self.person_id}
         res['p2'] = {'char': self.characteristic,
@@ -175,7 +176,6 @@ class P2C(Assertion):
                          if fetch_image and self.source
                          else None,
                      'parts': parts}
-        logger.debug('done P2C.to_json')
         return res
 
 
@@ -204,9 +204,11 @@ class P2E(Assertion):
 
     def getRelatedIds(self, into):
         super().getRelatedIds(into)
-        into.update(person_ids=[self.person_id],
-                    event_ids=[self.event_id],
-                    place_ids=[self.event.place_id])
+        into.add_known(events=(self.event, ))
+        into.add_missing(
+            persons=(self.person_id, ),
+            events=(self.event_id, ),
+            places=(self.event.place_id, ))
 
     def to_json(self):
         res = super().to_json()
@@ -230,7 +232,7 @@ class P2G(Assertion):
 
     def getRelatedIds(self, into):
         super().getRelatedIds(into)
-        into.update(person_ids=[self.person_id])
+        into.add_missing(persons=(self.person_id, ))
 
     def to_json(self):
         res = super().to_json()

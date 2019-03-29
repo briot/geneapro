@@ -91,6 +91,7 @@ const AssertionView: React.FC<AssertionProps> = (p) => {
                    eventId={a.eventId}
                    events={p.events}
                    dispatch={p.dispatch}
+                   metadata={p.metadata}
                    persons={p.persons}
                    places={p.places}
                    sources={p.sources}
