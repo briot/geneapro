@@ -127,119 +127,84 @@ class PersonSet(object):
             "GROUP BY p.main_id")
 
     @staticmethod
-    def _query_get_parents():
+    def _query_get_folks(relationship):
         """
-        A query that computes the list of direct parents for a person
+        A query that computes the list of direct parents or children
+        for a person
         """
-        return (
-            "SELECT DISTINCT persona.main_id, pp.main_id as parent "
-            "FROM persona, p2e, event, p2e p2, persona pp "
-            "WHERE event.id=p2e.event_id "
-            f"AND p2e.role_id={models.Event_Type_Role.PK_principal} "
-            f"AND event.type_id={models.Event_Type.PK_birth} "
-            f"AND p2.role_id IN ({models.Event_Type_Role.PK_birth__father},"
-            f"{models.Event_Type_Role.PK_birth__mother}) "
-            "AND p2e.person_id=persona.id "
-            "AND p2.event_id=event.id "
-            "AND p2.person_id=pp.id")
+        if 'parent' in relationship:
+            table_a = 'p2e'
+            table_b = 'p2'
+        elif 'child' in relationship:
+            table_a = 'p2'
+            table_b = 'p2e'
 
-    @staticmethod
-    def _query_get_children():
-        """
-        A query that computes the list of direct children for a person
-        """
         return (
-            "SELECT DISTINCT persona.main_id, pp.main_id as child "
+            f"SELECT DISTINCT persona.main_id, pp.main_id as {relationship} "
             "FROM persona, p2e, event, p2e p2, persona pp "
             "WHERE event.id=p2e.event_id "
-            f"AND p2e.role_id IN ({models.Event_Type_Role.PK_birth__father},"
-            f"{models.Event_Type_Role.PK_birth__mother}) "
+            f"AND {table_a}.role_id={models.Event_Type_Role.PK_principal} "
             f"AND event.type_id={models.Event_Type.PK_birth} "
-            f"AND p2.role_id={models.Event_Type_Role.PK_principal} "
+            f"AND {table_b}.role_id IN ({models.Event_Type_Role.PK_birth__father}, "
+            f"{models.Event_Type_Role.PK_birth__mother}) "
             "AND p2e.person_id=persona.id "
             "AND p2.event_id=event.id "
             "AND p2.person_id=pp.id")
 
     @classmethod
-    def get_ancestors(cls, person_id, max_depth=None, skip=0):
+    def get_folks(cls, relationship, person_id, max_depth=None, skip=0):
         """
         :returntype: list of FolkLore
            This includes person_id itself, at generation 0
         """
         assert isinstance(person_id, int)
 
+        if 'ancestors' in relationship:
+            role = ['parents', 'parent']
+        elif 'descendants' in relationship:
+            role = ['children', 'child']
+
         with django.db.connection.cursor() as cur:
-            initial = f"VALUES({person_id},0)"
-            md = f"AND ancestors.generation<={max_depth} " if max_depth else ""
-            sk = f"WHERE ancestors.generation>{skip} " if skip else ""
+            # ??? group_concat doesn't exist in postgres
+            if 'postgresql' in database_in_use:
+                initial = f"VALUES({person_id}::bigint, 0::bigint)"
+                group_concat = f"string_agg({role[0]}.{role[1]}::text, ',') AS {role[0]} "
+            else:
+                initial = f"VALUES({person_id},0)"
+                group_concat = f"group_concat({role[0]}.{role[1]}) AS {role[0]} "
+
+            md = (
+                f"AND {relationship}.generation<={max_depth} "
+                if max_depth else "")
+            sk = (
+                f"WHERE {relationship}.generation>{skip} "
+                if skip else "")
             q = (
-                "WITH RECURSIVE parents(main_id, parent) AS (" +
-                    cls._query_get_parents() +
-                "), ancestors(main_id,generation) as ("
-                    f"{initial} "
+                f"WITH RECURSIVE {role[0]}(main_id, {role[1]}) "
+                f"AS ({cls._query_get_folks(role[0])}), "
+                f"{relationship}(main_id,generation) "
+                    f"AS ({initial} "
                     "UNION "
-                    "SELECT parents.parent, ancestors.generation + 1 "
-                    "FROM parents, ancestors "
-                    "WHERE parents.main_id = ancestors.main_id "
-                    f"{md}"
-                ") SELECT ancestors.main_id, ancestors.generation, "
-
-                # ??? group_concat doesn't exist in postgres
-                "group_concat(parents.parent) as parents "
-
-                "FROM ancestors LEFT JOIN parents "
-                "ON parents.main_id=ancestors.main_id "
+                    f"SELECT {role[0]}.{role[1]}, {relationship}.generation + 1 "
+                    f"FROM {role[0]}, {relationship} "
+                    f"WHERE {role[0]}.main_id = {relationship}.main_id "
+                    f"{md}) "
+                f"SELECT {relationship}.main_id, {relationship}.generation, "
+                f"{group_concat}"
+                f"FROM {relationship} LEFT JOIN {role[0]} "
+                f"ON {role[0]}.main_id={relationship}.main_id "
                 f"{sk}"
-                "GROUP BY ancestors.main_id, ancestors.generation"
+                f"GROUP BY {relationship}.main_id, {relationship}.generation"
             )
             cur.execute(q)
+
             return [
                 FolkLore(
                     main_id,
                     generation,
-                    [] if not p else [int(a) for a in p.split(',')]
+                    [] if not f else [int(a) for a in f.split(',')]
                 )
-                for main_id, generation, p in cur.fetchall()]
-
-    @classmethod
-    def get_descendants(cls, person_id, max_depth=None, skip=0):
-        """
-        :returntype: list of DescendantInfo
-           This includes person_id itself, at generation 0
-        """
-        with django.db.connection.cursor() as cur:
-            initial = f"VALUES({person_id},0)"
-            md = (
-                f"AND descendants.generation<={max_depth} "
-                if max_depth else "")
-            sk = f"WHERE descendants.generation>{skip} " if skip else ""
-            cur.execute(
-                "WITH RECURSIVE children(main_id, child) AS (" +
-                    cls._query_get_children() +
-                "), descendants(main_id,generation) as ("
-                    f"{initial} "
-                    "UNION "
-                    "SELECT children.child, descendants.generation + 1 "
-                    "FROM children, descendants "
-                    "WHERE children.main_id = descendants.main_id "
-                    f"{md}"
-                ") SELECT descendants.main_id, descendants.generation, "
-
-                # ??? group_concat doesn't exist in postgres
-                "group_concat(children.child) as children "
-
-                "FROM descendants LEFT JOIN children "
-                "ON children.main_id=descendants.main_id "
-                f"{sk}"
-                "GROUP BY descendants.main_id, descendants.generation"
-            )
-            return [
-                FolkLore(
-                    main_id,
-                    generation,
-                    [] if not c else [int(a) for a in c.split(',')]
-                )
-                for main_id, generation, c in cur.fetchall()]
+                for main_id, generation, f in cur.fetchall()]
 
     def add_folks(self, person_id, relationship, max_depth=None, skip=0):
         """
@@ -250,10 +215,10 @@ class PersonSet(object):
         """
         assert isinstance(person_id, int)
         if relationship is 'ancestors':
-            folks = self.get_ancestors(person_id, max_depth, skip)
+            folks = self.get_folks(relationship, person_id, max_depth, skip)
             key = 'parents'
         elif relationship is 'descendants':
-            folks = self.get_descendants(person_id, max_depth, skip)
+            folks = self.get_folks(relationship, person_id, max_depth, skip)
             key = 'children'
 
         self.add_ids(ids=(f.main_id for f in folks))
@@ -299,10 +264,12 @@ class PersonSet(object):
                 where = ""
 
             cur.execute(
-                "WITH parents AS (" + cls._query_get_parents() +
-                "), sex AS (" + cls._query_get_sex() +
-                ") SELECT parents.main_id, sex.sex "
-                "FROM parents LEFT JOIN sex "
+                "WITH "
+                f"parents AS ({cls._query_get_folks('parent')}), "
+                f"sex AS ({cls._query_get_sex()}) "
+                "SELECT parents.main_id, sex.sex "
+                "FROM parents "
+                "LEFT JOIN sex "
                 f"ON parents.parent=sex.main_id {where}",
                 args)
 
