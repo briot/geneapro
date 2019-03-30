@@ -91,6 +91,7 @@ DATABASES = {
                 version='1.0',
                 roaming=True),
             'geneaprove.sqlite'),
+        'CHUNK_SIZE': 996
     }
 }
 

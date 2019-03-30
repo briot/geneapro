@@ -13,16 +13,9 @@ from .. import models
 logger = logging.getLogger(__name__)
 
 
-database_in_use = settings.DATABASES['default']['ENGINE'].split('.')[-1]
-logger.debug(f"django.core.management DATABASE engine: {database_in_use}")
-
 # Add max query size for other database backends
-if 'sqlite' in database_in_use:
-    CHUNK_SIZE = 996
-elif 'postgresql' in database_in_use:
-    CHUNK_SIZE = 8900
-else:
-    CHUNK_SIZE = 996
+CHUNK_SIZE = settings.DATABASES['default']['CHUNK_SIZE']
+logger.debug(f"django.core.management DATABASE CHUNK_SIZE: {CHUNK_SIZE}")
 
 AncestorInfo = collections.namedtuple(
     'AncestorInfo', "main_id generation parents")
@@ -210,7 +203,6 @@ class PersonSet(object):
                 f"{sk}"
                 "GROUP BY ancestors.main_id, ancestors.generation"
             )
-            logger.debug(f'get_ancestors() query: {q}')
             cur.execute(q)
 
             return [
@@ -256,7 +248,6 @@ class PersonSet(object):
                 f"{sk}"
                 "GROUP BY descendants.main_id, descendants.generation"
             )
-            logger.debug(f'get_descendants() query: {q}')
             cur.execute(q)
 
             return [
