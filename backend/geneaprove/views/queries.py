@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Add max query size for other database backends
 CHUNK_SIZE = settings.DATABASES['default']['CHUNK_SIZE']
+database_in_use = settings.DATABASES['default']['ENGINE'].split('.')[-1]
 logger.debug(f"django.core.management DATABASE CHUNK_SIZE: {CHUNK_SIZE}")
 
 AncestorInfo = collections.namedtuple(
