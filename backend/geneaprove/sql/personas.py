@@ -5,6 +5,7 @@ Support for writing custom SQL queries
 import collections
 import django.db
 from django.db.models import F
+from django.conf import settings
 import logging
 from .. import models
 from .asserts import AssertList
@@ -13,6 +14,10 @@ from .sqlsets import SQLSet
 
 logger = logging.getLogger(__name__)
 
+
+# Identify database backend
+database_in_use = settings.DATABASES['default']['ENGINE'].split('.')[-1]
+logger.debug(f"database_in_use: {database_in_use}")
 
 AncestorInfo = collections.namedtuple(
     'AncestorInfo', "main_id generation parents")
@@ -132,7 +137,7 @@ class PersonSet(SQLSet):
             f"AND c.type_id={models.Characteristic_Part_Type.PK_sex} "
             "AND p2c.person_id=p.id "
             "AND NOT p2c.disproved "
-            "GROUP BY p.main_id")
+            "GROUP BY p.main_id, c.name")
 
     @staticmethod
     def _query_get_parents():
@@ -177,13 +182,19 @@ class PersonSet(SQLSet):
         assert isinstance(person_id, int)
 
         with django.db.connection.cursor() as cur:
-            initial = f"VALUES({person_id},0)"
+            # ??? group_concat doesn't exist in postgres
+            if 'postgresql' in database_in_use:
+                initial = f"VALUES({person_id}::bigint, 0::bigint)"
+                group_concat = "string_agg(parents.parent::text, ',') AS parents "
+            else:
+                initial = f"VALUES({person_id},0)"
+                group_concat = "group_concat(parents.parent) AS parents "
             md = f"AND ancestors.generation<={max_depth} " if max_depth else ""
             sk = f"WHERE ancestors.generation>{skip} " if skip else ""
             q = (
                 "WITH RECURSIVE parents(main_id, parent) AS (" +
                     cls._query_get_parents() +
-                "), ancestors(main_id,generation) as ("
+                "), ancestors(main_id,generation) AS ("
                     f"{initial} "
                     "UNION "
                     "SELECT parents.parent, ancestors.generation + 1 "
@@ -191,16 +202,14 @@ class PersonSet(SQLSet):
                     "WHERE parents.main_id = ancestors.main_id "
                     f"{md}"
                 ") SELECT ancestors.main_id, ancestors.generation, "
-
-                # ??? group_concat doesn't exist in postgres
-                "group_concat(parents.parent) as parents "
-
+                f"{group_concat}"
                 "FROM ancestors LEFT JOIN parents "
                 "ON parents.main_id=ancestors.main_id "
                 f"{sk}"
                 "GROUP BY ancestors.main_id, ancestors.generation"
             )
             cur.execute(q)
+
             return [
                 AncestorInfo(
                     main_id,
@@ -216,12 +225,18 @@ class PersonSet(SQLSet):
            This includes person_id itself, at generation 0
         """
         with django.db.connection.cursor() as cur:
-            initial = f"VALUES({person_id},0)"
+            # ??? group_concat doesn't exist in postgres
+            if 'postgresql' in database_in_use:
+                initial = f"VALUES({person_id}::bigint, 0::bigint)"
+                group_concat = "string_agg(children.child::text, ',') AS children "
+            else:
+                initial = f"VALUES({person_id},0)"
+                group_concat = "group_concat(children.child) AS children "
             md = (
                 f"AND descendants.generation<={max_depth} "
                 if max_depth else "")
             sk = f"WHERE descendants.generation>{skip} " if skip else ""
-            cur.execute(
+            q = (
                 "WITH RECURSIVE children(main_id, child) AS (" +
                     cls._query_get_children() +
                 "), descendants(main_id,generation) as ("
@@ -232,15 +247,14 @@ class PersonSet(SQLSet):
                     "WHERE children.main_id = descendants.main_id "
                     f"{md}"
                 ") SELECT descendants.main_id, descendants.generation, "
-
-                # ??? group_concat doesn't exist in postgres
-                "group_concat(children.child) as children "
-
+                f"{group_concat}"
                 "FROM descendants LEFT JOIN children "
                 "ON children.main_id=descendants.main_id "
                 f"{sk}"
                 "GROUP BY descendants.main_id, descendants.generation"
             )
+            cur.execute(q)
+
             return [
                 DescendantInfo(
                     main_id,
