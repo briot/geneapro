@@ -1,5 +1,4 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
 import { render } from "react-testing-library";
 import EditableList from "./EditableList";
 // Some support in setupTests
@@ -12,12 +11,12 @@ it("renders all items in the list", () => {
 
    // List of attributes returned from render():
    //    https://testing-library.com/docs/react-testing-library/api
-   const { container, debug, queryAll } = render(
+   const { container } = render(
       <EditableList
          list={list}
          render={a => <span>{a}</span>}
          create={() => 4}
-         onChange={newlist => null}
+         onChange={() => null}
          orderable={false}
       />
    );

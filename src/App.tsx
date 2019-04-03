@@ -21,7 +21,7 @@ import ThemeEditor from "./ThemeEditor/ThemeEditor";
 import { setPersist, store } from "./Store/Store";
 import { fetchMetadata } from "./Store/Sagas";
 
-const App: React.FC<{}> = (p) => {
+const App: React.FC<{}> = () => {
    const [rehydrated, setRehydrated] = React.useState(false);
 
    React.useEffect(

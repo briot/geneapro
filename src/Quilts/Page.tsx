@@ -2,7 +2,7 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
-import { PersonSet, personDisplay } from "../Store/Person";
+import { personDisplay } from "../Store/Person";
 import { QuiltsSettings, changeQuiltsSettings } from "../Store/Quilts";
 import { AppState, GPDispatch } from "../Store/State";
 import { fetchQuiltsFromServer, QuiltsResult } from "../Server/Quilts";
@@ -25,10 +25,11 @@ const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
 
    const decujusid = Number(p.match.params.decujusId);
    const decujus = layout && layout.persons[decujusid];
+   const { dispatch } = p;
    const onSettingsChange = React.useCallback(
       (diff: Partial<QuiltsSettings>) =>
-         p.dispatch(changeQuiltsSettings({ diff })),
-      [p.dispatch]
+         dispatch(changeQuiltsSettings({ diff })),
+      [dispatch]
    );
 
    React.useEffect(
@@ -48,14 +49,12 @@ const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
 
    React.useEffect(
       () => {
-         p.dispatch(addToHistory({
-            kind: HistoryKind.PERSON, id: decujusid
-         }));
+         dispatch(addToHistory({ kind: HistoryKind.PERSON, id: decujusid }));
          if (decujus) {
             document.title = "Quilts for " + personDisplay(decujus);
          }
       },
-      [decujus, p.dispatch]
+      [decujus, decujusid, dispatch]
    );
 
    const main = loading ? (

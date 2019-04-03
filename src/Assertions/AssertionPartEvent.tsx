@@ -1,14 +1,10 @@
 import * as React from "react";
-import { connect } from "react-redux";
-import { AppState, GPDispatch, MetadataDict } from "../Store/State";
+import { GPDispatch, MetadataDict } from "../Store/State";
 import { fetchEventDetails } from "../Store/Sagas";
 import { Loader, Rating } from "semantic-ui-react";
 import { PersonaLink, SourceLink, PlaceLink } from "../Links";
-import { GenealogyEvent, GenealogyEventSet } from "../Store/Event";
+import { GenealogyEvent } from "../Store/Event";
 import { AssertionEntities } from "../Server/Person";
-import { PersonSet } from '../Store/Person';
-import { PlaceSet } from '../Store/Place';
-import { SourceSet } from '../Store/Source';
 import AssertionPart from "../Assertions/AssertionPart";
 import { P2E } from "../Store/Assertion";
 

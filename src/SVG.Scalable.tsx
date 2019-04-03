@@ -128,10 +128,12 @@ const ScalableSVG: React.FC<ScalableSVGProps> = (p) => {
             }
             e.preventDefault();
          };
-         svgRef.current!.addEventListener(
-            "mousewheel", onMouseWheel, {passive: false});
-         return () => svgRef.current!.removeEventListener(
-            "mousewheel", onMouseWheel);
+
+         const e = svgRef.current;
+         if (e) {
+            e.addEventListener("mousewheel", onMouseWheel, {passive: false});
+            return () => e.removeEventListener("mousewheel", onMouseWheel);
+         }
       },
       [pos]
    );

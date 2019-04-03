@@ -6,7 +6,6 @@ import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
 import { fetchPersonsCount, fetchPersonsFromServer } from '../Server/Person';
 import * as GP_JSON from "../Server/JSON";
 import { Person } from "../Store/Person";
-import { GenealogyEventSet } from "../Store/Event";
 import { PersonaLink } from "../Links";
 import PersonaListSide from "../PersonaList/Side";
 import { extractYear } from "../Store/Event";
@@ -24,11 +23,12 @@ interface PersonaListProps {
 }
 const PersonaList: React.FC<PersonaListProps> = p => {
    const [count, setCount] = React.useState(0);
+   const { dispatch } = p;
 
    const onSettingsChange = React.useCallback(
       (diff: Partial<PersonaListSettings>) =>
-         p.dispatch(changePersonaListSettings({ diff })),
-      [p.dispatch]
+         dispatch(changePersonaListSettings({ diff })),
+      [dispatch]
    );
 
    const onFilterChange = React.useCallback(

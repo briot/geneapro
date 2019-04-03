@@ -31,6 +31,7 @@ interface PedigreePageConnectedProps
 const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
    const decujusid = Number(p.match.params.decujusId);
    const decujus = p.persons[decujusid];
+   const { dispatch } = p;
 
    // Fetch data from server when some properties change
    // Always run this, though it will do nothing if we already have the data
@@ -40,7 +41,7 @@ const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
             //  ??? We only need to reload when colors change if we are using
             //  custom colors
             //  ??? Should avoid fetching known generations again
-            p.dispatch,
+            dispatch,
             {
                decujus: decujusid,
                ancestors: p.settings.ancestors,
@@ -53,20 +54,20 @@ const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
          p.settings.ancestors,
          p.settings.descendants,
          p.settings.colors,
-         p.dispatch
+         dispatch
       ]
    );
 
    // Add the person to history
    React.useEffect(() => {
       document.title = "Pedigree for " + personDisplay(decujus);
-      p.dispatch(addToHistory({ kind: HistoryKind.PERSON, id: decujusid }));
-   }, [decujus, p.dispatch]);
+      dispatch(addToHistory({ kind: HistoryKind.PERSON, id: decujusid }));
+   }, [decujus, dispatch, decujusid]);
 
    const onChange = React.useCallback(
       (diff: Partial<PedigreeSettings>) =>
-         p.dispatch(changePedigreeSettings({ diff })),
-      [p.dispatch]
+         dispatch(changePedigreeSettings({ diff })),
+      [dispatch]
    );
 
    // ??? Initially, we have no data and yet loading=false
@@ -111,9 +112,7 @@ const PedigreePage = connect(
       allPlaces: state.places,
       themeNameGet: themeNameGetter(state)
    }),
-   (dispatch: GPDispatch) => ({
-      dispatch
-   })
+   (dispatch: GPDispatch) => ({ dispatch })
 )(PedigreePageConnected);
 
 export default PedigreePage;

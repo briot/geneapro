@@ -26,6 +26,7 @@ interface RadialPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
 const RadialPageConnected = (p: RadialPageConnectedProps) => {
    const decujusid = Number(p.match.params.decujusId);
    const decujus = p.persons[decujusid];
+   const { dispatch } = p;
 
    React.useEffect(
       () =>
@@ -38,16 +39,18 @@ const RadialPageConnected = (p: RadialPageConnectedProps) => {
       [decujusid, p.settings.generations, p.settings.colors, p.dispatch]
    );
 
-   React.useEffect(() => {
-      document.title = "Radial for " + personDisplay(decujus);
-      p.dispatch(addToHistory({
-         kind: HistoryKind.PERSON, id: decujusid }));
-   }, [decujus, decujusid, p.dispatch]);
+   React.useEffect(
+      () => {
+         document.title = "Radial for " + personDisplay(decujus);
+         dispatch(addToHistory({ kind: HistoryKind.PERSON, id: decujusid }));
+      },
+      [decujus, decujusid, dispatch]
+   );
 
    const onChange = React.useCallback(
       (diff: Partial<RadialSettings>) =>
-         p.dispatch(changeRadialSettings({ diff })),
-      [p.dispatch]
+         dispatch(changeRadialSettings({ diff })),
+      [dispatch]
    );
 
    const main = p.settings.loading ? (

@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Accordion, Icon, Segment, Step } from "semantic-ui-react";
-import { AssertionEntities } from "../Server/Person";
 import { GPDispatch, MetadataDict } from "../Store/State";
 import { Source } from "../Store/Source";
 import SourceCitation from "../Source/Citation";

@@ -91,7 +91,7 @@ export class P2G extends Assertion {
    }
 
    /** overriding */
-   public getRole(meta: MetadataDict): string {
+   public getRole(): string {
       return "group";
    }
 }
@@ -121,7 +121,7 @@ export class P2C extends Assertion {
    }
 
    /** overriding */
-   public getRole(meta: MetadataDict): string {
+   public getRole(): string {
       return this.characteristic.name.toLowerCase();
    }
 }

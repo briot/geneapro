@@ -9,10 +9,7 @@ import {
 } from '../Server/Person';
 import { fetchSourceAsserts } from "../Server/Source";
 import { Assertion } from "../Store/Assertion";
-import {
-   AssertionTimeline,
-   TimelineProps
-} from "../Assertions/AssertionTimeline";
+import { AssertionTimeline } from "../Assertions/AssertionTimeline";
 import { Source } from "../Store/Source";
 import { InfiniteRowFetcher } from "../InfiniteList";
 

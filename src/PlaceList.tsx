@@ -37,13 +37,14 @@ interface PlaceListProps {
 
 const PlaceList: React.FC<PlaceListProps> = (p) => {
    const [count, setCount] = React.useState(0);
+   const { dispatch } = p;
 
    document.title = "List of places";
 
    const onSettingsChange = React.useCallback(
       (diff: Partial<PlaceListSettings>) =>
-         p.dispatch(changePlaceListSettings({ diff })),
-      [p.dispatch]
+         dispatch(changePlaceListSettings({ diff })),
+      [dispatch]
    );
 
    const onFilterChange = React.useCallback(

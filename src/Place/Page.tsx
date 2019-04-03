@@ -23,6 +23,8 @@ interface PlacePageProps extends RouteComponentProps<PropsFromRoute> {
 }
 
 const PlacePage: React.FC<PlacePageProps> = (p) => {
+   const { dispatch } = p;
+
    React.useEffect(
       () => { document.title = p.place ? p.place.name : "Place"; },
       [p.place]
@@ -30,18 +32,16 @@ const PlacePage: React.FC<PlacePageProps> = (p) => {
 
    React.useEffect(
       () => {
-         p.id >= 0 && fetchPlaceDetails.execute(p.dispatch, { id: p.id });
+         p.id >= 0 && fetchPlaceDetails.execute(dispatch, { id: p.id });
       },
-      [p.dispatch, p.id],
+      [dispatch, p.id],
    );
 
    React.useEffect(
-      () =>  {
-         p.dispatch(addToHistory({
-            kind: HistoryKind.PLACE, id: p.id
-         }));
+      () => {
+         dispatch(addToHistory({kind: HistoryKind.PLACE, id: p.id }));
       },
-      [p.dispatch, p.id]
+      [dispatch, p.id]
    );
 
    return (
@@ -50,7 +50,7 @@ const PlacePage: React.FC<PlacePageProps> = (p) => {
          main={
             p.place || p.id < 0 ? (
                <PlaceDetails
-                  dispatch={p.dispatch}
+                  dispatch={dispatch}
                   entities={p.entities}
                   metadata={p.metadata}
                   place={p.place}

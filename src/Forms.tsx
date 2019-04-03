@@ -20,10 +20,11 @@ export const SelectField = React.memo(
       names: { [id: number]: string };
       onChange: (diff: Partial<{ [name: string]: T }>) => void;
    }) => {
-      const onChange = React.useCallback(
+      const {onChange, fieldName} = p;
+      const onChangeCb = React.useCallback(
          (e: Event | React.SyntheticEvent, data: DropdownProps) =>
-            p.onChange({ [p.fieldName]: data.value as T }),
-         [p.onChange, p.fieldName]
+            onChange({ [fieldName]: data.value as T }),
+         [onChange, fieldName]
       );
       const colors = Object.keys(p.names)
          .map(d => Number(d))
@@ -34,7 +35,7 @@ export const SelectField = React.memo(
             <Select
                fluid={true}
                options={colors}
-               onChange={onChange}
+               onChange={onChangeCb}
                defaultValue={p.defaultValue}
             />
          </Form.Field>
@@ -61,13 +62,14 @@ export const SliderField = React.memo(
       // 250ms if the result of the change is going to be a slow operation
 
    }) => {
+      const {onChange, fieldName, debounce} = p;
       const reportChange = React.useCallback(
          useDebounce(
-            (val: number) => p.onChange({ [p.fieldName]: val}),
-            p.debounce || 0),
-         [p.onChange, p.fieldName, p.debounce]);
+            (val: number) => onChange({ [fieldName]: val}),
+            debounce || 0),
+         [onChange, fieldName, debounce]);
 
-      const onChange = (data: { target: { value: string } }) =>
+      const onChangeCb = (data: { target: { value: string } }) =>
          reportChange(Number(data.target.value));
 
       return (
@@ -81,7 +83,7 @@ export const SliderField = React.memo(
                min={p.min.toString()}
                max={p.max.toString()}
                defaultValue={p.defaultValue.toString()}
-               onChange={onChange}
+               onChange={onChangeCb}
                title={p.doc}
             />
          </Form.Field>
@@ -100,17 +102,18 @@ export const CheckboxField = React.memo(
       fieldName: string;
       onChange: (diff: Partial<{ [name: string]: boolean }>) => void;
    }) => {
-      const onChange = React.useCallback(
+      const { onChange, fieldName } = p;
+      const onChangeCb = React.useCallback(
          (e: Event | React.SyntheticEvent, data: CheckboxProps) =>
-            p.onChange({ [p.fieldName]: data.checked }),
-         [p.onChange, p.fieldName]
+            onChange({ [fieldName]: data.checked }),
+         [onChange, fieldName]
       );
       return (
          <Form.Field>
             <Checkbox
                label={p.label}
                defaultChecked={p.defaultChecked}
-               onChange={onChange}
+               onChange={onChangeCb}
             />
          </Form.Field>
       );

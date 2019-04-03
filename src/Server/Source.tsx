@@ -1,10 +1,8 @@
-import { Source, SourceSet } from "../Store/Source";
+import { Source } from "../Store/Source";
 import { AssertionList } from "../Store/Assertion";
 import {
    AssertionEntities,
    AssertionEntitiesJSON,
-   assertionFromJSON,
-   setAssertionEntities
 } from "../Server/Person";
 import * as JSON from "../Server/JSON";
 
@@ -55,7 +53,7 @@ export function* fetchSourceDetailsFromServer(id: number) {
 }
 
 export function fetchSourceAsserts(p: {
-   id: number, limit?: number, offset?: number
+   id: number; limit?: number; offset?: number;
 }): Promise<AssertionEntitiesJSON> {
    return fetch(
       `/data/sources/asserts/${p.id}?` +

@@ -214,7 +214,6 @@ interface DashboardProps extends RouteComponentProps<PropsFromRoute> {
    items: HistoryItem[];
 }
 const Dashboard: React.FC<DashboardProps> = (p) => {
-   const [decujus, setDecujus] = React.useState<Person|undefined>(undefined);
    const decujusid = Number(p.match.params.decujusId) || DEFAULT_DECUJUS;
    document.title = "Dashboard";
    return (

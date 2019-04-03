@@ -12,7 +12,6 @@ import { SourceSet } from "../Store/Source";
 import { sourceFromJSON } from "../Server/Source";
 import { PlaceSet } from "../Store/Place";
 import * as GP_JSON from "../Server/JSON";
-import { ResearcherSet } from "../Store/Researcher";
 import Style from "../Store/Styles";
 
 export interface FetchPersonsResult {
