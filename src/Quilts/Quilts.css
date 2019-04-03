@@ -1,7 +1,4 @@
 .Quilts {
-   width: 100%;
-   height: calc(100vh);
-   background: white;
 }
 
 .Quilts .layer rect {

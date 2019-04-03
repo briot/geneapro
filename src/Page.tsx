@@ -31,28 +31,13 @@ const Page: React.FC<PageProps> = (props) => {
          <Logo decujusid={props.decujusid} />
 
          <Navbar />
-         <Grid style={{ marginTop: "0px" }} stackable={true}>
+         <Grid stackable={true} className="pagegrid">
             <Grid.Row reversed="computer">
-               <Grid.Column width={13}>{props.main}</Grid.Column>
+               <Grid.Column width={13} >
+                  {props.main}
+               </Grid.Column>
 
                <Grid.Column width={3} className="Side">
-                  <Panel className="SideNav">
-                     <List>
-                        <List.Item>
-                           <List.Content>
-                              <Link to="/source/-1">
-                                 <Button
-                                    primary={true}
-                                    size="mini"
-                                    icon="add"
-                                    content="source"
-                                 />
-                              </Link>
-                           </List.Content>
-                        </List.Item>
-                     </List>
-                  </Panel>
-
                   {props.leftSide && (
                      <Panel className="settings">
                         <Header size="small" sub={true}>

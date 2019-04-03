@@ -198,7 +198,7 @@ export const InfiniteListFilter =
    );
 
    return (
-      <div className={`${p.title}List`}>
+      <div className={`${p.title}List List`}>
          <Segment color="blue" attached={true}>
             <span>{p.rowCount} {p.title && `${p.title}s`}</span>
                <Input
