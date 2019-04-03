@@ -26,11 +26,9 @@ export default class FanchartLayout extends React.PureComponent<
     * Create the layout for all persons
     */
    public setLayout(): PersonLayouts {
-      const spaceBetweenGens = this.props.settings.showMarriages
-         ? 12
-         : this.props.settings.gapBetweenGens
-         ? 8
-         : 0;
+      const spaceBetweenGens = Math.max(
+         this.props.settings.showMarriages ? 12 : 0,
+         this.props.settings.genGap);
 
       const minRadius: number[] = [0];
       const maxRadius: number[] = [INNER_CIRCLE];
