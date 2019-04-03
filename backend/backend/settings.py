@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
-    # 'django.contrib.messages',
+    'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
 
@@ -78,7 +78,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
 
@@ -92,9 +91,9 @@ DATABASES = {
                 version='1.0',
                 roaming=True),
             'geneaprove.sqlite'),
+        'CHUNK_SIZE': 996
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
