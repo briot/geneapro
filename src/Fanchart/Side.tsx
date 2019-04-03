@@ -124,6 +124,16 @@ export default function FanchartSide(props: FanchartSideProps) {
                      debounce={100}
                   />
 
+                  <SliderField
+                     defaultValue={props.settings.startAngle}
+                     label="Start angle"
+                     fieldName="startAngle"
+                     min={0}
+                     max={360}
+                     onChange={props.onChange}
+                     debounce={100}
+                  />
+
                   <ThemeSelector
                      defaultValue={props.settings.sepColors}
                      label="Separator colors"

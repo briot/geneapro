@@ -46,7 +46,7 @@ export default class FanchartLayout extends React.PureComponent<
          spaceBetweenGens: spaceBetweenGens
       };
 
-      const fullAngle = (this.props.settings.fullAngle * Math.PI) / 180;
+      const fullAngle = this.props.settings.fullAngle * Math.PI / 180;
       const parentMinAngle = -fullAngle / 2;
       const childFullAngle = 2 * Math.PI - fullAngle;
       const childMinAngle = fullAngle / 2;

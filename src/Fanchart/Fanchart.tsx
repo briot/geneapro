@@ -122,8 +122,9 @@ export function Fanchart(props: FanchartProps) {
    };
    recurseChildren(props.layouts[props.decujus]);
 
-   const transform = `translate(${props.layouts.centerX + 10},${props.layouts
-      .centerY + 10})`;
+   const transform =
+      `translate(${props.layouts.centerX + 10},${props.layouts.centerY + 10})`
+      + `rotate(${props.settings.startAngle})`;
    return (
       <ScalableSVG className="Fanchart">
          <g transform={transform}>

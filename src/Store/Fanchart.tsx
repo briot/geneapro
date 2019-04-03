@@ -7,6 +7,7 @@ export interface FanchartSettings {
    descendants: number;
    colors: GP_JSON.ColorSchemeId;
    sepColors: GP_JSON.ColorSchemeId;
+   startAngle: number;
    fullAngle: number; // full opening angle, in degrees
    anglePad: number; // between couples
    straightTextThreshold: number; // generation after which the text is along the axis
@@ -24,6 +25,7 @@ export const defaultFanchart: FanchartSettings = {
    descendants: 1,
    colors: PEDIGREE.id,
    sepColors: PEDIGREE.id,
+   startAngle: 0,
    fullAngle: 200,
    anglePad: 0,
    straightTextThreshold: 4,
