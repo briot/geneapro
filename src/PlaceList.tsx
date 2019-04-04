@@ -23,13 +23,6 @@ const renderRow: InfiniteRowRenderer<Place> = (p) => (
    </div>
 );
 
-const fetchPlaces: InfiniteRowFetcher<Place> = (p) => {
-   return fetchPlacesFromServer(p)
-      .then((list: GP_JSON.Place[]) =>
-         list.map(a => ({ id: a.id, name: a.name }))
-      );
-};
-
 interface PlaceListProps {
    dispatch: GPDispatch;
    settings: PlaceListSettings;
@@ -50,6 +43,16 @@ const PlaceList: React.FC<PlaceListProps> = (p) => {
    const onFilterChange = React.useCallback(
       (filter: string) => onSettingsChange({ filter }),
       [onSettingsChange]
+   );
+
+   const fetchPlaces: InfiniteRowFetcher<Place> = React.useCallback(
+      (pl) => {
+         return fetchPlacesFromServer({ ...pl, filter: p.settings.filter })
+            .then((list: GP_JSON.Place[]) =>
+               list.map(a => ({ id: a.id, name: a.name }))
+            );
+      },
+      [p.settings.filter]
    );
 
    React.useEffect(
