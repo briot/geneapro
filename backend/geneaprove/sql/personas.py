@@ -5,17 +5,12 @@ Support for writing custom SQL queries
 import collections
 import django.db
 from django.db.models import F
-from django.conf import settings
 import logging
 from .. import models
 from .asserts import AssertList
 from .sqlsets import SQLSet
 
 logger = logging.getLogger(__name__)
-
-# Identify database backend
-database_in_use = settings.DATABASES['default']['ENGINE'].split('.')[-1]
-logger.debug(f"database_in_use: {database_in_use}")
 
 FolkLore = collections.namedtuple(
     'FolkLore', "main_id generation folks") 
@@ -173,18 +168,11 @@ class PersonSet(SQLSet):
             role = ['children', 'child']
 
         with django.db.connection.cursor() as cur:
-            # ??? group_concat doesn't exist in postgres
-            if 'postgresql' in database_in_use:
-                initial = f"VALUES({person_id}::bigint, 0::bigint)"
-                group_concat = "string_agg(children.child::text, ',') AS children "
-            else:
-                initial = f"VALUES({person_id},0)"
-                group_concat = "group_concat(children.child) AS children "
-            md = (
-                f"AND {relationship}.generation<={max_depth} "
-                if max_depth else "")
-            sk = (
-                f"WHERE {relationship}.generation>{skip} " if skip else "")
+            pid = cls.cast(person_id, 'bigint')
+            zero = cls.cast(0, 'bigint')  # ??? do we really need to cast
+            initial = f"VALUES({pid}, {zero})"
+            md = f"AND {relationship}.generation<={max_depth} " if max_depth else ""
+            sk = f"WHERE {relationship}.generation>{skip} " if skip else ""
             q = (
                 f"WITH RECURSIVE {role[0]}(main_id, {role[1]}) "
                 f"AS ({cls._query_get_folks(role[0])}), "
@@ -196,10 +184,9 @@ class PersonSet(SQLSet):
                     f"WHERE {role[0]}.main_id = {relationship}.main_id "
                     f"{md}) "
                 f"SELECT {relationship}.main_id, {relationship}.generation, "
-
-                f"{group_concat}"
-
-                f"FROM {relationship} LEFT JOIN {role[0]} "
+                f"{cls.group_concat(f'{role[0]}.{role[1]}')} AS {role[1]} "
+                f"FROM {relationship} "
+                f"LEFT JOIN {role[0]} "
                 f"ON {role[0]}.main_id={relationship}.main_id "
                 f"{sk}"
                 f"GROUP BY {relationship}.main_id, {relationship}.generation"            )
