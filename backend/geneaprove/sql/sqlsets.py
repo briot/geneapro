@@ -1,7 +1,11 @@
 import django.db.models
+from django.conf import settings
 import logging
 
 logger = logging.getLogger(__name__)
+
+# Add max query size for other database backends
+CHUNK_SIZE = settings.DATABASES['default']['CHUNK_SIZE']
 
 class SQLSet(object):
     """
@@ -11,7 +15,7 @@ class SQLSet(object):
     These various helpers can be used to break those into multiple queries.
     """
 
-    def sql_split(self, ids, chunk_size=900):
+    def sql_split(self, ids, chunk_size=CHUNK_SIZE):
         """
         Generate multiple tuples to split a long list of ids into more
         manageable chunks for Sqlite
