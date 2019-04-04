@@ -15,6 +15,8 @@ class SQLSet(object):
     These various helpers can be used to break those into multiple queries.
     """
 
+    ENGINE = settings.DATABASES['default']['ENGINE']
+
     def sql_split(self, ids, chunk_size=CHUNK_SIZE):
         """
         Generate multiple tuples to split a long list of ids into more
@@ -38,6 +40,26 @@ class SQLSet(object):
         for chunk in self.sql_split(obj):
             django.db.models.prefetch_related_objects(chunk, *attrs)
         return obj
+
+    @classmethod
+    def group_concat(cls, field):
+        """
+        An aggregate function for the database, that takes all values for
+        the field and returns a comma-separated list of values
+        """
+        if 'postgresql' in cls.ENGINE:
+            return f"string_agg({field}::text, ',')"
+        else:
+            return f"group_concat({field})"
+
+    @classmethod
+    def cast(cls, field, typename):
+        """
+        Cast a field to a specific type
+        """
+        # Use standard SQL syntax, though historically postgresql used ::
+        return f"CAST({field} AS {typename})"
+
 
     def sqlin(self, queryset, **kwargs):
         """

@@ -5,7 +5,6 @@ Support for writing custom SQL queries
 import collections
 import django.db
 from django.db.models import F
-from django.conf import settings
 import logging
 from .. import models
 from .asserts import AssertList
@@ -14,10 +13,6 @@ from .sqlsets import SQLSet
 
 logger = logging.getLogger(__name__)
 
-
-# Identify database backend
-database_in_use = settings.DATABASES['default']['ENGINE'].split('.')[-1]
-logger.debug(f"database_in_use: {database_in_use}")
 
 AncestorInfo = collections.namedtuple(
     'AncestorInfo', "main_id generation parents")
@@ -182,13 +177,10 @@ class PersonSet(SQLSet):
         assert isinstance(person_id, int)
 
         with django.db.connection.cursor() as cur:
-            # ??? group_concat doesn't exist in postgres
-            if 'postgresql' in database_in_use:
-                initial = f"VALUES({person_id}::bigint, 0::bigint)"
-                group_concat = "string_agg(parents.parent::text, ',') AS parents "
-            else:
-                initial = f"VALUES({person_id},0)"
-                group_concat = "group_concat(parents.parent) AS parents "
+            pid = cls.cast(person_id, 'bigint')
+            zero = cls.cast(0, 'bigint')  # ??? do we really need to cast
+            initial = f"VALUES({pid}, {zero})"
+
             md = f"AND ancestors.generation<={max_depth} " if max_depth else ""
             sk = f"WHERE ancestors.generation>{skip} " if skip else ""
             q = (
@@ -202,7 +194,7 @@ class PersonSet(SQLSet):
                     "WHERE parents.main_id = ancestors.main_id "
                     f"{md}"
                 ") SELECT ancestors.main_id, ancestors.generation, "
-                f"{group_concat}"
+                f"{cls.group_concat('parents.parent')} AS parents "
                 "FROM ancestors LEFT JOIN parents "
                 "ON parents.main_id=ancestors.main_id "
                 f"{sk}"
@@ -225,13 +217,9 @@ class PersonSet(SQLSet):
            This includes person_id itself, at generation 0
         """
         with django.db.connection.cursor() as cur:
-            # ??? group_concat doesn't exist in postgres
-            if 'postgresql' in database_in_use:
-                initial = f"VALUES({person_id}::bigint, 0::bigint)"
-                group_concat = "string_agg(children.child::text, ',') AS children "
-            else:
-                initial = f"VALUES({person_id},0)"
-                group_concat = "group_concat(children.child) AS children "
+            pid = cls.cast(person_id, 'bigint')
+            zero = cls.cast(0, 'bigint')  # ??? do we really need to cast
+            initial = f"VALUES({pid}, {zero})"
             md = (
                 f"AND descendants.generation<={max_depth} "
                 if max_depth else "")
@@ -247,7 +235,7 @@ class PersonSet(SQLSet):
                     "WHERE children.main_id = descendants.main_id "
                     f"{md}"
                 ") SELECT descendants.main_id, descendants.generation, "
-                f"{group_concat}"
+                f"{cls.group_concat('children.child')} AS children "
                 "FROM descendants LEFT JOIN children "
                 "ON children.main_id=descendants.main_id "
                 f"{sk}"
