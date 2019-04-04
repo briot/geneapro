@@ -175,7 +175,7 @@ class PersonSet(SQLSet):
             sk = f"WHERE {relationship}.generation>{skip} " if skip else ""
             q = (
                 f"WITH RECURSIVE {role[0]}(main_id, {role[1]}) "
-                f"AS ({cls._query_get_folks(role[0])}), "
+                f"AS ({cls._query_get_folks(role[1])}), "
                 f"{relationship}(main_id,generation) "
                     f"AS ({initial} "
                     "UNION "
@@ -184,7 +184,7 @@ class PersonSet(SQLSet):
                     f"WHERE {role[0]}.main_id = {relationship}.main_id "
                     f"{md}) "
                 f"SELECT {relationship}.main_id, {relationship}.generation, "
-                f"{cls.group_concat(f'{role[0]}.{role[1]}')} AS {role[1]} "
+                f"{cls.group_concat(f'{role[0]}.{role[1]}')} AS {role[0]} "
                 f"FROM {relationship} "
                 f"LEFT JOIN {role[0]} "
                 f"ON {role[0]}.main_id={relationship}.main_id "
