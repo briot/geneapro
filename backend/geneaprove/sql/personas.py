@@ -209,12 +209,11 @@ class PersonSet(SQLSet):
         """
         assert isinstance(person_id, int)
         if relationship is 'ancestors':
-            folks = self.get_folks(relationship, person_id, max_depth, skip)
             key = 'parents'
         elif relationship is 'descendants':
-            folks = self.get_folks(relationship, person_id, max_depth, skip)
             key = 'children'
 
+        folks = self.get_folks(relationship, person_id, max_depth, skip)
         self.add_ids(ids=(f.main_id for f in folks))
         for f in folks:
             self.layout[f.main_id][key] = f.folks
