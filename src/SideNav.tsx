@@ -1,9 +1,9 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import { Header, List, Menu, SemanticICONS } from "semantic-ui-react";
+import { Header, List, SemanticICONS } from "semantic-ui-react";
 import { Link } from "react-router-dom";
 import { AppState } from "./Store/State";
-import { Person, PersonSet, personDisplay } from "./Store/Person";
+import { Person, personDisplay } from "./Store/Person";
 import { Place } from './Store/Place';
 import { Source } from './Store/Source';
 import {

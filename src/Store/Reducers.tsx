@@ -2,9 +2,8 @@ import * as Redux from "redux";
 import { isType } from "typescript-fsa";
 import { AppState, rehydrate } from "../Store/State";
 import { to_dict } from '../History';
-import { personDisplay, PersonSet } from "../Store/Person";
-import { Source, SourceSet } from "../Store/Source";
-import { addToHistory, HistoryItem, HistoryKind } from "../Store/History";
+import { Source } from "../Store/Source";
+import { addToHistory, HistoryItem } from "../Store/History";
 import {
    fetchPedigree,
    FetchPedigreeResult,
@@ -17,14 +16,14 @@ import {
 import { addEvents } from "../Store/Event";
 import { EventDetails } from "../Server/Event";
 import { DetailsResult, mergeAssertionEntities } from "../Server/Person";
-import { FetchPlacesResult, PlaceDetails } from "../Server/Place";
+import { PlaceDetails } from "../Server/Place";
 import { defaultPedigree, changePedigreeSettings } from "../Store/Pedigree";
 import { defaultFanchart, changeFanchartSettings } from "../Store/Fanchart";
 import {
    defaultPersonaList,
    changePersonaListSettings
 } from "../Store/PersonaList";
-import { changePlaceListSettings, PlaceSet } from '../Store/Place';
+import { changePlaceListSettings } from '../Store/Place';
 import { changeSourceListSettings } from '../Store/Source';
 import { defaultRadial, changeRadialSettings } from "../Store/Radial";
 import { defaultStats, changeStatsSettings } from "../Store/Stats";
@@ -141,11 +140,11 @@ export function rootReducer(
       return { ...state,
               metadata: {
                  ...m,
-                 p2p_types_dict: to_dict(m.p2p_types),
-                 event_types_dict: to_dict(m.event_types),
-                 event_type_roles_dict: to_dict(m.event_type_roles),
-                 researchers_dict: to_dict(m.researchers),
-                 char_part_types_dict: to_dict(m.characteristic_types),
+                 p2p_types_dict: to_dict(m.p2p_types, {}),
+                 event_types_dict: to_dict(m.event_types, {}),
+                 event_type_roles_dict: to_dict(m.event_type_roles, {}),
+                 researchers_dict: to_dict(m.researchers, {}),
+                 char_part_types_dict: to_dict(m.characteristic_types, {}),
               }};
    } else if (isType(action, fetchPedigree.started)) {
       return {

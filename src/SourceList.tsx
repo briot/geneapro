@@ -25,13 +25,14 @@ interface SourceListProps {
 
 const SourceList: React.FC<SourceListProps> = (p) => {
    const [count, setCount] = React.useState(0);
+   const { dispatch } = p;
 
    document.title = "List of sources";
 
    const onSettingsChange = React.useCallback(
       (diff: Partial<SourceListSettings>) =>
-         p.dispatch(changeSourceListSettings({ diff })),
-      [p.dispatch]
+         dispatch(changeSourceListSettings({ diff })),
+      [dispatch]
    );
 
    const onFilterChange = React.useCallback(

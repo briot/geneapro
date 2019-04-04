@@ -26,11 +26,9 @@ export default class FanchartLayout extends React.PureComponent<
     * Create the layout for all persons
     */
    public setLayout(): PersonLayouts {
-      const spaceBetweenGens = this.props.settings.showMarriages
-         ? 12
-         : this.props.settings.gapBetweenGens
-         ? 8
-         : 0;
+      const spaceBetweenGens = Math.max(
+         this.props.settings.showMarriages ? 12 : 0,
+         this.props.settings.genGap);
 
       const minRadius: number[] = [0];
       const maxRadius: number[] = [INNER_CIRCLE];
@@ -48,7 +46,7 @@ export default class FanchartLayout extends React.PureComponent<
          spaceBetweenGens: spaceBetweenGens
       };
 
-      const fullAngle = (this.props.settings.fullAngle * Math.PI) / 180;
+      const fullAngle = this.props.settings.fullAngle * Math.PI / 180;
       const parentMinAngle = -fullAngle / 2;
       const childFullAngle = 2 * Math.PI - fullAngle;
       const childMinAngle = fullAngle / 2;

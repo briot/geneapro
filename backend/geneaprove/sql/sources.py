@@ -1,6 +1,6 @@
 import collections
 import django.db
-from django.db.models import F, IntegerField, TextField, Value
+from django.db.models import F, IntegerField, TextField, Value, Count
 import logging
 from .. import models
 from .sqlsets import SQLSet
@@ -70,13 +70,25 @@ class SourceSet(SQLSet):
             for s, parent in cur.fetchall():
                 self._higher[s].append(parent)
 
+    def count_asserts(self):
+        """
+        Count all asserts for the sources, but doesn't fetch them
+        """
+        assert len(self.sources) == 1
+        sid = next(iter(self.sources))
+
+        count = 0
+        for table in (models.P2E, models.P2C, models.P2P, models.P2G):
+            count += table.objects.filter(source=sid).count()
+        return count
+
     def fetch_asserts(self, offset=None, limit=None):
         """
         Fetch all assertions for all sources
         """
-        assert len(self.sources) == 1
         logger.debug('SourceSet.fetch_asserts')
 
+        assert len(self.sources) == 1
         sid = next(iter(self.sources))
 
         kinds = [

@@ -1,7 +1,4 @@
 .Pedigree {
-   width: 100%;
-   height: calc(100vh - 0px);
-   background: white;
 }
 .Pedigree .details {
    fill: #555;

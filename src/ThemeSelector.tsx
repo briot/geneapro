@@ -62,14 +62,15 @@ interface ThemeSelectorProps {
 
 const ThemeSelectorConnected: React.FC<ThemeSelectorProps> = p => {
    const [showLegend, setLegend] = React.useState(false);
+   const { onChange, fieldName } = p;
 
    const vals = predefinedThemes
       .concat(p.metadata.themes)
       .map(s => ({ text: s.name, value: s.id }));
-   const onChange = React.useCallback(
+   const onChangeCb = React.useCallback(
       (_: {}, data: DropdownProps) =>
-         p.onChange({ [p.fieldName]: data.value as number }),
-      [p.onChange, p.fieldName]
+         onChange({ [fieldName]: data.value as number }),
+      [onChange, fieldName]
    );
 
    const toggleLegend = React.useCallback(() => setLegend(!showLegend), [
@@ -83,7 +84,7 @@ const ThemeSelectorConnected: React.FC<ThemeSelectorProps> = p => {
             <Select
                fluid={false}
                options={vals}
-               onChange={onChange}
+               onChange={onChangeCb}
                defaultValue={p.defaultValue}
             />
             <Link to="/themeeditor">

@@ -5,6 +5,7 @@ Support for writing custom SQL queries
 import collections
 import django.db
 from django.db.models import F
+from django.conf import settings
 import logging
 from .. import models
 from .asserts import AssertList
@@ -12,9 +13,12 @@ from .sqlsets import SQLSet
 
 logger = logging.getLogger(__name__)
 
+# Identify database backend
+database_in_use = settings.DATABASES['default']['ENGINE'].split('.')[-1]
+logger.debug(f"database_in_use: {database_in_use}")
+
 FolkLore = collections.namedtuple(
     'FolkLore', "main_id generation folks") 
-
 
 class PersonSet(SQLSet):
     """
@@ -128,7 +132,7 @@ class PersonSet(SQLSet):
             f"AND c.type_id={models.Characteristic_Part_Type.PK_sex} "
             "AND p2c.person_id=p.id "
             "AND NOT p2c.disproved "
-            "GROUP BY p.main_id")
+            "GROUP BY p.main_id, c.name")
 
     @staticmethod
     def _query_get_folks(relationship):
@@ -169,13 +173,18 @@ class PersonSet(SQLSet):
             role = ['children', 'child']
 
         with django.db.connection.cursor() as cur:
-            initial = f"VALUES({person_id},0)"
+            # ??? group_concat doesn't exist in postgres
+            if 'postgresql' in database_in_use:
+                initial = f"VALUES({person_id}::bigint, 0::bigint)"
+                group_concat = "string_agg(children.child::text, ',') AS children "
+            else:
+                initial = f"VALUES({person_id},0)"
+                group_concat = "group_concat(children.child) AS children "
             md = (
                 f"AND {relationship}.generation<={max_depth} "
                 if max_depth else "")
             sk = (
-                f"WHERE {relationship}.generation>{skip} "
-                if skip else "")
+                f"WHERE {relationship}.generation>{skip} " if skip else "")
             q = (
                 f"WITH RECURSIVE {role[0]}(main_id, {role[1]}) "
                 f"AS ({cls._query_get_folks(role[0])}), "
@@ -188,14 +197,12 @@ class PersonSet(SQLSet):
                     f"{md}) "
                 f"SELECT {relationship}.main_id, {relationship}.generation, "
 
-                # ??? group_concat doesn't exist in postgres
-                f"group_concat({role[0]}.{role[1]}) AS {role[0]} "
+                f"{group_concat}"
 
                 f"FROM {relationship} LEFT JOIN {role[0]} "
                 f"ON {role[0]}.main_id={relationship}.main_id "
                 f"{sk}"
-                f"GROUP BY {relationship}.main_id, {relationship}.generation"
-            )
+                f"GROUP BY {relationship}.main_id, {relationship}.generation"            )
             cur.execute(q)
 
             return [

@@ -78,6 +78,17 @@ class SourceAsserts(JSONView):
         return sources.asserts.to_json()  # fetch related entities
 
 
+class SourceAssertsCount(JSONView):
+    """
+    Return the number of asserts for a source
+    """
+
+    def get_json(self, params, id):
+        sources = SourceSet()
+        sources.add_ids(ids=[id])
+        return sources.count_asserts()
+
+
 class SourceView(JSONView):
     """
     View a specific source by id

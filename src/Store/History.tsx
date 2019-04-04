@@ -1,7 +1,4 @@
 import { actionCreator } from "../Store/Actions";
-import { Person } from "../Store/Person";
-import { Source } from "../Store/Source";
-import { Place } from "../Store/Place";
 
 export enum HistoryKind {
    PERSON = 0,

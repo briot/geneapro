@@ -9,23 +9,21 @@ export function useComponentSize<T extends Element>(ref: React.RefObject<T>) {
       () => ref.current && setSize(ref.current.getBoundingClientRect()),
       [ref]
    );
+   React.useLayoutEffect(
+      () => {
+         onResize();
 
-   React.useLayoutEffect(() => {
-      if (!ref.current) {
-         return;
-      }
+         // if (typeof window.ResizeObserver === 'function') {
+         //    const obs = new ResizeObserver(onResize);
+         //    obs.observe(ref.current);
+         //    return () => obs.disconnect(ref.current);
+         // }
 
-      onResize();
-
-      // if (typeof window.ResizeObserver === 'function') {
-      //    const obs = new ResizeObserver(onResize);
-      //    obs.observe(ref.current);
-      //    return () => obs.disconnect(ref.current);
-      // }
-
-      window.addEventListener("resize", onResize);
-      return () => window.removeEventListener("resize", onResize);
-   }, [ref.current, onResize]);
+         window.addEventListener("resize", onResize);
+         return () => window.removeEventListener("resize", onResize);
+      },
+      [onResize]
+   );
 
    return size;
 }
@@ -69,8 +67,9 @@ function createMemoSelector<P1, P2, V>(
 function createMemoSelector<P1, P2, P3, V>(
    resolver: (p1: P1, p2: P2, p3: P3) => V
 ): (p1: P1, p2: P2, p3: P3) => V;
-function createMemoSelector<V>(resolver: (...p: any[]) => V) {
-   return (dependencies: any[]) =>
+function createMemoSelector<V, T>(resolver: (...p: T[]) => V) {
+   return (dependencies: T[]) =>
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       React.useMemo(() => resolver(...dependencies), dependencies);
 }
 
@@ -81,7 +80,7 @@ export function createSelector<P1, P2, V>(
 export function createSelector<P1, P2, P3, V>(
    resolve: (p1: P1, p2: P2, p3: P3) => V
 ): (p1: P1, p2: P2, p3: P3) => V;
-export function createSelector<V>(resolver: (...p: any[]) => V) {
+export function createSelector<V, T>(resolver: (...p: any[]) => V) {
    const selector = createMemoSelector(resolver);
    return (...dependencies: any[]) => selector(dependencies);
 }

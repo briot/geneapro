@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Accordion, Form } from "semantic-ui-react";
 import { QuiltsSettings } from "../Store/Quilts";
-import { CheckboxField, SliderField } from "../Forms";
+import { SliderField } from "../Forms";
 
 interface QuiltsSideProps {
    settings: QuiltsSettings;

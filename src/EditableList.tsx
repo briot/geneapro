@@ -64,15 +64,15 @@ interface DropTargetProps {
    at: number;
    onSwap: (idx: number, at: number) => void;
 }
-const DropTarget = (p: DropTargetProps) => {
+const DropTarget = ({at, onSwap}: DropTargetProps) => {
    const [over, setOver] = React.useState(false);
 
    const isDroppable = React.useCallback(
       (e: React.DragEvent) => {
          const idx = e.dataTransfer.getData(DND_DATA);
-         return idx && Number(idx) != p.at && Number(idx + 1) != p.at;
+         return idx && Number(idx) != at && Number(idx + 1) != at;
       },
-      [p.at]);
+      [at]);
 
    const onDragEnter = React.useCallback(
       (e: React.DragEvent) => isDroppable(e) && setOver(true),
@@ -86,9 +86,9 @@ const DropTarget = (p: DropTargetProps) => {
    const onDrop = React.useCallback(
       (e: React.DragEvent) => {
          setOver(false);
-         p.onSwap(Number(e.dataTransfer.getData(DND_DATA)), p.at);
+         onSwap(Number(e.dataTransfer.getData(DND_DATA)), at);
       },
-      [p.at, p.onSwap]
+      [at, onSwap]
    );
 
    return (

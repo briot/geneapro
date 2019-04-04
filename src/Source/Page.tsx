@@ -2,13 +2,7 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { Loader } from "semantic-ui-react";
 import { RouteComponentProps } from "react-router";
-import {
-   AppState,
-   getEntities,
-   GPDispatch,
-   MetadataDict
-} from "../Store/State";
-import { AssertionEntities } from "../Server/Person";
+import { AppState, GPDispatch, MetadataDict } from "../Store/State";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { fetchSourceDetails } from "../Store/Sagas";
 import { Source } from "../Store/Source";
@@ -27,6 +21,7 @@ interface SourcePageProps extends RouteComponentProps<PropsFromRoute> {
 const SourcePage: React.FC<SourcePageProps> = (p) => {
    const id = Number(p.match.params.id);
    const s = p.source;
+   const { dispatch } = p;
 
    React.useEffect(
       () => {
@@ -46,9 +41,9 @@ const SourcePage: React.FC<SourcePageProps> = (p) => {
 
    React.useEffect(
       () => {
-         p.dispatch(addToHistory({kind: HistoryKind.SOURCE, id }));
+         dispatch(addToHistory({kind: HistoryKind.SOURCE, id }));
       },
-      [id, p.dispatch]
+      [id, dispatch]
    );
 
    return (

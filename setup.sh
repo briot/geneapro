@@ -47,7 +47,7 @@ else
    fi
 fi
 
-pip install django>=2.1 pillow grandalf django-prepared-query appdirs
+pip install "django>=2.1" pillow grandalf "django-prepared-query" appdirs "psycopg2-binary"
 
 if [ "$DEVELOPER" != "no" ]; then
    # Some useful tools for developers. 

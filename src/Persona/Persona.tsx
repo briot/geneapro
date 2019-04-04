@@ -1,13 +1,11 @@
 import * as React from "react";
-import { connect } from "react-redux";
 import { Icon } from "semantic-ui-react";
-import * as GP_JSON from "../Server/JSON";
-import { AppState, GPDispatch, MetadataDict } from "../Store/State";
+import { GPDispatch, MetadataDict } from "../Store/State";
 import { P2C } from "../Store/Assertion";
 import { Segment } from "semantic-ui-react";
 import { AssertionEntities } from "../Server/Person";
 import { Person, personDisplay } from "../Store/Person";
-import { GenealogyEventSet, extractYear } from "../Store/Event";
+import { extractYear } from "../Store/Event";
 import { AssertionTimelineFromList } from "../Assertions/AssertionTimeline";
 import "./Persona.css";
 

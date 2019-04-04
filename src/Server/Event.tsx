@@ -1,4 +1,3 @@
-import * as JSON from "../Server/JSON";
 import { AssertionList } from "../Store/Assertion";
 import {
    AssertionEntities,

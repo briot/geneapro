@@ -64,6 +64,8 @@ urlpatterns = [
     url(r'^data/sources/list$', sources.SourcesList.as_view()),
     url(r'^data/sources/asserts/(?P<id>-?\d+)$',
         sources.SourceAsserts.as_view()),
+    url(r'^data/sources/asserts/count/(?P<id>-?\d+)$',
+        sources.SourceAssertsCount.as_view()),
     url(r'^data/sources/count$', sources.SourcesCount.as_view()),
     url(r'^data/sources/(?P<id>-?\d+)$', sources.SourceView.as_view()),
     url(r'^data/sources/(?P<id>-?\d+)/saveparts$',

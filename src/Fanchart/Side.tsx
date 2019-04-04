@@ -98,8 +98,8 @@ export default function FanchartSide(props: FanchartSideProps) {
                      {props.settings.readableText ? ", text kept readable" : ""}
                   </small>
                   <small>
-                     {props.settings.gapBetweenGens
-                        ? "gap between generations"
+                     {props.settings.genGap
+                        ? `gap between generations ${props.settings.genGap}`
                         : ""}
                   </small>
                </span>
@@ -124,6 +124,16 @@ export default function FanchartSide(props: FanchartSideProps) {
                      debounce={100}
                   />
 
+                  <SliderField
+                     defaultValue={props.settings.startAngle}
+                     label="Start angle"
+                     fieldName="startAngle"
+                     min={0}
+                     max={360}
+                     onChange={props.onChange}
+                     debounce={100}
+                  />
+
                   <ThemeSelector
                      defaultValue={props.settings.sepColors}
                      label="Separator colors"
@@ -142,6 +152,16 @@ export default function FanchartSide(props: FanchartSideProps) {
                   />
 
                   <SliderField
+                     defaultValue={props.settings.genGap}
+                     label="Gap between generations"
+                     fieldName="genGap"
+                     min={0}
+                     max={100}
+                     onChange={props.onChange}
+                     debounce={100}
+                  />
+
+                  <SliderField
                      defaultValue={props.settings.straightTextThreshold}
                      label="Text along axis after generation"
                      fieldName="straightTextThreshold"
@@ -155,13 +175,6 @@ export default function FanchartSide(props: FanchartSideProps) {
                      defaultChecked={props.settings.readableText}
                      label="Orient text to keep it readable"
                      fieldName="readableText"
-                     onChange={props.onChange}
-                  />
-
-                  <CheckboxField
-                     defaultChecked={props.settings.gapBetweenGens}
-                     label="Gap between generations"
-                     fieldName="gapBetweenGens"
                      onChange={props.onChange}
                   />
                </Form>

@@ -28,6 +28,7 @@ interface FanchartPageConnectedProps
 
 const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
    const decujusid = Number(p.match.params.id);
+   const {dispatch} = p;
    const decujus: Person = p.persons[decujusid];
 
    React.useEffect(
@@ -49,8 +50,8 @@ const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
 
    React.useEffect(() => {
       document.title = "Fanchart for " + personDisplay(decujus);
-      p.dispatch(addToHistory({kind: HistoryKind.PERSON, id: decujusid }));
-   }, [decujus, p.dispatch]);
+      dispatch(addToHistory({kind: HistoryKind.PERSON, id: decujusid }));
+   }, [decujus, decujusid, dispatch]);
 
    const main =
       p.settings.loading || !decujus ? (
@@ -68,8 +69,8 @@ const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
 
    const onChange = React.useCallback(
       (diff: Partial<FanchartSettings>) =>
-         p.dispatch(changeFanchartSettings({ diff })),
-      [p.dispatch]
+         dispatch(changeFanchartSettings({ diff })),
+      [dispatch]
    );
 
    return (

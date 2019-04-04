@@ -1,18 +1,12 @@
 import * as React from "react";
-import { connect } from "react-redux";
 import {
    InfiniteList,
    InfiniteRowFetcher,
    InfiniteRowRenderer } from "../InfiniteList";
-import { AppState, GPDispatch, MetadataDict } from "../Store/State";
+import { GPDispatch, MetadataDict } from "../Store/State";
 import { Icon } from "semantic-ui-react";
 import { Assertion, AssertionList } from "../Store/Assertion";
-import { GenealogyEventSet } from "../Store/Event";
-import { PlaceSet } from "../Store/Place";
-import { PersonSet } from "../Store/Person";
-import { SourceSet } from "../Store/Source";
 import { AssertionEntities } from '../Server/Person';
-import { ResearcherSet } from "../Store/Researcher";
 import AssertionView from "../Assertions/Assertion";
 import "./AssertionTimeline.css";
 

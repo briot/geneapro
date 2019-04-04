@@ -6,7 +6,6 @@ import {
 } from "../Server/Person";
 import { fetchEventFromServer, EventDetails } from "../Server/Event";
 import { fetchPlaceFromServer, PlaceDetails } from "../Server/Place";
-import { fetchPlacesFromServer, FetchPlacesResult } from "../Server/Place";
 import {
    fetchSourceDetailsFromServer
 } from "../Server/Source";

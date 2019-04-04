@@ -9,10 +9,7 @@ import {
 } from '../Server/Person';
 import { fetchSourceAsserts } from "../Server/Source";
 import { Assertion } from "../Store/Assertion";
-import {
-   AssertionTimeline,
-   TimelineProps
-} from "../Assertions/AssertionTimeline";
+import { AssertionTimeline } from "../Assertions/AssertionTimeline";
 import { Source } from "../Store/Source";
 import { InfiniteRowFetcher } from "../InfiniteList";
 
@@ -30,6 +27,15 @@ const SourceAssertions: React.FC<SourceAssertionsProps> = (p) => {
    });
    const [count, setCount] = React.useState(0);
 
+   React.useEffect(
+      () => {
+         fetch(`/data/sources/asserts/count/${p.source.id}`)
+            .then(r => r.json())
+            .then(setCount);
+      },
+      []
+   );
+
    const fetchAsserts: InfiniteRowFetcher<Assertion> =
       React.useCallback(
          (fp) => {
@@ -45,17 +51,6 @@ const SourceAssertions: React.FC<SourceAssertionsProps> = (p) => {
                   sources: {}};
                setAssertionEntities(a, r);
                setEntities(e => mergeAssertionEntities(e, r));
-
-               //  Are there more items to fetch ?
-               const len = a.asserts.length;
-               if (len > 0) {
-                  setCount(c =>
-                     Math.max(
-                        c,
-                        fp.offset +
-                           (len >= fp.limit ? len + MIN_BATCH_SIZE : len)));
-               }
-
                return a.asserts.map(assertionFromJSON);
             });
          },

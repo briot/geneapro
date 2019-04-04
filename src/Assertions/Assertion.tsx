@@ -1,6 +1,5 @@
 import * as React from "react";
-import { connect } from "react-redux";
-import { AppState, GPDispatch, MetadataDict } from "../Store/State";
+import { GPDispatch, MetadataDict } from "../Store/State";
 import { Rating } from "semantic-ui-react";
 import { Segment } from "semantic-ui-react";
 import { Assertion } from "../Store/Assertion";
@@ -9,12 +8,7 @@ import AssertionPartPerson from "../Assertions/AssertionPartPerson";
 import AssertionPartCharacteristic from "../Assertions/AssertionPartChar";
 import { AssertionEntities } from "../Server/Person";
 import { P2E, P2C, P2P } from "../Store/Assertion";
-import { PlaceSet } from "../Store/Place";
-import { GenealogyEventSet } from "../Store/Event";
 import { SourceLink } from "../Links";
-import { SourceSet } from "../Store/Source";
-import { PersonSet } from "../Store/Person";
-import { ResearcherSet } from "../Store/Researcher";
 import "./Assertion.css";
 
 interface BoxProps {

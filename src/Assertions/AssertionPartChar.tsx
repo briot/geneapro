@@ -3,7 +3,6 @@ import * as GP_JSON from '../Server/JSON';
 import { AssertionEntities } from '../Server/Person';
 import { MetadataDict } from '../Store/State';
 import { Characteristic } from "../Store/Assertion";
-import { PlaceSet } from '../Store/Place';
 import AssertionPart from "../Assertions/AssertionPart";
 import { PlaceLink } from "../Links";
 import Media from "../MediaList";

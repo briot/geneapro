@@ -1,8 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { Button, Grid, Header, List } from "semantic-ui-react";
+import { Grid, Header } from "semantic-ui-react";
 import Panel from "./Panel";
-import { Person } from "./Store/Person";
 import { Navbar } from "./Navbar";
 import SideNav from "./SideNav";
 import "./Logo.css";
@@ -23,46 +22,31 @@ interface PageProps {
    main: JSX.Element;
    decujusid?: number;
 }
-const Page: React.FC<PageProps> = (props) => {
+const Page: React.FC<PageProps> = (p) => {
    // put the first column in second position, so that on mobile it goes
    // below. Since we reverse columns it still shows on the left
    return (
       <div className="App">
-         <Logo decujusid={props.decujusid} />
+         <Logo decujusid={p.decujusid} />
 
          <Navbar />
-         <Grid style={{ marginTop: "0px" }} stackable={true}>
+         <Grid stackable={true} className="pagegrid">
             <Grid.Row reversed="computer">
-               <Grid.Column width={13}>{props.main}</Grid.Column>
+               <Grid.Column width={13} >
+                  {p.main}
+               </Grid.Column>
 
                <Grid.Column width={3} className="Side">
-                  <Panel className="SideNav">
-                     <List>
-                        <List.Item>
-                           <List.Content>
-                              <Link to="/source/-1">
-                                 <Button
-                                    primary={true}
-                                    size="mini"
-                                    icon="add"
-                                    content="source"
-                                 />
-                              </Link>
-                           </List.Content>
-                        </List.Item>
-                     </List>
-                  </Panel>
-
-                  {props.leftSide && (
+                  {p.leftSide && (
                      <Panel className="settings">
                         <Header size="small" sub={true}>
                            Settings
                         </Header>
-                        {props.leftSide}
+                        {p.leftSide}
                      </Panel>
                   )}
 
-                  <SideNav decujus={props.decujusid} />
+                  <SideNav decujus={p.decujusid} />
                </Grid.Column>
             </Grid.Row>
          </Grid>

@@ -1,5 +1,27 @@
+body {
+   --top-menu-height: 50px;  /* Height of the top menu bar */
+   --height-margin: 10px;    /* height of <body> - height of <app> */
+   --pagegrid-top: 5px;  /* extra margin between navbar and page */
 
-.App {
+   /* height of main elements */
+   --main-height: calc(100vh
+                       - var(--pagegrid-top)
+                       - var(--top-menu-height)
+                       - var(--height-margin));
+
+   /* background of canvases */
+   --canvas-bg: white;
+   --canvas-text: white;
+
+}
+
+.ui.grid.pagegrid {
+   padding-top: var(--pagegrid-top);
+}
+
+.Side {
+   height: var(--main-height);
+   overflow-y: auto;
 }
 
 .Side .settings small {
@@ -11,10 +33,16 @@
    display: none;
 }
 
+svg {
+   width: 100%;
+   height: var(--main-height);
+   background: var(--canvas-bg);
+}
+
 .List {
    display: flex;
    flex-direction: column;
-   height: calc(100vh - 90px);
+   height: var(--main-height);
 }
 
 .preLine {
