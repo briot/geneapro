@@ -22,12 +22,14 @@ class PedigreeData(JSONView):
         theme_id = int(params.get("theme", -1))
 
         persons = PersonSet(styles=Styles(theme_id, decujus=id))
-        persons.add_ancestors(
+        persons.add_folks(
             person_id=id,
+            relationship = 'ancestors',
             max_depth=int(params.get("gens", 5)),
             skip=int(params.get("gens_known", 0)))
-        persons.add_descendants(
+        persons.add_folks(
             person_id=id,
+            relationship = 'descendants',
             max_depth=int(params.get("descendant_gens", 1)),
             skip=int(params.get("desc_known", 0)))
         persons.fetch_p2e()

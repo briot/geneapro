@@ -29,8 +29,8 @@ class StatsView(JSONView):
         # when we store children differently (for instance in a group)
 
         persons = PersonSet()
-        persons.add_ancestors(person_id=int(id))
-        persons.add_descendants(person_id=int(id))
+        persons.add_folks(person_id=int(id), relationship='ancestors')
+        persons.add_folks(person_id=int(id), relationship='descendants')
         persons.fetch_p2e()   # compute births and deaths
 
         logger.debug('count persons in tree')
