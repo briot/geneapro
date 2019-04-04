@@ -22,7 +22,6 @@ import { HistoryKind, HistoryItem } from "./Store/History";
 import { PersonaLink, PlaceLink } from "./Links";
 import Page from "./Page";
 
-const DEFAULT_DECUJUS = 1;
 const MAX_PER_CATEGORY = 9;
 
 interface PersonCardProps {
@@ -214,7 +213,7 @@ interface DashboardProps extends RouteComponentProps<PropsFromRoute> {
    items: HistoryItem[];
 }
 const Dashboard: React.FC<DashboardProps> = (p) => {
-   const decujusid = Number(p.match.params.decujusId) || DEFAULT_DECUJUS;
+   const decujusid = Number(p.match.params.decujusId) || undefined;
    document.title = "Dashboard";
    return (
       <Page

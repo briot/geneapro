@@ -1,8 +1,6 @@
 import * as React from "react";
-import { connect } from "react-redux";
 import { Header, List, SemanticICONS } from "semantic-ui-react";
 import { Link } from "react-router-dom";
-import { AppState } from "./Store/State";
 import { Person, personDisplay } from "./Store/Person";
 import { Place } from './Store/Place';
 import { Source } from './Store/Source';
@@ -11,7 +9,7 @@ import {
    useHistoryPlaces,
    useHistorySources
 } from './History';
-import { HistoryItem, HistoryKind, lastVisitedPerson } from "./Store/History";
+import { HistoryItem, HistoryKind } from "./Store/History";
 import { urlPersona, urlSource, urlPlace } from "./Links";
 import Panel from "./Panel";
 import "./SideNav.css";
@@ -77,16 +75,13 @@ const SideNavCategory: React.FC<SideNavCategoryProps> = (p) => {
 };
 
 interface SideNavProps {
-   decujus?: number;
+   decujusid: number;
    history: HistoryItem[];
 }
 const SideNav: React.FC<SideNavProps> = (p) => {
    const persons = useHistoryPersons(p.history);
    const places = useHistoryPlaces(p.history);
    const sources = useHistorySources(p.history);
-
-   const decujusid = p.decujus || lastVisitedPerson(p.history) || '';
-
    const hist = p.history.map(
       ({ id, kind }: HistoryItem) => (
          kind === HistoryKind.PERSON
@@ -105,7 +100,7 @@ const SideNav: React.FC<SideNavProps> = (p) => {
             <SideNavItem
                icon="dashboard"
                label="Dashboard"
-               to={"/" + decujusid}
+               to={`/${p.decujusid}`}
             />
             <SideNavItem
                icon="folder open"
@@ -134,7 +129,7 @@ const SideNav: React.FC<SideNavProps> = (p) => {
             <SideNavItem
                icon="pie chart"
                label="Stats"
-               to={"/stats/" + decujusid}
+               to={`/stats/${p.decujusid}`}
             />
             <SideNavItem
                icon="calendar times"
@@ -155,37 +150,35 @@ const SideNav: React.FC<SideNavProps> = (p) => {
                to="/familyDict"
             />
 
-            {decujusid !== '' && [
-               <SideNavCategory
-                  key="category"
-                  label={personDisplay(persons[decujusid])}
-                  linkTo={urlPersona(decujusid)}
-               />,
-               <SideNavItem
-                  key="pedigree"
-                  icon="sitemap"
-                  label="Pedigree"
-                  to={"/pedigree/" + decujusid}
-               />,
-               <SideNavItem
-                  key="fanchart"
-                  icon="wifi"
-                  label="Fan chart"
-                  to={"/fanchart/" + decujusid}
-               />,
-               <SideNavItem
-                  key="asterisk"
-                  icon="asterisk"
-                  label="Radial chart"
-                  to={"/radial/" + decujusid}
-               />,
-               <SideNavItem
-                  key="quilts"
-                  icon="server"
-                  label="Quilts"
-                  to={"/quilts/" + decujusid}
-               />
-            ]}
+            <SideNavCategory
+               key="category"
+               label={personDisplay(persons[p.decujusid])}
+               linkTo={urlPersona(p.decujusid)}
+            />
+            <SideNavItem
+               key="pedigree"
+               icon="sitemap"
+               label="Pedigree"
+               to={`/pedigree/${p.decujusid}`}
+            />
+            <SideNavItem
+               key="fanchart"
+               icon="wifi"
+               label="Fan chart"
+               to={`/fanchart/${p.decujusid}`}
+            />
+            <SideNavItem
+               key="asterisk"
+               icon="asterisk"
+               label="Radial chart"
+               to={`/radial/${p.decujusid}`}
+            />
+            <SideNavItem
+               key="quilts"
+               icon="server"
+               label="Quilts"
+               to={`/quilts/${p.decujusid}`}
+            />
 
             <SideNavCategory label="History" />
             {hist}
@@ -193,7 +186,5 @@ const SideNav: React.FC<SideNavProps> = (p) => {
       </Panel>
    );
 }
+export default SideNav;
 
-export default connect((state: AppState) => ({
-   history: state.history,
-}))(SideNav);

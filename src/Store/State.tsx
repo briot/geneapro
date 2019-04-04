@@ -12,6 +12,7 @@ import { HistoryItem } from "../Store/History";
 import { actionCreator } from "../Store/Actions";
 import { predefinedThemes } from "../Store/ColorTheme";
 import { GenealogyEventSet } from "../Store/Event";
+import { HistoryKind } from "../Store/History";
 import { PersonaListSettings } from "../Store/PersonaList";
 import { PlaceSet } from "../Store/Place";
 import { StatsSettings } from "../Store/Stats";
@@ -60,6 +61,19 @@ export const themeNameGetter = (s: AppState) => (
    const m = predefinedThemes.concat(s.metadata.themes).find(e => e.id == id);
    return m ? m.name : "";
 };
+
+/**
+ * Return the ID of the last visited person
+ */
+export function lastVisitedPerson(s: AppState) {
+   for (const h of s.history) {
+      if (h.kind === HistoryKind.PERSON) {
+         return h.id;
+      }
+   }
+   return 1;
+}
+
 
 /**
  * Get all entities required to display assertions. Apply some caching to avoid
