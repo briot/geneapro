@@ -40,5 +40,6 @@ export interface PersonSet {
  * Return the display name for the person
  */
 export function personDisplay(p?: Person, withId?: boolean) {
-   return p ? (withId ? `${p.display_name} (${p.id})` : p.display_name) : "";
+   return p ? (withId ? `${p.display_name} (${p.id})` : p.display_name)
+            : "Unknown person";
 }

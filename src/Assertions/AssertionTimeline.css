@@ -1,6 +1,8 @@
 .AssertionTimeline {
    --date-col-width: 60px;
    --col-sep-width: 20px;
+   --date-right-pad: 10px;     /* so that date doesn't overlap line */
+   --assert-right-margin: 5px; /* make sure we have no scroll bars */
 
    width: 100%;
 }
@@ -10,16 +12,16 @@
    display: flex;
 }
 .AssertionTimeline .assertRow > .date + div {
-   flex-grow: 1;
    margin-left: var(--col-sep-width);
    margin-top: 0.6em;
-   margin-right: 5px;  /* make sure we have no scroll bars */
+   margin-right: var(--assert-right-margin); 
+   flex-grow: 1;
 }
 
 .AssertionTimeline .date {
-   width: var(--date-col-width);
+   flex: 0 0 var(--date-col-width);
    border-right: 2px solid black;
-   padding-right: 10px; /* so that date doesn't overlap line */
+   padding-right: var(--date-right-pad);
    font-size: 0.8em;
    text-align: right;
    vertical-align: top;
