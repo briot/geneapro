@@ -85,57 +85,41 @@ const ScalableSVG: React.FC<ScalableSVGProps> = (p) => {
 
    React.useEffect(
       () => {
-         const toCanvas = (p: Point): Point => {
-            return {
-               left: p.left / pos.scale + pos.translate.left,
-               top: p.top / pos.scale + pos.translate.top
-            };
-         };
-         const toScreen = (p: Point): Point => {
-            return {
-               left: (p.left - pos.translate.left) * pos.scale,
-               top: (p.top - pos.translate.top) * pos.scale
-            };
-         };
-
-         const scaleBy = (factor: number, preserve: Point) => {
-            setPos(old => {
-               const scale = Math.max(
-                  Math.min(old.scale * factor, ZOOM_EXTENT[1]),
-                  ZOOM_EXTENT[0]
-               );
-               const preserveScreen = toScreen(preserve);
-               const translate: Point = {
-                  left: preserve.left - preserveScreen.left / scale,
-                  top: preserve.top - preserveScreen.top / scale
-               };
-               return {scale, translate};
-            });
-         };
-
-         const onMouseWheel = (e: Event) => {
+         const onMouseWheel = (e: WheelEvent) => {
             if (svgRef.current) {
-               const we = e as WheelEvent;
                const rect = svgRef.current.getBoundingClientRect();
-               const escreen = toCanvas({
-                  left: we.clientX - rect.left,
-                  top: we.clientY - rect.top
+               setPos(old => {
+                  const preserveScreen = {
+                     left: e.clientX - rect.left,
+                     top: e.clientY - rect.top
+                  };
+                  const preserve = {
+                     left: preserveScreen.left / old.scale + old.translate.left,
+                     top: preserveScreen.top / old.scale + old.translate.top
+                  };
+                  const factor = Math.pow(
+                     2, 0.002 * -e.deltaY * (e.deltaMode ? 120 : 1));
+                  const scale = Math.max(
+                     Math.min(old.scale * factor, ZOOM_EXTENT[1]),
+                     ZOOM_EXTENT[0]
+                  );
+                  const translate: Point = {
+                     left: preserve.left - preserveScreen.left / scale,
+                     top: preserve.top - preserveScreen.top / scale
+                  };
+                  return {scale, translate};
                });
-               scaleBy(
-                  Math.pow(2, 0.002 * -we.deltaY * (we.deltaMode ? 120 : 1)),
-                  escreen
-               );
+               e.preventDefault();
             }
-            e.preventDefault();
          };
 
          const e = svgRef.current;
          if (e) {
-            e.addEventListener("mousewheel", onMouseWheel, {passive: false});
-            return () => e.removeEventListener("mousewheel", onMouseWheel);
+            e.addEventListener("wheel", onMouseWheel, {passive: false});
+            return () => e.removeEventListener("wheel", onMouseWheel);
          }
       },
-      [pos]
+      []
    );
 
    return (
