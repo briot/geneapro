@@ -60,7 +60,7 @@ interface ThemeSelectorProps {
    // on change, a diff with a single field fieldName will be sent
 }
 
-const ThemeSelectorConnected: React.FC<ThemeSelectorProps> = p => {
+const ThemeSelector: React.FC<ThemeSelectorProps> = p => {
    const [showLegend, setLegend] = React.useState(false);
    const { onChange, fieldName } = p;
 
@@ -82,7 +82,7 @@ const ThemeSelectorConnected: React.FC<ThemeSelectorProps> = p => {
          <label>{p.label || "Colors"}</label>
          <span>
             <Select
-               fluid={false}
+               fluid={true}
                options={vals}
                onChange={onChangeCb}
                defaultValue={p.defaultValue}
@@ -111,12 +111,7 @@ const ThemeSelectorConnected: React.FC<ThemeSelectorProps> = p => {
    );
 };
 
-const ThemeSelector = connect(
-   (state: AppState) => ({
-      metadata: state.metadata
-   }),
-   (dispatch: GPDispatch) => ({
-      dispatch
-   })
-)(ThemeSelectorConnected);
-export default ThemeSelector;
+export default connect(
+   (state: AppState) => ({ metadata: state.metadata }),
+   (dispatch: GPDispatch) => ({ dispatch })
+)(ThemeSelector);
