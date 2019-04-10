@@ -7,12 +7,14 @@ import { QuiltsSettings, changeQuiltsSettings } from "../Store/Quilts";
 import { AppState, GPDispatch } from "../Store/State";
 import { fetchQuiltsFromServer, QuiltsResult } from "../Server/Quilts";
 import { addToHistory, HistoryKind } from "../Store/History";
+import { DropTarget } from "../Draggable";
+import { URL } from "../Links";
 import Page from "../Page";
 import Quilts from "../Quilts/Quilts";
 import QuiltsSide from "../Quilts/Side";
 
 interface PropsFromRoute {
-   decujusId: string;
+   id: string;
 }
 
 interface QuiltsPageProps extends RouteComponentProps<PropsFromRoute> {
@@ -23,7 +25,7 @@ const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
    const [loading, setLoading] = React.useState(false);
    const [layout, setLayout] = React.useState<QuiltsResult|undefined>(undefined);
 
-   const decujusid = Number(p.match.params.decujusId);
+   const decujusid = Number(p.match.params.id);
    const decujus = layout && layout.persons[decujusid];
    const { dispatch } = p;
    const onSettingsChange = React.useCallback(
@@ -62,11 +64,13 @@ const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
          Loading
       </Loader>
    ) : (
-      <Quilts
-         settings={p.settings}
-         layout={layout}
-         decujus={decujusid}
-      />
+      <DropTarget redirectUrl={URL.quilts}>
+         <Quilts
+            settings={p.settings}
+            layout={layout}
+            decujus={decujusid}
+         />
+      </DropTarget>
    );
 
    return (

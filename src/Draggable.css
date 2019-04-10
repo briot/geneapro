@@ -1,0 +1,18 @@
+[draggable=true] {
+   user-select: none;
+   -webkit-user-drag: element;
+   cursor: move;
+}
+
+.dragged {
+   opacity: 0.4;
+}
+
+.droptarget {
+   min-height: 15px;
+}
+
+.dropover {
+   background: #CCC;
+   opacity: 0.8;
+}

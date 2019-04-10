@@ -23,21 +23,3 @@
    visibility: visible;
 }
 
-/* Support for dnd */
-
-.editableList .listItem[draggable] {
-   user-select: none;
-   -webkit-user-drag: element;
-   cursor: move;
-}
-.editableList .listItem.dragged {
-   opacity: 0.4;
-}
-.editableList .listDropTarget {
-   height: 15px;
-}
-.editableList .listDropTarget.listDropOver {
-   background: #CCC;
-}
-
-

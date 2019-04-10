@@ -9,6 +9,8 @@ import { FanchartSettings, changeFanchartSettings } from "../Store/Fanchart";
 import { fetchPedigree } from "../Store/Sagas";
 import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
 import { GenealogyEventSet } from "../Store/Event";
+import { DropTarget } from "../Draggable";
+import { URL } from "../Links";
 import Page from "../Page";
 import FanchartSide from "../Fanchart/Side";
 import FanchartLayout from "../Fanchart/Layout";
@@ -59,12 +61,14 @@ const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
             Loading
          </Loader>
       ) : (
-         <FanchartLayout
-            settings={p.settings}
-            persons={p.persons}
-            allEvents={p.allEvents}
-            decujus={decujusid}
-         />
+         <DropTarget redirectUrl={URL.fanchart}>
+            <FanchartLayout
+               settings={p.settings}
+               persons={p.persons}
+               allEvents={p.allEvents}
+               decujus={decujusid}
+            />
+         </DropTarget>
       );
 
    const onChange = React.useCallback(
