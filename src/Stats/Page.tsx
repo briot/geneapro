@@ -8,6 +8,8 @@ import { AppState, GPDispatch } from "../Store/State";
 import { StatsSettings, changeStatsSettings } from "../Store/Stats";
 import { PersonSet, personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
+import { DropTarget } from "../Draggable";
+import { URL } from "../Links";
 import StatsGeneration from "../Stats/Generations";
 import StatsLifespan from "../Stats/Lifespan";
 import StatsSide from "../Stats/Side";
@@ -16,7 +18,7 @@ import "../Stats/Stats.css";
 import Page from "../Page";
 
 interface PropsFromRoute {
-   decujusId: string;
+   id: string;
 }
 
 interface StatsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
@@ -31,7 +33,7 @@ interface StatsPageConnectedState {
    data?: JSONStats;
 }
 
-class StatsPageConnected extends React.PureComponent<
+class StatsPage extends React.PureComponent<
    StatsPageConnectedProps,
    StatsPageConnectedState
 > {
@@ -74,7 +76,7 @@ class StatsPageConnected extends React.PureComponent<
             Loading
          </Loader>
       ) : (
-         <div>
+         <DropTarget redirectUrl={URL.stats}>
             {this.props.settings.show_treestats && (
                <StatsTree
                   decujus={decujus}
@@ -99,7 +101,7 @@ class StatsPageConnected extends React.PureComponent<
                   decujus={this.props.persons[this.props.decujusid]}
                />
             )}
-         </div>
+         </DropTarget>
       );
 
       return (
@@ -131,12 +133,12 @@ class StatsPageConnected extends React.PureComponent<
    }
 }
 
-const StatsPage = connect(
+export default connect(
    (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
       ...props,
       settings: state.stats,
       persons: state.persons,
-      decujusid: Number(props.match.params.decujusId)
+      decujusid: Number(props.match.params.id)
    }),
    (dispatch: GPDispatch) => ({
       dispatch,
@@ -144,6 +146,4 @@ const StatsPage = connect(
          dispatch(changeStatsSettings({ diff }));
       }
    })
-)(StatsPageConnected);
-
-export default StatsPage;
+)(StatsPage);

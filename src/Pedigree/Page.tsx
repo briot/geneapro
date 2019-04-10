@@ -10,12 +10,14 @@ import { addToHistory, HistoryKind } from "../Store/History";
 import { PedigreeSettings, changePedigreeSettings } from "../Store/Pedigree";
 import { fetchPedigree } from "../Store/Sagas";
 import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
+import { DropTarget } from "../Draggable";
+import { URL } from "../Links";
 import Page from "../Page";
 import PedigreeLayout from "../Pedigree/Layout";
 import PedigreeSide from "../Pedigree/Side";
 
 interface PropsFromRoute {
-   decujusId: string;
+   id: string;
 }
 
 interface PedigreePageConnectedProps
@@ -29,7 +31,7 @@ interface PedigreePageConnectedProps
 }
 
 const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
-   const decujusid = Number(p.match.params.decujusId);
+   const decujusid = Number(p.match.params.id);
    const decujus = p.persons[decujusid];
    const { dispatch } = p;
 
@@ -79,13 +81,15 @@ const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
             Loading
          </Loader>
       ) : (
-         <PedigreeLayout
-            settings={p.settings}
-            persons={p.persons}
-            allEvents={p.allEvents}
-            allPlaces={p.allPlaces}
-            decujus={decujusid}
-         />
+         <DropTarget redirectUrl={URL.pedigree}>
+            <PedigreeLayout
+               settings={p.settings}
+               persons={p.persons}
+               allEvents={p.allEvents}
+               allPlaces={p.allPlaces}
+               decujus={decujusid}
+            />
+         </DropTarget>
       );
 
    return (

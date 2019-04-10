@@ -8,12 +8,14 @@ import { addToHistory, HistoryKind } from "../Store/History";
 import { RadialSettings, changeRadialSettings } from "../Store/Radial";
 import { fetchPedigree } from "../Store/Sagas";
 import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
+import { DropTarget } from "../Draggable";
+import { URL } from "../Links";
 import RadialSide from "../Radial/Side";
 import Radial from "../Radial/Radial";
 import Page from "../Page";
 
 interface PropsFromRoute {
-   decujusId: string;
+   id: string;
 }
 
 interface RadialPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
@@ -23,8 +25,8 @@ interface RadialPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
 }
 
-const RadialPageConnected = (p: RadialPageConnectedProps) => {
-   const decujusid = Number(p.match.params.decujusId);
+const RadialPage: React.FC<RadialPageConnectedProps> = (p) => {
+   const decujusid = Number(p.match.params.id);
    const decujus = p.persons[decujusid];
    const { dispatch } = p;
 
@@ -58,7 +60,9 @@ const RadialPageConnected = (p: RadialPageConnectedProps) => {
          Loading
       </Loader>
    ) : (
-      <Radial settings={p.settings} persons={p.persons} decujus={decujusid} />
+      <DropTarget redirectUrl={URL.radial}>
+         <Radial settings={p.settings} persons={p.persons} decujus={decujusid} />
+      </DropTarget>
    );
 
    return (
@@ -76,7 +80,7 @@ const RadialPageConnected = (p: RadialPageConnectedProps) => {
    );
 };
 
-const RadialPage = connect(
+export default connect(
    (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
       ...props,
       settings: state.radial,
@@ -86,6 +90,4 @@ const RadialPage = connect(
    (dispatch: GPDispatch) => ({
       dispatch
    })
-)(RadialPageConnected);
-
-export default RadialPage;
+)(RadialPage);

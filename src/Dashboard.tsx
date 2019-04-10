@@ -207,13 +207,13 @@ const AllStats: React.FC<{}> = () => {
 };
 
 interface PropsFromRoute {
-   decujusId?: string;
+   id?: string;
 }
 interface DashboardProps extends RouteComponentProps<PropsFromRoute> {
    items: HistoryItem[];
 }
 const Dashboard: React.FC<DashboardProps> = (p) => {
-   const decujusid = Number(p.match.params.decujusId) || undefined;
+   const decujusid = Number(p.match.params.id) || undefined;
    document.title = "Dashboard";
    return (
       <Page

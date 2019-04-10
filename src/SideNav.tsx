@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Header, List, SemanticICONS } from "semantic-ui-react";
-import { Link } from "react-router-dom";
+import { Link, Redirect } from "react-router-dom";
+// import { RouteComponentProps } from "react-router";
 import { Person, personDisplay } from "./Store/Person";
 import { Place } from './Store/Place';
 import { Source } from './Store/Source';
@@ -10,7 +11,8 @@ import {
    useHistorySources
 } from './History';
 import { HistoryItem, HistoryKind } from "./Store/History";
-import { urlPersona, urlSource, urlPlace } from "./Links";
+import { URL } from "./Links";
+import { DndData, useDraggable, DropTarget } from "./Draggable";
 import Panel from "./Panel";
 import "./SideNav.css";
 
@@ -20,18 +22,33 @@ interface SideNavItemProps {
    icon?: SemanticICONS;
    label: React.ReactNode;
    disabled?: boolean;
+   dropLink?: URL;
+   dndData?: DndData;
    to?: string;
 }
 const SideNavItem: React.FC<SideNavItemProps> = (p) => {
+   const { dropLink } = p;
+   const [dragprops] = useDraggable({
+      data: p.dndData,
+      className: 'hideOverflow'
+   });
    return (
-      <List.Item disabled={p.disabled} className="hideOverflow">
+      <List.Item disabled={p.disabled} {...dragprops} >
          <List.Icon name={p.icon} />
          <List.Content title={p.label}>
-            {
-               p.to ?
-                  <Link to={p.to} style={LINK_STYLE}>{p.label}</Link>
-                 : p.label
-            }
+            <DropTarget redirectUrl={p.dropLink} >
+               {
+                  p.to ?
+                     <Link
+                        draggable={false}
+                        to={p.to}
+                        style={LINK_STYLE}
+                     >
+                        {p.label}
+                     </Link>
+                    : p.label
+               }
+            </DropTarget>
          </List.Content>
       </List.Item>
    );
@@ -39,23 +56,26 @@ const SideNavItem: React.FC<SideNavItemProps> = (p) => {
 
 const SideNavItemPerson: React.FC<{person?: Person}> = (p) =>
    p.person ? <SideNavItem
+      dndData={{kind: 'person', id: p.person.id}}
       icon="user"
       label={personDisplay(p.person)}
-      to={urlPersona(p.person.id)}
+      to={URL.persona.url(p.person.id)}
    /> : null;
 
 const SideNavItemPlace: React.FC<{place?: Place}> = (p) =>
    p.place ? <SideNavItem
+      dndData={{kind: 'place', id: p.place.id}}
       icon="globe"
       label={p.place.name}
-      to={urlPlace(p.place.id)}
+      to={URL.place.url(p.place.id)}
    /> : null;
 
 const SideNavItemSource: React.FC<{source?: Source}> = (p) =>
    p.source ? <SideNavItem
+      dndData={{kind: 'source', id: p.source.id}}
       icon="book"
       label={p.source.abbrev}
-      to={urlSource(p.source.id)}
+      to={URL.source.url(p.source.id)}
    /> : null;
 
 interface SideNavCategoryProps {
@@ -100,84 +120,98 @@ const SideNav: React.FC<SideNavProps> = (p) => {
             <SideNavItem
                icon="dashboard"
                label="Dashboard"
-               to={`/${p.decujusid}`}
+               to={URL.dashboard.url(p.decujusid)}
+               dropLink={URL.dashboard}
             />
             <SideNavItem
                icon="folder open"
                label="Import Gedcom"
                to="/import"
             />
-
             <SideNavItem
                icon="users"
                label="All persons"
                to="/persona/list/"
             />
-            <SideNavItem icon="globe" label="All places" to="/place/list/" />
+            <SideNavItem
+               icon="globe"
+               label="All places"
+               to="/place/list/"
+            />
             <SideNavItem
                icon="book"
                label="Bibliography"
                to="/source/list/"
             />
             <SideNavItem
-               icon="image"
-               label="Media Manager"
-               disabled={true}
-               to="/media"
-            />
-
-            <SideNavItem
                icon="pie chart"
                label="Stats"
-               to={`/stats/${p.decujusid}`}
+               to={URL.stats.url(p.decujusid)}
+               dropLink={URL.stats}
             />
-            <SideNavItem
-               icon="calendar times"
-               label="Timeline"
-               disabled={true}
-               to="/timeline"
-            />
-            <SideNavItem
-               icon="list ul"
-               label="Ancestor Tree"
-               disabled={true}
-               to="/ancestortree"
-            />
-            <SideNavItem
-               icon="address book outline"
-               label="Family Dictionary"
-               disabled={true}
-               to="/familyDict"
-            />
+
+            {
+               false &&
+               <>
+                  <SideNavItem
+                     icon="image"
+                     label="Media Manager"
+                     disabled={true}
+                     to="/media"
+                  />
+                  <SideNavItem
+                     icon="calendar times"
+                     label="Timeline"
+                     disabled={true}
+                     to="/timeline"
+                  />
+                  <SideNavItem
+                     icon="list ul"
+                     label="Ancestor Tree"
+                     disabled={true}
+                     to="/ancestortree"
+                  />
+                  <SideNavItem
+                     icon="address book outline"
+                     label="Family Dictionary"
+                     disabled={true}
+                     to="/familyDict"
+                  />
+               </>
+            }
 
             <SideNavCategory
                key="category"
                label={personDisplay(persons[p.decujusid])}
-               linkTo={urlPersona(p.decujusid)}
+               linkTo={URL.persona.url(p.decujusid)}
             />
             <SideNavItem
                key="pedigree"
                icon="sitemap"
                label="Pedigree"
-               to={`/pedigree/${p.decujusid}`}
+               to={URL.pedigree.url(p.decujusid)}
+               dropLink={URL.pedigree}
             />
             <SideNavItem
                key="fanchart"
                icon="wifi"
                label="Fan chart"
-               to={`/fanchart/${p.decujusid}`}
+               to={URL.fanchart.url(p.decujusid)}
+               dropLink={URL.fanchart}
             />
             <SideNavItem
                key="asterisk"
                icon="asterisk"
                label="Radial chart"
-               to={`/radial/${p.decujusid}`}
+               to={URL.radial.url(p.decujusid)}
+               dropLink={URL.radial}
             />
             <SideNavItem
                key="quilts"
                icon="server"
                label="Quilts"
-               to={`/quilts/${p.decujusid}`}
+               to={URL.quilts.url(p.decujusid)}
+               dropLink={URL.quilts}
             />
 
             <SideNavCategory label="History" />

@@ -20,6 +20,7 @@ import StatsPage from "./Stats/Page";
 import ThemeEditor from "./ThemeEditor/ThemeEditor";
 import { setPersist, store } from "./Store/Store";
 import { fetchMetadata } from "./Store/Sagas";
+import { URL } from "./Links";
 
 const App: React.FC<{}> = () => {
    const [rehydrated, setRehydrated] = React.useState(false);
@@ -45,18 +46,23 @@ const App: React.FC<{}> = () => {
                <Route path="/persona/list" component={PersonaList} />
                <Route path="/place/list" component={PlaceList} />
                <Route path="/source/list" component={SourceList} />
-               <Route path="/pedigree/:decujusId" component={PedigreePage} />
-               <Route path="/fanchart/:id" component={FanchartPage} />
-               <Route path="/radial/:decujusId" component={RadialPage} />
-               <Route path="/quilts/:decujusId" component={QuiltsPage} />
-               <Route path="/persona/:id" component={PersonaPage} />
-               <Route path="/source/:id" component={SourcePage} />
-               <Route path="/place/:id" component={PlacePage} />
+               <Route path={URL.pedigree.path} component={PedigreePage} />
+               <Route path={URL.fanchart.path} component={FanchartPage} />
+               <Route path={URL.radial.path} component={RadialPage} />
+               <Route path={URL.quilts.path} component={QuiltsPage} />
+               <Route path={URL.persona.path} component={PersonaPage} />
+               <Route path={URL.source.path} component={SourcePage} />
+               <Route path={URL.place.path} component={PlacePage} />
                <Route path="/import" component={ImportPage} />
                <Route path="/themeeditor" component={ThemeEditor} />
-               <Route path="/stats/:decujusId" component={StatsPage} />
+               <Route path={URL.stats.path} component={StatsPage} />
                <Route
-                  path="/:decujusId?"
+                  path={URL.dashboard.path}
+                  exact={true}
+                  component={DashboardPage}
+               />
+               <Route
+                  path="/"
                   exact={true}
                   component={DashboardPage}
                />
