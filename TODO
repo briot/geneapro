@@ -1,16 +1,6 @@
 # for Emacs: -*- mode: org; mode: flyspell; fill-column: 79 -*-
 
-* Upgrading environment
-** yarn add react-scripts-ts@2.8.0
-
-* Port to Angular2
-** BUGS
-*** Confusion between "givn" and "given_name" and "surn"/"surname" in persona.py
-*** Middle-click does not work on toolbar buttons
-
 ** Pedigree View
-*** Select Show Details, and then Back => not refreshed
-   This is documented as an Angular2 bug on Safari.
 *** Change vertical spacing => display broken on Safari
 ** See the following for fan colors suggestions
    https://gedtree.com/
@@ -33,12 +23,6 @@
 *** Editing media type (see source 16)
 *** Editing assertions
 *** Error in /source/199
-
-** Quilts
-*** Only show selected people
-*** Show whole database
-*** Bug: color highlighting horizontally sometimes extends to wrong column
-*** Should use more relative coordinates to simplify the code
 
 ** Import
 *** Use download form
@@ -92,6 +76,12 @@ http://www.beholdgenealogy.com/blog/?p=876
    http://timforsythe.com/blog/gedcom-import-testing-introduction/
    http://heiner-eichmann.de/gedcom/gedcom.htm
    http://gedcomindex.com/gedcoms.html
+** Father might not be present at birth. How to store the info? Maybe not
+   have him at the event and use a characteristic is father of.
+   Same for godfather and baptism. Or just a note
+** Removing import: we can't remove events and places created as part of
+   this import. Maybe have a ' first seen in' field, and we remove entities
+   with that field that are not used anywhere else
 
 * Pedigree View
 ** Dnd on Pedigree icon should display the pedigree for that person
@@ -139,6 +129,10 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
 ** Use presets
 
 * Quilts
+** Only show selected people
+** Show whole database
+** Bug: color highlighting horizontally sometimes extends to wrong column
+** Should use more relative coordinates to simplify the code
 ** Easy navigation to parents and children (GeneaQuilts uses pie charts)
 ** Add a way to unselect
    Currently, clicking on a selected person does nothing, and the only way
@@ -213,6 +207,14 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
    repositories separately at all.
 ** Hiearchical sources
    http://parallax-viewpoint.blogspot.fr/2015/01/hierarchical-sources.html
+** Assertions are potentially related to a specific representation in a source.
+   Should users have to created a nested source for these? That's heavy, since
+   we need citation... Better to add a pointer to representation in assertion
+   along with data like square within it
+   Can we always point to representation instead of source? Likely not
+** Support for temporary disabling a source and lower level. Like an import.
+   Would disable all assertions and personas created from those assertions.
+   Or show them in gray. Perhaps uses the surety scheme?
 
 * Groups
 ** For: neighbor, friend, clergy, care-taker, and more
