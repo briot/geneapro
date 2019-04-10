@@ -30,6 +30,7 @@ export default function PlaceDetails(props: PlaceProps) {
                   asserts={p.asserts}
                   dispatch={props.dispatch}
                   entities={props.entities}
+                  fullHeight={true}
                   metadata={props.metadata}
                />
             }

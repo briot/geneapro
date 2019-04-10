@@ -28,7 +28,6 @@ export interface Source {
    lastChange?: Date;
 
    medias?: GP_JSON.SourceRepr[];
-   asserts?: AssertionList;
    parts: CitationPartSet;
 }
 

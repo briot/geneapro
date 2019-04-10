@@ -32,6 +32,7 @@ export interface TimelineProps {
    metadata: MetadataDict;
 
    minBatchSize?: number;
+   fullHeight?: boolean;
 }
 
 interface AssertionTimelineProps extends TimelineProps {
@@ -75,6 +76,7 @@ export const AssertionTimeline: React.FC<AssertionTimelineProps> = (p) => {
       <div className="AssertionTimeline" >
          <InfiniteList
             fetchRows={p.fetchAsserts}
+            fullHeight={p.fullHeight}
             minBatchSize={p.minBatchSize || 30}
             renderRow={renderAssert}
             rowCount={p.rowCount}

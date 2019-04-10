@@ -43,7 +43,6 @@ export function* fetchSourceDetailsFromServer(id: number) {
    const data: JSONResult = yield resp.json();
    let r: Source = {
       ...sourceFromJSON(data.source),
-      asserts: new AssertionList([]),
       medias: data.repr,
       parts: data.parts ? data.parts.reduce(
          (val, part) => ({...val, [part.name]: part}), {})

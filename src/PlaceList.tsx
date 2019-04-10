@@ -69,6 +69,7 @@ const PlaceList: React.FC<PlaceListProps> = (p) => {
             <InfiniteListFilter
                fetchRows={fetchPlaces}
                filter={p.settings.filter}
+               fullHeight={true}
                renderRow={renderRow}
                rowCount={count}
                title="Place"

@@ -15,6 +15,25 @@ import { InfiniteRowFetcher } from "../InfiniteList";
 
 const MIN_BATCH_SIZE = 80;
 
+
+/**
+ * Compute the number of assertions known for the given source
+ */
+export const useSourceAssertsCount = (id: number|undefined) => {
+   const [count, setCount] = React.useState(0);
+   React.useEffect(
+      () => {
+         if (id !== undefined) {
+            fetch(`/data/sources/asserts/count/${id}`)
+               .then(r => r.json())
+               .then(setCount);
+         }
+      },
+      [id]
+   );
+   return count;
+}
+
 interface SourceAssertionsProps {
    filter: string;
    source: Source;
@@ -25,17 +44,7 @@ const SourceAssertions: React.FC<SourceAssertionsProps> = (p) => {
    const [entities, setEntities] = React.useState<AssertionEntities>({
       events: {}, persons: {}, places: {}, sources: {},
    });
-   const [count, setCount] = React.useState(0);
-
-   React.useEffect(
-      () => {
-         fetch(`/data/sources/asserts/count/${p.source.id}`)
-            .then(r => r.json())
-            .then(setCount);
-      },
-      []
-   );
-
+   const count = useSourceAssertsCount(p.source.id);
    const fetchAsserts: InfiniteRowFetcher<Assertion> =
       React.useCallback(
          (fp) => {
@@ -61,6 +70,7 @@ const SourceAssertions: React.FC<SourceAssertionsProps> = (p) => {
              dispatch={p.dispatch}
              entities={entities}
              fetchAsserts={fetchAsserts}
+             fullHeight={true}
              metadata={p.metadata}
              minBatchSize={MIN_BATCH_SIZE}
              rowCount={count}

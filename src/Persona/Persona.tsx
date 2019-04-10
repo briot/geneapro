@@ -55,6 +55,7 @@ function Persona(props: PersonaProps) {
                   asserts={p.asserts}
                   dispatch={props.dispatch}
                   entities={props.entities}
+                  fullHeight={true}
                   metadata={props.metadata}
                   refYear={birthYear}
                   hidePersonIf={p.id}
