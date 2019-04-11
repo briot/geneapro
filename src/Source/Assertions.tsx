@@ -7,32 +7,13 @@ import {
    mergeAssertionEntities,
    setAssertionEntities
 } from '../Server/Person';
-import { fetchSourceAsserts } from "../Server/Source";
+import { fetchSourceAsserts, useSourceAssertsCount } from "../Server/Source";
 import { Assertion } from "../Store/Assertion";
 import { AssertionTimeline } from "../Assertions/AssertionTimeline";
 import { Source } from "../Store/Source";
 import { InfiniteRowFetcher } from "../InfiniteList";
 
 const MIN_BATCH_SIZE = 80;
-
-
-/**
- * Compute the number of assertions known for the given source
- */
-export const useSourceAssertsCount = (id: number|undefined) => {
-   const [count, setCount] = React.useState(0);
-   React.useEffect(
-      () => {
-         if (id !== undefined) {
-            fetch(`/data/sources/asserts/count/${id}`)
-               .then(r => r.json())
-               .then(setCount);
-         }
-      },
-      [id]
-   );
-   return count;
-}
 
 interface SourceAssertionsProps {
    filter: string;

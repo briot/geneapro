@@ -5,7 +5,6 @@ import {
    DetailsResult
 } from "../Server/Person";
 import { fetchEventFromServer, EventDetails } from "../Server/Event";
-import { fetchPlaceFromServer, PlaceDetails } from "../Server/Place";
 import {
    fetchSourceDetailsFromServer
 } from "../Server/Source";
@@ -116,27 +115,6 @@ export const fetchEventDetails = createAsyncAction(
    "DATA/EVENT",
    _fetchEventDetails,
    _hasEventDetails
-);
-
-/**
- * Async Action: fetch details for one place
- */
-
-export interface FetchPlaceDetailsParams {
-   id: number;
-}
-function _hasPlaceDetails(p: FetchPlaceDetailsParams, state: AppState) {
-   const pl = state.places[p.id];
-   return pl && pl.asserts !== undefined && pl.asserts.get().length !== 0;
-}
-function* _fetchPlaceDetails(p: FetchPlaceDetailsParams) {
-   const res: PlaceDetails = yield call(fetchPlaceFromServer, p.id);
-   return res;
-}
-export const fetchPlaceDetails = createAsyncAction(
-   "DATA/PLACE",
-   _fetchPlaceDetails,
-   _hasPlaceDetails
 );
 
 /**

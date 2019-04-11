@@ -4,7 +4,8 @@ import { GPDispatch, MetadataDict } from "../Store/State";
 import { Source } from "../Store/Source";
 import SourceCitation from "../Source/Citation";
 import SourceMedias from "../Source/Media";
-import SourceAssertions, { useSourceAssertsCount} from "../Source/Assertions";
+import SourceAssertions from "../Source/Assertions";
+import { useSourceAssertsCount } from "../Server/Source";
 import "./Source.css";
 
 interface SourceProps {

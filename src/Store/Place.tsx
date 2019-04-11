@@ -2,9 +2,11 @@ import { actionCreator } from "../Store/Actions";
 import { AssertionList } from "../Store/Assertion";
 
 export interface Place {
+   date: string | null;
+   date_sort: string | null;
    id: number;
    name: string;
-   asserts?: AssertionList;
+   parent_place_id?: number;
 }
 
 export interface PlaceSet {

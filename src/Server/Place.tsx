@@ -1,4 +1,5 @@
-import { PlaceSet } from "../Store/Place";
+import * as React from "react";
+import { Place, PlaceSet } from "../Store/Place";
 import { AssertionList } from "../Store/Assertion";
 import {
    AssertionEntities,
@@ -21,7 +22,7 @@ interface FetchPlacesFromServerArgs {
 
 export function fetchPlacesFromServer(
    p: FetchPlacesFromServerArgs
-): Promise<JSON.Place[]> {
+): Promise<Place[]> {
    const url =
       '/data/places/list?' +
       (p.filter ? `&filter=${encodeURI(p.filter)}` : '') +
@@ -39,33 +40,46 @@ export const fetchPlacesCount = (p: {filter: string}): Promise<number> =>
    fetch(`/data/places/count?filter=${encodeURI(p.filter)}`)
    .then((r: Response) => r.json());
 
-export interface PlaceDetails extends AssertionEntities {
-   asserts: AssertionList;
+export const usePlace = (id: number): Place|undefined => {
+   const [place, setPlace] = React.useState<Place|undefined>(undefined);
+   React.useEffect(
+      () => {
+         window.fetch(`/data/place/${id}`)
+            .then(r => r.json())
+            .then(setPlace, () => setPlace(undefined));
+      },
+      [id]
+   );
+   return place;
+};
+
+/**
+ * Compute the number of assertions known for the given place
+ */
+export const usePlaceAssertsCount = (id: number|undefined) => {
+   const [count, setCount] = React.useState(0);
+   React.useEffect(
+      () => {
+         if (id !== undefined) {
+            fetch(`/data/places/asserts/count/${id}`)
+               .then(r => r.json())
+               .then(setCount);
+         }
+      },
+      [id]
+   );
+   return count;
 }
 
-interface JSONResult extends AssertionEntitiesJSON {
-   asserts: JSON.Assertion[];
-}
-
-export function* fetchPlaceFromServer(id: number) {
-   const resp: Response = yield window.fetch("/data/place/" + id);
-   if (resp.status !== 200) {
-      throw new Error("Server returned an error");
-   }
-
-   const data: JSONResult = yield resp.json();
-   const result: PlaceDetails = {
-      asserts: new AssertionList(data.asserts.map(a => assertionFromJSON(a))),
-      events: {},
-      persons: {},
-      places: {},
-      sources: {},
-   };
-   setAssertionEntities(data, result);
-
-   if (result.places[id]) {
-      result.places[id].asserts = result.asserts;
-   }
-
-   return result;
+/**
+ * Fetch asserts from the server
+ */
+export function fetchPlaceAsserts(p: {
+   id: number; limit?: number; offset?: number;
+}): Promise<AssertionEntitiesJSON> {
+   return fetch(
+      `/data/places/asserts/${p.id}?` +
+      (p.limit ? `limit=${p.limit}&` : '') +
+      (p.offset !== undefined ? `offset=${p.offset}&` : '')
+   ).then(r => r.json());
 }

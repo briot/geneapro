@@ -11,19 +11,17 @@ import {
    fetchEventDetails,
    fetchSourceDetails,
    fetchMetadata,
-   fetchPlaceDetails
 } from "../Store/Sagas";
 import { addEvents } from "../Store/Event";
 import { EventDetails } from "../Server/Event";
 import { DetailsResult, mergeAssertionEntities } from "../Server/Person";
-import { PlaceDetails } from "../Server/Place";
 import { defaultPedigree, changePedigreeSettings } from "../Store/Pedigree";
 import { defaultFanchart, changeFanchartSettings } from "../Store/Fanchart";
 import {
    defaultPersonaList,
    changePersonaListSettings
 } from "../Store/PersonaList";
-import { changePlaceListSettings } from '../Store/Place';
+import { changePlaceListSettings, Place } from '../Store/Place';
 import { changeSourceListSettings } from '../Store/Source';
 import { defaultRadial, changeRadialSettings } from "../Store/Radial";
 import { defaultStats, changeStatsSettings } from "../Store/Stats";
@@ -194,9 +192,6 @@ export function rootReducer(
          s.persons[action.payload.params.id] = s.persons[data.person.id];
       }
       return s;
-   } else if (isType(action, fetchPlaceDetails.done)) {
-      const data: PlaceDetails = action.payload.result as PlaceDetails;
-      return { ...state, ...mergeAssertionEntities(state, data) };
    } else if (isType(action, fetchSourceDetails.done)) {
       const source: Source = action.payload.result;
       return {

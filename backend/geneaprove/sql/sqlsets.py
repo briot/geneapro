@@ -1,6 +1,8 @@
-import django.db.models
+from django.db.models import F, Value, IntegerField, TextField, \
+        prefetch_related_objects
 from django.conf import settings
 import logging
+from .. import models
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +40,7 @@ class SQLSet(object):
         logger.debug('prefetch related %s', attrs)
         obj = list(objects)
         for chunk in self.sql_split(obj):
-            django.db.models.prefetch_related_objects(chunk, *attrs)
+            prefetch_related_objects(chunk, *attrs)
         return obj
 
     @classmethod
@@ -93,4 +95,44 @@ class SQLSet(object):
             else:
                 return queryset[:int(limit)]
         return queryset
+
+    def fetch_asserts_subset(self, tables, offset=None, limit=None):
+        """
+        Fetch a subset of assertions.
+        :param list tables:
+            The list of tables that should be queried, as ini
+               [models.P2E.objects.filter(...),
+                models.P2C.objects.filter(...)]
+        """
+        pm = None
+        for idx, queryset in enumerate(tables):
+            # ??? Should we use a dispatching operation
+            if queryset.model == models.P2E:
+                date = F('event__date_sort')
+            elif queryset.model == models.P2C:
+                date = F('characteristic__date_sort')
+            elif queryset.model == models.P2P:
+                date = Value("", TextField())
+            elif queryset.model == models.P2G:
+                date = Value("", TextField())
+            else:
+                raise Exception('Unknown queryset %s' % queryset)
+
+            a = queryset \
+                .values('id') \
+                .annotate(kind=Value(idx, IntegerField()), date_sort=date)
+            pm = a if pm is None else pm.union(a)
+
+        pm = pm.order_by('date_sort')
+        pm = self.limit_offset(pm, offset=offset, limit=limit)
+
+        asserts = list(pm)
+        result = []
+        for idx, queryset in enumerate(tables):
+            ids = [a['id'] for a in asserts if a['kind'] == idx]
+            if ids:
+                prefetch = queryset.model.related_json_fields()
+                for chunk in self.sqlin(queryset.model.objects, id__in=ids):
+                    result.extend(self.prefetch_related(chunk, *prefetch))
+        return result
 

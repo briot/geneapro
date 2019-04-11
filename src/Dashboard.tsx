@@ -125,7 +125,7 @@ const RecentPlaces: React.FC<RecentPlaces> = (p) => {
                .map(s => s.id);
          if (items.length) {
             fetchPlacesFromServer({ ids: items })
-               .then((a: GP_JSON.Place[]) => setPlaces(a));
+               .then((a: Place[]) => setPlaces(a));
          }
       },
       [p.items]

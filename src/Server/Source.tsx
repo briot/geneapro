@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Source } from "../Store/Source";
 import { AssertionList } from "../Store/Assertion";
 import {
@@ -85,4 +86,22 @@ export function fetchSourcesFromServer(
 export const fetchSourcesCount = (p: {filter: string}): Promise<number> =>
    fetch(`/data/sources/count?filter=${encodeURI(p.filter)}`)
    .then((r: Response) => r.json());
+
+/**
+ * Compute the number of assertions known for the given source
+ */
+export const useSourceAssertsCount = (id: number|undefined) => {
+   const [count, setCount] = React.useState(0);
+   React.useEffect(
+      () => {
+         if (id !== undefined) {
+            fetch(`/data/sources/asserts/count/${id}`)
+               .then(r => r.json())
+               .then(setCount);
+         }
+      },
+      [id]
+   );
+   return count;
+}
 

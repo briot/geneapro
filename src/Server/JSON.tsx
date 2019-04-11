@@ -166,11 +166,3 @@ export interface P2G extends Assertion {
    p1: { person: number };
    p2: { group: number; role: number };
 }
-
-export interface Place {
-   id: number;
-   name: string;
-   date: string | null;
-   date_sort: string | null;
-   parent_place_id: number;
-}

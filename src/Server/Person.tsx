@@ -10,7 +10,7 @@ import {
 import { GenealogyEventSet } from "../Store/Event";
 import { SourceSet } from "../Store/Source";
 import { sourceFromJSON } from "../Server/Source";
-import { PlaceSet } from "../Store/Place";
+import { Place, PlaceSet } from "../Store/Place";
 import * as GP_JSON from "../Server/JSON";
 import Style from "../Store/Styles";
 
@@ -140,7 +140,7 @@ export function assertionFromJSON(a: GP_JSON.Assertion): Assertion {
 export interface AssertionEntitiesJSON {
    events?: GP_JSON.Event[]; // All events mentioned in the asserts
    persons?: GP_JSON.Person[];
-   places?: GP_JSON.Place[];
+   places?: Place[];
    sources?: GP_JSON.Source[];
    asserts: GP_JSON.Assertion[];
 }
@@ -167,16 +167,7 @@ export function setAssertionEntities(
    into: AssertionEntities
 ) {
    if (entities.places) {
-      for (const p of entities.places) {
-         into.places[p.id] = {
-            id: p.id,
-            name: p.name,
-            asserts: new AssertionList([]),
-            // p.date,
-            // p.date_sort,
-            // p.parent_place_id,
-         };
-      }
+      into.places = {...into.places, ...entities.places};
    }
 
    if (entities.events) {

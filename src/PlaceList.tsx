@@ -46,12 +46,7 @@ const PlaceList: React.FC<PlaceListProps> = (p) => {
    );
 
    const fetchPlaces: InfiniteRowFetcher<Place> = React.useCallback(
-      (pl) => {
-         return fetchPlacesFromServer({ ...pl, filter: p.settings.filter })
-            .then((list: GP_JSON.Place[]) =>
-               list.map(a => ({ id: a.id, name: a.name }))
-            );
-      },
+      (pl) => fetchPlacesFromServer({ ...pl, filter: p.settings.filter }),
       [p.settings.filter]
    );
 
