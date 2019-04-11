@@ -51,7 +51,7 @@ const SourceDetails: React.FC<SourceProps> = (p) => {
                {step > 4 ? null : (
                   <Step.Group
                      ordered={true}
-                     stackable="tablet"
+                     unstackable={true}
                      fluid={true}
                      size="mini"
                   >
@@ -66,7 +66,7 @@ const SourceDetails: React.FC<SourceProps> = (p) => {
                         active={s && !s.medias}
                         disabled={!s}
                         title="Capturing"
-                        description="images, sounds, videos"
+                        description="media"
                      />
                      <Step
                         completed={step3Complete}
@@ -80,7 +80,7 @@ const SourceDetails: React.FC<SourceProps> = (p) => {
                         active={step === 4}
                         disabled={!s}
                         title="Asserting"
-                        description="what the source says"
+                        description="what source says"
                      />
                   </Step.Group>
                )}
