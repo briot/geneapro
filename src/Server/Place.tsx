@@ -44,7 +44,7 @@ export const usePlace = (id: number): Place|undefined => {
    const [place, setPlace] = React.useState<Place|undefined>(undefined);
    React.useEffect(
       () => {
-         window.fetch(`/data/place/${id}`)
+         window.fetch(`/data/places/${id}`)
             .then(r => r.json())
             .then(setPlace, () => setPlace(undefined));
       },
@@ -61,7 +61,7 @@ export const usePlaceAssertsCount = (id: number|undefined) => {
    React.useEffect(
       () => {
          if (id !== undefined) {
-            fetch(`/data/places/asserts/count/${id}`)
+            fetch(`/data/places/${id}/asserts/count`)
                .then(r => r.json())
                .then(setCount);
          }
@@ -78,7 +78,7 @@ export function fetchPlaceAsserts(p: {
    id: number; limit?: number; offset?: number;
 }): Promise<AssertionEntitiesJSON> {
    return fetch(
-      `/data/places/asserts/${p.id}?` +
+      `/data/places/${p.id}/asserts?` +
       (p.limit ? `limit=${p.limit}&` : '') +
       (p.offset !== undefined ? `offset=${p.offset}&` : '')
    ).then(r => r.json());

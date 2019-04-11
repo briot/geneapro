@@ -56,7 +56,7 @@ export function fetchSourceAsserts(p: {
    id: number; limit?: number; offset?: number;
 }): Promise<AssertionEntitiesJSON> {
    return fetch(
-      `/data/sources/asserts/${p.id}?` +
+      `/data/sources/${p.id}/asserts?` +
       (p.limit ? `limit=${p.limit}&` : '') +
       (p.offset !== undefined ? `offset=${p.offset}&` : '')
    ).then(r => r.json());
@@ -95,7 +95,7 @@ export const useSourceAssertsCount = (id: number|undefined) => {
    React.useEffect(
       () => {
          if (id !== undefined) {
-            fetch(`/data/sources/asserts/count/${id}`)
+            fetch(`/data/sources/${id}/asserts/count`)
                .then(r => r.json())
                .then(setCount);
          }

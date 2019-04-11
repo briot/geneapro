@@ -3,7 +3,7 @@ The URLs supported by geneaprove
 """
 import os
 import logging
-from django.urls import path, re_path
+from django.urls import path, re_path, register_converter
 import django.contrib
 from django.shortcuts import render_to_response
 from django.template.context_processors import csrf
@@ -52,52 +52,60 @@ def static(request):
         return index(request)
 
 
+class NegativeOrPositive:
+    regex = '-?\d+'
+    def to_python(self, value):
+        return int(value)
+    def to_url(self, value):
+        return str(value)
+register_converter(NegativeOrPositive, 'negpos')
+
+
 urlpatterns = [
     re_path(r'^$', index, name='index'),
-    path('data/pedigree/<int:id>', pedigree.PedigreeData.as_view()),
+
     path('data/persona/list', persona.PersonaList.as_view()),
     path('data/persona/count', persona.PersonCount.as_view()),
     path('data/persona/<int:id>', persona.PersonaView.as_view()),
 
-    path('data/place/<int:id>', places.PlaceView.as_view()),
     path('data/places/list', places.PlaceList.as_view()),
     path('data/places/count', places.PlaceCount.as_view()),
-    path('data/places/asserts/<int:id>', places.PlaceAsserts.as_view()),
-    path('data/places/asserts/count/<int:id>',
+    path('data/places/<int:id>', places.PlaceView.as_view()),
+    path('data/places/<int:id>/asserts', places.PlaceAsserts.as_view()),
+    path('data/places/<int:id>/asserts/count',
         places.PlaceAssertsCount.as_view()),
 
     path('data/sources/list', sources.SourcesList.as_view()),
-    re_path(r'^data/sources/asserts/(?P<id>-?\d+)$',
-        sources.SourceAsserts.as_view()),
-    re_path(r'^data/sources/asserts/count/(?P<id>-?\d+)$',
-        sources.SourceAssertsCount.as_view()),
     path('data/sources/count', sources.SourcesCount.as_view()),
-    re_path(r'^data/sources/(?P<id>-?\d+)$', sources.SourceView.as_view()),
-    re_path(r'^data/sources/(?P<id>-?\d+)/saveparts$',
+    path('data/sources/<negpos:id>', sources.SourceView.as_view()),
+    path('data/sources/<negpos:id>/asserts', sources.SourceAsserts.as_view()),
+    path('data/sources/<negpos:id>/asserts/count',
+        sources.SourceAssertsCount.as_view()),
+    path('data/sources/<negpos:id>/saveparts$',
         sources.EditSourceCitation.as_view()),
-    re_path(r'^data/sources/(\d+)/addRepr', sources.AddSourceRepr.as_view()),
-    re_path(r'^data/sources/(\d+)/allRepr',
+    path('data/sources/<int:id>addRepr', sources.AddSourceRepr.as_view()),
+    path('data/sources/<int:id>/allRepr',
         sources.SourceRepresentations.as_view()),
-    re_path(r'^data/sources/(\d+)/delRepr/(\d+)',
+    path('data/sources/<int:id>/delRepr/<int:repr_id>',
         sources.DelSourceRepr.as_view()),
 
-    path('data/suretySchemes', persona.SuretySchemesList.as_view()),
-    re_path(r'^data/event/(\d+)$', events.EventDetailsView.as_view()),
-    re_path(r'^data/stats/(?P<id>\d+)$', stats.StatsView.as_view()),
-    path('data/metadata', metadata.MetadataList.as_view()),
-    re_path(r'^data/theme/(?P<theme_id>\d+)/rules',
+    path('data/theme/<negpos:theme_id>/rules',
         themelist.ThemeRules.as_view()),
-    re_path(r'^data/theme/(?P<theme_id>-?\d+)/delete',
+    path('data/theme/<negpos:theme_id>/delete',
         themelist.ThemeDelete.as_view()),
-    re_path(r'^data/theme/(?P<theme_id>-?\d+)/save',
-        themelist.ThemeSave.as_view()),
+    path('data/theme/<negpos:theme_id>/save', themelist.ThemeSave.as_view()),
+
+    path('data/pedigree/<int:id>', pedigree.PedigreeData.as_view()),
+    path('data/suretySchemes', persona.SuretySchemesList.as_view()),
+    path('data/event/<int:id>', events.EventDetailsView.as_view()),
+    path('data/stats/<int:id>', stats.StatsView.as_view()),
+    path('data/metadata', metadata.MetadataList.as_view()),
     path('data/import', importers.GedcomImport.as_view()),
-    re_path(r'^data/citationModel/(?P<model_id>.+)$',
-        sources.CitationModel.as_view()),
+    path('data/citationModel/<int:model_id>', sources.CitationModel.as_view()),
     path('data/citationModels', sources.CitationModels.as_view()),
     re_path(r'^data/repr/(?P<id>\d+)(?:/(?P<size>\d+))?$',
         representation.view),
-    re_path(r'^data/quilts/(?P<id>\d+)$', quilts.QuiltsView.as_view()),
+    path('data/quilts/<int:id>', quilts.QuiltsView.as_view()),
 
     # Getting the CSRF token
     path('data/csrf', send_csrf),
