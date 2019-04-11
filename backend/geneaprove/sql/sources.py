@@ -91,14 +91,13 @@ class SourceSet(SQLSet):
         assert len(self.sources) == 1
         sid = next(iter(self.sources))
 
-        self.asserts.extend(
-            self.fetch_asserts_subset(
-                [models.P2E.objects.filter(source=sid),
-                 models.P2C.objects.filter(source=sid),
-                 models.P2P.objects.filter(source=sid),
-                 models.P2G.objects.filter(source=sid)],
-                offset=offset,
-                limit=limit))
+        self.asserts.fetch_asserts_subset(
+            [models.P2E.objects.filter(source=sid),
+             models.P2C.objects.filter(source=sid),
+             models.P2P.objects.filter(source=sid),
+             models.P2G.objects.filter(source=sid)],
+            offset=offset,
+            limit=limit)
 
     def fetch_citations(self):
         """

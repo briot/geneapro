@@ -21,14 +21,12 @@ class PlaceSet(SQLSet):
         return p2c + p2e
 
     def fetch_asserts(self, offset=None, limit=None):
-        a = self.fetch_asserts_subset(
+        result = AssertList()
+        result.fetch_asserts_subset(
             [models.P2C.objects
                 .filter(characteristic__place__in=self.place_ids),
              models.P2E.objects
                 .filter(event__place__in=self.place_ids)],
             offset=offset,
             limit=limit)
-
-        result = AssertList()
-        result.extend(a)
         return result

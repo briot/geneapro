@@ -6,7 +6,7 @@ client.
 
 import collections
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import F, Q, Value, IntegerField, TextField
 from geneaprove import models
 import logging
 from .sqlsets import SQLSet
@@ -21,7 +21,7 @@ class AssertList(SQLSet):
         """
         Fetch all data needed for the asserts
         """
-        self.asserts = set(asserts)
+        self.asserts = [a for a in asserts]
         self._known_events = set()     # list of Event
         self._known_persons = set()    # list of Person
         self._known_places = set()     # list of Place
@@ -35,10 +35,10 @@ class AssertList(SQLSet):
         return iter(self.asserts)
 
     def add(self, assertions):
-        self.asserts.add(assertions)
+        self.asserts.append(assertions)
 
     def extend(self, assertions):
-        self.asserts.update(assertions)
+        self.asserts.extend(assertions)
 
     def add_known(self, *, events=[], persons=[], places=[], sources=[]):
         """
@@ -83,6 +83,55 @@ class AssertList(SQLSet):
         self._missing_persons.update(persons)
         self._missing_places.update(places)
         self._missing_sources.update(sources)
+
+    def fetch_asserts_subset(self, tables, offset=None, limit=None):
+        """
+        Fetch a subset of assertions.
+        :param list tables:
+            The list of tables that should be queried, as ini
+               [models.P2E.objects.filter(...),
+                models.P2C.objects.filter(...)]
+        """
+        pm = None
+        for idx, queryset in enumerate(tables):
+            # ??? Should we use a dispatching operation
+            if queryset.model == models.P2E:
+                date = F('event__date_sort')
+            elif queryset.model == models.P2C:
+                date = F('characteristic__date_sort')
+            elif queryset.model == models.P2P:
+                date = Value("", TextField())
+            elif queryset.model == models.P2G:
+                date = Value("", TextField())
+            else:
+                raise Exception('Unknown queryset %s' % queryset)
+
+            a = queryset \
+                .values('id') \
+                .annotate(kind=Value(idx, IntegerField()), date_sort=date)
+            pm = a if pm is None else pm.union(a)
+
+        pm = pm.order_by('date_sort')
+        pm = self.limit_offset(pm, offset=offset, limit=limit)
+
+        asserts = list(pm)
+        result = [None] * len(asserts)
+
+        for kind, queryset in enumerate(tables):
+            ids = [a['id'] for a in asserts if a['kind'] == kind]
+            if ids:
+                # Memorize the sort order, because the next query (using "IN")
+                # will not preserve it.
+                order = {a['id']: idx
+                         for idx, a in enumerate(asserts)
+                         if a['kind'] == kind}
+                prefetch = queryset.model.related_json_fields()
+                for chunk in self.sqlin(queryset.model.objects, id__in=ids):
+                    for c in self.prefetch_related(chunk, *prefetch):
+                        result[order[c.id]] = c
+
+        # result.sort(key=lambda a: order[a.id])
+        self.asserts.extend(result)
 
     def to_json(self):
         """

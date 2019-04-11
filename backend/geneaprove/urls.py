@@ -81,7 +81,7 @@ urlpatterns = [
     path('data/sources/<negpos:id>/asserts', sources.SourceAsserts.as_view()),
     path('data/sources/<negpos:id>/asserts/count',
         sources.SourceAssertsCount.as_view()),
-    path('data/sources/<negpos:id>/saveparts$',
+    path('data/sources/<negpos:id>/saveparts',
         sources.EditSourceCitation.as_view()),
     path('data/sources/<int:id>addRepr', sources.AddSourceRepr.as_view()),
     path('data/sources/<int:id>/allRepr',
