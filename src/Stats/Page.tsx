@@ -3,11 +3,11 @@ import { connect } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
 import { JSONStats, fetchStatsFromServer } from "../Server/Stats";
-import { fetchPersonDetails } from "../Store/Sagas";
 import { AppState, GPDispatch } from "../Store/State";
 import { StatsSettings, changeStatsSettings } from "../Store/Stats";
 import { PersonSet, personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
+import { usePerson } from "../Server/Person";
 import { DropTarget } from "../Draggable";
 import { URL } from "../Links";
 import StatsGeneration from "../Stats/Generations";
@@ -22,128 +22,92 @@ interface PropsFromRoute {
 }
 
 interface StatsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
-   persons: PersonSet;
    dispatch: GPDispatch;
    settings: StatsSettings;
-   onChange: (diff: Partial<StatsSettings>) => void;
-   decujusid: number;
 }
 
-interface StatsPageConnectedState {
-   data?: JSONStats;
-}
+const StatsPage: React.FC<StatsPageConnectedProps> = (p) => {
+   const decujusid = Number(p.match.params.id);
+   const [data, setData] = React.useState<JSONStats|undefined>(undefined);
+   const person = usePerson(decujusid);
 
-class StatsPage extends React.PureComponent<
-   StatsPageConnectedProps,
-   StatsPageConnectedState
-> {
-   public state: StatsPageConnectedState = {};
-   public controller: AbortController | undefined;
+   React.useEffect(
+      () => {
+         fetchStatsFromServer(decujusid, p.settings).then(setData);
+      },
+      [decujusid, p.settings]
+   );
 
-   public componentDidMount() {
-      this.calculateProps();
+   React.useEffect(
+      () => {
+         p.dispatch(addToHistory({kind: HistoryKind.PERSON, id: decujusid }));
+      },
+      [decujusid, p.dispatch]
+   );
+
+   const onChange = React.useCallback(
+      (diff: Partial<StatsSettings>) =>
+         p.dispatch(changeStatsSettings({ diff })),
+      [p.dispatch]
+   );
+
+   if (person) {
+      document.title = "Stats for " + personDisplay(person);
    }
 
-   public componentDidUpdate(old: StatsPageConnectedProps) {
-      if (
-         this.props.decujusid !== old.decujusid ||
-         this.props.settings.max_age !== old.settings.max_age ||
-         this.props.settings.bar_width !== old.settings.bar_width
-      ) {
-         this.calculateProps();
-      }
+   const main = (!data || !person) ? (
+      <Loader active={true} size="large">
+         Loading
+      </Loader>
+   ) : (
+      <DropTarget redirectUrl={URL.stats}>
+         {p.settings.show_treestats && (
+            <StatsTree
+               decujus={person}
+               totalInDatabase={data.total_persons}
+               totalInTree={data.total_ancestors}
+               fatherAncestors={data.total_father}
+               motherAncestors={data.total_mother}
+            />
+         )}
 
-      this.props.dispatch(addToHistory({
-         kind: HistoryKind.PERSON, id: this.props.decujusid }));
+         {p.settings.show_generations && (
+            <StatsGeneration
+               ranges={data.ranges}
+               decujus={person}
+            />
+         )}
 
-      // Make sure we have the name of the person
-      const p = this.props.persons[this.props.decujusid];
-      if (!p) {
-         fetchPersonDetails.execute(this.props.dispatch, {
-            id: this.props.decujusid
-         });
-      }
-   }
+         {p.settings.show_lifespan && (
+            <StatsLifespan
+               ages={data.ages}
+               settings={p.settings}
+               decujus={person}
+            />
+         )}
+      </DropTarget>
+   );
 
-   public render() {
-      const decujus = this.props.persons[this.props.decujusid];
-      if (decujus) {
-         document.title = "Stats for " + personDisplay(decujus);
-      }
-
-      const main = !this.state.data ? (
-         <Loader active={true} size="large">
-            Loading
-         </Loader>
-      ) : (
-         <DropTarget redirectUrl={URL.stats}>
-            {this.props.settings.show_treestats && (
-               <StatsTree
-                  decujus={decujus}
-                  totalInDatabase={this.state.data.total_persons}
-                  totalInTree={this.state.data.total_ancestors}
-                  fatherAncestors={this.state.data.total_father}
-                  motherAncestors={this.state.data.total_mother}
-               />
-            )}
-
-            {this.props.settings.show_generations && (
-               <StatsGeneration
-                  ranges={this.state.data.ranges}
-                  decujus={this.props.persons[this.props.decujusid]}
-               />
-            )}
-
-            {this.props.settings.show_lifespan && (
-               <StatsLifespan
-                  ages={this.state.data.ages}
-                  settings={this.props.settings}
-                  decujus={this.props.persons[this.props.decujusid]}
-               />
-            )}
-         </DropTarget>
-      );
-
-      return (
-         <Page
-            decujusid={this.props.decujusid}
-            main={main}
-            leftSide={
-               <StatsSide
-                  settings={this.props.settings}
-                  onChange={this.props.onChange}
-               />
-            }
-         />
-      );
-   }
-
-   private calculateProps() {
-      if (this.controller) {
-         this.controller.abort();
-      }
-      this.controller = new AbortController();
-      fetchStatsFromServer(
-         this.props.decujusid,
-         this.props.settings,
-         this.controller.signal
-      ).then((s: JSONStats) => {
-         this.setState({ data: s });
-      });
-   }
+   return (
+      <Page
+         decujusid={decujusid}
+         main={main}
+         leftSide={
+            <StatsSide
+               settings={p.settings}
+               onChange={onChange}
+            />
+         }
+      />
+   );
 }
 
 export default connect(
    (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
       ...props,
       settings: state.stats,
-      persons: state.persons,
-      decujusid: Number(props.match.params.id)
    }),
    (dispatch: GPDispatch) => ({
       dispatch,
-      onChange: (diff: Partial<StatsSettings>) => {
-         dispatch(changeStatsSettings({ diff }));
-      }
    })
 )(StatsPage);

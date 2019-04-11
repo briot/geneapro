@@ -1,5 +1,4 @@
 import { actionCreator } from "../Store/Actions";
-import { AssertionList } from "../Store/Assertion";
 
 export interface Place {
    date: string | null;

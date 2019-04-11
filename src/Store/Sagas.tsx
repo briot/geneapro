@@ -1,9 +1,5 @@
 import { all, call, put } from "redux-saga/effects";
 import { fetchPedigreeFromServer } from "../Server/Pedigree";
-import {
-   fetchPersonDetailsFromServer,
-   DetailsResult
-} from "../Server/Person";
 import { fetchEventFromServer, EventDetails } from "../Server/Event";
 import {
    fetchSourceDetailsFromServer
@@ -76,26 +72,6 @@ export const fetchMetadata = createAsyncAction<
    FetchMetadataParams,
    GP_JSON.Metadata
 >("DATA/META", _fetchMetaData, _hasMetadata);
-
-/**
- * Async Action: fetch details for one specific person
- */
-
-export interface FetchPersonDetailsParams {
-   id: number;
-}
-function* _fetchPersonDetails(p: FetchPersonDetailsParams) {
-   const res: DetailsResult = yield call(fetchPersonDetailsFromServer, p.id);
-
-   // Register all events
-   yield put(addEvents({ events: res.events }));
-
-   return res;
-}
-export const fetchPersonDetails = createAsyncAction(
-   "DATA/PERSON",
-   _fetchPersonDetails
-);
 
 /**
  * Async Action: fetch details for one event

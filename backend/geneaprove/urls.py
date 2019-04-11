@@ -67,6 +67,9 @@ urlpatterns = [
     path('data/persona/list', persona.PersonaList.as_view()),
     path('data/persona/count', persona.PersonCount.as_view()),
     path('data/persona/<int:id>', persona.PersonaView.as_view()),
+    path('data/persona/<int:id>/asserts', persona.PersonAsserts.as_view()),
+    path('data/persona/<int:id>/asserts/count',
+        persona.PersonAssertsCount.as_view()),
 
     path('data/places/list', places.PlaceList.as_view()),
     path('data/places/count', places.PlaceCount.as_view()),

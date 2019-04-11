@@ -7,7 +7,6 @@ import { addToHistory, HistoryItem } from "../Store/History";
 import {
    fetchPedigree,
    FetchPedigreeResult,
-   fetchPersonDetails,
    fetchEventDetails,
    fetchSourceDetails,
    fetchMetadata,
@@ -181,17 +180,6 @@ export function rootReducer(
          events: { ...state.events, ...action.payload.result.events },
          pedigree: { ...state.pedigree, loading: false }
       };
-   } else if (isType(action, fetchPersonDetails.done)) {
-      const data: DetailsResult = action.payload.result as DetailsResult;
-      const s = {...state, ...mergeAssertionEntities(state, data) };
-      s.persons[data.person.id] = data.person;
-
-      // Create an alias if necessary, in case the person was referenced
-      // by one of its personas
-      if (action.payload.params.id !== data.person.id) {
-         s.persons[action.payload.params.id] = s.persons[data.person.id];
-      }
-      return s;
    } else if (isType(action, fetchSourceDetails.done)) {
       const source: Source = action.payload.result;
       return {

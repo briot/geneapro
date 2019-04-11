@@ -11,9 +11,9 @@ import {
    GPDispatch,
    MetadataDict
 } from "../Store/State";
-import { fetchPersonDetails } from "../Store/Sagas";
 import Page from "../Page";
 import Persona from "../Persona/Persona";
+import { usePerson } from "../Server/Person";
 
 interface PropsFromRoute {
    id: string;
@@ -21,20 +21,19 @@ interface PropsFromRoute {
 
 interface PersonaPageProps extends RouteComponentProps<PropsFromRoute> {
    dispatch: GPDispatch;
-   entities: AssertionEntities;
    metadata: MetadataDict;
 }
 
 const PersonaPage: React.FC<PersonaPageProps> = (p) => {
    const id = Number(p.match.params.id);
-   const pers = p.entities.persons[id];
    const { dispatch } = p;
+   const person = usePerson(id);
 
    React.useEffect(
       () => {
-          document.title = pers ? personDisplay(pers) : "Persona";
+          document.title = person ? personDisplay(person) : "Persona";
       },
-      [pers]
+      [person]
    );
 
    React.useEffect(
@@ -44,20 +43,14 @@ const PersonaPage: React.FC<PersonaPageProps> = (p) => {
       [id, dispatch ]
    );
 
-   React.useEffect(
-      () => fetchPersonDetails.execute(dispatch, { id }),
-      [id, dispatch]
-   );
-
    return (
       <Page
          decujusid={id}
          main={
-            pers ? (
+            person ? (
                <Persona
                   dispatch={dispatch}
-                  entities={p.entities}
-                  person={pers}
+                  person={person}
                   metadata={p.metadata}
                />
             ) : (
@@ -73,7 +66,6 @@ const PersonaPage: React.FC<PersonaPageProps> = (p) => {
 export default connect(
    (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
       ...props,
-      entities: getEntities(state),
       metadata: state.metadata,
    }),
    (dispatch: GPDispatch) => ({ dispatch })

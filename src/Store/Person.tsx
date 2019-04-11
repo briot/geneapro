@@ -1,4 +1,3 @@
-import { AssertionList } from "../Store/Assertion";
 import Style from "../Store/Styles";
 
 // The base type is only needed until the server returns a proper Person.
@@ -23,9 +22,6 @@ export interface Person extends BasePerson {
    // Those are only known after asking for a person's pedigree
    parents?: (number | null)[];
    children?: (number | null)[];
-
-   // Those are only known after asking for a person's details
-   asserts?: AssertionList;
 }
 
 export interface PersonSet {

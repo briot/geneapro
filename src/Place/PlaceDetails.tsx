@@ -27,25 +27,24 @@ export default function PlaceDetails(p: PlaceProps) {
    });
    const place = p.place;
    const count = usePlaceAssertsCount(place.id);
-   const fetchAsserts: InfiniteRowFetcher<Assertion> =
-      React.useCallback(
-         (fp) => {
-            return fetchPlaceAsserts({
-               id: place.id,
-               limit: fp.limit,
-               offset: fp.offset
-            }).then((a: AssertionEntitiesJSON) => {
-               const r: AssertionEntities = {
-                  events: {},
-                  persons: {},
-                  places: {},
-                  sources: {}};
-               setAssertionEntities(a, r);
-               setEntities(e => mergeAssertionEntities(e, r));
-               return a.asserts.map(assertionFromJSON);
-            });
-         },
-         [place.id],
+   const fetchAsserts: InfiniteRowFetcher<Assertion> = React.useCallback(
+      (fp) => {
+         return fetchPlaceAsserts({
+            id: place.id,
+            limit: fp.limit,
+            offset: fp.offset
+         }).then((a: AssertionEntitiesJSON) => {
+            const r: AssertionEntities = {
+               events: {},
+               persons: {},
+               places: {},
+               sources: {}};
+            setAssertionEntities(a, r);
+            setEntities(e => mergeAssertionEntities(e, r));
+            return a.asserts.map(assertionFromJSON);
+         });
+      },
+      [place.id],
    );
 
    return (

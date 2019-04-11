@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Source } from "../Store/Source";
-import { AssertionList } from "../Store/Assertion";
 import {
    AssertionEntities,
    AssertionEntitiesJSON,
@@ -12,10 +11,6 @@ interface JSONResult {
    higher_sources: number[];
    repr: JSON.SourceRepr[];
    parts: JSON.CitationPart[];
-}
-
-interface SourceAsserts extends AssertionEntities {
-   asserts: AssertionList;
 }
 
 export function sourceFromJSON(s: JSON.Source) {

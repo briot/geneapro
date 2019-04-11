@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Place, PlaceSet } from "../Store/Place";
-import { AssertionList } from "../Store/Assertion";
 import {
    AssertionEntities,
    AssertionEntitiesJSON,
@@ -40,6 +39,9 @@ export const fetchPlacesCount = (p: {filter: string}): Promise<number> =>
    fetch(`/data/places/count?filter=${encodeURI(p.filter)}`)
    .then((r: Response) => r.json());
 
+/**
+ * Fetch details about a specific place
+ */
 export const usePlace = (id: number): Place|undefined => {
    const [place, setPlace] = React.useState<Place|undefined>(undefined);
    React.useEffect(

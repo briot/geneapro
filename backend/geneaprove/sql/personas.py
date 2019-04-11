@@ -4,7 +4,7 @@ Support for writing custom SQL queries
 
 import collections
 import django.db
-from django.db.models import F
+from django.db.models import F, Q
 import logging
 from .. import models
 from .asserts import AssertList
@@ -483,6 +483,26 @@ class PersonSet(SQLSet):
                     cur.execute(q)
             finally:
                 cur.execute("pragma foreign_keys=%s" % previous)
+
+    def _query_asserts(self):
+        return [
+            table.objects.filter(person__main_id__in=self.persons.keys())
+            for table in (models.P2C, models.P2E, models.P2G)
+        ] + [models.P2P.objects \
+            .filter(Q(person1__main_id__in=self.persons.keys())
+                    | Q(person2__main_id__in=self.persons.keys()))
+        ]
+
+    def count_asserts(self):
+        total = 0
+        for a in self._query_asserts():
+            total += a.count()
+        return total
+
+    def fetch_asserts_subset(self, offset=None, limit=None):
+        self.asserts.fetch_asserts_subset(
+            self._query_asserts(), offset=offset, limit=limit)
+        return self.asserts
 
     def to_json(self):
         result = {}

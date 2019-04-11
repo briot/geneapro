@@ -30,24 +30,25 @@ interface PersonCardProps {
 
 const PersonCard: React.FC<PersonCardProps> = (p) => {
    let img: JSX.Element | undefined;
-   if (p.person.asserts) {
-      for (const a of p.person.asserts.get()) {
-         if (
-            a instanceof P2C &&
-            a.characteristic.medias &&
-            a.characteristic.medias[0]
-         ) {
-            img = (
-               <Image
-                  floated="right"
-                  size="tiny"
-                  src={a.characteristic.medias[0].url}
-               />
-            );
-            break;
-         }
-      }
-   }
+   window.console.log('MANU dashboard.personcard=', p.person);
+//   if (p.person.asserts) {
+//      for (const a of p.person.asserts.get()) {
+//         if (
+//            a instanceof P2C &&
+//            a.characteristic.medias &&
+//            a.characteristic.medias[0]
+//         ) {
+//            img = (
+//               <Image
+//                  floated="right"
+//                  size="tiny"
+//                  src={a.characteristic.medias[0].url}
+//               />
+//            );
+//            break;
+//         }
+//      }
+//   }
 
    return (
       <Card>
