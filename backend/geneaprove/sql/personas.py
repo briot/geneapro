@@ -3,6 +3,7 @@ Support for writing custom SQL queries
 """
 
 import collections
+from enum import Enum
 import django.db
 from django.db.models import F
 import logging
@@ -14,6 +15,16 @@ logger = logging.getLogger(__name__)
 
 FolkLore = collections.namedtuple(
     'FolkLore', "main_id generation folks") 
+
+class Relationship(Enum):
+    ANCESTORS = ('ancestors', 'parents', 'parent', ('p2e', 'p2'))
+    DESCENDANTS = ('descendants', 'children', 'child', ('p2', 'p2e'))
+
+    def __init__(self, relations, group, individual, query_tables):
+        self.relations = relations
+        self.group = group
+        self.individual = individual
+        self.query_tables = query_tables
 
 class PersonSet(SQLSet):
     """
@@ -135,20 +146,14 @@ class PersonSet(SQLSet):
         A query that computes the list of direct parents or children
         for a person
         """
-        if 'parent' in relationship:
-            table_a = 'p2e'
-            table_b = 'p2'
-        elif 'child' in relationship:
-            table_a = 'p2'
-            table_b = 'p2e'
 
         return (
-            f"SELECT DISTINCT persona.main_id, pp.main_id as {relationship} "
+            f"SELECT DISTINCT persona.main_id, pp.main_id as {relationship.individual} "
             "FROM persona, p2e, event, p2e p2, persona pp "
             "WHERE event.id=p2e.event_id "
-            f"AND {table_a}.role_id={models.Event_Type_Role.PK_principal} "
+            f"AND {relationship.query_tables[0]}.role_id={models.Event_Type_Role.PK_principal} "
             f"AND event.type_id={models.Event_Type.PK_birth} "
-            f"AND {table_b}.role_id IN ({models.Event_Type_Role.PK_birth__father}, "
+            f"AND {relationship.query_tables[1]}.role_id IN ({models.Event_Type_Role.PK_birth__father}, "
             f"{models.Event_Type_Role.PK_birth__mother}) "
             "AND p2e.person_id=persona.id "
             "AND p2.event_id=event.id "
@@ -162,34 +167,29 @@ class PersonSet(SQLSet):
         """
         assert isinstance(person_id, int)
 
-        if 'ancestors' in relationship:
-            role = ['parents', 'parent']
-        elif 'descendants' in relationship:
-            role = ['children', 'child']
-
         with django.db.connection.cursor() as cur:
             pid = cls.cast(person_id, 'bigint')
             zero = cls.cast(0, 'bigint')  # ??? do we really need to cast
             initial = f"VALUES({pid}, {zero})"
-            md = f"AND {relationship}.generation<={max_depth} " if max_depth else ""
-            sk = f"WHERE {relationship}.generation>{skip} " if skip else ""
+            md = f"AND {relationship.relations}.generation<={max_depth} " if max_depth else ""
+            sk = f"WHERE {relationship.relations}.generation>{skip} " if skip else ""
             q = (
-                f"WITH RECURSIVE {role[0]}(main_id, {role[1]}) "
-                f"AS ({cls._query_get_folks(role[1])}), "
-                f"{relationship}(main_id,generation) "
+                f"WITH RECURSIVE {relationship.group}(main_id, {relationship.individual}) "
+                f"AS ({cls._query_get_folks(relationship)}), "
+                f"{relationship.relations}(main_id,generation) "
                     f"AS ({initial} "
                     "UNION "
-                    f"SELECT {role[0]}.{role[1]}, {relationship}.generation + 1 "
-                    f"FROM {role[0]}, {relationship} "
-                    f"WHERE {role[0]}.main_id = {relationship}.main_id "
+                    f"SELECT {relationship.group}.{relationship.individual}, {relationship.relations}.generation + 1 "
+                    f"FROM {relationship.group}, {relationship.relations} "
+                    f"WHERE {relationship.group}.main_id = {relationship.relations}.main_id "
                     f"{md}) "
-                f"SELECT {relationship}.main_id, {relationship}.generation, "
-                f"{cls.group_concat(f'{role[0]}.{role[1]}')} AS {role[0]} "
-                f"FROM {relationship} "
-                f"LEFT JOIN {role[0]} "
-                f"ON {role[0]}.main_id={relationship}.main_id "
+                f"SELECT {relationship.relations}.main_id, {relationship.relations}.generation, "
+                f"{cls.group_concat(f'{relationship.group}.{relationship.individual}')} AS {relationship.group} "
+                f"FROM {relationship.relations} "
+                f"LEFT JOIN {relationship.group} "
+                f"ON {relationship.group}.main_id={relationship.relations}.main_id "
                 f"{sk}"
-                f"GROUP BY {relationship}.main_id, {relationship}.generation"            )
+                f"GROUP BY {relationship.relations}.main_id, {relationship.relations}.generation"            )
             cur.execute(q)
 
             return [
@@ -208,15 +208,11 @@ class PersonSet(SQLSet):
         front-end already has that information.
         """
         assert isinstance(person_id, int)
-        if relationship is 'ancestors':
-            key = 'parents'
-        elif relationship is 'descendants':
-            key = 'children'
 
         folks = self.get_folks(relationship, person_id, max_depth, skip)
         self.add_ids(ids=(f.main_id for f in folks))
         for f in folks:
-            self.layout[f.main_id][key] = f.folks
+            self.layout[f.main_id][relationship.group] = f.folks
 
     def get_unique_person(self):
         """
@@ -228,7 +224,7 @@ class PersonSet(SQLSet):
             return None
 
     @classmethod
-    def has_known_parent(cls, main_ids=None, sex=None):
+    def has_known_parent(cls, main_ids=None, sex=None, relationship=Relationship.ANCESTORS):
         """
         Whether the person has a known father (sex=M) or mother (sex=F).
         :returntype:
@@ -257,7 +253,7 @@ class PersonSet(SQLSet):
                 where = ""
 
             cur.execute(
-                f"WITH parents AS ({cls._query_get_folks('parent')}), "
+                f"WITH parents AS ({cls._query_get_folks(relationship)}), "
                 f"sex AS ({cls._query_get_sex()}) "
                 "SELECT parents.main_id, sex.sex "
                 "FROM parents "
