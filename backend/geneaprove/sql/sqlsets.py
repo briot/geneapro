@@ -42,25 +42,22 @@ class SQLSet(object):
             prefetch_related_objects(chunk, *attrs)
         return obj
 
-    @classmethod
-    def group_concat(cls, field):
+    def group_concat(self, field):
         """
         An aggregate function for the database, that takes all values for
         the field and returns a comma-separated list of values
         """
-        if 'postgresql' in cls.ENGINE:
+        if 'postgresql' in self.ENGINE:
             return f"string_agg({field}::text, ',')"
         else:
             return f"group_concat({field})"
 
-    @classmethod
-    def cast(cls, field, typename):
+    def cast(self, field, typename):
         """
         Cast a field to a specific type
         """
         # Use standard SQL syntax, though historically postgresql used ::
-        return
-
+        return f"CAST({field} AS {typename})"
 
     def sqlin(self, queryset, **kwargs):
         """

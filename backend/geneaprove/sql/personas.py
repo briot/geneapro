@@ -168,8 +168,7 @@ class PersonSet(SQLSet):
             "AND p2.event_id=event.id "
             "AND p2.person_id=pp.id")
 
-    @classmethod
-    def get_ancestors(cls, person_id, max_depth=None, skip=0):
+    def get_ancestors(self, person_id, max_depth=None, skip=0):
         """
         :returntype: list of AncestorInfo
            This includes person_id itself, at generation 0
@@ -177,15 +176,15 @@ class PersonSet(SQLSet):
         assert isinstance(person_id, int)
 
         with django.db.connection.cursor() as cur:
-            pid = cls.cast(person_id, 'bigint')
-            zero = cls.cast(0, 'bigint')  # ??? do we really need to cast
+            pid = self.cast(person_id, 'bigint')
+            zero = self.cast(0, 'bigint')  # ??? do we really need to cast
             initial = f"VALUES({pid}, {zero})"
 
             md = f"AND ancestors.generation<={max_depth} " if max_depth else ""
             sk = f"WHERE ancestors.generation>{skip} " if skip else ""
             q = (
                 "WITH RECURSIVE parents(main_id, parent) AS (" +
-                    cls._query_get_parents() +
+                    self._query_get_parents() +
                 "), ancestors(main_id,generation) AS ("
                     f"{initial} "
                     "UNION "
@@ -194,7 +193,7 @@ class PersonSet(SQLSet):
                     "WHERE parents.main_id = ancestors.main_id "
                     f"{md}"
                 ") SELECT ancestors.main_id, ancestors.generation, "
-                f"{cls.group_concat('parents.parent')} AS parents "
+                f"{self.group_concat('parents.parent')} AS parents "
                 "FROM ancestors LEFT JOIN parents "
                 "ON parents.main_id=ancestors.main_id "
                 f"{sk}"
@@ -210,15 +209,14 @@ class PersonSet(SQLSet):
                 )
                 for main_id, generation, p in cur.fetchall()]
 
-    @classmethod
-    def get_descendants(cls, person_id, max_depth=None, skip=0):
+    def get_descendants(self, person_id, max_depth=None, skip=0):
         """
         :returntype: list of DescendantInfo
            This includes person_id itself, at generation 0
         """
         with django.db.connection.cursor() as cur:
-            pid = cls.cast(person_id, 'bigint')
-            zero = cls.cast(0, 'bigint')  # ??? do we really need to cast
+            pid = self.cast(person_id, 'bigint')
+            zero = self.cast(0, 'bigint')  # ??? do we really need to cast
             initial = f"VALUES({pid}, {zero})"
             md = (
                 f"AND descendants.generation<={max_depth} "
@@ -226,7 +224,7 @@ class PersonSet(SQLSet):
             sk = f"WHERE descendants.generation>{skip} " if skip else ""
             q = (
                 "WITH RECURSIVE children(main_id, child) AS (" +
-                    cls._query_get_children() +
+                    self._query_get_children() +
                 "), descendants(main_id,generation) as ("
                     f"{initial} "
                     "UNION "
@@ -235,7 +233,7 @@ class PersonSet(SQLSet):
                     "WHERE children.main_id = descendants.main_id "
                     f"{md}"
                 ") SELECT descendants.main_id, descendants.generation, "
-                f"{cls.group_concat('children.child')} AS children "
+                f"{self.group_concat('children.child')} AS children "
                 "FROM descendants LEFT JOIN children "
                 "ON children.main_id=descendants.main_id "
                 f"{sk}"
@@ -286,8 +284,7 @@ class PersonSet(SQLSet):
         else:
             return None
 
-    @classmethod
-    def has_known_parent(cls, main_ids=None, sex=None):
+    def has_known_parent(self, main_ids=None, sex=None):
         """
         Whether the person has a known father (sex=M) or mother (sex=F).
         :returntype:
@@ -316,8 +313,8 @@ class PersonSet(SQLSet):
                 where = ""
 
             cur.execute(
-                "WITH parents AS (" + cls._query_get_parents() +
-                "), sex AS (" + cls._query_get_sex() +
+                "WITH parents AS (" + self._query_get_parents() +
+                "), sex AS (" + self._query_get_sex() +
                 ") SELECT parents.main_id, sex.sex "
                 "FROM parents LEFT JOIN sex "
                 f"ON parents.parent=sex.main_id {where}",
@@ -441,8 +438,7 @@ class PersonSet(SQLSet):
             .select_related(*models.P2P.related_json_fields())
         self.asserts.extend(pm)
 
-    @classmethod
-    def recompute_main_ids(cls):
+    def recompute_main_ids(self):
         """
         Recompute all main_ids in the database (thread-safe).
         Must be called outside of a transaction, or it will be very slow
