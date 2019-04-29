@@ -4,7 +4,7 @@ from geneaprove import models
 from grandalf.graphs import Vertex,Edge,Graph
 from grandalf.layouts import SugiyamaLayout
 from .to_json import JSONView
-from ..sql import PersonSet
+from ..sql import PersonSet, Relationship
 
 
 class BirthEvent:
@@ -44,8 +44,8 @@ class QuiltsView(JSONView):
 
     def get_json(self, params, id):
         persons = PersonSet()
-        persons.add_ancestors(int(id))
-        persons.add_descendants(int(id))
+        persons.add_folks(int(id), Relationship.ANCESTORS)
+        persons.add_folks(int(id), Relationship.DESCENDANTS)
         persons.fetch_p2e(
             event_types=(models.Event_Type.PK_birth,
                          models.Event_Type.PK_marriage))

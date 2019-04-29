@@ -8,7 +8,7 @@ from django.db.models import Count, F
 import logging
 from .. import models
 from ..utils.date import DateRange
-from ..sql import PersonSet
+from ..sql import PersonSet, Relationship
 from .to_json import JSONView
 
 logger = logging.getLogger('geneaprove.STATS')
@@ -29,8 +29,8 @@ class StatsView(JSONView):
         # when we store children differently (for instance in a group)
 
         persons = PersonSet()
-        persons.add_ancestors(person_id=int(id))
-        persons.add_descendants(person_id=int(id))
+        persons.add_folks(person_id=int(id), relationship=Relationship.ANCESTORS)
+        persons.add_folks(person_id=int(id), relationship=Relationship.DESCENDANTS)
         persons.fetch_p2e()   # compute births and deaths
 
         logger.debug('count persons in tree')

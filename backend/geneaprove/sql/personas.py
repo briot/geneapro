@@ -3,6 +3,7 @@ Support for writing custom SQL queries
 """
 
 import collections
+from enum import Enum
 import django.db
 from django.db.models import F, Q
 import logging
@@ -10,15 +11,20 @@ from .. import models
 from .asserts import AssertList
 from .sqlsets import SQLSet
 
-
 logger = logging.getLogger(__name__)
 
+FolkLore = collections.namedtuple(
+    'FolkLore', "main_id generation folks")
 
-AncestorInfo = collections.namedtuple(
-    'AncestorInfo', "main_id generation parents")
-DescendantInfo = collections.namedtuple(
-    'DescendantInfo', "main_id generation children")
+class Relationship(Enum):
+    ANCESTORS = ('ancestors', 'parents', 'parent', ('p2e', 'p2'))
+    DESCENDANTS = ('descendants', 'children', 'child', ('p2', 'p2e'))
 
+    def __init__(self, relations, group, individual, query_tables):
+        self.relations = relations
+        self.group = group
+        self.individual = individual
+        self.query_tables = query_tables
 
 class PersonSet(SQLSet):
     """
@@ -135,42 +141,27 @@ class PersonSet(SQLSet):
             "GROUP BY p.main_id, c.name")
 
     @staticmethod
-    def _query_get_parents():
+    def _query_get_folks(relationship):
         """
-        A query that computes the list of direct parents for a person
+        A query that computes the list of direct parents or children
+        for a person
         """
+
         return (
-            "SELECT DISTINCT persona.main_id, pp.main_id as parent "
+            f"SELECT DISTINCT persona.main_id, pp.main_id as {relationship.individual} "
             "FROM persona, p2e, event, p2e p2, persona pp "
             "WHERE event.id=p2e.event_id "
-            f"AND p2e.role_id={models.Event_Type_Role.PK_principal} "
+            f"AND {relationship.query_tables[0]}.role_id={models.Event_Type_Role.PK_principal} "
             f"AND event.type_id={models.Event_Type.PK_birth} "
-            f"AND p2.role_id IN ({models.Event_Type_Role.PK_birth__father},"
+            f"AND {relationship.query_tables[1]}.role_id IN ({models.Event_Type_Role.PK_birth__father}, "
             f"{models.Event_Type_Role.PK_birth__mother}) "
             "AND p2e.person_id=persona.id "
             "AND p2.event_id=event.id "
             "AND p2.person_id=pp.id")
 
-    @staticmethod
-    def _query_get_children():
+    def get_folks(self, relationship, person_id, max_depth=None, skip=0):
         """
-        A query that computes the list of direct children for a person
-        """
-        return (
-            "SELECT DISTINCT persona.main_id, pp.main_id as child "
-            "FROM persona, p2e, event, p2e p2, persona pp "
-            "WHERE event.id=p2e.event_id "
-            f"AND p2e.role_id IN ({models.Event_Type_Role.PK_birth__father},"
-            f"{models.Event_Type_Role.PK_birth__mother}) "
-            f"AND event.type_id={models.Event_Type.PK_birth} "
-            f"AND p2.role_id={models.Event_Type_Role.PK_principal} "
-            "AND p2e.person_id=persona.id "
-            "AND p2.event_id=event.id "
-            "AND p2.person_id=pp.id")
-
-    def get_ancestors(self, person_id, max_depth=None, skip=0):
-        """
-        :returntype: list of AncestorInfo
+        :returntype: list of FolkLore
            This includes person_id itself, at generation 0
         """
         assert isinstance(person_id, int)
@@ -179,101 +170,48 @@ class PersonSet(SQLSet):
             pid = self.cast(person_id, 'bigint')
             zero = self.cast(0, 'bigint')  # ??? do we really need to cast
             initial = f"VALUES({pid}, {zero})"
-
-            md = f"AND ancestors.generation<={max_depth} " if max_depth else ""
-            sk = f"WHERE ancestors.generation>{skip} " if skip else ""
+            md = f"AND {relationship.relations}.generation<={max_depth} " if max_depth else ""
+            sk = f"WHERE {relationship.relations}.generation>{skip} " if skip else ""
             q = (
-                "WITH RECURSIVE parents(main_id, parent) AS (" +
-                    self._query_get_parents() +
-                "), ancestors(main_id,generation) AS ("
-                    f"{initial} "
+                f"WITH RECURSIVE {relationship.group}(main_id, {relationship.individual}) "
+                f"AS ({self._query_get_folks(relationship)}), "
+                f"{relationship.relations}(main_id,generation) "
+                    f"AS ({initial} "
                     "UNION "
-                    "SELECT parents.parent, ancestors.generation + 1 "
-                    "FROM parents, ancestors "
-                    "WHERE parents.main_id = ancestors.main_id "
-                    f"{md}"
-                ") SELECT ancestors.main_id, ancestors.generation, "
-                f"{self.group_concat('parents.parent')} AS parents "
-                "FROM ancestors LEFT JOIN parents "
-                "ON parents.main_id=ancestors.main_id "
+                    f"SELECT {relationship.group}.{relationship.individual}, {relationship.relations}.generation + 1 "
+                    f"FROM {relationship.group}, {relationship.relations} "
+                    f"WHERE {relationship.group}.main_id = {relationship.relations}.main_id "
+                    f"{md}) "
+                f"SELECT {relationship.relations}.main_id, {relationship.relations}.generation, "
+                f"{self.group_concat(f'{relationship.group}.{relationship.individual}')} AS {relationship.group} "
+                f"FROM {relationship.relations} "
+                f"LEFT JOIN {relationship.group} "
+                f"ON {relationship.group}.main_id={relationship.relations}.main_id "
                 f"{sk}"
-                "GROUP BY ancestors.main_id, ancestors.generation"
-            )
+                f"GROUP BY {relationship.relations}.main_id, {relationship.relations}.generation"            )
             cur.execute(q)
 
             return [
-                AncestorInfo(
+                FolkLore(
                     main_id,
                     generation,
-                    [] if not p else [int(a) for a in p.split(',')]
+                    [] if not f else [int(a) for a in f.split(',')]
                 )
-                for main_id, generation, p in cur.fetchall()]
+                for main_id, generation, f in cur.fetchall()]
 
-    def get_descendants(self, person_id, max_depth=None, skip=0):
+    def add_folks(self, person_id, relationship, max_depth=None, skip=0):
         """
-        :returntype: list of DescendantInfo
-           This includes person_id itself, at generation 0
-        """
-        with django.db.connection.cursor() as cur:
-            pid = self.cast(person_id, 'bigint')
-            zero = self.cast(0, 'bigint')  # ??? do we really need to cast
-            initial = f"VALUES({pid}, {zero})"
-            md = (
-                f"AND descendants.generation<={max_depth} "
-                if max_depth else "")
-            sk = f"WHERE descendants.generation>{skip} " if skip else ""
-            q = (
-                "WITH RECURSIVE children(main_id, child) AS (" +
-                    self._query_get_children() +
-                "), descendants(main_id,generation) as ("
-                    f"{initial} "
-                    "UNION "
-                    "SELECT children.child, descendants.generation + 1 "
-                    "FROM children, descendants "
-                    "WHERE children.main_id = descendants.main_id "
-                    f"{md}"
-                ") SELECT descendants.main_id, descendants.generation, "
-                f"{self.group_concat('children.child')} AS children "
-                "FROM descendants LEFT JOIN children "
-                "ON children.main_id=descendants.main_id "
-                f"{sk}"
-                "GROUP BY descendants.main_id, descendants.generation"
-            )
-            cur.execute(q)
-
-            return [
-                DescendantInfo(
-                    main_id,
-                    generation,
-                    [] if not c else [int(a) for a in c.split(',')]
-                )
-                for main_id, generation, c in cur.fetchall()]
-
-    def add_ancestors(self, person_id, max_depth=None, skip=0):
-        """
-        Fetch the list of all ancestors of `person_id`, up until the
-        `max_depth` generation.
+        Fetch the list of all ancestors or descendants of `person_id`, up
+        until the `max_depth` generation.
         Omit all persons with a generation less than `skip`, assuming the
         front-end already has that information.
         """
         assert isinstance(person_id, int)
-        ancestors = self.get_ancestors(person_id, max_depth, skip)
-        self.add_ids(ids=(a.main_id for a in ancestors))
-        for a in ancestors:
-            self.layout[a.main_id]['parents'] = a.parents
 
-    def add_descendants(self, person_id, max_depth=None, skip=0):
-        """
-        Fetch the list of all descendants of `person_id`, up until the
-        `max_depth` generation.
-        Omit all persons with a generation less than `skip`, assuming the
-        front-end already has that information.
-        """
-        assert isinstance(person_id, int)
-        desc = self.get_descendants(person_id, max_depth, skip)
-        self.add_ids(ids=(a.main_id for a in desc))
-        for a in desc:
-            self.layout[a.main_id]['children'] = a.children
+        folks = self.get_folks(relationship, person_id, max_depth, skip)
+        self.add_ids(ids=(f.main_id for f in folks))
+        for f in folks:
+            self.layout[f.main_id][relationship.group] = f.folks
 
     def get_unique_person(self):
         """
@@ -284,7 +222,7 @@ class PersonSet(SQLSet):
         else:
             return None
 
-    def has_known_parent(self, main_ids=None, sex=None):
+    def has_known_parent(self, main_ids=None, sex=None, relationship=Relationship.ANCESTORS):
         """
         Whether the person has a known father (sex=M) or mother (sex=F).
         :returntype:
@@ -313,10 +251,11 @@ class PersonSet(SQLSet):
                 where = ""
 
             cur.execute(
-                "WITH parents AS (" + self._query_get_parents() +
-                "), sex AS (" + self._query_get_sex() +
-                ") SELECT parents.main_id, sex.sex "
-                "FROM parents LEFT JOIN sex "
+                f"WITH parents AS ({self._query_get_folks(relationship)}), "
+                f"sex AS ({self._query_get_sex()}) "
+                "SELECT parents.main_id, sex.sex "
+                "FROM parents "
+                "LEFT JOIN sex "
                 f"ON parents.parent=sex.main_id {where}",
                 args)
 
@@ -350,8 +289,7 @@ class PersonSet(SQLSet):
         Compute the generation number for all persons in self, assuming that
         people in `gen_0_ids` are at generation 0 (parents are one generation
         above, children one below.
-        This assumes you have called `add_ancestors` or `add_descendants` to
-        add the persons.
+        This assumes you have called `add_folks()`to add the persons.
         """
         generations = {}
         queue = [(self.get_from_id(g).main_id, 0) for g in gen_0_ids]
