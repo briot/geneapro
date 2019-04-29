@@ -237,7 +237,7 @@ class Ancestor(RuleChecker):
 
     def precompute(self, decujus, precomputed):
         ancestors = PersonSet.get_folks(
-            relationship = Relationship.ANCESTORS,
+            relationship=Relationship.ANCESTORS,
             person_id=decujus if self.decujus < 0 else self.decujus)
         precomputed[self.id] = set( # Do not insert the decujus himself
             a.main_id for a in ancestors if a.generation != 0)
@@ -264,7 +264,7 @@ class Descendant(RuleChecker):
 
     def precompute(self, decujus, precomputed):
         desc = PersonSet.get_folks(
-            relationship = Relationship.DESCENDANTS,
+            relationship=Relationship.DESCENDANTS,
             person_id=decujus if self.decujus < 0 else self.decujus)
         precomputed[self.id] = set( # Do not insert the decujus himself
             a.main_id for a in desc if a.generation != 0)
@@ -299,14 +299,14 @@ class Implex(RuleChecker):
         count = collections.defaultdict(int)
 
         ancestors = PersonSet.get_folks(
-            relationship = Relationship.ANCESTORS,
+            relationship=Relationship.ANCESTORS,
             person_id=decujus if self.decujus < 0 else self.decujus)
         for a in ancestors:
             if a.generation != 0:
                 count[a.main_id] += 1
 
         desc = PersonSet.get_folks(
-            relationship = Relationship.DESCENDANTS,
+            relationship=Relationship.DESCENDANTS,
             person_id=decujus if self.decujus < 0 else self.decujus)
         for a in desc:
             if a.generation != 0:
