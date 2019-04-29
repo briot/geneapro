@@ -7,16 +7,13 @@ import { addToHistory, HistoryItem } from "../Store/History";
 import {
    fetchPedigree,
    FetchPedigreeResult,
-   fetchPersonDetails,
    fetchEventDetails,
    fetchSourceDetails,
    fetchMetadata,
-   fetchPlaceDetails
 } from "../Store/Sagas";
 import { addEvents } from "../Store/Event";
 import { EventDetails } from "../Server/Event";
-import { DetailsResult, mergeAssertionEntities } from "../Server/Person";
-import { PlaceDetails } from "../Server/Place";
+import { mergeAssertionEntities } from "../Server/Person";
 import { defaultPedigree, changePedigreeSettings } from "../Store/Pedigree";
 import { defaultFanchart, changeFanchartSettings } from "../Store/Fanchart";
 import {
@@ -82,14 +79,14 @@ export function rootReducer(
       // Do no change if the first item is already the correct one, to avoid
       // refreshing all pages and getting data from the server again.
       if (state.history.length &&
-          state.history[0].id == item.id &&
-          state.history[0].kind == item.kind
+          state.history[0].id === item.id &&
+          state.history[0].kind === item.kind
       ) {
          return state;
       }
 
       const idx = state.history.findIndex(
-         (h: HistoryItem) => h.id === item.id && h.kind == item.kind);
+         (h: HistoryItem) => h.id === item.id && h.kind === item.kind);
       return {
          ...state,
          history:
@@ -183,20 +180,6 @@ export function rootReducer(
          events: { ...state.events, ...action.payload.result.events },
          pedigree: { ...state.pedigree, loading: false }
       };
-   } else if (isType(action, fetchPersonDetails.done)) {
-      const data: DetailsResult = action.payload.result as DetailsResult;
-      const s = {...state, ...mergeAssertionEntities(state, data) };
-      s.persons[data.person.id] = data.person;
-
-      // Create an alias if necessary, in case the person was referenced
-      // by one of its personas
-      if (action.payload.params.id !== data.person.id) {
-         s.persons[action.payload.params.id] = s.persons[data.person.id];
-      }
-      return s;
-   } else if (isType(action, fetchPlaceDetails.done)) {
-      const data: PlaceDetails = action.payload.result as PlaceDetails;
-      return { ...state, ...mergeAssertionEntities(state, data) };
    } else if (isType(action, fetchSourceDetails.done)) {
       const source: Source = action.payload.result;
       return {

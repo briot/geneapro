@@ -1,11 +1,6 @@
-import { all, call, put } from "redux-saga/effects";
+import { all, call } from "redux-saga/effects";
 import { fetchPedigreeFromServer } from "../Server/Pedigree";
-import {
-   fetchPersonDetailsFromServer,
-   DetailsResult
-} from "../Server/Person";
 import { fetchEventFromServer, EventDetails } from "../Server/Event";
-import { fetchPlaceFromServer, PlaceDetails } from "../Server/Place";
 import {
    fetchSourceDetailsFromServer
 } from "../Server/Source";
@@ -14,7 +9,7 @@ import { Source } from "../Store/Source";
 import { AppState } from "../Store/State";
 import { PersonSet } from "../Store/Person";
 import { allSagas, createAsyncAction } from "../Store/Actions";
-import { addEvents, GenealogyEventSet } from "../Store/Event";
+import { GenealogyEventSet } from "../Store/Event";
 import { ChildrenAndParentsSet } from "../Store/Pedigree";
 
 /**
@@ -79,26 +74,6 @@ export const fetchMetadata = createAsyncAction<
 >("DATA/META", _fetchMetaData, _hasMetadata);
 
 /**
- * Async Action: fetch details for one specific person
- */
-
-export interface FetchPersonDetailsParams {
-   id: number;
-}
-function* _fetchPersonDetails(p: FetchPersonDetailsParams) {
-   const res: DetailsResult = yield call(fetchPersonDetailsFromServer, p.id);
-
-   // Register all events
-   yield put(addEvents({ events: res.events }));
-
-   return res;
-}
-export const fetchPersonDetails = createAsyncAction(
-   "DATA/PERSON",
-   _fetchPersonDetails
-);
-
-/**
  * Async Action: fetch details for one event
  */
 
@@ -116,27 +91,6 @@ export const fetchEventDetails = createAsyncAction(
    "DATA/EVENT",
    _fetchEventDetails,
    _hasEventDetails
-);
-
-/**
- * Async Action: fetch details for one place
- */
-
-export interface FetchPlaceDetailsParams {
-   id: number;
-}
-function _hasPlaceDetails(p: FetchPlaceDetailsParams, state: AppState) {
-   const pl = state.places[p.id];
-   return pl && pl.asserts !== undefined && pl.asserts.get().length !== 0;
-}
-function* _fetchPlaceDetails(p: FetchPlaceDetailsParams) {
-   const res: PlaceDetails = yield call(fetchPlaceFromServer, p.id);
-   return res;
-}
-export const fetchPlaceDetails = createAsyncAction(
-   "DATA/PLACE",
-   _fetchPlaceDetails,
-   _hasPlaceDetails
 );
 
 /**

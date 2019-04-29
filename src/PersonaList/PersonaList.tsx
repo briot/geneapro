@@ -93,6 +93,7 @@ const PersonaList: React.FC<PersonaListProps> = p => {
                title="Person"
                fetchRows={fetchPersons}
                filter={p.settings.filter}
+               fullHeight={true}
                renderRow={renderRow}
                rowCount={count}
                onFilterChange={onFilterChange}

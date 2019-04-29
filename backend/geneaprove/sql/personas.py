@@ -5,7 +5,7 @@ Support for writing custom SQL queries
 import collections
 from enum import Enum
 import django.db
-from django.db.models import F
+from django.db.models import F, Q
 import logging
 from .. import models
 from .asserts import AssertList
@@ -159,8 +159,7 @@ class PersonSet(SQLSet):
             "AND p2.event_id=event.id "
             "AND p2.person_id=pp.id")
 
-    @classmethod
-    def get_folks(cls, relationship, person_id, max_depth=None, skip=0):
+    def get_folks(self, relationship, person_id, max_depth=None, skip=0):
         """
         :returntype: list of FolkLore
            This includes person_id itself, at generation 0
@@ -168,14 +167,14 @@ class PersonSet(SQLSet):
         assert isinstance(person_id, int)
 
         with django.db.connection.cursor() as cur:
-            pid = cls.cast(person_id, 'bigint')
-            zero = cls.cast(0, 'bigint')  # ??? do we really need to cast
+            pid = self.cast(person_id, 'bigint')
+            zero = self.cast(0, 'bigint')  # ??? do we really need to cast
             initial = f"VALUES({pid}, {zero})"
             md = f"AND {relationship.relations}.generation<={max_depth} " if max_depth else ""
             sk = f"WHERE {relationship.relations}.generation>{skip} " if skip else ""
             q = (
                 f"WITH RECURSIVE {relationship.group}(main_id, {relationship.individual}) "
-                f"AS ({cls._query_get_folks(relationship)}), "
+                f"AS ({self._query_get_folks(relationship)}), "
                 f"{relationship.relations}(main_id,generation) "
                     f"AS ({initial} "
                     "UNION "
@@ -223,8 +222,7 @@ class PersonSet(SQLSet):
         else:
             return None
 
-    @classmethod
-    def has_known_parent(cls, main_ids=None, sex=None, relationship=Relationship.ANCESTORS):
+    def has_known_parent(self, main_ids=None, sex=None, relationship=Relationship.ANCESTORS):
         """
         Whether the person has a known father (sex=M) or mother (sex=F).
         :returntype:
@@ -253,14 +251,13 @@ class PersonSet(SQLSet):
                 where = ""
 
             cur.execute(
-                f"WITH parents AS ({cls._query_get_folks(relationship)}), "
-                f"sex AS ({cls._query_get_sex()}) "
+                f"WITH parents AS ({self._query_get_folks(relationship)}), "
+                f"sex AS ({self._query_get_sex()}) "
                 "SELECT parents.main_id, sex.sex "
                 "FROM parents "
                 "LEFT JOIN sex "
                 f"ON parents.parent=sex.main_id {where}",
                 args)
-
 
             result = collections.defaultdict(str)
             for person_id, sex in cur.fetchall():
@@ -379,8 +376,7 @@ class PersonSet(SQLSet):
             .select_related(*models.P2P.related_json_fields())
         self.asserts.extend(pm)
 
-    @classmethod
-    def recompute_main_ids(cls):
+    def recompute_main_ids(self):
         """
         Recompute all main_ids in the database (thread-safe).
         Must be called outside of a transaction, or it will be very slow
@@ -421,6 +417,26 @@ class PersonSet(SQLSet):
                     cur.execute(q)
             finally:
                 cur.execute("pragma foreign_keys=%s" % previous)
+
+    def _query_asserts(self):
+        return [
+            table.objects.filter(person__main_id__in=self.persons.keys())
+            for table in (models.P2C, models.P2E, models.P2G)
+        ] + [models.P2P.objects \
+            .filter(Q(person1__main_id__in=self.persons.keys())
+                    | Q(person2__main_id__in=self.persons.keys()))
+        ]
+
+    def count_asserts(self):
+        total = 0
+        for a in self._query_asserts():
+            total += a.count()
+        return total
+
+    def fetch_asserts_subset(self, offset=None, limit=None):
+        self.asserts.fetch_asserts_subset(
+            self._query_asserts(), offset=offset, limit=limit)
+        return self.asserts
 
     def to_json(self):
         result = {}

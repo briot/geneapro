@@ -34,6 +34,8 @@ interface InfiniteListProps<T> {
    renderRow: InfiniteRowRenderer<T>;
 
    rowHeight?: number | 'dynamic';
+
+   fullHeight?: boolean;
 };
 
 export const InfiniteList = <T extends {}>(p: InfiniteListProps<T>) => {
@@ -152,7 +154,10 @@ export const InfiniteList = <T extends {}>(p: InfiniteListProps<T>) => {
        ? measureRenderRow : userRenderRow;
 
    return (
-      <div ref={container} className="List">
+      <div
+         ref={container}
+         className={`List ${p.fullHeight ? 'fullHeight' : ''}`}
+      >
          <InfiniteLoader
             isRowLoaded={isRowLoaded}
             loadMoreRows={loadMoreItems}

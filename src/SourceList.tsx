@@ -61,6 +61,7 @@ const SourceList: React.FC<SourceListProps> = (p) => {
                title="Source"
                fetchRows={fetchSources}
                filter={p.settings.filter}
+               fullHeight={true}
                renderRow={renderRow}
                rowCount={count}
                onFilterChange={onFilterChange}

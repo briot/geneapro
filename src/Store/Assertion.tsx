@@ -158,6 +158,7 @@ export class P2E extends Assertion {
 }
 
 export class AssertionList {
+   // eslint-disable-next-line no-useless-constructor
    public constructor(private asserts: Assertion[]) {}
 
    public get(): Assertion[] {

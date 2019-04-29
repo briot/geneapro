@@ -1,6 +1,5 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import * as GP_JSON from "./Server/JSON";
 import {
    InfiniteListFilter,
    InfiniteRowFetcher,
@@ -46,12 +45,7 @@ const PlaceList: React.FC<PlaceListProps> = (p) => {
    );
 
    const fetchPlaces: InfiniteRowFetcher<Place> = React.useCallback(
-      (pl) => {
-         return fetchPlacesFromServer({ ...pl, filter: p.settings.filter })
-            .then((list: GP_JSON.Place[]) =>
-               list.map(a => ({ id: a.id, name: a.name }))
-            );
-      },
+      (pl) => fetchPlacesFromServer({ ...pl, filter: p.settings.filter }),
       [p.settings.filter]
    );
 
@@ -69,6 +63,7 @@ const PlaceList: React.FC<PlaceListProps> = (p) => {
             <InfiniteListFilter
                fetchRows={fetchPlaces}
                filter={p.settings.filter}
+               fullHeight={true}
                renderRow={renderRow}
                rowCount={count}
                title="Place"

@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Header, List, SemanticICONS } from "semantic-ui-react";
-import { Link, Redirect } from "react-router-dom";
-// import { RouteComponentProps } from "react-router";
+import { Link } from "react-router-dom";
 import { Person, personDisplay } from "./Store/Person";
 import { Place } from './Store/Place';
 import { Source } from './Store/Source';
@@ -27,7 +26,6 @@ interface SideNavItemProps {
    to?: string;
 }
 const SideNavItem: React.FC<SideNavItemProps> = (p) => {
-   const { dropLink } = p;
    const [dragprops] = useDraggable({
       data: p.dndData,
       className: 'hideOverflow'

@@ -5,7 +5,7 @@ import {
    InfiniteRowRenderer } from "../InfiniteList";
 import { GPDispatch, MetadataDict } from "../Store/State";
 import { Icon } from "semantic-ui-react";
-import { Assertion, AssertionList } from "../Store/Assertion";
+import { Assertion } from "../Store/Assertion";
 import { AssertionEntities } from '../Server/Person';
 import AssertionView from "../Assertions/Assertion";
 import "./AssertionTimeline.css";
@@ -32,6 +32,7 @@ export interface TimelineProps {
    metadata: MetadataDict;
 
    minBatchSize?: number;
+   fullHeight?: boolean;
 }
 
 interface AssertionTimelineProps extends TimelineProps {
@@ -75,6 +76,7 @@ export const AssertionTimeline: React.FC<AssertionTimelineProps> = (p) => {
       <div className="AssertionTimeline" >
          <InfiniteList
             fetchRows={p.fetchAsserts}
+            fullHeight={p.fullHeight}
             minBatchSize={p.minBatchSize || 30}
             renderRow={renderAssert}
             rowCount={p.rowCount}
@@ -83,25 +85,3 @@ export const AssertionTimeline: React.FC<AssertionTimelineProps> = (p) => {
       </div>
    );
 }
-
-
-interface TimelineFromListProps extends TimelineProps {
-   asserts: AssertionList;
-}
-export const AssertionTimelineFromList: React.FC<TimelineFromListProps> =
-   (p) => {
-      p.asserts.sortByDate(p.entities.events, p.metadata);
-
-      const fetchAsserts = React.useCallback(
-         () => Promise.resolve(p.asserts.get()),
-         [p.asserts]
-      );
-
-      return (
-         <AssertionTimeline
-            {...p}
-            fetchAsserts={fetchAsserts}
-            rowCount={p.asserts.get().length}
-         />
-      );
-};

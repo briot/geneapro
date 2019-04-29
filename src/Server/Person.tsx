@@ -1,7 +1,7 @@
+import * as React from "react";
 import { BasePerson, Person, PersonSet } from "../Store/Person";
 import {
    Assertion,
-   AssertionList,
    P2E,
    P2C,
    P2P,
@@ -10,7 +10,7 @@ import {
 import { GenealogyEventSet } from "../Store/Event";
 import { SourceSet } from "../Store/Source";
 import { sourceFromJSON } from "../Server/Source";
-import { PlaceSet } from "../Store/Place";
+import { Place, PlaceSet } from "../Store/Place";
 import * as GP_JSON from "../Server/JSON";
 import Style from "../Store/Styles";
 
@@ -140,14 +140,13 @@ export function assertionFromJSON(a: GP_JSON.Assertion): Assertion {
 export interface AssertionEntitiesJSON {
    events?: GP_JSON.Event[]; // All events mentioned in the asserts
    persons?: GP_JSON.Person[];
-   places?: GP_JSON.Place[];
+   places?: Place[];
    sources?: GP_JSON.Source[];
    asserts: GP_JSON.Assertion[];
 }
 
-interface JSONPersonDetails extends AssertionEntitiesJSON {
+interface JSONPersonDetails {
    person: BasePerson;
-   asserts: GP_JSON.Assertion[];
 }
 
 export interface AssertionEntities {
@@ -158,7 +157,6 @@ export interface AssertionEntities {
 }
 
 export interface DetailsResult extends AssertionEntities {
-   asserts: AssertionList;
    person: Person;
 }
 
@@ -167,16 +165,7 @@ export function setAssertionEntities(
    into: AssertionEntities
 ) {
    if (entities.places) {
-      for (const p of entities.places) {
-         into.places[p.id] = {
-            id: p.id,
-            name: p.name,
-            asserts: new AssertionList([]),
-            // p.date,
-            // p.date_sort,
-            // p.parent_place_id,
-         };
-      }
+      into.places = {...into.places, ...entities.places};
    }
 
    if (entities.events) {
@@ -233,25 +222,46 @@ export function mergeAssertionEntities(
    };
 }
 
-export function* fetchPersonDetailsFromServer(id: number) {
-   const resp: Response = yield window.fetch("/data/persona/" + id);
-   if (resp.status !== 200) {
-      throw new Error("Server returned an error");
-   }
-   const data: JSONPersonDetails = yield resp.json();
-   let r: DetailsResult = {
-      person: {
-         ...data.person,
-         asserts: data.asserts
-            ? new AssertionList(data.asserts.map(a => assertionFromJSON(a)))
-            : undefined
+/**
+ * Fetch details about a specific person
+ */
+export const usePerson = (id: number): Person|undefined => {
+   const [person, setPerson] = React.useState<Person|undefined>(undefined);
+   React.useEffect(
+      () => {
+         fetch(`/data/persona/${id}`)
+            .then(r => r.json())
+            .then(setPerson, () => setPerson(undefined));
       },
-      asserts: new AssertionList([]),
-      persons: {},
-      events: {},
-      places: {},
-      sources: {},
-   };
-   setAssertionEntities(data, r);
-   return r;
-}
+      [id]
+   );
+   return person;
+};
+
+/**
+ * Fetch the number of assertions known for a given person
+ */
+export const usePersonAssertsCount = (id: number) => {
+   const [count, setCount] = React.useState(0);
+   React.useEffect(
+      () => {
+         fetch(`/data/persona/${id}/asserts/count`)
+            .then(r => r.json())
+            .then(setCount);
+      },
+      [id]
+   );
+   return count;
+};
+
+/**
+ * Fetch a subset of the asserts for a given person
+ */
+export const fetchPersonAsserts = (p: {
+   id: number; limit?: number; offset?: number;
+}): Promise<AssertionEntitiesJSON> => {
+   return fetch(`/data/persona/${p.id}/asserts?` +
+      (p.limit ? `limit=${p.limit}&` : '') +
+      (p.offset ? `offset=${p.offset}&` : '')
+   ).then(r => r.json());
+};

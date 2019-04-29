@@ -91,32 +91,13 @@ class SourceSet(SQLSet):
         assert len(self.sources) == 1
         sid = next(iter(self.sources))
 
-        kinds = [
-            (models.P2E, F('event__date_sort')),
-            (models.P2C, F('characteristic__date_sort')),
-            (models.P2P, Value("", TextField())),
-            (models.P2G, Value("", TextField())),
-        ]
-
-        pm = None
-        for idx, (table, date) in enumerate(kinds):
-            a = table.objects \
-                .values('id') \
-                .annotate(kind=Value(idx, IntegerField()),
-                          date_sort=date) \
-                .filter(source=sid)
-            pm = a if pm is None else pm.union(a)
-
-        pm = pm.order_by('date_sort')
-        pm = self.limit_offset(pm, offset=offset, limit=limit)
-
-        asserts = list(pm)
-        for idx, (table, date) in enumerate(kinds):
-            ids = [a['id'] for a in asserts if a['kind'] == idx]
-            if ids:
-                prefetch = table.related_json_fields()
-                for chunk in self.sqlin(table.objects, id__in=ids):
-                    self.asserts.extend(self.prefetch_related(chunk, *prefetch))
+        self.asserts.fetch_asserts_subset(
+            [models.P2E.objects.filter(source=sid),
+             models.P2C.objects.filter(source=sid),
+             models.P2P.objects.filter(source=sid),
+             models.P2G.objects.filter(source=sid)],
+            offset=offset,
+            limit=limit)
 
     def fetch_citations(self):
         """

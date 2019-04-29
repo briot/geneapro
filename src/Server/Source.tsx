@@ -1,9 +1,6 @@
+import * as React from "react";
 import { Source } from "../Store/Source";
-import { AssertionList } from "../Store/Assertion";
-import {
-   AssertionEntities,
-   AssertionEntitiesJSON,
-} from "../Server/Person";
+import { AssertionEntitiesJSON } from "../Server/Person";
 import * as JSON from "../Server/JSON";
 
 interface JSONResult {
@@ -11,10 +8,6 @@ interface JSONResult {
    higher_sources: number[];
    repr: JSON.SourceRepr[];
    parts: JSON.CitationPart[];
-}
-
-interface SourceAsserts extends AssertionEntities {
-   asserts: AssertionList;
 }
 
 export function sourceFromJSON(s: JSON.Source) {
@@ -43,7 +36,6 @@ export function* fetchSourceDetailsFromServer(id: number) {
    const data: JSONResult = yield resp.json();
    let r: Source = {
       ...sourceFromJSON(data.source),
-      asserts: new AssertionList([]),
       medias: data.repr,
       parts: data.parts ? data.parts.reduce(
          (val, part) => ({...val, [part.name]: part}), {})
@@ -56,7 +48,7 @@ export function fetchSourceAsserts(p: {
    id: number; limit?: number; offset?: number;
 }): Promise<AssertionEntitiesJSON> {
    return fetch(
-      `/data/sources/asserts/${p.id}?` +
+      `/data/sources/${p.id}/asserts?` +
       (p.limit ? `limit=${p.limit}&` : '') +
       (p.offset !== undefined ? `offset=${p.offset}&` : '')
    ).then(r => r.json());
@@ -86,4 +78,22 @@ export function fetchSourcesFromServer(
 export const fetchSourcesCount = (p: {filter: string}): Promise<number> =>
    fetch(`/data/sources/count?filter=${encodeURI(p.filter)}`)
    .then((r: Response) => r.json());
+
+/**
+ * Compute the number of assertions known for the given source
+ */
+export const useSourceAssertsCount = (id: number|undefined) => {
+   const [count, setCount] = React.useState(0);
+   React.useEffect(
+      () => {
+         if (id !== undefined) {
+            fetch(`/data/sources/${id}/asserts/count`)
+               .then(r => r.json())
+               .then(setCount);
+         }
+      },
+      [id]
+   );
+   return count;
+}
 

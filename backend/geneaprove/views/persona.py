@@ -17,10 +17,7 @@ class PersonaView(JSONView):
         persons.fetch_p2e(event_types=None)
         persons.fetch_p2c()
         persons.fetch_p2p()
-        return {
-            "person": persons.get_unique_person(),
-            **persons.asserts.to_json()  # fetch related
-        }
+        return persons.get_unique_person()
 
 
 class SuretySchemesList(JSONView):
@@ -75,3 +72,19 @@ class PersonaList(JSONView):
             limit=params.get('limit', None))
         persons.fetch_p2e()
         return persons
+
+
+class PersonAssertsCount(JSONView):
+    def get_json(self, params, id):
+        p = PersonSet()
+        p.add_ids([id])
+        return p.count_asserts()
+
+
+class PersonAsserts(JSONView):
+    def get_json(self, params, id):
+        p = PersonSet()
+        p.add_ids([id])
+        return p.fetch_asserts_subset(
+            offset=params.get('offset', None),
+            limit=params.get('limit', None))

@@ -5,7 +5,7 @@ Event-related views
 from django.db.models import Count
 from django.db.models.functions import Lower
 from .. import models
-from ..sql import AssertList
+from ..sql import AssertList, PlaceSet
 from .to_json import JSONView
 
 class PlaceList(JSONView):
@@ -46,6 +46,23 @@ class PlaceCount(JSONView):
         return int(pm['count'])
 
 
+class PlaceAssertsCount(JSONView):
+    def get_json(self, params, id):
+        places = PlaceSet()
+        places.add_ids([id])
+        return places.count_asserts()
+
+
+class PlaceAsserts(JSONView):
+    def get_json(self, params, id):
+        places = PlaceSet()
+        places.add_ids([id])
+        return places.fetch_asserts(
+            offset=params.get('offset', None),
+            limit=params.get('limit', None)
+        )
+
+
 class PlaceView(JSONView):
     """
     JSON data for a specific place
@@ -53,6 +70,4 @@ class PlaceView(JSONView):
 
     def get_json(self, params, id):
         place = models.Place.objects.get(id=id)
-        asserts = models.Place.get_asserts(ids=[id])
-        asserts.add_known(places=(place, ))
-        return asserts.to_json()
+        return place

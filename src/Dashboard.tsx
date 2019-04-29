@@ -1,17 +1,14 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import * as GP_JSON from "./Server/JSON";
 import { AppState } from "./Store/State";
 import { Person } from "./Store/Person";
 import { Place, } from "./Store/Place";
-import { P2C } from "./Store/Assertion";
 import { extractYear } from "./Store/Event";
 import { RouteComponentProps } from "react-router";
 import {
    Card,
    Header,
    Icon,
-   Image,
    SemanticICONS,
    Statistic
 } from "semantic-ui-react";
@@ -30,25 +27,6 @@ interface PersonCardProps {
 
 const PersonCard: React.FC<PersonCardProps> = (p) => {
    let img: JSX.Element | undefined;
-   if (p.person.asserts) {
-      for (const a of p.person.asserts.get()) {
-         if (
-            a instanceof P2C &&
-            a.characteristic.medias &&
-            a.characteristic.medias[0]
-         ) {
-            img = (
-               <Image
-                  floated="right"
-                  size="tiny"
-                  src={a.characteristic.medias[0].url}
-               />
-            );
-            break;
-         }
-      }
-   }
-
    return (
       <Card>
          <Card.Content>
@@ -125,7 +103,7 @@ const RecentPlaces: React.FC<RecentPlaces> = (p) => {
                .map(s => s.id);
          if (items.length) {
             fetchPlacesFromServer({ ids: items })
-               .then((a: GP_JSON.Place[]) => setPlaces(a));
+               .then((a: Place[]) => setPlaces(a));
          }
       },
       [p.items]

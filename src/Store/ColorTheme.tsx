@@ -110,7 +110,7 @@ export default class ColorTheme {
     * Default for fanchart boxes
     */
    public static forFanchartBox(colors: GP_JSON.ColorSchemeId): Style {
-      return colors == NO_BOX.id ? TEXT_ONLY : DEFAULT;
+      return colors === NO_BOX.id ? TEXT_ONLY : DEFAULT;
    }
 
    /**

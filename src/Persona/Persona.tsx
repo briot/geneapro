@@ -1,34 +1,57 @@
 import * as React from "react";
 import { Icon } from "semantic-ui-react";
 import { GPDispatch, MetadataDict } from "../Store/State";
-import { P2C } from "../Store/Assertion";
+import { Assertion } from "../Store/Assertion";
 import { Segment } from "semantic-ui-react";
-import { AssertionEntities } from "../Server/Person";
+import {
+   AssertionEntities,
+   AssertionEntitiesJSON,
+   assertionFromJSON,
+   usePersonAssertsCount,
+   fetchPersonAsserts,
+   mergeAssertionEntities,
+   setAssertionEntities
+} from "../Server/Person";
 import { Person, personDisplay } from "../Store/Person";
 import { extractYear } from "../Store/Event";
-import { AssertionTimelineFromList } from "../Assertions/AssertionTimeline";
+import { AssertionTimeline } from "../Assertions/AssertionTimeline";
+import { InfiniteRowFetcher } from "../InfiniteList";
 import "./Persona.css";
 
 interface PersonaProps {
    dispatch: GPDispatch;
-   entities: AssertionEntities;
    metadata: MetadataDict;
    person: Person;
 }
 
-function Persona(props: PersonaProps) {
-   const p: Person = props.person;
-   const birthYear = extractYear(p.birthISODate);
-   const deathYear = extractYear(p.deathISODate);
+const Persona: React.FC<PersonaProps> = (p) => {
+   const [entities, setEntities] = React.useState<AssertionEntities>({
+      events: {}, persons: {}, places: {}, sources: {},
+   });
+   const person: Person = p.person;
+   const birthYear = extractYear(person.birthISODate);
+   const deathYear = extractYear(person.deathISODate);
+   const count = usePersonAssertsCount(person.id);
 
-   let gender = "";
-   if (p.asserts) {
-      gender = p.asserts.get()
-         .filter(a => a instanceof P2C)
-         .flatMap(a => (a as P2C).characteristic.parts)
-         .filter(part => part.type === props.metadata.char_part_SEX)
-         .map(p => p.value)[0] || '';
-   }
+   const fetchAsserts: InfiniteRowFetcher<Assertion> = React.useCallback(
+      (fp) => {
+         return fetchPersonAsserts({
+            id: person.id,
+            limit: fp.limit,
+            offset: fp.offset
+         }).then((a: AssertionEntitiesJSON) => {
+            const r: AssertionEntities = {
+               events: {},
+               persons: {},
+               places: {},
+               sources: {}};
+            setAssertionEntities(a, r);
+            setEntities(e => mergeAssertionEntities(e, r));
+            return a.asserts.map(assertionFromJSON);
+         });
+      },
+      [person.id]
+   );
 
    return (
       <div className="Persona">
@@ -36,28 +59,29 @@ function Persona(props: PersonaProps) {
             <Icon
                className="gender"
                name={
-                  gender === "M"
+                  person.sex === "M"
                      ? "man"
-                     : gender === "F"
+                     : person.sex === "F"
                      ? "woman"
                      : "genderless"
                }
             />
-            {personDisplay(p)}
+            {personDisplay(person)}
             <span className="lifespan">
                {birthYear} - {deathYear}
             </span>
          </Segment>
          <Segment attached={true} className="pageContent">
             {
-               p.asserts &&
-               <AssertionTimelineFromList
-                  asserts={p.asserts}
-                  dispatch={props.dispatch}
-                  entities={props.entities}
-                  metadata={props.metadata}
+               <AssertionTimeline
+                  dispatch={p.dispatch}
+                  entities={entities}
+                  fetchAsserts={fetchAsserts}
+                  fullHeight={true}
+                  metadata={p.metadata}
                   refYear={birthYear}
-                  hidePersonIf={p.id}
+                  hidePersonIf={person.id}
+                  rowCount={count}
                />
             }
          </Segment>

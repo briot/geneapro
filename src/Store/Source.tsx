@@ -1,5 +1,4 @@
 import { actionCreator } from "../Store/Actions";
-import { AssertionList } from "../Store/Assertion";
 import * as GP_JSON from '../Server/JSON';
 
 export interface CitationPart {
@@ -28,7 +27,6 @@ export interface Source {
    lastChange?: Date;
 
    medias?: GP_JSON.SourceRepr[];
-   asserts?: AssertionList;
    parts: CitationPartSet;
 }
 

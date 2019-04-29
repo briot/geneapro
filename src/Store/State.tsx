@@ -58,7 +58,7 @@ export type GPStore = Redux.Store<AppState>;
 export const themeNameGetter = (s: AppState) => (
    id: GP_JSON.ColorSchemeId
 ): string => {
-   const m = predefinedThemes.concat(s.metadata.themes).find(e => e.id == id);
+   const m = predefinedThemes.concat(s.metadata.themes).find(e => e.id === id);
    return m ? m.name : "";
 };
 

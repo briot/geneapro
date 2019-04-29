@@ -1,6 +1,7 @@
-import django.db.models
+from django.db.models import prefetch_related_objects
 from django.conf import settings
 import logging
+from .. import models
 
 logger = logging.getLogger(__name__)
 
@@ -38,28 +39,25 @@ class SQLSet(object):
         logger.debug('prefetch related %s', attrs)
         obj = list(objects)
         for chunk in self.sql_split(obj):
-            django.db.models.prefetch_related_objects(chunk, *attrs)
+            prefetch_related_objects(chunk, *attrs)
         return obj
 
-    @classmethod
-    def group_concat(cls, field):
+    def group_concat(self, field):
         """
         An aggregate function for the database, that takes all values for
         the field and returns a comma-separated list of values
         """
-        if 'postgresql' in cls.ENGINE:
+        if 'postgresql' in self.ENGINE:
             return f"string_agg({field}::text, ',')"
         else:
             return f"group_concat({field})"
 
-    @classmethod
-    def cast(cls, field, typename):
+    def cast(self, field, typename):
         """
         Cast a field to a specific type
         """
         # Use standard SQL syntax, though historically postgresql used ::
         return f"CAST({field} AS {typename})"
-
 
     def sqlin(self, queryset, **kwargs):
         """
@@ -93,4 +91,3 @@ class SQLSet(object):
             else:
                 return queryset[:int(limit)]
         return queryset
-
