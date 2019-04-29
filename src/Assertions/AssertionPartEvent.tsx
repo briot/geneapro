@@ -93,22 +93,27 @@ const AssertionPartEvent: React.FC<EventProps> = (p) => {
    return (
       <AssertionPart
          title={
-            <div>
-               <div className="dateAndTag">
-                  <div>
-                     {e.date && <span title={e.date_sort}>{e.date}</span>}
+            <>
+               <div>
+            {/*
+                  <span className="eventType">
+                     {typ ? typ.name : "Unknown"}
+                  </span>
+                  */}
+                  <span className="eventDescr">
+                     {e.name}
+                  </span>
+               </div>
+               {
+                  place &&
+                  <div className="eventPlace">
+                     <PlaceLink place={place} />
                   </div>
-                  <div>{typ ? typ.name : "Unknown"}</div>
+               }
+               <div className="more">
+                  <a href="#">View event details</a>
                </div>
-               <div
-                  className={
-                     "nameAndPlace " + (e.name || place ? "bordered " : "")
-                  }
-               >
-                  <div>{e.name}</div>
-                  <div>{place && <PlaceLink place={place} />}</div>
-               </div>
-            </div>
+            </>
          }
          expandable={true}
          expanded={<EventDetails event={e} entities={p.entities} />}

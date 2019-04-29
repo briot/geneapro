@@ -22,4 +22,19 @@
    background: #ececec;
 }
 
-
+.Persona {
+   display: flex;
+   flex-direction: column;
+   flex-wrap: nowrap;
+   justify-content: space-between;
+   height: var(--main-height);
+}
+.Persona .pageContent {
+   flex: 1 1 auto;
+}
+.Persona .pageContent .AssertionTimeline {
+   height: 100%;
+}
+.Persona .pageContent .AssertionTimeline .List {
+   height: 100%;
+}

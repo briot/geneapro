@@ -1,6 +1,7 @@
 import { GenealogyEventSet } from "../Store/Event";
 import * as GP_JSON from '../Server/JSON';
 import { MetadataDict } from '../Store/State';
+import { AssertionEntities } from "../Server/Person";
 
 export interface Characteristic extends GP_JSON.Characteristic {
    parts: GP_JSON.CharacteristicPart[];
@@ -36,6 +37,19 @@ export abstract class Assertion {
    }
 
    /**
+    * Return the display date for the assertion
+    */
+   public abstract getDate(events: GenealogyEventSet): string | null;
+
+   /**
+    * Return the event or characteristic type
+    */
+   public abstract getSummary(
+      meta: MetadataDict,
+      entities: AssertionEntities
+   ): string;
+
+   /**
     * Return a key to use when sorting assertions. This is the secondary key
     * in timelines, where the dates have been checked first
     */
@@ -62,8 +76,22 @@ export class P2P extends Assertion {
    }
 
    /** overriding */
+   public getDate(events: GenealogyEventSet): string | null {
+      return null;
+   }
+
+   /** overriding */
    public getSortKey(): string {
       return "same as";
+   }
+
+   /** overriding */
+   public getSummary(
+      meta: MetadataDict,
+      entities: AssertionEntities
+   ): string {
+      const n = meta.p2p_types_dict[this.relation];
+      return n ? n.name.toUpperCase() : '';
    }
 
    /** overriding */
@@ -86,6 +114,11 @@ export class P2G extends Assertion {
    }
 
    /** overriding */
+   public getDate(events: GenealogyEventSet): string | null {
+      return null;
+   }
+
+   /** overriding */
    public getSortKey(): string {
       return "group";
    }
@@ -94,6 +127,12 @@ export class P2G extends Assertion {
    public getRole(): string {
       return "group";
    }
+
+   /** overriding */
+   public getSummary() {
+      return "GROUP";
+   }
+
 }
 
 export class P2C extends Assertion {
@@ -116,6 +155,11 @@ export class P2C extends Assertion {
    }
 
    /** overriding */
+   public getDate(events: GenealogyEventSet): string | null {
+      return this.characteristic.date || null;
+   }
+
+   /** overriding */
    public getSortKey(): string {
       return this.characteristic.name;
    }
@@ -123,6 +167,14 @@ export class P2C extends Assertion {
    /** overriding */
    public getRole(): string {
       return this.characteristic.name.toLowerCase();
+   }
+
+   /** overriding */
+   public getSummary(
+      meta: MetadataDict,
+      entities: AssertionEntities
+   ): string {
+      return this.characteristic.name.toUpperCase();
    }
 }
 
@@ -145,6 +197,13 @@ export class P2E extends Assertion {
    }
 
    /** overriding */
+   public getDate(events: GenealogyEventSet): string | null {
+      const e = events[this.eventId];
+      return e && e.date_sort ? new Date(e.date_sort).toLocaleDateString("fr-FR", { year: 'numeric', month: 'long', day: 'numeric' }) : null;
+      return e.date || null;
+   }
+
+   /** overriding */
    public getSortKey(events: GenealogyEventSet, meta: MetadataDict): string {
       const e = events[this.eventId];
       const t = e && e.type !== undefined && meta.event_types_dict[e.type];
@@ -154,6 +213,18 @@ export class P2E extends Assertion {
    public getRole(meta: MetadataDict): string {
       const role = meta.event_type_roles_dict[this.role];
       return `as ${role ? role.name : ''}`;
+   }
+
+   /** overriding */
+   public getSummary(
+      meta: MetadataDict,
+      entities: AssertionEntities
+   ): string {
+      const e = entities.events[this.eventId];
+      const t = e && e.type !== undefined && meta.event_types_dict[e.type];
+      const role = meta.event_type_roles_dict[this.role];
+      const r = role && role.name !== "principal" ? ` (as ${role.name})` : '';
+      return `${t ? t.name.toUpperCase() : ""} ${r}`;
    }
 }
 

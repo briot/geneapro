@@ -42,17 +42,7 @@ export default class AssertionPart extends React.PureComponent<
    public render() {
       const p = this.props;
       return (
-         <Segment attached={true}>
-            <div className="expander" onClick={this.onExpand}>
-               {p.expandable && (
-                  <Icon
-                     name={this.state.expanded ? "dropdown" : "triangle right"}
-                  />
-               )}
-            </div>
-            <div className="assertionTitle">{p.title}</div>
-            {(!p.expandable || this.state.expanded) && <div>{p.expanded}</div>}
-         </Segment>
+         <div className="assertionTitle">{p.title}</div>
       );
    }
 }

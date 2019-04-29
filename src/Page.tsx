@@ -25,7 +25,7 @@ const Page: React.FC<ConnectedPageProps> = (p) => {
    return (
       <div className="App">
          <Navbar />
-         <Grid stackable={true} className="pagegrid">
+         <Grid stackable={true}>
             <Grid.Row reversed="computer">
                <Grid.Column width={13} >
                   {p.main}

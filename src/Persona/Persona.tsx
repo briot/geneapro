@@ -77,7 +77,7 @@ const Persona: React.FC<PersonaProps> = (p) => {
                   dispatch={p.dispatch}
                   entities={entities}
                   fetchAsserts={fetchAsserts}
-                  fullHeight={true}
+                  fullHeight={false}
                   metadata={p.metadata}
                   refYear={birthYear}
                   hidePersonIf={person.id}

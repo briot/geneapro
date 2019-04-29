@@ -165,7 +165,9 @@ export function setAssertionEntities(
    into: AssertionEntities
 ) {
    if (entities.places) {
-      into.places = {...into.places, ...entities.places};
+      for (const p of entities.places) {
+         into.places[p.id] = p;
+      }
    }
 
    if (entities.events) {

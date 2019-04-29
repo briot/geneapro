@@ -1,31 +1,98 @@
 .AssertionTimeline {
    --date-col-width: 60px;
    --col-sep-width: 20px;
-   --date-right-pad: 10px;     /* so that date doesn't overlap line */
+   --date-right-pad: 20px;     /* so that date doesn't overlap line */
    --assert-right-margin: 5px; /* make sure we have no scroll bars */
 
+   --line-width: 4px;
+   --between-items: 20px;
+   --line-color: green; /* #e17b77; */
+   --half-circle-size: 10px;
+   --half-arrow-size: 7px;
+   --role-font-size: 0.8em;
+   --arrow-top: 20px;
+   --item-margin-right: 20px;
+
    width: 100%;
+   display: flex;
+   flex-direction: column;
+   position: relative;  /* for positioning the line */
+}
+
+/**
+ * The vertical timeline
+ */
+.AssertionTimeline::before {
+   background-color: var(--line-color);
+   content: "";
+   height: 100%;
+   left: calc(var(--date-col-width) - var(--line-width) / 2);
+   position: absolute;
+   width: var(--line-width);
 }
 
 .AssertionTimeline .assertRow {
-   overflow-y: hidden;
    display: flex;
+   padding-top: calc(var(--role-font-size) / 2 + 4px);
+   padding-bottom: var(--between-items);
+   justify-content: flex-start;
 }
-.AssertionTimeline .assertRow > .date + div {
-   margin-left: var(--col-sep-width);
-   margin-top: 0.6em;
-   margin-right: var(--assert-right-margin); 
-   flex-grow: 1;
-}
+
+/**
+ * The arrow
+ */
+.AssertionTimeline .assertRow.withDate .Assertion::before,
+.AssertionTimeline .assertRow.withDate .Assertion2::before {
+   content: " ";
+   background-color: #fff;
+   box-shadow: -1px 1px 1px rgba(0,0,0,.2);
+   position: absolute;
+   left: calc(0px - var(--half-arrow-size));
+   top: calc(var(--arrow-top) + 2px);
+   transform: rotate(45deg);
+   width: calc(2 * var(--half-arrow-size));
+   height: calc(2 * var(--half-arrow-size));
+   z-index: 100;
+ }
 
 .AssertionTimeline .date {
    flex: 0 0 var(--date-col-width);
-   border-right: 2px solid black;
-   padding-right: var(--date-right-pad);
    font-size: 0.8em;
-   text-align: right;
-   vertical-align: top;
+   padding-right: var(--date-right-pad);
    position: relative;
+   top: calc(var(--arrow-top) + 2px);
+}
+.AssertionTimeline .date > div {
+   text-align: center;
+   font-weight: bold;
+   vertical-align: top;
+
+   background-color: #fff;
+   box-shadow: 0 0 5px rgba(0,0,0,.3);
+}
+
+.AssertionTimeline .age {
+   color: #999;
+   display: block;
+}
+
+.AssertionTimeline .Assertion,
+.AssertionTimeline .Assertion2 {
+   flex-grow: 1;
+   margin-left: calc(var(--col-sep-width) + var(--half-arrow-size));
+   margin-right: calc(var(--item-margin-right) + var(--assert-right-margin)); 
+   position: relative;  /* need positioning for placement of arrow */
+}
+
+.AssertionTimeline .circle {
+   background-color: #fff;
+   border-radius: 50%;
+   border: var(--line-width) solid var(--line-color);
+   height: calc(2 * var(--half-circle-size));
+   position: absolute;
+   right: calc(0px - var(--half-circle-size));
+   width: calc(2 * var(--half-circle-size));
+   z-index: 100;
 }
 
 .AssertionTimeline .role {
@@ -34,10 +101,10 @@
 .AssertionTimeline .role > span {
    position: absolute;
    left: 10px;
-   z-index: 1000;
+   z-index: 100;
    text-align: left;
-   font-size: 0.8em;
-   top: -10px;
+   font-size: var(--role-font-size);
+   top: calc(0px - var(--role-font-size) - 2px);
 
    background: white;
    padding: 0 5px;
@@ -47,14 +114,77 @@
    border: 1px solid #ddd;
 }
 
-.AssertionTimeline .age {
-   color: #999;
-   display: block;
-}
 
-.AssertionTimeline .date i {
-   position: absolute;
-   top: 0;
-   right: -11px;
-   font-size: 1.1em;
+.AssertionTimeline .Assertion2 {
+   background-color: white;
+   box-shadow: 0 0 5px rgba(0,0,0,.3);
+   min-height: 50px;
+   padding: 5px 5px 5px 15px;
+   border-top: 2px solid green;
+}
+.AssertionTimeline .Assertion2 .eventDate {
+   color: #777;
+   font-size: 12px;
+   font-weight: 700;
+}
+.AssertionTimeline .Assertion2 .eventType  {
+   font-weight: bold;
+   padding-right: 20px;
+}
+.AssertionTimeline .Assertion2 .eventRole  {
+   color: #777;
+   padding-right: 20px;
+}
+.AssertionTimeline .Assertion2 .right  {
+   float: right;
+   text-align: right;
+}
+.AssertionTimeline .Assertion2 .right > span {
+   padding: 0 5px;
+}
+.AssertionTimeline .Assertion2 .right > span + span {
+   border-left: 1px solid #777;
+}
+.AssertionTimeline .Assertion2 .rationale  {
+   font-style: italic;
+   color: #777;
+   padding-top: 10px;
+}
+.AssertionTimeline .Assertion2 .titlebar {
+   margin-bottom: 15px;
+}
+.AssertionTimeline .Assertion2 .summary {
+   /* text-transform: uppercase; */
+   letter-spacing: 1px;
+   padding: 5px;
+   color: #fff;
+   font-size: 12px;
+   font-weight: 700;
+   background: rgb(225, 123, 119);
+   margin-right: 10px;
+}
+.AssertionTimeline .Assertion2 .rationale::before  {
+   content: "Rationale: ";
+}
+/*
+.AssertionTimeline .Assertion2 .eventRole::before  {
+   content: "(";
+}
+.AssertionTimeline .Assertion2 .eventRole::after  {
+   content: ")";
+}
+*/
+.AssertionTimeline .Assertion2 .more  {
+   padding-top: 10px;
+}
+.AssertionTimeline .Assertion2 .more a {
+   color: #555;
+   font-size: 12px;
+   font-weight: 700;
+}
+.AssertionTimeline .Assertion2 .more::after {
+   content: "\25BA";
+   font-size: 12px;
+   color: #555;
+   padding: 0 5px;
 }
