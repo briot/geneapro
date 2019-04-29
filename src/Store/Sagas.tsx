@@ -1,4 +1,4 @@
-import { all, call, put } from "redux-saga/effects";
+import { all, call } from "redux-saga/effects";
 import { fetchPedigreeFromServer } from "../Server/Pedigree";
 import { fetchEventFromServer, EventDetails } from "../Server/Event";
 import {
@@ -9,7 +9,7 @@ import { Source } from "../Store/Source";
 import { AppState } from "../Store/State";
 import { PersonSet } from "../Store/Person";
 import { allSagas, createAsyncAction } from "../Store/Actions";
-import { addEvents, GenealogyEventSet } from "../Store/Event";
+import { GenealogyEventSet } from "../Store/Event";
 import { ChildrenAndParentsSet } from "../Store/Pedigree";
 
 /**

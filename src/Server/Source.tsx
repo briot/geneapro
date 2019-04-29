@@ -1,9 +1,6 @@
 import * as React from "react";
 import { Source } from "../Store/Source";
-import {
-   AssertionEntities,
-   AssertionEntitiesJSON,
-} from "../Server/Person";
+import { AssertionEntitiesJSON } from "../Server/Person";
 import * as JSON from "../Server/JSON";
 
 interface JSONResult {

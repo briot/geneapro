@@ -69,7 +69,7 @@ interface DropTargetProps extends RouteComponentProps<{}> {
 }
 const ConnectedDropTarget: React.FC<DropTargetProps> = (p) => {
    const [over, setOver] = React.useState(false);
-   const [count, setCount] = React.useState(0);
+   const setCount = React.useState(0)[1];
    const { redirectUrl } = p;
 
    const isDroppable = React.useCallback(
@@ -91,7 +91,7 @@ const ConnectedDropTarget: React.FC<DropTargetProps> = (p) => {
          });
          e.preventDefault();
       },
-      [isDroppable]
+      [isDroppable, setCount]
    );
 
    const onDragOver = React.useCallback(
@@ -108,7 +108,7 @@ const ConnectedDropTarget: React.FC<DropTargetProps> = (p) => {
             return c - 1;
          });
       },
-      []
+      [setCount]
    );
 
    const onDropCb = React.useCallback(
@@ -122,7 +122,7 @@ const ConnectedDropTarget: React.FC<DropTargetProps> = (p) => {
             e.preventDefault();
          }
       },
-      [redirectUrl]
+      [redirectUrl, p.history]
    );
 
    if (!redirectUrl) {

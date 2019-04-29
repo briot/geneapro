@@ -70,7 +70,7 @@ const DropTarget = ({at, onSwap}: DropTargetProps) => {
    const isDroppable = React.useCallback(
       (e: React.DragEvent) => {
          const idx = e.dataTransfer.getData(DND_DATA);
-         return idx && Number(idx) != at && Number(idx + 1) != at;
+         return idx && Number(idx) !== at && Number(idx + 1) !== at;
       },
       [at]);
 
@@ -176,7 +176,7 @@ export default class EditableList<T> extends React.PureComponent<ListProps<T>> {
                   onSwap={this.onSwap}
                />
             )}
-            {this.props.list.length == 0 && (
+            {this.props.list.length === 0 && (
                <Button
                   className="listItemButton"
                   icon="add"

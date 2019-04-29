@@ -116,6 +116,7 @@ class CompactLayout implements PedigreeLayoutAlgo {
     * @param genIncrease should be 1 if the "parents" returned by getParents
     *   are the ancestors, -1 otherwise.
     */
+   // eslint-disable-next-line no-useless-constructor
    public constructor(
       public settings: PedigreeSettings,
       public getParents: (p: PersonLayout) => (PersonLayout | undefined)[],

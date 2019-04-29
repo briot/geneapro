@@ -13,14 +13,14 @@ import {
 } from "../Store/Sagas";
 import { addEvents } from "../Store/Event";
 import { EventDetails } from "../Server/Event";
-import { DetailsResult, mergeAssertionEntities } from "../Server/Person";
+import { mergeAssertionEntities } from "../Server/Person";
 import { defaultPedigree, changePedigreeSettings } from "../Store/Pedigree";
 import { defaultFanchart, changeFanchartSettings } from "../Store/Fanchart";
 import {
    defaultPersonaList,
    changePersonaListSettings
 } from "../Store/PersonaList";
-import { changePlaceListSettings, Place } from '../Store/Place';
+import { changePlaceListSettings } from '../Store/Place';
 import { changeSourceListSettings } from '../Store/Source';
 import { defaultRadial, changeRadialSettings } from "../Store/Radial";
 import { defaultStats, changeStatsSettings } from "../Store/Stats";
@@ -79,14 +79,14 @@ export function rootReducer(
       // Do no change if the first item is already the correct one, to avoid
       // refreshing all pages and getting data from the server again.
       if (state.history.length &&
-          state.history[0].id == item.id &&
-          state.history[0].kind == item.kind
+          state.history[0].id === item.id &&
+          state.history[0].kind === item.kind
       ) {
          return state;
       }
 
       const idx = state.history.findIndex(
-         (h: HistoryItem) => h.id === item.id && h.kind == item.kind);
+         (h: HistoryItem) => h.id === item.id && h.kind === item.kind);
       return {
          ...state,
          history:

@@ -8,6 +8,7 @@ import { DndData } from "./Draggable";
 import "./Links.css";
 
 export class URL {
+   // eslint-disable-next-line no-useless-constructor
    public constructor(
       public path: string,
       public accept: 'person'|'place'|'source',

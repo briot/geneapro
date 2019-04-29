@@ -5,7 +5,7 @@ import { Loader } from "semantic-ui-react";
 import { JSONStats, fetchStatsFromServer } from "../Server/Stats";
 import { AppState, GPDispatch } from "../Store/State";
 import { StatsSettings, changeStatsSettings } from "../Store/Stats";
-import { PersonSet, personDisplay } from "../Store/Person";
+import { personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { usePerson } from "../Server/Person";
 import { DropTarget } from "../Draggable";
@@ -27,6 +27,7 @@ interface StatsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
 }
 
 const StatsPage: React.FC<StatsPageConnectedProps> = (p) => {
+   const { dispatch } = p;
    const decujusid = Number(p.match.params.id);
    const [data, setData] = React.useState<JSONStats|undefined>(undefined);
    const person = usePerson(decujusid);
@@ -40,15 +41,14 @@ const StatsPage: React.FC<StatsPageConnectedProps> = (p) => {
 
    React.useEffect(
       () => {
-         p.dispatch(addToHistory({kind: HistoryKind.PERSON, id: decujusid }));
+         dispatch(addToHistory({kind: HistoryKind.PERSON, id: decujusid }));
       },
-      [decujusid, p.dispatch]
+      [decujusid, dispatch]
    );
 
    const onChange = React.useCallback(
-      (diff: Partial<StatsSettings>) =>
-         p.dispatch(changeStatsSettings({ diff })),
-      [p.dispatch]
+      (diff: Partial<StatsSettings>) => dispatch(changeStatsSettings({diff})),
+      [dispatch]
    );
 
    if (person) {

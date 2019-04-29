@@ -59,6 +59,7 @@ export default class Style {
             };
 
          case "dom":
+         default:
             return {
                background: this.fill || "none",
                color: this.color || "none",

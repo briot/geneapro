@@ -1,17 +1,14 @@
 import * as React from "react";
 import { connect } from "react-redux";
-import * as GP_JSON from "./Server/JSON";
 import { AppState } from "./Store/State";
 import { Person } from "./Store/Person";
 import { Place, } from "./Store/Place";
-import { P2C } from "./Store/Assertion";
 import { extractYear } from "./Store/Event";
 import { RouteComponentProps } from "react-router";
 import {
    Card,
    Header,
    Icon,
-   Image,
    SemanticICONS,
    Statistic
 } from "semantic-ui-react";

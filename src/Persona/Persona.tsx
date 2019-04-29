@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Icon } from "semantic-ui-react";
 import { GPDispatch, MetadataDict } from "../Store/State";
-import { Assertion, P2C } from "../Store/Assertion";
+import { Assertion } from "../Store/Assertion";
 import { Segment } from "semantic-ui-react";
 import {
    AssertionEntities,

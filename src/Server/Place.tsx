@@ -1,12 +1,6 @@
 import * as React from "react";
 import { Place, PlaceSet } from "../Store/Place";
-import {
-   AssertionEntities,
-   AssertionEntitiesJSON,
-   assertionFromJSON,
-   setAssertionEntities
-} from "../Server/Person";
-import * as JSON from "../Server/JSON";
+import { AssertionEntitiesJSON } from "../Server/Person";
 
 export interface FetchPlacesResult {
    places: PlaceSet;

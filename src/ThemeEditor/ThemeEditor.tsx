@@ -86,6 +86,7 @@ function pythonToHTML(typ: GP_JSON.OperatorTypes) {
       case "str":
          return "text";
       case "bool":
+      default:
          return "text"; // Wrong, but unused
    }
 }
@@ -121,7 +122,7 @@ const Value: React.FC<ValueProps> = p => {
       const onListItemChange = (e: {}, data: { value?: ValueType }) =>
          onValueChange(data.value as ValueType);
 
-      return p.operator.basetype == "person" ? (
+      return p.operator.basetype === "person" ? (
          <Input
             value={v}
             onChange={onListItemChange}
@@ -150,13 +151,14 @@ const Value: React.FC<ValueProps> = p => {
          case "int":
             return Number(v);
          case "bool":
-            return v == true || v == "true";
+            return v === true || v === "true";
          case "str":
             return v;
          case "person":
             return Number(v);
+         default:
+            return v;
       }
-      return v;
    };
 
    const v = p.operator.is_list
@@ -214,7 +216,7 @@ const FieldOperatorValue = React.memo((p: FieldOperatorValueProps) => {
       (v: ServerThemes.RulePart) => {
          const parts = { ...p.rule.parts, [p.field]: v };
 
-         if (v.operator == DO_NOTHING_OP.op) {
+         if (v.operator === DO_NOTHING_OP.op) {
             delete parts[p.field];
          }
 
@@ -364,7 +366,7 @@ const RuleWithSubs = (p: RuleProps, label: string) => {
 
    const onCreateRule = React.useCallback(() => NEW_NESTED_RULE, []);
 
-   if (p.rule.children.length == 0) {
+   if (p.rule.children.length === 0) {
       onListChange([NEW_NESTED_RULE]);
       return null;
    }
@@ -812,7 +814,7 @@ const metadataToDropdown = (p: MetadataDict): AllOptions => {
    const typeToName: { [id: number]: string } = {};
 
    const build_operators = (typ: GP_JSON.OperatorTypes) => {
-      const f = p.theme_operators.filter(t => t.basetype == typ);
+      const f = p.theme_operators.filter(t => t.basetype === typ);
       return [DO_NOTHING_OP, ...f].map(s => ({
          key: s.op,
          value: s.op,
@@ -884,7 +886,7 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {
 
    React.useEffect(() => {
       for (const t of themeList) {
-         if (t.id == selected) {
+         if (t.id === selected) {
             setName(t.name);
             break;
          }
@@ -896,7 +898,7 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {
    }, [p.metadata.themes]);
 
    const loadRuleList = React.useCallback(() => {
-      if (selected == -1) {
+      if (selected === -1) {
          setRules([DEFAULT_RULE]);
          return;
       }
@@ -983,7 +985,7 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {
                placeholder="theme name"
                style={{ marginTop: 0 }}
             />
-            {selected != -1 && (
+            {selected !== -1 && (
                <Button
                   icon="trash"
                   title="Delete this theme"

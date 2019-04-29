@@ -2,11 +2,9 @@ import * as React from "react";
 import { connect } from "react-redux";
 import { Loader } from "semantic-ui-react";
 import { RouteComponentProps } from "react-router";
-import { AssertionEntities } from "../Server/Person";
-import { AppState, getEntities, GPDispatch, MetadataDict } from "../Store/State";
+import { AppState, GPDispatch, MetadataDict } from "../Store/State";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { usePlace } from "../Server/Place";
-import { Place } from "../Store/Place";
 import PlaceDetails from "../Place/PlaceDetails";
 import Page from "../Page";
 
