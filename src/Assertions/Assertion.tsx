@@ -1,8 +1,7 @@
 import * as React from "react";
 import { GPDispatch, MetadataDict } from "../Store/State";
-import { Icon, Rating, Segment } from "semantic-ui-react";
+import { Icon, Rating } from "semantic-ui-react";
 import { Assertion } from "../Store/Assertion";
-import { GenealogyEventSet } from "../Store/Event";
 import AssertionPartEvent from "../Assertions/AssertionPartEvent";
 import AssertionPartPerson from "../Assertions/AssertionPartPerson";
 import AssertionPartCharacteristic from "../Assertions/AssertionPartChar";

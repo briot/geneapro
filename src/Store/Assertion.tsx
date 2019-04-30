@@ -199,8 +199,10 @@ export class P2E extends Assertion {
    /** overriding */
    public getDate(events: GenealogyEventSet): string | null {
       const e = events[this.eventId];
-      return e && e.date_sort ? new Date(e.date_sort).toLocaleDateString("fr-FR", { year: 'numeric', month: 'long', day: 'numeric' }) : null;
-      return e.date || null;
+      return e && e.date_sort
+         ? new Date(e.date_sort).toLocaleDateString(
+            "fr-FR", { year: 'numeric', month: 'long', day: 'numeric' })
+         : null;
    }
 
    /** overriding */

@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Icon, Segment } from "semantic-ui-react";
 
 /**
  * Assertion Part

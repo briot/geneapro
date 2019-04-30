@@ -5,10 +5,8 @@ import {
    InfiniteRowFetcher,
    InfiniteRowRenderer } from "../InfiniteList";
 import { GPDispatch, MetadataDict } from "../Store/State";
-import { Icon } from "semantic-ui-react";
 import { Assertion } from "../Store/Assertion";
 import { AssertionEntities } from '../Server/Person';
-import { GenealogyEventSet } from "../Store/Event";
 import AssertionView from "../Assertions/Assertion";
 import "./AssertionTimeline.css";
 

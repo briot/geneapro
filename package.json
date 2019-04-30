@@ -21,7 +21,6 @@
     "start": "react-scripts start",
     "server": "./python_env/bin/python backend/manage.py migrate && ./python_env/bin/python backend/manage.py runserver 8002",
     "build": "react-scripts build",
-    "lint": "eslint 'src/**/*tsx'",
     "pretty": "prettier --tab-width=3 --write 'src/**/*tsx'",
     "test": "(cd backend; ../python_env/bin/python ./manage.py test) && (CI=true react-scripts test --env=jsdom)",
     "jstest": "react-scripts test --env=jsdom --watch",
@@ -30,7 +29,6 @@
   "proxy": "http://localhost:8002",
   "devDependencies": {
     "@types/d3": "~5.7.1",
-    "@types/jest": "~22.2.3",
     "@types/node": "~9.6.46",
     "@types/react": "~16.7.20",
     "@types/react-dom": "~16.0.11",
