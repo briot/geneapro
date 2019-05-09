@@ -1,9 +1,6 @@
-.Radial {
-}
-
 .Radial .link {
    fill: none;
-   stroke: #777;
+   stroke: var(--text-color);;
 }
 
 .Radial text {

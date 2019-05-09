@@ -44,8 +44,8 @@
 .AssertionTimeline .assertRow.withDate .Assertion::before,
 .AssertionTimeline .assertRow.withDate .Assertion2::before {
    content: " ";
-   background-color: #fff;
-   box-shadow: -1px 1px 1px rgba(0,0,0,.2);
+   background-color: var(--card-background);
+   box-shadow: -1px 1px 1px var(--assertion-box-shadow);
    position: absolute;
    left: calc(0px - var(--half-arrow-size));
    top: calc(var(--arrow-top) + 2px);
@@ -67,8 +67,8 @@
    font-weight: bold;
    vertical-align: top;
 
-   background-color: #fff;
-   box-shadow: 0 0 5px rgba(0,0,0,.3);
+   background-color: var(--card-background);
+   box-shadow: 0 0 5px var(--assertion-box-shadow);
 }
 
 .AssertionTimeline .age {
@@ -76,7 +76,6 @@
    display: block;
 }
 
-.AssertionTimeline .Assertion,
 .AssertionTimeline .Assertion2 {
    flex-grow: 1;
    margin-left: calc(var(--col-sep-width) + var(--half-arrow-size));
@@ -85,7 +84,7 @@
 }
 
 .AssertionTimeline .circle {
-   background-color: #fff;
+   background-color: var(--card-background);
    border-radius: 50%;
    border: var(--line-width) solid var(--line-color);
    height: calc(2 * var(--half-circle-size));
@@ -106,7 +105,7 @@
    font-size: var(--role-font-size);
    top: calc(0px - var(--role-font-size) - 2px);
 
-   background: white;
+   background: var(--card-background);
    padding: 0 5px;
    color: #999;
    font-weight: normal;
@@ -116,14 +115,14 @@
 
 
 .AssertionTimeline .Assertion2 {
-   background-color: white;
-   box-shadow: 0 0 5px rgba(0,0,0,.3);
+   background-color: var(--card-background);
+   box-shadow: 0 0 5px var(--assertion-box-shadow);
    min-height: 50px;
    padding: 5px 5px 5px 15px;
    border-top: 2px solid green;
 }
 .AssertionTimeline .Assertion2 .eventDate {
-   color: #777;
+   color: var(--assertion-text);
    font-size: 12px;
    font-weight: 700;
 }
@@ -132,7 +131,7 @@
    padding-right: 20px;
 }
 .AssertionTimeline .Assertion2 .eventRole  {
-   color: #777;
+   color: var(--assertion-text);
    padding-right: 20px;
 }
 .AssertionTimeline .Assertion2 .right  {
@@ -143,7 +142,7 @@
    padding: 0 5px;
 }
 .AssertionTimeline .Assertion2 .right > span + span {
-   border-left: 1px solid #777;
+   border-left: 1px solid var(--assertion-text);
 }
 .AssertionTimeline .Assertion2 .rationale  {
    font-style: italic;
@@ -178,13 +177,13 @@
    padding-top: 10px;
 }
 .AssertionTimeline .Assertion2 .more a {
-   color: #555;
+   color: var(--assertion-more-color);
    font-size: 12px;
    font-weight: 700;
 }
 .AssertionTimeline .Assertion2 .more::after {
    content: "\25BA";
    font-size: 12px;
-   color: #555;
+   color: var(--assertion-more-color);
    padding: 0 5px;
 }

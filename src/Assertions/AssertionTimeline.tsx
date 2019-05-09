@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Rating } from "semantic-ui-react";
 import {
    InfiniteList,
    InfiniteRowFetcher,
@@ -50,70 +49,6 @@ export const AssertionTimeline: React.FC<TimelineProps> = (p) => {
       }
 
       const isSameYear = prevYear === year;
-
-      if (a.index === 0) {
-         return (
-            <div
-               className={`assertRow ${isSameYear ? '' : 'withDate'}`}
-               style={a.style}
-               key={a.key}
-            >
-               <div className="date">
-                  {isSameYear &&
-                     <div>
-                        <span className="circle" />
-                        {year}
-                        <span className="age">
-                           {ageAtDate(p.refYear, d)}
-                        </span>
-                     </div>
-                  }
-               </div>
-               <div className="Assertion2">
-                  <div className="titlebar">
-                     <div className="right">
-                        <span><a href="#">Source</a></span>
-                        <span title="Researched by Toto">Search</span>
-                        <span>
-                           <Rating
-                              className="rating"
-                              rating={1} /* ??? Incorrect */
-                              size="mini"
-                              maxRating={5}
-                           />
-                        </span>
-                     </div>
-                     <span className="summary">
-                        BIRTH (principal)
-                     </span>
-                     <span className="eventDate">
-                        November 43, 2019
-                     </span>
-                  </div>
-                  <div>
-                     <a href="#">Emmanuel Briot</a>
-                  </div>
-                 {/*<span className="eventRole">principal</span>*/}
-                  <div>
-                      {/*<span className="eventType">Birth</span>*/}
-                      <span className="eventDescr">
-                          Birth of Emmanuel Briot
-                      </span>
-                  </div>
-                  <div className="eventPlace">
-                     Villeurbanne, Rhone, France
-                  </div>
-                  <div className="rationale">
-                      This explains the conclusion
-                  </div>
-                  <div className="more">
-                     <a href="#">View details</a>
-                  </div>
-               </div>
-            </div>
-         );
-
-      }
 
       return (
          <div

@@ -352,7 +352,7 @@ export default class Quilts extends React.PureComponent<
                      return (
                         <g key={index} className="person">
                            <path
-                              fill={index < 2 ? "#000" : "#999"}
+                              fill={index < 2 ? "var(--text-color)" : "#999"}
                               d={pathForPersonSymbol(
                                  playout,
                                  fam.left /* x */,

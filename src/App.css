@@ -1,4 +1,4 @@
-body {
+:root {
    --top-menu-height: 50px;  /* Height of the top menu bar */
    --height-margin: 10px;    /* height of <body> - height of <app> */
    --pagegrid-top: 5px;  /* extra margin between navbar and page */
@@ -9,14 +9,93 @@ body {
                        - var(--top-menu-height)
                        - var(--height-margin));
 
-   /* background of canvases */
-   --canvas-bg: white;
-   --canvas-text: white;
+}
 
+/* Support dark color theme */
+:root {
+   color-scheme: light dark;
+}
+@media(prefers-color-scheme:light), all {
+   :root {
+      --assertion-more-text: #555;    /* "More" button in assertions */
+      --assertion-box-shadow: rgba(0,0,0,.2);
+      --assertion-text: #777;
+      --axis-color: black;            /* Axis in graphs */
+      --background-color: #f0f0f0;
+      --border-color: #d4d4d5;        /* semantic-ui default */
+      --canvas-bg: white;             /* background of canvases */
+      --canvas-box-details: #555;     /* addition data shown in boxes */
+      --canvas-text: rgba(0,0,0,.87); /* text on background (marriages,...) */
+      --card-background: white;       /* semantic-ui's card */
+      --card-background-hover: #eee;  /* semantic-ui's card */
+      --grid-color: #ccc;
+      --header-color: rgb(100,100,100);
+      --input-background: white;
+      --link-color: rgba(0,0,0,.87);  /* from semantic-ui default */
+      --page-title-background: #cdcdcd;
+      --page-title-color: #4d4d4d;
+      --text-color: rgba(0,0,0,.87);
+   }
+}
+@media(prefers-color-scheme:dark) {
+   :root {
+      --assertion-more-text: white;
+      --assertion-box-shadow: rgba(0,0,0,.8);
+      --assertion-text: white;
+      --axis-color: white;
+      --background-color: #2a2b2c;
+      --border-color: black;
+      --canvas-bg: #2a2b2c; /* #1b1c1d; /* background of canvases */
+      --canvas-box-details: #2a2b2c;
+      --canvas-text: #f0f0f0;
+      --card-background: #4a4b4c;
+      --card-background-hover: #6a6b6c;
+      --grid-color: #6a6b6c;
+      --header-color: #f0f0f0;
+      --input-background: #6a6b6c;
+      --page-title-background: #3a3b3c;
+      --page-title-color: white;
+      --link-color: #f0f0f0;
+      --text-color: #f0f0f0;
+   }
+}
+
+body {
+   background: var(--background-color) !important;
 }
 
 .ui.grid.pagegrid {
    padding-top: var(--pagegrid-top);
+}
+
+.ui.list .item              { color: var(--link-color); }
+.ui.card, .ui.cards>.card   { background: var(--card-background); }
+.ui.segment,
+.ui.steps .step,
+.ui.steps .step .description,
+.ui.steps .step::after,
+.ui.styled.accordion                 {
+   background: var(--card-background);
+   color: var(--text-color);
+}
+.ui.form .field>label,
+.ui.basic.button,
+.ui.basic.buttons .button,
+.ui.checkbox label,
+.ui.styled.accordion .title,
+.ui.styled.accordion .active.title {
+   color: var(--text-color) !important;
+}
+.ui.selection.dropdown,
+input {
+   background: var(--input-background) !important;
+   color: var(--text-color) !important;
+}
+.ui.steps,
+.ui.steps .step,
+.ui.steps .step::after,
+.ui.attached.segment {
+  border-color: var(--border-color);
 }
 
 .Side {
@@ -37,6 +116,7 @@ svg {
    width: 100%;
    height: var(--main-height);
    background: var(--canvas-bg);
+   fill: var(--canvas-text);
 }
 
 .List {
@@ -62,6 +142,6 @@ svg {
 }
 
 .ui.header {
-   color: rgb(100,100,100);
+   color: var(--header-color);
 }
 

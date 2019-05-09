@@ -54,11 +54,6 @@ const AssertionBox: React.FC<BoxProps> = (p) => {
           </div>
 
          {p.p1}
-      {/*
-         <div className="eventRole">
-            <span>{a.getRole(p.metadata)}</span>
-         </div>
-         */}
          {p.p2}
 
          {a.rationale &&

@@ -3,14 +3,14 @@
 }
 
 .Source .pageTitle {
-   background: #cdcdcd;
+   background: var(--page-title-background);
    font-size: 1.4em;
    line-height: 1.6em;
    white-space: nowrap;
-   color: #4d4d4d;
+   color: var(--page-title-color);
    font-family: serif;
 }
 
 .Source .pageContent .content {
-   background: #ececec;
+   background: var(--card-background);
 }

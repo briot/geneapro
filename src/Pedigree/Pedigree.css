@@ -1,13 +1,13 @@
 .Pedigree {
 }
 .Pedigree .details {
-   fill: #555;
+   fill: var(--canvas-box-details);
 }
 .Pedigree text,
 .Pedigree tspan {
    line-height: 1em;
 }
 .Pedigree .link {
-   stroke: #000;
+   stroke: var(--text-color);
    fill: none;
 }

@@ -1,4 +1,4 @@
 .PlaceList {
    max-width: 900px;
-   background: white;
+   background: var(--card-background);
 }

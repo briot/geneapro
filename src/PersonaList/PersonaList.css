@@ -1,20 +1,20 @@
 .PersonList {
    max-width: 900px;
-   background: white;
+   background: var(--card-background);
 }
 .PersonList .lifespan {
-   color: #999;
+   color: var(--text-color);
    float: right;
    padding-right: 10px;
 }
 .PersonList .person:hover {
-   background: #EEE;
+   background: var(--card-background-hover);
 }
 .PersonList .lifespan span {
    display: inline-block;
    width: 30px;
 }
 .PersonList .loading {
-   color: #999;
+   color: var(--text-color);
    text-size: 0.6em;
 }

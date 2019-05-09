@@ -71,7 +71,11 @@ const Persona: React.FC<PersonaProps> = (p) => {
                {birthYear} - {deathYear}
             </span>
          </Segment>
-         <Segment attached={true} className="pageContent">
+         <Segment
+            attached={true}
+            className="pageContent"
+            style={{display: 'flex'}}
+         >
             {
                <AssertionTimeline
                   dispatch={p.dispatch}

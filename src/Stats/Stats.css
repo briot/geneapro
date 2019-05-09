@@ -24,12 +24,18 @@
    stroke-width: 0
 }
 
-.Stats .grid .tick {
+.Stats .axis path,
+.Stats .axis .tick {
    fill: none;
    shape-rendering: crispEdges;
+   stroke: var(--axis-color);
+}
+.Stats .axis .tick text {
+   fill: var(--axis-color);
+   stroke: none;
 }
 
 .Stats .grid line {
-   stroke: #ccc;
+   stroke: var(--grid-color);
 }
 

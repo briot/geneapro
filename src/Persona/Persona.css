@@ -3,11 +3,11 @@
 }
 
 .Persona .pagetitle {
-   background: #cdcdcd;
+   background: var(--page-title-background);
    font-size: 1.4em;
    line-height: 1.6em;
    white-space: nowrap;
-   color: #4d4d4d;
+   color: var(--page-title-color);
 }
 
 .Persona .pagetitle .lifespan {
@@ -17,11 +17,10 @@
    font-size: 0.8em;
    margin-right: 10px;
 }
-
 .Persona .pageContent {
-   background: #ececec;
+   background: var(--background-color);
+   flex: 1 1 auto;
 }
-
 .Persona {
    display: flex;
    flex-direction: column;
@@ -29,11 +28,9 @@
    justify-content: space-between;
    height: var(--main-height);
 }
-.Persona .pageContent {
-   flex: 1 1 auto;
-}
 .Persona .pageContent .AssertionTimeline {
-   height: 100%;
+   /* height: 100%; */
+   flex: 1 1 100%;
 }
 .Persona .pageContent .AssertionTimeline .List {
    height: 100%;

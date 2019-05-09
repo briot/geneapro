@@ -89,17 +89,11 @@ const AssertionPartEvent: React.FC<EventProps> = (p) => {
 
    const e = p.entities.events[p.eventId];
    const place = e.placeId ? p.entities.places[e.placeId] : undefined;
-   const typ = e.type ? p.metadata.event_types_dict[e.type] : undefined;
    return (
       <AssertionPart
          title={
             <>
                <div>
-            {/*
-                  <span className="eventType">
-                     {typ ? typ.name : "Unknown"}
-                  </span>
-                  */}
                   <span className="eventDescr">
                      {e.name}
                   </span>

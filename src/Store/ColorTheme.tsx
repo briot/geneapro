@@ -44,7 +44,7 @@ const DEFAULT = new Style({
    color: "black",
    stroke: "#222"
 });
-const STROKE_GREY_ON_WHITE = new Style({ ...DEFAULT, fill: "#fff" });
+const STROKE_GREY_ON_DEFAULT = new Style({ ...DEFAULT, fill: "inherit" });
 const TEXT_ONLY = new Style({ color: "black" });
 
 export default class ColorTheme {
@@ -74,7 +74,7 @@ export default class ColorTheme {
             return new Style({ ...DEFAULT, fill: fillColor });
 
          case WHITE.id:
-            return STROKE_GREY_ON_WHITE;
+            return STROKE_GREY_ON_DEFAULT;
 
          case NO_BOX.id:
             return TEXT_ONLY;
