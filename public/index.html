@@ -7,8 +7,8 @@
     <!--
       manifest.json provides metadata used when your web app is added to the
       homescreen on Android. See https://developers.google.com/web/fundamentals/engage-and-retain/web-app-manifest/
+       <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
     -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
     <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
     <!--
       Notice the use of %PUBLIC_URL% in the tags above.
@@ -28,6 +28,8 @@
 
     <!-- Needed to send POST data to Django.
         This sets the csrf cookie
+        The django-corsheaders extension will likely help here. We were
+        serving a html file, but loading it as javascript.
     -->
     <script type="text/javascript" src="/data/csrf" ></script>
 

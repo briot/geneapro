@@ -5,8 +5,9 @@ import os
 import logging
 from django.urls import path, re_path, register_converter
 import django.contrib
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.template.context_processors import csrf
+from django.conf import settings
 import django.views
 from .views import events
 from .views import importers
@@ -21,35 +22,30 @@ from .views import stats
 from .views import themelist
 import sys
 
-
-def index(request):
-    """
-    Send the index.html file back to the user
-    """
-    c = {}
-    c.update(csrf(request))
-    return render_to_response('index.html', c)
+logger = logging.getLogger('geneaprove')
 
 
 def send_csrf(request):
-    logging.getLogger('geneaprove').info("Sending csrf")
-    c = {}
-    c.update(csrf(request))
-    return render_to_response('csrf.html', c)
+    logger.info("Sending csrf")
+    return render(
+        request,
+        'csrf.js',
+        context=csrf(request),
+        content_type='text/javascript',
+    )
 
 
 def static(request):
     """
     Send static resources (CSS, javascript,...)
     """
-
-    # Special case to handle the templateUrl attributes when we have
-    # not used webpack to package them up
-    p = os.path.join(os.getcwd(), 'resources/ts', request.path[1:])
+    p = os.path.join(settings.GENEAPROVE_STATIC_ROOT, request.path[1:])
     if os.path.isfile(p):
+        logger.info('Serving static file %s', p)
         return django.views.static.serve(request, p, document_root='/')
     else:
-        return index(request)
+        logger.info('Serving index.html instead of %s', request.path)
+        return render(request, 'index.html', context=csrf(request))
 
 
 class NegativeOrPositive:
@@ -62,8 +58,6 @@ register_converter(NegativeOrPositive, 'negpos')
 
 
 urlpatterns = [
-    re_path(r'^$', index, name='index'),
-
     path('data/persona/list', persona.PersonaList.as_view()),
     path('data/persona/count', persona.PersonCount.as_view()),
     path('data/persona/<int:id>', persona.PersonaView.as_view()),
@@ -113,8 +107,13 @@ urlpatterns = [
     # Getting the CSRF token
     path('data/csrf', send_csrf),
 
-    # Fallback to support the path location strategy in URLs
-    # url(r'^.*', static, name='index'),
+    # This serves two purposes:
+    # - in non-devel mode, the GUI has been precompiled and we should server
+    #   its contents (js, css,...) as static files
+    # - it also receives URLs like '/pedigree/1' (when the user first loads a
+    #   page); in this case it simply returns index.html and the GUI is in
+    #   charge of showing the proper page.
+    re_path(r'^.*$', static),
 
     # url(r'^merge$', geneaprove.views.merge.view),
 ]

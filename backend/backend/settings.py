@@ -42,9 +42,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # See https://github.com/adamchainz/django-cors-headers
+    #'corsheaders',
+
+    # To run django shell in a jupyter notebook
+    #   manage.py shell_plus --notebook
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
+    #'corsheaders.middleware.CorsMiddleware',
     'backend.middleware.simple_exception.AJAXSimpleExceptionResponse',
     'backend.middleware.profile.ProfileMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -58,8 +66,14 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'backend.urls'
 
-GENEAPROVE_STATIC_ROOT = os.path.realpath(
-    os.path.join(BASE_DIR, "../dist"))
+# In case we have compiled a static version of the site, use this in priority
+__GENEAPROVE_ROOT_PROD = os.path.realpath(os.path.join(BASE_DIR, "../build"))
+__GENEAPROVE_ROOT_DEV  = os.path.realpath(os.path.join(BASE_DIR, "../public"))
+GENEAPROVE_STATIC_ROOT = (
+    __GENEAPROVE_ROOT_PROD
+    if os.path.isdir(__GENEAPROVE_ROOT_PROD)
+    else __GENEAPROVE_ROOT_DEV
+)
 
 TEMPLATES = [
     {
@@ -134,14 +148,6 @@ USE_L10N = True
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.10/howto/static-files/
-
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    GENEAPROVE_STATIC_ROOT
-]
 
 class WithStacktrace(object):
     "https://blog.ionelmc.ro/2013/12/10/adding-stacktraces-to-log-messages/"

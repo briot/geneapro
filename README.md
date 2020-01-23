@@ -25,9 +25,7 @@ Q. How do I start the server ?
        sh ./setup.sh
 
    This command will download required nodejs and python dependencies (which
-   might take a while the first time), and then start split the window into
-   several parts: one makes sure the server is running, another that the
-   resources needed by the web browser are compiled.
+   might take a while the first time), and then start the server.
 
    This command also creates an empty database if none exists yet.
 

@@ -376,7 +376,8 @@ class PersonSet(SQLSet):
             .select_related(*models.P2P.related_json_fields())
         self.asserts.extend(pm)
 
-    def recompute_main_ids(self):
+    @staticmethod
+    def recompute_main_ids():
         """
         Recompute all main_ids in the database (thread-safe).
         Must be called outside of a transaction, or it will be very slow
