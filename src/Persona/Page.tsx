@@ -1,10 +1,10 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
 import { personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
-import { AppState, GPDispatch, MetadataDict } from "../Store/State";
+import { AppState, MetadataDict } from "../Store/State";
 import Page from "../Page";
 import Persona from "../Persona/Persona";
 import { usePerson } from "../Server/Person";
@@ -14,13 +14,12 @@ interface PropsFromRoute {
 }
 
 interface PersonaPageProps extends RouteComponentProps<PropsFromRoute> {
-   dispatch: GPDispatch;
    metadata: MetadataDict;
 }
 
 const PersonaPage: React.FC<PersonaPageProps> = (p) => {
    const id = Number(p.match.params.id);
-   const { dispatch } = p;
+   const dispatch = useDispatch();
    const person = usePerson(id);
 
    React.useEffect(
@@ -43,7 +42,6 @@ const PersonaPage: React.FC<PersonaPageProps> = (p) => {
          main={
             person ? (
                <Persona
-                  dispatch={dispatch}
                   person={person}
                   metadata={p.metadata}
                />
@@ -62,5 +60,4 @@ export default connect(
       ...props,
       metadata: state.metadata,
    }),
-   (dispatch: GPDispatch) => ({ dispatch })
 )(PersonaPage);

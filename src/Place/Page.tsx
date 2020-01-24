@@ -1,8 +1,8 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { Loader } from "semantic-ui-react";
 import { RouteComponentProps } from "react-router";
-import { AppState, GPDispatch, MetadataDict } from "../Store/State";
+import { AppState, MetadataDict } from "../Store/State";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { usePlace } from "../Server/Place";
 import PlaceDetails from "../Place/PlaceDetails";
@@ -14,12 +14,11 @@ interface PropsFromRoute {
 
 interface PlacePageProps extends RouteComponentProps<PropsFromRoute> {
    metadata: MetadataDict;
-   dispatch: GPDispatch;
 }
 
 const PlacePage: React.FC<PlacePageProps> = (p) => {
    const id = Number(p.match.params.id);
-   const { dispatch } = p;
+   const dispatch = useDispatch();
    const place = usePlace(id);
 
    React.useEffect(
@@ -40,7 +39,6 @@ const PlacePage: React.FC<PlacePageProps> = (p) => {
          main={
             place ? (
                <PlaceDetails
-                  dispatch={dispatch}
                   metadata={p.metadata}
                   place={place}
                />
@@ -59,5 +57,4 @@ export default connect(
       ...props,
       metadata: state.metadata,
    }),
-   (dispatch: GPDispatch) => ({ dispatch })
 )(PlacePage);

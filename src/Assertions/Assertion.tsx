@@ -1,5 +1,6 @@
 import * as React from "react";
-import { GPDispatch, MetadataDict } from "../Store/State";
+import { useDispatch } from "react-redux";
+import { MetadataDict } from "../Store/State";
 import { Icon, Rating } from "semantic-ui-react";
 import { Assertion } from "../Store/Assertion";
 import AssertionPartEvent from "../Assertions/AssertionPartEvent";
@@ -68,13 +69,13 @@ const AssertionBox: React.FC<BoxProps> = (p) => {
 interface AssertionProps {
    assert: Assertion;
    entities: AssertionEntities;
-   dispatch: GPDispatch;
    metadata: MetadataDict;
 
    hidePersonIf?: number;
    //  Hide persons when they have this idea (to be used on the Persona page)
 }
 const AssertionView: React.FC<AssertionProps> = (p) => {
+   const dispatch = useDispatch();
    const a = p.assert;
    if (a instanceof P2E) {
       return (
@@ -92,7 +93,6 @@ const AssertionView: React.FC<AssertionProps> = (p) => {
             p2={<AssertionPartEvent
                    eventId={a.eventId}
                    entities={p.entities}
-                   dispatch={p.dispatch}
                    metadata={p.metadata}
                 />}
             entities={p.entities}

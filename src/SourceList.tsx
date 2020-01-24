@@ -1,8 +1,8 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { InfiniteListFilter, InfiniteRowRenderer } from './InfiniteList';
 import Page from "./Page";
-import { AppState, GPDispatch } from "./Store/State";
+import { AppState } from "./Store/State";
 import {
    Source,
    SourceListSettings,
@@ -19,13 +19,12 @@ const renderRow: InfiniteRowRenderer<Source> = (p) => (
 );
 
 interface SourceListProps {
-   dispatch: GPDispatch;
    settings: SourceListSettings;
 }
 
 const SourceList: React.FC<SourceListProps> = (p) => {
    const [count, setCount] = React.useState(0);
-   const { dispatch } = p;
+   const dispatch = useDispatch();
 
    document.title = "List of sources";
 
@@ -73,5 +72,4 @@ const SourceList: React.FC<SourceListProps> = (p) => {
 
 export default connect(
    (state: AppState) => ({ settings: state.sourcelist }),
-   (dispatch: GPDispatch) => ({ dispatch })
 )(SourceList);

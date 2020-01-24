@@ -1,5 +1,6 @@
 import * as React from "react";
-import { GPDispatch, MetadataDict } from "../Store/State";
+import { useDispatch } from "react-redux";
+import { MetadataDict } from "../Store/State";
 import { fetchEventDetails } from "../Store/Sagas";
 import { Loader, Rating } from "semantic-ui-react";
 import { PersonaLink, SourceLink, PlaceLink } from "../Links";
@@ -78,14 +79,14 @@ const EventDetails: React.FC<EventDetailsProps> = (p) => {
 
 interface EventProps {
    eventId: number;
-   dispatch: GPDispatch;
    entities: AssertionEntities;
    metadata: MetadataDict;
 }
 const AssertionPartEvent: React.FC<EventProps> = (p) => {
+   const dispatch = useDispatch();
    const onExpand = React.useCallback(
-      () => fetchEventDetails.execute(p.dispatch, { id: p.eventId }),
-      [p.dispatch, p.eventId]);
+      () => fetchEventDetails.execute(dispatch, { id: p.eventId }),
+      [dispatch, p.eventId]);
 
    const e = p.entities.events[p.eventId];
    const place = e.placeId ? p.entities.places[e.placeId] : undefined;
@@ -105,7 +106,7 @@ const AssertionPartEvent: React.FC<EventProps> = (p) => {
                   </div>
                }
                <div className="more">
-                  <a href="#">View event details</a>
+                  { /* <a href="#">View event details</a> */ }
                </div>
             </>
          }

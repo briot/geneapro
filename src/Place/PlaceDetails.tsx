@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Segment } from "semantic-ui-react";
-import { GPDispatch, MetadataDict } from "../Store/State";
+import { MetadataDict } from "../Store/State";
 import {
    AssertionEntities,
    AssertionEntitiesJSON,
@@ -16,7 +16,6 @@ import { InfiniteRowFetcher } from "../InfiniteList";
 import "./PlaceDetails.css";
 
 interface PlaceProps {
-   dispatch: GPDispatch;
    metadata: MetadataDict;
    place: Place;
 }
@@ -54,7 +53,6 @@ export default function PlaceDetails(p: PlaceProps) {
          </Segment>
          <Segment attached={true} className="pageContent">
             <AssertionTimeline
-               dispatch={p.dispatch}
                entities={entities}
                fetchAsserts={fetchAsserts}
                fullHeight={true}

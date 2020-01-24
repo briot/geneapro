@@ -7,7 +7,7 @@ import {
    ForkEffect
 } from "redux-saga/effects";
 import actionCreatorFactory, { Action } from "typescript-fsa";
-import { AppState, GPDispatch } from "../Store/State";
+import { AppState } from "../Store/State";
 
 export const actionCreator = actionCreatorFactory("GP" /* prefix */);
 
@@ -67,7 +67,7 @@ export function createAsyncAction<Params, Result>(
       }
    }
 
-   function execute(dispatch: GPDispatch, p: Params) {
+   function execute(dispatch: Redux.Dispatch, p: Params) {
       dispatch(request(p));
    }
 

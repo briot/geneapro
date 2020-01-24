@@ -1,10 +1,10 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
 import { personDisplay } from "../Store/Person";
 import { QuiltsSettings, changeQuiltsSettings } from "../Store/Quilts";
-import { AppState, GPDispatch } from "../Store/State";
+import { AppState } from "../Store/State";
 import { fetchQuiltsFromServer, QuiltsResult } from "../Server/Quilts";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { DropTarget } from "../Draggable";
@@ -19,7 +19,6 @@ interface PropsFromRoute {
 
 interface QuiltsPageProps extends RouteComponentProps<PropsFromRoute> {
    settings: QuiltsSettings;
-   dispatch: GPDispatch;
 }
 const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
    const [loading, setLoading] = React.useState(false);
@@ -27,7 +26,7 @@ const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
 
    const decujusid = Number(p.match.params.id);
    const decujus = layout && layout.persons[decujusid];
-   const { dispatch } = p;
+   const dispatch = useDispatch();
    const onSettingsChange = React.useCallback(
       (diff: Partial<QuiltsSettings>) =>
          dispatch(changeQuiltsSettings({ diff })),
@@ -92,5 +91,4 @@ export default connect(
       ...props,
       settings: state.quilts,
    }),
-   (dispatch: GPDispatch) => ({ dispatch, })
 )(QuiltsPage);

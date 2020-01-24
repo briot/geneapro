@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Icon } from "semantic-ui-react";
-import { GPDispatch, MetadataDict } from "../Store/State";
+import { MetadataDict } from "../Store/State";
 import { Assertion } from "../Store/Assertion";
 import { Segment } from "semantic-ui-react";
 import {
@@ -19,7 +19,6 @@ import { InfiniteRowFetcher } from "../InfiniteList";
 import "./Persona.css";
 
 interface PersonaProps {
-   dispatch: GPDispatch;
    metadata: MetadataDict;
    person: Person;
 }
@@ -78,7 +77,6 @@ const Persona: React.FC<PersonaProps> = (p) => {
          >
             {
                <AssertionTimeline
-                  dispatch={p.dispatch}
                   entities={entities}
                   fetchAsserts={fetchAsserts}
                   fullHeight={false}

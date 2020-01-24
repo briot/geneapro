@@ -3,7 +3,7 @@ import { connect } from "react-redux";
 import { Link } from "react-router-dom";
 import { Button, DropdownProps, Form, Select } from "semantic-ui-react";
 import { predefinedThemes } from "./Store/ColorTheme";
-import { AppState, GPDispatch, MetadataDict } from "./Store/State";
+import { AppState, MetadataDict } from "./Store/State";
 import * as GP_JSON from "./Server/JSON";
 import * as ServerThemes from "./Server/Themes";
 
@@ -49,7 +49,6 @@ const ThemeLegend: React.FC<ThemeLegendProps> = p => {
 };
 
 interface ThemeSelectorProps {
-   dispatch: GPDispatch;
    defaultValue: GP_JSON.ColorSchemeId;
    metadata: MetadataDict;
 
@@ -113,5 +112,4 @@ const ThemeSelector: React.FC<ThemeSelectorProps> = p => {
 
 export default connect(
    (state: AppState) => ({ metadata: state.metadata }),
-   (dispatch: GPDispatch) => ({ dispatch })
 )(ThemeSelector);

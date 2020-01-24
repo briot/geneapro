@@ -3,7 +3,7 @@ import {
    InfiniteList,
    InfiniteRowFetcher,
    InfiniteRowRenderer } from "../InfiniteList";
-import { GPDispatch, MetadataDict } from "../Store/State";
+import { MetadataDict } from "../Store/State";
 import { Assertion } from "../Store/Assertion";
 import { AssertionEntities } from '../Server/Person';
 import AssertionView from "../Assertions/Assertion";
@@ -27,7 +27,6 @@ export interface TimelineProps {
    //  "age" will be displayed relative to that date
 
    entities: AssertionEntities;
-   dispatch: GPDispatch;
    metadata: MetadataDict;
 
    minBatchSize?: number;

@@ -1,8 +1,8 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { InfiniteListFilter, InfiniteRowRenderer } from '../InfiniteList';
 import Page from "../Page";
-import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
+import { AppState, themeNameGetter } from "../Store/State";
 import { fetchPersonsCount, fetchPersonsFromServer } from '../Server/Person';
 import * as GP_JSON from "../Server/JSON";
 import { Person } from "../Store/Person";
@@ -17,13 +17,12 @@ import ColorTheme from "../Store/ColorTheme";
 import "./PersonaList.css";
 
 interface PersonaListProps {
-   dispatch: GPDispatch;
    settings: PersonaListSettings;
    themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
 }
 const PersonaList: React.FC<PersonaListProps> = p => {
    const [count, setCount] = React.useState(0);
-   const { dispatch } = p;
+   const dispatch = useDispatch();
 
    const onSettingsChange = React.useCallback(
       (diff: Partial<PersonaListSettings>) =>
@@ -108,5 +107,4 @@ export default connect(
       settings: state.personalist,
       themeNameGet: themeNameGetter(state)
    }),
-   (dispatch: GPDispatch) => ({ dispatch })
 )(PersonaList);

@@ -1,6 +1,6 @@
 import * as React from "react";
-import { connect } from "react-redux";
-import { RouteComponentProps } from "react-router";
+import { connect, useDispatch } from "react-redux";
+import { useParams } from "react-router-dom";
 import { Loader } from "semantic-ui-react";
 import * as GP_JSON from "../Server/JSON";
 import { personDisplay, PersonSet } from "../Store/Person";
@@ -9,7 +9,7 @@ import { PlaceSet } from "../Store/Place";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { PedigreeSettings, changePedigreeSettings } from "../Store/Pedigree";
 import { fetchPedigree } from "../Store/Sagas";
-import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
+import { AppState, themeNameGetter } from "../Store/State";
 import { DropTarget } from "../Draggable";
 import { URL } from "../Links";
 import Page from "../Page";
@@ -26,14 +26,13 @@ interface PedigreePageConnectedProps
    persons: PersonSet;
    allEvents: GenealogyEventSet;
    allPlaces: PlaceSet;
-   dispatch: GPDispatch;
    themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
 }
 
 const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
    const decujusid = Number(p.match.params.id);
    const decujus = p.persons[decujusid];
-   const { dispatch } = p;
+   const dispatch = useDispatch();
 
    // Fetch data from server when some properties change
    // Always run this, though it will do nothing if we already have the data
@@ -116,7 +115,6 @@ const PedigreePage = connect(
       allPlaces: state.places,
       themeNameGet: themeNameGetter(state)
    }),
-   (dispatch: GPDispatch) => ({ dispatch })
 )(PedigreePageConnected);
 
 export default PedigreePage;

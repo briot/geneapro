@@ -1,11 +1,11 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import {
    InfiniteListFilter,
    InfiniteRowFetcher,
    InfiniteRowRenderer
 } from './InfiniteList';
-import { AppState, GPDispatch } from "./Store/State";
+import { AppState } from "./Store/State";
 import Page from "./Page";
 import {
    Place,
@@ -23,13 +23,12 @@ const renderRow: InfiniteRowRenderer<Place> = (p) => (
 );
 
 interface PlaceListProps {
-   dispatch: GPDispatch;
    settings: PlaceListSettings;
 }
 
 const PlaceList: React.FC<PlaceListProps> = (p) => {
    const [count, setCount] = React.useState(0);
-   const { dispatch } = p;
+   const dispatch = useDispatch();
 
    document.title = "List of places";
 
@@ -76,5 +75,4 @@ const PlaceList: React.FC<PlaceListProps> = (p) => {
 
 export default connect(
    (state: AppState) => ({ settings: state.placelist }),
-   (dispatch: GPDispatch) => ({ dispatch })
 )(PlaceList);

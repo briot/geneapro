@@ -1,5 +1,5 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
 import * as GP_JSON from "../Server/JSON";
@@ -7,7 +7,7 @@ import { PersonSet, personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { RadialSettings, changeRadialSettings } from "../Store/Radial";
 import { fetchPedigree } from "../Store/Sagas";
-import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
+import { AppState, themeNameGetter } from "../Store/State";
 import { DropTarget } from "../Draggable";
 import { URL } from "../Links";
 import RadialSide from "../Radial/Side";
@@ -21,24 +21,23 @@ interface PropsFromRoute {
 interface RadialPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
    settings: RadialSettings;
    persons: PersonSet;
-   dispatch: GPDispatch;
    themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
 }
 
 const RadialPage: React.FC<RadialPageConnectedProps> = (p) => {
    const decujusid = Number(p.match.params.id);
    const decujus = p.persons[decujusid];
-   const { dispatch } = p;
+   const dispatch = useDispatch();
 
    React.useEffect(
       () =>
-         fetchPedigree.execute(p.dispatch, {
+         fetchPedigree.execute(dispatch, {
             decujus: decujusid,
             ancestors: Math.max(0, p.settings.generations),
             descendants: Math.abs(Math.min(0, p.settings.generations)),
             theme: p.settings.colors
          }),
-      [decujusid, p.settings.generations, p.settings.colors, p.dispatch]
+      [decujusid, p.settings.generations, p.settings.colors, dispatch]
    );
 
    React.useEffect(
@@ -87,7 +86,4 @@ export default connect(
       persons: state.persons,
       themeNameGet: themeNameGetter(state)
    }),
-   (dispatch: GPDispatch) => ({
-      dispatch
-   })
 )(RadialPage);

@@ -1,8 +1,7 @@
 import "semantic-ui-css/semantic.min.css";
 import "./App.css";
-
 import * as React from "react";
-import { Provider } from "react-redux";
+import { useDispatch, Provider } from "react-redux";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import DashboardPage from "./Dashboard";
 import FanchartPage from "./Fanchart/Page";
@@ -24,11 +23,12 @@ import { URL } from "./Links";
 
 const App: React.FC<{}> = () => {
    const [rehydrated, setRehydrated] = React.useState(false);
+   const dispatch = useDispatch();
 
    React.useEffect(
       () => {
          setPersist(() => setRehydrated(true));
-         fetchMetadata.execute(store.dispatch, {});
+         fetchMetadata.execute(dispatch, {});
       },
       []
    );

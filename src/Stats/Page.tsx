@@ -1,9 +1,9 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
 import { JSONStats, fetchStatsFromServer } from "../Server/Stats";
-import { AppState, GPDispatch } from "../Store/State";
+import { AppState } from "../Store/State";
 import { StatsSettings, changeStatsSettings } from "../Store/Stats";
 import { personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
@@ -22,12 +22,11 @@ interface PropsFromRoute {
 }
 
 interface StatsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
-   dispatch: GPDispatch;
    settings: StatsSettings;
 }
 
 const StatsPage: React.FC<StatsPageConnectedProps> = (p) => {
-   const { dispatch } = p;
+   const dispatch = useDispatch();
    const decujusid = Number(p.match.params.id);
    const [data, setData] = React.useState<JSONStats|undefined>(undefined);
    const person = usePerson(decujusid);
@@ -107,7 +106,4 @@ export default connect(
       ...props,
       settings: state.stats,
    }),
-   (dispatch: GPDispatch) => ({
-      dispatch,
-   })
 )(StatsPage);

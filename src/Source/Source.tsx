@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Accordion, Icon, Segment, Step } from "semantic-ui-react";
-import { GPDispatch, MetadataDict } from "../Store/State";
+import { MetadataDict } from "../Store/State";
 import { Source } from "../Store/Source";
 import SourceCitation from "../Source/Citation";
 import SourceMedias from "../Source/Media";
@@ -9,7 +9,6 @@ import { useSourceAssertsCount } from "../Server/Source";
 import "./Source.css";
 
 interface SourceProps {
-   dispatch: GPDispatch;
    metadata: MetadataDict;
    source: Source | undefined;
 }
@@ -138,7 +137,6 @@ const SourceDetails: React.FC<SourceProps> = (p) => {
                </Accordion.Title>
                <Accordion.Content active={showAsserts}>
                   <SourceAssertions
-                     dispatch={p.dispatch}
                      filter={""}
                      metadata={p.metadata}
                      source={s}

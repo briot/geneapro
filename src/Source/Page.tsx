@@ -1,8 +1,8 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { Loader } from "semantic-ui-react";
 import { RouteComponentProps } from "react-router";
-import { AppState, GPDispatch, MetadataDict } from "../Store/State";
+import { AppState, MetadataDict } from "../Store/State";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { fetchSourceDetails } from "../Store/Sagas";
 import { Source } from "../Store/Source";
@@ -16,20 +16,19 @@ interface PropsFromRoute {
 interface SourcePageProps extends RouteComponentProps<PropsFromRoute> {
    metadata: MetadataDict;
    source: Source | undefined;
-   dispatch: GPDispatch;
 }
 const SourcePage: React.FC<SourcePageProps> = (p) => {
    const id = Number(p.match.params.id);
    const s = p.source;
-   const { dispatch } = p;
+   const dispatch = useDispatch();
 
    React.useEffect(
       () => {
          if (id >= 0) {
-            fetchSourceDetails.execute(p.dispatch, { id });
+            fetchSourceDetails.execute(dispatch, { id });
          }
       },
-      [id, p.dispatch]
+      [id, dispatch]
    );
 
    React.useEffect(
@@ -52,7 +51,6 @@ const SourcePage: React.FC<SourcePageProps> = (p) => {
          main={
             s || id < 0 ? (
                <SourceDetails
-                  dispatch={p.dispatch}
                   metadata={p.metadata}
                   source={s}
                />
@@ -72,5 +70,4 @@ export default connect(
       metadata: state.metadata,
       source: state.sources[Number(props.match.params.id)] as Source | undefined
    }),
-   (dispatch: GPDispatch) => ({ dispatch })
 )(SourcePage);

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import {
    Button,
    Checkbox,
@@ -13,7 +13,7 @@ import {
    Select
 } from "semantic-ui-react";
 import Page from "../Page";
-import { AppState, GPDispatch, MetadataDict } from "../Store/State";
+import { AppState, MetadataDict } from "../Store/State";
 import { fetchMetadata } from "../Store/Sagas";
 import * as GP_JSON from "../Server/JSON";
 import * as ServerThemes from "../Server/Themes";
@@ -870,7 +870,6 @@ const useMetadataToDropdown = createSelector(metadataToDropdown);
  */
 
 interface ThemeEditorProps {
-   dispatch: GPDispatch;
    metadata: MetadataDict;
 }
 
@@ -878,6 +877,7 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {
    const [themeList, setThemeList] = React.useState<GP_JSON.ColorScheme[]>(
       p.metadata.themes
    );
+   const dispatch = useDispatch();
    const [selected, setSelected] = React.useState(NEW_THEME.id);
    const [modified, setModified] = React.useState(false);
    const [name, setName] = React.useState("");
@@ -936,9 +936,9 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {
       ServerThemes.deleteThemeOnServer(selected).then(() => {
          setModified(false);
          setSelected(NEW_THEME.id);
-         fetchMetadata.execute(p.dispatch, { force: true });
+         fetchMetadata.execute(dispatch, { force: true });
       });
-   }, [selected, p.dispatch]);
+   }, [selected, dispatch]);
 
    const onCancel = React.useCallback(() => {
       loadRuleList();
@@ -950,11 +950,11 @@ const ThemeEditorConnected: React.FC<ThemeEditorProps> = p => {
       ServerThemes.saveThemeOnServer(selected, name, rules).then(
          (theme_id: number) => {
             setModified(false);
-            fetchMetadata.execute( p.dispatch, { force: true });
+            fetchMetadata.execute( dispatch, { force: true });
             setSelected(theme_id); //  ??? Only once we have reloaded
          }
       );
-   }, [selected, name, rules, p.dispatch]);
+   }, [selected, name, rules, dispatch]);
 
    const renderRule = React.useCallback(
       (
@@ -1024,9 +1024,6 @@ const ThemeEditor = connect(
    (state: AppState) => ({
       metadata: state.metadata
    }),
-   (dispatch: GPDispatch) => ({
-      dispatch
-   })
 )(ThemeEditorConnected);
 
 export default ThemeEditor;

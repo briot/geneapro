@@ -1,5 +1,5 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { connect, useDispatch } from "react-redux";
 import { RouteComponentProps } from "react-router";
 import { Loader } from "semantic-ui-react";
 import * as GP_JSON from "../Server/JSON";
@@ -7,7 +7,7 @@ import { Person, PersonSet, personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { FanchartSettings, changeFanchartSettings } from "../Store/Fanchart";
 import { fetchPedigree } from "../Store/Sagas";
-import { AppState, GPDispatch, themeNameGetter } from "../Store/State";
+import { AppState, themeNameGetter } from "../Store/State";
 import { GenealogyEventSet } from "../Store/Event";
 import { DropTarget } from "../Draggable";
 import { URL } from "../Links";
@@ -24,18 +24,17 @@ interface FanchartPageConnectedProps
    settings: FanchartSettings;
    persons: PersonSet;
    allEvents: GenealogyEventSet;
-   dispatch: GPDispatch;
    themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
 }
 
 const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
    const decujusid = Number(p.match.params.id);
-   const {dispatch} = p;
+   const dispatch = useDispatch();
    const decujus: Person = p.persons[decujusid];
 
    React.useEffect(
       () =>
-         fetchPedigree.execute(p.dispatch, {
+         fetchPedigree.execute(dispatch, {
             decujus: decujusid,
             ancestors: p.settings.ancestors,
             descendants: p.settings.descendants,
@@ -43,7 +42,7 @@ const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
          }),
       [
          decujusid,
-         p.dispatch,
+         dispatch,
          p.settings.ancestors,
          p.settings.descendants,
          p.settings.colors
@@ -100,9 +99,6 @@ const FanchartPage = connect(
       allEvents: state.events,
       themeNameGet: themeNameGetter(state)
    }),
-   (dispatch: GPDispatch) => ({
-      dispatch
-   })
 )(FanchartPageConnected);
 
 export default FanchartPage;

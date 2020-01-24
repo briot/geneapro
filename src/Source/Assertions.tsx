@@ -1,5 +1,5 @@
 import * as React from "react";
-import { GPDispatch, MetadataDict } from "../Store/State";
+import { MetadataDict } from "../Store/State";
 import {
    AssertionEntities,
    AssertionEntitiesJSON,
@@ -18,7 +18,6 @@ const MIN_BATCH_SIZE = 80;
 interface SourceAssertionsProps {
    filter: string;
    source: Source;
-   dispatch: GPDispatch;
    metadata: MetadataDict;
 }
 const SourceAssertions: React.FC<SourceAssertionsProps> = (p) => {
@@ -48,7 +47,6 @@ const SourceAssertions: React.FC<SourceAssertionsProps> = (p) => {
    );
 
    return <AssertionTimeline
-             dispatch={p.dispatch}
              entities={entities}
              fetchAsserts={fetchAsserts}
              fullHeight={true}
