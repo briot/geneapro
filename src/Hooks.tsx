@@ -137,3 +137,85 @@ export function createSelector<V, T>(resolver: (...p: any[]) => V) {
 //     )
 //   }
 // }
+
+
+// From https://overreacted.io/making-setinterval-declarative-with-react-hooks/
+// This lets us dynamically change the callback, without impact the time, or
+// temporary suspend callbacks by setting the default to 'null'
+
+export function useInterval(callback: ()=>void, delay: number|null) {
+  const savedCallback = React.useRef<()=>void>(callback);
+
+  // Remember the latest callback.
+  React.useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  // Set up the interval.
+  React.useEffect(() => {
+    function tick() {
+      savedCallback.current();
+    }
+    if (delay !== null) {
+      let id = setInterval(tick, delay);
+      return () => clearInterval(id);
+    }
+  }, [delay]);
+}
+
+// Use in async operations, to check that the component is still mounted
+// before we do anything like updating its state.
+
+export const useIsMounted = () => {
+  const isMounted = React.useRef(false);
+  React.useEffect(
+    () => {
+      isMounted.current = true;
+      return () => { isMounted.current = false; }
+    },
+    []);
+  return isMounted;
+}
+
+// Triggering code when the user presses a specific key
+
+export const useOnKeyPress = (
+      targetKey: number,
+      onKeyDown: (e: Event) => void,
+      onKeyUp: (e: Event) => void,
+      isDebugging=false
+) => {
+   const [isKeyDown, setIsKeyDown] = React.useState(false)
+   const onKeyDownLocal = React.useCallback(e => {
+      if (isDebugging) {
+         console.log("key down",
+            e.key, e.key !== targetKey ? " isn't triggered" : " is triggered");
+      }
+      if (e.key === targetKey) {
+         setIsKeyDown(true);
+         onKeyDown(e);
+      }
+   }, [onKeyDown, isDebugging, targetKey])
+
+   const onKeyUpLocal = React.useCallback(e => {
+      if (isDebugging) {
+         console.log("key up",
+            e.key, e.key !== targetKey ? " isn't triggered" : " is triggered");
+      }
+      if (e.key !== targetKey) {
+         setIsKeyDown(false);
+         onKeyUp(e);
+      }
+   }, [onKeyUp, isDebugging, targetKey])
+
+   React.useEffect(() => {
+      window.addEventListener('keydown', onKeyDownLocal);
+      window.addEventListener('keyup', onKeyUpLocal);
+      return () => {
+        window.removeEventListener('keydown', onKeyDownLocal);
+        window.removeEventListener('keyup', onKeyUpLocal);
+      }
+   }, [onKeyDownLocal, onKeyUpLocal]);
+
+   return isKeyDown;
+}
