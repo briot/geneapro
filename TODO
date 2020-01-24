@@ -76,6 +76,7 @@ http://www.beholdgenealogy.com/blog/?p=876
    http://timforsythe.com/blog/gedcom-import-testing-introduction/
    http://heiner-eichmann.de/gedcom/gedcom.htm
    http://gedcomindex.com/gedcoms.html
+   https://reactjs.org/docs/testing-recipes.html?no-cache=1
 ** Father might not be present at birth. How to store the info? Maybe not
    have him at the event and use a characteristic is father of.
    Same for godfather and baptism. Or just a note
@@ -405,7 +406,11 @@ http://www.wolframalpha.com/input/?i=great+grand+mother%27s+niece
 ** Password confirmation view
    https://simpleisbetterthancomplex.com/tutorial/2016/08/15/how-to-create-a-password-confirmation-view.html
 ** Custom fields
-https://blogs.gnome.org/danni/2017/05/19/postgresql-date-ranges-in-django-forms/
+   https://blogs.gnome.org/danni/2017/05/19/postgresql-date-ranges-in-django-forms/
+** Test number of queries
+   https://www.vinta.com.br/blog/2020/counting-queries-basic-performance-testing-in-django/
+** Bulk create manager
+   https://www.caktusgroup.com/blog/2019/01/09/django-bulk-inserts/
 
 * CSS
 ** http://learnlayout.com
@@ -417,10 +422,11 @@ https://blogs.gnome.org/danni/2017/05/19/postgresql-date-ranges-in-django-forms/
    http://labs.jensimmons.com/2017/01-009.html
 ** Grid
    https://tympanus.net/codrops/css_reference/grid/
-
-* Angular
-** Ahead-of-time compilation
-   http://blog.mgechev.com/2016/08/14/ahead-of-time-compilation-angular-offline-precompilation/
+** 3D Carousel
+   https://codepen.io/hoanghien0410/pen/MMPaqm
+   https://codepen.io/EntropyReversed/pen/YBEwXV
+** Toolbar
+   https://codepen.io/oliviale/pen/rPjgmB
 
 * GUI
 ** The toplevel menubar sections should match the genealogical process (collect, analyze,...)
