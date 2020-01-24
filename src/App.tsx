@@ -43,10 +43,18 @@ const App: React.FC<{}> = () => {
       <Provider store={store}>
          <BrowserRouter>
             <Switch>
-               <Route path="/persona/list" component={PersonaList} />
-               <Route path="/place/list" component={PlaceList} />
-               <Route path="/source/list" component={SourceList} />
-               <Route path={URL.pedigree.path} component={PedigreePage} />
+               <Route path="/persona/list">
+                  <PersonaList />
+               </Route>
+               <Route path="/place/list">
+                  <PlaceList />
+               </Route>
+               <Route path="/source/list">
+                   <SourceList />
+               </Route>
+               <Route path={URL.pedigree.path}>
+                   <PedigreePage />
+               </Route>
                <Route path={URL.fanchart.path} component={FanchartPage} />
                <Route path={URL.radial.path} component={RadialPage} />
                <Route path={URL.quilts.path} component={QuiltsPage} />
