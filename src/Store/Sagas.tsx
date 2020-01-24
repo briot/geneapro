@@ -84,10 +84,12 @@ function _hasEventDetails(p: FetchEventDetailsParams, state: AppState) {
    return p.id in state.events && state.events[p.id].asserts !== undefined;
 }
 function* _fetchEventDetails(p: FetchEventDetailsParams) {
-   const res: EventDetails = yield call(fetchEventFromServer, p.id);
-   return res;
+   return (yield call(fetchEventFromServer, p.id)) as EventDetails;
 }
-export const fetchEventDetails = createAsyncAction(
+export const fetchEventDetails = createAsyncAction<
+   FetchEventDetailsParams,
+   EventDetails
+>(
    "DATA/EVENT",
    _fetchEventDetails,
    _hasEventDetails
@@ -104,8 +106,7 @@ function _hasSourceDetails() {
    return false;
 }
 function* _fetchSourceDetails(p: FetchSourceDetailsParams) {
-   const res: Source = yield call(fetchSourceDetailsFromServer, p.id);
-   return res;
+   return (yield call(fetchSourceDetailsFromServer, p.id)) as Source;
 }
 export const fetchSourceDetails = createAsyncAction(
    "DATA/SOURCE",

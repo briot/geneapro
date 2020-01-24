@@ -49,8 +49,7 @@ export interface AppState {
    sources: SourceSet;
 }
 
-export type GPDispatch = Redux.Dispatch<AppState>;
-export type GPStore = Redux.Store<AppState>;
+export type GPStore = Redux.Store<AppState, Redux.AnyAction>;
 
 /**
  * Given an id, returns the name of the corresponding theme.

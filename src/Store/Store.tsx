@@ -27,11 +27,11 @@ if (process.env.NODE_ENV === `development`) {
    ); // log actions in the console
 }
 
-export const store: GPStore = Redux.createStore<AppState>(
+export const store = Redux.createStore(
    rootReducer /* reducer */,
    Redux.compose(
       /* enhancer */
-      Redux.applyMiddleware(...middlewares) as Redux.StoreEnhancer<AppState>,
+      Redux.applyMiddleware(...middlewares),
       autoRehydrate<AppState>({ log: false }) // load from persistent storage
    )
 );

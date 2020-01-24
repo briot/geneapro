@@ -28,12 +28,15 @@ export function sourceFromJSON(s: JSON.Source) {
    return result;
 }
 
-export function* fetchSourceDetailsFromServer(id: number) {
-   const resp: Response = yield window.fetch("/data/sources/" + id);
+export function* fetchSourceDetailsFromServer(
+   id: number
+): Generator<any, Source> {
+   const prom: Promise<Response> = window.fetch("/data/sources/" + id);
+   const resp: Response = (yield prom) as Response;  // workaround typescript
    if (resp.status !== 200) {
       throw new Error("Server returned an error");
    }
-   const data: JSONResult = yield resp.json();
+   const data: JSONResult = (yield resp.json()) as JSONResult;  // workaround
    let r: Source = {
       ...sourceFromJSON(data.source),
       medias: data.repr,

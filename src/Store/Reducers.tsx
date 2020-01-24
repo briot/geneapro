@@ -128,7 +128,7 @@ export function rootReducer(
    } else if (isType(action, changeStatsSettings)) {
       return { ...state, stats: { ...state.stats, ...action.payload.diff } };
    } else if (isType(action, fetchEventDetails.done)) {
-      const data = action.payload.result as EventDetails;
+      const data = action.payload.result;
       const s = { ...state, ...mergeAssertionEntities(state, data) };
       s.events[data.id].asserts = data.asserts;
       return s;

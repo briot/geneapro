@@ -1,3 +1,4 @@
+import * as Redux from "redux";
 import {
    call,
    put,
@@ -74,9 +75,7 @@ export function createAsyncAction<Params, Result>(
    allSagas.push(takeEvery(request.type, perform));
 
    return {
-      started: actions.started,
-      done: actions.done,
-      failed: actions.failed,
-      execute
+      ...actions,   // 'started', 'done', 'failed'
+      execute,      // dispatch the 'request' action, which executes async
    };
 }
