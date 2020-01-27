@@ -111,6 +111,12 @@ DATABASES = {
     }
 }
 
+# make sure the database directory exists
+try:
+    os.makedirs(DATABASES['default']['NAME'], exist_ok=True)
+except FileExistsError:
+    pass
+
 # Password validation
 # https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
 
