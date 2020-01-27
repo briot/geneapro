@@ -70,9 +70,12 @@ MANAGE_PY="${VENV}/bin/python backend/manage.py"
 if [ "$DEVELOPER" = "no" ]; then
    # Non-developers will use a static version of JS and CSS.
    # They should connect directly to the server on the :8002 port
-   echo "Next time, you can simply run 'sh ./server.sh'"
-   echo "Connect to localhost:8002"
    npm run build     # create static version of site
+
+   echo "---------------------------------------------------------"
+   echo "Geneaprove: next time, you can simply run 'sh ./server.sh'"
+   echo "Connect to localhost:8002"
+   echo "---------------------------------------------------------"
    sh ./server.sh    # run the server
 else
    # Developers should connect to the node server, which will proxy to the
