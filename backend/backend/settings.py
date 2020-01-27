@@ -113,7 +113,7 @@ DATABASES = {
 
 # make sure the database directory exists
 try:
-    os.makedirs(DATABASES['default']['NAME'], exist_ok=True)
+    os.makedirs(os.path.dirname(DATABASES['default']['NAME']), exist_ok=True)
 except FileExistsError:
     pass
 
@@ -237,4 +237,3 @@ LOGGING = {
         }
     }
 }
-
