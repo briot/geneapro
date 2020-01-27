@@ -34,7 +34,7 @@ class Source(GeneaProveModel):
         " and their activities in Georgia. Georgia is the subject"
         " place, whereas NC is the jurisdiction place",
         on_delete=models.CASCADE)
-    researcher = models.ForeignKey(Researcher, null=False, on_delete=models.CASCADE)
+    researcher = models.ForeignKey(Researcher, null=True, on_delete=models.CASCADE)
     subject_date = models.CharField(
         max_length=100, null=True,
         help_text="the date of the subject. Note that the dates might be" +

@@ -50,8 +50,8 @@ class Project (GeneaProveModel):
     description
     """
 
-    researchers = models.ManyToManyField(Researcher,
-                                         through="Researcher_Project")
+    researchers = models.ManyToManyField(
+        Researcher, through="Researcher_Project")
     name = models.CharField(max_length=100)
     description = models.TextField(null=True)
     scheme = models.ForeignKey(Surety_Scheme, default=1, on_delete=models.CASCADE)

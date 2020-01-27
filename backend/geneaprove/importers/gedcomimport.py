@@ -163,9 +163,12 @@ class GedcomImporter(object):
             django.utils.timezone.get_default_timezone()).strftime(
                 "%Y-%m-%d %H:%M:%S %Z")
 
+        researcher_name = (
+            self._researcher.name if self._researcher else "unknown")
+
         title = (
             f'"{os.path.basename(name)}", '
-            f'{self._researcher.name}, '
+            f'{researcher_name}, '
             f'exported from {created_by}, '
             f'created on {date_str}, '
             f'imported on {imported_date_time}')
@@ -363,10 +366,11 @@ class GedcomImporter(object):
             name='Gedcom import',
             description=f'Import from {file.value}',
             scheme=self._surety_scheme)
-        models.Researcher_Project.objects.create(
-            researcher=researcher,
-            project=p,
-            role='Generated GEDCOM file')
+        if researcher:
+            models.Researcher_Project.objects.create(
+                researcher=researcher,
+                project=p,
+                role='Generated GEDCOM file')
         return p
 
     def unexpected(self, field):
@@ -1617,33 +1621,43 @@ class GedcomImporter(object):
                     surety=self._default_surety)
 
             elif f.tag == "ASSO":
-                related = self._ids_indi[(NO_SOURCE, f.as_xref())]
-                relation = None
-
-                for a in f.fields:
-                    if a.tag == "RELA":
-                        self.ignore_fields(a, prefix="INDI.ASSO")
-
-                        l = a.value.lower()
-                        relation = self._p2p_types.get(l, None)
-                        if relation is None:
-                            relation = models.P2P_Type.objects.create(
-                                name=a.value)
-                            self._p2p_types[l] = relation
+                # Gedcom says this should be an association to an individual,
+                # but Geneweb also generates associations to families...
+                related = self._ids_indi.get((NO_SOURCE, f.as_xref()))
+                if related is None:
+                    famc = self._famc.get(f.as_xref())
+                    if famc is not None:
+                        self.report_error(f, "ASSO to a FAM is invalid")
                     else:
-                        self.ignored(a, prefix="INDI.ASSO")
+                        self.report_error(f, "ASSOC to unknown INDI")
 
-                if relation is None:
-                    self.report_error(f, "ASSO without a RELA field")
-                else:
-                    self._all_p2p.append(
-                        models.P2P(
-                            surety=self._default_surety,
-                            researcher=self._researcher,
-                            last_change=indi.last_change,
-                            person1=indi,
-                            person2=related,
-                            type=relation))
+                if related:
+                    relation = None
+
+                    for a in f.fields:
+                        if a.tag == "RELA":
+                            self.ignore_fields(a, prefix="INDI.ASSO")
+
+                            l = a.value.lower()
+                            relation = self._p2p_types.get(l, None)
+                            if relation is None:
+                                relation = models.P2P_Type.objects.create(
+                                    name=a.value)
+                                self._p2p_types[l] = relation
+                        else:
+                            self.ignored(a, prefix="INDI.ASSO")
+
+                    if relation is None:
+                        self.report_error(f, "ASSO without a RELA field")
+                    else:
+                        self._all_p2p.append(
+                            models.P2P(
+                                surety=self._default_surety,
+                                researcher=self._researcher,
+                                last_change=indi.last_change,
+                                person1=indi,
+                                person2=related,
+                                type=relation))
 
             elif f.tag == "ALIA":
                 related = self._ids_indi[(NO_SOURCE, f.as_xref())]

@@ -280,6 +280,7 @@ class F(object):
             "" indicates that some textual value is expected
             "INDI" indicates an xref to an INDI field is expected, or inline
                textual value
+            "SUBM" indicates an xret to a SUBM
         :param None|list children:
             list of F objects that can be found as children. You can also
             use tag names instead of F objects, they will be looked up
@@ -295,6 +296,11 @@ class F(object):
         self.min = min
         self.max = max
         self.text = text
+
+        assert self.text in (None, "Y", "", "INDI", "SUBM", "SUBN", "NOTE",
+                             "OBJE", "SOUR", "NOTE", "FAM", "REPO"), \
+                "Invalid %s" % self.text
+
         if children is None:
             self.children = None
         else:
@@ -473,7 +479,9 @@ HEADER = [
     F("DATE", 0, 1, '', [                # Transmission date
        F("TIME", 0, 1),                  # Time value
     ]),
-    F("SUBM", 1, 1, "SUBM"),             # Xref to SUBM
+    F("SUBM",
+        0,  # Standard says minimum is 1, but Geneweb doesn't output it
+        1, "SUBM"),             # Xref to SUBM
     F("SUBN", 0, 1, "SUBN"),             # Submission number
     F("FILE", 0, 1),                     # File name
     F("COPR", 0, 1),                     # Copyright Gedcom file
@@ -608,6 +616,10 @@ FAMILY_EVENT_DETAIL = [
         F("AGE", 1, 1),                # age at event
     ]),
     F("AGE", 0, unlimited),            # Invalid, but used in TGC55C.ged
+    F("ASSO", 0, unlimited, "FAM", [   # ??? Geneweb extension. Text is a ref.
+        F("TYPE", 1, 1),
+        F("RELA", 1, 1),
+    ]),
 ] + EVENT_DETAIL
 
 FAM_EVENT_STRUCT = [
@@ -635,7 +647,7 @@ LDS_SPOUSE_SEALING = [
     F("TEMP", 0, 1),             # Temple code
     F("PLAC", 0, 1),             # Place living ordinance
     F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
-    F("NOTE", 0, unlimited, "NONE"),
+    F("NOTE", 0, unlimited, "NOTE"),
 ]
 
 FAM_REC = FAM_EVENT_STRUCT + [
@@ -798,6 +810,7 @@ INDI_REC = INDIVIDUAL_EVENT_STRUCT + \
         F("RELA", 1, 1),                # Relation-is descriptor
         F("NOTE", 0, unlimited, "NOTE"),
         F("SOUR", 0, unlimited, "SOUR", SOURCE_CITATION),
+        F("TYPE", 0, 1),                # ??? Geneweb extension
     ]),
     F("RELATION", 0, unlimited, '', [   # Geneatique 2010
         F("ASSO", 0, unlimited, '', [

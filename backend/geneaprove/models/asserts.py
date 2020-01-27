@@ -48,7 +48,7 @@ class Assertion(GeneaProveModel):
 
     surety = models.ForeignKey(Surety_Scheme_Part, on_delete=models.CASCADE)
     researcher = models.ForeignKey(
-        Researcher, null=False, on_delete=models.CASCADE)
+        Researcher, null=True, on_delete=models.CASCADE)
     source = models.ForeignKey(
         Source, null=True,
         help_text="An assertion comes from no more than one source. It can"
