@@ -28,23 +28,26 @@ export function sourceFromJSON(s: JSON.Source) {
    return result;
 }
 
-export function* fetchSourceDetailsFromServer(
-   id: number
-): Generator<any, Source> {
-   const prom: Promise<Response> = window.fetch("/data/sources/" + id);
-   const resp: Response = (yield prom) as Response;  // workaround typescript
-   if (resp.status !== 200) {
-      throw new Error("Server returned an error");
-   }
-   const data: JSONResult = (yield resp.json()) as JSONResult;  // workaround
-   let r: Source = {
-      ...sourceFromJSON(data.source),
-      medias: data.repr,
-      parts: data.parts ? data.parts.reduce(
-         (val, part) => ({...val, [part.name]: part}), {})
-         : {},
-   };
-   return r;
+export interface FetchSourceDetailsParams {
+   id: number;
+}
+
+export function fetchSourceDetailsFromServer(p: FetchSourceDetailsParams) {
+   return window.fetch("/data/sources/" + p.id
+   ).then((resp: Response) => {
+      if (!resp.ok) {
+         throw new Error("Server returned an error");
+      }
+      return resp.json();
+   }).then((data: JSONResult): Source => {
+      return {
+         ...sourceFromJSON(data.source),
+         medias: data.repr,
+         parts: data.parts ? data.parts.reduce(
+            (val, part) => ({...val, [part.name]: part}), {})
+            : {},
+      };
+   });
 }
 
 export function fetchSourceAsserts(p: {

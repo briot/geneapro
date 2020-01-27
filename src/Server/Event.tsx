@@ -15,21 +15,27 @@ interface JSONEventDetails extends AssertionEntitiesJSON {
    id: number;
 }
 
-export function* fetchEventFromServer(id: number) {
-   const resp: Response = yield window.fetch("/data/event/" + id);
-   if (resp.status !== 200) {
-      throw new Error("Server returned an error");
-   }
+export interface FetchEventDetailsParams {
+   id: number;
+}
 
-   const data: JSONEventDetails = yield resp.json();
-   let result: EventDetails = {
-      id: data.id,
-      asserts: new AssertionList(data.asserts.map(a => assertionFromJSON(a))),
-      persons: {},
-      events: {},
-      places: {},
-      sources: {},
-   };
-   setAssertionEntities(data, result /* into */);
-   return result;
+export function fetchEventFromServer(p: FetchEventDetailsParams) {
+   return window.fetch("/data/event/" + p.id
+   ).then((resp: Response) => {
+      if (!resp.ok) {
+         throw new Error("Server returned an error");
+      }
+      return resp.json();
+   }).then((data: JSONEventDetails) => {
+      let result: EventDetails = {
+         id: data.id,
+         asserts: new AssertionList(data.asserts.map(a => assertionFromJSON(a))),
+         persons: {},
+         events: {},
+         places: {},
+         sources: {},
+      };
+      setAssertionEntities(data, result /* into */);
+      return result;
+   });
 }

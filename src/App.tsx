@@ -23,12 +23,11 @@ import { URL } from "./Links";
 
 const App: React.FC<{}> = () => {
    const [rehydrated, setRehydrated] = React.useState(false);
-   const dispatch = useDispatch();
 
    React.useEffect(
       () => {
          setPersist(() => setRehydrated(true));
-         fetchMetadata.execute(dispatch, {});
+         fetchMetadata.execute(store.dispatch, {});
       },
       []
    );

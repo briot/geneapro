@@ -1,16 +1,16 @@
 import * as Redux from "redux";
-import { isType } from "typescript-fsa";
+import { isType, Action, Success } from "typescript-fsa";
 import { AppState, rehydrate } from "../Store/State";
 import { to_dict } from '../History';
 import { Source } from "../Store/Source";
 import { addToHistory, HistoryItem } from "../Store/History";
 import {
    fetchPedigree,
-   FetchPedigreeResult,
    fetchEventDetails,
    fetchSourceDetails,
    fetchMetadata,
 } from "../Store/Sagas";
+import { FetchPedigreeResult } from "../Server/Pedigree";
 import { addEvents } from "../Store/Event";
 import { EventDetails } from "../Server/Event";
 import { mergeAssertionEntities } from "../Server/Person";
@@ -128,7 +128,8 @@ export function rootReducer(
    } else if (isType(action, changeStatsSettings)) {
       return { ...state, stats: { ...state.stats, ...action.payload.diff } };
    } else if (isType(action, fetchEventDetails.done)) {
-      const data = action.payload.result;
+      const act = action as Action<Success<{}, EventDetails>>; // workaround
+      const data = act.payload.result;
       const s = { ...state, ...mergeAssertionEntities(state, data) };
       s.events[data.id].asserts = data.asserts;
       return s;
@@ -181,7 +182,8 @@ export function rootReducer(
          pedigree: { ...state.pedigree, loading: false }
       };
    } else if (isType(action, fetchSourceDetails.done)) {
-      const source: Source = action.payload.result;
+      const act = action as Action<Success<unknown, Source>>; // workaround
+      const source: Source = act.payload.result;
       return {
          ...state,
          sources: {

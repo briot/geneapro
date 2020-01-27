@@ -31,12 +31,15 @@ const RadialPage: React.FC<RadialPageConnectedProps> = (p) => {
 
    React.useEffect(
       () =>
-         fetchPedigree.execute(dispatch, {
-            decujus: decujusid,
-            ancestors: Math.max(0, p.settings.generations),
-            descendants: Math.abs(Math.min(0, p.settings.generations)),
-            theme: p.settings.colors
-         }),
+         fetchPedigree.execute(
+            dispatch,
+            {
+               ancestors: Math.max(0, p.settings.generations),
+               decujus: decujusid,
+               descendants: Math.abs(Math.min(0, p.settings.generations)),
+               theme: p.settings.colors,
+            }
+         ),
       [decujusid, p.settings.generations, p.settings.colors, dispatch]
    );
 

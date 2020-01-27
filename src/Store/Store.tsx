@@ -1,14 +1,14 @@
 import * as Redux from "redux";
-import createSagaMiddleware from "redux-saga";
 import { persistStore, autoRehydrate } from "redux-persist";
+import thunk, { ThunkDispatch } from 'redux-thunk';
 import { AppState, GPStore } from "../Store/State";
 import { rootReducer } from "../Store/Reducers";
-import { rootSaga } from "../Store/Sagas";
+
+const middlewares: Redux.Middleware[] = [
+   thunk,
+];
 
 // Use generators as reducers
-const sagaMiddleware = createSagaMiddleware();
-
-const middlewares: Redux.Middleware[] = [sagaMiddleware];
 
 if (process.env.NODE_ENV === `development`) {
    // Log actions to the console
@@ -36,11 +36,12 @@ export const store = Redux.createStore(
    )
 );
 
-sagaMiddleware.run(rootSaga);
+export type GPDispatch =
+   ThunkDispatch<AppState, null /* extra args */, Redux.Action>;
 
 /**
  * Make the store persistent. This will be called from the main component's
- * componentDidMount, so that we can set a 'loading...' state while we restore
+ et fil componentDidMount, so that we can set a 'loading...' state while we restore
  * and thus avoid displaying the default settings.
  */
 export function setPersist(whenDone: () => void) {

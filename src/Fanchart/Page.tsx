@@ -34,12 +34,15 @@ const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
 
    React.useEffect(
       () =>
-         fetchPedigree.execute(dispatch, {
-            decujus: decujusid,
-            ancestors: p.settings.ancestors,
-            descendants: p.settings.descendants,
-            theme: p.settings.colors
-         }),
+         fetchPedigree.execute(
+            dispatch,
+            {
+               ancestors: p.settings.ancestors,
+               decujus: decujusid,
+               descendants: p.settings.descendants,
+               theme: p.settings.colors,
+            }
+         ),
       [
          decujusid,
          dispatch,

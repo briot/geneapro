@@ -40,10 +40,10 @@ const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
             //  ??? Should avoid fetching known generations again
             dispatch,
             {
-               decujus: decujusid,
                ancestors: p.settings.ancestors,
+               decujus: decujusid,
                descendants: p.settings.descendants,
-               theme: p.settings.colors
+               theme: p.settings.colors,
             }
          ),
       [
