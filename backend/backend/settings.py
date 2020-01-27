@@ -192,7 +192,7 @@ LOGGING = {
             'format': '%(asctime)s %(module)s %(process)d %(thread)d %(message)s'
         },
         'simple': {
-            'format': '%(asctime)s %(funcName)s %(message)s'
+            'format': '%(asctime)s %(module)s %(funcName)s %(message)s'
         },
         'simplegray': {
             'format': '\033[2m%(asctime)s %(message)s\033[0m'
@@ -224,7 +224,7 @@ LOGGING = {
         },
         'django': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'INFO',
             'propagate': False,
         },
 
