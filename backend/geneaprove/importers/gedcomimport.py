@@ -1632,8 +1632,14 @@ class GedcomImporter(object):
                 # with a general census event.
                 d = GedcomRecord(
                     line=f.line,
-                    tag="CENS",
-                    fields=[f])
+                    tag="EVEN",
+                    fields=[
+                        f,
+                        GedcomRecord(
+                            line=f.line,
+                            tag="TYPE",
+                            value="Cited in a source, not related to an event"
+                        )])
                 self._create_event(
                     d, [(indi, self._principal)],
                     CHAN=indi.last_change,
