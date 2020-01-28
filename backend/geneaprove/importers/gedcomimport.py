@@ -789,20 +789,20 @@ class GedcomImporter(object):
         return self._ids_note[x] if x else field.value
 
     def _create_characteristic(self, field, indi, CHAN=None, prefix=""):
-        """Create a Characteristic for the person indi.
-         Return True if a characteristic could be created, false otherwise.
+        """
+        Create a Characteristic for the person indi.
 
-         :param GedcomRecord field:
-         :param Persona indi:
-         :param datetime.datetime|None CHAN:
-         :param str prefix: for error messages
+        :param GedcomRecord field:
+        :param Persona indi:
+        :param datetime.datetime|None CHAN:
+        :param str prefix: for error messages
 
-         As defined in the GEDCOM standard, and except for the NAME which
-         is special, all other attributes follow the following grammar:
-             n TITL nobility_type_title
-             +1 <EVENT_DETAIL>
-         where EVENT_DETAIL can define any of the following: TYPE, DATE,
-         PLAC, ADDR, AGE, AGNC, CAUS, SOUR, NOTE, MULT
+        As defined in the GEDCOM standard, and except for the NAME which
+        is special, all other attributes follow the following grammar:
+            n TITL nobility_type_title
+            +1 <EVENT_DETAIL>
+        where EVENT_DETAIL can define any of the following: TYPE, DATE,
+        PLAC, ADDR, AGE, AGNC, CAUS, SOUR, NOTE, MULT
         """
 
         if prefix:
@@ -862,6 +862,18 @@ class GedcomImporter(object):
 
             self._all_char_parts.append(
                 models.Characteristic_Part(characteristic=c, type=typ, name=v))
+
+        # For a NAME (typ is None), we might not have any decomposition, in
+        # which case we should still create at least one part for the
+        # characteristic
+
+        elif not field.fields:
+            self._all_char_parts.append(
+                models.Characteristic_Part(
+                    characteristic=c,
+                    type=self._char_types["SURN"],
+                    name=indi.display_name
+                ))
 
         # Second pass to add characteristic parts
 
