@@ -1529,10 +1529,17 @@ class GedcomImporter(object):
                 if p and role == self._principal)
             # type of event
             # More specific information for type
-            name = (
-                f'{(evt_type_name or evt_type.name).title()}'
-                f'{type_descr} -- '
-                f'{principals}')
+            if field.tag == "EVEN":
+                # Those are custom types, for which adding the name of the
+                # principals might be confusing.
+                name = (
+                    f'{(evt_type_name or evt_type.name)}'
+                    f'{type_descr}')
+            else:
+                name = (
+                    f'{(evt_type_name or evt_type.name).title()}'
+                    f'{type_descr} -- '
+                    f'{principals}')
 
         # For each source, we duplicate the event.
         # Otherwise, we end up with multiple 'principal', 'mother',...
