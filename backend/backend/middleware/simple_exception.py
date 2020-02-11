@@ -13,14 +13,14 @@ class AJAXSimpleExceptionResponse(object):
     def __call__(self, request):
 
         # Code to be executed before the view
-        start = time.clock ()
+        start = time.perf_counter()
         self.has_exception = False
 
         response = self.get_response(request)
 
         # Code to be executed after the view
         if settings.DEBUG and len(connection.queries):
-           end = time.clock()
+           end = time.perf_counter()
            total = 0.0
 
            for r, q in enumerate(connection.queries):
