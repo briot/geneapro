@@ -13,8 +13,7 @@
     "redux-logger": "~3.0.6",
     "redux-persist": "~4.10.2",
     "redux-thunk": "~2.3.0",
-    "semantic-ui-css": "~2.4.1",
-    "semantic-ui-react": "~0.88.2"
+    "semantic-ui-react": "~2.1.3"
   },
   "scripts": {
     "start": "concurrently --kill-others-on-fail -c='white,green,blue,red,cyan,cyan' -n 'pyth,vite,tsc ,lint,test,btes' '$npm_execpath run watch-back' '$npm_execpath run watch-vite' '$npm_execpath run watch-tsc' '$npm_execpath run watch-lint' '$npm_execpath run watch-test' '$npm_execpath run watch-test-backend'",
