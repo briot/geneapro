@@ -69,7 +69,8 @@ ROOT_URLCONF = 'backend.urls'
 
 # In case we have compiled a static version of the site, use this in priority
 __GENEAPROVE_ROOT_PROD = os.path.realpath(os.path.join(BASE_DIR, "../build"))
-__GENEAPROVE_ROOT_DEV  = os.path.realpath(os.path.join(BASE_DIR, "../public"))
+__GENEAPROVE_ROOT_DEV  = os.path.realpath(os.path.join(
+    BASE_DIR, "../frontend/public"))
 GENEAPROVE_STATIC_ROOT = (
     __GENEAPROVE_ROOT_PROD
     if os.path.isdir(__GENEAPROVE_ROOT_PROD)

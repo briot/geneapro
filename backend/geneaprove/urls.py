@@ -20,7 +20,7 @@ from .views import representation
 from .views import sources
 from .views import stats
 from .views import themelist
-import sys
+
 
 logger = logging.getLogger('geneaprove')
 
