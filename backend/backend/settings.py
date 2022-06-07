@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 
 import os
 import appdirs
+import logging
 import sys
 from traceback import format_stack
 
@@ -177,6 +178,7 @@ class WithStacktrace(object):
             record.stack_patched = True
         return True
 
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -237,3 +239,8 @@ LOGGING = {
         }
     }
 }
+
+
+# Disable logs in tests
+if len(sys.argv) > 1 and sys.argv[1] == 'test':
+    logging.disable(logging.CRITICAL)

@@ -33,6 +33,7 @@ module.exports = {
       "@typescript-eslint/explicit-function-return-type": "off",
       "@typescript-eslint/no-parameter-properties": "off",
       "react/display-name": "off",
+      "react/react-in-jsx-scope": "off",
     },
     settings: {
        react: {

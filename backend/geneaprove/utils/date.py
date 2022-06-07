@@ -182,14 +182,13 @@ def to_roman_literal(val):
         """Convert a single digit to its roman literal representation"""
         if digit == 0:
             return ""
-        elif digit < 4:
+        if digit < 4:
             return unit * digit
-        elif digit == 4:
+        if digit == 4:
             return unit + five
-        elif digit < 9:
+        if digit < 9:
             return five + unit * (digit - 5)
-        else:
-            return unit + ten
+        return unit + ten
 
     return proc(val // 1000, ten="MMMMMMMMMM", five="MMMMM", unit="M") \
         + proc((val % 1000) // 100, ten="M", five="D", unit="C") \
@@ -1120,4 +1119,3 @@ class DateRange(object):
     def day_of_week(self):
         """Return the day of week for the start date"""
         return self._from.day_of_week()
-

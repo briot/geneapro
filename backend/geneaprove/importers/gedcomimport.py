@@ -2,18 +2,16 @@
 Provides a gedcom importer
 """
 
-from django.utils.translation import ugettext as _
-import django.utils.timezone
+from django.utils.translation import ugettext as _    # type: ignore
+import django.utils.timezone    # type: ignore
 from geneaprove.utils.gedcom import parse_gedcom, Invalid_Gedcom, \
         GedcomRecord, ADDR_FIELDS, FAM_EVENT_FIELDS
 from geneaprove import models
-from django.db import transaction, connection
+from django.db import transaction    # type: ignore
 import geneaprove.importers
-import re
 import datetime
 import logging
 import traceback
-import time
 import os
 
 logger = logging.getLogger('geneaprove.importers')
@@ -67,14 +65,11 @@ class GedcomImporter(object):
         self._process_FILE(filename)
 
     def _process_FILE(self, filename):
-        logger.info("First pass: parse gedcomfile")
         self._data = parse_gedcom(filename)
 
-        logger.info("Second pass: create records")
         self._create_ids(filename=filename)
 
         self.execute_bulks()
-        logger.info(f"Done inserting bulks {filename}")
 
     def _create_ids(self, filename):
         for f in self._data.fields:
@@ -93,7 +88,7 @@ class GedcomImporter(object):
 
         for f in self._data.fields:
             if f.tag == "SOUR":
-                self._ids_sour[f.id] = self._create_bare_sour(f) # need HEAD
+                self._ids_sour[f.id] = self._create_bare_sour(f)  # need HEAD
 
         for f in self._data.fields:
             if f.tag == "REPO":
@@ -334,7 +329,7 @@ class GedcomImporter(object):
         self._all_p2e = []            # list of P2E to bulk_create
         self._all_p2p = []            # list of P2P to bulk_create
         self._all_char_parts = []     # list of Characteristic_Part
-        self._all_citation_parts = [] # list of Citation_Part
+        self._all_citation_parts = []  # list of Citation_Part
 
         # Matches gedcom ids with objects in the database. Those objects are
         # created in an initial pass, so that xref can be resolved later on.

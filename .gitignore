@@ -18,6 +18,7 @@
 .settings/
 *.sublime-workspace
 *.pyc
+geneaprove.log
 
 # IDE - VSCode
 .vsgitbuild
