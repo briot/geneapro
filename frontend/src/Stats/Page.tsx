@@ -1,6 +1,6 @@
 import * as React from "react";
-import { connect, useDispatch } from "react-redux";
-import { RouteComponentProps } from "react-router";
+import { useSelector, useDispatch } from "react-redux";
+import { useParams } from "react-router";
 import { Loader } from "semantic-ui-react";
 import { JSONStats, fetchStatsFromServer } from "../Server/Stats";
 import { AppState } from "../Store/State";
@@ -14,28 +14,27 @@ import StatsGeneration from "../Stats/Generations";
 import StatsLifespan from "../Stats/Lifespan";
 import StatsSide from "../Stats/Side";
 import StatsTree from "../Stats/Tree";
-import "../Stats/Stats.css";
 import Page from "../Page";
 
-interface PropsFromRoute {
-   id: string;
+import "../Stats/Stats.css";
+
+type StatsPageParams = {
+   id?: string;
 }
 
-interface StatsPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
-   settings: StatsSettings;
-}
-
-const StatsPage: React.FC<StatsPageConnectedProps> = (p) => {
+const StatsPage: React.FC<unknown> = () => {
+   const settings = useSelector((s: AppState) => s.stats);
    const dispatch = useDispatch();
-   const decujusid = Number(p.match.params.id);
+   const params = useParams<StatsPageParams>();
+   const decujusid = Number(params.id);
    const [data, setData] = React.useState<JSONStats|undefined>(undefined);
    const person = usePerson(decujusid);
 
    React.useEffect(
       () => {
-         fetchStatsFromServer(decujusid, p.settings).then(setData);
+         fetchStatsFromServer(decujusid, settings).then(setData);
       },
-      [decujusid, p.settings]
+      [decujusid, settings]
    );
 
    React.useEffect(
@@ -60,7 +59,7 @@ const StatsPage: React.FC<StatsPageConnectedProps> = (p) => {
       </Loader>
    ) : (
       <DropTarget redirectUrl={URL.stats}>
-         {p.settings.show_treestats && (
+         {settings.show_treestats && (
             <StatsTree
                decujus={person}
                totalInDatabase={data.total_persons}
@@ -70,17 +69,17 @@ const StatsPage: React.FC<StatsPageConnectedProps> = (p) => {
             />
          )}
 
-         {p.settings.show_generations && (
+         {settings.show_generations && (
             <StatsGeneration
                ranges={data.ranges}
                decujus={person}
             />
          )}
 
-         {p.settings.show_lifespan && (
+         {settings.show_lifespan && (
             <StatsLifespan
                ages={data.ages}
-               settings={p.settings}
+               settings={settings}
                decujus={person}
             />
          )}
@@ -93,7 +92,7 @@ const StatsPage: React.FC<StatsPageConnectedProps> = (p) => {
          main={main}
          leftSide={
             <StatsSide
-               settings={p.settings}
+               settings={settings}
                onChange={onChange}
             />
          }
@@ -101,9 +100,4 @@ const StatsPage: React.FC<StatsPageConnectedProps> = (p) => {
    );
 }
 
-export default connect(
-   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
-      ...props,
-      settings: state.stats,
-   }),
-)(StatsPage);
+export default StatsPage;

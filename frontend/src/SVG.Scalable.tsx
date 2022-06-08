@@ -7,6 +7,7 @@ interface Point {
 
 interface ScalableSVGProps {
    className?: string;
+   children?: React.ReactNode;
 }
 
 interface ScalableSVGState {

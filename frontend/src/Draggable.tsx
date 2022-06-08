@@ -1,5 +1,5 @@
 import * as React from "react";
-import { RouteComponentProps, withRouter } from "react-router";
+import { useNavigate } from "react-router";
 import { URL } from "./Links";
 import './Draggable.css';
 
@@ -64,18 +64,19 @@ export const useDraggable = (p: UseDraggableProps) => {
  * Hook to make an element accept dropped elements
  */
 
-interface DropTargetProps extends RouteComponentProps {
+interface DropTargetProps {
+   children?: React.ReactNode;
    redirectUrl?: URL; // where to redirect
 }
-const ConnectedDropTarget: React.FC<DropTargetProps> = (p) => {
+export const DropTarget: React.FC<DropTargetProps> = (p) => {
    const [over, setOver] = React.useState(false);
    const setCount = React.useState(0)[1];
-   const { redirectUrl } = p;
+   const navigate = useNavigate();
 
    const isDroppable = React.useCallback(
       (types: ReadonlyArray<string>) =>
-         redirectUrl && types.includes(dnd_type(redirectUrl.accept)),
-      [redirectUrl]
+         p.redirectUrl && types.includes(dnd_type(p.redirectUrl.accept)),
+      [p.redirectUrl]
    );
 
    const onDragEnter = React.useCallback(
@@ -114,18 +115,18 @@ const ConnectedDropTarget: React.FC<DropTargetProps> = (p) => {
    const onDropCb = React.useCallback(
       (e: React.DragEvent) => {
          setOver(false);
-         const d = redirectUrl &&
-                   e.dataTransfer.getData(dnd_type(redirectUrl.accept));
+         const d = p.redirectUrl &&
+                   e.dataTransfer.getData(dnd_type(p.redirectUrl.accept));
          if (d) {
-            const s = redirectUrl && redirectUrl.url(JSON.parse(d));
-            s && p.history.push(s);
+            const s = p.redirectUrl && p.redirectUrl.url(JSON.parse(d));
+            s && navigate(s);
             e.preventDefault();
          }
       },
-      [redirectUrl, p.history]
+      [p.redirectUrl, navigate]
    );
 
-   if (!redirectUrl) {
+   if (!p.redirectUrl) {
       return <>{p.children}</>;
    }
 
@@ -141,4 +142,3 @@ const ConnectedDropTarget: React.FC<DropTargetProps> = (p) => {
       </div>
    );
 };
-export const DropTarget = withRouter(ConnectedDropTarget);

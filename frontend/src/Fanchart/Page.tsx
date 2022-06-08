@@ -1,54 +1,49 @@
 import * as React from "react";
-import { connect, useDispatch } from "react-redux";
-import { RouteComponentProps } from "react-router";
+import { useSelector, useDispatch } from "react-redux";
+import { useParams } from "react-router";
 import { Loader } from "semantic-ui-react";
-import * as GP_JSON from "../Server/JSON";
-import { Person, PersonSet, personDisplay } from "../Store/Person";
+import { Person, personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { FanchartSettings, changeFanchartSettings } from "../Store/Fanchart";
 import { fetchPedigree } from "../Store/Sagas";
 import { AppState, themeNameGetter } from "../Store/State";
-import { GenealogyEventSet } from "../Store/Event";
 import { DropTarget } from "../Draggable";
 import { URL } from "../Links";
 import Page from "../Page";
 import FanchartSide from "../Fanchart/Side";
 import FanchartLayout from "../Fanchart/Layout";
 
-interface PropsFromRoute {
+type FanchartPageParams = {
    id: string;
 }
 
-interface FanchartPageConnectedProps
-   extends RouteComponentProps<PropsFromRoute> {
-   settings: FanchartSettings;
-   persons: PersonSet;
-   allEvents: GenealogyEventSet;
-   themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
-}
-
-const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
-   const decujusid = Number(p.match.params.id);
+const FanchartPage: React.FC<unknown> = () => {
+   const params = useParams<FanchartPageParams>();
+   const decujusid = Number(params.id);
    const dispatch = useDispatch();
-   const decujus: Person = p.persons[decujusid];
+   const settings = useSelector((s: AppState) => s.fanchart);
+   const persons = useSelector((s: AppState) => s.persons);
+   const allEvents = useSelector((s: AppState) => s.events);
+   const themeNameGet = useSelector((s: AppState) => themeNameGetter(s));
+   const decujus: Person = persons[decujusid];
 
    React.useEffect(
       () =>
          fetchPedigree.execute(
             dispatch,
             {
-               ancestors: p.settings.ancestors,
+               ancestors: settings.ancestors,
                decujus: decujusid,
-               descendants: p.settings.descendants,
-               theme: p.settings.colors,
+               descendants: settings.descendants,
+               theme: settings.colors,
             }
          ),
       [
          decujusid,
          dispatch,
-         p.settings.ancestors,
-         p.settings.descendants,
-         p.settings.colors
+         settings.ancestors,
+         settings.descendants,
+         settings.colors
       ]
    );
 
@@ -58,16 +53,16 @@ const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
    }, [decujus, decujusid, dispatch]);
 
    const main =
-      p.settings.loading || !decujus ? (
+      settings.loading || !decujus ? (
          <Loader active={true} size="large">
             Loading
          </Loader>
       ) : (
          <DropTarget redirectUrl={URL.fanchart}>
             <FanchartLayout
-               settings={p.settings}
-               persons={p.persons}
-               allEvents={p.allEvents}
+               settings={settings}
+               persons={persons}
+               allEvents={allEvents}
                decujus={decujusid}
             />
          </DropTarget>
@@ -84,24 +79,14 @@ const FanchartPageConnected: React.FC<FanchartPageConnectedProps> = p => {
          decujusid={decujusid}
          leftSide={
             <FanchartSide
-               settings={p.settings}
+               settings={settings}
                onChange={onChange}
-               themeNameGet={p.themeNameGet}
+               themeNameGet={themeNameGet}
             />
          }
          main={main}
       />
    );
 };
-
-const FanchartPage = connect(
-   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
-      ...props,
-      settings: state.fanchart,
-      persons: state.persons,
-      allEvents: state.events,
-      themeNameGet: themeNameGetter(state)
-   }),
-)(FanchartPageConnected);
 
 export default FanchartPage;

@@ -1,9 +1,8 @@
 import * as React from "react";
-import { connect, useDispatch } from "react-redux";
-import { RouteComponentProps } from "react-router";
+import { useSelector, useDispatch } from "react-redux";
+import { useParams } from "react-router";
 import { Loader } from "semantic-ui-react";
-import * as GP_JSON from "../Server/JSON";
-import { PersonSet, personDisplay } from "../Store/Person";
+import { personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { RadialSettings, changeRadialSettings } from "../Store/Radial";
 import { fetchPedigree } from "../Store/Sagas";
@@ -14,33 +13,32 @@ import RadialSide from "../Radial/Side";
 import Radial from "../Radial/Radial";
 import Page from "../Page";
 
-interface PropsFromRoute {
+type RadialPageParams = {
    id: string;
 }
 
-interface RadialPageConnectedProps extends RouteComponentProps<PropsFromRoute> {
-   settings: RadialSettings;
-   persons: PersonSet;
-   themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
-}
-
-const RadialPage: React.FC<RadialPageConnectedProps> = (p) => {
-   const decujusid = Number(p.match.params.id);
-   const decujus = p.persons[decujusid];
+const RadialPage: React.FC<unknown> = () => {
+   const params = useParams<RadialPageParams>();
+   const decujusid = Number(params.id);
    const dispatch = useDispatch();
+   const settings = useSelector((s: AppState) => s.radial);
+   const persons = useSelector((s: AppState) => s.persons);
+   const themeNameGet = useSelector((s: AppState) => themeNameGetter(s));
+
+   const decujus = persons[decujusid];
 
    React.useEffect(
       () =>
          fetchPedigree.execute(
             dispatch,
             {
-               ancestors: Math.max(0, p.settings.generations),
+               ancestors: Math.max(0, settings.generations),
                decujus: decujusid,
-               descendants: Math.abs(Math.min(0, p.settings.generations)),
-               theme: p.settings.colors,
+               descendants: Math.abs(Math.min(0, settings.generations)),
+               theme: settings.colors,
             }
          ),
-      [decujusid, p.settings.generations, p.settings.colors, dispatch]
+      [decujusid, settings.generations, settings.colors, dispatch]
    );
 
    React.useEffect(
@@ -57,13 +55,13 @@ const RadialPage: React.FC<RadialPageConnectedProps> = (p) => {
       [dispatch]
    );
 
-   const main = p.settings.loading ? (
+   const main = settings.loading ? (
       <Loader active={true} size="large">
          Loading
       </Loader>
    ) : (
       <DropTarget redirectUrl={URL.radial}>
-         <Radial settings={p.settings} persons={p.persons} decujus={decujusid} />
+         <Radial settings={settings} persons={persons} decujus={decujusid} />
       </DropTarget>
    );
 
@@ -72,9 +70,9 @@ const RadialPage: React.FC<RadialPageConnectedProps> = (p) => {
          decujusid={decujusid}
          leftSide={
             <RadialSide
-               settings={p.settings}
+               settings={settings}
                onChange={onChange}
-               themeNameGet={p.themeNameGet}
+               themeNameGet={themeNameGet}
             />
          }
          main={main}
@@ -82,11 +80,4 @@ const RadialPage: React.FC<RadialPageConnectedProps> = (p) => {
    );
 };
 
-export default connect(
-   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
-      ...props,
-      settings: state.radial,
-      persons: state.persons,
-      themeNameGet: themeNameGetter(state)
-   }),
-)(RadialPage);
+export default RadialPage;

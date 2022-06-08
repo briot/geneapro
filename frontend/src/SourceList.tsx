@@ -1,5 +1,5 @@
 import * as React from "react";
-import { connect, useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { InfiniteListFilter, InfiniteRowRenderer } from './InfiniteList';
 import Page from "./Page";
 import { AppState } from "./Store/State";
@@ -13,16 +13,13 @@ import { fetchSourcesCount, fetchSourcesFromServer } from "./Server/Source";
 import "./SourceList.css";
 
 const renderRow: InfiniteRowRenderer<Source> = (p) => (
-   <div style={p.style} key={p.key}>
+   <div style={p.style}>
       <SourceLink source={p.row} showAbbrev={true} />
    </div>
 );
 
-interface SourceListProps {
-   settings: SourceListSettings;
-}
-
-const SourceList: React.FC<SourceListProps> = (p) => {
+const SourceList: React.FC<unknown> = () => {
+   const settings = useSelector((s: AppState) => s.sourcelist);
    const [count, setCount] = React.useState(0);
    const dispatch = useDispatch();
 
@@ -41,16 +38,16 @@ const SourceList: React.FC<SourceListProps> = (p) => {
 
    React.useEffect(
       () => {
-         fetchSourcesCount({ filter: p.settings.filter }).then(setCount);
+         fetchSourcesCount({ filter: settings.filter }).then(setCount);
       },
-      [p.settings.filter]
+      [settings.filter]
    );
 
    const fetchSources = React.useCallback(
-      (a) => {
-         return fetchSourcesFromServer({ ...a, filter: p.settings.filter });
+      (a: {offset: number; limit: number}) => {
+         return fetchSourcesFromServer({ ...a, filter: settings.filter });
       },
-      [p.settings.filter]
+      [settings.filter]
    );
 
    return (
@@ -59,7 +56,7 @@ const SourceList: React.FC<SourceListProps> = (p) => {
             <InfiniteListFilter
                title="Source"
                fetchRows={fetchSources}
-               filter={p.settings.filter}
+               filter={settings.filter}
                fullHeight={true}
                renderRow={renderRow}
                rowCount={count}
@@ -69,7 +66,4 @@ const SourceList: React.FC<SourceListProps> = (p) => {
       />
    );
 };
-
-export default connect(
-   (state: AppState) => ({ settings: state.sourcelist }),
-)(SourceList);
+export default SourceList;

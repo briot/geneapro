@@ -2,7 +2,7 @@ import "semantic-ui-css/semantic.min.css";
 import "./App.css";
 import * as React from "react";
 import { Provider } from "react-redux";
-import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import DashboardPage from "./Dashboard";
 import FanchartPage from "./Fanchart/Page";
 import ImportPage from "./Import/Page";
@@ -41,42 +41,23 @@ const App: React.FC<unknown> = () => {
    return (
       <Provider store={store}>
          <BrowserRouter>
-            <Switch>
-               <Route path="/persona/list">
-                  <PersonaList />
-               </Route>
-               <Route path="/place/list">
-                  <PlaceList />
-               </Route>
-               <Route path="/source/list">
-                   <SourceList />
-               </Route>
-               <Route path={URL.pedigree.path}>
-                   <PedigreePage />
-               </Route>
-               <Route path={URL.fanchart.path} component={FanchartPage} />
-               <Route path={URL.radial.path} component={RadialPage} />
-               <Route path={URL.quilts.path} component={QuiltsPage} />
-               <Route path={URL.persona.path} component={PersonaPage} />
-               <Route path={URL.source.path} component={SourcePage} />
-               <Route path={URL.place.path} component={PlacePage} />
-               <Route path="/import" component={ImportPage} />
-               <Route path="/themeeditor" component={ThemeEditor} />
-               <Route path={URL.stats.path} component={StatsPage} />
-               <Route
-                  path={URL.dashboard.path}
-                  exact={true}
-                  component={DashboardPage}
-               />
-               <Route
-                  path="/"
-                  exact={true}
-                  component={DashboardPage}
-               />
-               <Route>
-                  {() => <span>No match for route</span>}
-               </Route>
-            </Switch>
+            <Routes>
+               <Route path="/persona/list"      element={<PersonaList />} />
+               <Route path="/place/list"        element={<PlaceList />} />
+               <Route path="/source/list"       element={<SourceList />} />
+               <Route path={URL.pedigree.path}  element={<PedigreePage />} />
+               <Route path={URL.fanchart.path}  element={<FanchartPage />} />
+               <Route path={URL.radial.path}    element={<RadialPage />} />
+               <Route path={URL.quilts.path}    element={<QuiltsPage />} />
+               <Route path={URL.persona.path}   element={<PersonaPage />} />
+               <Route path={URL.source.path}    element={<SourcePage />} />
+               <Route path={URL.place.path}     element={<PlacePage />} />
+               <Route path="/import"            element={<ImportPage />} />
+               <Route path="/themeeditor"       element={<ThemeEditor />} />
+               <Route path={URL.stats.path}     element={<StatsPage />} />
+               <Route path={URL.dashboard.path} element={<DashboardPage />} />
+               <Route path="/"                  element={<DashboardPage />} />
+            </Routes>
          </BrowserRouter>
       </Provider>
    );

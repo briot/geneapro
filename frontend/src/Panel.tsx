@@ -5,6 +5,7 @@ import "./Panel.css";
 interface PanelProps {
    header?: string | React.ReactNode;
    className?: string;
+   children?: React.ReactNode;
 }
 
 const Panel: React.FC<PanelProps> = p => {

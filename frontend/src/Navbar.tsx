@@ -16,7 +16,7 @@ const Logo = () => {
 
 export const Navbar = () => {
    return (
-      <Menu attached={true} inverted={true} size="mini" >
+      <Menu inverted={true} size="mini" >
          <Logo />
          <Container fluid={true}>
             <Menu.Item position="right">

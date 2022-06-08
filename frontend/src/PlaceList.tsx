@@ -17,7 +17,7 @@ import { fetchPlacesCount, fetchPlacesFromServer } from "./Server/Place";
 import "./PlaceList.css";
 
 const renderRow: InfiniteRowRenderer<Place> = (p) => (
-   <div style={p.style} key={p.key}>
+   <div style={p.style}>
       <PlaceLink place={p.row} />
    </div>
 );

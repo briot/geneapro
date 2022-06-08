@@ -1,26 +1,24 @@
 import * as React from "react";
-import { connect, useDispatch } from "react-redux";
-import { RouteComponentProps } from "react-router";
+import { useSelector, useDispatch } from "react-redux";
+import { useParams } from "react-router";
 import { Loader } from "semantic-ui-react";
 import { personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
-import { AppState, MetadataDict } from "../Store/State";
+import { AppState } from "../Store/State";
 import Page from "../Page";
 import Persona from "../Persona/Persona";
 import { usePerson } from "../Server/Person";
 
-interface PropsFromRoute {
-   id: string;
+type PersonaPageParams = {
+   id?: string;
 }
 
-interface PersonaPageProps extends RouteComponentProps<PropsFromRoute> {
-   metadata: MetadataDict;
-}
-
-const PersonaPage: React.FC<PersonaPageProps> = (p) => {
-   const id = Number(p.match.params.id);
+const PersonaPage: React.FC<unknown> = () => {
+   const params = useParams<PersonaPageParams>();
+   const id = Number(params.id);
    const dispatch = useDispatch();
    const person = usePerson(id);
+   const metadata = useSelector((s: AppState) => s.metadata);
 
    React.useEffect(
       () => {
@@ -43,7 +41,7 @@ const PersonaPage: React.FC<PersonaPageProps> = (p) => {
             person ? (
                <Persona
                   person={person}
-                  metadata={p.metadata}
+                  metadata={metadata}
                />
             ) : (
                <Loader active={true} size="large">
@@ -55,9 +53,4 @@ const PersonaPage: React.FC<PersonaPageProps> = (p) => {
    );
 };
 
-export default connect(
-   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
-      ...props,
-      metadata: state.metadata,
-   }),
-)(PersonaPage);
+export default PersonaPage;

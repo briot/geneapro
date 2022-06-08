@@ -1,5 +1,5 @@
 // import * as React from "react";
-import { render } from "react-testing-library";
+import { render } from "@testing-library/react";
 import EditableList from "./EditableList";
 // Some support in setupTests
 
@@ -20,7 +20,6 @@ it("renders all items in the list", () => {
          orderable={false}
       />
    );
-   //debug();
 
    // List of possible Jest tests:
    //    https://jestjs.io/docs/en/expect.html#content

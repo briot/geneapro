@@ -1,5 +1,6 @@
 module.exports = {
    preset: "ts-jest",
+   testEnvironment: "jsdom",
    setupFilesAfterEnv: ["<rootDir>/frontend/src/setupTests.ts"],
    moduleDirectories: ["node_modules", "frontend"],
    moduleFileExtensions: ["ts", "tsx", "js", "jsx"],

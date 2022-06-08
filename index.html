@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="/favicon.ico" />
+    <title>Geneaprove</title>
+    <meta
+      name="description"
+      content="Prove your genealogy"
+    />
+
+    <!-- use device-width here, so that on iOS and others, in landscape
+       mode, the page doesn't go below the sensors.
+       We could also use viewport-fit=cover instead. Then the page
+       extends below the sensors, and we should use 
+          env(safe-area-inset-left)
+       in CSS to set padding
+    -->
+    <meta name="viewport" content="viewport-fit=cover" />
+    <!--
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    -->
+
+    <!--  media attribute is only supported by Safari 15 for now, other
+        browers will use the first one. This could also be set in the
+        manifest file, though this header has priority.
+        In Safari, this sets the color of the navigation bar.
+    -->
+    <meta name="theme-color" 
+      content="rgb(29,30,48)" 
+      media="(prefers-color-scheme: light)">
+    <meta name="theme-color" 
+      content="#e0e5ec" 
+      media="(prefers-color-scheme: dark)">
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- Rich links: when one copy-paste the URL to the site in various apps,
+       this controls what should be displayed. For instance
+       <meta name="og:title" content="The title we want to show">
+       <meta name="og:image" content="alere.jpg" >
+       <meta name="og:video" content="..." >
+    -->
+
+    <!--
+       <link rel="apple-touch-icon" href="/logo192.png" />
+    -->
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Needed to send POST data to Django.
+        This sets the csrf cookie
+        The django-corsheaders extension will likely help here. We were
+        serving a html file, but loading it as javascript.
+    -->
+    <script type="text/javascript" src="/data/csrf" ></script>
+  </head>
+
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root"></div>
+    <script type="module" src="/frontend/src/index.tsx"></script>
+  </body>
+</html>

@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite'
-import reactRefresh from '@vitejs/plugin-react-refresh'
+import react from '@vitejs/plugin-react'
 import path from 'path'
 
 const proxy_to = process.env.VITE_API_URL; // See package.json
 
 // https://vitejs.dev/config/
 export default defineConfig({
-   plugins: [reactRefresh()],
+   plugins: [react()],
    publicDir: "frontend/public",
  
    resolve: {
@@ -17,7 +17,7 @@ export default defineConfig({
  
    server: {
       proxy: {
-         '/api': {
+         '/data': {
             target: 'http://' + proxy_to,
             changeOrigin: true,
          }

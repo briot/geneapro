@@ -1,26 +1,23 @@
 import * as React from "react";
-import { connect, useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Loader } from "semantic-ui-react";
-import { RouteComponentProps } from "react-router";
-import { AppState, MetadataDict } from "../Store/State";
+import { useParams } from "react-router";
+import { AppState } from "../Store/State";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { fetchSourceDetails } from "../Store/Sagas";
-import { Source } from "../Store/Source";
 import Page from "../Page";
 import SourceDetails from "../Source/Source";
 
-interface PropsFromRoute {
-   id: string;
+type SourcePageParams = {
+   id?: string;
 }
 
-interface SourcePageProps extends RouteComponentProps<PropsFromRoute> {
-   metadata: MetadataDict;
-   source: Source | undefined;
-}
-const SourcePage: React.FC<SourcePageProps> = (p) => {
-   const id = Number(p.match.params.id);
-   const s = p.source;
+const SourcePage: React.FC<unknown> = () => {
+   const params = useParams<SourcePageParams>();
+   const id = Number(params.id);
    const dispatch = useDispatch();
+   const metadata = useSelector((s: AppState) => s.metadata);
+   const source = useSelector((s: AppState) => s.sources[id]);
 
    React.useEffect(
       () => {
@@ -33,9 +30,9 @@ const SourcePage: React.FC<SourcePageProps> = (p) => {
 
    React.useEffect(
       () => {
-         document.title = s ? s.abbrev : "New Source";
+         document.title = source ? source.abbrev : "New Source";
       },
-      [s]
+      [source]
    );
 
    React.useEffect(
@@ -49,10 +46,10 @@ const SourcePage: React.FC<SourcePageProps> = (p) => {
       <Page
          decujusid={undefined}
          main={
-            s || id < 0 ? (
+            source || id < 0 ? (
                <SourceDetails
-                  metadata={p.metadata}
-                  source={s}
+                  metadata={metadata}
+                  source={source}
                />
             ) : (
                <Loader active={true} size="large">
@@ -64,10 +61,4 @@ const SourcePage: React.FC<SourcePageProps> = (p) => {
    );
 };
 
-export default connect(
-   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
-      ...props,
-      metadata: state.metadata,
-      source: state.sources[Number(props.match.params.id)] as Source | undefined
-   }),
-)(SourcePage);
+export default SourcePage;

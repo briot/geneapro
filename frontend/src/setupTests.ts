@@ -4,10 +4,14 @@
 // learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom/extend-expect';
 // import { queryCache } from "react-query";
-// import fetch from "jest-fetch-mock";
+import fetchMock from "jest-fetch-mock";
 // import "@testing-library/jest-dom"
 
 //  require("jest-fetch-mock").enableMocks();
+
+
+// See https://reactjs.org/blog/2022/03/08/react-18-upgrade-guide.html
+// globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
 
 /**
@@ -29,6 +33,8 @@ window.ResizeObserver = ResizeObserver;
 
 beforeEach(() => {
   jest.clearAllMocks()
-  //  fetch.resetMocks()
+  fetchMock.resetMocks()
   // queryCache.clear()
 })
+
+fetchMock.enableMocks()

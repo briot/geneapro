@@ -1,10 +1,10 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { useSelector } from "react-redux";
 import { AppState } from "./Store/State";
 import { Person } from "./Store/Person";
 import { Place, } from "./Store/Place";
 import { extractYear } from "./Store/Event";
-import { RouteComponentProps } from "react-router";
+import { useParams } from "react-router";
 import {
    Card,
    Header,
@@ -184,21 +184,20 @@ const AllStats: React.FC<unknown> = () => {
    );
 };
 
-interface PropsFromRoute {
+type DashboardParams = {
    id?: string;
 }
-interface DashboardProps extends RouteComponentProps<PropsFromRoute> {
-   items: HistoryItem[];
-}
-const Dashboard: React.FC<DashboardProps> = (p) => {
-   const decujusid = Number(p.match.params.id) || undefined;
+const Dashboard: React.FC<unknown> = () => {
+   const params = useParams<DashboardParams>();
+   const decujusid = Number(params.id) || undefined;
+   const items = useSelector((s: AppState) => s.history);
    document.title = "Dashboard";
    return (
       <Page
          main={
             <div>
-               <RecentPersons {...p} />
-               <RecentPlaces {...p} />
+               <RecentPersons items={items} />
+               <RecentPlaces items={items} />
                <AllStats />
             </div>
          }
@@ -207,9 +206,4 @@ const Dashboard: React.FC<DashboardProps> = (p) => {
    );
 };
 
-export default connect(
-   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
-      ...props,
-      items: state.history,
-   }),
-)(Dashboard);
+export default Dashboard;

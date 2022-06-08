@@ -1,10 +1,9 @@
 import * as React from "react";
-import { connect, useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { InfiniteListFilter, InfiniteRowRenderer } from '../InfiniteList';
 import Page from "../Page";
 import { AppState, themeNameGetter } from "../Store/State";
 import { fetchPersonsCount, fetchPersonsFromServer } from '../Server/Person';
-import * as GP_JSON from "../Server/JSON";
 import { Person } from "../Store/Person";
 import { PersonaLink } from "../Links";
 import PersonaListSide from "../PersonaList/Side";
@@ -16,13 +15,11 @@ import {
 import ColorTheme from "../Store/ColorTheme";
 import "./PersonaList.css";
 
-interface PersonaListProps {
-   settings: PersonaListSettings;
-   themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
-}
-const PersonaList: React.FC<PersonaListProps> = p => {
+const PersonaList: React.FC<unknown> = () => {
    const [count, setCount] = React.useState(0);
    const dispatch = useDispatch();
+   const settings = useSelector((s: AppState) => s.personalist);
+   const themeNameGet = useSelector((s: AppState) => themeNameGetter(s));
 
    const onSettingsChange = React.useCallback(
       (diff: Partial<PersonaListSettings>) =>
@@ -40,11 +37,11 @@ const PersonaList: React.FC<PersonaListProps> = p => {
          const b = extractYear(pers.row.birthISODate);
          const d = extractYear(pers.row.deathISODate);
          return (
-            <div style={pers.style} className="person" key={pers.key}>
+            <div style={pers.style} className="person" key={pers.row.id} >
                <span
                   style={
                      ColorTheme.forPerson(
-                        p.settings.colors, 1 /* maxgen */, pers.row)
+                        settings.colors, 1 /* maxgen */, pers.row)
                      .toStr("dom")
                   }
                >
@@ -58,22 +55,22 @@ const PersonaList: React.FC<PersonaListProps> = p => {
             </div>
          );
       },
-      [p.settings]
+      [settings]
    );
 
    React.useEffect(
       () => {
-         fetchPersonsCount({filter: p.settings.filter}).then(c => setCount(c));
+         fetchPersonsCount({filter: settings.filter}).then(c => setCount(c));
       },
-      [p.settings]
+      [settings.filter]
    );
 
    //  Changing this callback resets the list
    const fetchPersons = React.useCallback(
-      (a) => {
-         return fetchPersonsFromServer({ ...a, filter: p.settings.filter });
+      (a: {offset: number; limit: number}) => {
+         return fetchPersonsFromServer({ ...a, filter: settings.filter });
       },
-      [p.settings.filter]
+      [settings.filter]
    );
 
    document.title = 'List of persons';
@@ -82,16 +79,16 @@ const PersonaList: React.FC<PersonaListProps> = p => {
       <Page
          leftSide={
             <PersonaListSide
-               settings={p.settings}
+               settings={settings}
                onChange={onSettingsChange}
-               themeNameGet={p.themeNameGet}
+               themeNameGet={themeNameGet}
             />
          }
          main={
             <InfiniteListFilter
                title="Person"
                fetchRows={fetchPersons}
-               filter={p.settings.filter}
+               filter={settings.filter}
                fullHeight={true}
                renderRow={renderRow}
                rowCount={count}
@@ -102,9 +99,4 @@ const PersonaList: React.FC<PersonaListProps> = p => {
    );
 };
 
-export default connect(
-   (state: AppState) => ({
-      settings: state.personalist,
-      themeNameGet: themeNameGetter(state)
-   }),
-)(PersonaList);
+export default PersonaList;

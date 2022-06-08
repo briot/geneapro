@@ -1,31 +1,31 @@
 import * as React from "react";
-import { connect } from "react-redux";
+import { useSelector } from "react-redux";
 import { Grid, Header } from "semantic-ui-react";
 import { AppState, lastVisitedPerson } from "./Store/State";
 import Panel from "./Panel";
 import { Navbar } from "./Navbar";
 import SideNav from "./SideNav";
-import { HistoryItem } from "./Store/History";
 
 interface PageProps {
    decujusid?: number;
    leftSide?: JSX.Element[] | JSX.Element;
    main: JSX.Element;
 }
-interface ConnectedPageProps extends PageProps {
-   history: HistoryItem[];
-   default_decujusid: number;
-}
-const Page: React.FC<ConnectedPageProps> = (p) => {
+
+const Page: React.FC<PageProps> = (p) => {
+   const default_decujusid = useSelector(
+      (s: AppState) => lastVisitedPerson(s));
+   const history = useSelector((s: AppState) => s.history);
+
    const decujusid = p.decujusid === undefined
-      ? p.default_decujusid : p.decujusid;
+      ? default_decujusid : p.decujusid;
 
    // put the first column in second position, so that on mobile it goes
    // below. Since we reverse columns it still shows on the left
    return (
       <div className="App">
          <Navbar />
-         <Grid stackable={true}>
+         <Grid stackable={true} >
             <Grid.Row reversed="computer">
                <Grid.Column width={13} >
                   {p.main}
@@ -41,7 +41,7 @@ const Page: React.FC<ConnectedPageProps> = (p) => {
                      </Panel>
                   )}
 
-                  <SideNav decujusid={decujusid} history={p.history} />
+                  <SideNav decujusid={decujusid} history={history} />
                </Grid.Column>
             </Grid.Row>
          </Grid>
@@ -49,9 +49,4 @@ const Page: React.FC<ConnectedPageProps> = (p) => {
    );
 };
 
-export default connect(
-   (state: AppState) => ({
-      default_decujusid: lastVisitedPerson(state),
-      history: state.history,
-   })
-)(Page);
+export default Page;

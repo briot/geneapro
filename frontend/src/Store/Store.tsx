@@ -15,16 +15,17 @@ if (process.env.NODE_ENV === `development`) {
    // Enabling 'diff' is useful in some cases, but has a very significant
    // performance impact (extra 14s to display the list of persons with
    // 10000 individuals).
+   //
    // eslint-disable-next-line @typescript-eslint/no-var-requires
-   const { createLogger } = require("redux-logger");
-   middlewares.push(
-      createLogger({
-         collapsed: true,
-         duration: true,
-         timestamp: true,
-         diff: false
-      })
-   ); // log actions in the console
+//   const { createLogger } = require("redux-logger");
+//   middlewares.push(
+//      createLogger({
+//         collapsed: true,
+//         duration: true,
+//         timestamp: true,
+//         diff: false
+//      })
+//   ); // log actions in the console
 }
 
 export const store = Redux.createStore(

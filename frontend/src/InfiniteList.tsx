@@ -1,21 +1,49 @@
 import * as React from "react";
-import { CellMeasurer, CellMeasurerCache } from 'react-virtualized';
 import {
-   Index,
-   IndexRange,
-   InfiniteLoader,
-   InfiniteLoaderChildProps,
-   List,
-   ListRowProps
-} from "react-virtualized";
+   FixedSizeList,
+   VariableSizeList,
+   ListChildComponentProps } from 'react-window';
+import InfiniteLoader from 'react-window-infinite-loader';
 import { Input, InputProps, Segment } from "semantic-ui-react";
 import { useComponentSize } from "./Hooks";
 
 export type InfiniteRowRenderer<T> =
-   (p: ListRowProps & {row: T; prevRow: T|undefined}) => React.ReactNode;
+   (p: ListChildComponentProps<T>
+      & {row: T; prevRow: T|undefined}) => React.ReactElement;
 
 export type InfiniteRowFetcher<T> =
    (p: {offset: number; limit: number}) => Promise<T[]>;
+
+interface measureRenderProps<T> {
+   params: ListChildComponentProps<T> & {row: T; prevRow: T|undefined};
+   render: InfiniteRowRenderer<T>;
+   setSize: (index: number, size: number) => void;
+   size: {width: number, height: number};
+}
+
+const MeasureRenderRow = <T extends object>(p: measureRenderProps<T>) => {
+   const rowRef = React.useRef<HTMLDivElement>(null);
+   const { setSize } = p;
+
+   React.useEffect(
+      () => {
+         if (rowRef.current) {
+            setSize(
+               p.params.index,
+               rowRef.current.children[0].getBoundingClientRect().height
+            );
+         }
+      },
+      [setSize, p.params.index, p.size]
+   );
+
+   return (
+      <div ref={rowRef}>
+         {p.render(p.params)}
+      </div>
+   );
+}
+
 
 interface InfiniteListProps<T> {
    // Minimum number of elements to fetch per query
@@ -43,32 +71,37 @@ export const InfiniteList = <T extends object>(p: InfiniteListProps<T>) => {
    const container = React.useRef<HTMLDivElement>(null);
    const size = useComponentSize(container);
    const infiniteLoaderRef = React.useRef<InfiniteLoader>(null);
-   const cacheRef = React.useRef<CellMeasurerCache|undefined>(undefined);
+   const varlistRef = React.useRef<VariableSizeList>(null);
+   const { fetchRows } = p;
 
-   const getCache = () => {
-      if (cacheRef.current === undefined) {
-         cacheRef.current = new CellMeasurerCache(
-            { fixedWidth: true, minHeight: 10, defaultHeight: 200 });
-      }
-      return cacheRef.current;
-   };
-   const cache = getCache();
+   const cacheRef = React.useRef<{[index: number]: number}>({});
+   const setSize = React.useCallback(
+      (index: number, size: number) => {
+         cacheRef.current = {...cacheRef.current, [index]: size};
+         varlistRef.current?.resetAfterIndex(index);
+         window.console.log('MANU setSize', index, size, cacheRef.current,
+            varlistRef.current, infiniteLoaderRef.current);
+      },
+      []
+   );
+   const getSize = React.useCallback(
+      (index: number) => cacheRef.current[index] || 40,
+      []
+   );
 
    // Set to a T when it has finished loading.
    // Set to 'false' while loading.
    // Set to undefined when we never requested its loading
    const [rows, setRows] = React.useState<(T|false|undefined)[]>([]);
 
-   const { fetchRows } = p;
-
    const loadMoreItems = React.useCallback(
-      (rg: IndexRange) => {
+      (startIndex: number, stopIndex: number): Promise<void> => {
          // Prepare the list of rows to indicate which ones we are loading,
          // and thus avoid double-loading
          setRows(s => {
-            const result = new Array(Math.max(s.length, rg.stopIndex));
+            const result = new Array(Math.max(s.length, stopIndex));
             s.forEach((r, idx) => result[idx] = r);
-            for (let idx = rg.startIndex; idx <= rg.stopIndex; idx++) {
+            for (let idx = startIndex; idx <= stopIndex; idx++) {
                if (result[idx - 1] === undefined) {
                   result[idx - 1] = false;
                }
@@ -77,14 +110,14 @@ export const InfiniteList = <T extends object>(p: InfiniteListProps<T>) => {
          });
 
          return fetchRows({
-            offset: rg.startIndex,
-            limit: rg.stopIndex - rg.startIndex + 1
+            offset: startIndex,
+            limit: stopIndex - startIndex + 1
          }).then((t: T[]) => {
             setRows(s => {
                const result = [...s];
                t.forEach((r, idx) => {
-                  result[idx + rg.startIndex] = r;
-                  cache.clear(idx + rg.startIndex, 0);
+                  result[idx + startIndex] = r;
+                  cacheRef.current = {};
                });
                return result;
             });
@@ -92,66 +125,72 @@ export const InfiniteList = <T extends object>(p: InfiniteListProps<T>) => {
             alert('Error while loading \n' + reason);
          });
       },
-      [fetchRows, cache]
+      [fetchRows]
    );
 
    // Reset
    React.useEffect(
       () => {
          setRows([]);
-         cache.clearAll();
+         cacheRef.current = {};
          if (infiniteLoaderRef.current) {
             //  Do not let infinite loader auto-reload. If we had scrolled
             //  down, it would still be requesting items 2000..3000, even
             //  though there might only be 10 items left after filtering.
-            infiniteLoaderRef.current.resetLoadMoreRowsCache();
-            loadMoreItems({startIndex: 0, stopIndex: minBatchSize});
+            infiniteLoaderRef.current.resetloadMoreItemsCache();
+
+            loadMoreItems(0, minBatchSize);
          }
       },
-      [p.fetchRows, cache, minBatchSize, loadMoreItems]
+      [fetchRows, minBatchSize, loadMoreItems]
    );
 
    const isRowLoaded = React.useCallback(
-      (q: Index) => q.index < rows.length && rows[q.index] !== undefined,
+      (q: number) => q < rows.length && rows[q] !== undefined,
       [rows]
    );
 
    const { renderRow } = p;
 
    const userRenderRow = React.useCallback(
-      (params: ListRowProps) => {
+      (params: ListChildComponentProps<T>): React.ReactElement => {
          const row = rows[params.index];
          if (!row) {
             return (
-               <div key={params.key} className="loading" style={params.style}>
+               <div className="loading" style={params.style}>
                   loading...
                </div>
             );
          }
          const prevRow = rows[params.index - 1] || undefined;
-         return renderRow({ ...params, row, prevRow});
+         return renderRow({...params, row, prevRow});
       },
       [rows, renderRow]
    );
 
    const measureRenderRow = React.useCallback(
-      (params: ListRowProps) => (
-         <CellMeasurer
-            key={params.key}
-            cache={cache}
-            rowIndex={params.index}
-            parent={params.parent}
-         >
-            {
-               () => userRenderRow(params)
-            }
-         </CellMeasurer>
-      ),
-      [userRenderRow, cache]
+      (params: ListChildComponentProps<T>): React.ReactElement => {
+         const row = rows[params.index];
+         if (!row) {
+            return (
+               <div className="loading" style={params.style}>
+                  loading...
+               </div>
+            );
+         }
+         const prevRow = rows[params.index - 1] || undefined;
+         return (
+            <MeasureRenderRow
+               params={{...params, row, prevRow}}
+               render={renderRow}
+               setSize={setSize}
+               size={size}
+            />
+         );
+      },
+      [renderRow, rows, setSize, size]
    );
 
-   const actualRenderRow = p.rowHeight === 'dynamic'
-       ? measureRenderRow : userRenderRow;
 
    return (
       <div
@@ -159,31 +198,41 @@ export const InfiniteList = <T extends object>(p: InfiniteListProps<T>) => {
          className={`List ${p.fullHeight ? 'fullHeight' : ''}`}
       >
          <InfiniteLoader
-            isRowLoaded={isRowLoaded}
-            loadMoreRows={loadMoreItems}
+            isItemLoaded={isRowLoaded}
+            loadMoreItems={loadMoreItems}
             minimumBatchSize={minBatchSize}
             ref={infiniteLoaderRef}
-            rowCount={p.rowCount}
+            itemCount={p.rowCount}
             threshold={minBatchSize / 2}
          >
             {
-            ({onRowsRendered, registerChild}: InfiniteLoaderChildProps) => (
-               <List
-                  width={size.width}
-                  height={size.height}
-                  deferredMeasurementCache={
-                     p.rowHeight === 'dynamic' ? cache : undefined
-                  }
-                  rowCount={p.rowCount}
-                  rowHeight={
-                     (p.rowHeight === 'dynamic')
-                        ? cache.rowHeight
-                        : p.rowHeight || 30
-                  }
-                  rowRenderer={actualRenderRow}
-                  onRowsRendered={onRowsRendered}
-                  ref={registerChild}
-               />
+            ({onItemsRendered, ref}) => (
+               p.rowHeight === 'dynamic'
+               ? (
+                  <VariableSizeList
+                     width={size.width}
+                     height={size.height}
+                     itemCount={p.rowCount}
+                     itemSize={getSize}
+                     onItemsRendered={onItemsRendered}
+                     overscanCount={2}
+                     ref={varlistRef}
+                  >
+                     {measureRenderRow}
+                  </VariableSizeList>
+               ) : (
+                  <FixedSizeList
+                     width={size.width}
+                     height={size.height}
+                     itemCount={p.rowCount}
+                     itemSize={p.rowHeight ?? 30}
+                     onItemsRendered={onItemsRendered}
+                     overscanCount={2}
+                     ref={ref}
+                  >
+                     {userRenderRow}
+                  </FixedSizeList>
+               )
             )
             }
          </InfiniteLoader>

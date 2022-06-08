@@ -1,11 +1,8 @@
 import * as React from "react";
-import { connect, useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useParams } from "react-router-dom";
 import { Loader } from "semantic-ui-react";
-import * as GP_JSON from "../Server/JSON";
-import { personDisplay, PersonSet } from "../Store/Person";
-import { GenealogyEventSet } from "../Store/Event";
-import { PlaceSet } from "../Store/Place";
+import { personDisplay } from "../Store/Person";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { PedigreeSettings, changePedigreeSettings } from "../Store/Pedigree";
 import { fetchPedigree } from "../Store/Sagas";
@@ -16,23 +13,20 @@ import Page from "../Page";
 import PedigreeLayout from "../Pedigree/Layout";
 import PedigreeSide from "../Pedigree/Side";
 
-interface PedigreePageConnectedProps {
-   settings: PedigreeSettings;
-   persons: PersonSet;
-   allEvents: GenealogyEventSet;
-   allPlaces: PlaceSet;
-   themeNameGet: (id: GP_JSON.ColorSchemeId) => string;
-}
-
-interface PedigreePageParams {
+type PedigreePageParams = {
    id?: string;
 }
 
-const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
-   const { id } = useParams<PedigreePageParams>();
-   const decujusid = Number(id);
-   const decujus = p.persons[decujusid];
+const PedigreePage: React.FC<unknown> = () => {
+   const params = useParams<PedigreePageParams>();
+   const decujusid = Number(params.id);
    const dispatch = useDispatch();
+   const settings = useSelector((s: AppState) => s.pedigree);
+   const persons = useSelector((s: AppState) => s.persons);
+   const allEvents = useSelector((s: AppState) => s.events);
+   const allPlaces = useSelector((s: AppState) => s.places);
+   const themeNameGet = useSelector((s: AppState) => themeNameGetter(s));
+   const decujus = persons[decujusid];
 
    // Fetch data from server when some properties change
    // Always run this, though it will do nothing if we already have the data
@@ -44,17 +38,17 @@ const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
             //  ??? Should avoid fetching known generations again
             dispatch,
             {
-               ancestors: p.settings.ancestors,
+               ancestors: settings.ancestors,
                decujus: decujusid,
-               descendants: p.settings.descendants,
-               theme: p.settings.colors,
+               descendants: settings.descendants,
+               theme: settings.colors,
             }
          ),
       [
          decujusid,
-         p.settings.ancestors,
-         p.settings.descendants,
-         p.settings.colors,
+         settings.ancestors,
+         settings.descendants,
+         settings.colors,
          dispatch
       ]
    );
@@ -75,17 +69,17 @@ const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
    // We added special code in Pedigree/Data.tsx to test whether the layout
    // is known, but that's not elegant.
    const main =
-      p.settings.loading || !decujus ? (
+      settings.loading || !decujus ? (
          <Loader active={true} size="large">
             Loading
          </Loader>
       ) : (
          <DropTarget redirectUrl={URL.pedigree}>
             <PedigreeLayout
-               settings={p.settings}
-               persons={p.persons}
-               allEvents={p.allEvents}
-               allPlaces={p.allPlaces}
+               settings={settings}
+               persons={persons}
+               allEvents={allEvents}
+               allPlaces={allPlaces}
                decujus={decujusid}
             />
          </DropTarget>
@@ -96,24 +90,14 @@ const PedigreePageConnected: React.FC<PedigreePageConnectedProps> = p => {
          decujusid={decujusid}
          leftSide={
             <PedigreeSide
-               settings={p.settings}
+               settings={settings}
                onChange={onChange}
-               themeNameGet={p.themeNameGet}
+               themeNameGet={themeNameGet}
             />
          }
          main={main}
       />
    );
 };
-
-const PedigreePage = connect(
-   (state: AppState) => ({
-      settings: state.pedigree,
-      persons: state.persons,
-      allEvents: state.events,
-      allPlaces: state.places,
-      themeNameGet: themeNameGetter(state)
-   }),
-)(PedigreePageConnected);
 
 export default PedigreePage;

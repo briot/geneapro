@@ -184,43 +184,43 @@ export const useIsMounted = () => {
 
 // Triggering code when the user presses a specific key
 
-export const useOnKeyPress = (
-      targetKey: number,
-      onKeyDown: (e: Event) => void,
-      onKeyUp: (e: Event) => void,
-      isDebugging=false
-) => {
-   const [isKeyDown, setIsKeyDown] = React.useState(false)
-   const onKeyDownLocal = React.useCallback(e => {
-      if (isDebugging) {
-         console.log("key down",
-            e.key, e.key !== targetKey ? " isn't triggered" : " is triggered");
-      }
-      if (e.key === targetKey) {
-         setIsKeyDown(true);
-         onKeyDown(e);
-      }
-   }, [onKeyDown, isDebugging, targetKey])
-
-   const onKeyUpLocal = React.useCallback(e => {
-      if (isDebugging) {
-         console.log("key up",
-            e.key, e.key !== targetKey ? " isn't triggered" : " is triggered");
-      }
-      if (e.key !== targetKey) {
-         setIsKeyDown(false);
-         onKeyUp(e);
-      }
-   }, [onKeyUp, isDebugging, targetKey])
-
-   React.useEffect(() => {
-      window.addEventListener('keydown', onKeyDownLocal);
-      window.addEventListener('keyup', onKeyUpLocal);
-      return () => {
-        window.removeEventListener('keydown', onKeyDownLocal);
-        window.removeEventListener('keyup', onKeyUpLocal);
-      }
-   }, [onKeyDownLocal, onKeyUpLocal]);
-
-   return isKeyDown;
-}
+// export const useOnKeyPress = (
+//       targetKey: number,
+//       onKeyDown: (e: Event) => void,
+//       onKeyUp: (e: Event) => void,
+//       isDebugging=false
+// ) => {
+//    const [isKeyDown, setIsKeyDown] = React.useState(false)
+//    const onKeyDownLocal = React.useCallback((e: KeyboardEvent) => {
+//       if (isDebugging) {
+//          console.log("key down",
+//             e.key, e.key !== targetKey ? " isn't triggered" : " is triggered");
+//       }
+//       if (e.key === targetKey) {
+//          setIsKeyDown(true);
+//          onKeyDown(e);
+//       }
+//    }, [onKeyDown, isDebugging, targetKey])
+//
+//    const onKeyUpLocal = React.useCallback(e => {
+//       if (isDebugging) {
+//          console.log("key up",
+//             e.key, e.key !== targetKey ? " isn't triggered" : " is triggered");
+//       }
+//       if (e.key !== targetKey) {
+//          setIsKeyDown(false);
+//          onKeyUp(e);
+//       }
+//    }, [onKeyUp, isDebugging, targetKey])
+//
+//    React.useEffect(() => {
+//       window.addEventListener('keydown', onKeyDownLocal);
+//       window.addEventListener('keyup', onKeyUpLocal);
+//       return () => {
+//         window.removeEventListener('keydown', onKeyDownLocal);
+//         window.removeEventListener('keyup', onKeyUpLocal);
+//       }
+//    }, [onKeyDownLocal, onKeyUpLocal]);
+//
+//    return isKeyDown;
+// }

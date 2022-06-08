@@ -53,7 +53,6 @@ export const AssertionTimeline: React.FC<TimelineProps> = (p) => {
          <div
             className={`assertRow ${isSameYear ? '' : 'withDate'}`}
             style={a.style}
-            key={a.key}
          >
             <div className="date">
                {isSameYear ? null : (
@@ -80,7 +79,7 @@ export const AssertionTimeline: React.FC<TimelineProps> = (p) => {
             minBatchSize={p.minBatchSize || 30}
             renderRow={renderAssert}
             rowCount={p.rowCount}
-            rowHeight='dynamic'
+            rowHeight={200 /* 'dynamic' */}
          />
       </div>
    );

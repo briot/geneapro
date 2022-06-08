@@ -1,23 +1,21 @@
 import * as React from "react";
-import { connect, useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Loader } from "semantic-ui-react";
-import { RouteComponentProps } from "react-router";
-import { AppState, MetadataDict } from "../Store/State";
+import { useParams } from "react-router";
+import { AppState } from "../Store/State";
 import { addToHistory, HistoryKind } from "../Store/History";
 import { usePlace } from "../Server/Place";
 import PlaceDetails from "../Place/PlaceDetails";
 import Page from "../Page";
 
-interface PropsFromRoute {
-   id: string;
+type PlacePageParams = {
+   id?: string;
 }
 
-interface PlacePageProps extends RouteComponentProps<PropsFromRoute> {
-   metadata: MetadataDict;
-}
-
-const PlacePage: React.FC<PlacePageProps> = (p) => {
-   const id = Number(p.match.params.id);
+const PlacePage: React.FC<unknown> = () => {
+   const params = useParams<PlacePageParams>();
+   const id = Number(params.id);
+   const metadata = useSelector((s: AppState) => s.metadata);
    const dispatch = useDispatch();
    const place = usePlace(id);
 
@@ -39,7 +37,7 @@ const PlacePage: React.FC<PlacePageProps> = (p) => {
          main={
             place ? (
                <PlaceDetails
-                  metadata={p.metadata}
+                  metadata={metadata}
                   place={place}
                />
             ) : (
@@ -52,9 +50,4 @@ const PlacePage: React.FC<PlacePageProps> = (p) => {
    );
 }
 
-export default connect(
-   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
-      ...props,
-      metadata: state.metadata,
-   }),
-)(PlacePage);
+export default PlacePage;

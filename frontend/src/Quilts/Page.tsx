@@ -1,6 +1,6 @@
 import * as React from "react";
-import { connect, useDispatch } from "react-redux";
-import { RouteComponentProps } from "react-router";
+import { useSelector, useDispatch } from "react-redux";
+import { useParams } from "react-router";
 import { Loader } from "semantic-ui-react";
 import { personDisplay } from "../Store/Person";
 import { QuiltsSettings, changeQuiltsSettings } from "../Store/Quilts";
@@ -13,20 +13,19 @@ import Page from "../Page";
 import Quilts from "../Quilts/Quilts";
 import QuiltsSide from "../Quilts/Side";
 
-interface PropsFromRoute {
+type QuiltsPageParams = {
    id: string;
 }
 
-interface QuiltsPageProps extends RouteComponentProps<PropsFromRoute> {
-   settings: QuiltsSettings;
-}
-const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
+const QuiltsPage: React.FC<unknown> = () => {
+   const params = useParams<QuiltsPageParams>();
    const [loading, setLoading] = React.useState(false);
-   const [layout, setLayout] = React.useState<QuiltsResult|undefined>(undefined);
-
-   const decujusid = Number(p.match.params.id);
+   const [layout, setLayout] = React.useState<QuiltsResult|undefined>(
+      undefined);
+   const decujusid = Number(params.id);
    const decujus = layout && layout.persons[decujusid];
    const dispatch = useDispatch();
+   const settings = useSelector((s: AppState) => s.quilts);
    const onSettingsChange = React.useCallback(
       (diff: Partial<QuiltsSettings>) =>
          dispatch(changeQuiltsSettings({ diff })),
@@ -65,7 +64,7 @@ const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
    ) : (
       <DropTarget redirectUrl={URL.quilts}>
          <Quilts
-            settings={p.settings}
+            settings={settings}
             layout={layout}
             decujus={decujusid}
          />
@@ -77,7 +76,7 @@ const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
          decujusid={decujusid}
          leftSide={
             <QuiltsSide
-               settings={p.settings}
+               settings={settings}
                onChange={onSettingsChange}
             />
          }
@@ -86,9 +85,4 @@ const QuiltsPage: React.FC<QuiltsPageProps> = (p) => {
    );
 }
 
-export default connect(
-   (state: AppState, props: RouteComponentProps<PropsFromRoute>) => ({
-      ...props,
-      settings: state.quilts,
-   }),
-)(QuiltsPage);
+export default QuiltsPage;
