@@ -32,26 +32,30 @@ can be any of "color" (text color), "fill" (background color),
 """
 
 from collections import defaultdict
-from collections.abc import Iterable
-import datetime
-from geneaprove.utils.date import DateRange
-from geneaprove import models
-from geneaprove.models.theme import Style
-from ..sql import PersonSet
+from geneaprove.models.theme.rules import Precomputed, Statuses
+from geneaprove.models.theme.styles import Style
+from geneaprove.models.theme import Theme
+from geneaprove.models.asserts import P2C, P2P, P2E, P2G
+from ..sql.personas import PersonSet, StylesProtocol
 import logging
+from typing import Dict, Tuple
+
 
 logger = logging.getLogger('geneaprove.styles')
 
 
-class Styles(object):
-
+class Styles(StylesProtocol):
     """
     This class is responsible for computing the styles (colors and text
     styles) to apply to personas. It tries to be as efficient as possible
     by caching data when appropriate.
     """
 
-    def __init__(self, theme_id, decujus):
+    def __init__(
+            self,
+            theme_id: int,
+            decujus: int,
+            ):
         """Rules specifies the rules to use for the highlighting.
         """
         super().__init__()
@@ -63,38 +67,45 @@ class Styles(object):
         self.need_places = False
 
         try:
-            theme = models.Theme.objects \
-                .prefetch_related('rules', 'rules__parts') \
+            theme = (
+                Theme.objects
+                .prefetch_related('rules', 'rules__parts')
                 .get(id=theme_id)
+            )
             self.rules = theme.as_rule_list()
-        except models.Theme.DoesNotExist:
+        except Theme.DoesNotExist:
             # logger.error(f'Theme not found: {theme_id}')
             self.rules = []
             return
 
         # For each rule, the result of its precomputation
-        self.precomputed = {}
+        self.precomputed: Precomputed = {}
 
         for r in self.rules:
-            self.need_p2e = self.need_p2e or r.need_p2e # ??? Should be a list of types
-            self.need_p2c = self.need_p2c or r.need_p2c # ??? Should be a list of types
+            # ??? Should be a list of types
+            self.need_p2e = self.need_p2e or r.need_p2e
+
+            # ??? Should be a list of types
+            self.need_p2c = self.need_p2c or r.need_p2c
+
             self.need_places = self.need_places or r.need_places
             r.precompute(decujus=decujus, precomputed=self.precomputed)
 
-    def compute(self, persons):
+    def compute(
+            self,
+            persons: PersonSet,
+            ) -> Tuple[
+                Dict[int, Style],  # style_id  => Style
+                Dict[int, int],    # person_id => style_id
+            ]:
         """
         Returns the styles to apply to the persons.
-
-        :returntype: dict
-            maps main_id to a style object
         """
-        assert isinstance(persons, PersonSet)
-
         if not self.rules:
             return {}, {}
 
         # for each rule and for each person, its current status
-        status = defaultdict(dict)
+        status: Statuses = defaultdict(dict)
 
         for r in self.rules:
             for p in persons.persons.values():
@@ -102,26 +113,37 @@ class Styles(object):
 
         # Apply each assertions
         for a in persons.asserts:
-            p = persons.get_from_id(a.person_id)
+            pid = (
+                a.person1_id
+                if isinstance(a, P2P)
+                else a.person_id
+                if isinstance(a, (P2C, P2E, P2G))
+                else None
+            )
+            if pid is None:
+                continue
+
+            p = persons.get_from_id(pid)
             for r in self.rules:
                 r.merge(
                     assertion=a,
                     person=p,
                     precomputed=self.precomputed,
-                    statuses=status)
+                    statuses=status,
+                )
 
         # We now know whether each rule applies, so we can set the styles
         # Make styles unique, so that we send fewer data
-        result = {}
+        result: Dict[int, int] = {}   # person id -> style id
 
-        all_styles = {}   # style -> id
+        all_styles: Dict[Style, int] = {}   # style -> id
         all_styles[Style()] = 0  # default style
         style_id = 1
 
         for main_id in persons.persons:
             s = Style()
             for r in self.rules:
-                if status[r.id].get(main_id, None) == True:
+                if status[r.id].get(main_id, None) is True:
                     s = s.merge(r.style)
 
             sv = all_styles.get(s, None)
@@ -133,4 +155,7 @@ class Styles(object):
             if sv != 0:   # Do not emit the default style
                 result[main_id] = sv
 
-        return {id: s for s, id in all_styles.items()}, result
+        return (
+            {id: s for s, id in all_styles.items()},
+            result,
+        )

@@ -2,7 +2,6 @@
 Provides new commands to ./manage.py
 """
 
-import appdirs
 import os
 import sys
 from django.conf import settings

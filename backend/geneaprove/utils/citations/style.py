@@ -3,13 +3,41 @@ Support for citation styles
 """
 
 import re
-from geneaprove import models
+from geneaprove.models.source import Source, Citation_Part
+from typing import Dict, Union, Set
 
 
-class Citation_Style(object):
+class Source_Citation:
+    """The citation for a source. This is the result of the expansion of
+       a Citation_Style object."""
+
+    def __init__(
+            self,
+            biblio: str,
+            full: str,
+            short: str,
+            ):
+        self.biblio = biblio
+        self.full = full
+        self.short = short
+
+    def to_json(self) -> Dict[str, str]:
+        return {'biblio': self.biblio,
+                'full': self.full,
+                'short': self.short}
+
+
+class Citation_Style:
     """This object describes a full citation for a source."""
 
-    def __init__(self, category, type, biblio, full, short):
+    def __init__(
+            self,
+            category: str,
+            type: str,
+            biblio: str,
+            full: str,
+            short: str,
+            ):
         """
         :param category: a translatable string that describes the category
            for the source.
@@ -30,35 +58,43 @@ class Citation_Style(object):
         self.full = full
         self.short = short
 
-    def cite(self, source, unknown_as_text=True):
+    def cite(
+            self,
+            source: Union[Source, Dict[str, str]],
+            unknown_as_text=True,
+            ) -> Source_Citation:
         """
         Compute the citation for a source. This function does not use the
         computed name from the database, but recompute its from the citation
         parts.
 
-        :param source: a models.Source or a dictionary of (key,value) for the
+        :param source: a Source or a dictionary of (key,value) for the
            citation parts.
         :return: a Source_Citation.
         """
 
-        subst = {}
+        subst: Dict[str, str] = {}
         for part in self.required_parts():
             subst[part] = f'unknown {part if unknown_as_text else ""}'
 
-        if isinstance(source, models.Source):
-            subst['_title'] = source.title
-            subst['_abbrev'] = source.abbrev
-            subst['_biblio'] = source.biblio
-            for part in source.parts.select_related('type__name').all():
-                subst[part.type.name] = part.value
+        if isinstance(source, Source):
+            subst['_title'] = source.title or ''
+            subst['_abbrev'] = source.abbrev or ''
+            subst['_biblio'] = source.biblio or ''
+            cp: Citation_Part
+            for cp in source.parts.select_related(   # type: ignore
+                    'type__name').all():
+                subst[cp.type.name] = cp.value
+
         elif isinstance(source, dict):
             for k, v in source.items():
                 if v != '':
                     subst[k] = v
+
         else:
             raise Exception("Invalid parameter to cite()")
 
-        def __repl(repl):
+        def __repl(repl: re.Match) -> str:
             return subst[repl.group(1)]
 
         # An unknown type ? use the explicit title from the user
@@ -76,9 +112,10 @@ class Citation_Style(object):
                 r.sub(__repl, self.full),
                 r.sub(__repl, self.short))
 
-    def required_parts(self):
-        """Return the set of citation parts that are necessary to build the
-           citation.
+    def required_parts(self) -> Set[str]:
+        """
+        Return the set of citation parts that are necessary to build the
+        citation.
         """
         parts = set()
         r = re.compile(r"\$\{([^}]+)\}")
@@ -94,18 +131,3 @@ class Citation_Style(object):
 
 
 No_Citation_Style = Citation_Style("", "", "", "", "")
-
-
-class Source_Citation(object):
-    """The citation for a source. This is the result of the expansion of
-       a Citation_Style object."""
-
-    def __init__(self, biblio, full, short):
-        self.biblio = biblio
-        self.full = full
-        self.short = short
-
-    def to_json(self):
-        return {'biblio': self.biblio,
-                'full': self.full,
-                'short': self.short}

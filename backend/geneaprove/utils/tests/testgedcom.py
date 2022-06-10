@@ -5,7 +5,8 @@ unittest-based framework for testing units in GeneaProve.utils
 import unittest
 import os
 import os.path
-from .. import gedcom
+from ..gedcom import parse_gedcom
+from ..gedcom.exceptions import Invalid_Gedcom
 
 
 class GedcomTestCase(unittest.TestCase):
@@ -26,9 +27,9 @@ class GedcomTestCase(unittest.TestCase):
 
         try:
             # Universal newline
-            gedcom.parse_gedcom(filename, print_warning=pw)
+            parse_gedcom(filename, print_warning=pw)
             error.append('OK')
-        except gedcom.Invalid_Gedcom as e:
+        except Invalid_Gedcom as e:
             error.append(e.msg)
 
         expected_name = os.path.splitext(filename)[0] + ".out"

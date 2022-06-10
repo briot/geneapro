@@ -1,6 +1,7 @@
 from django.db import models
 import django.utils.timezone
 from .base import GeneaProveModel
+from typing import Optional
 
 
 class Persona(GeneaProveModel):
@@ -10,6 +11,7 @@ class Persona(GeneaProveModel):
     really represents some data about an individual found in one source
     (when we are sure all attributes apply to the same person)
     """
+    id: int
 
     display_name = models.TextField(db_column="name")
     # The name as found in the source document.
@@ -24,11 +26,13 @@ class Persona(GeneaProveModel):
     # The last change date will be computed as the date of the most recent
     # assertion that applies to the person.
 
-    birthISODate = None    # string, precomputed via extended_personas
-    deathISODate = None    # string, precomputed via extended_personas
-    marriageISODate = None # string, precomputed via extended_personas
-    sex = None             # string, precomputed via extended_personas
-    generation = None      # int, precomputed via PedigreeData
+    birthISODate: Optional[str] = None     # precomputed via extended_personas
+    deathISODate: Optional[str] = None     # precomputed via extended_personas
+    marriageISODate: Optional[str] = None  # precomputed via extended_personas
+    sex: Optional[str] = None              # precomputed via extended_personas
+    generation: Optional[int] = None       # precomputed via PedigreeData
+
+    main_id: int
 
     main = models.ForeignKey(
         "self", null=True, on_delete=models.CASCADE,
@@ -41,10 +45,10 @@ class Persona(GeneaProveModel):
     # to a persona with a null main_id.
 
     def __repr__(self):
-        return f'Persona({self.id},{self.display_name})'
+        return f'Persona({self.id})'
 
     def __str__(self):
-        return f'<Persona id={self.id} name={self.display_name}>'
+        return f'<Persona id={self.id}>'
 
     class Meta:
         """Meta data for the model"""
@@ -53,7 +57,6 @@ class Persona(GeneaProveModel):
     def to_json(self):
         result = {
             'id': self.id,
-            'display_name': self.display_name,
         }
         if self.description:
             result['description'] = self.description

@@ -1,0 +1,3 @@
+[MASTER]
+
+disable=invalid-name,too-many-lines,missing-function-docstring,too-many-branches,too-many-statements,too-many-locals,too-many-nested-blocks,bad-continuation,too-few-public-methods,broad-except

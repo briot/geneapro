@@ -7,12 +7,14 @@ This file parses the output of
 from string import Template
 
 
-def process(at_line):
+def process(at_line: int) -> str:
     """Extract the citation from the given line"""
-    return contents[at_line].replace("[", "{") \
-        .replace("]", "}") \
-        .replace("'", "\\'") \
+    return (
+        contents[at_line].replace("[", "{")
+        .replace("]", "}")
+        .replace("'", "\\'")
         .title()
+    )
 
 
 f = open("esm_templates.txt")

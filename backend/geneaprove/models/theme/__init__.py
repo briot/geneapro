@@ -1,8 +1,9 @@
 from django.db import models
 from ..base import GeneaProveModel
-from .checks import Checker
+from .checks import Checker, Check
 from .rules import RuleChecker
 from .styles import Style
+from typing import Dict, Any
 
 
 class Theme(GeneaProveModel):
@@ -30,7 +31,6 @@ class Rule(GeneaProveModel):
     """
     One specific rule within a theme
     """
-
 
     theme = models.ForeignKey(
         Theme, related_name="rules", on_delete=models.CASCADE)
@@ -117,8 +117,17 @@ class RulePart(GeneaProveModel):
     value = models.TextField(
         help_text="What it should match (either a string or a list)")
 
-    def to_json(self):
-        return Checker.part_to_json(self)
-
     def __str__(self):
         return f"(RulePart {self.field} {self.operator} {self.value})"
+
+    def build_check(self) -> Check:
+        descr = Checker.__MAPPING[self.operator]
+        return descr[0](descr[1].convert(self.value))
+
+    def to_json(self) -> Dict[str, Any]:
+        descr = Checker.__MAPPING[self.operator]
+        return {  # Javascript's  RulePart
+            "field": self.field,
+            "operator": self.operator,
+            "value": descr[1].convert(self.value),
+        }

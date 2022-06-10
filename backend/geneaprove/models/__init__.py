@@ -10,10 +10,9 @@ object appropriate for use by simplejson. For instance:
 """
 
 from django.db import models, connection
-import django.utils.timezone
 from .asserts import Assertion, P2P, P2C, P2E, P2G, P2P_Type
-from .characteristic import Characteristic_Part_Type, \
-    Characteristic, Characteristic_Part
+from .characteristic import (
+    Characteristic_Part_Type, Characteristic, Characteristic_Part)
 from .event import Event_Type, Event_Type_Role, Event
 from .group import Group_Type, Group_Type_Role, Group
 from .persona import Persona
@@ -25,6 +24,7 @@ from .source import Source, Citation_Part_Type, Citation_Part
 from .surety import Surety_Scheme, Surety_Scheme_Part
 from .base import GeneaProveModel, Part_Type
 from .theme import Theme, Rule, RulePart
+from typing import Type
 
 
 class Config(GeneaProveModel):
@@ -54,7 +54,8 @@ class Project (GeneaProveModel):
         Researcher, through="Researcher_Project")
     name = models.CharField(max_length=100)
     description = models.TextField(null=True)
-    scheme = models.ForeignKey(Surety_Scheme, default=1, on_delete=models.CASCADE)
+    scheme = models.ForeignKey(
+        Surety_Scheme, default=1, on_delete=models.CASCADE)
     client_data = models.TextField(
         null=True,
         help_text="The client for which the project is undertaken. In general"
@@ -76,7 +77,8 @@ class Researcher_Project (GeneaProveModel):
     given researcher might be working simulatenously on several projects.
     """
 
-    researcher = models.ForeignKey(Researcher, null=False, on_delete=models.CASCADE)
+    researcher = models.ForeignKey(
+        Researcher, null=False, on_delete=models.CASCADE)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     role = models.TextField(
         null=True,
@@ -120,7 +122,8 @@ class Activity (GeneaProveModel):
     """
 
     objectives = models.ManyToManyField(Research_Objective)
-    researcher = models.ForeignKey(Researcher, null=True, on_delete=models.CASCADE)
+    researcher = models.ForeignKey(
+        Researcher, null=True, on_delete=models.CASCADE)
     scheduled_date = models.DateField(null=True)
     completed_date = models.DateField(null=True)
     is_admin = models.BooleanField(
@@ -203,16 +206,18 @@ class Source_Group (GeneaProveModel):
 # table or field names
 
 
-def sql_table_name(cls):
+def sql_table_name(cls: Type[GeneaProveModel]) -> str:
     return connection.ops.quote_name(cls._meta.db_table)
 
 
-def sql_field_name(cls, field_name):
+def sql_field_name(cls: Type[GeneaProveModel], field_name: str) -> str:
     """Help write custom SQL queries"""
-    if field_name == "pk":
-        f = cls._meta.pk
-    else:
-        f = cls._meta.get_field(field_name)
+    f = (
+        cls._meta.pk
+        if field_name == "pk"
+        else cls._meta.get_field(field_name)
+    )
+    assert isinstance(f, models.Field)
     return f"{sql_table_name(cls)}.{connection.ops.quote_name(f.column)}"
 
 

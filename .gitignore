@@ -14,6 +14,7 @@
 .project
 .classpath
 .c9/
+.dmypy.json
 *.launch
 .settings/
 *.sublime-workspace

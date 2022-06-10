@@ -1,5 +1,5 @@
 from django.db import models
-
+import django.utils.timezone
 from .base import GeneaProveModel
 from .place import Place
 
@@ -30,9 +30,14 @@ class Repository(GeneaProveModel):
 
     place = models.ForeignKey(Place, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
-    type = models.ForeignKey(Repository_Type, null=True, on_delete=models.CASCADE)
+    type = models.ForeignKey(
+        Repository_Type,
+        null=True,
+        on_delete=models.CASCADE,
+    )
     info = models.TextField(null=True)
     addr = models.TextField(null=True)
+    last_change = models.DateTimeField(default=django.utils.timezone.now)
 
     class Meta:
         """Meta data for the model"""

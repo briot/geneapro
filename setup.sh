@@ -33,7 +33,8 @@ ${VENV}/bin/pip install       \
    django-cors-headers==3.2.1 \
    grandalf==0.6              \
    pillow==6.1                \
-   psycopg2-binary==2.8
+   psycopg2-binary==2.8       \
+   django-stubs[compatible-mypy]
 
 if [ "$DEVELOPER" != "no" ]; then
    # Some useful tools for developers. 

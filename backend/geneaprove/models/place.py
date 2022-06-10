@@ -1,6 +1,5 @@
 from django.db import models
 from .base import GeneaProveModel, compute_sort_date, Part_Type
-from ..sql import AssertList
 
 
 class Place(GeneaProveModel):

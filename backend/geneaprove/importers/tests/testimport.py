@@ -5,6 +5,7 @@ unittest-based framework for testing imports
 import unittest
 import os
 import os.path
+from ...utils import gedcom
 from .. import gedcomimport
 
 

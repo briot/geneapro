@@ -8,9 +8,10 @@ from django.db.models import Count
 from django.db.models.functions import Lower
 from django.conf import settings
 from .. import models
-from ..sql import SourceSet
+from ..sql.sources import SourceSet
 from ..utils.citations import Citations
-from .to_json import JSONView, to_json
+from ..utils.citations.style import Source_Citation
+from .to_json import JSONView
 
 
 logger = logging.getLogger(__name__)
@@ -205,9 +206,11 @@ class SourcesList(JSONView):
         namefilter = params.get('filter', None)
         ids = params.get('ids', None)
 
-        pm = models.Source.objects \
-            .order_by(Lower('abbrev'), Lower('title')) \
-            .select_related( 'subject_place', 'jurisdiction_place')
+        pm = (
+            models.Source.objects
+            .order_by(Lower('abbrev'), Lower('title'))
+            .select_related('subject_place', 'jurisdiction_place')
+        )
 
         if namefilter:
             pm = pm.filter(abbrev__icontains=namefilter)

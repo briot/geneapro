@@ -1,14 +1,17 @@
 from django.db import models
 from geneaprove.utils import date
+from typing import Any, Dict, Optional
 
 
 class GeneaProveModel(models.Model):
 
-    def to_json(self):
-        """Returns a version of self suitable for use in json. By default,
-           this returns the dictionary of the class without the attributes
-           starting with _"""
-        result = {}
+    def to_json(self) -> Dict[str, Any]:
+        """
+        Returns a version of self suitable for use in json. By default,
+        this returns the dictionary of the class without the attributes
+        starting with _
+        """
+        result: Dict[str, Any] = {}
         for key, value in self.__dict__.items():
             if key[0] != '_':
                 result[key] = value
@@ -19,22 +22,24 @@ class GeneaProveModel(models.Model):
         abstract = True
 
 
-def compute_sort_date(partial_date):
+def compute_sort_date(partial_date: Optional[str]) -> Optional[str]:
     """
     Given a date as read in a source, parse it to an approximatin that
     can be used for sorting purposes.
     """
-    return (None
-            if partial_date is None
-            else date.DateRange(partial_date).sort_date())
+    return (
+        None
+        if partial_date is None
+        else date.DateRange(partial_date).sort_date()
+    )
 
 
 ##########
 # Lookup #
 ##########
 
-class _LookupDescriptor(object):
-    def __init__(self, kwargs):
+class _LookupDescriptor:
+    def __init__(self, kwargs) -> None:
         self.kwargs = kwargs
         self._cached = None
 
@@ -46,7 +51,7 @@ class _LookupDescriptor(object):
         return self._cached
 
 
-def lazy_lookup(**kwargs):
+def lazy_lookup(**kwargs) -> Any:
     """
     A value that will be looked up lazily the first time it is read.
     """

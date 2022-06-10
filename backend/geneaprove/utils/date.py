@@ -21,12 +21,15 @@ try:
     from django.utils.translation import ugettext as _
     _("foo")
 except ImportError:
-    def _(txt):
+    def _(txt: str) -> str:    # type: ignore
         return txt
 
+import enum
 import datetime
+import functools
 import re
 import time
+from typing import Any, Tuple, Dict, Optional, Union, overload
 
 __all__ = ["from_roman_literal", "to_roman_literal", "DateRange",
            "Calendar", "CalendarGregorian", "CalendarFrench",
@@ -89,7 +92,8 @@ FRENCH_MONTHS = [
     ("messidor", "mess"),
     ("thermidor", "ther"),
     ("fructidor", "fruc"),
-    ("",)]
+    ("",),
+]
 
 # No translation below
 
@@ -139,46 +143,57 @@ AFTER_RE = re.compile("(>|" + RE_AFTER + r"|(\\d)/[^\d])", IGNORECASE)
 ABOUT_RE = re.compile(r"^\s*(\b(?:" + RE_ABOUT + r")|~)\s*", IGNORECASE)
 EST_RE = re.compile(r"\s*((?:" + RE_EST + r")\s*|\?\s*$)", IGNORECASE)
 
-SPAN_FROM = 1
-SPAN_BETWEEN = 2
 
-DATE_BEFORE = 1
-DATE_ON = 2
-DATE_AFTER = 3
+class Span(enum.IntEnum):
+    NONE = -1
+    FROM = 1
+    BETWEEN = 2
 
-PRECISION_ABOUT = 1
-PRECISION_ESTIMATED = 2
-PRECISION_EXACT = 3
+
+class When(enum.IntEnum):
+    BEFORE = 1
+    ON = 2
+    AFTER = 3
+
+
+class Precision(enum.IntEnum):
+    ABOUT = 1
+    ESTIMATED = 2
+    EXACT = 3
+
 
 ROMAN_LITERALS = dict(I=1, V=5, X=10, L=50, C=100, D=500, M=1000)
 
 
-def from_roman_literal(text):
+def from_roman_literal(text: str) -> int:
     """Convert a roman literal into an int"""
 
     total = 0
     subtotal = 0
-    prev_char = 0
+    prev_char: Optional[str] = None
 
     for p in text:
         if p == prev_char:
-            subtotal = subtotal + ROMAN_LITERALS[p]
-        elif prev_char and ROMAN_LITERALS[prev_char] < ROMAN_LITERALS[p]:
-            total = total + ROMAN_LITERALS[p] - subtotal
+            subtotal += ROMAN_LITERALS[p]
+        elif (
+                prev_char is not None
+                and ROMAN_LITERALS[prev_char] < ROMAN_LITERALS[p]
+             ):
+            total += ROMAN_LITERALS[p] - subtotal
             subtotal = 0
-            prev_char = 0
+            prev_char = None
         else:
-            total = total + subtotal
+            total += subtotal
             subtotal = ROMAN_LITERALS[p]
             prev_char = p
 
     return total + subtotal
 
 
-def to_roman_literal(val):
+def to_roman_literal(val: int) -> str:
     """Convert an int to its roman literal representation"""
 
-    def proc(digit, ten, five, unit):
+    def proc(digit: int, ten: str, five: str, unit: str) -> str:
         """Convert a single digit to its roman literal representation"""
         if digit == 0:
             return ""
@@ -196,7 +211,7 @@ def to_roman_literal(val):
         + proc(val % 10, ten="X", five="V", unit="I")
 
 
-def __get_year(text):
+def __get_year(text: str) -> int:
     """Convert a year string (possibly in roman literals) into an int"""
     if text.isdigit():
         return int(text)
@@ -207,7 +222,7 @@ def __get_year(text):
         return from_roman_literal(text)
 
 
-def as_int(d):
+def as_int(d: Any) -> int:
     """Converts d to an integer, or returns the empty string if not
        an integer
     """
@@ -217,42 +232,44 @@ def as_int(d):
         return 0
 
 
-def get_ymd(txt, months):
-    """Extracts year, month and day from txt. Returns a tuple with
-       (year, month, day, year_specified, month_specified, day_specified)
-       The last three fields indicate whether the field was specified or
-       txt or whether a default value was used.
-       _months_ is a dict of month names for the current calendar. It can
-       contain an entry matching the empty string which is used as the default
-       when the month is not found.
+def get_ymd(
+        txt: str,
+        months: Dict[str, int],
+        ) -> Tuple[int, int, int, bool, bool, bool]:
+    """
+    Extracts year, month and day from txt. Returns a tuple with
+    (year, month, day, year_specified, month_specified, day_specified)
+    The last three fields indicate whether the field was specified or
+    txt or whether a default value was used.
+    `months` is a dict of month names for the current calendar. It can
+    contain an entry matching the empty string which is used as the default
+    when the month is not found.
     """
 
-    def parse_year(s):
+    def parse_year(s: str) -> Tuple[int, bool]:
         try:
             return __get_year(s), True
-        except:
+        except Exception:
             return -4000, False
 
-    def parse_month(s):
+    def parse_month(s: str) -> Tuple[int, bool]:
         try:
             return months[s.lower()], True
         except KeyError:
             return 1, False
 
-    def parse_int(s):
+    def parse_int(s: str) -> Tuple[int, bool]:
         try:
             return int(s), True
-        except:
+        except TypeError:
             return 1, False
-
 
     m = YYYYMMDD_RE.search(txt) or ISO_RE.search(txt)
     if m:
-        day_known = m.group(3) and m.group(3)[0].isdigit()
+        day_known = m.group(3)[0].isdigit() if m.group(3) else False
         year, year_known = parse_year(m.group(1))
         month, month_known = parse_int(m.group(2))
-        return (year, month,
-                as_int(m.group(3)),
+        return (year,       month,       as_int(m.group(3)),
                 year_known, month_known, day_known)
 
     m = DDMMYYYY_RE.search(txt)
@@ -308,47 +325,53 @@ def get_ymd(txt, months):
 
     return (-4000, 1, 1, False, False, False)
 
+
 ########################
 # Calendar
 ########################
 
-
-class Calendar(object):
-
+class Calendar:
     """Abstract base class for all types of calendars we support"""
 
-    def __init__(self, suffixes):
+    def __init__(self, suffixes: str):
         self.__re = re.compile(
             '\\s*\\(?(' + suffixes + ')\\)?\\s*', IGNORECASE)
         self._month_names = MONTH_NAMES
 
-    def is_a(self, text):
-        """If str is expressed in the calendar, returns the string that remains
-           after removing the calendar indication. Return None if the date does
-           not match the calendar
-           Default implementation is to check for a suffix that matches that of
-           the calendar. However, calendar implementations are encouraged to
-           check month names or other recognizable characteristics"""
+    def is_a(self, text: str) -> Optional[str]:
+        """
+        If str is expressed in the calendar, returns the string that remains
+        after removing the calendar indication. Return None if the date does
+        not match the calendar
+        Default implementation is to check for a suffix that matches that of
+        the calendar. However, calendar implementations are encouraged to
+        check month names or other recognizable characteristics
+        """
 
         m = self.__re.search(text)
         if m:
             return text[:m.start(0)] + text[m.end(0):]
         return None
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Convert to a string"""
         return ""
 
-    def parse(self, txt):
-        """Parse a simple date expressed in this calendar. str contains
-           information about day, month and year only, although some of this
-           info might be missing. Classes are encouraged to support as many
-           formats as possible for completeness.
-           None should be returned if the date could not be parsed.
-           This returns a tuple containing
-           (julian_day_number, year_specified, month_specified, day_specified,
-            calendar)
+    def parse(self, txt: str) -> Tuple[int, bool, bool, bool, "Calendar"]:
         """
+        Parse a simple date expressed in this calendar. str contains
+        information about day, month and year only, although some of this
+        info might be missing. Classes are encouraged to support as many
+        formats as possible for completeness.
+        None should be returned if the date could not be parsed.
+        This returns a tuple containing
+        (julian_day_number, year_specified, month_specified, day_specified,
+         calendar)
+        """
+        year: Optional[int]
+        month: Optional[int]
+        day: Optional[int]
+
         year, month, day, yk, mk, dk = get_ymd(txt, self._month_names)
         if not yk:
             year = None
@@ -361,44 +384,51 @@ class Calendar(object):
 
         return self.from_components(year, month, day)
 
-    def from_components(self, year=None, month=None, day=None):
-        """Given an expanded (possibly partial) date, return the same result
-           as parse.
-           This returns a tuple containing
-           (julian_day_number, year_specified, month_specified, day_specified,
-            calendar)
+    def from_components(
+            self,
+            year: int = None,
+            month: int = None,
+            day: int = None,
+            ) -> Tuple[int, bool, bool, bool, "Calendar"]:
+        """
+        Given an expanded (possibly partial) date, return the same result
+        as parse.
         """
         raise NotImplementedError
 
-    def components(self, julian_day):
+    def components(self, julian_day: int) -> Tuple[int, int, int]:
         """Return a tuple (year, month, day) for the given day"""
         raise NotImplementedError
 
-    def date_unicode(self, julian_day, year_known=True,
-                     month_known=True, day_known=True, year_only=False):
-        """Return a string representing the julian day in the self calendar.
-           If year_only is true, only the year is returned"""
+    def date_unicode(
+            self,
+            julian_day: int,
+            year_known=True,
+            month_known=True,
+            day_known=True,
+            year_only=False,
+            ) -> str:
+        """
+        Return a string representing the julian day in the self calendar.
+        If year_only is true, only the year is returned
+        """
         (year, month, day) = self.components(julian_day)
 
         if year_only:
             if year_known:
-                return "%(year)d" % {"year": year}
-            else:
-                return ""
+                return f"{year:04d}"
+            return ""
 
         if year_known:
             if month_known and not day_known:
-                formt = "%(year)d-%(month)02d"
-            elif month_known and day_known:
-                formt = "%(year)d-%(month)02d-%(day)02d"
-            elif day_known:
-                formt = "%(year)d-??-%(day)02d"
-            else:
-                formt = "%(year)d"
+                return f"{year:04d}-{month:02d}"
+            if month_known and day_known:
+                return f"{year:04d}-{month:02d}-{day:02}"
+            if day_known:
+                return f"{year:04d}-??-{day:02d}"
+            return f"{year:04d}"
         else:
-            formt = "????-%(month)02d-%(day)02d"
-
-        return formt % {"year": year, "month": month, "day": day}
+            return f"????-{month:02d}-{day:02d}"
 
 
 class CalendarGregorian(Calendar):
@@ -407,10 +437,15 @@ class CalendarGregorian(Calendar):
        much later in some countries
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         Calendar.__init__(self, "\\b(GR|G|Gregorian)\\b")
 
-    def from_components(self, year=None, month=None, day=None):
+    def from_components(
+            self,
+            year: int = None,
+            month: int = None,
+            day: int = None,
+            ) -> Tuple[int, bool, bool, bool, Calendar]:
         """See inherited documentation"""
         y = year or -4000
         m = month or 1
@@ -434,13 +469,13 @@ class CalendarGregorian(Calendar):
                     day is not None, self)
 
     @staticmethod
-    def today():
+    def today() -> Tuple[int, bool, bool, bool, "Calendar"]:
         """Return today's date"""
         t = time.localtime()
         return CalendarGregorian().from_components(
             t.tm_year, t.tm_mon, t.tm_mday)
 
-    def components(self, julian_day):
+    def components(self, julian_day: int) -> Tuple[int, int, int]:
         """See inherited documentation"""
         # Algorithm from wikipedia "julian day"
         days_per_four_years = 1461  # julian days per four year period
@@ -466,7 +501,7 @@ class CalendarFrench(Calendar):
        years during the french revolution.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # The @#DFRENCH R@ notation comes from gramps
         Calendar.__init__(self, "\\b(F|FR|French Republican)\\b|@#DFRENCH R@")
         self._month_names = dict()
@@ -478,13 +513,13 @@ class CalendarFrench(Calendar):
             "|".join([k for k in self._month_names.keys() if k != ""]),
             IGNORECASE)
 
-    def __str__(self):
+    def __str__(self) -> str:
         # Do not return the name of the calendar when we spell out the month
         # name in date_str(), since there is no ambiguity in this case
         # return "French Republican"
         return ""
 
-    def is_a(self, text):
+    def is_a(self, text: str) -> Optional[str]:
         """See inherited documentation"""
         result = Calendar.is_a(self, text)
         if result:
@@ -496,7 +531,12 @@ class CalendarFrench(Calendar):
 
         return None
 
-    def from_components(self, year=None, month=None, day=None):
+    def from_components(
+            self,
+            year: int = None,
+            month: int = None,
+            day: int = None,
+            ) -> Tuple[int, bool, bool, bool, Calendar]:
         """See inherited documentation"""
         if year and year >= 1:
             y = year or -4000
@@ -508,7 +548,7 @@ class CalendarFrench(Calendar):
         else:
             return (0, False, False, False, self)
 
-    def components(self, julian_day):
+    def components(self, julian_day: int) -> Tuple[int, int, int]:
         """See inherited documentation"""
         # From http://www.scottlee.net
         days_per_four_years = 1461  # julian days per four year period
@@ -522,8 +562,14 @@ class CalendarFrench(Calendar):
 
         return (y, m, d)
 
-    def date_unicode(self, julian_day, year_known=True, month_known=True,
-                     day_known=True, year_only=False):
+    def date_unicode(
+            self,
+            julian_day: int,
+            year_known=True,
+            month_known=True,
+            day_known=True,
+            year_only=False,
+            ) -> str:
         """See inherited documentation"""
         (y, m, d) = self.components(julian_day)
         output = ""
@@ -550,15 +596,20 @@ class CalendarJulian(Calendar):
 
     """The julian calendar (in use before the gregorian calendar)"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # OS stands for "Old style"
         Calendar.__init__(self, "\\b(JU|J|Julian|OS)\\b|@#DJULIAN@")
         self._month_names = MONTH_NAMES
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "Julian"
 
-    def from_components(self, year=None, month=None, day=None):
+    def from_components(
+            self,
+            year: int = None,
+            month: int = None,
+            day: int = None,
+            ) -> Tuple[int, bool, bool, bool, Calendar]:
         """See inherited doc"""
         # Conversion formulat from Wikipedia "Julian Day"
         y = year or -4000
@@ -572,7 +623,7 @@ class CalendarJulian(Calendar):
         return ((d + (153 * m2 + 2) // 5 + 365 * y2 + y2 // 4) - feb_29_4800,
                 year is not None, month is not None, day is not None, self)
 
-    def components(self, julian_day):
+    def components(self, julian_day: int) -> Tuple[int, int, int]:
         """See inherited doc"""
         days_per_four_years = 1461  # julian days per four year period
         j = julian_day + 32083
@@ -589,27 +640,33 @@ class CalendarJulian(Calendar):
 # The list of predefined calendars
 KNOWN_CALENDARS = [CalendarJulian(), CalendarFrench(), CalendarGregorian()]
 
+
 #####################
 # Time Delta
 #####################
 
-
-class TimeDelta(object):
-
-    """A difference between two dates.
-       You can add a number of years or months to a date. This directly
-       adds on the components of the dates (which are then normalized).
-       However, when you do a difference between two days, it is always
-       returned as a number of days to keep precision (since a year does
-       not have a fixed duration).
+class TimeDelta:
+    """
+    A difference between two dates.
+    You can add a number of years or months to a date. This directly
+    adds on the components of the dates (which are then normalized).
+    However, when you do a difference between two days, it is always
+    returned as a number of days to keep precision (since a year does
+    not have a fixed duration).
     """
 
-    def __init__(self, years=0, months=0, days=0, weeks=0):
+    def __init__(
+            self,
+            years: int = 0,
+            months: int = 0,
+            days: int = 0,
+            weeks: int = 0,
+            ):
         self.days = days + weeks * 7
         self.months = months
         self.years = years
 
-    def __str__(self):
+    def __str__(self) -> str:
         result = []
         if self.years != 0:
             result.append(f"{self.years}y")
@@ -619,14 +676,16 @@ class TimeDelta(object):
             result.append(f"{self.days}d")
         return " ".join(result)
 
-    def __neg__(self):
+    def __neg__(self) -> "TimeDelta":
         return TimeDelta(
-            years=-self.years, months=-self.months, days=-self.days)
+            years=-self.years, months=-self.months, days=-self.days
+        )
 
-    def parse(self, txt):
-        """Parse a text description of the delta. This extracts the relevant
-           information from TXT, and returns the original TXT minus this
-           info.
+    def parse(self, txt: str) -> str:
+        """
+        Parse a text description of the delta. This extracts the relevant
+        information from TXT, and returns the original TXT minus this
+        info.
         """
 
         self.days = 0
@@ -660,8 +719,8 @@ class TimeDelta(object):
 # _Date
 #####################
 
-class _Date(object):
-
+@functools.total_ordering
+class _Date:
     """Internal representation for a specific point in time (not a range of
        dates).
        The date might be imprecise ("about 1700") or incomplete ("1802-02",
@@ -671,21 +730,21 @@ class _Date(object):
        the operations on such dates.
     """
 
-    def __init__(self, text="", calendar=None):
+    def __init__(self, text="", calendar: Calendar = None):
         """Unless specified, the calendar will be auto-detected."""
         self.text = text.strip() or ""
         self.calendar = calendar
-        self.type = DATE_ON
-        self.precision = PRECISION_EXACT
-        self.seconds = None
-        self.date = None
+        self.type = When.ON
+        self.precision = Precision.EXACT
+        self.seconds: Optional[datetime.time] = None
+        self.date: Optional[int] = None    # Julian day
         self.month_known = False
         self.year_known = False
         self.day_known = False
         if text:
             self.__parse()
 
-    def __parse(self):
+    def __parse(self) -> None:
         """Parse self.text into a meaningful date"""
         txt = self.text
 
@@ -699,26 +758,26 @@ class _Date(object):
         if not self.calendar:
             self.calendar = CalendarGregorian()
 
-        self.type = DATE_ON
+        self.type = When.ON
         match = BEFORE_RE.search(txt)
         if match:
-            self.type = DATE_BEFORE
+            self.type = When.BEFORE
             txt = (match.group(2) or "") + txt[match.end(1):]
         else:
             match = AFTER_RE.search(txt)
             if match:
-                self.type = DATE_AFTER
+                self.type = When.AFTER
                 txt = (match.group(2) or "") + txt[match.end(1):]
 
-        self.precision = PRECISION_EXACT
+        self.precision = Precision.EXACT
         match = ABOUT_RE.search(txt)
         if match:
-            self.precision = PRECISION_ABOUT
+            self.precision = Precision.ABOUT
             txt = txt[:match.start(0)] + txt[match.end(0):]
         else:
             match = EST_RE.search(txt)
             if match:
-                self.precision = PRECISION_ESTIMATED
+                self.precision = Precision.ESTIMATED
                 txt = txt[:match.start(0)] + txt[match.end(0):]
 
         # Do we have a time indicated ?
@@ -734,71 +793,92 @@ class _Date(object):
             else:
                 hour = int(match.group(1))
 
-            self.seconds = datetime.time(hour=hour,
-                                         minute=int(match.group(2)),
-                                         second=secs)
+            self.seconds = datetime.time(
+                hour=hour,
+                minute=int(match.group(2)),
+                second=secs,
+            )
             txt = txt[:match.start(0)]
         else:
             self.seconds = None
 
         delta = TimeDelta()
-        txt = delta.parse(txt)
 
-        txt = txt.strip()
-        day = self.calendar.parse(txt)
-
-        if day:
-            (self.date, self.year_known, self.month_known, self.day_known,
-             self.calendar) = day
-        else:
-            self.date = None
+        (self.date, self.year_known, self.month_known, self.day_known,
+         self.calendar) = self.calendar.parse(delta.parse(txt).strip())
 
         if delta.years or delta.months or delta.days:
             r = self + delta
             self.date = r.date
             self.calendar = r.calendar
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
-    def __str__(self):
-        """Display the date, using either the parsed date, or if it could not be
-           parsed the date as was entered by the user. The calendar used is the
-           one parsed from the initial string"""
+    def __str__(self) -> str:
+        """
+        Display the date, using either the parsed date, or if it could not be
+        parsed the date as was entered by the user. The calendar used is the
+        one parsed from the initial string.
+        """
         return self.display(calendar=None)
 
-    def sort_date(self):
+    def __lt__(self, right: "_Date") -> bool:
+        """
+        Compare two dates
+        """
+        return self.julian_day < right.julian_day
+
+    @property
+    def julian_day(self) -> int:
+        return (0 if self.date is None else self.date)
+
+    def sort_date(self) -> Optional[str]:
         """Return a single date that can be used when sorting Dates"""
-        if self.year_known:
+        if self.year_known and self.date is not None:
             return CalendarGregorian().date_unicode(self.date)
         else:
             return None  # Can't do any sorting
 
-    def year(self, calendar=None):
+    def year(self, calendar: Calendar = None) -> int:
         """Return the year component of self, in the associated calendar"""
         cal = calendar or self.calendar
+        if cal is None or self.date is None:
+            return 0
         return cal.components(self.date)[0]
 
-    def __eq__(self, date):
-        return self.date == date.date
+    def __eq__(self, date: Any) -> bool:
+        if isinstance(date, _Date):
+            return self.date == date.date
+        return False
 
     @staticmethod
-    def today():
+    def today() -> "_Date":
         """Return today's date"""
         date = CalendarGregorian().today()
         result = _Date("")
-        (result.date, result.year_known, result.month_known, result.day_known,
-         result.calendar) = date
+        (
+            result.date,
+            result.year_known,
+            result.month_known,
+            result.day_known,
+            result.calendar,
+        ) = date
         return result
 
-    def display(self, calendar=None, year_only=False, original=False):
-        """Return a string representing string. By default, this uses the
-           calendar parsed when the date was created, but it is possible to
-           force the display in other date formats.
-           If the date could not be parsed, it is returned exactly as written
-           by the user.
-           If ORIGINAL is true, the date is output exactly as the user entered
-           it.
+    def display(
+            self,
+            calendar: Calendar = None,
+            year_only=False,
+            original=False,
+            ) -> str:
+        """
+        Return a string representing string. By default, this uses the
+        calendar parsed when the date was created, but it is possible to
+        force the display in other date formats.
+        If the date could not be parsed, it is returned exactly as written
+        by the user.
+        If ORIGINAL is true, the date is output exactly as the user entered it
         """
 
         if original and self.text:
@@ -806,36 +886,43 @@ class _Date(object):
 
         else:
             cal = calendar or self.calendar
+            if cal is None or self.date is None:
+                return ""
+
             result = ""
 
-            if self.precision == PRECISION_ABOUT:
+            if self.precision == Precision.ABOUT:
                 result += "~"
 
-            if self.type == DATE_BEFORE:
+            if self.type == When.BEFORE:
                 result += "/"
 
-            result = result + cal.date_unicode(
-                self.date, self.year_known, self.month_known, self.day_known,
+            result += cal.date_unicode(
+                self.date, self.year_known,
+                self.month_known, self.day_known,
                 year_only=year_only)
 
             if not year_only and self.seconds is not None:
                 result += " " + str(self.seconds)
 
-            if self.type == DATE_AFTER:
+            if self.type == When.AFTER:
                 result += "/"
 
-            if self.precision == PRECISION_ESTIMATED:
+            if self.precision == Precision.ESTIMATED:
                 result += " ?"
 
-            cal = str(cal)
-            if cal:
-                result += " (" + cal + ")"
+            cal_str = str(cal)
+            if cal_str:
+                result += f" ({cal})"
 
             return result
 
-    def __add__(self, delta):
+    def __add__(self, delta: TimeDelta) -> "_Date":
         """Add a delta to a date"""
         result = _Date()
+
+        if self.date is None or self.calendar is None:
+            return result
 
         (y, m, d) = self.calendar.components(self.date)
 
@@ -869,54 +956,81 @@ class _Date(object):
         result.precision = self.precision
         return result
 
-    def __sub__(self, date):
-        """Return a year-month-day difference between two dates.
-           The result is meant to be human readable, and matches the
-           computation done when entering dates. But it is less precise
-           than the number of days, as returned by days_since().
+    @overload
+    def __sub__(self, date: "_Date") -> TimeDelta:
+        ...
+
+    @overload
+    def __sub__(self, date: TimeDelta) -> "_Date":
+        ...
+
+    def __sub__(
+            self,
+            date: Union["_Date", TimeDelta],
+            ) -> Union["_Date", "TimeDelta"]:
         """
+        Return a year-month-day difference between two dates.
+        The result is meant to be human readable, and matches the
+        computation done when entering dates. But it is less precise
+        than the number of days, as returned by days_since().
+        """
+
+        if self.calendar is None or self.date is None:
+            return _Date()
 
         if isinstance(date, TimeDelta):
             return self + (-date)
 
-        else:
-            (y1, m1, d1) = self.calendar.components(self.date)
-            (y2, m2, d2) = self.calendar.components(date.date)
+        if date.date is None:
+            return _Date()
 
-            m = (y1 - y2) * 12 + m1 - m2  # Total months difference
-            if d1 != d2:
-                m -= 1
-            years = m // 12
-            months = m % 12
+        (y1, m1, d1) = self.calendar.components(self.date)
+        (y2, m2, d2) = self.calendar.components(date.date)
 
-            d = date + TimeDelta(years=years, months=months)
-            days = self.date - d.date
+        m = (y1 - y2) * 12 + m1 - m2  # Total months difference
+        if d1 != d2:
+            m -= 1
+        years = m // 12
+        months = m % 12
 
-            return TimeDelta(years=years, months=months, days=days)
+        d = date + TimeDelta(years=years, months=months)
+        if d.date is None:
+            return _Date()
 
-    def day_of_week(self):
-        """Return the day of week (as a string) for self.
-           This returns an empty string if the date is not fully known
+        days = self.date - d.date
+
+        return TimeDelta(years=years, months=months, days=days)
+
+    def day_of_week(self) -> str:
+        """
+        Return the day of week (as a string) for self.
+        This returns an empty string if the date is not fully known
         """
         # See http://en.wikipedia.org/wiki/Calculating_the_day_of_the_week
         # We know that Jan 1st, 1700 was a Friday
 
-        if self.year_known \
-           and self.month_known \
-           and self.day_known:
-
+        if (
+                self.date is not None
+                and self.year_known
+                and self.month_known
+                and self.day_known
+           ):
             JAN_01_1700 = 2341973  # Julian day
-
             return WEEKDAYS[(self.date - JAN_01_1700 + 5) % 7]
 
         return ""
+
+
+min_date = _Date("1")
+max_date = _Date("9999")
 
 
 ##################
 # DateRange
 ##################
 
-class DateRange(object):
+@functools.total_ordering
+class DateRange:
     """
     This class represents a date or a range of date, as read from the
     user. Such dates might be incomplete or unprecise. The text entered
@@ -924,7 +1038,7 @@ class DateRange(object):
     interpretation of the text more suitable for machin use
     """
 
-    def __init__(self, text):
+    def __init__(self, text: str):
         """
         Represents a potentially partial and potentially unprecise date
         or date range, in a specific calendar. calendar should be an instance
@@ -932,141 +1046,192 @@ class DateRange(object):
         will attempt to autodetect it.
         """
 
+        self._from: Optional[Union[_Date, "DateRange"]]
+        self._to: Optional[Union[_Date, "DateRange"]] = None
+        self._span = Span.NONE
+
         text = self._text = text.strip()  # Date as the user entered it
 
         groups = PERIOD_RE.search(text)
         if groups:
             # First date could be "between A and B"
-            e1 = DateRange(groups.group(2))
-            if e1._to is None:
-                e1 = e1._from
-
-            e2 = DateRange(groups.group(4))
-            if e2._to is None:
-                e2 = e2._from
-
-            self._from = e1
-            self._to = e2
-            self._span = SPAN_FROM
+            self._from = DateRange(groups.group(2))
+            self._to = DateRange(groups.group(4))
+            self._span = Span.FROM
             return
 
         groups = FROM_RE.search(text)
         if groups:
-            e1 = DateRange(groups.group(2))
-            if e1._to is None:
-                e1 = e1._from
-
-            self._from = e1
+            self._from = DateRange(groups.group(2))
             self._to = None
-            self._span = SPAN_FROM
+            self._span = Span.FROM
             return
 
         groups = TO_RE.search(text)
         if groups:
-            e1 = DateRange(groups.group(2))
-            if e1._to is None:
-                e1 = e1._from
-
             self._from = None
-            self._to = e1
-            self._span = SPAN_FROM
+            self._to = DateRange(groups.group(2))
+            self._span = Span.FROM
             return
 
         groups = BETWEEN_RE.search(text)
         if groups:
-            self._from = _Date(groups.group(2))
-            self._to = _Date(groups.group(4))
-            self._span = SPAN_BETWEEN
+            self._from = DateRange(groups.group(2))
+            self._to = DateRange(groups.group(4))
+            self._span = Span.BETWEEN
             return
 
         self._from = _Date(text)
-        self._to = None
-        self._span = -1
 
     @staticmethod
-    def today():
+    def today() -> "DateRange":
         """Return today's date"""
         today = _Date.today()
         result = DateRange.__new__(DateRange)
         result._text = str(today)
         result._from = today
         result._to = None
-        result._span = -1
+        result._span = Span.NONE
         return result
 
-    def sort_date(self):
-        """Return a single date that can be used when sorting DateRanges.
-           For a range of dates, we have chosen (randomly) to return the
-           first date in the range."""
-        if self._from:
-            return self._from.sort_date()
-        else:
-            return None
+    def sort_date(self) -> Optional[str]:
+        """
+        Return a single date that can be used when sorting DateRanges.
+        For a range of dates, we have chosen (randomly) to return the
+        first date in the range.
+        """
+        return self._from.sort_date() if self._from else ""
 
-    def __sub__(self, date):
+    @property
+    def earliest_date(self) -> _Date:
+        if self._from is None:
+            return min_date
+        if isinstance(self._from, _Date):
+            return self._from
+        return self._from.earliest_date
+
+    @property
+    def earliest_julian_day(self) -> int:
+        return self.earliest_date.julian_day
+
+    @property
+    def latest_date(self) -> _Date:
+        if self._span == Span.NONE:
+            return self.earliest_date
+        if self._to is None:
+            return max_date
+        if isinstance(self._to, _Date):
+            return self._to
+        return self._to.latest_date
+
+    @property
+    def latest_julian_day(self) -> int:
+        return self.latest_date.julian_day
+
+    def overlap(self, right: "DateRange") -> bool:
+        """
+        Whether the two ranges overlap
+        """
+        if self._span == Span.NONE or right._span == Span.NONE:
+            return False    # a date never overlaps anything
+
+        sf = self.earliest_julian_day
+        st = self.latest_julian_day
+        rf = right.earliest_julian_day
+        rt = right.latest_julian_day
+        return sf < rt and rf < st
+
+    def left_of(self, right: "DateRange") -> bool:
+        """
+        Whether self is to the left of right
+        """
+        st = self.latest_julian_day
+        rf = right.earliest_julian_day
+        return st <= rf
+
+    @overload
+    def __sub__(self, date: TimeDelta) -> "DateRange":
+        ...
+
+    @overload
+    def __sub__(self, date: "DateRange") -> TimeDelta:
+        ...
+
+    def __sub__(
+            self,
+            date: Union[TimeDelta, "DateRange"],
+            ) -> Union["DateRange", TimeDelta]:
         """Return a TimeDelta between the two dates"""
-        # ??? Should return a minimum and maximum difference, in the case of
-        # ranges.
 
         if isinstance(date, TimeDelta):
-            d1 = self._from - date
-            if self._to:
-                d2 = self._to - date
-            else:
-                d2 = None
-
             result = DateRange.__new__(DateRange)
             result._text = f"{self} - {date}"
-            result._from = d1
-            result._to = d2
-            result._span = -1
+            result._from = (
+                self._from - date
+                if self._from is not None
+                else None
+            )
+            result._to = (
+                self._to - date
+                if self._to is not None
+                else None
+            )
+            result._span = self._span
             return result
 
-        else:
-            assert isinstance(date, DateRange)
-            if self._from is None or date._from is None:
-                return None
-            return self._from - date._from
+        if self.overlap(date):
+            return TimeDelta()
 
-    def __add__(self, delta):
+        sf = self.earliest_date
+        st = self.latest_date
+        df = date.earliest_date
+        dt = date.latest_date
+        return st - df if st <= df else sf - dt
+
+    def __add__(self, delta: TimeDelta) -> "DateRange":
         """Add a delta to a date range"""
-        assert isinstance(delta, TimeDelta)
-        d1 = self._from + delta
-        if self._to:
-            d2 = self._to + delta
-        else:
-            d2 = None
-
         result = DateRange.__new__(DateRange)
         result._text = f"{self} + {delta}"
-        result._from = d1
-        result._to = d2
-        result._span = -1
+        result._from = None if self._from is None else self._from + delta
+        result._to = None if self._to is None else self._to + delta
+        result._span = Span.NONE
         return result
 
-    def year(self, calendar=None):
+    def year(self, calendar: Calendar = None) -> Optional[int]:
         """Return the year to be used for the range, when sorting"""
-        if self._from and self._from.year_known:
-            return self._from.year(calendar)
-        else:
+        if self._from is None:
             return None
+        if isinstance(self._from, _Date):
+            if self._from.year_known:
+                return self._from.year(calendar)
+            return None
+        return self._from.year(calendar)
 
-    def __eq__(self, date):
-        return self._from == date._from and self._to == date._to
+    def __eq__(self, date: Any) -> bool:
+        if isinstance(date, DateRange):
+            return self._from == date._from and self._to == date._to
+        return False
 
-    def __lt__(self, date):
+    def __lt__(self, date: Union["DateRange", _Date]) -> bool:
         """Compare two DateRange"""
-        return date is not None and self._from.date < date._from.date
+        d1 = self.earliest_julian_day
+        d2 = (
+            date.earliest_julian_day
+            if isinstance(date, DateRange)
+            else date.julian_day
+        )
+        return d1 < d2
 
-    def __gt__(self, date):
-        """Compare two DateRange"""
-        return date is not None and self._from.date > date._from.date
-
-    def __str__(self):
+    def __str__(self) -> str:
         """Convert to a string"""
         return self.display()
 
-    def display(self, calendar=None, year_only=False, original=False):
+    def display(
+            self,
+            calendar: Calendar = None,
+            year_only=False,
+            original=False,
+            ) -> str:
         """
         Convert to a string
         :param bool year_only: only display the date.
@@ -1076,46 +1241,52 @@ class DateRange(object):
             return str(self._text)
 
         if self._from is None:
+            if self._to is None:
+                return str(self._text)
+
             d2 = self._to.display(
                 calendar=calendar, year_only=year_only, original=original)
-            if self._to is not None:
-                return f"to {d2}"
-            else:
-                return str(self._text)
-        else:
-            d1 = self._from.display(
+            return f"to {d2}"
+
+        d1 = self._from.display(
+            calendar=calendar, year_only=year_only, original=original)
+
+        if self._to is not None:
+            d2 = self._to.display(
                 calendar=calendar, year_only=year_only, original=original)
+            if self._span == Span.FROM:
+                return f"from {d1} to {d2}"
+            if self._span == Span.BETWEEN:
+                return f"between {d1} and {d2}"
+        else:
+            if self._span == Span.FROM:
+                return f"from {d1}"
+            if self._span == Span.NONE:
+                return d1
+        raise Exception(f"unexpected span {self._span}")
 
-            if self._to is not None:
-                d2 = self._to.display(
-                    calendar=calendar, year_only=year_only, original=original)
-
-                if self._span == SPAN_FROM:
-                    return f"from {d1} to {d2}"
-                else:
-                    return f"between {d1} and {d2}"
-            else:
-                if self._span == SPAN_FROM:
-                    return f"from {d1}"
-                else:
-                    return d1
-
-    def days_since(self, date):
+    def days_since(self, date: "DateRange") -> int:
         """"Return the number of days between two dates"""
-        return self._from.date - date._from.date
+        if self.overlap(date):
+            return 0
 
-    def years_since(self, date):
+        sf = self.earliest_julian_day
+        st = self.latest_julian_day
+        df = date.earliest_julian_day
+        dt = date.latest_julian_day
+        return st - df if st <= dt else sf - dt
+
+    def years_since(self, date: "DateRange") -> Optional[int]:
         """Return the number of years between two DateRange.
            Only full years are counted
         """
-        if self._from is not None \
-                and self._from.year_known \
-                and date._from is not None \
-                and date._from.year_known:
-            return (self._from - date._from).years
-        else:
-            return None
+        sf = self.earliest_date
+        df = date.earliest_date
 
-    def day_of_week(self):
+        if sf != min_date and df != min_date:
+            return (sf - df).years
+        return None
+
+    def day_of_week(self) -> str:
         """Return the day of week for the start date"""
-        return self._from.day_of_week()
+        return "" if self._from is None else self._from.day_of_week()

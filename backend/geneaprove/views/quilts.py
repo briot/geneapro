@@ -1,13 +1,14 @@
 import collections
 import itertools
 from geneaprove import models
-from grandalf.graphs import Vertex,Edge,Graph
-from grandalf.layouts import SugiyamaLayout
+from grandalf.graphs import Vertex, Edge, Graph   # type: ignore
+from grandalf.layouts import SugiyamaLayout     # type: ignore
 from .to_json import JSONView
-from ..sql import PersonSet, Relationship
+from ..sql.personas import PersonSet, Relationship
 
 
 class BirthEvent:
+
     def __init__(self):
         self.child = None
         self.fathers = []
@@ -26,7 +27,9 @@ class BirthEvent:
     def __repr__(self):
         return f"(birth {self.child} from {self.fathers} and {self.mothers})"
 
+
 class MarriageEvent:
+
     def __init__(self):
         self.spouses = []
 

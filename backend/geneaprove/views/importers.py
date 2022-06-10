@@ -1,6 +1,6 @@
 from geneaprove.importers.gedcomimport import GedcomFileImporter
 from .to_json import JSONView
-from ..sql import PersonSet
+from ..sql.personas import PersonSet
 import logging
 
 logger = logging.getLogger('geneaprove.importers')

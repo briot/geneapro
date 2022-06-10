@@ -4,27 +4,66 @@ Support for writing custom SQL queries
 
 import collections
 from enum import Enum
-import django.db
-from django.db.models import F, Q
+import django.db.transaction
+from django.db.models import F, Q, QuerySet
 import logging
-from .. import models
+from ..models.asserts import P2E, P2C, P2P, P2G, P2P_Type
+from ..models.persona import Persona
+from ..models.event import Event_Type, Event_Type_Role
+from ..models.characteristic import Characteristic_Part_Type
+from ..models.theme.styles import Style
 from .asserts import AssertList
 from .sqlsets import SQLSet
+from typing import (
+    Dict, List, NamedTuple, Iterable, Optional, Literal, Tuple, Any, Protocol)
+
 
 logger = logging.getLogger(__name__)
 
-FolkLore = collections.namedtuple(
-    'FolkLore', "main_id generation folks")
+
+class Parent_And_Children:
+    __slots__ = ("parents", "children")
+
+    def __init__(self) -> None:
+        self.parents: List[int] = []
+        self.children: List[int] = []
+
+
+class FolkLore(NamedTuple):
+    main_id: int
+    generation: int
+    folks: List[int]
+
+
+class StylesProtocol(Protocol):
+    need_places: bool
+
+    def compute(
+            self,
+            persons: "PersonSet",
+            ) -> Tuple[
+                Dict[int, Style],  # style_id  => Style
+                Dict[int, int],    # person_id => style_id
+            ]:
+        ...
+
 
 class Relationship(Enum):
     ANCESTORS = ('ancestors', 'parents', 'parent', ('p2e', 'p2'))
     DESCENDANTS = ('descendants', 'children', 'child', ('p2', 'p2e'))
 
-    def __init__(self, relations, group, individual, query_tables):
+    def __init__(
+            self,
+            relations: Literal["ancestors", "descendants"],
+            group: Literal["parents", "children"],
+            individual: Literal["parent", "child"],
+            query_tables: Tuple[str, ...],
+            ):
         self.relations = relations
         self.group = group
         self.individual = individual
         self.query_tables = query_tables
+
 
 class PersonSet(SQLSet):
     """
@@ -33,27 +72,28 @@ class PersonSet(SQLSet):
     persons.
     """
 
-    BMD = None
-    # Will be set to the list of events for birth-marriage-death.
-    # Cannot be computed immediately, since it needs a database lookup, and
-    # the database might not event exist yet.
-
-    def __init__(self, styles=None):
-        self.asserts = AssertList() # All Assertions used to compute persons
-        self.persons = collections.OrderedDict() # main_id -> Persona instance
+    def __init__(self, styles: StylesProtocol = None):
+        self.asserts = AssertList()  # All Assertions used to compute persons
+        self.persons: Dict[int, Persona] = collections.OrderedDict()
         self.styles = styles
 
         # main_id -> parents and children
-        self.layout = collections.defaultdict(
-            lambda: {'children': [], 'parents': []})
+        self.layout: Dict[int, Parent_And_Children] = collections.defaultdict(
+            lambda: Parent_And_Children())
+        self.BMD = (
+            Event_Type.PK_birth,
+            Event_Type.PK_death,
+            Event_Type.PK_marriage
+        )
 
-        if PersonSet.BMD is None:
-            PersonSet.BMD = (models.Event_Type.PK_birth,
-                             models.Event_Type.PK_death,
-                             models.Event_Type.PK_marriage)
-
-    def add_ids(self, ids=None, namefilter=None, offset=None, limit=None,
-                compute_sex=True):
+    def add_ids(
+            self,
+            ids: Iterable[int] = None,
+            namefilter: str = None,
+            offset: int = None,
+            limit: int = None,
+            compute_sex=True,
+            ) -> None:
         """
         Append to the list all persons for which one of the base personas has
         an id in `ids`.
@@ -67,15 +107,15 @@ class PersonSet(SQLSet):
         """
         assert ids is None or isinstance(ids, collections.abc.Iterable)
 
-        # This query is much slower than the one below, though it returns a real
-        # manager that we can further manipulate.
+        # This query is much slower than the one below, though it returns a
+        # real manager that we can further manipulate.
         #     .annotate(sex=RawSQL(
         #         "SELECT c.name FROM characteristic_part c, p2c, persona p "
         #         "WHERE c.characteristic_id=p2c.characteristic_id "
         #         "AND c.type_id=%s "
         #         "AND p2c.person_id=p.id "
         #         "AND p.main_id=persona.id",
-        #         (models.Characteristic_Part_Type.PK_sex,)))
+        #         (Characteristic_Part_Type.PK_sex,)))
         #
         # ??? Doesn't work, second instance of persona disappears
         #     .extra(
@@ -86,14 +126,14 @@ class PersonSet(SQLSet):
         #                "characteristic_part.type_id=%s",
         #                "p2c.person_id=t2.id",
         #                "t2.main_id=persona.id"],
-        #         params=(models.Characteristic_Part_Type.PK_sex,))
+        #         params=(Characteristic_Part_Type.PK_sex,))
 
         if ids:
             # Convert from ids to main ids
-            ids = ','.join('%d' % n for n in ids)
+            ids_str = ','.join(f"{n:d}" for n in ids)
             id_to_main = (
                 f"persona.id IN ("
-                f"SELECT p.main_id FROM persona p WHERE p.id IN ({ids}))")
+                f"SELECT p.main_id FROM persona p WHERE p.id IN ({ids_str}))")
         else:
             id_to_main = "persona.main_id=persona.id"
 
@@ -111,11 +151,11 @@ class PersonSet(SQLSet):
             sex_field = "'?' as sex"
             sex_query = ""
 
-        pm = models.Persona.objects.raw(
+        pm = Persona.objects.raw(
             f"SELECT persona.*, {sex_field} "
             f"FROM persona {sex_query}"
             f"WHERE {id_to_main} " +
-            (f"AND persona.name LIKE %s " if namefilter else "") +
+            #  ("AND persona.name LIKE %s " if namefilter else "") +
             "ORDER BY lower(persona.name) ASC " +
             (f"LIMIT {int(limit)} " if limit is not None else "") +
             (f"OFFSET {int(offset)} " if offset else ""),
@@ -127,7 +167,7 @@ class PersonSet(SQLSet):
         self.asserts.add_known(persons=self.persons.values())
 
     @staticmethod
-    def _query_get_sex():
+    def _query_get_sex() -> str:
         """
         A query to compute the sex of persons
         """
@@ -135,31 +175,41 @@ class PersonSet(SQLSet):
             "SELECT p.main_id, c.name AS sex "
             "FROM characteristic_part c, p2c, persona p "
             "WHERE c.characteristic_id=p2c.characteristic_id "
-            f"AND c.type_id={models.Characteristic_Part_Type.PK_sex} "
+            f"AND c.type_id={Characteristic_Part_Type.PK_sex} "
             "AND p2c.person_id=p.id "
             "AND NOT p2c.disproved "
-            "GROUP BY p.main_id, c.name")
+            "GROUP BY p.main_id, c.name"
+        )
 
     @staticmethod
-    def _query_get_folks(relationship):
+    def _query_get_folks(relationship: Relationship) -> str:
         """
         A query that computes the list of direct parents or children
         for a person
         """
-
         return (
-            f"SELECT DISTINCT persona.main_id, pp.main_id as {relationship.individual} "
+            f"SELECT DISTINCT persona.main_id,"
+            f" pp.main_id as {relationship.individual} "
             "FROM persona, p2e, event, p2e p2, persona pp "
             "WHERE event.id=p2e.event_id "
-            f"AND {relationship.query_tables[0]}.role_id={models.Event_Type_Role.PK_principal} "
-            f"AND event.type_id={models.Event_Type.PK_birth} "
-            f"AND {relationship.query_tables[1]}.role_id IN ({models.Event_Type_Role.PK_birth__father}, "
-            f"{models.Event_Type_Role.PK_birth__mother}) "
+            f"AND {relationship.query_tables[0]}.role_id="
+            f" {Event_Type_Role.PK_principal} "
+            f"AND event.type_id={Event_Type.PK_birth} "
+            f"AND {relationship.query_tables[1]}.role_id IN"
+            f" ({Event_Type_Role.PK_birth__father}, "
+            f"  {Event_Type_Role.PK_birth__mother}) "
             "AND p2e.person_id=persona.id "
             "AND p2.event_id=event.id "
-            "AND p2.person_id=pp.id")
+            "AND p2.person_id=pp.id"
+        )
 
-    def get_folks(self, relationship, person_id, max_depth=None, skip=0):
+    def get_folks(
+            self,
+            relationship: Relationship,
+            person_id: int,
+            max_depth: int = None,
+            skip=0,
+            ) -> List[FolkLore]:
         """
         :returntype: list of FolkLore
            This includes person_id itself, at generation 0
@@ -170,26 +220,44 @@ class PersonSet(SQLSet):
             pid = self.cast(person_id, 'bigint')
             zero = self.cast(0, 'bigint')  # ??? do we really need to cast
             initial = f"VALUES({pid}, {zero})"
-            md = f"AND {relationship.relations}.generation<={max_depth} " if max_depth else ""
-            sk = f"WHERE {relationship.relations}.generation>{skip} " if skip else ""
-            q = (
-                f"WITH RECURSIVE {relationship.group}(main_id, {relationship.individual}) "
-                f"AS ({self._query_get_folks(relationship)}), "
+            md = (
+                f"AND {relationship.relations}.generation<={max_depth} "
+                if max_depth
+                else ""
+            )
+            sk = (
+                f"WHERE {relationship.relations}.generation>{skip} "
+                if skip
+                else ""
+            )
+            cur.execute(
+                f"WITH RECURSIVE {relationship.group}("
+                f"  main_id, {relationship.individual}) "
+                f"AS ("
+                f"  {self._query_get_folks(relationship)}"
+                f"), "
                 f"{relationship.relations}(main_id,generation) "
-                    f"AS ({initial} "
-                    "UNION "
-                    f"SELECT {relationship.group}.{relationship.individual}, {relationship.relations}.generation + 1 "
-                    f"FROM {relationship.group}, {relationship.relations} "
-                    f"WHERE {relationship.group}.main_id = {relationship.relations}.main_id "
-                    f"{md}) "
-                f"SELECT {relationship.relations}.main_id, {relationship.relations}.generation, "
-                f"{self.group_concat(f'{relationship.group}.{relationship.individual}')} AS {relationship.group} "
+                f"AS ("
+                f" {initial} "
+                "  UNION "
+                f" SELECT {relationship.group}.{relationship.individual},"
+                f" {relationship.relations}.generation + 1 "
+                f" FROM {relationship.group}, {relationship.relations} "
+                f" WHERE {relationship.group}.main_id ="
+                f"   {relationship.relations}.main_id "
+                f" {md}"
+                f") "
+                f"SELECT {relationship.relations}.main_id,"
+                f" {relationship.relations}.generation,"
+                f" {self.group_concat(f'{relationship.group}.{relationship.individual}')} AS {relationship.group} "
                 f"FROM {relationship.relations} "
                 f"LEFT JOIN {relationship.group} "
-                f"ON {relationship.group}.main_id={relationship.relations}.main_id "
+                f"ON {relationship.group}.main_id="
+                f" {relationship.relations}.main_id "
                 f"{sk}"
-                f"GROUP BY {relationship.relations}.main_id, {relationship.relations}.generation"            )
-            cur.execute(q)
+                f"GROUP BY {relationship.relations}.main_id,"
+                f" {relationship.relations}.generation"
+            )
 
             return [
                 FolkLore(
@@ -199,21 +267,28 @@ class PersonSet(SQLSet):
                 )
                 for main_id, generation, f in cur.fetchall()]
 
-    def add_folks(self, person_id, relationship, max_depth=None, skip=0):
+    def add_folks(
+            self,
+            person_id: int,
+            relationship: Relationship,
+            max_depth: int = None,
+            skip=0,
+            ):
         """
         Fetch the list of all ancestors or descendants of `person_id`, up
         until the `max_depth` generation.
         Omit all persons with a generation less than `skip`, assuming the
         front-end already has that information.
         """
-        assert isinstance(person_id, int)
-
         folks = self.get_folks(relationship, person_id, max_depth, skip)
         self.add_ids(ids=(f.main_id for f in folks))
         for f in folks:
-            self.layout[f.main_id][relationship.group] = f.folks
+            if relationship.group == 'parents':
+                self.layout[f.main_id].parents = f.folks
+            elif relationship.group == 'children':
+                self.layout[f.main_id].children = f.folks
 
-    def get_unique_person(self):
+    def get_unique_person(self) -> Optional[Persona]:
         """
         If the set contains a single person, return it
         """
@@ -222,7 +297,12 @@ class PersonSet(SQLSet):
         else:
             return None
 
-    def has_known_parent(self, main_ids=None, sex=None, relationship=Relationship.ANCESTORS):
+    def has_known_parent(
+            self,
+            main_ids=None,
+            sex=None,
+            relationship=Relationship.ANCESTORS,
+            ) -> Dict[int, str]:
         """
         Whether the person has a known father (sex=M) or mother (sex=F).
         :returntype:
@@ -233,22 +313,19 @@ class PersonSet(SQLSet):
         assert sex is None or isinstance(sex, str)
 
         with django.db.connection.cursor() as cur:
-            args = []
-            where = []
+            args: List[Any] = []
+            where: str = ''
 
             if main_ids:
                 ids = ','.join(f"{d:d}" for d in main_ids)
-                where.append(f"parents.main_id IN ({ids})")
+                where += f"parents.main_id IN ({ids})"
 
             if sex:
-                where.append(f"sex.sex=%s")
+                where += ' AND sex.sex=%s'
                 args.append(sex)
 
             if where:
-                where = " AND ".join(where)
                 where = f"WHERE {where}"
-            else:
-                where = ""
 
             cur.execute(
                 f"WITH parents AS ({self._query_get_folks(relationship)}), "
@@ -257,26 +334,25 @@ class PersonSet(SQLSet):
                 "FROM parents "
                 "LEFT JOIN sex "
                 f"ON parents.parent=sex.main_id {where}",
-                args)
+                args
+            )
 
-            result = collections.defaultdict(str)
+            result: Dict[int, str] = collections.defaultdict(str)
             for person_id, sex in cur.fetchall():
                 result[person_id] = result[person_id] + (sex or ' ')
 
             return result
 
-    def get_from_id(self, id):
+    def get_from_id(self, id: int) -> Persona:
         """
         Retrieve a person given the id of one of its base persons.
         If possible this is retrieved from the current set of persons
         """
-        assert isinstance(id, int)
-
         p = self.persons.get(id, None)
         if p is not None:
             return p
 
-        main_id = models.Persona.objects.get(id=id).main_id
+        main_id = Persona.objects.get(id=id).main_id
         p = self.persons.get(main_id, None)
         if p is not None:
             return p
@@ -284,14 +360,17 @@ class PersonSet(SQLSet):
         self.add_ids([main_id])
         return self.persons[main_id]
 
-    def compute_generations(self, gen_0_ids):
+    def compute_generations(
+            self,
+            gen_0_ids: List[int],
+            ) -> Dict[int, int]:
         """
         Compute the generation number for all persons in self, assuming that
         people in `gen_0_ids` are at generation 0 (parents are one generation
         above, children one below.
         This assumes you have called `add_folks()`to add the persons.
         """
-        generations = {}
+        generations: Dict[int, int] = {}
         queue = [(self.get_from_id(g).main_id, 0) for g in gen_0_ids]
         while queue:
             main_id, gen = queue.pop(0)
@@ -299,12 +378,15 @@ class PersonSet(SQLSet):
 
             lay = self.layout.get(main_id)
             if lay is not None:
-                queue.extend((p, gen + 1) for p in lay['parents'])
-                queue.extend((p, gen - 1) for p in lay['children'])
+                queue.extend((p, gen + 1) for p in lay.parents)
+                queue.extend((p, gen - 1) for p in lay.children)
 
         return generations
 
-    def fetch_p2e(self, event_types=BMD):
+    def fetch_p2e(
+            self,
+            event_types: Tuple[Event_Type, ...] = None,   # defaults to BMD
+            ) -> None:
         """
         Fetch all person-to-event relationships for the persons.
         As a side-effect, this sets the birth, death and marriage dates for the
@@ -312,14 +394,20 @@ class PersonSet(SQLSet):
 
         :param event_types: restricts the types of events that are retrieved
         """
-        related = ['event', 'role', *models.P2E.related_json_fields()]
+        event_types = (
+            event_types if event_types is not None else self.BMD
+        )
+
+        related = ['event', 'role', *P2E.related_json_fields()]
         if self.styles and self.styles.need_places:
             related.append('event__place')
 
-        events = models.P2E.objects \
-            .filter(disproved=False) \
+        events = (
+            P2E.objects
+            .filter(disproved=False)
             .annotate(person_main_id=F('person__main_id'),
                       event_type=F('event__type_id'))
+        )
         if event_types:
             events = events.filter(event__type__in=event_types)
 
@@ -327,41 +415,45 @@ class PersonSet(SQLSet):
             for p2e in self.prefetch_related(qs.all(), *related):
                 self.asserts.add(p2e)
 
-                if not p2e.disproved \
-                   and p2e.role_id == models.Event_Type_Role.PK_principal:
+                if (
+                        not p2e.disproved
+                        and p2e.role_id == Event_Type_Role.PK_principal
+                   ):
 
                     e = p2e.event
                     person = self.persons[p2e.person_main_id]
 
                     if not e.date_sort:
                         pass
-                    elif p2e.event_type == models.Event_Type.PK_birth:
+                    elif p2e.event_type == Event_Type.PK_birth:
                         if person.birthISODate is None or \
                                 e.date_sort < person.birthISODate:
                             person.birthISODate = e.date_sort
-                    elif p2e.event_type == models.Event_Type.PK_death:
+                    elif p2e.event_type == Event_Type.PK_death:
                         if person.deathISODate is None or \
                                 e.date_sort > person.deathISODate:
                             person.deathISODate = e.date_sort
-                    elif p2e.event_type == models.Event_Type.PK_marriage:
+                    elif p2e.event_type == Event_Type.PK_marriage:
                         person.marriageISODate = e.date_sort
 
-    def fetch_p2c(self):
+    def fetch_p2c(self) -> None:
         """
         Fetch all person-to-characteristic assertions for the given list of
         persons.
         Each assertion receives an extra `person_main_id` field.
         """
-        pm = models.P2C.objects \
-            .prefetch_related(*models.P2C.related_json_fields()) \
-            .filter(disproved=False) \
+        pm = (
+            P2C.objects
+            .prefetch_related(*P2C.related_json_fields())
+            .filter(disproved=False)
             .annotate(person_main_id=F('person__main_id'))
+        )
 
         for p2c_set in self.sqlin(pm, person__main_id__in=self.persons.keys()):
             self.asserts.extend(
                 self.prefetch_related(p2c_set.all(), 'characteristic__parts'))
 
-    def fetch_p2p(self):
+    def fetch_p2p(self) -> None:
         """
         Fetch all person-to-person relationships.
         This includes relationships for any of the related based personasi
@@ -370,14 +462,16 @@ class PersonSet(SQLSet):
         """
         # It is enough to test either person1 or person2, since they both have
         # the same main_id
-        pm = models.P2P.objects \
-            .filter(person1__in=models.Persona.objects
-                       .filter(main_id__in=self.persons.keys())) \
-            .select_related(*models.P2P.related_json_fields())
+        pm = (
+            P2P.objects
+            .filter(person1__in=Persona.objects
+                       .filter(main_id__in=self.persons.keys()))
+            .select_related(*P2P.related_json_fields())
+        )
         self.asserts.extend(pm)
 
     @staticmethod
-    def recompute_main_ids():
+    def recompute_main_ids() -> None:
         """
         Recompute all main_ids in the database (thread-safe).
         Must be called outside of a transaction, or it will be very slow
@@ -395,7 +489,7 @@ class PersonSet(SQLSet):
                     "FROM mains, p2p "
                     "WHERE mains.main_id IN (p2p.person1_id, p2p.person2_id) "
                     "AND NOT p2p.disproved "
-                    f"AND p2p.type_id={models.P2P_Type.sameAs}"
+                    f"AND p2p.type_id={P2P_Type.sameAs}"
                 "), main(id, main_id) AS ("
                     "SELECT id, MIN(main_id) "
                     "FROM mains GROUP BY id"
@@ -419,28 +513,33 @@ class PersonSet(SQLSet):
             finally:
                 cur.execute("pragma foreign_keys=%s" % previous)
 
-    def _query_asserts(self):
+    def _query_asserts(self) -> List[QuerySet]:
         return [
             table.objects.filter(person__main_id__in=self.persons.keys())
-            for table in (models.P2C, models.P2E, models.P2G)
-        ] + [models.P2P.objects \
+            for table in (P2C, P2E, P2G)
+        ] + [
+            P2P.objects
             .filter(Q(person1__main_id__in=self.persons.keys())
                     | Q(person2__main_id__in=self.persons.keys()))
         ]
 
-    def count_asserts(self):
+    def count_asserts(self) -> int:
         total = 0
         for a in self._query_asserts():
             total += a.count()
         return total
 
-    def fetch_asserts_subset(self, offset=None, limit=None):
+    def fetch_asserts_subset(
+            self,
+            offset: int = None,
+            limit: int = None,
+            ) -> AssertList:
         self.asserts.fetch_asserts_subset(
             self._query_asserts(), offset=offset, limit=limit)
         return self.asserts
 
-    def to_json(self):
-        result = {}
+    def to_json(self) -> Dict[str, Any]:
+        result: Dict[str, Any] = {}
         result['persons'] = list(self.persons.values())
 
         if self.styles:

@@ -8,7 +8,7 @@ from django.db.models import Count, F
 import logging
 from .. import models
 from ..utils.date import DateRange
-from ..sql import PersonSet, Relationship
+from ..sql.personas import PersonSet, Relationship
 from .to_json import JSONView
 
 logger = logging.getLogger('geneaprove.STATS')
@@ -29,8 +29,14 @@ class StatsView(JSONView):
         # when we store children differently (for instance in a group)
 
         persons = PersonSet()
-        persons.add_folks(person_id=int(id), relationship=Relationship.ANCESTORS)
-        persons.add_folks(person_id=int(id), relationship=Relationship.DESCENDANTS)
+        persons.add_folks(
+            person_id=int(id),
+            relationship=Relationship.ANCESTORS,
+        )
+        persons.add_folks(
+            person_id=int(id),
+            relationship=Relationship.DESCENDANTS,
+        )
         persons.fetch_p2e()   # compute births and deaths
 
         logger.debug('count persons in tree')
@@ -85,13 +91,25 @@ class StatsView(JSONView):
                     gen_range[2] = a[1]
 
             if index >= 16:
-                gen_range[3] = f"Gen. {index + 1:02d} ({len(generations[index])}) {gen_range[1]} - {gen_range[2]}"
+                gen_range[3] = (
+                    f"Gen. {index + 1:02d}"
+                    f" ({len(generations[index])})"
+                    f" {gen_range[1]} - {gen_range[2]}"
+                )
             elif index >= 0 and index <= 16:
-                gen_range[3] = f"Gen. {index + 1:02d} ({len(generations[index])} / {2 ** index}) {gen_range[1]} - {gen_range[2]}"
+                gen_range[3] = (
+                    f"Gen. {index + 1:02d}"
+                    f" ({len(generations[index])} / {2 ** index})"
+                    f" {gen_range[1]} - {gen_range[2]}"
+                )
             else:
                 # No need to count maximum number of persons, this becomes
                 # too large, and irrelevant since there is implex
-                gen_range[3] = f"Desc. {-index:02d} ({len(generations[index])}) {gen_range[1]} - {gen_range[2]}"
+                gen_range[3] = (
+                    f"Desc. {-index:02d}"
+                    f" ({len(generations[index])})"
+                    f" {gen_range[1]} - {gen_range[2]}"
+                )
 
             # Postprocess the ranges:
             #   generation n's earliest date has to be at least 15 years before

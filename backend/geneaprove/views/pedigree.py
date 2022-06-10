@@ -3,7 +3,7 @@ Various views related to displaying the pedgree of a person graphically
 """
 
 from django.db import transaction
-from ..sql import PersonSet, Relationship
+from ..sql.personas import PersonSet, Relationship
 from .styles import Styles
 from .to_json import JSONView
 import logging

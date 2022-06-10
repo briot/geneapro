@@ -49,11 +49,15 @@ def static(request):
 
 
 class NegativeOrPositive:
-    regex = '-?\d+'
+    regex = r'-?\d+'
+
     def to_python(self, value):
         return int(value)
+
     def to_url(self, value):
         return str(value)
+
+
 register_converter(NegativeOrPositive, 'negpos')
 
 
@@ -62,36 +66,51 @@ urlpatterns = [
     path('data/persona/count', persona.PersonCount.as_view()),
     path('data/persona/<int:id>', persona.PersonaView.as_view()),
     path('data/persona/<int:id>/asserts', persona.PersonAsserts.as_view()),
-    path('data/persona/<int:id>/asserts/count',
-        persona.PersonAssertsCount.as_view()),
-
+    path(
+        'data/persona/<int:id>/asserts/count',
+        persona.PersonAssertsCount.as_view()
+    ),
     path('data/places/list', places.PlaceList.as_view()),
     path('data/places/count', places.PlaceCount.as_view()),
     path('data/places/<int:id>', places.PlaceView.as_view()),
     path('data/places/<int:id>/asserts', places.PlaceAsserts.as_view()),
-    path('data/places/<int:id>/asserts/count',
-        places.PlaceAssertsCount.as_view()),
-
+    path(
+        'data/places/<int:id>/asserts/count',
+        places.PlaceAssertsCount.as_view()
+    ),
     path('data/sources/list', sources.SourcesList.as_view()),
     path('data/sources/count', sources.SourcesCount.as_view()),
     path('data/sources/<negpos:id>', sources.SourceView.as_view()),
     path('data/sources/<negpos:id>/asserts', sources.SourceAsserts.as_view()),
-    path('data/sources/<negpos:id>/asserts/count',
-        sources.SourceAssertsCount.as_view()),
-    path('data/sources/<negpos:id>/saveparts',
-        sources.EditSourceCitation.as_view()),
+    path(
+        'data/sources/<negpos:id>/asserts/count',
+        sources.SourceAssertsCount.as_view()
+    ),
+    path(
+        'data/sources/<negpos:id>/saveparts',
+        sources.EditSourceCitation.as_view()
+    ),
     path('data/sources/<int:id>addRepr', sources.AddSourceRepr.as_view()),
-    path('data/sources/<int:id>/allRepr',
-        sources.SourceRepresentations.as_view()),
-    path('data/sources/<int:id>/delRepr/<int:repr_id>',
-        sources.DelSourceRepr.as_view()),
-
-    path('data/theme/<negpos:theme_id>/rules',
-        themelist.ThemeRules.as_view()),
-    path('data/theme/<negpos:theme_id>/delete',
-        themelist.ThemeDelete.as_view()),
-    path('data/theme/<negpos:theme_id>/save', themelist.ThemeSave.as_view()),
-
+    path(
+        'data/sources/<int:id>/allRepr',
+        sources.SourceRepresentations.as_view()
+    ),
+    path(
+        'data/sources/<int:id>/delRepr/<int:repr_id>',
+        sources.DelSourceRepr.as_view()
+    ),
+    path(
+        'data/theme/<negpos:theme_id>/rules',
+        themelist.ThemeRules.as_view()
+    ),
+    path(
+        'data/theme/<negpos:theme_id>/delete',
+        themelist.ThemeDelete.as_view()
+    ),
+    path(
+        'data/theme/<negpos:theme_id>/save',
+        themelist.ThemeSave.as_view()
+    ),
     path('data/pedigree/<int:id>', pedigree.PedigreeData.as_view()),
     path('data/suretySchemes', persona.SuretySchemesList.as_view()),
     path('data/event/<int:id>', events.EventDetailsView.as_view()),
@@ -100,8 +119,10 @@ urlpatterns = [
     path('data/import', importers.GedcomImport.as_view()),
     path('data/citationModel/<int:model_id>', sources.CitationModel.as_view()),
     path('data/citationModels', sources.CitationModels.as_view()),
-    re_path(r'^data/repr/(?P<id>\d+)(?:/(?P<size>\d+))?$',
-        representation.view),
+    re_path(
+        r'^data/repr/(?P<id>\d+)(?:/(?P<size>\d+))?$',
+        representation.view
+    ),
     path('data/quilts/<int:id>', quilts.QuiltsView.as_view()),
 
     # Getting the CSRF token

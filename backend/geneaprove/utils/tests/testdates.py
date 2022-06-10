@@ -29,12 +29,20 @@ MAY_1_UNDEFINED = 260211
 class DateTestCase(unittest.TestCase):
     """tests for date.py"""
 
-    def _assert_delta(self, expected, fromDate, toDate):
+    def _assert_delta(
+            self,
+            expected: date.TimeDelta,
+            fromDate: date.DateRange,
+            toDate: date.DateRange,
+            ):
         delta = toDate - fromDate
-        self.assertTrue(expected.years == delta.years and
-                        expected.months == delta.months and
-                        expected.days == delta.days,
-                        f"Expected '{expected}', got '{delta}' for '{toDate} - {fromDate}'")
+        self.assertTrue(
+            expected.years == delta.years
+            and expected.months == delta.months
+            and expected.days == delta.days,
+            f"Expected '{expected}', got '{delta}'"
+            f" for '{toDate} - {fromDate}'"
+        )
 
     def _assert_date(self, inputdate, day, expected):
         """Ensure that a date was correctly parsed"""

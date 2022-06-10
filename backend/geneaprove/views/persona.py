@@ -4,9 +4,10 @@ Various views related to displaying the pedgree of a person graphically
 
 from django.db.models import F, Count
 from .. import models
-from ..sql import AssertList, PersonSet
+from ..sql.personas import PersonSet
 from .to_json import JSONView
 from .styles import Styles
+
 
 class PersonaView(JSONView):
     """Display all details known about persona ID"""

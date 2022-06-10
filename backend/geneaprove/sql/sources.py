@@ -1,6 +1,5 @@
 import collections
 import django.db
-from django.db.models import F, IntegerField, TextField, Value, Count
 import logging
 from .. import models
 from .sqlsets import SQLSet
@@ -39,7 +38,7 @@ class SourceSet(SQLSet):
         self._higher = None
         self._citations = None
         self.asserts.add_known(
-            sources=self.sources.values()) # Do not fetch them again
+            sources=self.sources.values())   # Do not fetch them again
 
     def fetch_higher_sources(self):
         """

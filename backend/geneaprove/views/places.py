@@ -5,8 +5,9 @@ Event-related views
 from django.db.models import Count
 from django.db.models.functions import Lower
 from .. import models
-from ..sql import AssertList, PlaceSet
+from ..sql.places import PlaceSet
 from .to_json import JSONView
+
 
 class PlaceList(JSONView):
     """View the list of a all known places"""

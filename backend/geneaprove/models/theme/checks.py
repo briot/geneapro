@@ -3,11 +3,16 @@ How to compare an expected and an actual value, when applying
 themes.
 """
 
-import abc # abstract base classes
+import abc    # abstract base classes
 from collections.abc import Iterable
+from typing import List, Union, Sequence
 import enum
 
 __slots__ = ["Checker", "Check_Success", "Check_Exact"]
+
+
+BaseValue = Union[str, bool, int, None]
+Value = Union[BaseValue, List[BaseValue]]
 
 
 class ValueType(enum.Enum):   # Javascript  OperatorTypes
@@ -18,71 +23,89 @@ class ValueType(enum.Enum):   # Javascript  OperatorTypes
     STR_LIST = 'list:str'
     PERSON = 'person'
 
-    def is_list(self):
+    def is_list(self) -> bool:
         """
         Whether we expect a list of values
         """
         return self.value.startswith('list:')
 
-    def base_type(self):
+    def base_type(self) -> "ValueType":
         """
         For a list, the type of elements in the list.
         Otherwise self itself
         """
         if self == ValueType.INT_LIST:
             return ValueType.INT
-        elif self == ValueType.STR_LIST:
+        if self == ValueType.STR_LIST:
             return ValueType.STR
-        else:
-            return self
+        return self
 
-    def convert(self, value):
+    def convert(
+            self,
+            value: Value,
+            ) -> Value:
         """
         Convert value to the appropriate type
         """
 
         # Parse lists if needed
         if self.is_list():
+
             # From a string read in the database ?
             if isinstance(value, str):
                 assert (value[0] == '[' and value[-1] == ']') or \
                        (value[0] == '(' and value[-1] == ')')
-                value = value[1:-1].split(',')
+                v: Sequence[BaseValue] = value[1:-1].split(',')
+            else:
+                assert isinstance(value, list)
+                v = value
 
-            assert isinstance(value, list)
             base = self.base_type()
-            return [base.convert(c) for c in value]
+            return [
+                base.convert(c)    # type: ignore
+                for c in v
+            ]
+
+        assert not isinstance(value, list)
 
         if self == ValueType.INT:
+            if value is None:
+                return 0
             return int(value)
-        elif self == ValueType.PERSON:
+
+        if self == ValueType.PERSON:
+            if value is None:
+                return -1
             return int(value)
-        elif self == ValueType.BOOL:
+
+        if self == ValueType.BOOL:
             if isinstance(value, str):
                 return value.lower() in ('true', 't')
             return bool(value)
-        elif self == ValueType.STR:
+
+        if self == ValueType.STR:
             assert isinstance(value, str)
             return value
-        else:
-            raise TypeError(f"Cannot convert {self}")
+
+        raise TypeError(f"Cannot convert {self}")
 
 
-class Check(object, metaclass=abc.ABCMeta):
+class Check(metaclass=abc.ABCMeta):
     """
     Compares two values according to some relation (contains, is, before,...)
     """
 
-    def __init__(self, reference):
+    def __init__(self, reference: Value):
         self.reference = reference
 
-    @abc.abstractmethod
-    def match(self, value):
-        raise Exception("Abstract class")
+    def match(self, value: Value) -> bool:
+        raise NotImplementedError
 
-    def __str__(self):
-        return (f"<{self.__class__.__name__} ref={self.reference}"
-                f" ({type(self.reference)}>")
+    def __str__(self) -> str:
+        return (
+            f"<{self.__class__.__name__} ref={self.reference}"
+            f" ({type(self.reference)}>"
+        )
 
 
 class ICheck(Check):
@@ -91,103 +114,156 @@ class ICheck(Check):
     """
 
     @staticmethod
-    def to_lower(v):
+    def to_lower(v: Value) -> Value:
         if isinstance(v, str):
             return v.lower()
         elif isinstance(v, Iterable):
-            return [ICheck.to_lower(a) for a in v]
+            return [
+                ICheck.to_lower(a)    # type: ignore
+                for a in v
+            ]
         else:
             return v
 
-    def __init__(self, reference):
+    def __init__(self, reference: Value):
         super().__init__(ICheck.to_lower(reference))
 
-    def match(self, value):
+    def match(self, value: Value) -> bool:
         return self.imatch(ICheck.to_lower(value))
 
     @abc.abstractmethod
-    def imatch(self, value):
+    def imatch(self, value: Value) -> bool:
         """Value is already lower-cased"""
         raise Exception("Abstract method")
 
 
 class Check_Success(Check):
     """Always matches"""
-    def __init__(self, *args, **kwargs):
-        super().__init__(None)
 
-    def match(self, value):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(True)
+
+    def match(self, value: Value) -> bool:
         return True
+
 
 class Check_Exact(Check):
     """Equal to"""
-    def match(self, value):
+
+    def match(self, value: Value) -> bool:
         return value == self.reference
+
 
 class Check_IExact(ICheck):
     """Equal to (case insensitive)"""
-    def imatch(self, value):
+
+    def imatch(self, value: Value) -> bool:
         return value == self.reference
+
 
 class Check_Different(Check):
     """Different from"""
-    def match(self, value):
+
+    def match(self, value: Value) -> bool:
         return value != self.reference
+
 
 class Check_IDifferent(ICheck):
     """Different from (case insensitive)"""
-    def imatch(self, value):
+
+    def imatch(self, value: Value) -> bool:
         return value != self.reference
+
 
 class Check_In(Check):
     """Value in list"""
-    def match(self, value):
+
+    reference: List[BaseValue]
+
+    def __init__(self, reference: Value):
+        assert isinstance(reference, list)
+        super().__init__(reference)
+
+    def match(self, value: Value) -> bool:
         return value in self.reference
+
 
 class Check_IIn(ICheck):
     """Value in list (case insensitive)"""
-    def imatch(self, value):
+
+    reference: List[BaseValue]
+
+    def __init__(self, reference: Value):
+        assert isinstance(reference, list)
+        super().__init__(reference)
+
+    def imatch(self, value: Value) -> bool:
         return value in self.reference
+
 
 class Check_Contains(Check):
     """Contains"""
-    def match(self, value):
-        return value and self.reference in value
+
+    def match(self, value: Value) -> bool:
+        if isinstance(value, list):
+            return self.reference in value
+        return False
+
 
 class Check_IContains(ICheck):
     """Contains (case insensitive)"""
-    def imatch(self, value):
-        return value and self.reference in value
+
+    def imatch(self, value: Value) -> bool:
+        if isinstance(value, list):
+            return self.reference in value
+        return False
+
 
 class Check_Contains_Not(Check):
     """Does not contain"""
-    def match(self, value):
-        return value and self.reference not in value
+
+    def match(self, value: Value) -> bool:
+        if isinstance(value, list):
+            return self.reference not in value
+        return False
+
 
 class Check_IContains_Not(ICheck):
     """Does not contain (case insensitive)"""
-    def imatch(self, value):
-        return value and self.reference not in value
+
+    def imatch(self, value: Value) -> bool:
+        if isinstance(value, list):
+            return self.reference not in value
+        return False
+
 
 class Check_Less(Check):
     """Less than"""
-    def match(self, value):
-        return value and value < self.reference
+
+    def match(self, value: Value) -> bool:
+        return value is not None and value < self.reference    # type: ignore
+
 
 class Check_Less_Or_Equal(Check):
     """Less or equal to"""
-    def match(self, value):
-        return value and value <= self.reference
+
+    def match(self, value: Value):
+        return value is not None and value <= self.reference    # type: ignore
+
 
 class Check_Greater(Check):
     """Greater than"""
-    def match(self, value):
-        return value and value > self.reference
+
+    def match(self, value: Value):
+        return value is not None and value > self.reference    # type: ignore
+
 
 class Check_Greater_Or_Equal(Check):
     """Greater or equal to"""
-    def match(self, value):
-        return value and value >= self.reference
+
+    def match(self, value: Value):
+        return value is not None and value >= self.reference   # type: ignore
+
 
 class Checker:
 
@@ -230,31 +306,14 @@ class Checker:
 
     # List of valid checkers, to send to front-end
     CHECKS_LIST = [  # Javascript OperatorList
-       {'op': name, 'label': value[0].__doc__,
-        'basetype': value[1].base_type().value,
-        'is_list': value[1].is_list()}
-       for name, value in __MAPPING.items()]
+        {
+           'op': name,
+           'label': value[0].__doc__,
+           'basetype': value[1].base_type().value,
+           'is_list': value[1].is_list()
+        }
+        for name, value in __MAPPING.items()
+    ]
 
     # List of valid checkers, for use in django models
     DJANGO_CHOICES = [(n, n) for n in __MAPPING]
-
-    @staticmethod
-    def build_check(part):
-        """
-        :param rules.RulePart part: as read in the database
-        :returntype: Check
-        """
-        descr = Checker.__MAPPING[part.operator]
-        return descr[0](descr[1].convert(part.value))
-
-    @staticmethod
-    def part_to_json(part):
-        """
-        Convert a RulePart instance to a JSON object
-        """
-        descr = Checker.__MAPPING[part.operator]
-        return {  # Javascript's  RulePart
-            "field": part.field,
-            "operator": part.operator,
-            "value": descr[1].convert(part.value),
-        }

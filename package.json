@@ -18,30 +18,39 @@
     "semantic-ui-react": "~2.1.3"
   },
   "scripts": {
-    "start": "concurrently --kill-others-on-fail -c='white,green,blue,red,cyan,cyan' -n 'pyth,vite,tsc ,lint,test,btes' '$npm_execpath run watch-back' '$npm_execpath run watch-vite' '$npm_execpath run watch-tsc' '$npm_execpath run watch-lint' '$npm_execpath run watch-test' '$npm_execpath run watch-test-backend'",
+    "start": "concurrently --kill-others-on-fail -c='white,green,blue,red,cyan,cyan,brown' -n 'pyth,vite,tsc ,lint,test,btes,mypy' '$npm_execpath run watch-back' '$npm_execpath run watch-vite' '$npm_execpath run watch-tsc' '$npm_execpath run watch-lint' '$npm_execpath run watch-test' '$npm_execpath run watch-test-backend' '$npm_execpath run watch-mypy'",
     "build": "tsc && vite build",
     "manage": "./python_env/bin/python3 ./backend/manage.py",
-    "tests:backend": "$npm_execpath run manage test --parallel --verbosity=0 geneaprove",
     "watch-back": "$npm_execpath run manage migrate; $npm_execpath run manage runserver 8002",
     "watch-vite": "VITE_API_URL=127.0.0.1:8002 vite --clearScreen false",
     "watch-tsc": "tsc -w --preserveWatchOutput",
     "watch-lint": "esw -w --changed --ext .ts,.tsx frontend/src",
     "watch-pylint": "pylint --rcfile=backend/pylint.rc --reports=n backend/geneaprove/**/*py",
+
     "watch-test-coverage": "jest --coverage --watch",
     "watch-test": "jest --watch",
     "test-all": "jest --all",
-    "watch-test-backend": "npm-watch tests:backend",
     "pretty": "prettier --tab-width=3 --write 'src/**/*tsx'",
-    "TO_BE_REMOVED_test": "(cd backend; ../python_env/bin/python ./manage.py test) && (CI=true react-scripts test --env=jsdom)",
-    "TO_BE_REMOVED_jstest": "react-scripts test --env=jsdom --watch"
+    "make_migration": "$npm_execpath run manage makemigrations geneaprove",
+
+    "watch-test-backend": "npm-watch tests:backend",
+    "tests:backend": "$npm_execpath run manage test --parallel --verbosity=0 geneaprove",
+
+    "watch-mypy": "npm-watch mypy",
+    "mypy": ". ./python_env/bin/activate; mypy; true"
   },
   "watch": {
     "tests:backend": {
-      "patterns": [
-        "backend"
-      ],
-      "extensions": "py",
-      "runOnChangeOnly": false
+       "patterns": ["backend"],
+       "extensions": "py",
+       "silent": true,
+       "runOnChangeOnly": false
+    },
+    "mypy": {
+       "patterns": ["backend"],
+       "extensions": "py",
+       "silent": true,
+       "runOnChangeOnly": false
     }
   },
   "devDependencies": {

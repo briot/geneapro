@@ -1,6 +1,7 @@
 from .. import models
-from ..models.theme import Checker
+from ..models.theme.checks import Checker
 from .to_json import JSONView
+
 
 class MetadataList(JSONView):
     """
@@ -10,8 +11,8 @@ class MetadataList(JSONView):
 
     def get_json(self, params):
         return {
-            'characteristic_types': models.Characteristic_Part_Type
-               .objects.all(),
+            'characteristic_types':
+                models.Characteristic_Part_Type.objects.all(),
             'char_part_SEX': models.Characteristic_Part_Type.PK_sex,
             'event_types': models.Event_Type.objects.all(),
             'event_type_roles': models.Event_Type_Role.objects.all(),
