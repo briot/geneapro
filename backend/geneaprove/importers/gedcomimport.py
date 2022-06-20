@@ -228,13 +228,21 @@ class GedcomImporter:
             else:
                 self.ignored(f, prefix='')
 
+        for f, name in self._data.report_not_imported():
+            self.report_error(
+                f,
+                f"Ignored {name}",
+            )
+
     def _process_HEAD(self, head: GedcomRecord) -> Source:
         created_by = 'unknown'
         date = None
 
-        name = self.filename if isinstance(self.filename, str) \
-            else self.filename.name if hasattr(self.filename, 'name') \
+        name = (
+            self.filename if isinstance(self.filename, str)
+            else self.filename.name if hasattr(self.filename, 'name')
             else 'uploaded'
+        )
 
         for f in head.fields:
             if f.tag == "SUBM":
@@ -243,30 +251,38 @@ class GedcomImporter:
                 self._researcher = self._ids_subm[xref]
             elif f.tag == "FILE":
                 self._create_project(f, researcher=self._researcher)
+            elif f.tag == "CHAR":
+                if f.value != "UTF-8":
+                    self.report_error(
+                        f,
+                        f"Unsupported character encoding {f.value}",
+                    )
+
             elif f.tag == "SOUR":
+                created_by = f.value
+
                 for a in f.fields:
                     if a.tag in ("VERS", "CORP"):
-                        pass   # Ignored
+                        _ = a.value            # Ignored, nothing to import
                     elif a.tag == "NAME":
-                        created_by = a.value
+                        created_by = a.value   # override f.value
                     elif a.tag == "DATA":
                         for b in a.fields:
                             if b.tag == "DATE":  # publication date
                                 date = self._process_DATE(b)
                             elif b.tag == "COPR":
+                                _ = b.value
                                 pass
-                            else:
-                                self.ignored(b, prefix='HEAD.SOUR.DATA')
-                    else:
-                        self.ignored(a, prefix='HEAD.SOUR')
-            elif f.tag in ("DEST", "COPR", "GEDC", "LANG", "CHAR"):
-                # Ignored. CHAR was already handled by the gedcom parser itself
-                pass
+            elif f.tag == "GEDC":
+                for a in f.fields:
+                    if a.tag in ("FORM", "VERS"):
+                        _ = a.value    # Ignored, nothing to import
+            elif f.tag in ("DEST", "COPR", "LANG"):
+                _ = f.value   # ignored, nothing to import
+
             elif f.tag == "DATE":     # transmission date
                 if date is None:
                     date = self._process_DATE(f)
-            else:
-                self.ignored(f, prefix='HEAD')
 
         date_str = date.strftime('%Y-%m-%d %H:%M:%S %Z') if date else None
         imported_date_time = datetime.datetime.now(
@@ -304,13 +320,22 @@ class GedcomImporter:
         chan = None
         for f in indi.fields:
             if f.tag == "NAME":
-                # Gedcom says the first name should be used
-                if not name:
-                    name = f.value
+                # The children (SURN,...) will be imported as characteristics
+                # later on. The text itself, though, is only a summary added by
+                # the exporter. The Gedcom standard says that only the first
+                # such name should be used to describe the person, so that's
+                # what we import as the display_name.
+                # We still read f.value always to mark it as imported, though
+                display_name = f.value
+                name = name or display_name
+
             elif f.tag == "CHAN":
                 chan = self._process_CHAN(f)
             elif f.tag == "FAMS":
-                self.ignore_fields(f, prefix="INDI")  # Handled in "FAM" itself
+                # When we parse the family itself, we will get the list of
+                # members, which is the reverse of the FAMS relationship. We
+                # do not need an actual import of FAMS
+                _ = f.value
             elif f.tag == "FAMC":
                 xref = f.as_xref()
                 assert xref is not None
@@ -328,8 +353,6 @@ class GedcomImporter:
                         n.STAT = a.value
                     elif a.tag == "NOTE":
                         n.NOTE.append(self._get_note(a))
-                    else:
-                        self.ignored(a, prefix="INDI.FAMC")
 
             elif f.tag == "ADOP":
                 # Special case for adoptions: we need to associate with the
@@ -377,11 +400,16 @@ class GedcomImporter:
             last_change=chan or django.utils.timezone.now())
 
     def _create_bare_SUBM(self, subm: GedcomRecord) -> Researcher:
-        name = subm.get("NAME")
-        return Researcher.objects.create(
-            name=name.value if name is not None else '',
-            place=None,
-        )
+        r: Optional[Researcher] = None
+
+        for a in subm.fields:
+            if a.tag == "NAME":
+                r = Researcher.objects.create(name=a.value, place=None)
+
+        if r is None:
+            r = Researcher.objects.create(name='', place=None)
+
+        return r
 
     def _process_SUBM(self, subm: GedcomRecord, result: Researcher) -> None:
         """
@@ -532,15 +560,13 @@ class GedcomImporter:
         """
         if date:
             d = date.value
+
             tmp = datetime.datetime.strptime(d, "%d %b %Y")
 
             for f in date.fields:
                 if f.tag == "TIME":
-                    self.ignore_fields(f, prefix="DATE")
                     tmp = datetime.datetime.strptime(
                         d + " " + f.value, "%d %b %Y %H:%M:%S")
-                else:
-                    self.ignored(f, prefix='DATE')
 
             return django.utils.timezone.make_aware(
                 tmp, django.utils.timezone.get_default_timezone())
@@ -1125,144 +1151,143 @@ class GedcomImporter:
         )
 
         if lookup_name in self._sources:
-            # Assume the previous time we saw it it already had the same
-            # citation parts (which should be the case when gedcom was
-            # created by software).
-            return (NO_SOURCE, self._sources[lookup_name])
-        else:
+            s = self._sources[lookup_name]
+        elif sour.id is not None:
             # We might have a bare source, created in the initial pass.
             # In this case, we'll complete its attributes, otherwise create
             # a new one
-            if sour.id is not None:
-                s = self._ids_sour[sour.id]
-            else:
-                s = Source(
-                    higher_source=parent,
-                    researcher=self._researcher,
+            s = self._ids_sour[sour.id]
+        else:
+            s = Source(
+                higher_source=parent,
+                researcher=self._researcher,
+                last_change=last_change)
+
+        # We might have a bare source, created in the initial pass.
+        # In this case, we'll complete its attributes, otherwise create
+        # a new one
+        if sour.id is not None:
+            s = self._ids_sour[sour.id]
+        else:
+            s = Source(
+                higher_source=parent,
+                researcher=self._researcher,
+                last_change=last_change)
+
+        s.title = title
+        s.abbrev = abbr or title
+        s.biblio = bibl or title
+        s.comments = '\n\n'.join(notes)
+        s.subject_date = subject_date
+        s.save()
+
+        # Associate with the repositories
+
+        for r in repos:
+            caln = []
+            notes = []
+
+            for a in r.fields:
+                if a.tag == "CALN":
+                    medi = ""
+                    for b in a.fields:
+                        if b.tag == "MEDI":
+                            medi = b.value
+
+                    if medi:
+                        caln.append(f"{a.value} ({medi})")
+                    else:
+                        caln.append(a.value)
+
+                elif a.tag == "NOTE":
+                    notes.append(self._get_note(a))
+
+            rr = r.as_xref()
+            assert rr is not None
+
+            Repository_Source.objects.create(
+                repository=self._ids_repo[rr],
+                source=s,
+                activity=None,
+                call_number="\n".join(caln),
+                description="\n\n".join(notes))
+
+        # Create the citation parts
+
+        for tag, value in attr:
+            cp = self._citation_part_types.get(tag, None)
+            if cp is None:
+                cp = self._citation_part_types[tag] = \
+                    Citation_Part_Type.objects.create(gedcom=tag, name=tag)
+            self._all_citation_parts.append(
+                Citation_Part(
+                    source=s,
+                    type=cp,
+                    value=value))
+
+        # Create the source representations (multimedia and text)
+
+        for ob in obje:
+            self._process_OBJE(ob, source=s)
+
+        for txt in text:
+            Representation.objects.create(
+                source=s,
+                file=None,
+                mime_type="text/plain",
+                comments=txt)
+
+        # Create anonymous events
+
+        for a in events:
+            date = None
+            plac = self._extract_ADDR_PLAC_OBJE(
+                a,
+                sources=[(sour.id or NO_SOURCE, s)]
+            )
+
+            for b in a.fields:
+                if b.tag == "DATE":
+                    self.ignore_fields(b, prefix=f"{prefix}.DATA.EVEN")
+                    date = b.value
+                elif b.tag in PLAC_OBJE_FIELDS:
+                    pass  # already handled
+                else:
+                    self.ignored(b, prefix=f"{prefix}.DATA.EVEN")
+
+            types = a.value or "EVEN"
+            for tname in types.split(','):
+                tname = tname.strip()
+                et = self._event_types.get(tname, None)
+                if et is None:
+                    et = self._event_types[tname] = \
+                        Event_Type.objects.create(
+                            gedcom=tname, name=tname)
+                ev = Event.objects.create(
+                    type=et,
+                    place=plac,
+                    name=et.name,
+                    date=date)
+                anonymous = Persona.objects.create(
+                    description="Created automatically by importer",
+                    display_name='Anonymous from gedcom source',
                     last_change=last_change)
-
-            s.title = title
-            s.abbrev = abbr or title
-            s.biblio = bibl or title
-            s.comments = '\n\n'.join(notes)
-            s.subject_date = subject_date
-            s.save()
-
-            # Associate with the repositories
-
-            for r in repos:
-                caln = []
-                notes = []
-
-                for a in r.fields:
-                    if a.tag == "CALN":
-                        medi = ""
-                        for b in a.fields:
-                            if b.tag == "MEDI":
-                                self.ignore_fields(
-                                    b, prefix=f"{prefix}.REPO.CALN")
-                                medi = b.value
-                            else:
-                                self.ignored(
-                                    b, prefix=f"{prefix}.REPO.CALN")
-
-                        if medi:
-                            caln.append(f"{a.value} ({medi})")
-                        else:
-                            caln.append(a.value)
-
-                    elif a.tag == "NOTE":
-                        self.ignore_fields(a, prefix=f"{prefix}.REPO")
-                        notes.append(self._get_note(a))
-                    else:
-                        self.ignored(a, prefix=f"{prefix}.REPO")
-
-                rr = r.as_xref()
-                assert rr is not None
-
-                Repository_Source.objects.create(
-                    repository=self._ids_repo[rr],
-                    source=s,
-                    activity=None,
-                    call_number="\n".join(caln),
-                    description="\n\n".join(notes))
-
-            # Create the citation parts
-
-            for tag, value in attr:
-                cp = self._citation_part_types.get(tag, None)
-                if cp is None:
-                    cp = self._citation_part_types[tag] = \
-                        Citation_Part_Type.objects.create(gedcom=tag, name=tag)
-                self._all_citation_parts.append(
-                    Citation_Part(
+                self._all_p2e.append(
+                    P2E(
+                        surety=self._default_surety,
+                        researcher=self._researcher,
+                        disproved=False,
+                        person=anonymous,
+                        event=ev,
                         source=s,
-                        type=cp,
-                        value=value))
+                        role=self._principal,
+                        last_change=last_change,
+                        rationale="Event described in Gedcom"))
 
-            # Create the source representations (multimedia and text)
+        # Return the source
 
-            for ob in obje:
-                self._process_OBJE(ob, source=s)
-
-            for txt in text:
-                Representation.objects.create(
-                    source=s,
-                    file=None,
-                    mime_type="text/plain",
-                    comments=txt)
-
-            # Create anonymous events
-
-            for a in events:
-                date = None
-                plac = self._extract_ADDR_PLAC_OBJE(
-                    a,
-                    sources=[(sour.id or NO_SOURCE, s)]
-                )
-
-                for b in a.fields:
-                    if b.tag == "DATE":
-                        self.ignore_fields(b, prefix=f"{prefix}.DATA.EVEN")
-                        date = b.value
-                    elif b.tag in PLAC_OBJE_FIELDS:
-                        pass  # already handled
-                    else:
-                        self.ignored(b, prefix=f"{prefix}.DATA.EVEN")
-
-                types = a.value or "EVEN"
-                for tname in types.split(','):
-                    tname = tname.strip()
-                    et = self._event_types.get(tname, None)
-                    if et is None:
-                        et = self._event_types[tname] = \
-                            Event_Type.objects.create(
-                                gedcom=tname, name=tname)
-                    ev = Event.objects.create(
-                        type=et,
-                        place=plac,
-                        name=et.name,
-                        date=date)
-                    anonymous = Persona.objects.create(
-                        description="Created automatically by importer",
-                        display_name='Anonymous from gedcom source',
-                        last_change=last_change)
-                    self._all_p2e.append(
-                        P2E(
-                            surety=self._default_surety,
-                            researcher=self._researcher,
-                            disproved=False,
-                            person=anonymous,
-                            event=ev,
-                            source=s,
-                            role=self._principal,
-                            last_change=last_change,
-                            rationale="Event described in Gedcom"))
-
-            # Return the source
-
-            self._sources[lookup_name] = s
-            return (sour.id or NO_SOURCE, s)
+        self._sources[lookup_name] = s
+        return (sour.id or NO_SOURCE, s)
 
     def _extract_SOUR(
             self,
@@ -1771,24 +1796,34 @@ class GedcomImporter:
             elif f.tag in self._char_types:
                 self._create_characteristic(
                     f, indi, CHAN=indi.last_change, prefix="INDI")
-            elif f.tag[0] == "_" and f.value and not f.fields:
-                # A GEDCOM extension by an application.  If this is a simple
-                # string value, assume this is a characteristic.  Create the
-                # corresponding type in the database, and import the field
-                self._char_types[f.tag] = \
-                    Characteristic_Part_Type.objects.create(
-                        is_name_part=False, name=f.tag, gedcom=f.tag)
-                self._create_characteristic(
-                    f, indi, CHAN=indi.last_change, prefix="INDI")
+
+            elif f.tag[0] == "_":
+                if f.fields:
+
+                    # A GEDCOM extension as a complex value. Assume it is an
+                    # event
+                    self._event_types[f.tag] = (
+                        Event_Type.objects.create(gedcom=f.tag, name=f.tag)
+                    )
+                    self._create_event(
+                        f, [(indi, self._principal)], CHAN=indi.last_change,
+                        surety=self._default_surety, prefix="INDI")
+
+                else:
+
+                    # A GEDCOM extension by an application.  If this is a
+                    # simple string value, assume this is a characteristic.
+                    # Create the corresponding type in the database, and import
+                    # the field
+
+                    self._char_types[f.tag] = (
+                        Characteristic_Part_Type.objects.create(
+                            is_name_part=False, name=f.tag, gedcom=f.tag)
+                    )
+                    self._create_characteristic(
+                        f, indi, CHAN=indi.last_change, prefix="INDI")
 
             elif f.tag in self._event_types:
-                self._create_event(
-                    f, [(indi, self._principal)], CHAN=indi.last_change,
-                    surety=self._default_surety, prefix="INDI")
-            elif f.tag[0] == "_" and f.fields:
-                # A GEDCOM extension as a complex value. Assume it is an event
-                self._event_types[f.tag] = \
-                    Event_Type.objects.create(gedcom=f.tag, name=f.tag)
                 self._create_event(
                     f, [(indi, self._principal)], CHAN=indi.last_change,
                     surety=self._default_surety, prefix="INDI")
