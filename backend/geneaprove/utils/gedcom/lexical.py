@@ -1,4 +1,4 @@
-from typing import Optional, Callable
+from typing import Optional, Callable, NoReturn
 from .exceptions import Invalid_Gedcom
 from .file import File
 
@@ -30,7 +30,7 @@ class Lexical:
     def __init__(
             self,
             stream: File,
-            print_warning: Callable[[str], None],
+            print_warning: Callable[[str, int, str], None],
             ):
         """
         Lexical parser for a GEDCOM file. This returns lines one by one,
@@ -61,10 +61,9 @@ class Lexical:
                 or self.prefetch.level != 0
                 or self.prefetch.tag != 'HEAD'
            ):
-            self.error(
+            self.fatal_error(
                 "Invalid gedcom file, first line must be '0 HEAD'"
                 f" got {line!r}",
-                fatal=True,
             )
 
         self._readline()
@@ -77,12 +76,35 @@ class Lexical:
     def decode_any(self, value: bytes) -> str:
         return value.decode(self.encoding, "replace")
 
-    def error(self, msg: str, fatal=False, line: int = None) -> None:
+    def fatal_error(self, msg: str, line: int = None) -> NoReturn:
         m = f"{self.file.name}:{line or self.line} {msg}"
-        if fatal:
-            raise Invalid_Gedcom(m)
+        raise Invalid_Gedcom(m)
+
+    def warning(self, msg: str, line: int = None) -> None:
+        self.print_warning(self.file.name, line or self.line, msg)
+
+    def set_encoding(self, encoding: str) -> None:
+        """
+        Set the encoding of the source
+        """
+        if encoding == "ANSEL":
+            self.encoding = "iso-8859-1"
+            self.decode = self.decode_any
+        elif encoding == "ANSI":
+            # ??? Heredis specific
+            self.encoding = "heredis-ansi"
+            self.decode = self.decode_heredis_ansi
+        elif encoding == "UNICODE":
+            self.encoding = "utf-16"
+            self.decode = self.decode_any
+        elif encoding == "UTF-8":
+            self.encoding = "utf-8"
+            self.decode = self.decode_any
+        elif encoding == "ASCII":
+            self.encoding = "ascii"
+            self.decode = self.decode_any
         else:
-            self.print_warning(m)
+            self.fatal_error(f'Unknown encoding {encoding}')
 
     def _parse_line(self, raw_line: Optional[bytes]) -> Optional[Lexical_Line]:
         """
@@ -99,7 +121,7 @@ class Lexical:
         line = self.decode(raw_line).split('\n')[0]
         g = line.split(None, 2)   # Extract first three fields
         if len(g) < 2:
-            self.error(f"Invalid line '{line}'", fatal=True)
+            self.fatal_error(f"Invalid line '{line}'")
 
         if g[1][0] == '@':
             # "1 @I0001@ INDI"
@@ -122,25 +144,11 @@ class Lexical:
                 value=g[2] if len(g) == 3 else '',
             )
 
+        # ??? Should be handled in the importer itself. Here, we are not
+        # checking that this is inside SUBM
+
         if r.level == 1 and r.tag == "CHAR":
-            if r.value == "ANSEL":
-                self.encoding = "iso-8859-1"
-                self.decode = self.decode_any
-            elif r.value == "ANSI":
-                # ??? Heredis specific
-                self.encoding = "heredis-ansi"
-                self.decode = self.decode_heredis_ansi
-            elif r.value == "UNICODE":
-                self.encoding = "utf-16"
-                self.decode = self.decode_any
-            elif r.value == "UTF-8":
-                self.encoding = "utf-8"
-                self.decode = self.decode_any
-            elif r.value == "ASCII":
-                self.encoding = "ascii"
-                self.decode = self.decode_any
-            else:
-                self.error(f'Unknown encoding {r.value}')
+            self.set_encoding(r.value)
 
         return r
 

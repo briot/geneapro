@@ -83,20 +83,20 @@ class F:
 
         if self.text is None:
             if p.value:
-                lexical.error(
+                lexical.warning(
                     f"Unexpected text value after {p.tag}",
                     line=p.linenum,
-                    fatal=False)
+                )
             val = ''
 
         elif self.text == "Y":
             # Gedcom standard says value must be "Y", but PAF also uses "N".
             # The tag should simply not be there in this case
             if p.value and p.value not in ("Y", "N"):
-                lexical.error(
+                lexical.warning(
                     f"Unexpected text value after {p.tag}, expected 'Y'",
                     line=p.linenum,
-                    fatal=False)
+                )
 
         elif self.text == "":
             pass   # allow any text
@@ -129,14 +129,14 @@ class F:
                 if peeked.tag[0] == '_':
                     # A custom tag is allowed, and should accept anything
                     # ??? Wrong, the warning should be displayed elsewhere
-                    lexical.error(
+                    lexical.warning(
                         f"Custom tag ignored: {peeked.tag}",
                         line=peeked.linenum)
                 else:
-                    lexical.error(
+                    lexical.fatal_error(
                         f"Unexpected tag: {self.tag or 'root'} > {peeked.tag}",
                         line=peeked.linenum,
-                        fatal=True)
+                    )
 
                 # skip this record
                 while True:
@@ -148,13 +148,15 @@ class F:
 
             else:
                 if cdescr.max != unlimited and cdescr.max < count:
-                    lexical.error(
+                    lexical.warning(
                         f'Too many {peeked.tag} in {p.tag} (skipped)',
                         line=peeked.linenum,
-                        fatal=False)
-                c = cdescr.parse(lexical)  # read until end of child record
-                if c is not None:
-                    r.fields.append(c)
+                    )
+                    c = cdescr.parse(lexical)  # read until end of child record
+                else:
+                    c = cdescr.parse(lexical)  # read until end of child record
+                    if c is not None:
+                        r.fields.append(c)
 
         # We have parsed all children, make sure we are not missing any
 
@@ -165,18 +167,15 @@ class F:
                     ptag = p.tag if p.tag else "file"
                     count = cdescr.min - tags.get(ctag, 0)
                     if ptag[0] != "_":
-                        lexical.error(
+                        lexical.fatal_error(
                             f'Missing {count} occurrence of {ctag} in {ptag}',
                             line=p.linenum,
-                            fatal=True,
                         )
                     else:
-                        lexical.error(
+                        lexical.fatal_error(
                             f'Skipping {ptag}, missing {count}'
                             f' occurrence of {ctag}',
                             line=p.linenum,
-                            fatal=False,
                         )
-                    return None
 
         return r

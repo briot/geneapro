@@ -5,8 +5,8 @@ unittest-based framework for testing imports
 import unittest
 import os
 import os.path
-from ...utils import gedcom
 from .. import gedcomimport
+from ...utils.gedcom.exceptions import Invalid_Gedcom
 
 
 class GedcomImportTestCase(unittest.TestCase):
@@ -21,7 +21,7 @@ class GedcomImportTestCase(unittest.TestCase):
         try:
             success, msg = gedcomimport.GedcomFileImporter().parse(filename)
             error = f'{"OK" if success else "FAILED"}\n{msg}\n'
-        except gedcom.Invalid_Gedcom as e:
+        except Invalid_Gedcom as e:
             error = e.msg + "\n" + msg
 
         expected_name = os.path.splitext(filename)[0] + ".out"

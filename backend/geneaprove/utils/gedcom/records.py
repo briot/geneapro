@@ -29,15 +29,6 @@ class GedcomRecord:
     def __repr__(self):
         return f"GedcomRecord({self.tag}:{self.id})"
 
-#    def get(self, field: str) -> Optional["GedcomRecord"]:
-#        """
-#        Retrieve a specific field by name
-#        """
-#        for f in self.fields:
-#            if f.tag == field:
-#                return f
-#        return None
-
     @property
     def value(self) -> str:
         """

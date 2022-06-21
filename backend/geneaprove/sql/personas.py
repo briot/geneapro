@@ -28,6 +28,12 @@ class Parent_And_Children:
         self.parents: List[int] = []
         self.children: List[int] = []
 
+    def to_json(self) -> Dict[str, Any]:
+        return {
+            "parents": self.parents,
+            "children": self.children,
+        }
+
 
 class FolkLore(NamedTuple):
     main_id: int

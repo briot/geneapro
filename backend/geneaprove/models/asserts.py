@@ -292,6 +292,45 @@ class P2G(Assertion):
         return res
 
 
+class G2C(Assertion):
+    """Group-to-Characteristic assertions"""
+    group_id: int
+    group = models.ForeignKey(
+        Group, related_name="characteristics", on_delete=models.CASCADE)
+
+    characteristic_id: int
+    characteristic = models.ForeignKey(
+        Characteristic, related_name="groups", on_delete=models.CASCADE)
+
+    class Meta:
+        """Meta data for the model"""
+        db_table = "g2c"
+
+    def to_json(self) -> Dict[str, Any]:
+        res = super().to_json()
+
+        fetch_image = False
+
+        # ??? Could be slow, and result in a lot of queries
+        parts = []
+        for p in self.characteristic.parts.all():
+            parts.append({'type': p.type_id, 'value': p.name})
+            if p.type_id == Characteristic_Part_Type.PK_img:
+                fetch_image = True
+
+        res['p1'] = {'group': self.group_id}
+        res['p2'] = {
+            'char': self.characteristic,
+            'repr': (
+                list(self.source.representations.all())
+                if fetch_image and self.source
+                else None
+            ),
+            'parts': parts,
+        }
+        return res
+
+
 # class E2C(Assertion):
 #    """Event-to-Characteristic assertions.
 #       Such assertions are not part of the GENTECH super-statement, but

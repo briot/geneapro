@@ -22,8 +22,8 @@ class GedcomTestCase(unittest.TestCase):
 
         error = []
 
-        def pw(msg):
-            error.append(msg)
+        def pw(filename: str, line: int, msg: str) -> None:
+            error.append(f"{filename}:{line} {msg}")
 
         try:
             # Universal newline
