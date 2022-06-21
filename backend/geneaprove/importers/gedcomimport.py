@@ -314,20 +314,9 @@ class GedcomImporter:
         """
         assert indi.id is not None
 
-        name = ''
         chan = None
         for f in indi.fields:
-            if f.tag == "NAME":
-                # The children (SURN,...) will be imported as characteristics
-                # later on. The text itself, though, is only a summary added by
-                # the exporter. The Gedcom standard says that only the first
-                # such name should be used to describe the person, so that's
-                # what we import as the display_name.
-                # We still read f.value always to mark it as imported, though
-                display_name = f.value
-                name = name or display_name
-
-            elif f.tag == "CHAN":
+            if f.tag == "CHAN":
                 chan = self._process_CHAN(f)
             elif f.tag == "FAMS":
                 # When we parse the family itself, we will get the list of
@@ -370,13 +359,10 @@ class GedcomImporter:
                 else:
                     self.report_error(f, "ADOP without a FAM")
 
-            else:
-                # do not report on ignored or unexpected fields here
-                pass
-
         p = Persona.objects.create(
-            display_name=name, description=None,
-            last_change=chan or django.utils.timezone.now())
+            description=None,
+            last_change=chan or django.utils.timezone.now(),
+        )
         self.gedcom_ids[p] = indi.id
         return p
 
@@ -631,13 +617,9 @@ class GedcomImporter:
         # be ambiguities if that parent also belonged to another family
 
         if not husb:
-            husb = Persona.objects.create(
-                display_name=f"@Unknown husband in family {fam.id}@"
-            )
+            husb = Persona.objects.create()
         if not wife:
-            wife = Persona.objects.create(
-                display_name=f"@Unknown wife in family {fam.id}@"
-            )
+            wife = Persona.objects.create()
 
         # For all events, the list of individuals
 
@@ -852,7 +834,6 @@ class GedcomImporter:
                 return p
 
         ind = Persona.objects.create(
-            display_name=indi.display_name,
             description='',  # was set for the first persona already
             last_change=indi.last_change)
 
@@ -921,7 +902,7 @@ class GedcomImporter:
         # GEDCOM line as the characteristic itself. For simple
         # characteristics like "SEX", this will in fact be the only part.
 
-        if typ:
+        if typ is not None:
             if field.tag == 'NOTE':
                 v = self._get_note(field)
             else:
@@ -934,23 +915,21 @@ class GedcomImporter:
         # which case we should still create at least one part for the
         # characteristic
 
-        elif not field.fields and field.value:
-            self._all_char_parts.append(
-                Characteristic_Part(
-                    characteristic=c,
-                    type=self._char_types["SURN"],
-                    name=field.value,
-                ))
+        else:
+            display_name = field.value
+
+            if display_name and not field.fields:
+                self._all_char_parts.append(
+                    Characteristic_Part(
+                        characteristic=c,
+                        type=self._char_types["SURN"],
+                        name=display_name,
+                    ))
 
         # Second pass to add characteristic parts
 
         for f in field.fields:
-            if place is None and f.tag == "OBJE":
-                if sources:
-                    for sid, s in sources:
-                        self._process_OBJE(f, source=s)
-
-            elif f.tag == "NOTE":
+            if f.tag == "NOTE":
                 self._all_char_parts.append(
                     Characteristic_Part(
                         characteristic=c,

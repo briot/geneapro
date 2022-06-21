@@ -15,7 +15,8 @@ from ..models.theme.styles import Style
 from .asserts import AssertList
 from .sqlsets import SQLSet
 from typing import (
-    Dict, List, NamedTuple, Iterable, Optional, Literal, Tuple, Any, Protocol)
+    Dict, List, NamedTuple, Iterable, Optional, Literal, Tuple, Any, Protocol,
+    Set)
 
 
 logger = logging.getLogger(__name__)
@@ -91,6 +92,30 @@ class PersonSet(SQLSet):
             Event_Type.PK_death,
             Event_Type.PK_marriage
         )
+
+    def all_persons(self) -> Set[int]:
+        # ??? WIP: do not rely on the precomputed main_id in Persona.
+
+        query = (
+            """
+            --  Assume that the persons that are used to build up other
+            --  persons via P2P are low-level and should not be returned
+            --  directly in the list. An alternative is to consider all
+            --  persons that do not come directly from a source, but this is
+            --  a bit tricky with gedcom imports.
+
+            WITH person_ids AS (
+               SELECT id FROM persona
+               EXCEPT
+               SELECT person1_id FROM p2p WHERE not disproved
+            )
+            SELECT * FROM person_ids
+            """
+        )
+
+        with django.db.connection.cursor() as cur:
+            cur.execute(query)
+            return set(row[0] for row in cur)
 
     def add_ids(
             self,

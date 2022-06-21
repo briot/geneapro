@@ -13,12 +13,6 @@ class Persona(GeneaProveModel):
     """
     id: int
 
-    display_name = models.TextField(db_column="name")
-    # The name as found in the source document.
-    # The name will be displayed exactly as such in the GUI. Any name property
-    # (which distinguishes given name, surname,...) is extra, detailed
-    # information that only shows on the Persona page.
-
     description = models.TextField(null=True)
     # Additional data to distinguish the person among other homonyms
 
@@ -33,7 +27,6 @@ class Persona(GeneaProveModel):
     generation: Optional[int] = None       # precomputed via PedigreeData
 
     main_id: int
-
     main = models.ForeignKey(
         "self", null=True, on_delete=models.CASCADE,
         db_index=True, related_name="personas")

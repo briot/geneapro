@@ -1,5 +1,6 @@
 from django.db.models import prefetch_related_objects, QuerySet, Model
 from django.conf import settings
+import itertools
 import logging
 from typing import Optional, Iterable, Generator, List, TypeVar, Union
 
@@ -36,9 +37,11 @@ class SQLSet:
         if ids is None:
             yield None
         else:
-            ids = list(ids)  # need a list to extract parts of it
-            for i in range(0, len(ids), chunk_size):
-                yield ids[i:i + chunk_size]
+            b = iter(ids)
+            yield from iter(   # calls lambda until it returns an empty list
+                lambda: list(itertools.islice(b, chunk_size)),
+                []
+            )
 
     def prefetch_related(
             self,

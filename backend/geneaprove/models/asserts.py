@@ -81,8 +81,7 @@ class Assertion(GeneaProveModel):
         Source, null=True,
         help_text="An assertion comes from no more than one source. It can"
         " also come from one or more other assertions through the"
-        " assertion_assertion table, in which case source_id is"
-        " null",
+        " a2a table, in which case source_id is null",
         on_delete=models.CASCADE)
 
     rationale = models.TextField(
@@ -98,8 +97,8 @@ class Assertion(GeneaProveModel):
 
     class Meta:
         """Meta data for the model"""
-        # db_table = "assertion"
-        abstract = True
+        db_table = "assertion"
+        abstract = False
 
     @staticmethod
     def related_json_fields() -> List[str]:
@@ -114,7 +113,8 @@ class Assertion(GeneaProveModel):
             "researcher": self.researcher_id,
             "last_change": self.last_change,
             "source_id": self.source_id,
-            "surety": self.surety_id}
+            "surety": self.surety_id,
+        }
 
     def getRelatedIds(self, into: AssertListProtocol) -> None:
         """
@@ -331,24 +331,14 @@ class G2C(Assertion):
         return res
 
 
-# class E2C(Assertion):
-#    """Event-to-Characteristic assertions.
-#       Such assertions are not part of the GENTECH super-statement, but
-#       are used in particular to store event notes imported from GEDCOM
-#    """
-#   event      = models.ForeignKey(
-#       Event, related_name="characteristics", on_delete=models.CASCADE)
-#   characteristic = models.ForeignKey (
-#       Characteristic, related_name="events", on_delete=models.CASCADE)
+class A2A(GeneaProveModel):
+    original = models.ForeignKey(
+         Assertion, related_name="leads_to", on_delete=models.CASCADE)
+    deduction = models.ForeignKey(
+         Assertion, related_name="deducted_from", on_delete=models.CASCADE)
+    sequence_number = models.IntegerField(default=1)
 
-# class Assertion_Assertion (GeneaProveModel):
-#    original = models.ForeignKey(
-#         Assertion, related_name="leads_to", on_delete=models.CASCADE)
-#    deduction = models.ForeignKey(
-#         Assertion, related_name="deducted_from", on_delete=models.CASCADE)
-#    sequence_number = models.IntegerField(default=1)
-#
-#    class Meta:
-#        """Meta data for the model"""
-#        ordering = ("sequence_number",)
-#        db_table = "assertion_assertion"
+    class Meta:
+        """Meta data for the model"""
+        ordering = ("sequence_number", )
+        db_table = "a2a"
