@@ -28,6 +28,7 @@
 *** Use download form
 *** Do not mark the gedcom file as a source, but with a special mark so that
    we can also undo an import.
+*** https://gigatrees.com/ancestry-family-tree-support
 
 ** Groups
 *** Creating a dummy group:
@@ -83,6 +84,9 @@ http://www.beholdgenealogy.com/blog/?p=876
 ** Removing import: we can't remove events and places created as part of
    this import. Maybe have a ' first seen in' field, and we remove entities
    with that field that are not used anywhere else
+
+* Synchronize Data
+** https://www.beholdgenealogy.com/blog/?p=3034
 
 * Pedigree View
 ** Dnd on Pedigree icon should display the pedigree for that person
@@ -296,6 +300,7 @@ http://www.youtube.com/watch?v=fZ1GXZ0hJPY
   correctly.
 
 * Stats
+** https://www.beholdgenealogy.com/blog/?p=3883
 ** http://timforsythe.com/blog/once-more-please-this-time-with-pizzazz/
 ** See https://www.geneanet.org/blog/post/2017/07/les-statistiques-illustrees-3?utm_source=geneanet&utm_medium=e-mail&utm_campaign=SITE_fr_lettre-hebdo-a17s31&xtor=EREC-191-29141%5Bfr_lettre_hebdo_a17s31%5D-20170802-%5Blien9%5D-%401-20170802082617
    Ascendants d'un individu:
