@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from django.db import migrations
-import django.db.models.deletion
 
 
 def forward(apps, schema_editor):
@@ -15,6 +14,7 @@ def forward(apps, schema_editor):
     CPT = apps.get_model('geneaprove', 'Characteristic_Part_Type')
     CIT = apps.get_model('geneaprove', 'Citation_Part_Type')
     GT = apps.get_model('geneaprove', 'Group_Type')
+    P2PT = apps.get_model('geneaprove', 'P2P_Type')
     db_alias = schema_editor.connection.alias
 
     s = Surety_Scheme(
@@ -27,6 +27,12 @@ def forward(apps, schema_editor):
         SSPart(name="normal",    scheme=s, sequence_number=3),
         SSPart(name="low",       scheme=s, sequence_number=2),
         SSPart(name="very low",  scheme=s, sequence_number=1)])
+
+    P2PT.objects.using(db_alias).bulk_create([
+        P2PT(id=1, name="same as"),
+        P2PT(name="godfather"),
+        P2PT(name="godmother"),
+    ])
 
     PPart.objects.using(db_alias).bulk_create([
         PPart(gedcom="ADR1",     name="address"),
@@ -193,7 +199,7 @@ def forward(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('geneaprove', '0002_auto_20180314_0957')
+        ('geneaprove', '0001_initial')
     ]
     operations = [
         migrations.RunPython(forward)
