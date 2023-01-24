@@ -3,10 +3,11 @@ Provides a gedcom importer
 """
 
 import datetime
+import itertools
 import logging
 import traceback
 import os
-from typing import List, Tuple, Optional, BinaryIO, Union, Dict, Set
+from typing import List, Tuple, Optional, BinaryIO, Union, Dict, Set, Sequence
 
 from django.utils.translation import ugettext as _
 import django.utils.timezone
@@ -16,7 +17,8 @@ from geneaprove.utils.gedcom.exceptions import Invalid_Gedcom
 from geneaprove.utils.gedcom.records import GedcomRecord
 from geneaprove.utils.gedcom.grammar import ADDR_FIELDS, FAM_EVENT_FIELDS
 from geneaprove.models import Project, Researcher_Project, Repository_Source
-from geneaprove.models.asserts import P2P_Type, P2C, P2E, P2P, P2G, G2C
+from geneaprove.models.asserts import (
+    P2P_Type, P2C, P2E, P2P, P2G, G2C, Assertion)
 from geneaprove.models.characteristic import (
     Characteristic_Part_Type, Characteristic_Part, Characteristic)
 from geneaprove.models.event import Event, Event_Type_Role, Event_Type
@@ -416,13 +418,24 @@ class GedcomImporter:
 
     def execute_bulks(self) -> None:
         Place_Part.objects.bulk_create(self._all_place_parts)
-        P2C.objects.bulk_create(self._all_p2c)
-        P2E.objects.bulk_create(self._all_p2e)
-        P2P.objects.bulk_create(self._all_p2p)
-        P2G.objects.bulk_create(self._all_p2g)
-        G2C.objects.bulk_create(self._all_g2c)
         Characteristic_Part.objects.bulk_create(self._all_char_parts)
         Citation_Part.objects.bulk_create(self._all_citation_parts)
+
+        all_asserts = itertools.chain(
+            self._all_p2c,
+            self._all_p2e,
+            self._all_p2p,
+            self._all_p2g,
+            self._all_g2c,
+        )
+        for a in all_asserts:
+            a.save()
+
+#        P2C.objects.bulk_create(self._all_p2c)
+#        P2E.objects.bulk_create(self._all_p2e)
+#        P2P.objects.bulk_create(self._all_p2p)
+#        P2G.objects.bulk_create(self._all_p2g)
+#        G2C.objects.bulk_create(self._all_g2c)
 
     def _create_project(
             self,

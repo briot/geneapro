@@ -62,10 +62,11 @@ class TestPersona(django.test.TestCase):
 
     def test_high_personas(self):
         """
-        A tree of persons. We have decided that some of them are in fact the
-        same real-life person. In this case, the personas themselves will not
-        be shown in the list of persons, only the high-level persona will be
-        displayed.
+        Personas aggregated into a high-level persona.
+
+        We have decided that some of them are in fact the same real-life
+        person. In this case, the personas themselves will not be shown in the
+        list of persons, only the high-level persona will be displayed.
 
            Persona0
                     \
@@ -76,8 +77,8 @@ class TestPersona(django.test.TestCase):
 
         In this case, characteristics and events are automatically inherited by
         Persona3, and will only be hidden if they are part of an
-        assertion-to-assertion link. So if we have the following tree of
-        assertions:
+        assertion-to-assertion link to form an assertion on Persona3. So if we
+        have the following tree of assertions:
 
            birth:    persona0 -- birth of persona0
                      persona1 -- birth of persona1
@@ -110,3 +111,6 @@ class TestPersona(django.test.TestCase):
             s.all_persons(),
             {personas[3].id, personas[4].id},
         )
+
+        # If we have a cycle (Persona3 is also marked as sameAs with
+        # persona0 for instance)

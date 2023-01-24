@@ -97,17 +97,22 @@ class PersonSet(SQLSet):
         # ??? WIP: do not rely on the precomputed main_id in Persona.
 
         query = (
-            """
+            f"""
             --  Assume that the persons that are used to build up other
             --  persons via P2P are low-level and should not be returned
             --  directly in the list. An alternative is to consider all
             --  persons that do not come directly from a source, but this is
             --  a bit tricky with gedcom imports.
+            --  ??? What if we have a cycle (person1 -> person2 -> person1)
 
             WITH person_ids AS (
                SELECT id FROM persona
                EXCEPT
-               SELECT person1_id FROM p2p WHERE not disproved
+               SELECT person1_id
+                  FROM p2p JOIN assertion
+                  ON (assertion.id = p2p.assertion_ptr_id)
+                  WHERE not assertion.disproved
+                  AND p2p.type_id={P2P_Type.sameAs}
             )
             SELECT * FROM person_ids
             """
